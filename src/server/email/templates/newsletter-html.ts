@@ -1,6 +1,22 @@
+import { emailBaseUrl, farben, schrift } from "./email-layout";
+import { emailText, textLink } from "./email-text";
+
+/**
+ * `schrift` enthält Schriftnamen in doppelten Anführungszeichen (für
+ * React-Inline-Styles unproblematisch). In einem HTML-`style="…"`-Attribut
+ * würden sie die Anführung vorzeitig schließen und alles Folgende
+ * verschlucken — deshalb hier auf einfache umgesetzt.
+ */
+const htmlSchrift = schrift.replace(/"/g, "'");
+
 /**
  * Generate newsletter email HTML manually
  * This approach gives us full control over HTML injection
+ *
+ * Der Rumpf (`content`) ist vom Autor verfasstes, bereits bereinigtes HTML
+ * und wird unverändert eingesetzt — deshalb bleibt diese Vorlage ein
+ * Zeichenketten-Bauer statt einer react-email-Komponente. Nur die Hülle
+ * (Kopf, Rahmen, Fußzeile) folgt derselben Gestaltung wie EmailLayout.
  */
 export function generateNewsletterHtml({
   content,
@@ -12,6 +28,7 @@ export function generateNewsletterHtml({
   subscriberName?: string;
 }): string {
   const greeting = subscriberName ? `Hallo ${subscriberName},` : "Hallo,";
+  const basis = emailBaseUrl();
 
   return `<!DOCTYPE html>
 <html lang="de">
@@ -20,46 +37,50 @@ export function generateNewsletterHtml({
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Newsletter - Posaunenwerk Rheinland</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Ubuntu, sans-serif;">
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #f5f5f5;">
+<body style="margin: 0; padding: 0; background-color: ${farben.paper}; font-family: ${htmlSchrift};">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: ${farben.paper};">
     <tr>
-      <td align="center" style="padding: 20px 0;">
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="max-width: 600px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-          <!-- Header -->
+      <td align="center" style="padding: 0;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="max-width: 600px; background-color: ${farben.paper};">
+          <!-- Kopf -->
           <tr>
-            <td style="background-color: #faa619; padding: 32px 24px; text-align: center; border-radius: 8px 8px 0 0;">
-              <h1 style="color: #ffffff; font-size: 28px; font-weight: bold; margin: 0 0 8px 0; letter-spacing: 0.5px;">Posaunenwerk Rheinland</h1>
-              <p style="color: #ffffff; font-size: 12px; font-weight: normal; margin: 0; opacity: 0.95; letter-spacing: 0.3px;">Posaunenwerk der Evangelischen Kirche im Rheinland</p>
+            <td style="background-color: ${farben.primary}; padding: 28px 24px; text-align: center;">
+              <img src="${basis}/images/logo-icon-ink.png" width="24" height="59" alt="" style="display: block; margin: 0 auto 12px auto; border: 0;">
+              <p style="font-family: ${htmlSchrift}; color: ${farben.ink}; font-size: 24px; line-height: 28px; font-weight: bold; margin: 0 0 4px 0;">Posaunenwerk Rheinland</p>
+              <p style="font-family: ${htmlSchrift}; color: ${farben.ink}; font-size: 12px; line-height: 18px; margin: 0;">Posaunenwerk der Evangelischen Kirche im Rheinland</p>
             </td>
           </tr>
-          
-          <!-- Content -->
+
+          <!-- Inhalt -->
           <tr>
-            <td style="padding: 32px 24px;">
-              <p style="font-size: 18px; font-weight: bold; color: #58595b; margin: 0 0 24px 0;">${greeting}</p>
-              
+            <td style="padding: 32px 24px 8px 24px; border-top: 2px solid ${farben.ink};">
+              <p style="font-family: ${htmlSchrift}; font-size: 16px; line-height: 26px; color: ${farben.ink}; font-weight: bold; margin: 0 0 16px 0;">${greeting}</p>
+
               <!-- Newsletter Content -->
-              <div style="font-size: 16px; line-height: 26px; color: #58595b; margin-bottom: 16px;">
+              <div style="font-family: ${htmlSchrift}; font-size: 16px; line-height: 26px; color: ${farben.ink};">
                 ${content}
               </div>
-              
-              <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 32px 0;" />
-              
+
+              <hr style="border: none; border-top: 1px solid ${farben.rule}; margin: 28px 0;">
+
               <!-- Unsubscribe -->
-              <div style="text-align: center; margin-top: 32px;">
-                <p style="font-size: 12px; color: #6b7280; line-height: 20px; margin: 0;">
-                  Du möchtest keine Newsletter mehr erhalten? 
-                  <a href="${unsubscribeUrl}" style="color: #faa619; text-decoration: underline;">Hier abmelden</a>
+              <div style="text-align: center; margin: 0 0 20px 0;">
+                <p style="font-family: ${htmlSchrift}; font-size: 12px; color: ${farben.muted}; line-height: 20px; margin: 0;">
+                  Du möchtest keine Newsletter mehr erhalten?
+                  <a href="${unsubscribeUrl}" style="color: ${farben.primaryInk}; text-decoration: underline; font-weight: bold;">Hier abmelden</a>
                 </p>
               </div>
             </td>
           </tr>
-          
-          <!-- Footer -->
+
+          <!-- Fuß -->
           <tr>
-            <td style="padding: 24px; background-color: #f5f5f5; text-align: center; border-radius: 0 0 8px 8px;">
-              <p style="font-size: 12px; color: #9ca3af; margin: 0;">
-                Posaunenwerk der Evangelischen Kirche im Rheinland
+            <td style="padding: 20px 24px 32px 24px; border-top: 1px solid ${farben.rule};">
+              <p style="font-family: ${htmlSchrift}; font-size: 12px; line-height: 18px; color: ${farben.muted}; margin: 0; text-align: center;">
+                Posaunenwerk der Evangelischen Kirche im Rheinland e.V.
+              </p>
+              <p style="font-family: ${htmlSchrift}; font-size: 12px; line-height: 18px; color: ${farben.muted}; margin: 0; text-align: center;">
+                Rudolf-Harbig-Str. 20 · 56179 Vallendar
               </p>
             </td>
           </tr>
@@ -69,4 +90,29 @@ export function generateNewsletterHtml({
   </table>
 </body>
 </html>`;
+}
+
+/**
+ * Nur-Text-Fassung. Der Rumpf ist vom Autor verfasstes HTML und lässt sich
+ * nicht verlustfrei in Text verwandeln — daher nur Hinweis, Anrede und
+ * Abmeldelink, ohne den eigentlichen Inhalt.
+ */
+export function generateNewsletterText({
+  unsubscribeUrl,
+  subscriberName,
+}: {
+  unsubscribeUrl: string;
+  subscriberName?: string;
+}): string {
+  const greeting = subscriberName ? `Hallo ${subscriberName},` : "Hallo,";
+
+  return emailText([
+    "NEWSLETTER",
+    "",
+    greeting,
+    "",
+    "Diese Textfassung enthält den Newsletter-Inhalt nicht — er liegt nur als Gestaltung für das HTML-Postfach vor.",
+    "",
+    textLink("Newsletter abbestellen:", unsubscribeUrl),
+  ]);
 }

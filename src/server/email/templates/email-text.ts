@@ -40,7 +40,11 @@ export function emailText(zeilen: (string | null | undefined)[]): string {
  * untereinander stehen — das Pendant zur Werttabelle im HTML.
  */
 export function textZeile(beschriftung: string, wert: string): string {
-  return `${`${beschriftung}:`.padEnd(18)}${wert}`;
+  // Feste Breite 18, aber nie kürzer als die Beschriftung selbst: Sonst klebt
+  // der Wert bei langen Beschriftungen direkt am Doppelpunkt
+  // („Ursprünglicher Betrag:310,00 €“).
+  const kopf = `${beschriftung}:`;
+  return `${kopf.padEnd(Math.max(22, kopf.length + 1))}${wert}`;
 }
 
 /**
