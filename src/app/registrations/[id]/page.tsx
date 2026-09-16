@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   useRegistrationAccessToken,
@@ -14,16 +14,10 @@ import { useToast } from "@/app/_components/ui/toast";
 import { coursePath } from "@/lib/slug";
 import {
   ArrowLeftIcon,
-  ArrowRightIcon,
-  BuildingIcon,
-  CalendarIcon,
   CircleXIcon,
   DownloadIcon,
   EditIcon,
-  PencilIcon,
-  UsersIcon,
 } from "lucide-react";
-import { UserIcon } from "lucide-react";
 import {
   ScrollableModal,
   ScrollableModalCard,
@@ -34,6 +28,52 @@ import LocationNavigationLink from "@/app/_components/general/location-navigatio
 import { participantPriceOptionLabel } from "@/lib/course-price-options";
 import { registrantMayCancelDownPayment } from "@/lib/course-down-payment";
 import { RegistrationDownPaymentCard } from "@/app/_components/events/registration-down-payment-card";
+import PublicPage from "@/app/_components/general/public-page";
+import { headMeta } from "@/app/_components/programmheft/page-head";
+import { PageSection } from "@/app/_components/programmheft/page-section";
+import {
+  Heading,
+  ArrowLink,
+} from "@/app/_components/programmheft/section-head";
+import { Note } from "@/app/_components/programmheft/note";
+import { Tag, type TagTone } from "@/app/_components/programmheft/tag";
+import { ValueTable } from "@/app/_components/programmheft/value-table";
+import { formatEuro } from "@/lib/invoice-document";
+import { cn } from "@/lib/utils";
+
+/**
+ * Schaltflächen-Stimmen des Programmhefts, lokal wiederholt wie auf den
+ * übrigen öffentlichen Formularseiten (z. B. /registrations).
+ */
+const BTN_PRIMARY =
+  "bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-primary dark:text-ink dark:hover:bg-paper semi-condensed inline-flex min-h-12 items-center justify-center gap-2 px-6 text-base font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60";
+const BTN_OUTLINE =
+  "border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night semi-condensed inline-flex min-h-12 items-center justify-center gap-2 border-2 px-6 text-base font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60";
+
+const STATUS_TAG: Record<RegistrationStatus, { label: string; tone: TagTone }> =
+  {
+    CONFIRMED: { label: "Teilnahme Bestätigt", tone: "inverse" },
+    WAITLIST: { label: "Auf Warteliste", tone: "orange" },
+    CANCELLED: { label: "Storniert", tone: "cancelled" },
+  };
+
+/** Bezeichnung über einem schreibgeschützten Wert (wie `headMeta.label` als Kopf über Meta-Zeilen). */
+function InfoField({
+  label,
+  className,
+  children,
+}: {
+  label: string;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className={className}>
+      <p className={headMeta.label}>{label}</p>
+      <p className="text-ink dark:text-night-text mt-1">{children}</p>
+    </div>
+  );
+}
 
 export default function ViewRegistrationPage() {
   const params = useParams();
@@ -166,62 +206,36 @@ export default function ViewRegistrationPage() {
     });
   };
 
-  const getStatusBadge = (status: RegistrationStatus) => {
-    const badges: Record<RegistrationStatus, string> = {
-      CONFIRMED:
-        "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
-      WAITLIST:
-        "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
-      CANCELLED: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
-    };
-    const labels: Record<RegistrationStatus, string> = {
-      CONFIRMED: "Teilnahme Bestätigt",
-      WAITLIST: "Auf Warteliste",
-      CANCELLED: "Storniert",
-    };
-
-    return (
-      <span
-        className={`rounded-full px-3 py-1 text-sm font-semibold ${badges[status]}`}
-      >
-        {labels[status]}
-      </span>
-    );
-  };
-
   if (sessionLoading || registrationLoading) {
     return (
-      <div className="bg-background-secondary dark:bg-dark-background-secondary flex min-h-[calc(100vh-4rem)] items-center justify-center">
-        <div className="text-dark dark:text-dark-text">Lädt...</div>
+      <div className="bg-paper dark:bg-night text-ink dark:text-night-text flex min-h-[calc(100vh-4rem)] items-center justify-center">
+        <p className="semi-condensed text-lg font-semibold">Lädt...</p>
       </div>
     );
   }
 
   if (!registration) {
     return (
-      <div className="bg-background-secondary dark:bg-dark-background-secondary flex min-h-[calc(100vh-4rem)] items-center justify-center">
-        <div className="max-w-md px-4 text-center">
-          <h1 className="text-dark dark:text-dark-text mb-4 text-2xl font-bold">
+      <div className="bg-paper dark:bg-night text-ink dark:text-night-text flex min-h-[calc(100vh-4rem)] items-center justify-center px-4">
+        <div className="max-w-md text-center">
+          <h1 className="condensed text-[1.75rem] leading-none font-extrabold">
             Anmeldung nicht gefunden
           </h1>
           {isGuestAccess ? (
             <>
-              <p className="mb-4 text-gray-600 dark:text-gray-400">
+              <p className="text-dark dark:text-night-muted mt-4">
                 Dieser Zugangslink ist ungültig oder abgelaufen. Du kannst dir
                 jederzeit einen neuen Link schicken lassen.
               </p>
               <Link
                 href="/anmeldung-verwalten"
-                className="text-primary hover:text-primary-dark"
+                className="link-ink mt-4 inline-block"
               >
                 Neuen Zugangslink anfordern
               </Link>
             </>
           ) : (
-            <Link
-              href="/registrations"
-              className="text-primary hover:text-primary-dark"
-            >
+            <Link href="/registrations" className="link-ink mt-4 inline-block">
               Zurück zur Übersicht
             </Link>
           )}
@@ -232,18 +246,15 @@ export default function ViewRegistrationPage() {
 
   if (!isOwner) {
     return (
-      <div className="bg-background-secondary dark:bg-dark-background-secondary flex min-h-[calc(100vh-4rem)] items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-dark dark:text-dark-text mb-4 text-2xl font-bold">
+      <div className="bg-paper dark:bg-night text-ink dark:text-night-text flex min-h-[calc(100vh-4rem)] items-center justify-center px-4">
+        <div className="max-w-md text-center">
+          <h1 className="condensed text-[1.75rem] leading-none font-extrabold">
             Keine Berechtigung
           </h1>
-          <p className="mb-4 text-gray-600 dark:text-gray-400">
+          <p className="text-dark dark:text-night-muted mt-4">
             Du kannst nur deine eigenen Anmeldungen einsehen.
           </p>
-          <Link
-            href="/registrations"
-            className="text-primary hover:text-primary-dark"
-          >
+          <Link href="/registrations" className="link-ink mt-4 inline-block">
             Zurück zur Übersicht
           </Link>
         </div>
@@ -251,205 +262,162 @@ export default function ViewRegistrationPage() {
     );
   }
 
-  return (
-    <div className="bg-background-secondary dark:bg-dark-background-secondary min-h-[calc(100vh-4rem)] px-4 py-8">
-      <div className="container mx-auto max-w-4xl">
-        {/* Header */}
-        <div className="mb-8">
-          <nav className="mb-4 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-            {isGuestAccess ? (
-              <span>Meine Anmeldung</span>
-            ) : (
-              <Link
-                href="/registrations"
-                className="hover:text-primary transition-colors"
-              >
-                Meine Anmeldungen
-              </Link>
-            )}
-            <span>/</span>
-            <span className="text-dark dark:text-dark-text">Details</span>
-          </nav>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <h1 className="text-dark dark:text-dark-text text-3xl font-bold">
-                {registration.course.title}
-              </h1>
-              <div className="mt-2 flex flex-wrap items-center gap-3">
-                {getStatusBadge(registration.registrationStatus)}
-              </div>
-            </div>
-            <div className="flex shrink-0 flex-wrap gap-2">
-              {canEdit() && (
-                <Link
-                  href={withAccessToken(
-                    `/registrations/${registration.id}/edit`,
-                    accessToken,
-                  )}
-                  className="bg-primary hover:bg-primary-dark inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors"
-                >
-                  <EditIcon className="h-4 w-4" />
-                  Bearbeiten
-                </Link>
-              )}
-              {canCancel() && (
-                <button
-                  onClick={() => setCancelModalOpen(true)}
-                  className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-600 transition-colors hover:border-red-400 hover:bg-red-100 hover:text-red-700 dark:border-red-700 dark:bg-red-950/30 dark:text-red-400 dark:hover:border-red-600 dark:hover:bg-red-900/50 dark:hover:text-red-300"
-                >
-                  <CircleXIcon className="h-4 w-4" />
-                  Stornieren
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
+  const statusTag = STATUS_TAG[registration.registrationStatus];
 
-        {/* Course Info Card */}
-        <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="text-dark dark:text-dark-text mb-4 flex items-center gap-2 text-lg font-semibold">
-            <CalendarIcon className="text-primary h-5 w-5" />
-            Kursdetails
-          </h2>
-          <div className="grid gap-4 text-sm md:grid-cols-2">
-            <div>
-              <span className="font-medium text-gray-700 dark:text-gray-300">
-                Zeitraum:
-              </span>
-              <p className="text-gray-600 dark:text-gray-400">
+  const priceRows: { label: ReactNode; value: ReactNode }[] = [];
+  const hasDiscountBreakdown =
+    registration.siblingDiscountApplied &&
+    registration.originalTotalPrice &&
+    registration.siblingDiscountAmount;
+  if (hasDiscountBreakdown) {
+    priceRows.push({
+      label: "Zwischensumme",
+      value: formatEuro(registration.originalTotalPrice!),
+    });
+    priceRows.push({
+      label: "Geschwisterkindrabatt (20% pro weiteres Kind)",
+      value: `- ${formatEuro(registration.siblingDiscountAmount!)}`,
+    });
+  }
+  priceRows.push({
+    label: hasDiscountBreakdown ? "Gesamtpreis" : "Betrag",
+    value: formatEuro(registration.totalPrice),
+  });
+
+  return (
+    <PublicPage
+      title="Anmeldung"
+      heroTitle={registration.course.title}
+      breadcrumbs={
+        isGuestAccess
+          ? [
+              { label: "Start", href: "/" },
+              { label: "Meine Anmeldung" },
+              { label: "Details" },
+            ]
+          : [
+              { label: "Start", href: "/" },
+              { label: "Meine Anmeldungen", href: "/registrations" },
+              { label: "Details" },
+            ]
+      }
+      heroSize="compact"
+      description={
+        <div className="flex flex-wrap items-center gap-3">
+          <Tag tone={statusTag.tone}>{statusTag.label}</Tag>
+          {canEdit() && (
+            <Link
+              href={withAccessToken(
+                `/registrations/${registration.id}/edit`,
+                accessToken,
+              )}
+              className={headMeta.action}
+            >
+              <EditIcon className="h-4 w-4 shrink-0" aria-hidden />
+              Bearbeiten
+            </Link>
+          )}
+          {canCancel() && (
+            <button
+              type="button"
+              onClick={() => setCancelModalOpen(true)}
+              className={headMeta.action}
+            >
+              <CircleXIcon className="h-4 w-4 shrink-0" aria-hidden />
+              Stornieren
+            </button>
+          )}
+        </div>
+      }
+    >
+      <PageSection>
+        <div className="space-y-10">
+          {/* Kursdetails */}
+          <div>
+            <Heading as="h2" size="list" rule>
+              Kursdetails
+            </Heading>
+            <div className="mt-4 grid gap-6 text-sm sm:grid-cols-2">
+              <InfoField label="Zeitraum">
                 {formatDate(registration.course.startDate)} –{" "}
                 {formatDate(registration.course.endDate)}
-              </p>
-            </div>
-            {registration.course.location && (
-              <div>
-                <span className="font-medium text-gray-700 dark:text-gray-300">
-                  Ort:
-                </span>
-                <p className="text-gray-600 dark:text-gray-400">
+              </InfoField>
+              {registration.course.location && (
+                <InfoField label="Ort">
                   {registration.course.location.name},{" "}
                   {registration.course.location.city}
-                </p>
-                <LocationNavigationLink
-                  location={registration.course.location}
-                  variant="inline"
-                  className="mt-1"
-                />
-              </div>
-            )}
-            {registration.course.registrationDeadline && (
-              <div>
-                <span className="font-medium text-gray-700 dark:text-gray-300">
-                  Anmeldefrist:
-                </span>
-                <p className="text-gray-600 dark:text-gray-400">
+                  {/* Eigener Block: Der Link trug nur `mt-1`, stand aber
+                      inline direkt hinter dem Ortsnamen — gemessen ohne jeden
+                      Abstand. Ein oberer Rand wirkt erst auf eigener Zeile. */}
+                  <span className="mt-1 block">
+                    <LocationNavigationLink
+                      location={registration.course.location}
+                      variant="inline"
+                    />
+                  </span>
+                </InfoField>
+              )}
+              {registration.course.registrationDeadline && (
+                <InfoField label="Anmeldefrist">
                   {formatDate(registration.course.registrationDeadline)}
-                </p>
-              </div>
-            )}
-            <div>
-              <span className="font-medium text-gray-700 dark:text-gray-300">
-                Angemeldet am:
-              </span>
-              <p className="text-gray-600 dark:text-gray-400">
+                </InfoField>
+              )}
+              <InfoField label="Angemeldet am">
                 {formatDateTime(registration.createdAt)}
-              </p>
+              </InfoField>
             </div>
-          </div>
-          <div className="mt-4">
-            <Link
-              href={coursePath(registration.course)}
-              className="text-primary hover:text-primary-dark inline-flex items-center gap-1 text-sm font-medium transition-colors"
-            >
+            <ArrowLink href={coursePath(registration.course)} className="mt-5">
               Zur Kursseite
-              <ArrowRightIcon className="h-4 w-4" />
-            </Link>
+            </ArrowLink>
           </div>
-        </div>
 
-        {/* Registrant Info */}
-        <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="text-dark dark:text-dark-text mb-4 flex items-center gap-2 text-lg font-semibold">
-            <UserIcon className="text-primary h-5 w-5" />
-            Anmelder
-          </h2>
-          <div className="grid gap-4 text-sm md:grid-cols-2">
-            <div>
-              <span className="font-medium text-gray-700 dark:text-gray-300">
-                Name:
-              </span>
-              <p className="text-gray-600 dark:text-gray-400">
+          {/* Registrant Info */}
+          <div>
+            <Heading as="h2" size="list" rule>
+              Anmelder
+            </Heading>
+            <div className="mt-4 grid gap-6 text-sm sm:grid-cols-2">
+              <InfoField label="Name">
                 {registration.registrantFirstName}{" "}
                 {registration.registrantLastName}
-              </p>
-            </div>
-            <div>
-              <span className="font-medium text-gray-700 dark:text-gray-300">
-                E-Mail:
-              </span>
-              <p className="text-gray-600 dark:text-gray-400">
+              </InfoField>
+              <InfoField label="E-Mail">
                 {registration.registrantEmail}
-              </p>
-            </div>
-            {registration.registrantPhone && (
-              <div>
-                <span className="font-medium text-gray-700 dark:text-gray-300">
-                  Telefon:
-                </span>
-                <p className="text-gray-600 dark:text-gray-400">
+              </InfoField>
+              {registration.registrantPhone && (
+                <InfoField label="Telefon">
                   {registration.registrantPhone}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Billing Info (if separate) */}
-        {registration.useSeparateBilling && (
-          <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="text-dark dark:text-dark-text mb-4 flex items-center gap-2 text-lg font-semibold">
-              <BuildingIcon className="text-primary h-5 w-5" />
-              Rechnungsadresse
-            </h2>
-            <div className="grid gap-4 text-sm md:grid-cols-2">
-              {registration.billingCompany && (
-                <div>
-                  <span className="font-medium text-gray-700 dark:text-gray-300">
-                    Firma/Organisation:
-                  </span>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    {registration.billingCompany}
-                  </p>
-                </div>
+                </InfoField>
               )}
-              {(registration.billingFirstName ||
-                registration.billingLastName) && (
-                <div>
-                  <span className="font-medium text-gray-700 dark:text-gray-300">
-                    Name:
-                  </span>
-                  <p className="text-gray-600 dark:text-gray-400">
+            </div>
+          </div>
+
+          {/* Billing Info (if separate) */}
+          {registration.useSeparateBilling && (
+            <div>
+              <Heading as="h2" size="list" rule>
+                Rechnungsadresse
+              </Heading>
+              <div className="mt-4 grid gap-6 text-sm sm:grid-cols-2">
+                {registration.billingCompany && (
+                  <InfoField label="Firma/Organisation">
+                    {registration.billingCompany}
+                  </InfoField>
+                )}
+                {(registration.billingFirstName ||
+                  registration.billingLastName) && (
+                  <InfoField label="Name">
                     {registration.billingFirstName}{" "}
                     {registration.billingLastName}
-                  </p>
-                </div>
-              )}
-              {registration.billingEmail && (
-                <div>
-                  <span className="font-medium text-gray-700 dark:text-gray-300">
-                    E-Mail:
-                  </span>
-                  <p className="text-gray-600 dark:text-gray-400">
+                  </InfoField>
+                )}
+                {registration.billingEmail && (
+                  <InfoField label="E-Mail">
                     {registration.billingEmail}
-                  </p>
-                </div>
-              )}
-              {(registration.billingStreet || registration.billingCity) && (
-                <div className="md:col-span-2">
-                  <span className="font-medium text-gray-700 dark:text-gray-300">
-                    Adresse:
-                  </span>
-                  <p className="text-gray-600 dark:text-gray-400">
+                  </InfoField>
+                )}
+                {(registration.billingStreet || registration.billingCity) && (
+                  <InfoField label="Adresse" className="sm:col-span-2">
                     {registration.billingStreet && (
                       <>
                         {registration.billingStreet}
@@ -457,216 +425,150 @@ export default function ViewRegistrationPage() {
                       </>
                     )}
                     {registration.billingZipCode} {registration.billingCity}
-                  </p>
-                </div>
-              )}
+                  </InfoField>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Participants */}
-        <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg border border-gray-200 bg-white shadow-sm">
-          <div className="border-b border-gray-200 p-6 dark:border-gray-700">
-            <h2 className="text-dark dark:text-dark-text flex items-center gap-2 text-lg font-semibold">
-              <UsersIcon className="text-primary h-5 w-5" />
+          {/* Participants */}
+          <div>
+            <Heading as="h2" size="list" rule>
               Teilnehmer ({registration.participants.length})
-            </h2>
-          </div>
-          <div className="divide-y divide-gray-200 dark:divide-gray-700">
-            {registration.participants.map((participant, index) => {
-              const siblingGroup = registration.participants.filter(
-                (p) =>
-                  p.siblingGroupId &&
-                  p.siblingGroupId === participant.siblingGroupId,
-              );
-              const isInGroup = siblingGroup.length > 1;
-              const groupMembers = siblingGroup
-                .map((p) => {
-                  const idx = registration.participants.indexOf(p);
-                  return idx !== index ? idx + 1 : null;
-                })
-                .filter((idx) => idx !== null);
+            </Heading>
+            <ul className="border-rule dark:border-night-rule mt-4 border-t">
+              {registration.participants.map((participant, index) => {
+                const siblingGroup = registration.participants.filter(
+                  (p) =>
+                    p.siblingGroupId &&
+                    p.siblingGroupId === participant.siblingGroupId,
+                );
+                const isInGroup = siblingGroup.length > 1;
+                const groupMembers = siblingGroup
+                  .map((p) => {
+                    const idx = registration.participants.indexOf(p);
+                    return idx !== index ? idx + 1 : null;
+                  })
+                  .filter((idx) => idx !== null);
 
-              return (
-                <div
-                  key={participant.id}
-                  className={`p-6 ${
-                    isInGroup ? "bg-green-50 dark:bg-green-900/10" : ""
-                  }`}
-                >
-                  <div className="mb-3 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-dark dark:text-dark-text font-semibold">
-                        {participant.firstName} {participant.lastName}
-                      </h3>
-                      {isInGroup && (
-                        <span className="rounded-full bg-green-600 px-2 py-1 text-xs font-medium text-white dark:bg-green-700">
-                          Geschwistergruppe
-                        </span>
-                      )}
-                    </div>
-                    <span className="dark:bg-dark-background-secondary rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-600 dark:text-gray-400">
-                      {getParticipantDisplayName(
-                        participant.firstName,
-                        participant.lastName,
-                        participant.id,
-                      )}
-                    </span>
-                  </div>
-                  {isInGroup && groupMembers.length > 0 && (
-                    <div className="mb-3 text-xs text-green-700 dark:text-green-400">
-                      Geschwister mit:{" "}
-                      {siblingGroup
-                        .filter((p) => p.id !== participant.id)
-                        .map((p) =>
-                          getParticipantDisplayName(
-                            p.firstName,
-                            p.lastName,
-                            p.id,
-                          ),
-                        )
-                        .join(", ")}
-                    </div>
-                  )}
-                  <div className="grid gap-4 text-sm md:grid-cols-2">
-                    <div>
-                      <span className="font-medium text-gray-700 dark:text-gray-300">
-                        Geburtsdatum:
-                      </span>
-                      <p className="text-gray-600 dark:text-gray-400">
-                        {formatDate(participant.birthDate)}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-700 dark:text-gray-300">
-                        Wohnort:
-                      </span>
-                      <p className="text-gray-600 dark:text-gray-400">
-                        {participant.city}
-                      </p>
-                    </div>
-                    {participant.instrument && (
-                      <div>
-                        <span className="font-medium text-gray-700 dark:text-gray-300">
-                          Instrument:
-                        </span>
-                        <p className="text-gray-600 dark:text-gray-400">
-                          {participant.instrument}
-                        </p>
+                return (
+                  <li
+                    key={participant.id}
+                    className="border-rule dark:border-night-rule border-b py-6 first:pt-0"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-ink dark:text-night-text font-semibold">
+                          {participant.firstName} {participant.lastName}
+                        </h3>
+                        {isInGroup && (
+                          <Tag tone="inverse">Geschwistergruppe</Tag>
+                        )}
                       </div>
+                      <Tag tone="inverse">
+                        {getParticipantDisplayName(
+                          participant.firstName,
+                          participant.lastName,
+                          participant.id,
+                        )}
+                      </Tag>
+                    </div>
+                    {isInGroup && groupMembers.length > 0 && (
+                      <p className="text-dark dark:text-night-muted mt-2 text-xs">
+                        Geschwister mit:{" "}
+                        {siblingGroup
+                          .filter((p) => p.id !== participant.id)
+                          .map((p) =>
+                            getParticipantDisplayName(
+                              p.firstName,
+                              p.lastName,
+                              p.id,
+                            ),
+                          )
+                          .join(", ")}
+                      </p>
                     )}
-                    {participant.priceOption && (
-                      <div>
-                        <span className="font-medium text-gray-700 dark:text-gray-300">
-                          Preisoption:
-                        </span>
-                        <p className="text-gray-600 dark:text-gray-400">
+                    <div className="mt-3 grid gap-4 text-sm sm:grid-cols-2">
+                      <InfoField label="Geburtsdatum">
+                        {formatDate(participant.birthDate)}
+                      </InfoField>
+                      <InfoField label="Wohnort">{participant.city}</InfoField>
+                      {participant.instrument && (
+                        <InfoField label="Instrument">
+                          {participant.instrument}
+                        </InfoField>
+                      )}
+                      {participant.priceOption && (
+                        <InfoField label="Preisoption">
                           {participantPriceOptionLabel(
                             participant,
                             registration.course.priceOptions,
                           )}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+                        </InfoField>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
           </div>
-        </div>
 
-        <RegistrationDownPaymentCard
-          registration={registration}
-          course={registration.course}
-        />
+          <RegistrationDownPaymentCard
+            registration={registration}
+            course={registration.course}
+          />
 
-        {/* Price Summary */}
-        <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          {/* Price Summary */}
           <div>
-            <h2 className="text-dark dark:text-dark-text mb-4 text-lg font-semibold">
+            <Heading as="h2" size="list" rule>
               Preisübersicht
-            </h2>
-            <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+            </Heading>
+            <p className="text-dark dark:text-night-muted mt-3 text-sm">
               {registration.participants.length} Teilnehmer
               {registration.participants.length !== 1 && ""}
             </p>
-            {registration.siblingDiscountApplied &&
-            registration.originalTotalPrice &&
-            registration.siblingDiscountAmount ? (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">
-                    Zwischensumme
-                  </span>
-                  <span className="text-gray-900 dark:text-gray-100">
-                    {registration.originalTotalPrice.toFixed(2)} €
-                  </span>
-                </div>
-                <div className="flex items-center justify-between border-t border-gray-200 pt-3 dark:border-gray-700">
-                  <span className="text-green-600 dark:text-green-400">
-                    Geschwisterkindrabatt (20% pro weiteres Kind)
-                  </span>
-                  <span className="font-semibold text-green-600 dark:text-green-400">
-                    -{registration.siblingDiscountAmount.toFixed(2)} €
-                  </span>
-                </div>
-                {registration.siblingDiscountStatus === "PENDING" && (
-                  <div className="rounded-lg border border-orange-200 bg-orange-50 p-3 dark:border-orange-800 dark:bg-orange-900/20">
-                    <p className="text-sm text-orange-700 dark:text-orange-300">
-                      ⏳ Ihr Rabattantrag wird derzeit geprüft. Sie erhalten
-                      eine Benachrichtigung, sobald eine Entscheidung getroffen
-                      wurde.
-                    </p>
-                  </div>
-                )}
-                {registration.siblingDiscountStatus === "APPROVED" && (
-                  <div className="rounded-lg border border-green-200 bg-green-50 p-3 dark:border-green-800 dark:bg-green-900/20">
-                    <p className="text-sm text-green-700 dark:text-green-300">
-                      ✓ Ihr Rabattantrag wurde genehmigt.
-                    </p>
-                  </div>
-                )}
-                {registration.siblingDiscountStatus === "REJECTED" && (
-                  <div className="rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20">
-                    <p className="text-sm text-red-700 dark:text-red-300">
-                      ✗ Ihr Rabattantrag wurde leider abgelehnt. Der Preis wurde
-                      auf den vollen Betrag angepasst.
-                    </p>
-                  </div>
-                )}
-                <div className="flex items-center justify-between border-t-2 border-gray-300 pt-3 dark:border-gray-600">
-                  <span className="text-dark dark:text-dark-text text-lg font-semibold">
-                    Gesamtpreis
-                  </span>
-                  <span className="text-primary text-3xl font-bold">
-                    {registration.totalPrice.toFixed(2)} €
-                  </span>
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Betrag</span>
-                <span className="text-primary text-3xl font-bold">
-                  {registration.totalPrice.toFixed(2)} €
-                </span>
-              </div>
-            )}
+            <ValueTable className="mt-4" rows={priceRows} />
+            {hasDiscountBreakdown &&
+              registration.siblingDiscountStatus === "PENDING" && (
+                <Note tone="info" className="mt-4">
+                  <p>
+                    ⏳ Ihr Rabattantrag wird derzeit geprüft. Sie erhalten eine
+                    Benachrichtigung, sobald eine Entscheidung getroffen wurde.
+                  </p>
+                </Note>
+              )}
+            {hasDiscountBreakdown &&
+              registration.siblingDiscountStatus === "APPROVED" && (
+                <Note tone="info" className="mt-4">
+                  <p>✓ Ihr Rabattantrag wurde genehmigt.</p>
+                </Note>
+              )}
+            {hasDiscountBreakdown &&
+              registration.siblingDiscountStatus === "REJECTED" && (
+                <Note tone="error" className="mt-4">
+                  <p>
+                    ✗ Ihr Rabattantrag wurde leider abgelehnt. Der Preis wurde
+                    auf den vollen Betrag angepasst.
+                  </p>
+                </Note>
+              )}
+
             {registration.invoiceGenerated && registration.invoiceId && (
-              <div className="mt-4 border-t border-gray-200 pt-3 dark:border-gray-700">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">
+              <div className="border-rule dark:border-night-rule mt-4 border-t pt-4 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-dark dark:text-night-muted">
                     Rechnungsnummer
                   </span>
-                  <span className="text-dark dark:text-dark-text font-mono font-medium">
+                  <span className="text-ink dark:text-night-text font-mono font-semibold">
                     {registration.invoiceId}
                   </span>
                 </div>
                 {registration.invoiceDate && (
-                  <div className="mt-1 flex items-center justify-between text-sm">
-                    <span className="text-gray-600 dark:text-gray-400">
+                  <div className="mt-2 flex items-center justify-between gap-3">
+                    <span className="text-dark dark:text-night-muted">
                       Rechnungsdatum
                     </span>
-                    <span className="text-dark dark:text-dark-text">
+                    <span className="text-ink dark:text-night-text">
                       {new Date(registration.invoiceDate).toLocaleDateString(
                         "de-DE",
                         {
@@ -680,101 +582,114 @@ export default function ViewRegistrationPage() {
                 )}
               </div>
             )}
+
             {invoices.length > 0 && (
-              <div className="mt-4 space-y-2 border-t border-gray-200 pt-3 dark:border-gray-700">
+              <ul className="border-rule dark:border-night-rule mt-4 border-t">
                 {invoices.map((invoice) => (
-                  <a
+                  <li
                     key={invoice.id}
-                    href={`/api/invoices/${invoice.id}/pdf`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="dark:border-dark-border dark:bg-dark-background-secondary flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+                    className="border-rule dark:border-night-rule border-b py-3"
                   >
-                    <span className="text-dark dark:text-dark-text min-w-0">
-                      <span className="block font-medium">
-                        Rechnung {invoice.invoiceNumber}
-                      </span>
-                      {invoice.dueDate && (
-                        <span className="block text-xs text-gray-600 dark:text-gray-400">
-                          zahlbar bis{" "}
-                          {new Date(invoice.dueDate).toLocaleDateString(
-                            "de-DE",
-                          )}
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <p className="text-ink dark:text-night-text text-sm font-semibold">
+                          Rechnung {invoice.invoiceNumber}
+                        </p>
+                        {invoice.dueDate && (
+                          <p className="text-dark dark:text-night-muted text-xs">
+                            zahlbar bis{" "}
+                            {new Date(invoice.dueDate).toLocaleDateString(
+                              "de-DE",
+                            )}
+                          </p>
+                        )}
+                      </div>
+                      <a
+                        href={`/api/invoices/${invoice.id}/pdf`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="link-ink inline-flex shrink-0 items-center gap-1.5 text-sm"
+                      >
+                        <DownloadIcon className="h-4 w-4" aria-hidden />
+                        PDF
+                        <span className="sr-only">
+                          {" "}
+                          (PDF, öffnet in neuem Tab)
                         </span>
-                      )}
-                    </span>
-                    <span className="text-primary inline-flex shrink-0 items-center gap-1.5 font-medium">
-                      <DownloadIcon className="h-4 w-4" />
-                      PDF
-                    </span>
-                  </a>
+                      </a>
+                    </div>
+                  </li>
                 ))}
-              </div>
+              </ul>
             )}
           </div>
-        </div>
 
-        {/* Notes */}
-        {registration.notes && (
-          <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="text-dark dark:text-dark-text mb-4 flex items-center gap-2 text-lg font-semibold">
-              <PencilIcon className="text-primary h-5 w-5" />
-              Anmerkungen
-            </h2>
-            <p className="whitespace-pre-wrap text-gray-600 dark:text-gray-400">
-              {registration.notes}
-            </p>
+          {/* Notes */}
+          {registration.notes && (
+            <div>
+              <Heading as="h2" size="list" rule>
+                Anmerkungen
+              </Heading>
+              <p className="text-ink dark:text-night-text mt-4 whitespace-pre-wrap">
+                {registration.notes}
+              </p>
+            </div>
+          )}
+
+          {/* Back Link */}
+          <div>
+            <Link
+              href={
+                isGuestAccess
+                  ? coursePath(registration.course)
+                  : "/registrations"
+              }
+              className="semi-condensed text-primary-ink dark:text-primary inline-flex min-h-11 items-center gap-2 text-lg font-semibold underline-offset-4 hover:underline"
+            >
+              <ArrowLeftIcon className="h-5 w-5" aria-hidden />
+              {isGuestAccess ? "Zur Kursseite" : "Zurück zur Übersicht"}
+            </Link>
           </div>
-        )}
-
-        {/* Back Link */}
-        <div className="flex justify-start">
-          <Link
-            href={
-              isGuestAccess ? coursePath(registration.course) : "/registrations"
-            }
-            className="text-primary hover:text-primary-dark inline-flex items-center gap-2 text-sm font-medium transition-colors"
-          >
-            <ArrowLeftIcon className="h-4 w-4" />
-            {isGuestAccess ? "Zur Kursseite" : "Zurück zur Übersicht"}
-          </Link>
         </div>
 
         {/* Cancel Confirmation Modal */}
         {cancelModalOpen && (
           <ScrollableModal>
-            <ScrollableModalCard maxW="md">
+            <ScrollableModalCard
+              maxW="md"
+              className="border-ink dark:border-night-text rounded-none! border-2 shadow-none!"
+            >
               <ScrollableModalBody>
-                <h3 className="text-dark dark:text-dark-text mb-4 text-lg font-bold">
+                <Heading as="h2" size="list" className="text-[1.375rem]">
                   Anmeldung stornieren?
-                </h3>
-                <p className="mb-6 text-gray-600 dark:text-gray-400">
+                </Heading>
+                <p className="text-ink dark:text-night-text mt-4">
                   Bist du sicher, dass du diese Anmeldung stornieren möchtest?
                   Diese Aktion kann nicht rückgängig gemacht werden.
                 </p>
                 {cancelError && (
-                  <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20">
-                    <p className="text-sm text-red-800 dark:text-red-300">
-                      {cancelError}
-                    </p>
-                  </div>
+                  <Note tone="error" className="mt-4">
+                    <p>{cancelError}</p>
+                  </Note>
                 )}
               </ScrollableModalBody>
-              <ScrollableModalFooter>
+              <ScrollableModalFooter className="border-rule dark:border-night-rule">
                 <div className="flex gap-3">
                   <button
+                    type="button"
                     onClick={() => {
                       setCancelModalOpen(false);
                       setCancelError("");
                     }}
-                    className="dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+                    className={cn(BTN_OUTLINE, "flex-1")}
                   >
                     Zurück
                   </button>
                   <button
+                    type="button"
                     onClick={confirmCancel}
                     disabled={cancelMutation.isPending}
-                    className="flex-1 rounded-lg bg-red-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+                    className={cn(BTN_PRIMARY, "flex-1")}
                   >
                     {cancelMutation.isPending
                       ? "Wird storniert..."
@@ -785,7 +700,7 @@ export default function ViewRegistrationPage() {
             </ScrollableModalCard>
           </ScrollableModal>
         )}
-      </div>
-    </div>
+      </PageSection>
+    </PublicPage>
   );
 }
