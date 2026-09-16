@@ -1,13 +1,14 @@
+import { Button, Hr, Section, Text } from "@react-email/components";
 import {
-  Html,
-  Head,
-  Body,
-  Container,
-  Section,
-  Text,
-  Button,
-  Hr,
-} from "@react-email/components";
+  EmailLayout,
+  abschnittskopf,
+  ersatzLink,
+  grundtext,
+  haarlinie,
+  kleintext,
+  knopf,
+} from "./email-layout";
+import { emailText, textLink } from "./email-text";
 
 interface PasswordResetEmailProps {
   resetUrl: string;
@@ -19,167 +20,63 @@ export function PasswordResetEmail({
   userName,
 }: PasswordResetEmailProps) {
   return (
-    <Html lang="de">
-      <Head />
-      <Body style={main}>
-        <Container style={container}>
-          <Section style={header}>
-            <Text style={logoText}>Posaunenwerk Rheinland</Text>
-            <Text style={tagline}>
-              Posaunenwerk der Evangelischen Kirche im Rheinland
-            </Text>
-          </Section>
+    <EmailLayout preview="Passwort zurücksetzen">
+      <Text style={abschnittskopf}>Passwort zurücksetzen</Text>
 
-          <Section style={content}>
-            <Text style={heading}>Passwort zurücksetzen</Text>
+      <Text style={grundtext}>
+        {userName ? `Hallo ${userName},` : "Hallo,"}
+      </Text>
 
-            <Text style={paragraph}>
-              {userName ? `Hallo ${userName},` : "Hallo,"}
-            </Text>
+      <Text style={grundtext}>
+        du hast eine Anfrage zum Zurücksetzen deines Passworts gestellt. Klicke
+        auf den folgenden Button, um ein neues Passwort festzulegen:
+      </Text>
 
-            <Text style={paragraph}>
-              du hast eine Anfrage zum Zurücksetzen deines Passworts gestellt.
-              Klicke auf den folgenden Button, um ein neues Passwort
-              festzulegen:
-            </Text>
+      <Section style={knopfFeld}>
+        <Button style={knopf} href={resetUrl}>
+          Passwort zurücksetzen
+        </Button>
+      </Section>
 
-            <Section style={buttonContainer}>
-              <Button style={button} href={resetUrl}>
-                Passwort zurücksetzen
-              </Button>
-            </Section>
+      <Text style={grundtext}>
+        Falls der Button nicht funktioniert, kopiere diesen Link in deinen
+        Browser:
+      </Text>
+      <Text style={ersatzLink}>{resetUrl}</Text>
 
-            <Text style={paragraph}>
-              Falls der Button nicht funktioniert, kopiere diesen Link in deinen
-              Browser:
-            </Text>
-            <Text style={link}>{resetUrl}</Text>
+      <Hr style={haarlinie} />
 
-            <Hr style={hr} />
+      <Text style={kleintext}>
+        Falls du diese Anfrage nicht gestellt hast, kannst du diese E-Mail
+        ignorieren. Dein Passwort bleibt unverändert.
+      </Text>
 
-            <Text style={footer}>
-              Falls du diese Anfrage nicht gestellt hast, kannst du diese E-Mail
-              ignorieren. Dein Passwort bleibt unverändert.
-            </Text>
-
-            <Text style={footer}>Dieser Link ist 1 Stunde gültig.</Text>
-          </Section>
-
-          <Section style={footerSection}>
-            <Text style={footerText}>
-              Posaunenwerk der Evangelischen Kirche im Rheinland
-            </Text>
-          </Section>
-        </Container>
-      </Body>
-    </Html>
+      <Text style={kleintext}>Dieser Link ist 1 Stunde gültig.</Text>
+    </EmailLayout>
   );
 }
 
-const main = {
-  backgroundColor: "#f5f5f5", // Background secondary color
-  fontFamily:
-    '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Ubuntu,sans-serif',
-};
+/** Nur-Text-Fassung — gleicher Wortlaut, ohne Auszeichnung. */
+export function passwordResetText({
+  resetUrl,
+  userName,
+}: PasswordResetEmailProps): string {
+  return emailText([
+    "PASSWORT ZURÜCKSETZEN",
+    "",
+    userName ? `Hallo ${userName},` : "Hallo,",
+    "",
+    "du hast eine Anfrage zum Zurücksetzen deines Passworts gestellt. Öffne die folgende Adresse, um ein neues Passwort festzulegen:",
+    "",
+    textLink("Passwort zurücksetzen:", resetUrl),
+    "",
+    "Falls du diese Anfrage nicht gestellt hast, kannst du diese E-Mail ignorieren. Dein Passwort bleibt unverändert.",
+    "",
+    "Dieser Link ist 1 Stunde gültig.",
+  ]);
+}
 
-const container = {
-  backgroundColor: "#ffffff",
-  margin: "0 auto",
-  padding: "0",
-  marginBottom: "64px",
-  maxWidth: "600px",
-  borderRadius: "8px",
-  boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-};
-
-const header = {
-  backgroundColor: "#faa619", // Primary brand color (orange)
-  padding: "32px 24px",
+const knopfFeld = {
   textAlign: "center" as const,
-  borderRadius: "8px 8px 0 0",
-};
-
-const logoText = {
-  color: "#ffffff",
-  fontSize: "28px",
-  fontWeight: "bold",
-  margin: "0 0 8px 0",
-  letterSpacing: "0.5px",
-};
-
-const tagline = {
-  color: "#ffffff",
-  fontSize: "12px",
-  fontWeight: "normal",
-  margin: "0",
-  opacity: 0.95,
-  letterSpacing: "0.3px",
-};
-
-const content = {
-  padding: "32px 24px",
-};
-
-const heading = {
-  fontSize: "24px",
-  fontWeight: "bold",
-  color: "#58595b", // Brand dark color
-  marginBottom: "24px",
-};
-
-const paragraph = {
-  fontSize: "16px",
-  lineHeight: "26px",
-  color: "#58595b", // Brand dark color
-  marginBottom: "16px",
-};
-
-const buttonContainer = {
-  textAlign: "center" as const,
-  margin: "32px 0",
-};
-
-const button = {
-  backgroundColor: "#faa619", // Primary brand color
-  borderRadius: "8px",
-  color: "#ffffff",
-  fontSize: "16px",
-  fontWeight: "bold",
-  textDecoration: "none",
-  textAlign: "center" as const,
-  display: "inline-block",
-  padding: "14px 32px",
-  boxShadow: "0 2px 4px rgba(250, 166, 25, 0.3)",
-};
-
-const link = {
-  fontSize: "14px",
-  color: "#faa619", // Primary brand color for links
-  wordBreak: "break-all" as const,
-  marginBottom: "16px",
-};
-
-const hr = {
-  borderColor: "#e5e7eb",
-  margin: "32px 0",
-};
-
-const footer = {
-  fontSize: "14px",
-  color: "#6b7280",
-  lineHeight: "20px",
-  marginBottom: "8px",
-};
-
-const footerSection = {
-  padding: "24px",
-  backgroundColor: "#f5f5f5", // Background secondary color
-  textAlign: "center" as const,
-  borderRadius: "0 0 8px 8px",
-};
-
-const footerText = {
-  fontSize: "12px",
-  color: "#9ca3af",
-  margin: "0",
+  margin: "28px 0",
 };

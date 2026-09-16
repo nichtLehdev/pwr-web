@@ -1,7 +1,10 @@
 import { render } from "@react-email/components";
 import { sendEmail, type EmailAttachment } from "./send-email";
 import { VerificationEmail } from "./templates/verification-email";
-import { PasswordResetEmail } from "./templates/password-reset-email";
+import {
+  PasswordResetEmail,
+  passwordResetText,
+} from "./templates/password-reset-email";
 import { NewsletterConfirm } from "./templates/newsletter-confirm";
 import { CourseRegistrationConfirmed } from "./templates/course-registration-confirmed";
 import { CourseRegistrationWaitlist } from "./templates/course-registration-waitlist";
@@ -61,6 +64,7 @@ export async function sendPasswordResetEmail(
     to: email,
     subject: "Passwort zurücksetzen - Posaunenwerk Rheinland",
     html,
+    text: passwordResetText({ resetUrl, userName }),
   });
 }
 
