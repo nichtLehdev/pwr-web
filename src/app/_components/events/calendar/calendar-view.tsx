@@ -1,11 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState } from "react";
-import CompactEventCard from "../event-card-compact";
+import { useMemo, useState } from "react";
 import { getDistrictColor } from "@/lib/district-color";
 import type { CalendarItem } from "@/lib/types/calendar";
 import { ChevronLeft, ChevronRight, XCircleIcon, XIcon } from "lucide-react";
+import { Heading } from "@/app/_components/programmheft/section-head";
+import { ProgrammeList } from "@/app/_components/programmheft/programme";
+import {
+  courseEntry,
+  eventEntry,
+  type ProgrammeEntry,
+} from "@/app/_components/programmheft/programme-data";
 
 interface CalendarViewProps {
   items: CalendarItem[];
@@ -14,6 +20,27 @@ interface CalendarViewProps {
 export default function CalendarView({ items }: CalendarViewProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
+  const calendarNow = useMemo(() => {
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
+    return date;
+  }, []);
+
+  /**
+   * Termin oder Kurs als Programmzeile. `eventEntry`/`courseEntry` stammen aus
+   * dem Programmheft-Baustein; das Mitmachangebot hat dort keinen eigenen
+   * Platz, deshalb steht es hier als Statuszeile.
+   */
+  const toProgrammeEntry = (item: CalendarItem): ProgrammeEntry => {
+    if (item.type === "event") {
+      const entry = eventEntry(item);
+      if (!item.cancelled && item.openToParticipants) {
+        entry.status = { text: "Mitspielen möglich!", tone: "muted" };
+      }
+      return entry;
+    }
+    return courseEntry(item, calendarNow);
+  };
 
   const calendarItems = items.map((item) => ({
     ...item,
@@ -169,31 +196,31 @@ export default function CalendarView({ items }: CalendarViewProps) {
       {/* Mobile Kalender (< lg) */}
       <div className="lg:hidden">
         {/* Kalender Header */}
-        <div className="bg-background-secondary dark:bg-dark-surface dark:shadow-dark-border rounded-lg p-4 shadow-md">
+        <div className="border-ink dark:border-night-text bg-paper dark:bg-night border-2 p-4">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-dark text-xl font-bold dark:text-white">
+            <h2 className="condensed text-ink dark:text-night-text text-xl font-extrabold">
               {monthName}
             </h2>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-1">
               <button
                 onClick={goToPreviousMonth}
-                className="dark:hover:bg-dark-background rounded-lg p-2 transition-colors hover:bg-gray-100"
+                className="text-ink hover:bg-ink hover:text-paper dark:text-night-text dark:hover:bg-night-text dark:hover:text-night flex h-11 w-11 items-center justify-center transition-colors"
                 aria-label="Vorheriger Monat"
               >
-                <ChevronLeft className="h-5 w-5" />
+                <ChevronLeft className="h-5 w-5" aria-hidden />
               </button>
               <button
                 onClick={goToToday}
-                className="text-primary hover:bg-primary/10 rounded-lg px-3 py-1 text-sm font-semibold transition-colors"
+                className="semi-condensed text-primary-ink dark:text-primary hover:bg-ink hover:text-paper dark:hover:bg-night-text dark:hover:text-night flex h-11 items-center px-3 text-sm font-semibold transition-colors"
               >
                 Heute
               </button>
               <button
                 onClick={goToNextMonth}
-                className="rounded-lg p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="text-ink hover:bg-ink hover:text-paper dark:text-night-text dark:hover:bg-night-text dark:hover:text-night flex h-11 w-11 items-center justify-center transition-colors"
                 aria-label="Nächster Monat"
               >
-                <ChevronRight className="h-5 w-5" />
+                <ChevronRight className="h-5 w-5" aria-hidden />
               </button>
             </div>
           </div>
@@ -203,7 +230,7 @@ export default function CalendarView({ items }: CalendarViewProps) {
             {weekDays.map((day) => (
               <div
                 key={day}
-                className="py-2 text-center text-xs font-semibold text-gray-600 dark:text-gray-300"
+                className="semi-condensed text-dark dark:text-night-muted py-2 text-center text-xs font-semibold"
               >
                 {day}
               </div>
@@ -244,34 +271,34 @@ export default function CalendarView({ items }: CalendarViewProps) {
                       ),
                     )
                   }
-                  className={`relative flex aspect-square flex-col items-center justify-center rounded-lg transition-colors dark:text-white ${
+                  className={`text-ink dark:text-night-text relative flex aspect-square flex-col items-center justify-center transition-colors ${
                     selected
-                      ? "bg-primary font-bold text-white"
+                      ? "bg-ink text-paper dark:bg-night-text dark:text-night font-bold"
                       : today
-                        ? "bg-primary/20 text-primary font-bold"
+                        ? "bg-ink/[0.06] dark:bg-night-text/[0.08] font-bold"
                         : courseStatus
-                          ? "bg-primary/5"
-                          : "hover:bg-gray-100 dark:hover:bg-gray-700"
+                          ? "bg-rule/20 dark:bg-night-rule/20"
+                          : "hover:bg-rule/20 dark:hover:bg-night-rule/20"
                   }`}
                 >
                   {/* Cancelled Indicator oben links */}
                   {hasCancelledEvent && (
                     <div
-                      className={`absolute top-0.5 left-0.5 flex h-3 w-3 items-center justify-center rounded-full ${
-                        selected ? "bg-red-300" : "bg-red-500"
-                      } shadow-sm`}
+                      className={`absolute top-0.5 left-0.5 flex h-3 w-3 items-center justify-center ${
+                        selected ? "bg-red-400" : "bg-red-700 dark:bg-red-400"
+                      }`}
                       title="Abgesagt"
                     >
-                      <XCircleIcon className="h-2 w-2 text-white" />
+                      <XCircleIcon className="h-2 w-2 text-white" aria-hidden />
                     </div>
                   )}
 
                   {/* Mitmachangebot-Indicator oben rechts */}
                   {hasOpenToParticipants && (
                     <div
-                      className={`absolute top-0.5 right-0.5 h-2 w-2 rounded-full ${
-                        selected ? "bg-green-300" : "bg-green-500"
-                      } shadow-sm`}
+                      className={`absolute top-0.5 right-0.5 h-2 w-2 ${
+                        selected ? "bg-paper dark:bg-night" : "bg-primary"
+                      }`}
                       title="Mitmachangebot"
                     />
                   )}
@@ -280,13 +307,9 @@ export default function CalendarView({ items }: CalendarViewProps) {
                   {courseStatus && (
                     <div
                       className={`absolute top-0 right-0 left-0 h-0.5 ${
-                        selected ? "bg-white dark:bg-[#1a1614]" : "bg-primary"
-                      } ${
-                        courseStatus === "start"
-                          ? "rounded-l-full"
-                          : courseStatus === "end"
-                            ? "rounded-r-full"
-                            : ""
+                        selected
+                          ? "bg-paper dark:bg-night"
+                          : "bg-ink dark:bg-night-text"
                       }`}
                     />
                   )}
@@ -302,7 +325,7 @@ export default function CalendarView({ items }: CalendarViewProps) {
                         return (
                           <div
                             key={idx}
-                            className="h-1 w-1 rounded-full"
+                            className="h-1 w-1"
                             style={{
                               backgroundColor: selected
                                 ? "#FFFFFF"
@@ -319,20 +342,20 @@ export default function CalendarView({ items }: CalendarViewProps) {
           </div>
 
           {/* Legende */}
-          <div className="dark:border-dark-border mt-4 border-t border-gray-200 pt-4">
-            <div className="flex flex-wrap gap-4 text-xs text-gray-600 dark:text-gray-300">
+          <div className="border-rule dark:border-night-rule mt-4 border-t pt-4">
+            <div className="text-dark dark:text-night-muted flex flex-wrap gap-4 text-xs">
               <div className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-full bg-green-500"></div>
+                <div className="bg-primary h-2.5 w-2.5"></div>
                 <span>Mitspielen möglich</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="flex h-3 w-3 items-center justify-center rounded-full bg-red-500">
-                  <XIcon className="h-2 w-2 text-white" />
+                <div className="flex h-2.5 w-2.5 items-center justify-center bg-red-700 dark:bg-red-400">
+                  <XIcon className="h-2 w-2 text-white" aria-hidden />
                 </div>
                 <span>Abgesagt</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="bg-primary h-0.5 w-3 rounded-full"></div>
+                <div className="bg-ink dark:bg-night-text h-0.5 w-3"></div>
                 <span>Mehrtägige Veranstaltung</span>
               </div>
             </div>
@@ -341,9 +364,9 @@ export default function CalendarView({ items }: CalendarViewProps) {
       </div>
       {/* Ende Mobile Kalender */}
 
-      {/* Events für den ausgewählten Tag - nur Mobile */}
+      {/* Termine für den ausgewählten Tag - nur Mobile */}
       <div className="lg:hidden">
-        <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
+        <Heading as="h3" size="list" rule>
           {selectedDate.toLocaleDateString("de-DE", {
             weekday: "long",
             day: "numeric",
@@ -353,68 +376,34 @@ export default function CalendarView({ items }: CalendarViewProps) {
                 ? "numeric"
                 : undefined,
           })}
-        </h3>
+        </Heading>
 
         {todayItems.length > 0 ? (
-          <div className="mb-6 space-y-2">
-            {todayItems.map((item, idx) => (
-              <CompactEventCard
-                key={`today-${item.type}-${item.id}-${idx}`}
-                id={item.id}
-                slug={item.slug}
-                title={item.title}
-                date={item.type === "event" ? item.eventDate : item.startDate}
-                endDate={item.type === "course" ? item.endDate : undefined}
-                location={item.location?.city || ""}
-                category={
-                  item.type === "event" ? item.category : item.courseType
-                }
-                type={item.type}
-                openToParticipants={
-                  item.type === "event" ? item.openToParticipants : undefined
-                }
-                cancelled={item.type === "event" ? item.cancelled : undefined}
-              />
-            ))}
-          </div>
+          <ProgrammeList
+            entries={todayItems.map(toProgrammeEntry)}
+            now={calendarNow}
+          />
         ) : (
-          <p className="bg-background-secondary dark:bg-dark-background-secondary text-dark dark:text-dark-text mb-6 rounded-lg py-4 text-center text-sm">
+          <p className="text-dark dark:text-night-muted border-rule dark:border-night-rule border-b py-4 text-center text-sm">
             Keine Termine an diesem Tag
           </p>
         )}
 
         {/* Nächste Termine */}
         {upcomingItems.length > 0 && (
-          <>
-            <h4 className="text-dark dark:text-dark-text mt-6 mb-3 text-base font-bold">
+          <div className="mt-8">
+            <Heading as="h4" size="list" className="text-[1.375rem]">
               Nächste Termine
-            </h4>
-            <div className="space-y-2">
-              {upcomingItems.map((item, idx) => (
-                <CompactEventCard
-                  key={`upcoming-${item.type}-${item.id}-${idx}`}
-                  id={item.id}
-                  slug={item.slug}
-                  title={item.title}
-                  date={item.type === "event" ? item.eventDate : item.startDate}
-                  endDate={item.type === "course" ? item.endDate : undefined}
-                  location={item.location?.city || ""}
-                  category={
-                    item.type === "event" ? item.category : item.courseType
-                  }
-                  type={item.type}
-                  openToParticipants={
-                    item.type === "event" ? item.openToParticipants : undefined
-                  }
-                  cancelled={item.type === "event" ? item.cancelled : undefined}
-                />
-              ))}
-            </div>
-          </>
+            </Heading>
+            <ProgrammeList
+              entries={upcomingItems.map(toProgrammeEntry)}
+              now={calendarNow}
+            />
+          </div>
         )}
 
         {todayItems.length === 0 && upcomingItems.length === 0 && (
-          <p className="py-8 text-center text-gray-600 dark:text-gray-300">
+          <p className="text-dark dark:text-night-muted py-8 text-center">
             Keine weiteren Termine geplant.
           </p>
         )}

@@ -139,10 +139,7 @@ export default function CourseRegistrationPage({
         </span>
         {locationLine ? (
           <>
-            <span
-              className={headMeta.separator}
-              aria-hidden
-            >
+            <span className={headMeta.separator} aria-hidden>
               ·
             </span>
             <span className="flex items-center gap-2">
@@ -151,10 +148,7 @@ export default function CourseRegistrationPage({
             </span>
           </>
         ) : null}
-        <span
-          className={headMeta.separator}
-          aria-hidden
-        >
+        <span className={headMeta.separator} aria-hidden>
           ·
         </span>
         <span className="flex items-center gap-2">
@@ -165,10 +159,7 @@ export default function CourseRegistrationPage({
         </span>
         {!course.isFree && acceptedPaymentMethods ? (
           <>
-            <span
-              className={headMeta.separator}
-              aria-hidden
-            >
+            <span className={headMeta.separator} aria-hidden>
               ·
             </span>
             <span className="flex min-w-0 items-center gap-2">
@@ -202,10 +193,10 @@ export default function CourseRegistrationPage({
       heroSize="compact"
       description={heroDescription}
     >
-      <div className="bg-background-secondary dark:bg-dark-background-secondary min-h-[calc(100vh-12rem)] pb-8 md:pb-12">
+      <div className="bg-paper dark:bg-night min-h-[calc(100vh-12rem)] pb-8 md:pb-12">
         {session?.user && existingRegistrationLoading && (
-          <div className="container mx-auto px-4 py-16 text-center">
-            <p className="text-dark dark:text-dark-text">Laden…</p>
+          <div className="sheet py-16 text-center">
+            <p className="text-ink dark:text-night-text">Laden…</p>
           </div>
         )}
         {showForm && !existingRegistrationLoading && (
