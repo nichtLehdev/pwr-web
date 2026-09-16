@@ -1,5 +1,4 @@
 "use client";
-import { Select } from "@/app/_components/ui";
 
 import {
   useState,
@@ -12,7 +11,15 @@ import {
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { api } from "@/trpc/react";
+import { cn } from "@/lib/utils";
 import PublicPage from "@/app/_components/general/public-page";
+import { ButtonLink } from "@/app/_components/programmheft/button-link";
+import { Heading } from "@/app/_components/programmheft/section-head";
+import { Panel } from "@/app/_components/programmheft/panel";
+import {
+  FieldLabel,
+  fieldControlClasses,
+} from "@/app/_components/programmheft/field";
 import { getDistrictColor } from "@/lib/district-color";
 import { geoToBezirkeMapPoint } from "@/lib/bezirke-map-geo";
 import {
@@ -22,18 +29,15 @@ import {
 } from "@/lib/bezirke-map-bounds";
 import { BEZIRK_REFERENCE_CITIES } from "@/lib/bezirke-reference-cities";
 import { wrapSvgText } from "@/lib/wrap-svg-text";
+import { ensemblePath } from "@/lib/slug";
 import LoadingSpinner from "@/app/_components/general/loading-spinner";
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
-  ClockIcon,
-  GlobeIcon,
-  MapPinIcon,
-  PhoneIcon,
+  ChevronDownIcon,
   SearchIcon,
 } from "lucide-react";
-import { MailIcon } from "lucide-react";
-import { ensemblePath } from "@/lib/slug";
+import { ChoirRow } from "./_components/choir-row";
 
 function ChorFindenContent() {
   const searchParams = useSearchParams();
@@ -299,33 +303,40 @@ function ChorFindenContent() {
     };
 
     return (
-      <div className="mt-8 flex items-center justify-center gap-2">
+      <nav
+        aria-label="Seiten"
+        className="mt-10 flex items-center justify-center gap-2"
+      >
         <button
+          type="button"
           onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
           disabled={currentPage === 1}
-          className="dark:border-dark-border dark:hover:bg-dark-background-secondary rounded-lg border border-gray-300 px-3 py-2 text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-300"
+          className="text-ink hover:bg-ink hover:text-paper dark:text-night-text dark:hover:bg-night-text dark:hover:text-night disabled:hover:text-ink dark:disabled:hover:text-night-text flex h-11 w-11 items-center justify-center transition-colors disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
           aria-label="Vorherige Seite"
         >
-          <ArrowLeftIcon className="h-5 w-5" />
+          <ArrowLeftIcon aria-hidden className="h-5 w-5" />
         </button>
 
         {getPageNumbers().map((page, index) =>
           page === "..." ? (
             <span
               key={`ellipsis-${index}`}
-              className="px-2 text-gray-500 dark:text-gray-400"
+              className="text-dark dark:text-night-muted px-1"
             >
-              ...
+              …
             </span>
           ) : (
             <button
               key={page}
+              type="button"
               onClick={() => setCurrentPage(page as number)}
-              className={`rounded-lg border px-4 py-2 transition-colors ${
+              aria-current={currentPage === page ? "page" : undefined}
+              className={cn(
+                "semi-condensed border-ink dark:border-night-text flex h-11 min-w-11 items-center justify-center border-2 px-3 text-base font-semibold transition-colors",
                 currentPage === page
-                  ? "bg-primary border-primary text-white"
-                  : "dark:border-dark-border dark:hover:bg-dark-background-secondary border-gray-300 text-gray-700 hover:bg-gray-50 dark:text-gray-300"
-              }`}
+                  ? "bg-ink text-paper dark:bg-night-text dark:text-night"
+                  : "text-ink hover:bg-ink hover:text-paper dark:text-night-text dark:hover:bg-night-text dark:hover:text-night",
+              )}
             >
               {page}
             </button>
@@ -333,14 +344,15 @@ function ChorFindenContent() {
         )}
 
         <button
+          type="button"
           onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
           disabled={currentPage === totalPages}
-          className="dark:border-dark-border dark:hover:bg-dark-background-secondary rounded-lg border border-gray-300 px-3 py-2 text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-300"
+          className="text-ink hover:bg-ink hover:text-paper dark:text-night-text dark:hover:bg-night-text dark:hover:text-night disabled:hover:text-ink dark:disabled:hover:text-night-text flex h-11 w-11 items-center justify-center transition-colors disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
           aria-label="Nächste Seite"
         >
-          <ArrowRightIcon className="h-5 w-5" />
+          <ArrowRightIcon aria-hidden className="h-5 w-5" />
         </button>
-      </div>
+      </nav>
     );
   }
 
@@ -360,201 +372,197 @@ function ChorFindenContent() {
         </p>
       }
     >
-      {/* Kontakt-Info */}
-      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16">
-        <div className="container">
-          <div className="mx-auto max-w-4xl">
-            <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-8 shadow-lg md:p-10">
-              <div className="flex items-start gap-6">
-                <div className="bg-primary flex h-14 w-14 shrink-0 items-center justify-center rounded-full">
-                  <MapPinIcon className="h-7 w-7 text-white" />
-                </div>
-                <div className="flex-1">
-                  <h2 className="text-dark dark:text-dark-text mb-3 text-2xl font-bold">
-                    Persönliche Beratung gewünscht?
-                  </h2>
-                  <p className="mb-6 leading-relaxed text-gray-600 dark:text-gray-400">
-                    Unsere Regionalposaunenwarte und Bezirksobleute helfen dir
-                    gerne bei der Suche nach dem passenden Chor in deiner
-                    Region. Sie kennen die Chöre vor Ort und können dich
-                    individuell beraten.
-                  </p>
-                  <Link
-                    href="/kontakt"
-                    className="bg-primary hover:bg-primary-dark inline-flex items-center rounded-lg px-6 py-3 font-semibold text-white transition-colors"
-                  >
-                    <MailIcon className="mr-2 h-5 w-5" />
-                    Kontakt aufnehmen
-                  </Link>
-                </div>
-              </div>
-            </div>
+      {/* Persönliche Beratung */}
+      <section
+        aria-labelledby="beratung-heading"
+        className="bg-paper dark:bg-night py-16 md:py-24"
+      >
+        <div className="sheet lg:grid lg:grid-cols-12 lg:gap-10">
+          <div className="lg:col-span-4">
+            <Heading id="beratung-heading" className="hyphens-manual">
+              Persönliche Beratung gewünscht?
+            </Heading>
+          </div>
+          <div className="mt-8 lg:col-span-8 lg:mt-0">
+            <p className="text-ink dark:text-night-text max-w-[60ch] text-lg leading-relaxed">
+              Unsere Regionalposaunenwarte und Bezirksobleute helfen dir gerne
+              bei der Suche nach dem passenden Chor in deiner Region. Sie kennen
+              die Chöre vor Ort und können dich individuell beraten.
+            </p>
+            <ButtonLink href="/kontakt" className="mt-6">
+              Kontakt aufnehmen
+            </ButtonLink>
           </div>
         </div>
       </section>
 
       {/* Chor-Liste mit Filter */}
-      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
-        <div className="container">
-          <div className="mx-auto max-w-7xl">
-            <h2 className="text-dark dark:text-dark-text mb-6 text-2xl font-bold md:text-3xl lg:text-4xl">
-              Alle Posaunenchöre
-            </h2>
+      <section
+        aria-labelledby="choere-heading"
+        className="bg-paper dark:bg-night border-ink dark:border-night-rule border-t-2 py-16 md:py-24"
+      >
+        <div className="sheet">
+          <Heading id="choere-heading" rule>
+            Alle Posaunenchöre
+          </Heading>
 
-            <div className="mb-8 inline-flex rounded-lg border border-gray-300 p-1 dark:border-gray-600">
-              <button
-                type="button"
-                onClick={() => setViewMode("list")}
-                className={`rounded-md px-4 py-2 text-sm font-semibold transition-colors ${
-                  viewMode === "list"
-                    ? "bg-primary text-white"
-                    : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
-                }`}
-              >
-                Liste
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("map")}
-                className={`rounded-md px-4 py-2 text-sm font-semibold transition-colors ${
-                  viewMode === "map"
-                    ? "bg-primary text-white"
-                    : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
-                }`}
-              >
-                Karte
-              </button>
-            </div>
+          <div className="border-ink dark:border-night-text mt-6 inline-flex border-2">
+            <button
+              type="button"
+              onClick={() => setViewMode("list")}
+              aria-pressed={viewMode === "list"}
+              className={cn(
+                "semi-condensed min-h-11 px-5 text-base font-semibold transition-colors",
+                viewMode === "list"
+                  ? "bg-ink text-paper dark:bg-night-text dark:text-night"
+                  : "text-ink hover:bg-ink hover:text-paper dark:text-night-text dark:hover:bg-night-text dark:hover:text-night",
+              )}
+            >
+              Liste
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("map")}
+              aria-pressed={viewMode === "map"}
+              className={cn(
+                "semi-condensed border-ink dark:border-night-text min-h-11 border-l-2 px-5 text-base font-semibold transition-colors",
+                viewMode === "map"
+                  ? "bg-ink text-paper dark:bg-night-text dark:text-night"
+                  : "text-ink hover:bg-ink hover:text-paper dark:text-night-text dark:hover:bg-night-text dark:hover:text-night",
+              )}
+            >
+              Karte
+            </button>
+          </div>
 
-            <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-              {/* Left Column: Filters */}
+          <div
+            className={cn(
+              "mt-8",
+              viewMode === "list" && "lg:grid lg:grid-cols-12 lg:gap-10",
+            )}
+          >
+            {/* Left Column: Filters + map */}
+            <div
+              className={cn(
+                "space-y-8",
+                viewMode === "list" && "lg:col-span-4",
+              )}
+            >
+              {/* Filter */}
               <div
                 className={
                   viewMode === "map"
-                    ? "space-y-6 lg:col-span-3"
-                    : "space-y-6 lg:col-span-1"
+                    ? "flex flex-wrap items-end gap-6"
+                    : "space-y-6"
                 }
               >
-                {/* Traditional Filters */}
-                <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
-                  <h3 className="text-dark dark:text-dark-text mb-4 text-lg font-bold">
-                    Filter
-                  </h3>
-
-                  <div
-                    className={
-                      viewMode === "map"
-                        ? "flex flex-wrap items-end gap-4"
-                        : "space-y-4"
-                    }
-                  >
-                    {/* Bezirk-Filter */}
-                    <div className={viewMode === "map" ? "w-56" : undefined}>
-                      <label
-                        htmlFor="district"
-                        className="text-dark dark:text-dark-text mb-2 block text-sm font-semibold"
-                      >
-                        Bezirk
-                      </label>
-                      <Select
-                        id="district"
-                        value={selectedBezirk?.toString() || "all"}
-                        onChange={(e) => {
-                          setSelectedBezirk(
-                            e.target.value === "all"
-                              ? null
-                              : parseInt(e.target.value),
-                          );
-                          setCurrentPage(1);
-                        }}
-                        className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
-                      >
-                        <option value="all">Alle Bezirke</option>
-                        {allBezirke.map((bezirk) => (
-                          <option
-                            key={bezirk.id}
-                            value={bezirk.number.toString()}
-                          >
-                            Bezirk {bezirk.number} - {bezirk.shortName}
-                          </option>
-                        ))}
-                      </Select>
-                    </div>
-
-                    {/* Stadt/PLZ-Suche */}
-                    <div className={viewMode === "map" ? "w-64" : undefined}>
-                      <label
-                        htmlFor="search"
-                        className="text-dark dark:text-dark-text mb-2 block text-sm font-semibold"
-                      >
-                        Suche
-                      </label>
-                      <input
-                        id="search"
-                        type="text"
-                        value={searchTerm}
-                        onChange={(e) => {
-                          setSearchTerm(e.target.value);
-                          setCurrentPage(1);
-                        }}
-                        placeholder="Stadt, PLZ oder Chorname"
-                        className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 placeholder:text-gray-400 focus:border-transparent focus:ring-2 dark:placeholder:text-gray-500"
-                      />
-                    </div>
-
-                    {/* Results count */}
-                    <div
-                      className={
-                        viewMode === "map"
-                          ? "flex items-center gap-3 pb-2"
-                          : "flex items-center justify-between pt-2"
-                      }
+                {/* Bezirk-Filter */}
+                <div className={viewMode === "map" ? "w-56" : undefined}>
+                  <FieldLabel htmlFor="district">Bezirk</FieldLabel>
+                  <div className="relative">
+                    <select
+                      id="district"
+                      value={selectedBezirk?.toString() || "all"}
+                      onChange={(e) => {
+                        setSelectedBezirk(
+                          e.target.value === "all"
+                            ? null
+                            : parseInt(e.target.value),
+                        );
+                        setCurrentPage(1);
+                      }}
+                      className={cn(
+                        fieldControlClasses,
+                        "appearance-none pr-10",
+                      )}
                     >
-                      <div className="text-sm text-gray-600 dark:text-gray-400">
-                        <span className="font-semibold">
-                          {filteredChoirs.length}
-                        </span>{" "}
-                        {filteredChoirs.length === 1 ? "Chor" : "Chöre"}{" "}
-                        gefunden
-                      </div>
-                      {hasActiveFilters && (
-                        <button
-                          onClick={clearFilters}
-                          className="text-primary hover:text-primary-dark text-sm font-semibold"
+                      <option value="all">Alle Bezirke</option>
+                      {allBezirke.map((bezirk) => (
+                        <option
+                          key={bezirk.id}
+                          value={bezirk.number.toString()}
                         >
-                          Zurücksetzen
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Pagination info */}
-                    {viewMode === "list" &&
-                      filteredChoirs.length > CHOIRS_PER_PAGE && (
-                        <div className="dark:border-dark-border w-full border-t pt-2 text-sm text-gray-600 dark:text-gray-400">
-                          Zeige {startIndex + 1} bis{" "}
-                          {Math.min(endIndex, filteredChoirs.length)} von{" "}
-                          {filteredChoirs.length}
-                        </div>
-                      )}
+                          Bezirk {bezirk.number} · {bezirk.shortName}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDownIcon
+                      aria-hidden
+                      className="text-dark dark:text-night-muted pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2"
+                    />
                   </div>
                 </div>
 
-                {/* Map placeholder - you can add your interactive map here */}
+                {/* Stadt/PLZ-Suche */}
+                <div className={viewMode === "map" ? "w-64" : undefined}>
+                  <FieldLabel htmlFor="search">Suche</FieldLabel>
+                  <div className="border-rule dark:border-night-rule focus-within:border-ink dark:focus-within:border-night-text bg-paper dark:bg-night flex min-h-11 items-center gap-2 border-2 px-3 transition-colors">
+                    <SearchIcon
+                      aria-hidden
+                      className="text-dark dark:text-night-muted h-5 w-5 shrink-0"
+                    />
+                    <input
+                      id="search"
+                      type="text"
+                      value={searchTerm}
+                      onChange={(e) => {
+                        setSearchTerm(e.target.value);
+                        setCurrentPage(1);
+                      }}
+                      placeholder="Stadt, PLZ oder Chorname"
+                      className="text-ink dark:text-night-text placeholder:text-dark dark:placeholder:text-night-muted w-full bg-transparent text-base outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Results count */}
                 <div
-                  className={`dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md ${
-                    viewMode === "map" ? "block" : "hidden lg:block"
-                  }`}
+                  className={
+                    viewMode === "map"
+                      ? "flex items-center gap-4 pb-2"
+                      : "flex items-center justify-between pt-2"
+                  }
                 >
-                  <h3 className="text-dark dark:text-dark-text mb-4 text-lg font-bold">
+                  <p className="text-dark dark:text-night-muted text-sm">
+                    <span className="text-ink dark:text-night-text font-semibold">
+                      {filteredChoirs.length}
+                    </span>{" "}
+                    {filteredChoirs.length === 1 ? "Chor" : "Chöre"} gefunden
+                  </p>
+                  {hasActiveFilters && (
+                    <button
+                      type="button"
+                      onClick={clearFilters}
+                      className="link-ink inline-flex min-h-11 items-center"
+                    >
+                      Zurücksetzen
+                    </button>
+                  )}
+                </div>
+
+                {/* Pagination info */}
+                {viewMode === "list" &&
+                  filteredChoirs.length > CHOIRS_PER_PAGE && (
+                    <p className="border-rule dark:border-night-rule text-dark dark:text-night-muted w-full border-t pt-3 text-sm">
+                      Zeige {startIndex + 1} bis{" "}
+                      {Math.min(endIndex, filteredChoirs.length)} von{" "}
+                      {filteredChoirs.length}
+                    </p>
+                  )}
+              </div>
+
+              {/* Karte */}
+              <div className={viewMode === "map" ? "block" : "hidden lg:block"}>
+                <Panel>
+                  <h3 className="condensed text-ink dark:text-night-text text-[1.5rem] leading-tight font-bold">
                     Bezirk auf Karte wählen
                   </h3>
-                  <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-dark dark:text-night-muted mt-2 text-[0.9375rem]">
                     Klicke auf einen Bezirk, um Chöre zu filtern
                   </p>
-                  {/* Add your SVG map here */}
                   <div
                     ref={mapContainerRef}
-                    className="relative"
+                    className="relative mt-4"
                     onClick={handleMapBackgroundClick}
                     onMouseMove={(e) => {
                       if (isCoarsePointer) return;
@@ -992,7 +1000,7 @@ function ChorFindenContent() {
                         }
                         return (
                           <div
-                            className="pointer-events-none absolute z-50 rounded-lg bg-gray-900 px-3 py-2 text-sm text-white shadow-lg"
+                            className="border-ink dark:border-night-text bg-paper dark:bg-night text-ink dark:text-night-text pointer-events-none absolute z-50 border-2 px-3 py-2 text-sm"
                             style={{
                               left: `${pos.x}px`,
                               top: `${pos.y}px`,
@@ -1001,10 +1009,10 @@ function ChorFindenContent() {
                                 : "translate(0, -50%)",
                             }}
                           >
-                            <p className="font-semibold">
+                            <p className="semi-condensed font-semibold">
                               Bezirk {hoveredBezirk}
                             </p>
-                            <p className="text-xs text-gray-300">
+                            <p className="text-dark dark:text-night-muted text-xs">
                               {allBezirke.find(
                                 (b) => b.number === hoveredBezirk,
                               )?.name || ""}
@@ -1024,16 +1032,19 @@ function ChorFindenContent() {
                         );
                         return (
                           <div
-                            className={`absolute z-50 rounded-lg bg-gray-900 px-3 py-2 text-sm text-white shadow-lg ${
-                              isCoarsePointer ? "" : "pointer-events-none"
-                            }`}
+                            className={cn(
+                              "border-ink dark:border-night-text bg-paper dark:bg-night text-ink dark:text-night-text absolute z-50 border-2 px-3 py-2 text-sm",
+                              !isCoarsePointer && "pointer-events-none",
+                            )}
                             style={{
                               left: `${pos.x}px`,
                               top: `${pos.y}px`,
                               transform: "translate(-50%, -100%)",
                             }}
                           >
-                            <p className="font-semibold">{marker.name}</p>
+                            <p className="semi-condensed font-semibold">
+                              {marker.name}
+                            </p>
                             {/* Only needed on touch, where the marker itself
                                 is too small to reliably re-tap; on desktop
                                 the marker is already directly clickable. */}
@@ -1041,7 +1052,7 @@ function ChorFindenContent() {
                               <Link
                                 href={ensemblePath(marker)}
                                 onClick={(e) => e.stopPropagation()}
-                                className="text-primary-light mt-1 inline-block underline"
+                                className="link-ink mt-1 inline-block"
                               >
                                 Chorseite öffnen
                               </Link>
@@ -1050,181 +1061,73 @@ function ChorFindenContent() {
                         );
                       })()}
                   </div>
-                </div>
+                </Panel>
               </div>
+            </div>
 
-              {/* Right Column: Choir List */}
-              {viewMode === "list" && (
-                <div className="lg:col-span-2">
-                  {ensembles.isLoading && <LoadingSpinner text="Lade Chöre" />}
+            {/* Right Column: Choir List */}
+            {viewMode === "list" && (
+              <div className="mt-10 lg:col-span-8 lg:mt-0">
+                {ensembles.isLoading && <LoadingSpinner text="Lade Chöre" />}
 
-                  {!ensembles.isLoading && paginatedChoirs.length > 0 ? (
-                    <>
-                      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                        {paginatedChoirs.map((choir) => (
-                          <div
-                            key={choir.id}
-                            className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md transition-shadow hover:shadow-lg"
-                          >
-                            <div className="mb-4 flex items-start justify-between">
-                              <div className="flex-1">
-                                <Link
-                                  href={ensemblePath(choir)}
-                                  className="text-dark dark:text-dark-text hover:text-primary mb-2 block text-xl font-bold transition-colors"
-                                >
-                                  {choir.name}
-                                </Link>
-                                <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
-                                  <div className="flex items-center gap-1">
-                                    <MapPinIcon className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-                                    {choir.location?.city},{" "}
-                                    {choir.location?.zipCode}
-                                  </div>
-                                  <span className="text-gray-400">•</span>
-                                  {choir.bezirk && (
-                                    <span
-                                      className="rounded px-2 py-1 font-semibold"
-                                      style={{
-                                        backgroundColor: `${getDistrictColor(
-                                          choir.bezirk.number,
-                                        )}20`,
-                                        color: getDistrictColor(
-                                          choir.bezirk.number,
-                                        ),
-                                      }}
-                                    >
-                                      Bezirk {choir.bezirk.number}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
+                {!ensembles.isLoading && paginatedChoirs.length > 0 ? (
+                  <>
+                    <ul className="border-ink dark:border-night-text grid border-t-2 lg:grid-cols-2">
+                      {paginatedChoirs.map((choir, index) => (
+                        <li
+                          key={choir.id}
+                          className={cn(
+                            "border-rule dark:border-night-rule border-b",
+                            index % 2 === 0 ? "lg:pr-8" : "lg:border-l lg:pl-8",
+                          )}
+                        >
+                          <ChoirRow choir={choir} />
+                        </li>
+                      ))}
+                    </ul>
 
-                            <div className="mb-4 space-y-2">
-                              {((choir.rehearsalSchedules &&
-                                choir.rehearsalSchedules.length > 0) ||
-                                (choir.rehearsalDay &&
-                                  choir.rehearsalTime)) && (
-                                <div className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
-                                  <ClockIcon
-                                    className="mt-0.5 h-5 w-5 shrink-0 text-gray-400 dark:text-gray-500"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                                    />
-                                  </ClockIcon>
-                                  <span>
-                                    Proben:{" "}
-                                    {choir.rehearsalSchedules &&
-                                    choir.rehearsalSchedules.length > 0
-                                      ? choir.rehearsalSchedules
-                                          .map((s) => `${s.day} ${s.time}`)
-                                          .join(", ")
-                                      : choir.rehearsalDay &&
-                                          choir.rehearsalTime
-                                        ? `${choir.rehearsalDay} um ${choir.rehearsalTime} Uhr`
-                                        : ""}
-                                  </span>
-                                </div>
-                              )}
-                              {choir.location && (
-                                <div className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
-                                  <MapPinIcon className="mt-0.5 h-5 w-5 shrink-0 text-gray-400 dark:text-gray-500" />
-                                  <span>
-                                    {choir.location.street},{" "}
-                                    {choir.location.zipCode}{" "}
-                                    {choir.location.city}
-                                  </span>
-                                </div>
-                              )}
-                              {(choir.representativePhone ||
-                                choir.conductorPhone) && (
-                                <div className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
-                                  <PhoneIcon className="mt-0.5 h-5 w-5 shrink-0 text-gray-400 dark:text-gray-500" />
-                                  <span>
-                                    Telefon:{" "}
-                                    {choir.representativePhone ??
-                                      choir.conductorPhone}
-                                  </span>
-                                </div>
-                              )}
-                              {choir.contactWebsite && (
-                                <div className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
-                                  <GlobeIcon className="mt-0.5 h-5 w-5 shrink-0 text-gray-400 dark:text-gray-500" />
-                                  <Link
-                                    href={choir.contactWebsite}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-primary hover:text-primary-dark text-sm font-semibold"
-                                  >
-                                    Webseite
-                                  </Link>
-                                </div>
-                              )}
-                            </div>
-
-                            <Link
-                              href={`mailto:${
-                                choir.representative?.email ??
-                                choir.representativeEmail ??
-                                choir.conductorEmail ??
-                                ""
-                              }`}
-                              className="text-primary hover:text-primary-dark inline-flex items-center text-sm font-semibold"
-                            >
-                              <MailIcon className="mr-2 h-4 w-4" />
-                              Kontakt aufnehmen
-                            </Link>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Pagination */}
-                      {/* eslint-disable-next-line react-hooks/static-components */}
-                      <Pagination
-                        totalPages={totalPages}
-                        currentPage={currentPage}
-                        setCurrentPage={setCurrentPage}
+                    {/* Pagination */}
+                    {/* eslint-disable-next-line react-hooks/static-components */}
+                    <Pagination
+                      totalPages={totalPages}
+                      currentPage={currentPage}
+                      setCurrentPage={setCurrentPage}
+                    />
+                  </>
+                ) : (
+                  !ensembles.isLoading && (
+                    <div className="border-ink dark:border-night-text border-t-2 py-16 text-center">
+                      <SearchIcon
+                        aria-hidden
+                        className="text-dark dark:text-night-muted mx-auto mb-4 h-12 w-12"
                       />
-                    </>
-                  ) : (
-                    !ensembles.isLoading && (
-                      <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-12 text-center shadow-md">
-                        <SearchIcon className="mx-auto mb-4 h-16 w-16 text-gray-300 dark:text-gray-600" />
-                        <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
-                          Keine Chöre gefunden
-                        </h3>
-                        <p className="mb-6 text-gray-600 dark:text-gray-400">
-                          {hasActiveFilters
-                            ? "Probiere andere Suchkriterien oder kontaktiere uns für persönliche Beratung."
-                            : "Es konnten keine Chöre geladen werden."}
-                        </p>
+                      <h3 className="condensed text-ink dark:text-night-text text-[1.5rem] leading-tight font-bold">
+                        Keine Chöre gefunden
+                      </h3>
+                      <p className="text-dark dark:text-night-muted mx-auto mt-3 max-w-md">
+                        {hasActiveFilters
+                          ? "Probiere andere Suchkriterien oder kontaktiere uns für persönliche Beratung."
+                          : "Es konnten keine Chöre geladen werden."}
+                      </p>
+                      <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
                         {hasActiveFilters && (
                           <button
+                            type="button"
                             onClick={clearFilters}
-                            className="border-primary text-primary hover:bg-primary mr-2 mb-4 inline-flex items-center rounded-lg border-2 px-6 py-3 font-semibold transition-colors hover:text-white"
+                            className="link-ink inline-flex min-h-11 items-center"
                           >
                             Filter zurücksetzen
                           </button>
                         )}
-                        <Link
-                          href="/kontakt"
-                          className="bg-primary hover:bg-primary-dark inline-flex items-center rounded-lg px-6 py-3 font-semibold text-white transition-colors"
-                        >
+                        <ButtonLink href="/kontakt">
                           Kontakt aufnehmen
-                        </Link>
+                        </ButtonLink>
                       </div>
-                    )
-                  )}
-                </div>
-              )}
-            </div>
+                    </div>
+                  )
+                )}
+              </div>
+            )}
           </div>
         </div>
       </section>
