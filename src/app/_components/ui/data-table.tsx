@@ -257,8 +257,10 @@ function Popover({
 /* Column filters                                                             */
 /* -------------------------------------------------------------------------- */
 
+// Haarlinie statt 2px: Auf einer Arbeitsfläche mit vielen Feldern wird ein
+// doppelter Tintenrahmen zum Lärm. 2px bleibt den Hauptaktionen vorbehalten.
 const inputClass =
-  "dark:border-dark-border dark:bg-dark-background dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:ring-1 focus:outline-none";
+  "border-ink dark:border-night-text dark:bg-night dark:text-night-text w-full border bg-paper px-2 py-1.5 text-sm";
 
 function SetFilter<TData extends RowData>({
   column,
@@ -749,7 +751,7 @@ export function DataTable<TData extends RowData>({
                 onChange={(event) => setSearchInput(event.target.value)}
                 placeholder={searchPlaceholder}
                 aria-label={searchPlaceholder}
-                className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 py-2 pr-3 pl-9 text-sm focus:ring-1 focus:outline-none"
+                className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper w-full border py-2 pr-3 pl-9 text-sm"
               />
             </div>
           )}
@@ -768,7 +770,9 @@ export function DataTable<TData extends RowData>({
         </div>
       )}
 
-      <div className="dark:bg-dark-surface dark:border-dark-border overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+      {/* Kein Kasten mit Rundung und Schatten: Die Tabelle öffnet wie im Heft
+          mit einem 2px-Tintenstrich, die Zeilen trennen Haarlinien. */}
+      <div className="border-ink dark:border-night-text dark:bg-night bg-paper overflow-hidden border-t-2">
         {renderMobileRow && (
           <div className="md:hidden">
             {isLoading ? (
@@ -802,7 +806,7 @@ export function DataTable<TData extends RowData>({
           className={`overflow-x-auto ${renderMobileRow ? "hidden md:block" : ""}`}
         >
           <table className="w-full text-left text-sm">
-            <thead className="dark:bg-dark-background-secondary dark:text-dark-muted bg-gray-50 text-xs tracking-wide text-gray-500 uppercase">
+            <thead className="semi-condensed border-rule dark:border-night-rule text-dark dark:text-night-muted border-b text-xs tracking-wide uppercase">
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map((header) => {
@@ -901,7 +905,7 @@ export function DataTable<TData extends RowData>({
                     onClick={
                       onRowClick ? () => onRowClick(row.original) : undefined
                     }
-                    className={`dark:hover:bg-dark-background-secondary hover:bg-gray-50 ${
+                    className={`dark:hover:bg-night-raised hover:bg-rule/30 ${
                       onRowClick ? "cursor-pointer" : ""
                     } ${rowClassName?.(row.original) ?? ""}`}
                   >

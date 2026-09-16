@@ -14,14 +14,23 @@
   --color-foerderverein-dark: #5a8fc4;
   --color-foerderverein-light: #9bc2e8;
 
-  /* Dark Mode Colors */
-  --color-dark-background: #0f1419;
-  --color-dark-background-secondary: #1a1f27;
-  --color-dark-surface: #252b36;
-  --color-dark-border: #2d3340;
-  --color-dark-text: #e4e6eb;
-  --color-dark-text-secondary: #b0b3ba;
-  --color-dark-text-muted: #8a8d93;
+  /*
+   * Nachtfarben. Die Namen bleiben, weil rund 4200 Stellen daran hängen — die
+   * Werte zeigen aber jetzt auf die Nachtpalette des Programmhefts (siehe
+   * unten). Vorher liefen zwei Paletten nebeneinander: ein blaustichiges
+   * Schiefergrau im Dashboard und die neutrale Nachtfarbe öffentlich. Wer
+   * zwischen beiden wechselte, sah zwei verschiedene Anwendungen.
+   *
+   * Nachgemessen: Öffentliche Seiten hängen nicht an diesen Tokens, ihre
+   * Darstellung bleibt unverändert.
+   */
+  --color-dark-background: #141517;
+  --color-dark-background-secondary: #1d1f22;
+  --color-dark-surface: #1d1f22;
+  --color-dark-border: #34373c;
+  --color-dark-text: #ecebe8;
+  --color-dark-text-secondary: #a6a8ad;
+  --color-dark-text-muted: #a6a8ad;
 
   /* Programmheft (öffentliche Website) */
   --font-programm: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
