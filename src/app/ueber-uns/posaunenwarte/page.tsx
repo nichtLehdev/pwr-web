@@ -109,14 +109,27 @@ export default async function PosaunenwartePage() {
             Kurzporträt schon reichlich Höhe mit, bei fünf Personen wird die
             Liste sehr lang. In einem Split stünde daneben eine dritte, ab
             der Überschrift dauerhaft leere Spalte (vgl. materialien/literatur,
-            Abschnitt „Unsere Bläserhefte“). */}
+            Abschnitt „Unsere Bläserhefte“).
+
+            Ab 64rem zweispaltig, wie die Personenregister auf den Seiten
+            Vorstand und Posaunenrat: Einspaltig läuft die Liste über die volle
+            Satzbreite, das Kurzporträt bricht aber nach 60 Zeichen um — die
+            rechte Hälfte bliebe über die ganze Länge leer. Zwei Spalten ergeben
+            je rund 640px und damit genau das Maß, das der Fließtext ohnehin
+            einnimmt. Drei wie beim Vorstand wären zu eng; dort trägt die
+            schlankere PersonRow kein Porträt.
+
+            Jedes `li` ist Flex-Kasten, damit die Personenzeile auf die Höhe der
+            Rasterzeile mitwächst. Sonst säße ihre Haarlinie am Ende des eigenen
+            Inhalts und die Linien beider Spalten stünden versetzt. */}
         <Heading id="rpw-heading" className="hyphens-manual">
           Regional&shy;posaunenwarte
         </Heading>
-        <ul className="border-ink dark:border-night-text mt-10 border-t-2">
+        <ul className="border-ink dark:border-night-text mt-10 grid border-t-2 lg:grid-cols-2 lg:gap-x-10">
           {rpw.map((pw) => (
-            <li key={pw.id}>
+            <li key={pw.id} className="flex">
               <PersonContactRow
+                className="w-full"
                 name={pw.name ?? ""}
                 role={pw.districtRoleName || "Regionalposaunenwart"}
                 image={pw.profileImage}
