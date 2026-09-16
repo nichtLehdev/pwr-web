@@ -1,18 +1,15 @@
 import PublicPage from "@/app/_components/general/public-page";
+import { ClosingCall } from "@/app/_components/programmheft/closing-call";
 import {
-  ArrowRightIcon,
-  BookOpenIcon,
-  BrainIcon,
-  ChurchIcon,
-  DownloadIcon,
-  Music2Icon,
-  Music3Icon,
-  MusicIcon,
-  PartyPopperIcon,
-  StarIcon,
-  UsersIcon,
-} from "lucide-react";
-import Link from "next/link";
+  PageSection,
+  Split,
+} from "@/app/_components/programmheft/page-section";
+import { PointList } from "@/app/_components/programmheft/point-list";
+import {
+  Heading,
+  SectionHead,
+} from "@/app/_components/programmheft/section-head";
+import { WayList, WayRow } from "@/app/_components/programmheft/way-list";
 import { buildPageMetadata } from "@/lib/seo";
 
 export const metadata = buildPageMetadata({
@@ -22,74 +19,64 @@ export const metadata = buildPageMetadata({
   path: "/mitmachen/jungblaeser",
 });
 
+/** Fließtext der Seite: Tinte, ruhige Zeilenlänge (65ch). */
+const PROSE =
+  "text-ink dark:text-night-text max-w-[65ch] space-y-4 text-lg leading-relaxed";
+
+const ANGEBOTE = [
+  {
+    title: "Bläserkurse für Kinder & Jugendliche",
+    text: "Spielerisch ein Blechblasinstrument erlernen – von den ersten Tönen bis zum gemeinsamen Musizieren.",
+  },
+  {
+    title: "Jungbläserfreizeiten",
+    text: "Gemeinsam Musik machen, neue Freunde finden und unvergessliche Erlebnisse teilen.",
+  },
+  {
+    title: "Jungbläserensembles",
+    text: "In kleinen Gruppen gemeinsam musizieren und von erfahrenen Dozenten lernen.",
+  },
+  {
+    title: "Workshops & Projekte",
+    text: "Spannende Themen wie Improvisation, Rhythmik oder Musik und Bewegung für junge Bläser.",
+  },
+];
+
+const WARUM = [
+  {
+    title: "Musikalische Grundlagen",
+    text: "Kinder und Jugendliche lernen Notenlesen, Rhythmus und erwerben ein fundiertes musikalisches Verständnis.",
+  },
+  {
+    title: "Gemeinschaft erleben",
+    text: "Im Chor entstehen Freundschaften, Teamgeist und ein starkes Zusammengehörigkeitsgefühl.",
+  },
+  {
+    title: "Persönliche Entwicklung",
+    text: "Musik fördert Konzentration, Disziplin, Selbstbewusstsein und Kreativität.",
+  },
+  {
+    title: "Glauben leben",
+    text: "Junge Menschen erleben, wie Musik und Glaube zusammengehören und Gottesdienste mitgestalten können.",
+  },
+];
+
+/**
+ * Jungbläserarbeit, mit „du“ (wie auf /mitmachen). Zwei Sätze im letzten
+ * Abschnitt sind im Original mit „Sie“ formuliert (Arbeitshilfe- und
+ * Beratungs-Beschreibung) — Formulierung bewusst unverändert übernommen,
+ * siehe Abschlussbericht.
+ */
 export default function JungblaserPage() {
-  const offerings = [
-    {
-      id: "kurse",
-      title: "Bläserkurse für Kinder & Jugendliche",
-      description:
-        "Spielerisch ein Blechblasinstrument erlernen – von den ersten Tönen bis zum gemeinsamen Musizieren.",
-      icon: <MusicIcon className="h-6 w-6" />,
-    },
-    {
-      id: "freizeiten",
-      title: "Jungbläserfreizeiten",
-      description:
-        "Gemeinsam Musik machen, neue Freunde finden und unvergessliche Erlebnisse teilen.",
-      icon: <PartyPopperIcon className="h-6 w-6" />,
-    },
-    {
-      id: "ensembles",
-      title: "Jungbläserensembles",
-      description:
-        "In kleinen Gruppen gemeinsam musizieren und von erfahrenen Dozenten lernen.",
-      icon: <UsersIcon className="h-6 w-6" />,
-    },
-    {
-      id: "workshops",
-      title: "Workshops & Projekte",
-      description:
-        "Spannende Themen wie Improvisation, Rhythmik oder Musik und Bewegung für junge Bläser.",
-      icon: <Music2Icon className="h-6 w-6" />,
-    },
-  ];
-
-  const benefits = [
-    {
-      title: "Musikalische Grundlagen",
-      description:
-        "Kinder und Jugendliche lernen Notenlesen, Rhythmus und erwerben ein fundiertes musikalisches Verständnis.",
-      icon: <Music3Icon className="h-6 w-6" />,
-    },
-    {
-      title: "Gemeinschaft erleben",
-      description:
-        "Im Chor entstehen Freundschaften, Teamgeist und ein starkes Zusammengehörigkeitsgefühl.",
-      icon: <UsersIcon className="h-6 w-6" />,
-    },
-    {
-      title: "Persönliche Entwicklung",
-      description:
-        "Musik fördert Konzentration, Disziplin, Selbstbewusstsein und Kreativität.",
-      icon: <BrainIcon className="h-6 w-6" />,
-    },
-    {
-      title: "Glauben leben",
-      description:
-        "Junge Menschen erleben, wie Musik und Glaube zusammengehören und Gottesdienste mitgestalten können.",
-      icon: <ChurchIcon className="h-6 w-6" />,
-    },
-  ];
-
   return (
     <PublicPage
       title="Jungbläserarbeit"
+      heroTitle="Jungbläserarbeit – Musik von Anfang an"
       breadcrumbs={[
         { label: "Start", href: "/" },
         { label: "Mitmachen", href: "/mitmachen" },
         { label: "Jungbläserarbeit" },
       ]}
-      heroTitle="Jungbläserarbeit – Musik von Anfang an"
       description={
         <>
           <p>
@@ -106,218 +93,112 @@ export default function JungblaserPage() {
         </>
       }
     >
-      {/* Was ist Jungbläserarbeit */}
-      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
-        <div className="container">
-          <div className="mx-auto max-w-4xl">
-            <h2 className="text-dark dark:text-dark-text mb-6 text-2xl font-bold md:text-3xl lg:text-4xl">
-              Was ist Jungbläserarbeit?
-            </h2>
-            <div className="prose prose-lg max-w-none leading-relaxed text-gray-600 dark:text-gray-400">
-              <p className="mb-4">
-                Jungbläserarbeit umfasst alle Angebote und Aktivitäten für
-                Kinder und Jugendliche, die ein Blechblasinstrument erlernen
-                möchten oder bereits spielen. Ob Trompete, Posaune, Horn oder
-                Tuba – bei uns können junge Menschen ab etwa 8 Jahren ihr
-                Wunschinstrument entdecken.
-              </p>
-              <p className="mb-4">
-                In kleinen Gruppen oder im Einzelunterricht lernen sie die
-                Grundlagen, bevor sie dann im Jungbläserchor gemeinsam
-                musizieren. Ziel ist es, die jungen Bläserinnen und Bläser
-                Schritt für Schritt in die Posaunenchöre zu integrieren.
-              </p>
-              <p className="mb-4">
-                Unsere Jungbläserarbeit verbindet musikalische Ausbildung mit
-                christlichen Werten und Gemeinschaftserlebnissen – sei es bei
-                Freizeiten, Workshops oder besonderen Projekten.
-              </p>
-              <p>
-                „Jungbläser“ hat bei uns übrigens nichts mit dem Geburtsdatum zu
-                tun. Wer neu mit einem Blechblasinstrument anfängt, gehört dazu
-                – ganz gleich, ob Kind, Jugendlicher oder längst erwachsen.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Unsere Angebote */}
-      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
-        <div className="container">
-          <div className="mx-auto max-w-6xl">
-            <h2 className="text-dark dark:text-dark-text mb-4 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
-              Unsere Angebote für Jungbläser
-            </h2>
-            <p className="mx-auto mb-12 max-w-3xl text-center text-lg text-gray-600 dark:text-gray-400">
-              Vielfältige Möglichkeiten für Kinder und Jugendliche, die Welt der
-              Blechblasinstrumente zu entdecken.
+      <PageSection labelledBy="was-ist-heading">
+        <Split
+          head={
+            <Heading id="was-ist-heading" className="hyphens-manual">
+              Was ist Jungbläser&shy;arbeit?
+            </Heading>
+          }
+          bodyClassName="mt-8"
+        >
+          <div className={PROSE}>
+            <p>
+              Jungbläserarbeit umfasst alle Angebote und Aktivitäten für Kinder
+              und Jugendliche, die ein Blechblasinstrument erlernen möchten oder
+              bereits spielen. Ob Trompete, Posaune, Horn oder Tuba – bei uns
+              können junge Menschen ab etwa 8 Jahren ihr Wunschinstrument
+              entdecken.
             </p>
-
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              {offerings.map((offering) => (
-                <div
-                  key={offering.id}
-                  className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg transition-all hover:shadow-xl"
-                >
-                  <div className="bg-district-9 mb-4 flex h-12 w-12 items-center justify-center rounded-full text-white">
-                    {offering.icon}
-                  </div>
-                  <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
-                    {offering.title}
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    {offering.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Warum Jungbläserarbeit */}
-      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
-        <div className="container">
-          <div className="mx-auto max-w-4xl">
-            <h2 className="text-dark dark:text-dark-text mb-12 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
-              Warum Jungbläserarbeit?
-            </h2>
-
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              {benefits.map((benefit, index) => (
-                <div
-                  key={index}
-                  className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md"
-                >
-                  <div className="bg-primary mb-4 flex h-12 w-12 items-center justify-center rounded-full text-white">
-                    {benefit.icon}
-                  </div>
-                  <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
-                    {benefit.title}
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    {benefit.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Für Chorleiter & Ausbilder */}
-      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
-        <div className="container">
-          <div className="mx-auto max-w-4xl">
-            <h2 className="text-dark dark:text-dark-text mb-8 text-2xl font-bold md:text-3xl lg:text-4xl">
-              Für Chorleiter & Ausbilder
-            </h2>
-
-            <div className="space-y-6">
-              {/* Arbeitshilfe */}
-              <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-8 shadow-lg">
-                <div className="flex items-start gap-4">
-                  <div className="bg-district-9 flex h-12 w-12 shrink-0 items-center justify-center rounded-full">
-                    <BookOpenIcon className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
-                      Arbeitshilfe Jungbläserausbildung
-                    </h3>
-                    <p className="mb-4 leading-relaxed text-gray-600 dark:text-gray-400">
-                      Eine umfassende Arbeitshilfe mit praktischen Tipps und
-                      Anleitungen für alle, die in der Jungbläserausbildung
-                      tätig sind oder es werden wollen.
-                    </p>
-                    <a
-                      href="/downloads/arbeitshilfe-jungblaeser.pdf"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-district-9 inline-flex items-center font-semibold hover:opacity-80"
-                    >
-                      <DownloadIcon className="mr-2 h-5 w-5" />
-                      Arbeitshilfe herunterladen
-                    </a>
-                  </div>
-                </div>
-              </div>
-
-              {/* Leistungsstempel */}
-              <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-8 shadow-lg">
-                <div className="flex items-start gap-4">
-                  <div className="bg-primary flex h-12 w-12 shrink-0 items-center justify-center rounded-full">
-                    <StarIcon className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
-                      Leistungsstempel-System
-                    </h3>
-                    <p className="mb-4 leading-relaxed text-gray-600 dark:text-gray-400">
-                      Mit aufeinander aufbauenden Leistungsstufen können Sie den
-                      Fortschritt Ihrer Jungbläser dokumentieren und motivieren.
-                    </p>
-                    <Link
-                      href="/materialien?search=leistungsstempel"
-                      className="text-primary hover:text-primary-dark inline-flex items-center font-semibold"
-                    >
-                      Mehr zu Leistungsstempeln →
-                    </Link>
-                  </div>
-                </div>
-              </div>
-
-              {/* Unterstützung */}
-              <div className="bg-primary/10 dark:bg-primary/20 border-primary rounded-lg border-l-4 p-8">
-                <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
-                  Beratung & Unterstützung
-                </h3>
-                <p className="mb-4 leading-relaxed text-gray-700 dark:text-gray-300">
-                  Unsere Regionalposaunenwarte stehen für Fragen rund um die
-                  Jungbläserarbeit gerne zur Verfügung – von der Planung bis zur
-                  Umsetzung. Zögern Sie nicht, sich bei Bedarf an sie zu wenden!
-                </p>
-                <Link
-                  href="/ueber-uns/posaunenwarte"
-                  className="bg-primary hover:bg-primary-dark inline-flex items-center rounded-lg px-6 py-3 font-semibold text-white transition-colors"
-                >
-                  Regionalposaunenwarte
-                  <ArrowRightIcon className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="bg-district-9 py-12 text-white md:py-16 lg:py-20">
-        <div className="container">
-          <div className="mx-auto max-w-3xl text-center">
-            <h2 className="mb-4 text-2xl font-bold md:text-3xl">
-              Interesse geweckt?
-            </h2>
-            <p className="mb-8 text-lg opacity-95">
-              Finde einen Chor in deiner Nähe und starte deine musikalische
-              Reise!
+            <p>
+              In kleinen Gruppen oder im Einzelunterricht lernen sie die
+              Grundlagen, bevor sie dann im Jungbläserchor gemeinsam musizieren.
+              Ziel ist es, die jungen Bläserinnen und Bläser Schritt für Schritt
+              in die Posaunenchöre zu integrieren.
             </p>
-            <div className="flex flex-col justify-center gap-4 sm:flex-row">
-              <Link
-                href="/mitmachen/chor-finden"
-                className="text-district-9 inline-block rounded-lg bg-white px-8 py-3 font-bold transition-colors hover:bg-gray-100"
-              >
-                Chor finden
-              </Link>
-              <Link
-                href="/termine"
-                className="inline-block rounded-lg border-2 border-white bg-transparent px-8 py-3 font-semibold text-white transition-colors hover:bg-white/10"
-              >
-                Termine ansehen
-              </Link>
-            </div>
+            <p>
+              Unsere Jungbläserarbeit verbindet musikalische Ausbildung mit
+              christlichen Werten und Gemeinschaftserlebnissen – sei es bei
+              Freizeiten, Workshops oder besonderen Projekten.
+            </p>
+            <p>
+              „Jungbläser“ hat bei uns übrigens nichts mit dem Geburtsdatum zu
+              tun. Wer neu mit einem Blechblasinstrument anfängt, gehört dazu –
+              ganz gleich, ob Kind, Jugendlicher oder längst erwachsen.
+            </p>
           </div>
-        </div>
-      </section>
+        </Split>
+      </PageSection>
+
+      <PageSection labelledBy="angebote-heading" rule>
+        <Split
+          side="right"
+          head={
+            <SectionHead
+              id="angebote-heading"
+              title="Unsere Angebote für Jungbläser"
+              intro="Vielfältige Möglichkeiten für Kinder und Jugendliche, die Welt der Blechblasinstrumente zu entdecken."
+            />
+          }
+          bodyClassName="mt-8"
+        >
+          <PointList items={ANGEBOTE} columns={2} />
+        </Split>
+      </PageSection>
+
+      <PageSection labelledBy="warum-heading" rule>
+        <Split
+          head={
+            <Heading id="warum-heading" className="hyphens-manual">
+              Warum Jungbläser&shy;arbeit?
+            </Heading>
+          }
+          bodyClassName="mt-8"
+        >
+          <PointList items={WARUM} columns={2} />
+        </Split>
+      </PageSection>
+
+      <PageSection labelledBy="chorleiter-heading" rule>
+        <Split
+          side="right"
+          head={
+            <Heading id="chorleiter-heading" className="hyphens-manual">
+              Für Chorleiter &amp; Ausbilder
+            </Heading>
+          }
+          bodyClassName="mt-8"
+        >
+          <WayList labelledBy="chorleiter-heading">
+            <WayRow
+              href="/downloads/arbeitshilfe-jungblaeser.pdf"
+              kind="download"
+              title="Arbeitshilfe Jungbläserausbildung"
+              description="Eine umfassende Arbeitshilfe mit praktischen Tipps und Anleitungen für alle, die in der Jungbläserausbildung tätig sind oder es werden wollen."
+            />
+            <WayRow
+              href="/materialien?search=leistungsstempel"
+              title="Leistungsstempel-System"
+              description="Mit aufeinander aufbauenden Leistungsstufen können Sie den Fortschritt Ihrer Jungbläser dokumentieren und motivieren."
+            />
+            <WayRow
+              href="/ueber-uns/posaunenwarte"
+              title="Beratung & Unterstützung"
+              description="Unsere Regionalposaunenwarte stehen für Fragen rund um die Jungbläserarbeit gerne zur Verfügung – von der Planung bis zur Umsetzung. Zögern Sie nicht, sich bei Bedarf an sie zu wenden!"
+            />
+          </WayList>
+        </Split>
+      </PageSection>
+
+      <ClosingCall
+        id="geweckt-heading"
+        title="Interesse geweckt?"
+        text="Finde einen Chor in deiner Nähe und starte deine musikalische Reise!"
+        actions={[
+          { href: "/mitmachen/chor-finden", label: "Chor finden" },
+          { href: "/termine", label: "Termine ansehen" },
+        ]}
+      />
     </PublicPage>
   );
 }
