@@ -181,15 +181,23 @@ export default function AktuellesClient() {
         <div className="sheet py-3">
           {/* Mobile: Compact Row */}
           <div className="flex items-center justify-between gap-2">
-            {/* Left: Results Count */}
-            <p className="text-dark dark:text-night-muted text-sm">
-              {totalFiltered} {totalFiltered === 1 ? "Beitrag" : "Beiträge"}
-              {hasActiveFilters && (
-                <span className="text-primary-ink dark:text-primary ml-1 font-semibold">
-                  (gefiltert)
-                </span>
-              )}
-            </p>
+            <div className="flex items-center gap-4">
+              {/* Kolumnentitel: sagt beim Scrollen, auf welcher Seite des
+                  Hefts man steht — und füllt den Platz, den die Leiste unter
+                  der Navigation ohnehin einnimmt. */}
+              <p className="condensed text-ink dark:text-night-text hidden text-xl leading-none font-bold lg:block">
+                Aktuelles
+              </p>
+              {/* Left: Results Count */}
+              <p className="text-dark dark:text-night-muted text-sm">
+                {totalFiltered} {totalFiltered === 1 ? "Beitrag" : "Beiträge"}
+                {hasActiveFilters && (
+                  <span className="text-primary-ink dark:text-primary ml-1 font-semibold">
+                    (gefiltert)
+                  </span>
+                )}
+              </p>
+            </div>
 
             {/* Right: RSS Feed & Filter Toggle Button */}
             <div className="flex items-center gap-1">

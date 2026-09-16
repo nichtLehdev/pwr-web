@@ -421,37 +421,45 @@ export default function EventsClient({
         >
           <div className="sheet py-3">
             <div className="flex items-center justify-between gap-2">
-              {/* Left: View Toggle */}
-              <div className="border-ink dark:border-night-text flex border-2">
-                <button
-                  onClick={() => handleSetViewMode("list")}
-                  className={cn(
-                    TOGGLE_BUTTON,
-                    effectiveViewMode === "list"
-                      ? TOGGLE_ACTIVE
-                      : TOGGLE_INACTIVE,
-                  )}
-                  aria-pressed={effectiveViewMode === "list"}
-                  aria-label="Listenansicht"
-                  title="Listenansicht"
-                >
-                  <ListIcon className="h-5 w-5" aria-hidden />
-                </button>
-                <button
-                  onClick={() => handleSetViewMode("calendar")}
-                  className={cn(
-                    "border-ink dark:border-night-text border-l-2",
-                    TOGGLE_BUTTON,
-                    effectiveViewMode === "calendar"
-                      ? TOGGLE_ACTIVE
-                      : TOGGLE_INACTIVE,
-                  )}
-                  aria-pressed={effectiveViewMode === "calendar"}
-                  aria-label="Kalenderansicht"
-                  title="Kalenderansicht"
-                >
-                  <CalendarIcon className="h-5 w-5" aria-hidden />
-                </button>
+              <div className="flex items-center gap-4">
+                {/* Kolumnentitel: sagt beim Scrollen, auf welcher Seite des
+                    Hefts man steht — und füllt den Platz, den die Leiste
+                    unter der Navigation ohnehin einnimmt. */}
+                <p className="condensed text-ink dark:text-night-text hidden text-xl leading-none font-bold lg:block">
+                  Termine
+                </p>
+                {/* Left: View Toggle */}
+                <div className="border-ink dark:border-night-text flex border-2">
+                  <button
+                    onClick={() => handleSetViewMode("list")}
+                    className={cn(
+                      TOGGLE_BUTTON,
+                      effectiveViewMode === "list"
+                        ? TOGGLE_ACTIVE
+                        : TOGGLE_INACTIVE,
+                    )}
+                    aria-pressed={effectiveViewMode === "list"}
+                    aria-label="Listenansicht"
+                    title="Listenansicht"
+                  >
+                    <ListIcon className="h-5 w-5" aria-hidden />
+                  </button>
+                  <button
+                    onClick={() => handleSetViewMode("calendar")}
+                    className={cn(
+                      "border-ink dark:border-night-text border-l-2",
+                      TOGGLE_BUTTON,
+                      effectiveViewMode === "calendar"
+                        ? TOGGLE_ACTIVE
+                        : TOGGLE_INACTIVE,
+                    )}
+                    aria-pressed={effectiveViewMode === "calendar"}
+                    aria-label="Kalenderansicht"
+                    title="Kalenderansicht"
+                  >
+                    <CalendarIcon className="h-5 w-5" aria-hidden />
+                  </button>
+                </div>
               </div>
 
               {/* Center: Active Filters Count */}
