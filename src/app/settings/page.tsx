@@ -392,7 +392,7 @@ export default function SettingsPage() {
       heroSize="compact"
       description={<p>Verwalte dein Profil und deine persönlichen Daten</p>}
     >
-      <PageSection flush="top">
+      <PageSection>
         <nav
           aria-label="Einstellungsbereiche"
           className="border-ink dark:border-night-text -mx-1 flex gap-1 overflow-x-auto border-b-2 px-1 sm:gap-2"
