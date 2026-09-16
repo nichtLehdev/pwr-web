@@ -3,6 +3,7 @@ import {
   PageHead,
   type Breadcrumb,
 } from "@/app/_components/programmheft/page-head";
+import { PageTitleBar } from "@/app/_components/programmheft/page-title-bar";
 
 export type PublicPageBreadcrumb = Breadcrumb;
 
@@ -23,6 +24,11 @@ export interface PublicPageProps {
    * `<h1>` (z. B. „Anmeldung“ unter dem Kurstitel).
    */
   heroSize?: "default" | "compact";
+  /**
+   * `false` für Seiten, die selbst eine klebende Leiste mit dem Seitentitel
+   * mitbringen (Termine, Aktuelles) — sonst stünden zwei Streifen übereinander.
+   */
+  stickyTitle?: boolean;
   children: ReactNode;
 }
 
@@ -39,6 +45,7 @@ export default function PublicPage({
   breadcrumbs,
   description,
   heroSize = "default",
+  stickyTitle = true,
   children,
 }: PublicPageProps) {
   const heading = heroTitle ?? title;
@@ -57,6 +64,7 @@ export default function PublicPage({
         size={heroSize}
         tone={tone}
       />
+      {stickyTitle ? <PageTitleBar title={heading} /> : null}
       {children}
     </div>
   );
