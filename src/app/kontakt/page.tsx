@@ -85,7 +85,9 @@ function TeamMemberRow({ member }: { member: OrgTeamMember }) {
           />
         </div>
       ) : (
-        <div className="border-ink dark:border-night-text text-dark dark:text-night-muted flex h-14 w-14 shrink-0 items-center justify-center border-2">
+        // Gleiche Form wie das Foto daneben: Ein eckiger Kasten neben einem
+        // runden Bild sind zwei Bildsprachen in derselben Zeile.
+        <div className="bg-ink text-paper dark:bg-night-raised dark:text-night-muted flex h-14 w-14 shrink-0 items-center justify-center rounded-full">
           <User className="h-6 w-6" aria-hidden />
         </div>
       )}
@@ -154,120 +156,140 @@ export default async function KontaktPage() {
           head={<Heading id="erreichen-heading">So erreichen Sie uns</Heading>}
           bodyClassName="mt-8"
         >
-          <div className="grid gap-y-12 sm:grid-cols-2 sm:gap-x-10 lg:gap-x-16">
-            <div className="border-rule dark:border-night-rule border-b pb-12 sm:border-b-0 sm:pr-10 sm:pb-0 lg:pr-16">
-              <Heading as="h3" size="list" rule>
-                Geschäftsstelle
-              </Heading>
-              <div className={`${PROSE} mt-5`}>
-                <p>Für allgemeine Anfragen und Verwaltung</p>
-                <p>
-                  Posaunenwerk der Evangelischen Kirche im Rheinland e.V.
-                  <br />
-                  Rudolf-Harbig-Str. 20
-                  <br />
-                  56179 Vallendar
-                </p>
-                <p>
-                  <a href="tel:02613000011" className="link-ink">
-                    0261 300 00 11
-                  </a>
-                  <br />
-                  <a
-                    href="mailto:info@posaunenwerk-rheinland.de"
-                    className="link-ink"
-                  >
-                    info@posaunenwerk-rheinland.de
-                  </a>
+          {/* Gegenüberliegende Spalten wie im aufgeschlagenen Heft: Beide
+              teilen sich dieselben drei Zeilen (Einstieg, Hinweis, Team), so
+              dass die Abschnitte auf einer Linie stehen. Ohne das rutschten
+              die beiden „Unser Team" auf verschiedene Höhen und die
+              Trennlinie lief mitten hindurch. */}
+          <div className="grid sm:grid-cols-2 sm:grid-rows-[auto_auto_auto]">
+            <div className="border-rule dark:border-night-rule grid content-start gap-y-10 border-b pb-12 sm:row-span-3 sm:grid-rows-subgrid sm:border-b-0 sm:pr-10 sm:pb-0 lg:pr-16">
+              <div>
+                <Heading as="h3" size="list" rule>
+                  Geschäftsstelle
+                </Heading>
+                <div className={`${PROSE} mt-5`}>
+                  <p>Für allgemeine Anfragen und Verwaltung</p>
+                  <p>
+                    Posaunenwerk der Evangelischen Kirche im Rheinland e.V.
+                    <br />
+                    Rudolf-Harbig-Str. 20
+                    <br />
+                    56179 Vallendar
+                  </p>
+                  <p>
+                    <a href="tel:02613000011" className="link-ink">
+                      0261 300 00 11
+                    </a>
+                    <br />
+                    <a
+                      href="mailto:info@posaunenwerk-rheinland.de"
+                      className="link-ink"
+                    >
+                      info@posaunenwerk-rheinland.de
+                    </a>
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <h4 className={LABEL_HEAD}>Erreichbarkeit</h4>
+                <p className="text-ink dark:text-night-text mt-3 max-w-[65ch] text-lg leading-relaxed">
+                  Die Geschäftsstelle und das Telefon sind nicht jeden Tag
+                  besetzt. Bitte senden Sie uns eine E-Mail oder hinterlassen
+                  Sie bei einem Anruf gerne Ihre Nachricht auf dem
+                  Anrufbeantworter. Sie erhalten dann so schnell wie möglich
+                  eine Rückmeldung.
                 </p>
               </div>
 
-              <h4 className={`${LABEL_HEAD} mt-8`}>Erreichbarkeit</h4>
-              <p className="text-ink dark:text-night-text mt-3 max-w-[65ch] text-lg leading-relaxed">
-                Die Geschäftsstelle und das Telefon sind nicht jeden Tag
-                besetzt. Bitte senden Sie uns eine E-Mail oder hinterlassen Sie
-                bei einem Anruf gerne Ihre Nachricht auf dem Anrufbeantworter.
-                Sie erhalten dann so schnell wie möglich eine Rückmeldung.
-              </p>
-
-              {geschaeftsstelle.length > 0 ? (
-                <>
-                  <h4 className={`${LABEL_HEAD} mt-8`}>Unser Team</h4>
-                  <ul className="border-ink dark:border-night-text mt-3 border-t-2">
-                    {geschaeftsstelle.map((member, index) => (
-                      <TeamMemberRow key={index} member={member} />
-                    ))}
-                  </ul>
-                </>
-              ) : null}
+              <div>
+                {geschaeftsstelle.length > 0 ? (
+                  <>
+                    <h4 className={LABEL_HEAD}>Unser Team</h4>
+                    <ul className="border-ink dark:border-night-text mt-3 border-t-2">
+                      {geschaeftsstelle.map((member, index) => (
+                        <TeamMemberRow key={index} member={member} />
+                      ))}
+                    </ul>
+                  </>
+                ) : null}
+              </div>
             </div>
 
-            <div className="border-rule dark:border-night-rule sm:border-l sm:pl-10 lg:pl-16">
-              <Heading as="h3" size="list" rule>
-                Internet-Team
-              </Heading>
-              <div className={`${PROSE} mt-5`}>
-                <p>Für Website-Fragen und technischen Support</p>
-                <p>
-                  Haben Sie Fragen zur Website, technische Probleme oder
-                  Anregungen für neue Features? Unser Internet-Team hilft Ihnen
-                  gerne weiter.
-                </p>
-                <p>
-                  <a
-                    href="mailto:webmaster@posaunenwerk-rheinland.de"
-                    className="link-ink"
-                  >
-                    webmaster@posaunenwerk-rheinland.de
-                  </a>
-                </p>
+            <div className="border-rule dark:border-night-rule grid content-start gap-y-10 sm:row-span-3 sm:grid-rows-subgrid sm:border-l sm:pl-10 lg:pl-16">
+              <div>
+                <Heading as="h3" size="list" rule>
+                  Internet-Team
+                </Heading>
+                <div className={`${PROSE} mt-5`}>
+                  <p>Für Website-Fragen und technischen Support</p>
+                  <p>
+                    Haben Sie Fragen zur Website, technische Probleme oder
+                    Anregungen für neue Features? Unser Internet-Team hilft
+                    Ihnen gerne weiter.
+                  </p>
+                  <p>
+                    <a
+                      href="mailto:webmaster@posaunenwerk-rheinland.de"
+                      className="link-ink"
+                    >
+                      webmaster@posaunenwerk-rheinland.de
+                    </a>
+                  </p>
+                </div>
               </div>
 
-              <h4 className={`${LABEL_HEAD} mt-8`}>Wir helfen bei:</h4>
-              <ul className="border-ink dark:border-night-text mt-3 border-t-2">
-                {HILFE_BEI.map((item) => (
-                  <li
-                    key={item}
-                    className="border-rule dark:border-night-rule text-ink dark:text-night-text flex gap-3 border-b px-1 py-3 text-lg leading-snug"
-                  >
+              <div>
+                <h4 className={LABEL_HEAD}>Wir helfen bei:</h4>
+                <ul className="border-ink dark:border-night-text mt-3 border-t-2">
+                  {HILFE_BEI.map((item) => (
+                    <li
+                      key={item}
+                      className="border-rule dark:border-night-rule text-ink dark:text-night-text flex gap-3 border-b px-1 py-3 text-lg leading-snug"
+                    >
+                      <span
+                        aria-hidden
+                        className="bg-ink dark:bg-night-text mt-2 h-2 w-2 shrink-0"
+                      />
+                      {item}
+                    </li>
+                  ))}
+                  {/* Ohne flex-wrap: Sonst rutscht der Text in die nächste Zeile
+                    und das Aufzählungsquadrat bleibt allein zurück. */}
+                  <li className="border-rule dark:border-night-rule text-ink dark:text-night-text flex gap-3 border-b px-1 py-3 text-lg leading-snug">
                     <span
                       aria-hidden
                       className="bg-ink dark:bg-night-text mt-2 h-2 w-2 shrink-0"
                     />
-                    {item}
-                  </li>
-                ))}
-                <li className="border-rule dark:border-night-rule text-ink dark:text-night-text flex flex-wrap items-center gap-3 border-b px-1 py-3 text-lg leading-snug">
-                  <span
-                    aria-hidden
-                    className="bg-ink dark:bg-night-text mt-2 h-2 w-2 shrink-0 self-start"
-                  />
-                  <span>
-                    Feedback und Verbesserungsvorschlägen
-                    {/* Feedback page only exists where the GitHub
+                    <span>
+                      Feedback und Verbesserungsvorschlägen
+                      {/* Feedback page only exists where the GitHub
                       integration is configured (beta) */}
-                    {env.GITHUB_TOKEN && env.GITHUB_REPO && (
-                      <Link
-                        href="/feedback"
-                        className="link-ink ml-2 text-base"
-                      >
-                        Feedback geben
-                      </Link>
-                    )}
-                  </span>
-                </li>
-              </ul>
+                      {env.GITHUB_TOKEN && env.GITHUB_REPO && (
+                        <Link
+                          href="/feedback"
+                          className="link-ink ml-2 text-base"
+                        >
+                          Feedback geben
+                        </Link>
+                      )}
+                    </span>
+                  </li>
+                </ul>
+              </div>
 
-              {internetTeam.length > 0 ? (
-                <>
-                  <h4 className={`${LABEL_HEAD} mt-8`}>Unser Team</h4>
-                  <ul className="border-ink dark:border-night-text mt-3 border-t-2">
-                    {internetTeam.map((member, index) => (
-                      <TeamMemberRow key={index} member={member} />
-                    ))}
-                  </ul>
-                </>
-              ) : null}
+              <div>
+                {internetTeam.length > 0 ? (
+                  <>
+                    <h4 className={LABEL_HEAD}>Unser Team</h4>
+                    <ul className="border-ink dark:border-night-text mt-3 border-t-2">
+                      {internetTeam.map((member, index) => (
+                        <TeamMemberRow key={index} member={member} />
+                      ))}
+                    </ul>
+                  </>
+                ) : null}
+              </div>
             </div>
           </div>
         </Split>
