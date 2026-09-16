@@ -1,6 +1,5 @@
 "use client";
 
-import { Landmark } from "lucide-react";
 import type { CourseWithRelations, RegistrationData } from "./types";
 import { formatEuro } from "@/lib/invoice-document";
 import { roundMoney } from "@/lib/sibling-discount";
@@ -8,7 +7,13 @@ import {
   downPaymentReference,
   downPaymentRefundNotice,
 } from "@/lib/course-down-payment";
-import { DownPaymentTransferDetails } from "../down-payment-transfer-details";
+import {
+  DownPaymentQrFigure,
+  transferDetailRows,
+} from "../down-payment-transfer-details";
+import { Panel } from "@/app/_components/programmheft/panel";
+import { Heading } from "@/app/_components/programmheft/section-head";
+import { ValueTable } from "@/app/_components/programmheft/value-table";
 
 interface DownPaymentSummaryProps {
   course: CourseWithRelations;
@@ -60,39 +65,28 @@ export function DownPaymentSummary({
       : "Restbetrag (nach Erhalt der Rechnung)";
 
   return (
-    <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 sm:p-6 dark:border-amber-800 dark:bg-amber-900/20">
-      <h4 className="text-dark dark:text-dark-text mb-3 flex items-center gap-2 font-bold">
-        <Landmark className="text-primary h-5 w-5" aria-hidden />
+    <Panel as="section" labelledBy="anzahlung-summary-heading">
+      <Heading as="h4" id="anzahlung-summary-heading" size="list">
         Anzahlung
-      </h4>
+      </Heading>
 
-      <dl className="space-y-1 text-sm">
-        <div className="flex justify-between gap-3">
-          <dt className="text-gray-700 dark:text-gray-300">Gesamtpreis</dt>
-          <dd className="font-semibold text-gray-900 dark:text-gray-100">
-            {formatEuro(totalPrice)}
-          </dd>
-        </div>
-        <div className="flex justify-between gap-3">
-          <dt className="text-gray-700 dark:text-gray-300">
-            {isWaitlist
+      <ValueTable
+        className="mt-4"
+        rows={[
+          { label: "Gesamtpreis", value: formatEuro(totalPrice) },
+          {
+            label: isWaitlist
               ? "Anzahlung (nach Platzbestätigung)"
-              : "Anzahlung (jetzt fällig)"}
-          </dt>
-          <dd className="font-semibold text-gray-900 dark:text-gray-100">
-            {formatEuro(amount)}
-          </dd>
-        </div>
-        <div className="flex justify-between gap-3">
-          <dt className="text-gray-700 dark:text-gray-300">{remainderLabel}</dt>
-          <dd className="font-semibold text-gray-900 dark:text-gray-100">
-            {formatEuro(remainder)}
-          </dd>
-        </div>
-      </dl>
+              : "Anzahlung (jetzt fällig)",
+            value: formatEuro(amount),
+          },
+          { label: remainderLabel, value: formatEuro(remainder) },
+          ...(!isWaitlist ? transferDetailRows(amount, reference) : []),
+        ]}
+      />
 
       {isWaitlist ? (
-        <p className="mt-4 text-sm text-gray-700 dark:text-gray-300">
+        <p className="text-dark dark:text-night-muted mt-4 text-sm">
           Die Anzahlung wird erst fällig, wenn Ihr Platz bestätigt ist. Betrag,
           Bankverbindung und Verwendungszweck erhalten Sie dann mit der
           Bestätigung per E-Mail
@@ -103,9 +97,9 @@ export function DownPaymentSummary({
         </p>
       ) : (
         <div className="mt-4">
-          <DownPaymentTransferDetails amount={amount} reference={reference} />
+          <DownPaymentQrFigure amount={amount} reference={reference} />
           {acknowledgement && (
-            <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
+            <p className="text-dark dark:text-night-muted mt-3 text-sm">
               Alle Angaben zur Anzahlung – Betrag, Bankverbindung und
               Verwendungszweck – finden Sie auch in Ihrer Bestätigungsmail
               {listedInMyRegistrations
@@ -124,9 +118,9 @@ export function DownPaymentSummary({
             checked={acknowledgement.checked}
             onChange={(e) => acknowledgement.onChange(e.target.checked)}
             required
-            className="text-primary focus:ring-primary mt-1 h-4 w-4"
+            className="border-ink dark:border-night-text mt-1 h-4 w-4 shrink-0 rounded-none"
           />
-          <span className="text-sm text-gray-700 dark:text-gray-300">
+          <span className="text-ink dark:text-night-text text-sm">
             Ich überweise die Anzahlung von {formatEuro(amount)}{" "}
             {isWaitlist ? "nach der Platzbestätigung" : "zeitnah"} mit dem
             angegebenen Verwendungszweck. {refundNotice} Teilnehmer hinzufügen,
@@ -136,11 +130,11 @@ export function DownPaymentSummary({
         </label>
       ) : (
         refundNotice && (
-          <p className="mt-3 text-xs text-gray-600 dark:text-gray-400">
+          <p className="text-dark dark:text-night-muted mt-3 text-xs">
             {refundNotice}
           </p>
         )
       )}
-    </div>
+    </Panel>
   );
 }

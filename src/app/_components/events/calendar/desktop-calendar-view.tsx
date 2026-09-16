@@ -395,43 +395,43 @@ export default function DesktopCalendarView({
 
   return (
     <>
-      <div className="dark:shadow-dark-border bg-background-secondary dark:bg-dark-surface overflow-hidden rounded-lg shadow-lg">
+      <div className="border-ink dark:border-night-text bg-paper dark:bg-night border-2">
         {/* Header */}
-        <div className="dark:border-dark-border flex items-center justify-between border-b border-gray-200 p-4">
-          <h2 className="text-dark text-2xl font-bold dark:text-white">
+        <div className="border-ink dark:border-night-text flex items-center justify-between border-b-2 p-4">
+          <h2 className="condensed text-ink dark:text-night-text text-2xl font-extrabold">
             {monthName}
           </h2>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-1">
             <button
               onClick={goToPreviousMonth}
-              className="text-dark dark:text-dark-text rounded-lg p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="text-ink hover:bg-ink hover:text-paper dark:text-night-text dark:hover:bg-night-text dark:hover:text-night flex h-11 w-11 items-center justify-center transition-colors"
               aria-label="Vorheriger Monat"
             >
-              <ChevronLeft className="h-5 w-5" />
+              <ChevronLeft className="h-5 w-5" aria-hidden />
             </button>
             <button
               onClick={goToToday}
-              className="text-primary hover:bg-primary/10 rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
+              className="semi-condensed text-primary-ink dark:text-primary hover:bg-ink hover:text-paper dark:hover:bg-night-text dark:hover:text-night flex h-11 items-center px-4 text-sm font-semibold transition-colors"
               aria-label="Zum heutigen Tag springen"
             >
               Heute
             </button>
             <button
               onClick={goToNextMonth}
-              className="text-dark dark:text-dark-text rounded-lg p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="text-ink hover:bg-ink hover:text-paper dark:text-night-text dark:hover:bg-night-text dark:hover:text-night flex h-11 w-11 items-center justify-center transition-colors"
               aria-label="Nächster Monat"
             >
-              <ChevronRight className="h-5 w-5" />
+              <ChevronRight className="h-5 w-5" aria-hidden />
             </button>
           </div>
         </div>
 
         {/* Week days */}
-        <div className="dark:border-dark-border bg-background-tertiary dark:bg-dark-background-secondary grid grid-cols-7 border-b border-gray-200">
+        <div className="border-ink dark:border-night-text grid grid-cols-7 border-b-2">
           {weekDays.map((day) => (
             <div
               key={day}
-              className="px-2 py-3 text-center text-sm font-semibold text-gray-600 dark:text-gray-300"
+              className="semi-condensed text-dark dark:text-night-muted px-2 py-3 text-center text-sm font-semibold"
             >
               {day}
             </div>
@@ -448,9 +448,9 @@ export default function DesktopCalendarView({
             return (
               <div
                 key={`empty-${i}`}
-                className={`bg-background-tertiary dark:bg-dark-background-secondary opacity-50 ${!isLastColumn ? "dark:border-dark-border border-r border-gray-200" : ""} ${
+                className={`bg-rule/20 dark:bg-night-rule/20 ${!isLastColumn ? "border-rule dark:border-night-rule border-r" : ""} ${
                   !isLastRow
-                    ? "dark:border-dark-border border-b border-gray-200"
+                    ? "border-rule dark:border-night-rule border-b"
                     : ""
                 }`}
               ></div>
@@ -500,14 +500,14 @@ export default function DesktopCalendarView({
             return (
               <div
                 key={day}
-                className={`relative ${!isLastColumn ? "dark:border-dark-border border-r border-gray-200" : ""} ${
+                className={`relative ${!isLastColumn ? "border-rule dark:border-night-rule border-r" : ""} ${
                   !isLastRow
-                    ? "dark:border-dark-border border-b border-gray-200"
+                    ? "border-rule dark:border-night-rule border-b"
                     : ""
                 } ${
                   today
-                    ? "bg-primary/5 dark:bg-primary/10"
-                    : "dark:hover:bg-dark-background-secondary hover:bg-gray-50"
+                    ? "bg-ink/[0.04] dark:bg-night-text/[0.06]"
+                    : "hover:bg-rule/20 dark:hover:bg-night-rule/20"
                 }`}
               >
                 {/* Date */}
@@ -515,8 +515,8 @@ export default function DesktopCalendarView({
                   <span
                     className={`text-sm font-semibold ${
                       today
-                        ? "bg-primary flex h-6 w-6 items-center justify-center rounded-full text-white"
-                        : "text-gray-700 dark:text-gray-200"
+                        ? "bg-ink text-paper dark:bg-night-text dark:text-night flex h-6 w-6 items-center justify-center"
+                        : "text-ink dark:text-night-text"
                     }`}
                   >
                     {day}
@@ -527,7 +527,7 @@ export default function DesktopCalendarView({
                         e.stopPropagation();
                         setSelectedHoliday(holiday);
                       }}
-                      className="text-amber-600 transition-transform hover:scale-125 dark:text-amber-400"
+                      className="text-primary-ink dark:text-primary transition-transform hover:scale-125"
                       title={holiday.name}
                       aria-label={`Details zu ${holiday.name}`}
                     >
@@ -579,11 +579,11 @@ export default function DesktopCalendarView({
                           key={rowIndex}
                           className={`mb-1 h-5 cursor-pointer truncate py-0.5 text-[11px] font-semibold text-white transition-opacity hover:opacity-90 ${
                             isStart && isEnd
-                              ? "mx-2 rounded px-2"
+                              ? "mx-2 px-2"
                               : isStart
-                                ? "-mr-px ml-2 rounded-l pr-0 pl-2"
+                                ? "-mr-px ml-2 pr-0 pl-2"
                                 : isEnd
-                                  ? "mr-2 -ml-px rounded-r pr-2 pl-0"
+                                  ? "mr-2 -ml-px pr-2 pl-0"
                                   : "-mx-px pr-0 pl-0"
                           }`}
                           style={{
@@ -649,10 +649,10 @@ export default function DesktopCalendarView({
                               <button
                                 key={idx}
                                 onClick={() => setSelectedEvent(event)}
-                                className={`flex w-full cursor-pointer items-center gap-1 truncate rounded px-2 py-0.5 text-left text-[11px] font-medium transition-all hover:brightness-95 ${
+                                className={`flex w-full cursor-pointer items-center gap-1 truncate px-2 py-0.5 text-left text-[11px] font-medium transition-all hover:brightness-95 ${
                                   isCancelled
-                                    ? "border-2 border-red-500 bg-red-100 text-gray-500 line-through dark:bg-red-900/30 dark:text-gray-400"
-                                    : `text-dark dark:text-dark-text ${categoryStyle.borderClass}`
+                                    ? "border-2 border-red-700 bg-red-100 text-red-800 line-through dark:border-red-400 dark:bg-red-900/30 dark:text-red-300"
+                                    : `text-ink dark:text-night-text ${categoryStyle.borderClass}`
                                 }`}
                                 style={
                                   isCancelled
@@ -688,7 +688,7 @@ export default function DesktopCalendarView({
                           {hasMoreThanLimit && (
                             <button
                               onClick={() => setShowMoreEventsDay(day)}
-                              className="text-primary hover:bg-primary/10 w-full rounded px-2 py-1 text-left text-[11px] font-medium transition-colors"
+                              className="text-primary-ink dark:text-primary hover:bg-ink hover:text-paper dark:hover:bg-night-text dark:hover:text-night w-full px-2 py-1 text-left text-[11px] font-semibold transition-colors"
                             >
                               +{totalEventsCount - displayedCount} weitere
                               Events
@@ -706,44 +706,47 @@ export default function DesktopCalendarView({
       </div>
 
       {/* Legend */}
-      <div className="dark:border-dark-border dark:shadow-dark-border bg-background-secondary dark:bg-dark-surface mt-6 rounded-lg border border-gray-200 p-4 shadow-md">
-        <h3 className="text-dark dark:text-dark-text mb-3 text-sm font-bold">
+      <div className="border-ink dark:border-night-text bg-paper dark:bg-night mt-6 border-2 p-4">
+        <h3 className="condensed text-ink dark:text-night-text mb-3 text-sm font-bold">
           Legende
         </h3>
-        <div className="grid grid-cols-1 gap-3 text-xs text-gray-600 md:grid-cols-2 dark:text-gray-300">
+        <div className="text-dark dark:text-night-muted grid grid-cols-1 gap-3 text-xs md:grid-cols-2">
           <div className="flex items-center gap-2">
-            <Users className="h-3 w-3" />
+            <Users className="h-3 w-3" aria-hidden />
             <span>= Mitspielen möglich</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="flex h-3 w-8 items-center justify-center rounded border-2 border-red-500 bg-red-100 dark:bg-red-900/30">
-              <X className="h-2.5 w-2.5 text-red-500" />
+            <div className="flex h-3 w-8 items-center justify-center border-2 border-red-700 bg-red-100 dark:border-red-400 dark:bg-red-900/30">
+              <X
+                className="h-2.5 w-2.5 text-red-700 dark:text-red-400"
+                aria-hidden
+              />
             </div>
             <span>Abgesagt</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="h-3 w-8 rounded border-2 border-blue-500 bg-blue-500/20"></div>
+            <div className="h-3 w-8 border-2 border-blue-500 bg-blue-500/20"></div>
             <span>Konzert (dicker Rand)</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="h-3 w-8 rounded border border-blue-500 bg-blue-500/15"></div>
+            <div className="h-3 w-8 border border-blue-500 bg-blue-500/15"></div>
             <span>Gottesdienst (dünner Rand)</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="h-3 w-8 rounded border border-dashed border-blue-500 bg-blue-500/15"></div>
+            <div className="h-3 w-8 border border-dashed border-blue-500 bg-blue-500/15"></div>
             <span>Probe (gestrichelt)</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="h-3 w-8 rounded border border-dotted border-blue-500 bg-blue-500/10"></div>
+            <div className="h-3 w-8 border border-dotted border-blue-500 bg-blue-500/10"></div>
             <span>Sonstiges (gepunktet)</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="bg-primary h-3 w-8 rounded"></div>
+            <div className="bg-ink dark:bg-night-text h-3 w-8"></div>
             <span>Mehrtägige Veranstaltung</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-amber-600 dark:text-amber-400">
-              <StarIcon className="h-3 w-3" />
+            <span className="text-primary-ink dark:text-primary">
+              <StarIcon className="h-3 w-3" aria-hidden />
             </span>
             <span>Feiertag</span>
           </div>

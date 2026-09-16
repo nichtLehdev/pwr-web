@@ -3,6 +3,8 @@
 import type { RegistrationData } from "./types";
 import { fieldClass } from "./field-styles";
 import { isPlausibleEmail } from "@/lib/email-address";
+import { Checkbox } from "@/app/_components/programmheft/field";
+import { Heading } from "@/app/_components/programmheft/section-head";
 
 const EMAIL_HINT =
   "Bitte eine gültige E-Mail-Adresse eingeben, z. B. max@example.com";
@@ -23,13 +25,8 @@ export function Step1RegistrantInfo({
   staffMode = false,
 }: Step1RegistrantInfoProps) {
   const contactRequiredMark = staffMode ? "" : " *";
-  const inputClass = fieldClass({
-    className: "dark:bg-dark-background-secondary bg-white",
-  });
-  const invalidInputClass = fieldClass({
-    error: true,
-    className: "dark:bg-dark-background-secondary bg-white",
-  });
+  const inputClass = fieldClass();
+  const invalidInputClass = fieldClass({ error: true });
 
   // Erst meckern, wenn etwas dasteht: ein noch leeres Pflichtfeld ist kein
   // Fehler, sondern unausgefüllt — dafür bleibt der Weiter-Button gesperrt.
@@ -42,10 +39,10 @@ export function Step1RegistrantInfo({
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-dark dark:text-dark-text mb-4 text-xl font-bold">
+        <Heading as="h3" size="list" className="text-[1.375rem]">
           {staffMode ? "Kontaktdaten des Anmelders" : "Ihre Kontaktdaten"}
-        </h3>
-        <p className="mb-6 text-sm text-gray-600 dark:text-gray-400">
+        </Heading>
+        <p className="text-dark dark:text-night-muted mt-2 mb-6 text-sm">
           {staffMode
             ? "Der Anmelder erhält Bestätigung und weitere Informationen an diese E-Mail-Adresse. Adresse und Telefon können nachgetragen werden, für Rechnungen sind sie nötig."
             : "Als Anmelder erhalten Sie die Bestätigung und alle weiteren Informationen per E-Mail."}
@@ -53,7 +50,7 @@ export function Step1RegistrantInfo({
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
-            <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+            <label className="text-ink dark:text-night-text mb-1 block text-sm font-semibold">
               Vorname *
             </label>
             <input
@@ -73,7 +70,7 @@ export function Step1RegistrantInfo({
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+            <label className="text-ink dark:text-night-text mb-1 block text-sm font-semibold">
               Nachname *
             </label>
             <input
@@ -93,7 +90,7 @@ export function Step1RegistrantInfo({
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+            <label className="text-ink dark:text-night-text mb-1 block text-sm font-semibold">
               E-Mail *
             </label>
             <input
@@ -116,7 +113,7 @@ export function Step1RegistrantInfo({
             {emailInvalid && (
               <p
                 id="registrant-email-error"
-                className="mt-1 text-sm font-medium text-red-600 dark:text-red-400"
+                className="mt-1 text-sm font-medium text-red-700 dark:text-red-400"
               >
                 {EMAIL_HINT}
               </p>
@@ -124,7 +121,7 @@ export function Step1RegistrantInfo({
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+            <label className="text-ink dark:text-night-text mb-1 block text-sm font-semibold">
               Telefon{contactRequiredMark}
             </label>
             <input
@@ -143,7 +140,7 @@ export function Step1RegistrantInfo({
             />
           </div>
           <div className="md:col-span-2">
-            <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+            <label className="text-ink dark:text-night-text mb-1 block text-sm font-semibold">
               Straße und Hausnummer{contactRequiredMark}
             </label>
             <input
@@ -162,7 +159,7 @@ export function Step1RegistrantInfo({
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+            <label className="text-ink dark:text-night-text mb-1 block text-sm font-semibold">
               PLZ{contactRequiredMark}
             </label>
             <input
@@ -181,7 +178,7 @@ export function Step1RegistrantInfo({
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+            <label className="text-ink dark:text-night-text mb-1 block text-sm font-semibold">
               Ort{contactRequiredMark}
             </label>
             <input
@@ -202,39 +199,33 @@ export function Step1RegistrantInfo({
         </div>
 
         {/* Billing Address Section */}
-        <div className="dark:border-dark-border mt-8 border-t border-gray-200 pt-8">
-          <h3 className="text-dark dark:text-dark-text mb-4 text-lg font-bold">
+        <div className="border-rule dark:border-night-rule mt-8 border-t pt-8">
+          <Heading as="h3" size="list" className="mb-4 text-[1.375rem]">
             Rechnungsadresse
-          </h3>
+          </Heading>
 
-          <div className="mb-4">
-            <label className="dark:bg-dark-background-secondary dark:hover:bg-dark-background flex cursor-pointer items-center gap-3 rounded-lg bg-gray-50 p-4 transition-colors hover:bg-gray-100">
-              <input
-                type="checkbox"
-                checked={registrationData.useSeparateBilling}
-                onChange={(e) =>
-                  setRegistrationData({
-                    ...registrationData,
-                    useSeparateBilling: e.target.checked,
-                  })
-                }
-                className="text-primary focus:ring-primary h-5 w-5 rounded"
-              />
-              <div>
-                <span className="text-dark dark:text-dark-text font-semibold">
-                  Abweichende Rechnungsadresse
-                </span>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  z.B. für Kirchengemeinde oder Institution
-                </p>
-              </div>
-            </label>
-          </div>
+          <Checkbox
+            id="use-separate-billing"
+            checked={!!registrationData.useSeparateBilling}
+            onChange={(e) =>
+              setRegistrationData({
+                ...registrationData,
+                useSeparateBilling: e.target.checked,
+              })
+            }
+          >
+            <span className="text-ink dark:text-night-text font-semibold">
+              Abweichende Rechnungsadresse
+            </span>
+            <span className="text-dark dark:text-night-muted mt-0.5 block text-sm">
+              z.B. für Kirchengemeinde oder Institution
+            </span>
+          </Checkbox>
 
           {registrationData.useSeparateBilling && (
             <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="md:col-span-2">
-                <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                <label className="text-ink dark:text-night-text mb-1 block text-sm font-semibold">
                   Firma / Institution / Kirchengemeinde
                 </label>
                 <input
@@ -253,7 +244,7 @@ export function Step1RegistrantInfo({
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                <label className="text-ink dark:text-night-text mb-1 block text-sm font-semibold">
                   Vorname
                 </label>
                 <input
@@ -272,7 +263,7 @@ export function Step1RegistrantInfo({
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                <label className="text-ink dark:text-night-text mb-1 block text-sm font-semibold">
                   Nachname
                 </label>
                 <input
@@ -291,7 +282,7 @@ export function Step1RegistrantInfo({
               </div>
 
               <div className="md:col-span-2">
-                <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                <label className="text-ink dark:text-night-text mb-1 block text-sm font-semibold">
                   Straße und Hausnummer *
                 </label>
                 <input
@@ -310,7 +301,7 @@ export function Step1RegistrantInfo({
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                <label className="text-ink dark:text-night-text mb-1 block text-sm font-semibold">
                   PLZ *
                 </label>
                 <input
@@ -329,7 +320,7 @@ export function Step1RegistrantInfo({
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                <label className="text-ink dark:text-night-text mb-1 block text-sm font-semibold">
                   Stadt *
                 </label>
                 <input
@@ -348,7 +339,7 @@ export function Step1RegistrantInfo({
               </div>
 
               <div className="md:col-span-2">
-                <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                <label className="text-ink dark:text-night-text mb-1 block text-sm font-semibold">
                   E-Mail für Rechnung
                 </label>
                 <input
@@ -372,12 +363,12 @@ export function Step1RegistrantInfo({
                 {billingEmailInvalid ? (
                   <p
                     id="billing-email-error"
-                    className="mt-1 text-sm font-medium text-red-600 dark:text-red-400"
+                    className="mt-1 text-sm font-medium text-red-700 dark:text-red-400"
                   >
                     {EMAIL_HINT}
                   </p>
                 ) : (
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-dark dark:text-night-muted mt-1 text-xs">
                     Falls abweichend von Ihrer E-Mail-Adresse
                   </p>
                 )}
