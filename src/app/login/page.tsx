@@ -6,14 +6,23 @@ import Link from "next/link";
 import { api } from "@/trpc/react";
 import { signIn } from "@/lib/auth";
 import { resolvePostLoginTarget } from "@/lib/post-login-redirect";
-import {
-  Button,
-  Input,
-  Label,
-  Checkbox,
-  Alert,
-  AlertDescription,
-} from "@/app/_components/ui";
+import { Button, Input, Label, Checkbox } from "@/app/_components/ui";
+import PublicPage from "@/app/_components/general/public-page";
+import { PageSection } from "@/app/_components/programmheft/page-section";
+import { Note } from "@/app/_components/programmheft/note";
+
+/** Platzhalter, während `useSearchParams` (Redirect-Ziel) noch lädt. */
+function FormSkeleton() {
+  return (
+    <div className="flex justify-center py-12">
+      <div
+        className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-2 border-t-transparent"
+        aria-hidden
+      />
+      <span className="sr-only">Lädt…</span>
+    </div>
+  );
+}
 
 function LoginForm() {
   const router = useRouter();
@@ -98,97 +107,82 @@ function LoginForm() {
   };
 
   return (
-    <div className="bg-background-secondary dark:bg-dark-background-secondary flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-8">
-      <div className="w-full max-w-md">
-        <div className="mb-6 text-center">
-          <h1 className="text-dark dark:text-dark-text mb-2 text-3xl font-bold">
-            Anmelden
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Noch kein Konto?{" "}
+    <div className="mx-auto max-w-md">
+      {error && (
+        <Note tone="error" className="mb-6">
+          <p>{error}</p>
+          {error.includes("verifiziert") && loginEmail && (
             <Link
-              href="/register"
-              className="text-primary hover:text-primary-dark font-medium"
+              href={`/verify-email?email=${encodeURIComponent(loginEmail)}`}
+              className="link-ink mt-2 inline-block text-sm"
             >
-              Jetzt registrieren
+              Verifizierungs-E-Mail erneut senden
             </Link>
-          </p>
-        </div>
-
-        <div className="dark:bg-dark-surface rounded-lg bg-white p-6 shadow-lg md:p-8">
-          {error && (
-            <Alert variant="error" className="mb-4">
-              <AlertDescription>{error}</AlertDescription>
-              {error.includes("verifiziert") && loginEmail && (
-                <Link
-                  href={`/verify-email?email=${encodeURIComponent(loginEmail)}`}
-                  className="mt-2 block text-sm font-medium underline"
-                >
-                  Verifizierungs-E-Mail erneut senden
-                </Link>
-              )}
-            </Alert>
           )}
+        </Note>
+      )}
 
-          <form className="space-y-4" onSubmit={handleEmailLogin}>
-            <div>
-              <Label htmlFor="emailOrUsername">E-Mail oder Benutzername</Label>
-              <Input
-                id="emailOrUsername"
-                name="emailOrUsername"
-                type="text"
-                autoComplete="username"
-                required
-                value={emailOrUsername}
-                onChange={(e) => setEmailOrUsername(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <div className="mb-1 flex items-center justify-between">
-                <Label htmlFor="password">Passwort</Label>
-                <Link
-                  href="/forgot-password"
-                  className="text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary text-sm font-medium"
-                >
-                  Passwort vergessen?
-                </Link>
-              </div>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-
-            <div className="flex items-center">
-              <Checkbox
-                id="rememberMe"
-                name="rememberMe"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-              />
-              <Label htmlFor="rememberMe" className="mb-0 ml-2">
-                Angemeldet bleiben
-              </Label>
-            </div>
-
-            <Button type="submit" isLoading={isLoading} className="w-full">
-              Anmelden
-            </Button>
-          </form>
+      <form className="space-y-6" onSubmit={handleEmailLogin}>
+        <div>
+          <Label htmlFor="emailOrUsername">E-Mail oder Benutzername</Label>
+          <Input
+            id="emailOrUsername"
+            name="emailOrUsername"
+            type="text"
+            autoComplete="username"
+            required
+            value={emailOrUsername}
+            onChange={(e) => setEmailOrUsername(e.target.value)}
+          />
         </div>
 
-        <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
+        <div>
+          <div className="mb-1 flex items-center justify-between">
+            <Label htmlFor="password" className="mb-0">
+              Passwort
+            </Label>
+            <Link href="/forgot-password" className="link-ink text-sm">
+              Passwort vergessen?
+            </Link>
+          </div>
+          <Input
+            id="password"
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="rememberMe"
+            name="rememberMe"
+            checked={rememberMe}
+            onChange={(e) => setRememberMe(e.target.checked)}
+          />
+          <Label htmlFor="rememberMe" className="mb-0">
+            Angemeldet bleiben
+          </Label>
+        </div>
+
+        <Button type="submit" isLoading={isLoading} className="w-full">
+          Anmelden
+        </Button>
+      </form>
+
+      <div className="border-rule dark:border-night-rule mt-8 space-y-3 border-t pt-6 text-center text-sm">
+        <p className="text-dark dark:text-night-muted">
+          Noch kein Konto?{" "}
+          <Link href="/register" className="link-ink">
+            Jetzt registrieren
+          </Link>
+        </p>
+        <p className="text-dark dark:text-night-muted">
           Ohne Konto zu einem Kurs angemeldet?{" "}
-          <Link
-            href="/anmeldung-verwalten"
-            className="text-primary hover:text-primary-dark font-medium"
-          >
+          <Link href="/anmeldung-verwalten" className="link-ink">
             Anmeldung verwalten
           </Link>
         </p>
@@ -199,14 +193,16 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
-          <div className="border-primary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />
-        </div>
-      }
+    <PublicPage
+      title="Anmelden"
+      heroSize="compact"
+      breadcrumbs={[{ label: "Start", href: "/" }, { label: "Anmelden" }]}
     >
-      <LoginForm />
-    </Suspense>
+      <PageSection flush="top">
+        <Suspense fallback={<FormSkeleton />}>
+          <LoginForm />
+        </Suspense>
+      </PageSection>
+    </PublicPage>
   );
 }
