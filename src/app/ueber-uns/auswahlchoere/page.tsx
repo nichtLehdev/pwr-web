@@ -47,7 +47,6 @@ export default async function AuswahlchoerePage() {
           key={ensemble.name}
           id={ensemble.slug}
           labelledBy={`${ensemble.slug}-heading`}
-          flush={index === 0 ? "top" : undefined}
           rule={index > 0}
           className="scroll-mt-24"
         >
@@ -76,21 +75,28 @@ export default async function AuswahlchoerePage() {
                     </span>
                   ) : null}
                 </p>
+                {/* Das Bild gehört in den Kopf, nicht in den Inhalt: Sonst
+                    endet die Kopfspalte nach Name, Untertitel und Angaben und
+                    läuft neben Text und Terminen mehrere hundert Pixel leer
+                    mit — auf dieser Seite waren das bis zu 629px. Mit dem Bild
+                    trägt sie eigene Höhe. So bleiben die zwei alternierenden
+                    Spalten erhalten und die tote Fläche verschwindet, statt
+                    dass der Abschnitt zu einer einzigen Spalte gestapelt
+                    wird. */}
+                <div className="bg-ink dark:bg-night-raised relative mt-8 aspect-[3/2] max-w-xl overflow-hidden">
+                  <ImageWithFallback
+                    src={ensemble.image?.url}
+                    alt={`Ein Bild des Ensembles ${ensemble.name}`}
+                    fill
+                    priority={index < 2}
+                    sizes="(min-width: 1024px) 30vw, 100vw"
+                    className="object-cover"
+                  />
+                </div>
               </>
             }
             bodyClassName="mt-8 space-y-10"
           >
-            <div className="bg-ink dark:bg-night-raised relative aspect-[3/2] max-w-xl overflow-hidden">
-              <ImageWithFallback
-                src={ensemble.image?.url}
-                alt={`Ein Bild des Ensembles ${ensemble.name}`}
-                fill
-                priority={index < 2}
-                sizes="(min-width: 1024px) 40vw, 100vw"
-                className="object-cover"
-              />
-            </div>
-
             <p className="text-ink dark:text-night-text max-w-[65ch] text-lg leading-relaxed">
               {ensemble.description}
             </p>
