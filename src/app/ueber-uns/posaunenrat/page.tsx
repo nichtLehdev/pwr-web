@@ -106,6 +106,7 @@ export default async function PosaunenratPage() {
       {/* Zusammensetzung */}
       <PageSection labelledBy="zusammensetzung-heading">
         <Split
+          stickyHead
           head={
             <Heading
               id="zusammensetzung-heading"
