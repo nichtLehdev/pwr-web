@@ -72,12 +72,23 @@ const DISCOUNT_TAG: Partial<
 };
 
 /** Auswahl-Schaltfläche wie die Register-Reihe im Filter: gefüllt, wenn aktiv. */
+/**
+ * Statusfilter als Register, wie die Bereichswahl in den Einstellungen: Beide
+ * tun dasselbe — eins aus N über einer einzigen Liste wählen — und sahen
+ * bisher völlig verschieden aus (Kasten mit 2px-Rahmen gegen Register mit
+ * Unterstrich). Die Kastenform bleibt den Werkzeugleisten auf Termine und
+ * Aktuelles vorbehalten, wo ungleichartige Bedienelemente nebeneinander
+ * stehen und sich voneinander absetzen müssen.
+ *
+ * `aria-pressed` bleibt: Hier wird gefiltert, nicht navigiert — nur das
+ * Aussehen wird angeglichen, nicht die Bedeutung.
+ */
 function choiceButtonClass(active: boolean) {
   return cn(
-    "semi-condensed inline-flex min-h-11 items-center justify-center gap-2 border-2 px-4 text-sm font-semibold transition-colors",
+    "semi-condensed inline-flex shrink-0 items-center gap-2 border-b-[3px] px-3 py-3 text-[1.0625rem] font-semibold whitespace-nowrap transition-colors",
     active
-      ? "bg-ink text-paper border-ink dark:bg-night-text dark:text-night dark:border-night-text"
-      : "border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night",
+      ? "border-primary text-ink dark:text-night-text"
+      : "text-dark hover:border-ink hover:text-ink dark:text-night-muted dark:hover:border-night-text dark:hover:text-night-text border-transparent",
   );
 }
 
@@ -250,7 +261,7 @@ export default function MyRegistrationsPage() {
         <div
           role="group"
           aria-label="Nach Status filtern"
-          className="flex flex-wrap gap-2"
+          className="border-ink dark:border-night-text -mx-1 flex gap-1 overflow-x-auto border-b-2 px-1 sm:gap-2"
         >
           <button
             type="button"
