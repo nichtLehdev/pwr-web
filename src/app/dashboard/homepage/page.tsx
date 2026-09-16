@@ -18,6 +18,7 @@ import {
   ScrollableModalBody,
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
+import { Tag } from "@/app/_components/programmheft/tag";
 
 export default function DashboardHomepagePage() {
   const { data: session, isPending } = useSession();
@@ -211,8 +212,8 @@ export default function DashboardHomepagePage() {
 
   if (isPending || profileLoading || isLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
@@ -248,7 +249,7 @@ export default function DashboardHomepagePage() {
               setCustomSubtitle("");
             }}
             disabled={items && items.length >= 5}
-            className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+            className="bg-primary hover:bg-primary-dark text-ink semi-condensed inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Plus className="h-4 w-4" />
             Neues Element
@@ -261,13 +262,13 @@ export default function DashboardHomepagePage() {
             {items.map((item, index) => (
               <div
                 key={item.id}
-                className={`dark:bg-dark-surface dark:border-dark-border rounded-lg border border-gray-200 bg-white p-4 ${
+                className={`border-rule dark:border-night-rule bg-paper dark:bg-night border p-4 ${
                   !item.isActive ? "opacity-60" : ""
                 }`}
               >
                 <div className="flex items-start gap-4">
                   {/* Image Preview */}
-                  <div className="relative h-24 w-32 shrink-0 overflow-hidden rounded-lg bg-gray-100">
+                  <div className="bg-rule/25 dark:bg-night-raised relative h-24 w-32 shrink-0 overflow-hidden">
                     {item.media.mimeType.startsWith("image/") ? (
                       <Image
                         src={item.media.url}
@@ -277,7 +278,7 @@ export default function DashboardHomepagePage() {
                       />
                     ) : (
                       <div className="flex h-full items-center justify-center">
-                        <ImageIcon className="h-8 w-8 text-gray-400" />
+                        <ImageIcon className="text-dark dark:text-night-muted h-8 w-8" />
                       </div>
                     )}
                   </div>
@@ -287,19 +288,18 @@ export default function DashboardHomepagePage() {
                     <div className="flex items-start justify-between">
                       <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="dark:text-dark-text font-semibold text-gray-900">
+                          <h3 className="text-ink dark:text-night-text font-semibold">
                             {item.title || "Standard-Titel"}
                           </h3>
-                          {!item.isActive && (
-                            <span className="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-300">
-                              Inaktiv
-                            </span>
-                          )}
+                          {/* Umrandet, nicht gefüllt: „Inaktiv" ist ein
+                              Ruhezustand und verlangt nichts — gefüllt stand
+                              es so laut wie ein aktiver Eintrag. */}
+                          {!item.isActive && <Tag tone="muted">Inaktiv</Tag>}
                         </div>
-                        <p className="dark:text-dark-muted mt-1 text-sm text-gray-600">
+                        <p className="text-dark dark:text-night-muted mt-1 text-sm">
                           {item.subtitle || "Standard-Untertitel"}
                         </p>
-                        <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                        <p className="text-dark dark:text-night-muted mt-1 text-xs">
                           Bild: {item.media.name}
                         </p>
                       </div>
@@ -312,7 +312,7 @@ export default function DashboardHomepagePage() {
                       <button
                         onClick={() => handleMoveUp(index)}
                         disabled={index === 0 || reorderMutation.isPending}
-                        className="dark:bg-dark-background dark:hover:bg-dark-border rounded p-1 text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+                        className="text-dark hover:bg-rule/60 hover:text-ink dark:text-night-muted dark:hover:bg-night-rule dark:hover:text-night-text p-1 disabled:opacity-50"
                         title="Nach oben"
                       >
                         ↑
@@ -323,7 +323,7 @@ export default function DashboardHomepagePage() {
                           index === items.length - 1 ||
                           reorderMutation.isPending
                         }
-                        className="dark:bg-dark-background dark:hover:bg-dark-border rounded p-1 text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+                        className="text-dark hover:bg-rule/60 hover:text-ink dark:text-night-muted dark:hover:bg-night-rule dark:hover:text-night-text p-1 disabled:opacity-50"
                         title="Nach unten"
                       >
                         ↓
@@ -332,14 +332,14 @@ export default function DashboardHomepagePage() {
                     <div className="flex gap-1">
                       <button
                         onClick={() => handleEdit(item.id)}
-                        className="dark:bg-dark-background dark:hover:bg-dark-border rounded p-1.5 text-gray-600 hover:bg-gray-100"
+                        className="text-dark hover:bg-rule/60 hover:text-ink dark:text-night-muted dark:hover:bg-night-rule dark:hover:text-night-text p-1.5"
                         title="Bearbeiten"
                       >
                         <Edit className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => setShowDeleteModal(item.id)}
-                        className="dark:bg-dark-background dark:hover:bg-dark-border rounded p-1.5 text-red-600 hover:bg-red-50"
+                        className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                         title="Löschen"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -347,10 +347,10 @@ export default function DashboardHomepagePage() {
                     </div>
                     <button
                       onClick={() => handleToggleActive(item)}
-                      className={`rounded px-2 py-1 text-xs ${
+                      className={`border px-2 py-1 text-xs font-medium ${
                         item.isActive
-                          ? "bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400"
-                          : "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
+                          ? "border-green-700 text-green-700 dark:border-green-400 dark:text-green-400"
+                          : "border-rule dark:border-night-rule text-dark dark:text-night-muted"
                       }`}
                     >
                       {item.isActive ? "Aktiv" : "Inaktiv"}
@@ -361,12 +361,12 @@ export default function DashboardHomepagePage() {
             ))}
           </div>
         ) : (
-          <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg border border-gray-200 bg-white p-12 text-center">
-            <ImageIcon className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="dark:text-dark-text mt-4 text-lg font-semibold text-gray-900">
+          <div className="border-rule dark:border-night-rule border p-12 text-center">
+            <ImageIcon className="text-dark dark:text-night-muted mx-auto h-12 w-12" />
+            <h3 className="text-ink dark:text-night-text mt-4 text-lg font-semibold">
               Keine Carousel-Elemente
             </h3>
-            <p className="dark:text-dark-muted mt-2 text-gray-600">
+            <p className="text-dark dark:text-night-muted mt-2">
               Füge das erste Element hinzu, um die Homepage zu personalisieren
             </p>
           </div>
@@ -378,7 +378,7 @@ export default function DashboardHomepagePage() {
             <ScrollableModalCard maxW="2xl">
               <ScrollableModalHeader>
                 <div className="flex items-center justify-between">
-                  <h2 className="dark:text-dark-text text-xl font-semibold text-gray-900">
+                  <h2 className="text-ink dark:text-night-text text-xl font-semibold">
                     Neues Carousel-Element
                   </h2>
                   <button
@@ -389,7 +389,7 @@ export default function DashboardHomepagePage() {
                       setCustomTitle("");
                       setCustomSubtitle("");
                     }}
-                    className="dark:text-dark-text text-gray-400 hover:text-gray-600"
+                    className="text-dark hover:text-ink dark:text-night-muted dark:hover:text-night-text"
                   >
                     <X className="h-5 w-5" />
                   </button>
@@ -398,12 +398,12 @@ export default function DashboardHomepagePage() {
               <ScrollableModalBody className="space-y-4">
                 {/* Media Selection */}
                 <div>
-                  <label className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700">
+                  <label className="text-ink dark:text-night-text mb-2 block text-sm font-medium">
                     Bild *
                   </label>
                   {selectedMediaUrl ? (
                     <div className="relative">
-                      <div className="relative h-48 w-full overflow-hidden rounded-lg bg-gray-100">
+                      <div className="bg-rule/25 dark:bg-night-raised relative h-48 w-full overflow-hidden">
                         <Image
                           src={selectedMediaUrl}
                           alt="Selected"
@@ -416,7 +416,7 @@ export default function DashboardHomepagePage() {
                           setSelectedMediaId(null);
                           setSelectedMediaUrl(null);
                         }}
-                        className="dark:bg-dark-background dark:hover:bg-dark-border mt-2 rounded bg-gray-100 px-3 py-1 text-sm text-gray-700 hover:bg-gray-200"
+                        className="dark:bg-night-raised dark:hover:bg-night-rule text-ink dark:text-night-text bg-rule/40 hover:bg-rule/60 mt-2 px-3 py-1 text-sm"
                       >
                         Bild ändern
                       </button>
@@ -424,10 +424,10 @@ export default function DashboardHomepagePage() {
                   ) : (
                     <button
                       onClick={() => setShowMediaPicker(true)}
-                      className="dark:bg-dark-background dark:border-dark-border dark:hover:bg-dark-border hover:border-primary w-full rounded-lg border-2 border-dashed border-gray-300 p-8 text-center"
+                      className="border-ink dark:border-night-text hover:bg-rule/25 dark:hover:bg-night-raised hover:border-primary w-full border-2 border-dashed p-8 text-center"
                     >
-                      <ImageIcon className="mx-auto h-12 w-12 text-gray-400" />
-                      <p className="dark:text-dark-text mt-2 text-sm font-medium text-gray-700">
+                      <ImageIcon className="text-dark dark:text-night-muted mx-auto h-12 w-12" />
+                      <p className="text-ink dark:text-night-text mt-2 text-sm font-medium">
                         Bild auswählen
                       </p>
                     </button>
@@ -436,7 +436,7 @@ export default function DashboardHomepagePage() {
 
                 {/* Custom Title */}
                 <div>
-                  <label className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700">
+                  <label className="text-ink dark:text-night-text mb-2 block text-sm font-medium">
                     Titel (optional)
                   </label>
                   <input
@@ -444,16 +444,16 @@ export default function DashboardHomepagePage() {
                     value={customTitle}
                     onChange={(e) => setCustomTitle(e.target.value)}
                     placeholder="Posaunenwerk Rheinland"
-                    className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text w-full rounded-lg border border-gray-300 px-4 py-2"
+                    className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper w-full border px-4 py-2"
                   />
-                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                  <p className="text-dark dark:text-night-muted mt-1 text-xs">
                     Leer lassen für Standard-Titel
                   </p>
                 </div>
 
                 {/* Custom Subtitle */}
                 <div>
-                  <label className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700">
+                  <label className="text-ink dark:text-night-text mb-2 block text-sm font-medium">
                     Untertitel (optional)
                   </label>
                   <input
@@ -461,9 +461,9 @@ export default function DashboardHomepagePage() {
                     value={customSubtitle}
                     onChange={(e) => setCustomSubtitle(e.target.value)}
                     placeholder="Gemeinsam Musik machen, Glauben leben"
-                    className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text w-full rounded-lg border border-gray-300 px-4 py-2"
+                    className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper w-full border px-4 py-2"
                   />
-                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                  <p className="text-dark dark:text-night-muted mt-1 text-xs">
                     Leer lassen für Standard-Untertitel
                   </p>
                 </div>
@@ -478,14 +478,14 @@ export default function DashboardHomepagePage() {
                       setCustomTitle("");
                       setCustomSubtitle("");
                     }}
-                    className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-100"
+                    className="border-ink dark:border-night-text text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised min-h-11 border px-4 py-2"
                   >
                     Abbrechen
                   </button>
                   <button
                     onClick={handleAdd}
                     disabled={!selectedMediaId || createMutation.isPending}
-                    className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-white disabled:opacity-50"
+                    className="bg-primary hover:bg-primary-dark text-ink min-h-11 px-4 py-2 font-semibold disabled:opacity-50"
                   >
                     {createMutation.isPending
                       ? "Wird hinzugefügt..."
@@ -503,7 +503,7 @@ export default function DashboardHomepagePage() {
             <ScrollableModalCard maxW="2xl">
               <ScrollableModalHeader>
                 <div className="flex items-center justify-between">
-                  <h2 className="dark:text-dark-text text-xl font-semibold text-gray-900">
+                  <h2 className="text-ink dark:text-night-text text-xl font-semibold">
                     Carousel-Element bearbeiten
                   </h2>
                   <button
@@ -514,7 +514,7 @@ export default function DashboardHomepagePage() {
                       setCustomTitle("");
                       setCustomSubtitle("");
                     }}
-                    className="dark:text-dark-text text-gray-400 hover:text-gray-600"
+                    className="text-dark hover:text-ink dark:text-night-muted dark:hover:text-night-text"
                   >
                     <X className="h-5 w-5" />
                   </button>
@@ -523,12 +523,12 @@ export default function DashboardHomepagePage() {
               <ScrollableModalBody className="space-y-4">
                 {/* Media Selection */}
                 <div>
-                  <label className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700">
+                  <label className="text-ink dark:text-night-text mb-2 block text-sm font-medium">
                     Bild *
                   </label>
                   {selectedMediaUrl ? (
                     <div className="relative">
-                      <div className="relative h-48 w-full overflow-hidden rounded-lg bg-gray-100">
+                      <div className="bg-rule/25 dark:bg-night-raised relative h-48 w-full overflow-hidden">
                         <Image
                           src={selectedMediaUrl}
                           alt="Selected"
@@ -538,7 +538,7 @@ export default function DashboardHomepagePage() {
                       </div>
                       <button
                         onClick={() => setShowMediaPicker(true)}
-                        className="dark:bg-dark-background dark:hover:bg-dark-border mt-2 rounded bg-gray-100 px-3 py-1 text-sm text-gray-700 hover:bg-gray-200"
+                        className="dark:bg-night-raised dark:hover:bg-night-rule text-ink dark:text-night-text bg-rule/40 hover:bg-rule/60 mt-2 px-3 py-1 text-sm"
                       >
                         Bild ändern
                       </button>
@@ -546,10 +546,10 @@ export default function DashboardHomepagePage() {
                   ) : (
                     <button
                       onClick={() => setShowMediaPicker(true)}
-                      className="dark:bg-dark-background dark:border-dark-border dark:hover:bg-dark-border hover:border-primary w-full rounded-lg border-2 border-dashed border-gray-300 p-8 text-center"
+                      className="border-ink dark:border-night-text hover:bg-rule/25 dark:hover:bg-night-raised hover:border-primary w-full border-2 border-dashed p-8 text-center"
                     >
-                      <ImageIcon className="mx-auto h-12 w-12 text-gray-400" />
-                      <p className="dark:text-dark-text mt-2 text-sm font-medium text-gray-700">
+                      <ImageIcon className="text-dark dark:text-night-muted mx-auto h-12 w-12" />
+                      <p className="text-ink dark:text-night-text mt-2 text-sm font-medium">
                         Bild auswählen
                       </p>
                     </button>
@@ -558,7 +558,7 @@ export default function DashboardHomepagePage() {
 
                 {/* Custom Title */}
                 <div>
-                  <label className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700">
+                  <label className="text-ink dark:text-night-text mb-2 block text-sm font-medium">
                     Titel (optional)
                   </label>
                   <input
@@ -566,16 +566,16 @@ export default function DashboardHomepagePage() {
                     value={customTitle}
                     onChange={(e) => setCustomTitle(e.target.value)}
                     placeholder="Posaunenwerk Rheinland"
-                    className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text w-full rounded-lg border border-gray-300 px-4 py-2"
+                    className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper w-full border px-4 py-2"
                   />
-                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                  <p className="text-dark dark:text-night-muted mt-1 text-xs">
                     Leer lassen für Standard-Titel
                   </p>
                 </div>
 
                 {/* Custom Subtitle */}
                 <div>
-                  <label className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700">
+                  <label className="text-ink dark:text-night-text mb-2 block text-sm font-medium">
                     Untertitel (optional)
                   </label>
                   <input
@@ -583,9 +583,9 @@ export default function DashboardHomepagePage() {
                     value={customSubtitle}
                     onChange={(e) => setCustomSubtitle(e.target.value)}
                     placeholder="Gemeinsam Musik machen, Glauben leben"
-                    className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text w-full rounded-lg border border-gray-300 px-4 py-2"
+                    className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper w-full border px-4 py-2"
                   />
-                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                  <p className="text-dark dark:text-night-muted mt-1 text-xs">
                     Leer lassen für Standard-Untertitel
                   </p>
                 </div>
@@ -600,14 +600,14 @@ export default function DashboardHomepagePage() {
                       setCustomTitle("");
                       setCustomSubtitle("");
                     }}
-                    className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-100"
+                    className="border-ink dark:border-night-text text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised min-h-11 border px-4 py-2"
                   >
                     Abbrechen
                   </button>
                   <button
                     onClick={handleUpdate}
                     disabled={!selectedMediaId || updateMutation.isPending}
-                    className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-white disabled:opacity-50"
+                    className="bg-primary hover:bg-primary-dark text-ink min-h-11 px-4 py-2 font-semibold disabled:opacity-50"
                   >
                     {updateMutation.isPending
                       ? "Wird gespeichert..."
@@ -624,10 +624,10 @@ export default function DashboardHomepagePage() {
           <ScrollableModal>
             <ScrollableModalCard maxW="md">
               <ScrollableModalBody>
-                <h2 className="dark:text-dark-text mb-4 text-xl font-semibold text-gray-900">
+                <h2 className="text-ink dark:text-night-text mb-4 text-xl font-semibold">
                   Element löschen?
                 </h2>
-                <p className="dark:text-dark-muted mb-6 text-gray-600">
+                <p className="text-dark dark:text-night-muted mb-6">
                   Möchtest du dieses Carousel-Element wirklich löschen? Diese
                   Aktion kann nicht rückgängig gemacht werden.
                 </p>
@@ -636,14 +636,14 @@ export default function DashboardHomepagePage() {
                 <div className="flex justify-end gap-3">
                   <button
                     onClick={() => setShowDeleteModal(null)}
-                    className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-100"
+                    className="border-ink dark:border-night-text text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised min-h-11 border px-4 py-2"
                   >
                     Abbrechen
                   </button>
                   <button
                     onClick={() => handleDelete(showDeleteModal)}
                     disabled={deleteMutation.isPending}
-                    className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-50"
+                    className="min-h-11 bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-50"
                   >
                     {deleteMutation.isPending ? "Wird gelöscht..." : "Löschen"}
                   </button>
