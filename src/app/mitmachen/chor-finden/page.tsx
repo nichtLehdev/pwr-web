@@ -197,10 +197,13 @@ function ChorFindenContent() {
   const bezirkPathStyle = (bezirkNumber: number) => ({
     opacity:
       selectedBezirk !== null && selectedBezirk !== bezirkNumber ? 0.1 : 1,
+    // Die Fläche ist über .bezirk-path standardmäßig ein Tonwert (45 %); der
+    // ausgewählte Bezirk hebt sich davon in voller Sättigung ab.
+    fillOpacity: selectedBezirk === bezirkNumber ? 1 : undefined,
     pointerEvents: (selectedBezirk !== null && selectedBezirk !== bezirkNumber
       ? "none"
       : "auto") as CSSProperties["pointerEvents"],
-    transition: "opacity 0.3s ease",
+    transition: "opacity 0.3s ease, fill-opacity 0.3s ease",
   });
 
   const filteredChoirs = useMemo(() => {

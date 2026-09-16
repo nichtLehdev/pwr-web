@@ -64,13 +64,13 @@ function BezirkeMap({ bezirke }: { bezirke: Bezirk[] }) {
         <style>{`
           .bezirk-path {
             cursor: pointer;
-            transition: all 0.3s ease;
-            stroke: #333;
-            stroke-width: 2px;
+            transition:
+              fill-opacity 0.3s ease,
+              stroke-width 0.3s ease;
           }
           .bezirk-path:hover {
-            filter: brightness(1.2);
-            stroke-width: 3px;
+            fill-opacity: 0.85;
+            stroke-width: 2px;
           }
         `}</style>
 
