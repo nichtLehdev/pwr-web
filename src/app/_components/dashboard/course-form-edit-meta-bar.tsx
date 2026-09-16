@@ -36,27 +36,27 @@ export function CourseFormEditMetaBar({
 
   return (
     <div
-      className="dark:border-dark-border dark:from-dark-surface dark:via-dark-background dark:to-primary/15 mb-8 flex flex-col gap-4 rounded-2xl border border-gray-200/90 bg-linear-to-br from-white via-gray-50/40 to-emerald-50/30 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6"
+      className="border-rule dark:border-night-rule bg-rule/25 dark:bg-night-raised mb-8 flex flex-col gap-4 border px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6"
       role="region"
       aria-label="Kurskontext"
     >
-      <div className="flex items-start gap-2.5 text-sm text-gray-600 dark:text-gray-300">
+      <div className="text-dark dark:text-night-muted flex items-start gap-2.5 text-sm">
         <CalendarDays
-          className="text-primary mt-0.5 h-4 w-4 shrink-0 opacity-90"
+          className="text-primary-ink dark:text-primary mt-0.5 h-4 w-4 shrink-0"
           aria-hidden
         />
         {rangeLabel ? (
-          <span className="font-medium">{rangeLabel}</span>
-        ) : (
-          <span className="text-gray-400 dark:text-gray-500">
-            Termin ergänzen, um die Zeitspanne hier zu sehen
+          <span className="text-ink dark:text-night-text font-medium">
+            {rangeLabel}
           </span>
+        ) : (
+          <span>Termin ergänzen, um die Zeitspanne hier zu sehen</span>
         )}
       </div>
       <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm">
         <Link
           href={`/dashboard/courses/${courseId}`}
-          className="text-dark dark:text-dark-text font-medium underline-offset-4 hover:underline"
+          className="text-ink dark:text-night-text inline-flex min-h-11 items-center font-medium underline-offset-4 hover:underline"
         >
           Zur Kursübersicht
         </Link>
@@ -64,10 +64,12 @@ export function CourseFormEditMetaBar({
           href={`/mitmachen/kurse/${courseId}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-primary inline-flex items-center gap-1 font-semibold underline-offset-4 hover:underline"
+          // Orange als Textfarbe fällt auf Papier unter AA — Messing-Tinte
+          // trägt denselben Akzent (nachts darf Orange selbst stehen).
+          className="text-primary-ink dark:text-primary inline-flex min-h-11 items-center gap-1 font-semibold underline-offset-4 hover:underline"
         >
           Öffentliche Seite
-          <ExternalLink className="h-3.5 w-3.5 opacity-90" aria-hidden />
+          <ExternalLink className="h-3.5 w-3.5" aria-hidden />
         </Link>
       </div>
     </div>

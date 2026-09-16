@@ -8,10 +8,11 @@ import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
 import { PERMISSIONS } from "@/lib/permissions";
-import { getErrorMessage } from "@/lib/utils";
+import { cn, getErrorMessage } from "@/lib/utils";
 import { useToast } from "@/app/_components/ui/toast";
 import { DashboardPage } from "@/app/_components/dashboard";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
+import { fieldControlClasses } from "@/app/_components/programmheft/field";
 import { User } from "lucide-react";
 
 const UserPlaceholderIcon = ({ className }: { className?: string }) => (
@@ -305,23 +306,20 @@ export default function EditUserPage() {
 
   if (sessionLoading || profileLoading || userLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="dark:bg-night bg-paper flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
 
   if (!session || !user) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="dark:bg-night bg-paper flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <h1 className="dark:text-dark-text text-xl font-semibold text-gray-900">
+          <h1 className="text-ink dark:text-night-text text-xl font-semibold">
             Benutzer nicht gefunden
           </h1>
-          <Link
-            href="/dashboard/users"
-            className="text-primary mt-4 inline-block hover:underline"
-          >
+          <Link href="/dashboard/users" className="link-ink mt-4 inline-block">
             Zurück zur Übersicht
           </Link>
         </div>
@@ -348,7 +346,7 @@ export default function EditUserPage() {
       >
         {/* Error Message */}
         {error && (
-          <div className="mb-6 rounded-lg bg-red-50 p-4 text-red-700 dark:bg-red-900/20 dark:text-red-400">
+          <div className="mb-6 border-2 border-red-700 p-4 text-red-700 dark:border-red-400 dark:text-red-400">
             {error}
           </div>
         )}
@@ -356,8 +354,8 @@ export default function EditUserPage() {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Profile Image */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+          <section className="border-rule dark:border-night-rule border p-6">
+            <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
               Profilbild
             </h2>
             <div className="flex items-center gap-6">
@@ -371,15 +369,15 @@ export default function EditUserPage() {
                   />
                 </div>
               ) : (
-                <div className="dark:bg-dark-background-secondary flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-gray-100">
-                  <UserPlaceholderIcon className="dark:text-dark-muted h-12 w-12 text-gray-400" />
+                <div className="bg-rule/60 dark:bg-night-raised flex h-24 w-24 shrink-0 items-center justify-center rounded-full">
+                  <UserPlaceholderIcon className="text-dark dark:text-night-muted h-12 w-12" />
                 </div>
               )}
               <div className="flex flex-col gap-2">
                 <button
                   type="button"
                   onClick={() => setIsMediaPickerOpen(true)}
-                  className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors"
+                  className="on-orange bg-primary text-ink hover:bg-primary-dark inline-flex min-h-11 items-center justify-center px-4 py-2 text-sm font-semibold transition-colors"
                 >
                   {profileImageUrl ? "Bild ändern" : "Bild auswählen"}
                 </button>
@@ -390,7 +388,7 @@ export default function EditUserPage() {
                       setProfileImageId(null);
                       setProfileImageUrl(null);
                     }}
-                    className="rounded-lg px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                    className="inline-flex min-h-11 items-center justify-center px-4 py-2 text-sm font-semibold text-red-700 underline decoration-1 underline-offset-4 transition-colors hover:bg-red-50 hover:decoration-2 dark:text-red-400 dark:hover:bg-red-900/20"
                   >
                     Bild entfernen
                   </button>
@@ -400,13 +398,13 @@ export default function EditUserPage() {
           </section>
 
           {/* Basic Info */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+          <section className="border-rule dark:border-night-rule border p-6">
+            <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
               Grundinformationen
             </h2>
             <div className="space-y-4">
               <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                <label className="text-ink dark:text-night-text mb-1 block text-sm font-semibold">
                   Anzeigename
                 </label>
                 <input
@@ -415,26 +413,32 @@ export default function EditUserPage() {
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Vollständiger Name"
                   maxLength={100}
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+                  className={fieldControlClasses}
                 />
               </div>
 
               <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  E-Mail *
+                <label className="text-ink dark:text-night-text mb-1 block text-sm font-semibold">
+                  E-Mail{" "}
+                  <span
+                    aria-hidden
+                    className="text-primary-ink dark:text-primary"
+                  >
+                    *
+                  </span>
                 </label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="email@example.com"
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+                  className={fieldControlClasses}
                   required
                 />
               </div>
 
               <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                <label className="text-ink dark:text-night-text mb-1 block text-sm font-semibold">
                   Benutzername
                 </label>
                 <input
@@ -446,22 +450,23 @@ export default function EditUserPage() {
                   maxLength={30}
                   pattern="[a-zA-Z0-9_.-]+"
                   title="Nur Buchstaben, Zahlen, Unterstrich, Bindestrich und Punkt erlaubt"
-                  className={`focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none ${
+                  className={cn(
+                    fieldControlClasses,
                     usernameStatus.available === true
-                      ? "border-green-500"
+                      ? "border-green-600! dark:border-green-400!"
                       : usernameStatus.available === false
-                        ? "border-red-500"
-                        : "border-gray-300"
-                  }`}
+                        ? "border-red-700! dark:border-red-400!"
+                        : undefined,
+                  )}
                 />
                 {usernameStatus.message ? (
                   <p
                     className={`mt-1 flex items-center gap-1 text-xs ${
                       usernameStatus.checking
-                        ? "text-gray-500 dark:text-gray-400"
+                        ? "text-dark dark:text-night-muted"
                         : usernameStatus.available
                           ? "text-green-600 dark:text-green-400"
-                          : "text-red-600 dark:text-red-400"
+                          : "text-red-700 dark:text-red-400"
                     }`}
                   >
                     {usernameStatus.checking && (
@@ -470,14 +475,14 @@ export default function EditUserPage() {
                     {usernameStatus.message}
                   </p>
                 ) : (
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-dark dark:text-night-muted mt-1 text-xs">
                     Kann für die Anmeldung verwendet werden
                   </p>
                 )}
               </div>
 
               <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                <label className="text-ink dark:text-night-text mb-1 block text-sm font-semibold">
                   Bio
                 </label>
                 <textarea
@@ -486,12 +491,12 @@ export default function EditUserPage() {
                   rows={3}
                   placeholder="Kurze Beschreibung..."
                   maxLength={2000}
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+                  className={fieldControlClasses}
                 />
               </div>
 
               <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                <label className="text-ink dark:text-night-text mb-1 block text-sm font-semibold">
                   Telefonnummer
                 </label>
                 <input
@@ -500,20 +505,20 @@ export default function EditUserPage() {
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+49 123 456789"
                   maxLength={50}
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+                  className={fieldControlClasses}
                 />
               </div>
             </div>
           </section>
 
           {/* Address */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+          <section className="border-rule dark:border-night-rule border p-6">
+            <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
               Adresse
             </h2>
             <div className="space-y-4">
               <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                <label className="text-ink dark:text-night-text mb-1 block text-sm font-semibold">
                   Straße und Hausnummer
                 </label>
                 <input
@@ -522,13 +527,13 @@ export default function EditUserPage() {
                   onChange={(e) => setStreet(e.target.value)}
                   placeholder="Musterstraße 1"
                   maxLength={200}
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+                  className={fieldControlClasses}
                 />
               </div>
 
               <div className="grid gap-4 md:grid-cols-3">
                 <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                  <label className="text-ink dark:text-night-text mb-1 block text-sm font-semibold">
                     PLZ
                   </label>
                   <input
@@ -537,12 +542,12 @@ export default function EditUserPage() {
                     onChange={(e) => setZipCode(e.target.value)}
                     placeholder="12345"
                     maxLength={20}
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+                    className={fieldControlClasses}
                   />
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                  <label className="text-ink dark:text-night-text mb-1 block text-sm font-semibold">
                     Stadt
                   </label>
                   <input
@@ -551,16 +556,16 @@ export default function EditUserPage() {
                     onChange={(e) => setCity(e.target.value)}
                     placeholder="Musterstadt"
                     maxLength={100}
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+                    className={fieldControlClasses}
                   />
                 </div>
               </div>
 
-              <div className="dark:border-dark-border mt-4 space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:bg-gray-800/30">
-                <p className="dark:text-dark-text text-sm font-medium text-gray-900">
+              <div className="border-rule dark:border-night-rule bg-rule/25 dark:bg-night-raised mt-4 space-y-3 border p-4">
+                <p className="text-ink dark:text-night-text text-sm font-semibold">
                   Öffentliche Sichtbarkeit
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-dark dark:text-night-muted text-xs">
                   Ob Adresse und Telefon auf öffentlichen Seiten (z. B.
                   Vorstand, Bezirke) angezeigt werden.
                 </p>
@@ -570,11 +575,11 @@ export default function EditUserPage() {
                     type="checkbox"
                     checked={showAddressPublicly}
                     onChange={(e) => setShowAddressPublicly(e.target.checked)}
-                    className="focus:ring-primary text-primary h-4 w-4 rounded border-gray-300 focus:ring-2"
+                    className="border-ink checked:bg-ink dark:border-night-text dark:checked:bg-night-text bg-paper dark:bg-night h-5 w-5 shrink-0 cursor-pointer appearance-none border-2"
                   />
                   <label
                     htmlFor="edit-showAddressPublicly"
-                    className="dark:text-dark-text cursor-pointer text-sm text-gray-700"
+                    className="text-ink dark:text-night-text cursor-pointer text-sm"
                   >
                     Adresse anzeigen
                   </label>
@@ -585,11 +590,11 @@ export default function EditUserPage() {
                     type="checkbox"
                     checked={showPhonePublicly}
                     onChange={(e) => setShowPhonePublicly(e.target.checked)}
-                    className="focus:ring-primary text-primary h-4 w-4 rounded border-gray-300 focus:ring-2"
+                    className="border-ink checked:bg-ink dark:border-night-text dark:checked:bg-night-text bg-paper dark:bg-night h-5 w-5 shrink-0 cursor-pointer appearance-none border-2"
                   />
                   <label
                     htmlFor="edit-showPhonePublicly"
-                    className="dark:text-dark-text cursor-pointer text-sm text-gray-700"
+                    className="text-ink dark:text-night-text cursor-pointer text-sm"
                   >
                     Telefonnummer anzeigen
                   </label>
@@ -598,11 +603,11 @@ export default function EditUserPage() {
             </div>
           </section>
 
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-1 text-lg font-semibold text-gray-900">
+          <section className="border-rule dark:border-night-rule border p-6">
+            <h2 className="condensed text-ink dark:text-night-text mb-1 text-lg font-bold">
               Bezirkszugehörigkeit
             </h2>
-            <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-dark dark:text-night-muted mb-4 text-sm">
               Zu welchem Bezirk gehört diese Person, und in welchem Amt? Beides
               erscheint auf den öffentlichen Seiten. Wer nur Inhalte für einen
               Bezirk pflegen soll, braucht hier nichts — dafür ist die
@@ -612,7 +617,7 @@ export default function EditUserPage() {
               <div>
                 <label
                   htmlFor="edit-bezirk"
-                  className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700"
+                  className="text-ink dark:text-night-text mb-1 block text-sm font-semibold"
                 >
                   Bezirk
                 </label>
@@ -620,7 +625,7 @@ export default function EditUserPage() {
                   id="edit-bezirk"
                   value={bezirkId}
                   onChange={(e) => setBezirkId(e.target.value)}
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+                  className={fieldControlClasses}
                 >
                   <option value="">Keinem Bezirk zugeordnet</option>
                   {bezirke?.map((bezirk) => (
@@ -634,7 +639,7 @@ export default function EditUserPage() {
               <div>
                 <label
                   htmlFor="edit-districtRoleName"
-                  className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700"
+                  className="text-ink dark:text-night-text mb-1 block text-sm font-semibold"
                 >
                   Amtsbezeichnung
                 </label>
@@ -645,9 +650,9 @@ export default function EditUserPage() {
                   onChange={(e) => setDistrictRoleName(e.target.value)}
                   placeholder="z. B. Bezirksobmann"
                   maxLength={100}
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+                  className={fieldControlClasses}
                 />
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-dark dark:text-night-muted mt-1 text-xs">
                   Wird als Bezeichnung angezeigt, wo die Person öffentlich
                   auftaucht.
                 </p>
@@ -656,11 +661,11 @@ export default function EditUserPage() {
           </section>
 
           {canEditRoles && (
-            <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="dark:text-dark-text mb-1 text-lg font-semibold text-gray-900">
+            <section className="border-rule dark:border-night-rule border p-6">
+              <h2 className="condensed text-ink dark:text-night-text mb-1 text-lg font-bold">
                 Zuständigkeit für Bezirke
               </h2>
-              <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-dark dark:text-night-muted mb-4 text-sm">
                 Für welche Bezirke darf dieser Benutzer Termine, Beiträge und
                 Kurse anlegen? Das ist unabhängig davon, ob er Obmann oder
                 Obfrau ist — auch eine einmalige Ausnahme lässt sich hier
@@ -672,22 +677,22 @@ export default function EditUserPage() {
                 {bezirke?.map((bezirk) => (
                   <label
                     key={bezirk.id}
-                    className="dark:border-dark-border flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 px-3 py-2"
+                    className="border-rule dark:border-night-rule flex min-h-11 cursor-pointer items-center gap-3 border px-3 py-2"
                   >
                     <input
                       type="checkbox"
                       checked={bezirkScopeIds.includes(bezirk.id)}
                       onChange={() => toggleBezirkScope(bezirk.id)}
-                      className="focus:ring-primary text-primary h-4 w-4 rounded border-gray-300 focus:ring-2"
+                      className="border-ink checked:bg-ink dark:border-night-text dark:checked:bg-night-text bg-paper dark:bg-night h-5 w-5 shrink-0 cursor-pointer appearance-none border-2"
                     />
-                    <span className="dark:text-dark-text text-sm text-gray-700">
+                    <span className="text-ink dark:text-night-text text-sm">
                       Bezirk {bezirk.number} – {bezirk.shortName}
                     </span>
                   </label>
                 ))}
               </div>
               {bezirkScopeIds.length === 0 && (
-                <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-dark dark:text-night-muted mt-3 text-xs">
                   Keine Zuständigkeit: der Benutzer kann keine bezirksgebundenen
                   Inhalte anlegen.
                 </p>
@@ -699,14 +704,14 @@ export default function EditUserPage() {
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
             <Link
               href={`/dashboard/users/${userId}`}
-              className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-6 py-2.5 text-center font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="border-ink dark:border-night-text text-ink dark:text-night-text hover:bg-rule/60 dark:hover:bg-night-rule inline-flex min-h-11 items-center justify-center border-2 px-6 py-2.5 text-center font-semibold transition-colors"
             >
               Abbrechen
             </Link>
             <button
               type="submit"
               disabled={isSubmitting || updateUserMutation.isPending}
-              className="bg-primary hover:bg-primary/90 rounded-lg px-6 py-2.5 font-medium text-white transition-colors disabled:opacity-50"
+              className="on-orange bg-primary text-ink hover:bg-primary-dark inline-flex min-h-11 items-center justify-center px-6 py-2.5 font-semibold transition-colors disabled:opacity-50"
             >
               {isSubmitting || updateUserMutation.isPending
                 ? "Wird gespeichert..."

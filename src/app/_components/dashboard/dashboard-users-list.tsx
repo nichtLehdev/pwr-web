@@ -17,6 +17,7 @@ import {
   ScrollableModalBody,
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
+import { Tag } from "@/app/_components/programmheft/tag";
 
 type ListedUser = RouterOutputs["users"]["list"]["users"][number];
 
@@ -32,50 +33,46 @@ type SortableColumn = keyof typeof SORTABLE_COLUMNS;
 
 const column = createDataTableColumnHelper<ListedUser>();
 
-/** Die Gremien, in denen die Person sitzt — mit ihrer Farbgebung. */
+/**
+ * Die Gremien, in denen die Person sitzt — als Etikett mit einem quadratischen
+ * Farbpunkt. Der Punkt ist reine Zusatzinformation (aria-hidden); die
+ * Unterscheidung steht immer auch als Text im Etikett, nie nur in der Farbe.
+ */
 function membershipBadges(
   user: ListedUser,
-): { label: string; className: string }[] {
-  const badges: { label: string; className: string }[] = [];
+): { label: string; dotClassName: string }[] {
+  const badges: { label: string; dotClassName: string }[] = [];
   if (user.posaunenwart?.roleType === "LPW") {
-    badges.push({
-      label: "LPW",
-      className: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-    });
+    badges.push({ label: "LPW", dotClassName: "bg-red-600 dark:bg-red-400" });
   }
   if (user.posaunenwart?.roleType === "RPW") {
     badges.push({
       label: "RPW",
-      className:
-        "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+      dotClassName: "bg-orange-500 dark:bg-orange-400",
     });
   }
   if (user.teamMember) {
     badges.push({
       label: "Team",
-      className:
-        "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+      dotClassName: "bg-blue-600 dark:bg-blue-400",
     });
   }
   if (user.vorstandMember) {
     badges.push({
       label: "Vorstand",
-      className:
-        "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+      dotClassName: "bg-purple-600 dark:bg-purple-400",
     });
   }
   if (user.posaunenratMember) {
     badges.push({
       label: "Posaunenrat",
-      className:
-        "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+      dotClassName: "bg-green-600 dark:bg-green-400",
     });
   }
   if (user.foerdervereinMember) {
     badges.push({
       label: "Förderverein",
-      className:
-        "bg-foerderverein-light/40 text-foerderverein-dark dark:bg-foerderverein/20 dark:text-foerderverein-light",
+      dotClassName: "bg-foerderverein dark:bg-foerderverein-light",
     });
   }
   return badges;
@@ -137,7 +134,7 @@ export default function DashboardUsersList() {
             const user = row.original;
             return (
               <div className="flex items-center gap-3">
-                <div className="dark:bg-dark-border h-10 w-10 shrink-0 overflow-hidden rounded-full bg-gray-200">
+                <div className="bg-rule/60 dark:bg-night-raised h-10 w-10 shrink-0 overflow-hidden rounded-full">
                   {user.profileImage?.url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -146,7 +143,7 @@ export default function DashboardUsersList() {
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <div className="dark:text-dark-muted flex h-full w-full items-center justify-center text-sm font-medium text-gray-500">
+                    <div className="text-dark dark:text-night-muted flex h-full w-full items-center justify-center text-sm font-medium">
                       {(user.displayName ?? user.email)?.[0]?.toUpperCase()}
                     </div>
                   )}
@@ -154,11 +151,11 @@ export default function DashboardUsersList() {
                 <div className="min-w-0">
                   <Link
                     href={`/dashboard/users/${user.id}`}
-                    className="hover:text-primary dark:text-dark-text dark:hover:text-primary font-medium text-gray-900"
+                    className="text-ink dark:text-night-text hover:text-primary-ink dark:hover:text-primary font-medium"
                   >
                     {user.displayName ?? "Unbenannt"}
                   </Link>
-                  <p className="dark:text-dark-muted text-sm text-gray-500">
+                  <p className="text-dark dark:text-night-muted text-sm">
                     {user.email}
                   </p>
                 </div>
@@ -175,7 +172,7 @@ export default function DashboardUsersList() {
             const badges = membershipBadges(row.original);
             if (badges.length === 0) {
               return (
-                <span className="dark:text-dark-muted text-sm text-gray-400">
+                <span className="text-dark dark:text-night-muted text-sm">
                   –
                 </span>
               );
@@ -183,12 +180,13 @@ export default function DashboardUsersList() {
             return (
               <div className="flex flex-wrap gap-1">
                 {badges.map((badge) => (
-                  <span
-                    key={badge.label}
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${badge.className}`}
-                  >
+                  <Tag key={badge.label} tone="inverse">
+                    <span
+                      aria-hidden
+                      className={`h-2 w-2 shrink-0 ${badge.dotClassName}`}
+                    />
                     {badge.label}
-                  </span>
+                  </Tag>
                 ))}
               </div>
             );
@@ -201,9 +199,9 @@ export default function DashboardUsersList() {
           meta: { align: "center", label: "E-Mail bestätigt" },
           cell: ({ getValue }) =>
             getValue() ? (
-              <CheckCircle2 className="mx-auto h-5 w-5 text-green-500 dark:text-green-400" />
+              <CheckCircle2 className="mx-auto h-5 w-5 text-green-600 dark:text-green-400" />
             ) : (
-              <XCircle className="mx-auto h-5 w-5 text-amber-500 dark:text-amber-400" />
+              <XCircle className="mx-auto h-5 w-5 text-amber-600 dark:text-amber-400" />
             ),
         }),
         column.accessor((user) => user.createdAt, {
@@ -229,17 +227,17 @@ export default function DashboardUsersList() {
           header: "Aktionen",
           meta: { align: "right", label: "Aktionen" },
           cell: ({ row }) => (
-            <div className="flex items-center justify-end gap-3">
+            <div className="flex items-center justify-end gap-4">
               <Link
                 href={`/dashboard/users/${row.original.id}/edit`}
-                className="text-primary hover:text-primary/80 text-sm font-medium"
+                className="link-ink text-sm"
               >
                 Bearbeiten
               </Link>
               {session?.user.id !== row.original.id && (
                 <button
                   onClick={() => setShowDeleteModal(row.original.id)}
-                  className="text-sm font-medium text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                  className="text-sm font-semibold text-red-700 underline decoration-1 underline-offset-4 hover:decoration-2 dark:text-red-400"
                 >
                   Löschen
                 </button>
@@ -253,7 +251,7 @@ export default function DashboardUsersList() {
 
   if (error) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center dark:border-red-900 dark:bg-red-900/20">
+      <div className="border-2 border-red-700 p-6 text-center dark:border-red-400">
         <p className="text-red-700 dark:text-red-400">
           Fehler beim Laden der Benutzer: {error.message}
         </p>
@@ -266,22 +264,22 @@ export default function DashboardUsersList() {
       {/* Stats Cards */}
       {stats && (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-4">
-            <p className="dark:text-dark-muted text-sm text-gray-500">Gesamt</p>
-            <p className="dark:text-dark-text text-2xl font-bold text-gray-900">
+          <div className="border-rule dark:border-night-rule bg-rule/25 dark:bg-night-raised border p-4">
+            <p className="text-dark dark:text-night-muted text-sm">Gesamt</p>
+            <p className="text-ink dark:text-night-text text-2xl font-bold">
               {stats.totalUsers}
             </p>
           </div>
-          <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-4">
-            <p className="dark:text-dark-muted text-sm text-gray-500">
+          <div className="border-rule dark:border-night-rule bg-rule/25 dark:bg-night-raised border p-4">
+            <p className="text-dark dark:text-night-muted text-sm">
               Neue (30 Tage)
             </p>
             <p className="text-2xl font-bold text-green-600 dark:text-green-400">
               {stats.recentUsers}
             </p>
           </div>
-          <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-4">
-            <p className="dark:text-dark-muted text-sm text-gray-500">Team</p>
+          <div className="border-rule dark:border-night-rule bg-rule/25 dark:bg-night-raised border p-4">
+            <p className="text-dark dark:text-night-muted text-sm">Team</p>
             <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
               {stats.membership?.team ?? 0}
             </p>
@@ -300,11 +298,11 @@ export default function DashboardUsersList() {
         initialColumnVisibility={{ lastLoginAt: false }}
         emptyState={
           <>
-            <Users className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="dark:text-dark-text mt-4 text-lg font-medium text-gray-900">
+            <Users className="text-dark dark:text-night-muted mx-auto h-12 w-12" />
+            <h3 className="text-ink dark:text-night-text mt-4 text-lg font-medium">
               Keine Benutzer gefunden
             </h3>
-            <p className="dark:text-dark-muted mt-2 text-gray-500">
+            <p className="text-dark dark:text-night-muted mt-2">
               Es gibt noch keine Benutzer.
             </p>
           </>
@@ -329,10 +327,10 @@ export default function DashboardUsersList() {
         <ScrollableModal>
           <ScrollableModalCard maxW="md">
             <ScrollableModalBody>
-              <h3 className="dark:text-dark-text text-lg font-bold">
+              <h3 className="text-ink dark:text-night-text text-lg font-bold">
                 Benutzer löschen?
               </h3>
-              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-dark dark:text-night-muted mt-2 text-sm">
                 Möchtest du diesen Benutzer wirklich unwiderruflich löschen?
                 Diese Aktion kann nicht rückgängig gemacht werden.
               </p>
@@ -341,14 +339,14 @@ export default function DashboardUsersList() {
               <div className="flex justify-end gap-3">
                 <button
                   onClick={() => setShowDeleteModal(null)}
-                  className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+                  className="border-ink dark:border-night-text text-ink dark:text-night-text hover:bg-rule/60 dark:hover:bg-night-rule inline-flex min-h-11 items-center border-2 px-4 py-2 text-sm font-semibold transition-colors"
                 >
                   Abbrechen
                 </button>
                 <button
                   onClick={() => deleteMutation.mutate({ id: showDeleteModal })}
                   disabled={deleteMutation.isPending}
-                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+                  className="text-paper dark:text-night inline-flex min-h-11 items-center bg-red-700 px-4 py-2 text-sm font-semibold transition-colors hover:bg-red-800 disabled:opacity-50 dark:bg-red-400 dark:hover:bg-red-300"
                 >
                   {deleteMutation.isPending ? "Löschen..." : "Löschen"}
                 </button>

@@ -26,6 +26,8 @@ import {
   Users,
   Mail,
 } from "lucide-react";
+import { DashboardPage } from "@/app/_components/dashboard";
+import { Tag, type TagTone } from "@/app/_components/programmheft/tag";
 
 function formatDate(date: Date | string): string {
   return new Date(date).toLocaleDateString("de-DE", {
@@ -35,12 +37,10 @@ function formatDate(date: Date | string): string {
   });
 }
 
-const registrationStatusBadge: Record<RegistrationStatus, string> = {
-  CONFIRMED:
-    "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  WAITLIST:
-    "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-  CANCELLED: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+const registrationStatusTone: Record<RegistrationStatus, TagTone> = {
+  CONFIRMED: "inverse",
+  WAITLIST: "orange",
+  CANCELLED: "cancelled",
 };
 
 const registrationStatusLabel: Record<RegistrationStatus, string> = {
@@ -49,7 +49,13 @@ const registrationStatusLabel: Record<RegistrationStatus, string> = {
   CANCELLED: "Storniert",
 };
 
-export default function DashboardPage() {
+/** Gefüllte Werkbank-Schaltfläche, wie auf den Formularseiten des Hefts. */
+const BTN_PRIMARY =
+  "bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-primary dark:text-ink dark:hover:bg-paper semi-condensed inline-flex min-h-11 items-center justify-center gap-2 px-4 text-sm font-semibold transition-colors";
+/** Messing-Tinte-Textlink, immer unterstrichen — nie Orange als Textfarbe. */
+const FOOTER_LINK = "link-ink inline-flex items-center gap-1 text-sm";
+
+export default function DashboardPageRoute() {
   const { data: session, isPending } = useSession();
   const hasRedirected = useRef(false);
 
@@ -150,8 +156,8 @@ export default function DashboardPage() {
 
   if (isPending || profileLoading) {
     return (
-      <div className="bg-background-secondary dark:bg-dark-background-secondary flex min-h-[calc(100vh-4rem)] items-center justify-center">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="bg-paper dark:bg-night flex min-h-[calc(100vh-4rem)] items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
@@ -202,280 +208,271 @@ export default function DashboardPage() {
   ].filter(Boolean) as { title: string; href: string }[];
 
   return (
-    <main className="bg-background-secondary dark:bg-dark-background-secondary min-h-[calc(100vh-4rem)]">
-      <div className="container mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <h1 className="text-dark dark:text-dark-text text-3xl font-bold">
-              Übersicht
-            </h1>
-            <p className="mt-2 text-gray-600 dark:text-gray-400">
-              Willkommen zurück, {displayName}!
-            </p>
-          </div>
-          {quickActions.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {quickActions.map((action) => (
-                <Link
-                  key={action.href}
-                  href={action.href}
-                  className="bg-primary hover:bg-primary-dark inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors"
-                >
-                  <Plus className="h-4 w-4" />
-                  {action.title}
-                </Link>
-              ))}
-            </div>
-          )}
+    <DashboardPage
+      title="Übersicht"
+      description={`Willkommen zurück, ${displayName}!`}
+      breadcrumbs={[{ label: "Dashboard" }]}
+      actions={
+        quickActions.length > 0 ? (
+          <>
+            {quickActions.map((action) => (
+              <Link
+                key={action.href}
+                href={action.href}
+                className={BTN_PRIMARY}
+              >
+                <Plus className="h-4 w-4" aria-hidden />
+                {action.title}
+              </Link>
+            ))}
+          </>
+        ) : undefined
+      }
+    >
+      {!hasAnyTile && (
+        <div className="border-rule dark:border-night-rule border p-8 text-center">
+          <p className="text-dark dark:text-night-muted text-sm">
+            Nutze die Seitenleiste, um deine Bereiche zu verwalten.
+          </p>
         </div>
+      )}
 
-        {!hasAnyTile && (
-          <div className="dark:bg-dark-surface mb-8 rounded-lg border border-gray-200 bg-white p-8 text-center shadow-sm dark:border-gray-700">
-            <p className="text-gray-600 dark:text-gray-400">
-              Nutze die Seitenleiste, um deine Bereiche zu verwalten.
-            </p>
-          </div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {/* Review queue */}
+        {showReviewTile && (
+          <OverviewTile
+            title="Wartet auf Freigabe"
+            icon={<ClipboardCheck className="h-5 w-5" aria-hidden />}
+            badge={
+              pendingTotal > 0 ? <Tag tone="orange">{pendingTotal}</Tag> : null
+            }
+          >
+            {pendingTotal === 0 ? (
+              <div className="flex items-center gap-2 py-2 text-sm text-green-700 dark:text-green-400">
+                <CheckCircle2 className="h-4 w-4" aria-hidden />
+                Alles erledigt — nichts wartet auf Freigabe.
+              </div>
+            ) : (
+              <ul className="divide-rule dark:divide-night-rule divide-y">
+                {canApproveCourses && (pendingCourses?.total ?? 0) > 0 && (
+                  <ReviewRow
+                    label="Kurse"
+                    count={pendingCourses?.total ?? 0}
+                    href="/dashboard/courses"
+                  />
+                )}
+                {canApproveEvents && (pendingEvents?.total ?? 0) > 0 && (
+                  <ReviewRow
+                    label="Termine"
+                    count={pendingEvents?.total ?? 0}
+                    href="/dashboard/events"
+                  />
+                )}
+                {canApprovePosts && (pendingPosts?.total ?? 0) > 0 && (
+                  <ReviewRow
+                    label="Beiträge"
+                    count={pendingPosts?.total ?? 0}
+                    href="/dashboard/posts"
+                  />
+                )}
+                {(canManageRegistrations || canManageSiblingDiscount) &&
+                  (pendingDiscounts?.total ?? 0) > 0 && (
+                    <ReviewRow
+                      label="Geschwisterrabatte"
+                      count={pendingDiscounts?.total ?? 0}
+                      href={`/dashboard/registrations?discount=${SiblingDiscountStatus.PENDING}`}
+                    />
+                  )}
+              </ul>
+            )}
+          </OverviewTile>
         )}
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {/* Review queue */}
-          {showReviewTile && (
-            <OverviewTile
-              title="Wartet auf Freigabe"
-              icon={<ClipboardCheck className="text-primary h-5 w-5" />}
-              badge={
-                pendingTotal > 0 ? (
-                  <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
-                    {pendingTotal}
-                  </span>
-                ) : null
-              }
-            >
-              {pendingTotal === 0 ? (
-                <div className="flex items-center gap-2 py-2 text-sm text-green-700 dark:text-green-400">
-                  <CheckCircle2 className="h-4 w-4" />
-                  Alles erledigt — nichts wartet auf Freigabe.
-                </div>
-              ) : (
-                <ul className="divide-y divide-gray-100 dark:divide-gray-700/60">
-                  {canApproveCourses && (pendingCourses?.total ?? 0) > 0 && (
-                    <ReviewRow
-                      label="Kurse"
-                      count={pendingCourses?.total ?? 0}
-                      href="/dashboard/courses"
-                    />
-                  )}
-                  {canApproveEvents && (pendingEvents?.total ?? 0) > 0 && (
-                    <ReviewRow
-                      label="Termine"
-                      count={pendingEvents?.total ?? 0}
-                      href="/dashboard/events"
-                    />
-                  )}
-                  {canApprovePosts && (pendingPosts?.total ?? 0) > 0 && (
-                    <ReviewRow
-                      label="Beiträge"
-                      count={pendingPosts?.total ?? 0}
-                      href="/dashboard/posts"
-                    />
-                  )}
-                  {(canManageRegistrations || canManageSiblingDiscount) &&
-                    (pendingDiscounts?.total ?? 0) > 0 && (
-                      <ReviewRow
-                        label="Geschwisterrabatte"
-                        count={pendingDiscounts?.total ?? 0}
-                        href={`/dashboard/registrations?discount=${SiblingDiscountStatus.PENDING}`}
-                      />
-                    )}
-                </ul>
-              )}
-            </OverviewTile>
-          )}
-
-          {/* Upcoming courses */}
-          {showCoursesTile && (
-            <OverviewTile
-              title="Kommende Kurse"
-              icon={<GraduationCap className="text-primary h-5 w-5" />}
-              footer={{ label: "Alle Kurse", href: "/dashboard/courses" }}
-            >
-              <ul className="divide-y divide-gray-100 dark:divide-gray-700/60">
-                {upcomingCourses?.courses.map((course) => (
-                  <li
-                    key={course.id}
-                    className="flex items-center justify-between gap-3 py-2.5"
-                  >
-                    <div className="min-w-0">
-                      <Link
-                        href={`/dashboard/courses/${course.id}`}
-                        className="text-dark dark:text-dark-text hover:text-primary block truncate text-sm font-medium"
-                      >
-                        {course.title}
-                      </Link>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {formatDate(course.startDate)}
-                        {course.maxParticipants
-                          ? ` · ${course._count.participants} / ${course.maxParticipants} Teilnehmer`
-                          : ` · ${course._count.participants} Teilnehmer`}
-                      </p>
-                    </div>
+        {/* Upcoming courses */}
+        {showCoursesTile && (
+          <OverviewTile
+            title="Kommende Kurse"
+            icon={<GraduationCap className="h-5 w-5" aria-hidden />}
+            footer={{ label: "Alle Kurse", href: "/dashboard/courses" }}
+          >
+            <ul className="divide-rule dark:divide-night-rule divide-y">
+              {upcomingCourses?.courses.map((course) => (
+                <li
+                  key={course.id}
+                  className="flex items-center justify-between gap-3 py-2.5"
+                >
+                  <div className="min-w-0">
                     <Link
-                      href={`/dashboard/courses/${course.id}/participants`}
-                      className="text-primary hover:text-primary-dark shrink-0 text-sm font-medium"
+                      href={`/dashboard/courses/${course.id}`}
+                      className="text-ink dark:text-night-text block truncate text-sm font-medium hover:underline"
                     >
-                      Teilnehmer
+                      {course.title}
                     </Link>
-                  </li>
-                ))}
-              </ul>
-            </OverviewTile>
-          )}
-
-          {/* Latest registrations */}
-          {showRegistrationsTile && (
-            <OverviewTile
-              title="Neueste Anmeldungen"
-              icon={<Users className="text-primary h-5 w-5" />}
-              footer={{
-                label: "Alle Anmeldungen",
-                href: "/dashboard/registrations",
-              }}
-            >
-              {(latestRegistrations?.registrations.length ?? 0) === 0 ? (
-                <p className="py-2 text-sm text-gray-500 dark:text-gray-400">
-                  Noch keine Anmeldungen vorhanden.
-                </p>
-              ) : (
-                <>
-                  <ul className="divide-y divide-gray-100 dark:divide-gray-700/60">
-                    {latestRegistrations?.registrations.map((registration) => (
-                      <li
-                        key={registration.id}
-                        className="flex items-center justify-between gap-3 py-2.5"
-                      >
-                        <div className="min-w-0">
-                          <Link
-                            href={`/dashboard/courses/${registration.course.id}/participants/${registration.id}`}
-                            className="text-dark dark:text-dark-text hover:text-primary block truncate text-sm font-medium"
-                          >
-                            {registration.registrantFirstName}{" "}
-                            {registration.registrantLastName}
-                          </Link>
-                          <p className="truncate text-xs text-gray-500 dark:text-gray-400">
-                            {registration.course.title} ·{" "}
-                            {formatDate(registration.createdAt)}
-                          </p>
-                        </div>
-                        <span
-                          className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${registrationStatusBadge[registration.registrationStatus]}`}
-                        >
-                          {
-                            registrationStatusLabel[
-                              registration.registrationStatus
-                            ]
-                          }
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="mt-3 flex flex-wrap gap-4 border-t border-gray-100 pt-3 text-sm dark:border-gray-700/60">
-                    <span className="text-gray-600 dark:text-gray-400">
-                      Offene Zahlungen:{" "}
-                      <strong className="text-dark dark:text-dark-text">
-                        {openPayments?.total ?? 0}
-                      </strong>
-                    </span>
-                    <span className="text-gray-600 dark:text-gray-400">
-                      Warteliste:{" "}
-                      <strong className="text-dark dark:text-dark-text">
-                        {waitlisted?.total ?? 0}
-                      </strong>
-                    </span>
+                    <p className="text-dark dark:text-night-muted text-xs">
+                      {formatDate(course.startDate)}
+                      {course.maxParticipants
+                        ? ` · ${course._count.participants} / ${course.maxParticipants} Teilnehmer`
+                        : ` · ${course._count.participants} Teilnehmer`}
+                    </p>
                   </div>
-                </>
-              )}
-            </OverviewTile>
-          )}
+                  <Link
+                    href={`/dashboard/courses/${course.id}/participants`}
+                    className={`${FOOTER_LINK} shrink-0`}
+                  >
+                    Teilnehmer
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </OverviewTile>
+        )}
 
-          {/* Newsletter */}
-          {showNewsletterTile && (
-            <OverviewTile
-              title="Newsletter"
-              icon={<Mail className="text-primary h-5 w-5" />}
-              footer={{
-                label: "Newsletter erstellen",
-                href: "/dashboard/newsletter/compose",
-              }}
-            >
-              <div className="flex items-baseline gap-2 py-2">
-                <span className="text-dark dark:text-dark-text text-3xl font-bold">
-                  {newsletterStats?.active ?? 0}
-                </span>
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  aktive Abonnenten
-                  {newsletterStats ? ` (${newsletterStats.total} gesamt)` : ""}
-                </span>
-              </div>
-              <Link
-                href="/dashboard/newsletter/subscribers"
-                className="text-primary hover:text-primary-dark text-sm font-medium"
-              >
-                Abonnenten verwalten
-              </Link>
-            </OverviewTile>
-          )}
-        </div>
-
-        {/* Quick Links */}
-        <section className="mt-8">
-          <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white shadow-sm">
-            <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
-              <h2 className="text-dark dark:text-dark-text text-lg font-semibold">
-                Schnellzugriff
-              </h2>
-              <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                Häufig verwendete Links und Funktionen
+        {/* Latest registrations */}
+        {showRegistrationsTile && (
+          <OverviewTile
+            title="Neueste Anmeldungen"
+            icon={<Users className="h-5 w-5" aria-hidden />}
+            footer={{
+              label: "Alle Anmeldungen",
+              href: "/dashboard/registrations",
+            }}
+          >
+            {(latestRegistrations?.registrations.length ?? 0) === 0 ? (
+              <p className="text-dark dark:text-night-muted py-2 text-sm">
+                Noch keine Anmeldungen vorhanden.
               </p>
+            ) : (
+              <>
+                <ul className="divide-rule dark:divide-night-rule divide-y">
+                  {latestRegistrations?.registrations.map((registration) => (
+                    <li
+                      key={registration.id}
+                      className="flex items-center justify-between gap-3 py-2.5"
+                    >
+                      <div className="min-w-0">
+                        <Link
+                          href={`/dashboard/courses/${registration.course.id}/participants/${registration.id}`}
+                          className="text-ink dark:text-night-text block truncate text-sm font-medium hover:underline"
+                        >
+                          {registration.registrantFirstName}{" "}
+                          {registration.registrantLastName}
+                        </Link>
+                        <p className="text-dark dark:text-night-muted truncate text-xs">
+                          {registration.course.title} ·{" "}
+                          {formatDate(registration.createdAt)}
+                        </p>
+                      </div>
+                      <Tag
+                        tone={
+                          registrationStatusTone[
+                            registration.registrationStatus
+                          ]
+                        }
+                        className="shrink-0"
+                      >
+                        {
+                          registrationStatusLabel[
+                            registration.registrationStatus
+                          ]
+                        }
+                      </Tag>
+                    </li>
+                  ))}
+                </ul>
+                <div className="border-rule dark:border-night-rule mt-3 flex flex-wrap gap-4 border-t pt-3 text-sm">
+                  <span className="text-dark dark:text-night-muted">
+                    Offene Zahlungen:{" "}
+                    <strong className="text-ink dark:text-night-text">
+                      {openPayments?.total ?? 0}
+                    </strong>
+                  </span>
+                  <span className="text-dark dark:text-night-muted">
+                    Warteliste:{" "}
+                    <strong className="text-ink dark:text-night-text">
+                      {waitlisted?.total ?? 0}
+                    </strong>
+                  </span>
+                </div>
+              </>
+            )}
+          </OverviewTile>
+        )}
+
+        {/* Newsletter */}
+        {showNewsletterTile && (
+          <OverviewTile
+            title="Newsletter"
+            icon={<Mail className="h-5 w-5" aria-hidden />}
+            footer={{
+              label: "Newsletter erstellen",
+              href: "/dashboard/newsletter/compose",
+            }}
+          >
+            <div className="flex items-baseline gap-2 py-2">
+              <span className="text-ink dark:text-night-text text-3xl font-bold">
+                {newsletterStats?.active ?? 0}
+              </span>
+              <span className="text-dark dark:text-night-muted text-sm">
+                aktive Abonnenten
+                {newsletterStats ? ` (${newsletterStats.total} gesamt)` : ""}
+              </span>
             </div>
-            <div className="p-6">
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-                <QuickLink
-                  title="Einstellungen"
-                  href="/settings"
-                  icon={<Settings className="h-4 w-4" />}
-                />
-                <QuickLink
-                  title="Zur Webseite"
-                  href="/"
-                  icon={<Home className="h-4 w-4" />}
-                />
-                <QuickLink
-                  title="Termine"
-                  href="/termine"
-                  icon={<Calendar className="h-4 w-4" />}
-                />
-                <QuickLink
-                  title="Aktuelles"
-                  href="/aktuelles"
-                  icon={<FileText className="h-4 w-4" />}
-                />
-                <QuickLink
-                  title="Über uns"
-                  href="/ueber-uns"
-                  icon={<Info className="h-4 w-4" />}
-                />
-                <QuickLink
-                  title="Hilfe"
-                  href="/kontakt"
-                  icon={<HelpCircle className="h-4 w-4" />}
-                />
-              </div>
-            </div>
-          </div>
-        </section>
+            <Link
+              href="/dashboard/newsletter/subscribers"
+              className={FOOTER_LINK}
+            >
+              Abonnenten verwalten
+            </Link>
+          </OverviewTile>
+        )}
       </div>
-    </main>
+
+      {/* Quick Links */}
+      <section className="border-rule dark:border-night-rule mt-6 border">
+        <div className="border-rule dark:border-night-rule border-b px-4 py-3 sm:px-6">
+          <h2 className="condensed text-ink dark:text-night-text text-lg font-bold">
+            Schnellzugriff
+          </h2>
+          <p className="text-dark dark:text-night-muted mt-1 text-sm">
+            Häufig verwendete Links und Funktionen
+          </p>
+        </div>
+        <div className="p-4 sm:p-6">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            <QuickLink
+              title="Einstellungen"
+              href="/settings"
+              icon={<Settings className="h-4 w-4" aria-hidden />}
+            />
+            <QuickLink
+              title="Zur Webseite"
+              href="/"
+              icon={<Home className="h-4 w-4" aria-hidden />}
+            />
+            <QuickLink
+              title="Termine"
+              href="/termine"
+              icon={<Calendar className="h-4 w-4" aria-hidden />}
+            />
+            <QuickLink
+              title="Aktuelles"
+              href="/aktuelles"
+              icon={<FileText className="h-4 w-4" aria-hidden />}
+            />
+            <QuickLink
+              title="Über uns"
+              href="/ueber-uns"
+              icon={<Info className="h-4 w-4" aria-hidden />}
+            />
+            <QuickLink
+              title="Hilfe"
+              href="/kontakt"
+              icon={<HelpCircle className="h-4 w-4" aria-hidden />}
+            />
+          </div>
+        </div>
+      </section>
+    </DashboardPage>
   );
 }
 
@@ -493,23 +490,20 @@ function OverviewTile({
   children: React.ReactNode;
 }) {
   return (
-    <section className="dark:bg-dark-surface flex flex-col rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700">
-      <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-700">
-        <h2 className="text-dark dark:text-dark-text flex items-center gap-2 text-lg font-semibold">
+    <section className="border-rule dark:border-night-rule flex flex-col border">
+      <div className="border-rule dark:border-night-rule flex items-center justify-between border-b px-4 py-3 sm:px-6">
+        <h2 className="condensed text-ink dark:text-night-text flex items-center gap-2 text-base font-bold sm:text-lg">
           {icon}
           {title}
         </h2>
         {badge}
       </div>
-      <div className="flex-1 px-6 py-3">{children}</div>
+      <div className="flex-1 px-4 py-3 sm:px-6">{children}</div>
       {footer && (
-        <div className="border-t border-gray-100 px-6 py-3 dark:border-gray-700/60">
-          <Link
-            href={footer.href}
-            className="text-primary hover:text-primary-dark inline-flex items-center gap-1 text-sm font-medium"
-          >
+        <div className="border-rule dark:border-night-rule border-t px-4 py-3 sm:px-6">
+          <Link href={footer.href} className={FOOTER_LINK}>
             {footer.label}
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="h-4 w-4" aria-hidden />
           </Link>
         </div>
       )}
@@ -530,14 +524,12 @@ function ReviewRow({
     <li>
       <Link
         href={href}
-        className="group flex items-center justify-between py-2.5"
+        className="group flex min-h-11 items-center justify-between gap-3 py-2.5"
       >
-        <span className="text-dark dark:text-dark-text group-hover:text-primary text-sm font-medium">
+        <span className="text-ink dark:text-night-text text-sm font-medium group-hover:underline">
           {label}
         </span>
-        <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
-          {count}
-        </span>
+        <Tag tone="orange">{count}</Tag>
       </Link>
     </li>
   );
@@ -555,9 +547,9 @@ function QuickLink({
   return (
     <Link
       href={href}
-      className="group hover:border-primary hover:text-primary dark:hover:border-primary dark:hover:text-primary flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-700 transition-all dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+      className="group border-rule dark:border-night-rule hover:border-ink dark:hover:border-night-text hover:bg-rule/25 dark:hover:bg-night-raised text-ink dark:text-night-text flex min-h-11 items-center gap-2 border px-3 py-2.5 text-sm font-medium transition-colors"
     >
-      <span className="group-hover:text-primary dark:group-hover:text-primary text-gray-400 transition-colors dark:text-gray-500">
+      <span className="text-dark dark:text-night-muted group-hover:text-primary-ink dark:group-hover:text-primary transition-colors">
         {icon}
       </span>
       {title}
