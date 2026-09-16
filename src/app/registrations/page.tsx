@@ -34,6 +34,7 @@ import {
 import PublicPage from "@/app/_components/general/public-page";
 import { headMeta } from "@/app/_components/programmheft/page-head";
 import { PageSection } from "@/app/_components/programmheft/page-section";
+import { formatEuro } from "@/lib/invoice-document";
 import { Heading } from "@/app/_components/programmheft/section-head";
 import { Note } from "@/app/_components/programmheft/note";
 import { Tag, type TagTone } from "@/app/_components/programmheft/tag";
@@ -245,7 +246,7 @@ export default function MyRegistrationsPage() {
       heroSize="compact"
       description={<p>Übersicht über alle deine Anmeldungen.</p>}
     >
-      <PageSection flush="top">
+      <PageSection>
         <div
           role="group"
           aria-label="Nach Status filtern"
@@ -318,18 +319,18 @@ export default function MyRegistrationsPage() {
                   label: "Zwischensumme",
                   value: (
                     <span className="line-through decoration-2">
-                      {registration.originalTotalPrice.toFixed(2)} €
+                      {formatEuro(registration.originalTotalPrice)}
                     </span>
                   ),
                 });
                 priceRows.push({
                   label: "Geschwisterkindrabatt (20% pro weiteres Kind)",
-                  value: `- ${registration.siblingDiscountAmount.toFixed(2)} €`,
+                  value: `- ${formatEuro(registration.siblingDiscountAmount)}`,
                 });
               }
               priceRows.push({
                 label: "Gesamtpreis",
-                value: `${registration.totalPrice.toFixed(2)} €`,
+                value: formatEuro(registration.totalPrice),
               });
 
               return (
@@ -408,19 +409,6 @@ export default function MyRegistrationsPage() {
                         </ul>
                       </div>
 
-                      {/* Preis */}
-                      <ValueTable className="mt-6 max-w-md" rows={priceRows} />
-                      {registration.downPaymentAmount ? (
-                        <p className="text-dark dark:text-night-muted mt-2 text-xs">
-                          davon Anzahlung{" "}
-                          {registration.downPaymentAmount.toFixed(2)} € ·{" "}
-                          {
-                            DOWN_PAYMENT_STATE_LABELS[
-                              downPaymentState(registration)
-                            ]
-                          }
-                        </p>
-                      ) : null}
                       {invoice ? (
                         <p className="mt-3 flex flex-wrap items-center gap-3 text-sm">
                           <span className="text-dark dark:text-night-muted">
@@ -486,8 +474,23 @@ export default function MyRegistrationsPage() {
                       )}
                     </div>
 
-                    {/* Aktionen */}
-                    <div className="mt-6 flex shrink-0 flex-col gap-2 lg:mt-0 lg:w-44 lg:items-stretch">
+                    {/* Preis und Aktionen stehen zusammen in der rechten
+                        Spalte. Vorher klebte der Preis links unter dem Text
+                        und die Schaltflächen weit rechts — dazwischen blieb
+                        die halbe Zeile leer. */}
+                    <div className="mt-6 flex shrink-0 flex-col gap-2 lg:mt-0 lg:w-80 lg:items-stretch">
+                      <ValueTable rows={priceRows} />
+                      {registration.downPaymentAmount ? (
+                        <p className="text-dark dark:text-night-muted mb-2 text-xs">
+                          davon Anzahlung{" "}
+                          {formatEuro(registration.downPaymentAmount)} ·{" "}
+                          {
+                            DOWN_PAYMENT_STATE_LABELS[
+                              downPaymentState(registration)
+                            ]
+                          }
+                        </p>
+                      ) : null}
                       <Link
                         href={`/registrations/${registration.id}`}
                         className={BTN_ROW}
