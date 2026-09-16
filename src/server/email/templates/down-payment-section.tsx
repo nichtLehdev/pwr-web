@@ -1,11 +1,6 @@
-import { Hr, Img, Text } from "@react-email/components";
+import { Img, Text } from "@react-email/components";
 import { DOWN_PAYMENT_QR_CID, type DownPaymentMailInfo } from "../down-payment";
-import {
-  abschnittskopf,
-  grundtext,
-  haarlinie,
-  kleintext,
-} from "./email-layout";
+import { Regel, abschnittskopf, grundtext, kleintext } from "./email-layout";
 import { textZeile } from "./email-text";
 
 export interface DownPaymentSectionProps {
@@ -42,7 +37,7 @@ export function DownPaymentSection({
 
   return (
     <>
-      <Hr style={haarlinie} />
+      <Regel />
       <Text style={titel}>Anzahlung</Text>
       <Text style={grundtext}>
         <strong>Gesamtpreis:</strong> {formatPrice(totalPrice)}

@@ -1,9 +1,9 @@
-import { Hr, Link, Section, Text } from "@react-email/components";
+import { Link, Section, Text } from "@react-email/components";
 import { marked } from "marked";
 import {
   EmailLayout,
+  Regel,
   grundtext,
-  haarlinie,
   kleintext,
   link as linkStil,
 } from "./email-layout";
@@ -36,7 +36,7 @@ export function NewsletterEmail({
         {content || "NEWSLETTER_CONTENT_PLACEHOLDER_MARKER_12345"}
       </div>
 
-      <Hr style={haarlinie} />
+      <Regel />
 
       <Section style={abmeldenFeld}>
         <Text style={abmeldenText}>

@@ -1,10 +1,10 @@
-import { Button, Hr, Section, Text } from "@react-email/components";
+import { Button, Section, Text } from "@react-email/components";
 import {
   EmailLayout,
+  Regel,
   abschnittskopf,
   ersatzLink,
   grundtext,
-  haarlinie,
   kleintext,
   knopf,
 } from "./email-layout";
@@ -50,7 +50,7 @@ export function NewsletterConfirm({
       </Text>
       <Text style={ersatzLink}>{confirmUrl}</Text>
 
-      <Hr style={haarlinie} />
+      <Regel />
 
       <Text style={kleintext}>
         Du hast dich nicht angemeldet? Dann ignoriere diese E-Mail einfach. Ohne

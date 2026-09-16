@@ -1,11 +1,10 @@
-import { Hr, Section, Text } from "@react-email/components";
+import { Section, Text } from "@react-email/components";
 import {
   EmailLayout,
+  Regel,
   abschnittskopf,
   grundtext,
-  haarlinie,
   kleintext,
-  tintenstrich,
 } from "./email-layout";
 import { emailText, textZeile } from "./email-text";
 
@@ -30,7 +29,7 @@ export function ContactMessage({
       <Text style={kleintext}>Neue Nachricht über das Kontaktformular</Text>
       <Text style={abschnittskopf}>{subjectLabel}</Text>
 
-      <Hr style={tintenstrich} />
+      <Regel stark />
       <Section style={angabenFeld}>
         <Text style={angabe}>
           <strong>Name:</strong> {name}
@@ -47,7 +46,7 @@ export function ContactMessage({
 
       <Text style={nachrichtText}>{message}</Text>
 
-      <Hr style={haarlinie} />
+      <Regel />
 
       <Text style={kleintext}>
         Antworten auf diese E-Mail gehen direkt an {name} ({email}).

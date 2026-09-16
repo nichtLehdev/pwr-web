@@ -61,7 +61,11 @@ export function generateNewsletterHtml({
                 ${content}
               </div>
 
-              <hr style="border: none; border-top: 1px solid ${farben.rule}; margin: 28px 0;">
+              <!-- Trennlinie als gefuellte Zelle: Outlook laesst Rahmen an
+                   Trennelementen je nach Fassung fallen. -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin: 28px 0;">
+                <tr><td style="height: 1px; line-height: 1px; font-size: 1px; background-color: ${farben.rule};">&nbsp;</td></tr>
+              </table>
 
               <!-- Unsubscribe -->
               <div style="text-align: center; margin: 0 0 20px 0;">

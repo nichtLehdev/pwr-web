@@ -1,10 +1,12 @@
 import {
   Body,
+  Column,
   Container,
   Head,
   Html,
   Img,
   Preview,
+  Row,
   Section,
   Text,
 } from "@react-email/components";
@@ -122,6 +124,42 @@ export const tintenstrich = {
   margin: "28px 0 0 0",
 };
 
+/**
+ * Trennlinie als gefüllte Tabellenzelle statt als Rahmen.
+ *
+ * Outlook für Windows rendert mit der Word-Engine und lässt Rahmen an `<hr>`,
+ * `<div>` und `<table>` je nach Fassung fallen — die Linie verschwindet dann
+ * ersatzlos. Eine Zelle mit Hintergrundfarbe und fester Höhe zeichnet sie
+ * dort zuverlässig. Rahmen an `<td>` (etwa in den Werttabellen) sind davon
+ * nicht betroffen und bleiben, wo sie stehen.
+ *
+ * `stark`: 2px in Tinte, wie der Abschnittsstrich im Heft. Sonst Haarlinie.
+ */
+export function Regel({
+  stark = false,
+  abstand = "28px 0",
+}: {
+  stark?: boolean;
+  abstand?: string;
+}) {
+  return (
+    <Section style={{ margin: abstand }}>
+      <Row>
+        <Column
+          style={{
+            height: stark ? "2px" : "1px",
+            lineHeight: "1px",
+            fontSize: "1px",
+            backgroundColor: stark ? farben.ink : farben.rule,
+          }}
+        >
+          &nbsp;
+        </Column>
+      </Row>
+    </Section>
+  );
+}
+
 interface EmailLayoutProps {
   /** Zeile in der Vorschau des Postfachs. */
   preview?: string;
@@ -160,7 +198,11 @@ export function EmailLayout({ preview, children }: EmailLayoutProps) {
             </Text>
           </Section>
 
+          <Regel stark abstand="0" />
+
           <Section style={inhalt}>{children}</Section>
+
+          <Regel abstand="0" />
 
           <Section style={fuss}>
             <Text style={fusstext}>
@@ -215,14 +257,14 @@ const unterzeile = {
   margin: "0",
 };
 
+// Die Striche über Inhalt und Fußzeile zeichnet `Regel` als Tabellenzelle —
+// ein borderTop an diesen Abschnitten würde in Outlook fehlen.
 const inhalt = {
   padding: "32px 24px 8px 24px",
-  borderTop: `2px solid ${farben.ink}`,
 };
 
 const fuss = {
   padding: "20px 24px 32px 24px",
-  borderTop: `1px solid ${farben.rule}`,
 };
 
 const fusstext = {

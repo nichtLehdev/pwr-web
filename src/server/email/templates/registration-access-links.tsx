@@ -1,11 +1,11 @@
-import { Button, Hr, Section, Text } from "@react-email/components";
+import { Button, Section, Text } from "@react-email/components";
 import {
   EmailLayout,
+  Regel,
   abschnittskopf,
   ersatzLink,
   farben,
   grundtext,
-  haarlinie,
   kleintext,
   knopf,
 } from "./email-layout";
@@ -98,7 +98,7 @@ export function RegistrationAccessLinks({
 
       {registrations.map((registration) => (
         <Section key={registration.manageUrl}>
-          <Hr style={haarlinie} />
+          <Regel />
           <Text style={kursname}>{registration.courseTitle}</Text>
           <Werttabelle
             zeilen={[
@@ -122,7 +122,7 @@ export function RegistrationAccessLinks({
         </Section>
       ))}
 
-      <Hr style={haarlinie} />
+      <Regel />
 
       <Text style={kleintext}>
         Die Links sind persönlich — bitte gib sie nicht weiter. Falls du diese

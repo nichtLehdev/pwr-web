@@ -1,12 +1,11 @@
-import { Hr, Text } from "@react-email/components";
+import { Text } from "@react-email/components";
 import {
   EmailLayout,
+  Regel,
   abschnittskopf,
   farben,
   grundtext,
-  haarlinie,
   kleintext,
-  tintenstrich,
 } from "./email-layout";
 import { emailText, textZeile } from "./email-text";
 import {
@@ -122,7 +121,7 @@ export function SiblingDiscountApproved({
         ]}
       />
 
-      <Hr style={haarlinie} />
+      <Regel />
 
       <Text style={abschnittskopf}>Preisübersicht</Text>
       <Werttabelle
@@ -137,12 +136,12 @@ export function SiblingDiscountApproved({
           },
         ]}
       />
-      <Hr style={tintenstrich} />
+      <Regel stark />
       <Text style={gesamtzeile}>
         Gesamtbetrag: {formatPrice(finalTotalPrice)}
       </Text>
 
-      <Hr style={haarlinie} />
+      <Regel />
 
       <Text style={grundtext}>
         Deine Anmeldung wurde bestätigt. Du erhältst in Kürze weitere

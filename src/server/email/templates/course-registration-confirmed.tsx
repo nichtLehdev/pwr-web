@@ -1,16 +1,10 @@
-import { Hr, Text } from "@react-email/components";
+import { Text } from "@react-email/components";
 import type { DownPaymentMailInfo } from "../down-payment";
 import {
   DownPaymentSection,
   downPaymentSectionText,
 } from "./down-payment-section";
-import {
-  EmailLayout,
-  abschnittskopf,
-  grundtext,
-  haarlinie,
-  tintenstrich,
-} from "./email-layout";
+import { EmailLayout, Regel, abschnittskopf, grundtext } from "./email-layout";
 import { emailText, textZeile } from "./email-text";
 import {
   ManageRegistrationCta,
@@ -70,7 +64,7 @@ export function CourseRegistrationConfirmed({
         wurde erfolgreich bestätigt:
       </Text>
 
-      <Hr style={tintenstrich} />
+      <Regel stark />
       <Text style={kursTitel}>{courseTitle}</Text>
       <Text style={grundtext}>
         <strong>Start:</strong> {formatDate(startDate)}
@@ -94,7 +88,7 @@ export function CourseRegistrationConfirmed({
         />
       )}
 
-      <Hr style={haarlinie} />
+      <Regel />
 
       <Text style={grundtext}>
         Du erhältst in Kürze weitere Informationen zum Kurs per E-Mail. Bei

@@ -1,10 +1,10 @@
-import { Button, Hr, Section, Text } from "@react-email/components";
+import { Button, Section, Text } from "@react-email/components";
 import {
   EmailLayout,
+  Regel,
   abschnittskopf,
   ersatzLink,
   grundtext,
-  haarlinie,
   kleintext,
   knopf,
 } from "./email-layout";
@@ -45,7 +45,7 @@ export function VerificationEmail({
       </Text>
       <Text style={ersatzLink}>{verificationUrl}</Text>
 
-      <Hr style={haarlinie} />
+      <Regel />
 
       <Text style={kleintext}>
         Falls du dich nicht registriert hast, kannst du diese E-Mail ignorieren.

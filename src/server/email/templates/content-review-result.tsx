@@ -1,12 +1,11 @@
-import { Button, Hr, Section, Text } from "@react-email/components";
+import { Button, Section, Text } from "@react-email/components";
 import {
   EmailLayout,
+  Regel,
   abschnittskopf,
   farben,
   grundtext,
-  haarlinie,
   knopf,
-  tintenstrich,
 } from "./email-layout";
 import { emailText, textLink } from "./email-text";
 
@@ -52,9 +51,9 @@ export function ContentReviewResult({
           : `${contentType === "post" ? "dein" : "deine"} ${typeLabel} wurde geprüft und leider abgelehnt:`}
       </Text>
 
-      <Hr style={tintenstrich} />
+      <Regel stark />
       <Text style={titelStil}>{title}</Text>
-      <Hr style={haarlinie} />
+      <Regel />
 
       {reviewNotes ? (
         <>

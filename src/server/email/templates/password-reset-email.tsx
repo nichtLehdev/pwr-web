@@ -1,10 +1,10 @@
-import { Button, Hr, Section, Text } from "@react-email/components";
+import { Button, Section, Text } from "@react-email/components";
 import {
   EmailLayout,
+  Regel,
   abschnittskopf,
   ersatzLink,
   grundtext,
-  haarlinie,
   kleintext,
   knopf,
 } from "./email-layout";
@@ -44,7 +44,7 @@ export function PasswordResetEmail({
       </Text>
       <Text style={ersatzLink}>{resetUrl}</Text>
 
-      <Hr style={haarlinie} />
+      <Regel />
 
       <Text style={kleintext}>
         Falls du diese Anfrage nicht gestellt hast, kannst du diese E-Mail

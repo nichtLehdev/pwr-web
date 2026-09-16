@@ -112,7 +112,11 @@ export function generateCourseMailHtml({
                 ${bodyHtml}
               </div>
 
-              <hr style="border: none; border-top: 1px solid ${farben.rule}; margin: 28px 0;">
+              <!-- Trennlinie als gefuellte Zelle: Outlook laesst Rahmen an
+                   Trennelementen je nach Fassung fallen. -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin: 28px 0;">
+                <tr><td style="height: 1px; line-height: 1px; font-size: 1px; background-color: ${farben.rule};">&nbsp;</td></tr>
+              </table>
 
               <p style="font-family: ${htmlSchrift}; font-size: 14px; color: ${farben.muted}; line-height: 22px; margin: 0;">
                 Diese Nachricht wurde dir von <strong>${escapeHtml(senderName)}</strong> geschickt,

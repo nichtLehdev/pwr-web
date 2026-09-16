@@ -1,14 +1,13 @@
-import { Hr, Link, Text } from "@react-email/components";
+import { Link, Text } from "@react-email/components";
 import type { CourseRegistrationStats } from "@/lib/course-participants-export";
 import {
   EmailLayout,
+  Regel,
   abschnittskopf,
   farben,
   grundtext,
-  haarlinie,
   kleintext,
   link,
-  tintenstrich,
 } from "./email-layout";
 import { emailText, textZeile } from "./email-text";
 
@@ -180,14 +179,14 @@ export function CourseRegistrationClosedOverview({
       <Text style={kursname}>{courseTitle}</Text>
       <Werttabelle zeilen={kursZeilen} />
 
-      <Hr style={haarlinie} />
+      <Regel />
 
       <Text style={abschnittskopf}>Übersicht für die Planung</Text>
       <Werttabelle zeilen={uebersichtZeilen} />
 
       {zuKlaeren.length > 0 ? (
         <>
-          <Hr style={tintenstrich} />
+          <Regel stark />
           {zuKlaeren.map((zeile) => (
             <Text key={zeile} style={hinweiszeile}>
               {zeile}
@@ -202,7 +201,7 @@ export function CourseRegistrationClosedOverview({
         </Link>
       </Text>
 
-      <Hr style={haarlinie} />
+      <Regel />
 
       <Text style={kleintext}>
         Diese E-Mail wurde automatisch versendet, sobald die Anmeldefrist
