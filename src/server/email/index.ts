@@ -28,6 +28,21 @@ import {
   downPaymentQrAttachment,
   type DownPaymentMailInfo,
 } from "./down-payment";
+// Nur-Text-Fassungen: Jede Mail geht mit beidem raus. Reines HTML wird von
+// Spamfiltern schlechter bewertet und ist für Textpostfächer unbrauchbar.
+import { verificationEmailText } from "./templates/verification-email";
+import { newsletterConfirmText } from "./templates/newsletter-confirm";
+import { courseRegistrationConfirmedText } from "./templates/course-registration-confirmed";
+import { courseRegistrationWaitlistText } from "./templates/course-registration-waitlist";
+import { siblingDiscountApprovedText } from "./templates/sibling-discount-approved";
+import { siblingDiscountRejectedText } from "./templates/sibling-discount-rejected";
+import { courseRegistrationPendingDiscountText } from "./templates/course-registration-pending-discount";
+import { courseRegistrationCancelledText } from "./templates/course-registration-cancelled";
+import { registrationAccessLinksText } from "./templates/registration-access-links";
+import { courseRegistrationClosedOverviewText } from "./templates/course-registration-closed-overview";
+import { contentReviewResultText } from "./templates/content-review-result";
+import { contactMessageText } from "./templates/contact-message";
+import { generateCourseMailText } from "./templates/course-mail-html";
 
 export async function sendVerificationEmail(
   email: string,
@@ -45,6 +60,7 @@ export async function sendVerificationEmail(
     to: email,
     subject: "E-Mail-Adresse bestätigen - Posaunenwerk Rheinland",
     html,
+    text: verificationEmailText({ verificationUrl, userName }),
   });
 }
 
@@ -85,6 +101,7 @@ export async function sendNewsletterConfirmEmail(
     subject:
       "Bitte bestätige deine Newsletter-Anmeldung - Posaunenwerk Rheinland",
     html,
+    text: newsletterConfirmText({ confirmUrl, subscriberName }),
   });
 }
 
@@ -124,6 +141,19 @@ export async function sendCourseRegistrationConfirmedEmail(
     to: email,
     subject: `Anmeldung bestätigt: ${courseTitle} - Posaunenwerk Rheinland`,
     html,
+    text: courseRegistrationConfirmedText({
+      registrantFirstName,
+      registrantLastName,
+      courseTitle,
+      startDate,
+      endDate,
+      totalPrice,
+      participantsCount,
+      registrationId,
+      manageUrl,
+      downPayment,
+      downPaymentHasQr: qrCode !== null,
+    }),
     ...(qrCode && { attachments: [qrCode] }),
   });
 }
@@ -161,6 +191,18 @@ export async function sendCourseRegistrationWaitlistEmail(
     to: email,
     subject: `Auf Warteliste: ${courseTitle} - Posaunenwerk Rheinland`,
     html,
+    text: courseRegistrationWaitlistText({
+      registrantFirstName,
+      registrantLastName,
+      courseTitle,
+      startDate,
+      endDate,
+      totalPrice,
+      participantsCount,
+      registrationId,
+      manageUrl,
+      downPayment,
+    }),
   });
 }
 
@@ -198,6 +240,19 @@ export async function sendSiblingDiscountApprovedEmail(
     to: email,
     subject: `Geschwisterkindrabatt genehmigt: ${courseTitle} - Posaunenwerk Rheinland`,
     html,
+    text: siblingDiscountApprovedText({
+      registrantFirstName,
+      registrantLastName,
+      courseTitle,
+      startDate,
+      endDate,
+      originalTotalPrice,
+      discountAmount,
+      finalTotalPrice,
+      participantsCount,
+      registrationId,
+      manageUrl,
+    }),
   });
 }
 
@@ -241,6 +296,21 @@ export async function sendCourseRegistrationPendingDiscountEmail(
     to: email,
     subject: `Anmeldung erhalten (Rabatt prüfen): ${courseTitle} - Posaunenwerk Rheinland`,
     html,
+    text: courseRegistrationPendingDiscountText({
+      registrantFirstName,
+      registrantLastName,
+      courseTitle,
+      startDate,
+      endDate,
+      originalTotalPrice,
+      discountAmount,
+      finalTotalPrice,
+      participantsCount,
+      registrationId,
+      manageUrl,
+      downPayment,
+      downPaymentHasQr: qrCode !== null,
+    }),
     ...(qrCode && { attachments: [qrCode] }),
   });
 }
@@ -275,6 +345,17 @@ export async function sendSiblingDiscountRejectedEmail(
     to: email,
     subject: `Geschwisterkindrabatt abgelehnt: ${courseTitle} - Posaunenwerk Rheinland`,
     html,
+    text: siblingDiscountRejectedText({
+      registrantFirstName,
+      registrantLastName,
+      courseTitle,
+      startDate,
+      endDate,
+      originalTotalPrice,
+      participantsCount,
+      registrationId,
+      manageUrl,
+    }),
   });
 }
 
@@ -304,6 +385,15 @@ export async function sendCourseRegistrationCancelledEmail(
     to: email,
     subject: `Anmeldung storniert: ${courseTitle} - Posaunenwerk Rheinland`,
     html,
+    text: courseRegistrationCancelledText({
+      registrantFirstName,
+      registrantLastName,
+      courseTitle,
+      startDate,
+      endDate,
+      participantsCount,
+      registrationId,
+    }),
   });
 }
 
@@ -323,6 +413,7 @@ export async function sendRegistrationAccessLinksEmail(
     to: email,
     subject: "Zugang zu deinen Anmeldungen - Posaunenwerk Rheinland",
     html,
+    text: registrationAccessLinksText({ registrantFirstName, registrations }),
   });
 }
 
@@ -357,6 +448,17 @@ export async function sendCourseRegistrationClosedOverviewEmail(params: {
     to: params.to,
     subject: `Anmeldefrist beendet: ${params.courseTitle} – Posaunenwerk Rheinland`,
     html,
+    text: courseRegistrationClosedOverviewText({
+      courseTitle: params.courseTitle,
+      registrationDeadline: params.registrationDeadline,
+      startDate: params.startDate,
+      endDate: params.endDate,
+      locationName: params.locationName,
+      maxParticipants: params.maxParticipants,
+      allowWaitingList: params.allowWaitingList,
+      stats: params.stats,
+      participantsUrl: params.participantsUrl,
+    }),
     attachments: [
       {
         filename: params.attachment.filename,
@@ -398,6 +500,14 @@ export async function sendContentReviewResultEmail(params: {
       ? `${typeLabel} veröffentlicht: ${params.title} – Posaunenwerk Rheinland`
       : `${typeLabel} abgelehnt: ${params.title} – Posaunenwerk Rheinland`,
     html,
+    text: contentReviewResultText({
+      recipientName: params.recipientName,
+      contentType: params.contentType,
+      title: params.title,
+      approved: params.approved,
+      reviewNotes: params.reviewNotes,
+      dashboardUrl: params.dashboardUrl,
+    }),
   });
 }
 
@@ -425,6 +535,13 @@ export async function sendContactMessageEmail(params: {
     replyTo: params.email,
     subject: `Kontaktformular: ${params.subjectLabel} – ${params.name}`,
     html,
+    text: contactMessageText({
+      name: params.name,
+      email: params.email,
+      phone: params.phone,
+      subjectLabel: params.subjectLabel,
+      message: params.message,
+    }),
   });
 }
 
@@ -469,6 +586,16 @@ export async function sendCourseMailToRegistrant(params: {
     replyTo: params.replyToEmail,
     subject: params.subject,
     html,
+    text: generateCourseMailText({
+      courseTitle: params.courseTitle,
+      courseStartDate: params.courseStartDate,
+      courseEndDate: params.courseEndDate,
+      recipientName: params.recipientName,
+      senderName: params.senderName,
+      replyToEmail: params.replyToEmail,
+      courseUrl: params.courseUrl,
+      includeGreeting: params.includeGreeting,
+    }),
     attachments: params.attachments,
   });
 }

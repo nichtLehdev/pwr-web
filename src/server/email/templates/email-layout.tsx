@@ -42,7 +42,7 @@ export const farben = {
  * systemnah, damit überall dieselbe Zeile steht statt einer Notschrift.
  */
 export const schrift =
-  '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
+  "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif";
 
 /** Absolute Adresse für Bilder und Links — relative Pfade tragen in E-Mail nicht. */
 export function emailBaseUrl(): string {

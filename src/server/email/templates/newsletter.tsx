@@ -1,14 +1,13 @@
-import {
-  Html,
-  Head,
-  Body,
-  Container,
-  Section,
-  Text,
-  Hr,
-  Link,
-} from "@react-email/components";
+import { Hr, Link, Section, Text } from "@react-email/components";
 import { marked } from "marked";
+import {
+  EmailLayout,
+  grundtext,
+  haarlinie,
+  kleintext,
+  link as linkStil,
+} from "./email-layout";
+import { emailText, textLink } from "./email-text";
 
 marked.use({
   gfm: true,
@@ -27,140 +26,68 @@ export function NewsletterEmail({
   subscriberName,
 }: NewsletterEmailProps) {
   return (
-    <Html lang="de">
-      <Head />
-      <Body style={main}>
-        <Container style={container}>
-          <Section style={header}>
-            <Text style={logoText}>Posaunenwerk Rheinland</Text>
-            <Text style={tagline}>
-              Posaunenwerk der Evangelischen Kirche im Rheinland
-            </Text>
-          </Section>
+    <EmailLayout preview="Newsletter">
+      <Text style={grussStil}>
+        {subscriberName ? `Hallo ${subscriberName},` : "Hallo,"}
+      </Text>
 
-          <Section style={contentStyle}>
-            <Text style={greeting}>
-              {subscriberName ? `Hallo ${subscriberName},` : "Hallo,"}
-            </Text>
+      {/* Newsletter content will be injected here */}
+      <div data-newsletter-content="true" style={inhaltStil}>
+        {content || "NEWSLETTER_CONTENT_PLACEHOLDER_MARKER_12345"}
+      </div>
 
-            {/* Newsletter content will be injected here */}
-            <div
-              data-newsletter-content="true"
-              style={{
-                fontSize: "16px",
-                lineHeight: "26px",
-                color: "#58595b",
-                marginBottom: "16px",
-              }}
-            >
-              {content || "NEWSLETTER_CONTENT_PLACEHOLDER_MARKER_12345"}
-            </div>
+      <Hr style={haarlinie} />
 
-            <Hr style={hr} />
-
-            <Section style={unsubscribeSection}>
-              <Text style={unsubscribeText}>
-                Du möchtest keine Newsletter mehr erhalten?{" "}
-                <Link href={unsubscribeUrl} style={unsubscribeLink}>
-                  Hier abmelden
-                </Link>
-              </Text>
-            </Section>
-          </Section>
-
-          <Section style={footerSection}>
-            <Text style={footerText}>
-              Posaunenwerk der Evangelischen Kirche im Rheinland
-            </Text>
-          </Section>
-        </Container>
-      </Body>
-    </Html>
+      <Section style={abmeldenFeld}>
+        <Text style={abmeldenText}>
+          Du möchtest keine Newsletter mehr erhalten?{" "}
+          <Link href={unsubscribeUrl} style={linkStil}>
+            Hier abmelden
+          </Link>
+        </Text>
+      </Section>
+    </EmailLayout>
   );
 }
 
-const main = {
-  backgroundColor: "#f5f5f5",
-  fontFamily:
-    '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Ubuntu,sans-serif',
+/**
+ * Nur-Text-Fassung. Der Rumpf ist vom Autor verfasstes HTML, das sich nicht
+ * verlustfrei in Text verwandeln lässt — daher nur Hinweis, Anrede und
+ * Abmeldelink, ohne den eigentlichen Inhalt.
+ */
+export function newsletterEmailText({
+  unsubscribeUrl,
+  subscriberName,
+}: Omit<NewsletterEmailProps, "content">): string {
+  return emailText([
+    "NEWSLETTER",
+    "",
+    subscriberName ? `Hallo ${subscriberName},` : "Hallo,",
+    "",
+    "Diese Textfassung enthält den Newsletter-Inhalt nicht — er liegt nur als Gestaltung für das HTML-Postfach vor.",
+    "",
+    textLink("Newsletter abbestellen:", unsubscribeUrl),
+  ]);
+}
+
+const grussStil = {
+  ...grundtext,
+  fontWeight: "bold" as const,
 };
 
-const container = {
-  backgroundColor: "#ffffff",
-  margin: "0 auto",
-  padding: "0",
-  marginBottom: "64px",
-  maxWidth: "600px",
-  borderRadius: "8px",
-  boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+const inhaltStil = {
+  ...grundtext,
 };
 
-const header = {
-  backgroundColor: "#faa619",
-  padding: "32px 24px",
+const abmeldenFeld = {
   textAlign: "center" as const,
-  borderRadius: "8px 8px 0 0",
+  margin: "32px 0 0 0",
 };
 
-const logoText = {
-  color: "#ffffff",
-  fontSize: "28px",
-  fontWeight: "bold",
-  margin: "0 0 8px 0",
-  letterSpacing: "0.5px",
-};
-
-const tagline = {
-  color: "#ffffff",
+const abmeldenText = {
+  ...kleintext,
   fontSize: "12px",
-  fontWeight: "normal",
-  margin: "0",
-  opacity: 0.95,
-  letterSpacing: "0.3px",
-};
-
-const contentStyle = {
-  padding: "32px 24px",
-};
-
-const greeting = {
-  fontSize: "18px",
-  fontWeight: "bold",
-  color: "#58595b",
-  marginBottom: "24px",
-};
-
-const hr = {
-  borderColor: "#e5e7eb",
-  margin: "32px 0",
-};
-
-const unsubscribeSection = {
-  textAlign: "center" as const,
-  marginTop: "32px",
-};
-
-const unsubscribeText = {
-  fontSize: "12px",
-  color: "#6b7280",
   lineHeight: "20px",
-  margin: "0",
-};
-
-const unsubscribeLink = {
-  color: "#faa619",
-  textDecoration: "underline",
-};
-
-const footerSection = {
-  padding: "24px",
-  backgroundColor: "#f5f5f5",
   textAlign: "center" as const,
-  borderRadius: "0 0 8px 8px",
-};
-
-const footerText = {
-  fontSize: "12px",
-  color: "#9ca3af",
   margin: "0",
 };
