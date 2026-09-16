@@ -25,7 +25,8 @@ const TITLE: Record<NoteTone, string> = {
 interface NoteProps {
   tone?: NoteTone;
   title?: ReactNode;
-  titleAs?: "p" | "h3" | "h4";
+  /** `h2`, wenn der Hinweis ein eigener Abschnitt der Seite ist. */
+  titleAs?: "p" | "h2" | "h3" | "h4";
   as?: "div" | "aside";
   className?: string;
   children: ReactNode;
