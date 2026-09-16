@@ -1,11 +1,11 @@
-import { Hr, Link, Text } from "@react-email/components";
+import { Link, Text } from "@react-email/components";
 import {
   EmailLayout,
+  Regel,
   abschnittskopf,
   emailBaseUrl,
   farben,
   grundtext,
-  haarlinie,
   kleintext,
   link,
 } from "./email-layout";
@@ -118,14 +118,14 @@ export function SiblingDiscountRejected({
         ]}
       />
 
-      <Hr style={haarlinie} />
+      <Regel />
 
       <Text style={abschnittskopf}>Preisübersicht</Text>
       <Text style={gesamtzeile}>
         Gesamtbetrag: {formatPrice(originalTotalPrice)}
       </Text>
 
-      <Hr style={haarlinie} />
+      <Regel />
 
       <Text style={grundtext}>
         Du kannst deine Anmeldung weiterhin zum vollen Preis behalten oder sie

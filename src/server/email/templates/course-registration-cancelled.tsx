@@ -1,11 +1,5 @@
-import { Hr, Text } from "@react-email/components";
-import {
-  EmailLayout,
-  abschnittskopf,
-  grundtext,
-  haarlinie,
-  tintenstrich,
-} from "./email-layout";
+import { Text } from "@react-email/components";
+import { EmailLayout, Regel, abschnittskopf, grundtext } from "./email-layout";
 import { emailText, textZeile } from "./email-text";
 
 interface CourseRegistrationCancelledProps {
@@ -46,7 +40,7 @@ export function CourseRegistrationCancelled({
         deine Anmeldung für den folgenden Kurs wurde erfolgreich storniert:
       </Text>
 
-      <Hr style={tintenstrich} />
+      <Regel stark />
       <Text style={kursTitel}>{courseTitle}</Text>
       <Text style={grundtext}>
         <strong>Start:</strong> {formatDate(startDate)}
@@ -59,7 +53,7 @@ export function CourseRegistrationCancelled({
         {participantsCount === 1 ? "Person" : "Personen"}
       </Text>
 
-      <Hr style={haarlinie} />
+      <Regel />
 
       <Text style={kursTitel}>ℹ️ Wichtige Informationen</Text>
       <Text style={grundtext}>
@@ -67,7 +61,7 @@ export function CourseRegistrationCancelled({
         erfolgt ist, wende dich bitte an uns, um die Rückerstattung zu klären.
       </Text>
 
-      <Hr style={haarlinie} />
+      <Regel />
 
       <Text style={grundtext}>
         Bei Fragen kannst du dich gerne an uns wenden.

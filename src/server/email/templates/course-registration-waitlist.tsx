@@ -1,16 +1,10 @@
-import { Hr, Text } from "@react-email/components";
+import { Text } from "@react-email/components";
 import type { DownPaymentMailInfo } from "../down-payment";
 import {
   DownPaymentSection,
   downPaymentSectionText,
 } from "./down-payment-section";
-import {
-  EmailLayout,
-  abschnittskopf,
-  grundtext,
-  haarlinie,
-  tintenstrich,
-} from "./email-layout";
+import { EmailLayout, Regel, abschnittskopf, grundtext } from "./email-layout";
 import { emailText, textZeile } from "./email-text";
 import {
   ManageRegistrationCta,
@@ -68,7 +62,7 @@ export function CourseRegistrationWaitlist({
         vollständig ausgebucht. Wir haben dich auf die Warteliste gesetzt:
       </Text>
 
-      <Hr style={tintenstrich} />
+      <Regel stark />
       <Text style={kursTitel}>{courseTitle}</Text>
       <Text style={grundtext}>
         <strong>Start:</strong> {formatDate(startDate)}
@@ -92,7 +86,7 @@ export function CourseRegistrationWaitlist({
         />
       )}
 
-      <Hr style={haarlinie} />
+      <Regel />
 
       <Text style={grundtext}>
         Sollte ein Platz frei werden, werden wir dich umgehend per E-Mail

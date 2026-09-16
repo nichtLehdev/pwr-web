@@ -1,16 +1,10 @@
-import { Hr, Text } from "@react-email/components";
+import { Text } from "@react-email/components";
 import type { DownPaymentMailInfo } from "../down-payment";
 import {
   DownPaymentSection,
   downPaymentSectionText,
 } from "./down-payment-section";
-import {
-  EmailLayout,
-  abschnittskopf,
-  grundtext,
-  haarlinie,
-  tintenstrich,
-} from "./email-layout";
+import { EmailLayout, Regel, abschnittskopf, grundtext } from "./email-layout";
 import { emailText, textZeile } from "./email-text";
 import {
   ManageRegistrationCta,
@@ -74,7 +68,7 @@ export function CourseRegistrationPendingDiscount({
         folgenden Kurs erhalten:
       </Text>
 
-      <Hr style={tintenstrich} />
+      <Regel stark />
       <Text style={unterTitel}>{courseTitle}</Text>
       <Text style={grundtext}>
         <strong>Start:</strong> {formatDate(startDate)}
@@ -87,7 +81,7 @@ export function CourseRegistrationPendingDiscount({
         {participantsCount === 1 ? "Person" : "Personen"}
       </Text>
 
-      <Hr style={haarlinie} />
+      <Regel />
       <Text style={unterTitel}>Preisübersicht</Text>
       <Text style={grundtext}>
         <strong>Ursprünglicher Gesamtbetrag:</strong>{" "}
@@ -97,13 +91,13 @@ export function CourseRegistrationPendingDiscount({
         <strong>Geschwisterkindrabatt (20% pro weiteres Kind):</strong> -
         {formatPrice(discountAmount)}
       </Text>
-      <Hr style={tintenstrich} />
+      <Regel stark />
       <Text style={grundtext}>
         <strong>Gesamtbetrag (vorbehaltlich Genehmigung):</strong>{" "}
         {formatPrice(finalTotalPrice)}
       </Text>
 
-      <Hr style={haarlinie} />
+      <Regel />
       <Text style={unterTitel}>⏳ Rabatt prüfen</Text>
       <Text style={grundtext}>
         Dein Antrag auf Geschwisterkindrabatt wird derzeit geprüft. Du erhältst
@@ -119,7 +113,7 @@ export function CourseRegistrationPendingDiscount({
         />
       )}
 
-      <Hr style={haarlinie} />
+      <Regel />
 
       <Text style={grundtext}>
         Du erhältst in Kürze weitere Informationen zum Kurs per E-Mail. Bei
