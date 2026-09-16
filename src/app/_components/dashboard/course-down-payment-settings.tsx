@@ -38,7 +38,7 @@ export interface CourseDownPaymentSettingsProps {
 }
 
 const inputClass =
-  "focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:bg-gray-800";
+  "border-ink dark:border-night-text dark:bg-night dark:text-night-text border bg-paper px-3 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-50";
 
 const parseAmount = (value: string): number | null => {
   const parsed = parseFloat(value.replace(",", "."));
@@ -77,12 +77,12 @@ export function CourseDownPaymentSettings({
   const disabled = !canEdit || locked;
 
   return (
-    <div className="dark:border-dark-border space-y-4 rounded-lg border border-gray-200 p-4">
+    <div className="border-rule dark:border-night-rule space-y-4 border p-4">
       <div>
-        <p className="dark:text-dark-text text-sm font-medium text-gray-700">
+        <p className="text-ink dark:text-night-text text-sm font-medium">
           Anzahlung
         </p>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
+        <p className="text-dark dark:text-night-muted text-xs">
           Wird bei der Anmeldung per Überweisung fällig; der Restbetrag folgt
           mit der Rechnung. Anmeldungen mit Anzahlung kann nur das Kursteam
           stornieren oder um Teilnehmer ändern.
@@ -90,7 +90,7 @@ export function CourseDownPaymentSettings({
       </div>
 
       {(locked || !canEdit) && (
-        <p className="flex items-start gap-2 rounded-lg bg-gray-50 p-3 text-xs text-gray-600 dark:bg-gray-800/50 dark:text-gray-400">
+        <p className="bg-rule/25 dark:bg-night-raised text-dark dark:text-night-muted flex items-start gap-2 p-3 text-xs">
           <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
           {locked
             ? "Es gibt aktive Anmeldungen, die Betrag und Hinweise bereits bestätigt haben — die Anzahlung lässt sich nicht mehr ändern."
@@ -102,7 +102,7 @@ export function CourseDownPaymentSettings({
         {MODES.map((value) => (
           <label
             key={value}
-            className="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-gray-300"
+            className="text-ink dark:text-night-text flex cursor-pointer items-center gap-2 text-sm"
           >
             <input
               type="radio"
@@ -110,7 +110,7 @@ export function CourseDownPaymentSettings({
               checked={mode === value}
               onChange={() => onModeChange(value)}
               disabled={disabled}
-              className="text-primary focus:ring-primary h-4 w-4 border-gray-300"
+              className="text-primary border-rule dark:border-night-rule h-4 w-4"
             />
             {DOWN_PAYMENT_MODE_LABELS[value]}
           </label>
@@ -119,7 +119,7 @@ export function CourseDownPaymentSettings({
 
       {mode === "COURSE" && (
         <label className="block">
-          <span className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">
+          <span className="text-dark dark:text-night-muted mb-1 block text-xs font-medium">
             Betrag pro Teilnehmer
           </span>
           <span className="flex items-center gap-1">
@@ -132,19 +132,19 @@ export function CourseDownPaymentSettings({
               disabled={disabled}
               className={`${inputClass} w-28`}
             />
-            <span className="text-sm text-gray-500">€</span>
+            <span className="text-dark dark:text-night-muted text-sm">€</span>
           </span>
         </label>
       )}
 
       {mode === "TICKET" &&
         (priceOptions.length === 0 ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-dark dark:text-night-muted text-sm">
             Lege zuerst Preiskategorien an.
           </p>
         ) : (
           <div className="space-y-2">
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-dark dark:text-night-muted text-xs">
               Leer lassen, wenn für eine Kategorie keine Anzahlung fällig wird.
             </p>
             {priceOptions.map((option) => (
@@ -152,9 +152,9 @@ export function CourseDownPaymentSettings({
                 key={option.id}
                 className="flex flex-wrap items-center justify-between gap-2"
               >
-                <span className="text-sm text-gray-700 dark:text-gray-300">
+                <span className="text-ink dark:text-night-text text-sm">
                   {option.label || "Ohne Bezeichnung"}{" "}
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                  <span className="text-dark dark:text-night-muted text-xs">
                     ({formatEuro(option.price)}, höchstens{" "}
                     {formatEuro(
                       maxDownPaymentForPrice(
@@ -181,7 +181,9 @@ export function CourseDownPaymentSettings({
                     placeholder="keine"
                     className={`${inputClass} w-28`}
                   />
-                  <span className="text-sm text-gray-500">€</span>
+                  <span className="text-dark dark:text-night-muted text-sm">
+                    €
+                  </span>
                 </span>
               </div>
             ))}
@@ -191,13 +193,13 @@ export function CourseDownPaymentSettings({
       {mode !== "NONE" && (
         <>
           <fieldset className="space-y-2">
-            <legend className="mb-1 text-xs font-medium text-gray-500 dark:text-gray-400">
+            <legend className="text-dark dark:text-night-muted mb-1 text-xs font-medium">
               Hinweis zur Erstattung (bestätigen Anmeldende)
             </legend>
             {POLICIES.map((value) => (
               <label
                 key={value}
-                className="flex cursor-pointer items-start gap-2 text-sm text-gray-700 dark:text-gray-300"
+                className="text-ink dark:text-night-text flex cursor-pointer items-start gap-2 text-sm"
               >
                 <input
                   type="radio"
@@ -205,12 +207,12 @@ export function CourseDownPaymentSettings({
                   checked={refundPolicy === value}
                   onChange={() => onRefundPolicyChange(value)}
                   disabled={disabled}
-                  className="text-primary focus:ring-primary mt-0.5 h-4 w-4 border-gray-300"
+                  className="text-primary border-rule dark:border-night-rule mt-0.5 h-4 w-4"
                 />
                 <span>
                   {DOWN_PAYMENT_REFUND_POLICY_LABELS[value]}
                   {value !== "CUSTOM" && (
-                    <span className="block text-xs text-gray-500 dark:text-gray-400">
+                    <span className="text-dark dark:text-night-muted block text-xs">
                       „
                       {downPaymentRefundNotice({
                         downPaymentRefundPolicy: value,
@@ -234,7 +236,7 @@ export function CourseDownPaymentSettings({
             )}
           </fieldset>
 
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-dark dark:text-night-muted text-xs">
             {courseNumber.trim() ? (
               <>
                 Verwendungszweck:{" "}

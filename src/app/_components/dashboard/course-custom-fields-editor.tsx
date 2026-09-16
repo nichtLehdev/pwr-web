@@ -18,6 +18,7 @@ import {
   parseSelectOptionValues,
 } from "@/lib/course-custom-fields";
 import { Select } from "@/app/_components/ui";
+import { Tag } from "@/app/_components/programmheft/tag";
 import { CustomFieldType } from "~/generated/prisma/enums";
 
 export const customFieldTypeLabels: Record<CustomFieldType, string> = {
@@ -52,7 +53,7 @@ type CourseCustomFieldsEditorProps = {
 };
 
 const inputClassName =
-  "focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text dark:disabled:bg-dark-background block w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:text-gray-500";
+  "border-ink dark:border-night-text dark:bg-night dark:text-night-text block w-full border bg-paper px-3 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-50";
 
 const normalizeName = (name: string) => name.trim().toLowerCase();
 
@@ -214,7 +215,7 @@ export function CourseCustomFieldsEditor({
           <button
             type="button"
             onClick={() => setLibraryOpen((open) => !open)}
-            className="text-primary hover:text-primary/80 inline-flex items-center gap-1.5 text-sm font-medium"
+            className="text-primary-ink dark:text-primary inline-flex min-h-11 items-center gap-1.5 text-sm font-medium hover:underline"
           >
             <Library className="h-4 w-4" />
             Aus Bibliothek
@@ -222,7 +223,7 @@ export function CourseCustomFieldsEditor({
           <button
             type="button"
             onClick={addField}
-            className="text-primary hover:text-primary/80 text-sm font-medium"
+            className="text-primary-ink dark:text-primary min-h-11 text-sm font-medium hover:underline"
           >
             + Feld hinzufügen
           </button>
@@ -230,13 +231,13 @@ export function CourseCustomFieldsEditor({
       ) : null}
 
       {libraryOpen && !disabled ? (
-        <div className="dark:border-dark-border dark:bg-dark-background-secondary mb-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
+        <div className="border-rule dark:border-night-rule dark:bg-night-raised bg-rule/25 mb-4 border p-4">
           <div className="mb-3 flex items-center justify-between">
             <div>
-              <p className="dark:text-dark-text text-sm font-medium text-gray-700">
+              <p className="text-ink dark:text-night-text text-sm font-medium">
                 Feld-Bibliothek
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-dark dark:text-night-muted text-xs">
                 Beim Hinzufügen wird eine Kopie in den Kurs übernommen. Eigene
                 Felder sind erst für alle sichtbar, sobald ein Kurs mit dem Feld
                 freigegeben wurde.
@@ -245,7 +246,7 @@ export function CourseCustomFieldsEditor({
             <button
               type="button"
               onClick={() => setLibraryOpen(false)}
-              className="p-1 text-gray-400 hover:text-gray-600"
+              className="text-dark dark:text-night-muted hover:text-ink dark:hover:text-night-text p-1"
               aria-label="Bibliothek schließen"
             >
               <X className="h-4 w-4" />
@@ -253,11 +254,11 @@ export function CourseCustomFieldsEditor({
           </div>
 
           {templatesLoading ? (
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-dark dark:text-night-muted text-sm">
               Lade Bibliothek…
             </p>
           ) : !templates || templates.length === 0 ? (
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-dark dark:text-night-muted text-sm">
               Noch keine Felder in der Bibliothek. Speichere ein Feld über das
               Lesezeichen-Symbol, um es hier für alle verfügbar zu machen.
             </p>
@@ -270,24 +271,24 @@ export function CourseCustomFieldsEditor({
                 return (
                   <li
                     key={template.id}
-                    className="dark:border-dark-border dark:bg-dark-background flex items-center gap-3 rounded-lg border border-gray-200 bg-white px-3 py-2"
+                    className="border-rule dark:border-night-rule dark:bg-night bg-paper flex items-center gap-3 border px-3 py-2"
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="dark:text-dark-text truncate text-sm font-medium text-gray-800">
+                      <p className="text-ink dark:text-night-text truncate text-sm font-medium">
                         {template.fieldName}
                         {template.isRequired ? (
                           <span className="text-red-500"> *</span>
                         ) : null}
                         {!template.isGlobal ? (
                           <span
-                            className="ml-2 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-gray-500 uppercase dark:bg-gray-700 dark:text-gray-300"
+                            className="ml-2 inline-block"
                             title="Nur für dich sichtbar, bis ein Kurs mit diesem Feld freigegeben wurde"
                           >
-                            Privat
+                            <Tag tone="inverse">Privat</Tag>
                           </span>
                         ) : null}
                       </p>
-                      <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+                      <p className="text-dark dark:text-night-muted truncate text-xs">
                         {customFieldTypeLabels[template.fieldType]}
                         {customFieldTypeNeedsOptions(template.fieldType)
                           ? `: ${parseSelectOptionValues(template.options).join(", ")}`
@@ -300,7 +301,7 @@ export function CourseCustomFieldsEditor({
                       type="button"
                       onClick={() => addFromLibrary(template)}
                       disabled={alreadyAdded}
-                      className="text-primary hover:text-primary/80 shrink-0 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-40"
+                      className="text-primary-ink dark:text-primary shrink-0 text-sm font-medium hover:underline disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:no-underline"
                     >
                       {alreadyAdded ? "Hinzugefügt" : "+ Hinzufügen"}
                     </button>
@@ -316,7 +317,7 @@ export function CourseCustomFieldsEditor({
                         }
                       }}
                       disabled={deleteTemplate.isPending}
-                      className="shrink-0 p-1 text-gray-400 hover:text-red-500 disabled:opacity-40"
+                      className="text-dark dark:text-night-muted shrink-0 p-1 hover:text-red-500 disabled:opacity-40"
                       aria-label={`${template.fieldName} aus Bibliothek löschen`}
                     >
                       <TrashIcon className="h-4 w-4" />
@@ -330,7 +331,7 @@ export function CourseCustomFieldsEditor({
       ) : null}
 
       {fields.length === 0 ? (
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        <p className="text-dark dark:text-night-muted text-sm">
           Keine zusätzlichen Felder definiert.
         </p>
       ) : (
@@ -340,21 +341,21 @@ export function CourseCustomFieldsEditor({
             return (
               <div
                 key={field.id}
-                className={`rounded-lg border p-4 ${
+                className={`border p-4 ${
                   disabled
-                    ? "dark:border-dark-border dark:bg-dark-background-secondary border-gray-100 bg-gray-50"
-                    : "dark:border-dark-border border-gray-200"
+                    ? "border-rule dark:border-night-rule dark:bg-night-raised bg-rule/25"
+                    : "border-rule dark:border-night-rule"
                 }`}
               >
                 <div className="mb-3 flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  <span className="text-dark dark:text-night-muted text-sm font-medium">
                     Feld {index + 1}
                   </span>
                   {!disabled && (
                     <div className="flex items-center gap-1">
                       {inLibrary ? (
                         <span
-                          className="p-1 text-gray-400"
+                          className="text-dark dark:text-night-muted p-1"
                           title="Bereits in der Bibliothek"
                         >
                           <BookmarkCheck className="h-4 w-4" />
@@ -367,7 +368,7 @@ export function CourseCustomFieldsEditor({
                             createTemplate.isPending &&
                             savingFieldId === field.id
                           }
-                          className="hover:text-primary p-1 text-gray-400 disabled:opacity-40"
+                          className="text-dark dark:text-night-muted hover:text-primary-ink dark:hover:text-primary p-1 disabled:opacity-40"
                           title="In Bibliothek speichern (für alle verfügbar)"
                         >
                           <BookmarkPlus className="h-4 w-4" />
@@ -377,7 +378,7 @@ export function CourseCustomFieldsEditor({
                         type="button"
                         onClick={() => moveField(field.id, "up")}
                         disabled={index === 0}
-                        className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                        className="text-dark dark:text-night-muted hover:text-ink dark:hover:text-night-text p-1 disabled:opacity-30"
                       >
                         <ArrowUpIcon className="h-4 w-4" />
                       </button>
@@ -385,14 +386,14 @@ export function CourseCustomFieldsEditor({
                         type="button"
                         onClick={() => moveField(field.id, "down")}
                         disabled={index === fields.length - 1}
-                        className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                        className="text-dark dark:text-night-muted hover:text-ink dark:hover:text-night-text p-1 disabled:opacity-30"
                       >
                         <ArrowDownIcon className="h-4 w-4" />
                       </button>
                       <button
                         type="button"
                         onClick={() => removeField(field.id)}
-                        className="p-1 text-gray-400 hover:text-red-500"
+                        className="text-dark dark:text-night-muted p-1 hover:text-red-500"
                       >
                         <TrashIcon className="h-4 w-4" />
                       </button>
@@ -402,7 +403,7 @@ export function CourseCustomFieldsEditor({
 
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+                    <label className="text-dark dark:text-night-muted mb-1 block text-xs font-medium">
                       Feldname *
                     </label>
                     <input
@@ -417,7 +418,7 @@ export function CourseCustomFieldsEditor({
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+                    <label className="text-dark dark:text-night-muted mb-1 block text-xs font-medium">
                       Feldtyp
                     </label>
                     <Select
@@ -430,7 +431,7 @@ export function CourseCustomFieldsEditor({
                         )
                       }
                       disabled={disabled}
-                      className={inputClassName}
+                      className="w-full text-sm"
                     >
                       {Object.entries(customFieldTypeLabels).map(
                         ([value, label]) => (
@@ -444,7 +445,7 @@ export function CourseCustomFieldsEditor({
 
                   {customFieldTypeNeedsOptions(field.fieldType) && (
                     <div className="sm:col-span-2">
-                      <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+                      <label className="text-dark dark:text-night-muted mb-1 block text-xs font-medium">
                         Auswahloptionen (kommagetrennt)
                       </label>
                       <input
@@ -461,7 +462,7 @@ export function CourseCustomFieldsEditor({
                   )}
 
                   <div className="sm:col-span-2">
-                    <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+                    <label className="text-dark dark:text-night-muted mb-1 block text-xs font-medium">
                       Hilfetext
                     </label>
                     <input
@@ -485,9 +486,9 @@ export function CourseCustomFieldsEditor({
                           updateField(field.id, "isRequired", e.target.checked)
                         }
                         disabled={disabled}
-                        className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                        className="text-primary border-rule dark:border-night-rule h-4 w-4"
                       />
-                      <span className="dark:text-dark-text text-sm text-gray-700">
+                      <span className="text-ink dark:text-night-text text-sm">
                         Pflichtfeld
                       </span>
                     </label>

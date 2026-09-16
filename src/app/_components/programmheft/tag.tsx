@@ -8,15 +8,23 @@ import { cn } from "@/lib/utils";
  * - `ink`: immer Tinte mit Papierschrift, z. B. auf Orange
  * - `inverse`: Tinte auf Papier, im Nachtdruck Nachtschrift auf Nachtgrund
  * - `orange`: Druckorange mit Tinte (z. B. „Nur Warteliste“)
- * - `cancelled`: nur für „Abgesagt“
+ * - `cancelled`: beendete Zustände mit negativem Ausgang — „Abgesagt“,
+ *   „Storniert“, „Abgelehnt“
+ * - `muted`: nur umrandet, ohne Füllung. Für Zustände, die kein Gewicht
+ *   verdienen (Entwurf, Archiviert). Im Dashboard trägt eine Liste viele
+ *   Etiketten nebeneinander; wären alle gefüllt, hätte keines mehr Bedeutung.
+ *
+ * Gefüllt heißt: Das musst du sehen. Umrandet heißt: Das ist nur der Stand.
  */
-export type TagTone = "ink" | "inverse" | "orange" | "cancelled";
+export type TagTone = "ink" | "inverse" | "orange" | "cancelled" | "muted";
 
 const TONE: Record<TagTone, string> = {
   ink: "bg-ink text-paper",
   inverse: "bg-ink text-paper dark:bg-night-text dark:text-night",
   orange: "bg-primary text-ink",
   cancelled: "bg-red-700 text-paper dark:bg-red-400 dark:text-night",
+  muted:
+    "border-rule text-dark dark:border-night-rule dark:text-night-muted border bg-transparent",
 };
 
 export function Tag({
