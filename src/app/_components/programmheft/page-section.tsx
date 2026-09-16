@@ -31,11 +31,30 @@ interface PageSectionProps {
 export function Split({
   head,
   side = "left",
+  stickyHead = false,
   bodyClassName,
   children,
 }: {
   head: ReactNode;
   side?: "left" | "right";
+  /**
+   * Lässt den Kopf mitlaufen, während der Inhalt daneben vorbeizieht — damit
+   * bei langen Listen nicht verlorengeht, worunter man gerade liest.
+   *
+   * Ausdrücklich pro Abschnitt zu setzen und kein Grundverhalten: Sticky
+   * greift erst, wenn die Inhaltsspalte höher ist als das Fenster. Von 36
+   * Abschnitten im Heft trifft das auf drei zu; überall sonst bewegt sich
+   * nichts und die Regel liefe wirkungslos mit.
+   *
+   * Gegen den Leerraum in der Kopfspalte hilft das übrigens nicht — die Lücke
+   * bleibt gleich groß, der Kopf wandert nur darin. Dagegen hilft nur, die
+   * Spalte zu füllen (siehe Auswahlchöre und Regionalposaunenwarte).
+   *
+   * `lg:self-start` ist die eigentliche Bedingung: Rasterzellen werden sonst
+   * auf die Zeilenhöhe gestreckt, und eine gestreckte Zelle kann nicht kleben
+   * — sie füllt die Zeile ja bereits aus.
+   */
+  stickyHead?: boolean;
   /** Abstand und Rhythmus des Inhalts, z. B. `mt-8` für die mobile Stapelung. */
   bodyClassName?: string;
   children: ReactNode;
@@ -43,11 +62,12 @@ export function Split({
   return (
     <div className="lg:grid lg:grid-cols-12 lg:gap-10">
       <div
-        className={
+        className={cn(
           side === "left"
             ? "lg:col-span-4"
-            : "lg:col-span-4 lg:col-start-9 lg:row-start-1"
-        }
+            : "lg:col-span-4 lg:col-start-9 lg:row-start-1",
+          stickyHead && "split-sticky-head lg:sticky lg:self-start",
+        )}
       >
         {head}
       </div>

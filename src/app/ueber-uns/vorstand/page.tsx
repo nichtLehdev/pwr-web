@@ -100,6 +100,7 @@ export default async function VorstandPage() {
       {/* Vorstandsmitglieder */}
       <PageSection labelledBy="mitglieder-heading">
         <Split
+          stickyHead
           head={
             <Heading id="mitglieder-heading" className="hyphens-manual">
               Die Vorstands&shy;mitglieder

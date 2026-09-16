@@ -105,6 +105,7 @@ function MaterialienContent() {
 
       <PageSection labelledBy="downloads-heading">
         <Split
+          stickyHead
           head={
             <SectionHead
               id="downloads-heading"

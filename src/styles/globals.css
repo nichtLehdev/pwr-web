@@ -336,6 +336,23 @@ body {
       var(--main-padding-top, 9rem) + var(--dashboard-sticky-top-extra)
     );
   }
+
+  /*
+   * Mitlaufender Abschnittskopf im Heft (`Split` mit `stickyHead`).
+   *
+   * Der Versatz kommt aus `--main-padding-top`, das MainContent auf <main> als
+   * fertig ausgerechnetes calc aus Banner- und Navigationshöhe setzt und das
+   * sich nach unten vererbt. Eine feste Zahl wie `top-24` stimmt nicht mehr,
+   * sobald das Banner erscheint oder der Breakpoint die Navigationshöhe
+   * ändert — derselbe Fehler steckte zuvor im Kolumnentitel.
+   *
+   * Als benannte Klasse aus demselben Grund wie oben: Kommas in Tailwinds
+   * Arbitrary-Werten zerbrechen den Parser, `top` wird ungültig, und
+   * `position: sticky` bliebe dann still wirkungslos.
+   */
+  .split-sticky-head {
+    top: calc(var(--main-padding-top, 5rem) + 1.5rem);
+  }
 }
 
 /* Hash targets: shell + sticky pill nav (< xl); xl+ only needs shell + extra */
