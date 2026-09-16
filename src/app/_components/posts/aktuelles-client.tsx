@@ -10,6 +10,7 @@ import { FilterIcon, PinIcon, XCircleIcon, Rss } from "lucide-react";
 import FeedConfigModal from "@/app/_components/feeds/feed-config-modal";
 import { useBanner } from "@/app/_components/ui/banner-context";
 import { useStickyTop } from "@/lib/use-sticky-top";
+import { useTitelVorbei } from "@/lib/use-titel-vorbei";
 import { cn } from "@/lib/utils";
 
 type PostWithRelations = RouterOutputs["posts"]["getAll"]["posts"][number];
@@ -26,6 +27,7 @@ const FIELD_LABEL =
 export default function AktuellesClient() {
   const { bannerHeight } = useBanner();
   const stickyTop = useStickyTop(bannerHeight);
+  const { marke, vorbei } = useTitelVorbei(stickyTop);
 
   useEffect(() => {
     // Store original overflow value
@@ -176,6 +178,8 @@ export default function AktuellesClient() {
       // Die Filterleiste dieser Seite trägt den Kolumnentitel bereits.
       stickyTitle={false}
     >
+      {/* Marke für „Titel vorbei“: steht genau hinter dem Seitenkopf. */}
+      <div ref={marke} aria-hidden className="h-px" />
       {/* Filter Bar */}
       <section
         className="bg-paper dark:bg-night border-rule dark:border-night-rule sticky z-20 border-b"
@@ -185,10 +189,20 @@ export default function AktuellesClient() {
           {/* Mobile: Compact Row */}
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-4">
-              {/* Kolumnentitel: sagt beim Scrollen, auf welcher Seite des
-                  Hefts man steht — und füllt den Platz, den die Leiste unter
-                  der Navigation ohnehin einnimmt. */}
-              <p className="condensed text-ink dark:text-night-text hidden text-xl leading-none font-bold lg:block">
+              {/* Kolumnentitel: erscheint erst, wenn der große Titel nach
+                  oben aus dem Bild gelaufen ist — sonst stünde „Aktuelles“
+                  zweimal untereinander. Statt nur die Deckkraft zu ändern,
+                  wächst der Titel aus der Breite null auf: Die Angaben stehen
+                  zunächst ganz links und rücken beim Einblenden nach rechts.
+                  Das negative `-mr-4` schluckt in eingeklapptem Zustand den
+                  `gap-4` der Zeile, sonst bliebe eine Lücke. */}
+              <p
+                aria-hidden={!vorbei}
+                className={cn(
+                  "condensed text-ink dark:text-night-text hidden overflow-hidden text-xl leading-none font-bold whitespace-nowrap transition-[max-width,opacity,margin] duration-200 motion-reduce:transition-none lg:block",
+                  vorbei ? "max-w-48 opacity-100" : "-mr-4 max-w-0 opacity-0",
+                )}
+              >
                 Aktuelles
               </p>
               {/* Left: Results Count */}
