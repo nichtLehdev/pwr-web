@@ -87,7 +87,7 @@ export default function BlechblattPage() {
         </p>
       }
     >
-      <PageSection flush="top">
+      <PageSection>
         {isLoading ? (
           <LoadingSpinner text="Blechblatt-Ausgaben werden geladen..." />
         ) : editions && editions.length > 0 ? (
@@ -138,8 +138,8 @@ export default function BlechblattPage() {
             </div>
 
             {pdfUrl ? (
-              <div className="border-ink dark:border-night-text mt-8 border-2">
-                <div className="border-ink dark:border-night-text flex flex-wrap items-center justify-between gap-3 border-b-2 px-4 py-3 md:px-6">
+              <div className="border-rule dark:border-night-rule mt-8 border">
+                <div className="border-rule dark:border-night-rule flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3 md:px-6">
                   <h2 className="condensed text-ink dark:text-night-text truncate text-lg font-bold">
                     {selectedEdition?.title ?? "PDF-Vorschau"}
                   </h2>

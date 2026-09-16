@@ -89,6 +89,16 @@
   caret-color: var(--color-primary-ink);
 }
 
+/*
+ * Auswahlfelder zeichnen ihr eigenes Dreieck. Tailwinds `appearance-none`
+ * schreibt kein `-webkit-`-Präfix, deshalb blieb es in Safari stehen und
+ * stand neben dem Zeichen, das wir selbst setzen.
+ */
+.programm select {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
 .programm :focus-visible {
   outline: 3px solid var(--color-ink);
   outline-offset: 2px;
@@ -161,7 +171,7 @@
   transform: scaleX(1);
 }
 
-.fill-row:focus-within :is(h2, h3, h4, p, span, svg, a) {
+.fill-row:focus-within :is(h2, h3, h4, p, span, svg, a):not([data-tag]) {
   color: var(--color-ink);
 }
 
@@ -170,7 +180,7 @@
     transform: scaleX(1);
   }
 
-  .fill-row:hover :is(h2, h3, h4, p, span, svg, a) {
+  .fill-row:hover :is(h2, h3, h4, p, span, svg, a):not([data-tag]) {
     color: var(--color-ink);
   }
 }

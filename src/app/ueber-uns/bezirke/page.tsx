@@ -347,7 +347,7 @@ export default function BezirkePage() {
       ) : (
         <>
           {/* Übersichtskarte */}
-          <PageSection labelledBy="karte-heading" flush="top">
+          <PageSection labelledBy="karte-heading">
             <Heading id="karte-heading" rule>
               Übersichtskarte der Bezirke
             </Heading>

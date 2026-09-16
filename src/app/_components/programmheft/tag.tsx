@@ -30,6 +30,10 @@ export function Tag({
 }) {
   return (
     <span
+      // Etiketten tragen ihre eigene Füllung. Die Zeilenfüllung in
+      // `.fill-row` färbt sonst auch ihre Schrift in Tinte — auf einem
+      // tintefarbenen Etikett wäre sie dann unlesbar.
+      data-tag=""
       className={cn(
         "semi-condensed inline-flex min-h-6 items-center gap-1.5 px-2 text-sm leading-none font-semibold whitespace-nowrap",
         TONE[tone],

@@ -9,6 +9,7 @@ import { NewsColumns } from "@/app/_components/programmheft/news";
 import { FilterIcon, PinIcon, XCircleIcon, Rss } from "lucide-react";
 import FeedConfigModal from "@/app/_components/feeds/feed-config-modal";
 import { useBanner } from "@/app/_components/ui/banner-context";
+import { useStickyTop } from "@/lib/use-sticky-top";
 import { cn } from "@/lib/utils";
 
 type PostWithRelations = RouterOutputs["posts"]["getAll"]["posts"][number];
@@ -24,7 +25,7 @@ const FIELD_LABEL =
 
 export default function AktuellesClient() {
   const { bannerHeight } = useBanner();
-  const [filterBarTop, setFilterBarTop] = useState(112);
+  const stickyTop = useStickyTop(bannerHeight);
 
   useEffect(() => {
     // Store original overflow value
@@ -41,19 +42,6 @@ export default function AktuellesClient() {
       // Ensure overflow is restored on cleanup
       document.body.style.overflow = originalOverflow || "";
     };
-  }, []);
-
-  useEffect(() => {
-    const updateFilterBarTop = () => {
-      // Original values were top-28 (112px) mobile and md:top-36 (144px) desktop
-      // We add bannerHeight to these original values
-      const baseTop = window.innerWidth >= 768 ? 144 : 112;
-      setFilterBarTop(baseTop);
-    };
-
-    updateFilterBarTop();
-    window.addEventListener("resize", updateFilterBarTop);
-    return () => window.removeEventListener("resize", updateFilterBarTop);
   }, []);
 
   const [selectedDistrict, setSelectedDistrict] = useState<string>("all");
@@ -188,9 +176,7 @@ export default function AktuellesClient() {
       {/* Filter Bar */}
       <section
         className="bg-paper dark:bg-night border-rule dark:border-night-rule sticky z-20 border-b"
-        style={{
-          top: `${bannerHeight + filterBarTop}px`,
-        }}
+        style={{ top: `${stickyTop}px` }}
       >
         <div className="sheet py-3">
           {/* Mobile: Compact Row */}

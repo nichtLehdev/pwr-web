@@ -83,20 +83,19 @@ export default function BildungPage() {
         </p>
       }
     >
-      <PageSection>
-        {/* Rahmen statt Füllung: Die Seite trägt bereits das blaue
-            Fördervereinsfeld und den orangen Schlussaufruf. Eine dritte
-            Farbfläche direkt unter dem Titel wäre lauter als die Überschrift
-            und nähme dem Schlussaufruf seine Rolle als einziger Blickfang. */}
-        <Note tone="info" title="Wichtig" titleAs="h2">
+      {/* Hinweis und erster Abschnitt teilen sich ein Band. Getrennt ergaben
+          sie drei Linien kurz hintereinander: Kopfstrich, Kastenrahmen,
+          Abschnittsstrich. Der Rahmen statt einer orangen Füllung, weil die
+          Seite mit dem blauen Fördervereinsfeld und dem Schlussaufruf schon
+          zwei Farbflächen trägt. */}
+      <PageSection labelledBy="angebote-heading">
+        <Note tone="info" title="Wichtig" titleAs="h2" className="mb-14">
           <p>
             Unser Angebot richtet sich nicht ausschließlich an Mitglieder des
             Posaunenwerks, sondern steht allen Interessierten offen!
           </p>
         </Note>
-      </PageSection>
 
-      <PageSection labelledBy="angebote-heading" rule>
         <Split
           head={
             <SectionHead

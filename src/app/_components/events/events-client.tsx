@@ -24,6 +24,7 @@ import {
 } from "@/app/_components/programmheft/programme-data";
 import { ProgrammeList } from "@/app/_components/programmheft/programme";
 import { COURSE_TYPE_MAP, EVENT_CATEGORY_MAP } from "@/lib/termine-labels";
+import { useStickyTop } from "@/lib/use-sticky-top";
 import CalendarView from "./calendar/calendar-view";
 import DesktopCalendarView from "./calendar/desktop-calendar-view";
 import {
@@ -123,24 +124,11 @@ export default function EventsClient({
 }: EventsClientProps) {
   const { data: session } = useSession();
   const { bannerHeight } = useBanner();
-  const [filterBarTop, setFilterBarTop] = useState(112);
+  const stickyTop = useStickyTop(bannerHeight);
 
   const { data: profile } = api.users.getMyProfile.useQuery(undefined, {
     enabled: !!session?.user,
   });
-
-  useEffect(() => {
-    const updateFilterBarTop = () => {
-      // Original values were top-28 (112px) mobile and md:top-36 (144px) desktop
-      // We add bannerHeight to these original values
-      const baseTop = window.innerWidth >= 768 ? 144 : 112;
-      setFilterBarTop(baseTop);
-    };
-
-    updateFilterBarTop();
-    window.addEventListener("resize", updateFilterBarTop);
-    return () => window.removeEventListener("resize", updateFilterBarTop);
-  }, []);
 
   const userDefaultView = useMemo((): ViewMode => {
     if (profile?.preferences) {
@@ -428,10 +416,8 @@ export default function EventsClient({
       <div className="bg-paper dark:bg-night">
         {/* Filter & View Toggle */}
         <section
-          className="border-ink dark:border-night-text bg-paper dark:bg-night sticky z-20 border-b-2"
-          style={{
-            top: `${bannerHeight + filterBarTop}px`,
-          }}
+          className="border-rule dark:border-night-rule bg-paper dark:bg-night sticky z-20 border-b"
+          style={{ top: `${stickyTop}px` }}
         >
           <div className="sheet py-3">
             <div className="flex items-center justify-between gap-2">

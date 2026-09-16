@@ -71,7 +71,7 @@ function ConfirmContent() {
         { label: "Bestätigen" },
       ]}
     >
-      <PageSection flush="top">
+      <PageSection>
         <div className="max-w-[38rem]">
           {status === "success" ? (
             <Note tone="info">
