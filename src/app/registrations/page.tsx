@@ -336,7 +336,7 @@ export default function MyRegistrationsPage() {
               return (
                 <li
                   key={registration.id}
-                  className="border-rule dark:border-night-rule border-b py-8 first:pt-0"
+                  className="border-rule dark:border-night-rule border-b py-8"
                 >
                   <div className="lg:flex lg:items-start lg:justify-between lg:gap-10">
                     <div className="min-w-0 flex-1">
