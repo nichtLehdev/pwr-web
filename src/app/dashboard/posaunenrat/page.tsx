@@ -11,6 +11,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import Link from "next/link";
 import Image from "next/image";
 import { DashboardPage } from "@/app/_components/dashboard";
+import { Tag } from "@/app/_components/programmheft/tag";
 import {
   DataTable,
   createDataTableColumnHelper,
@@ -177,8 +178,8 @@ export default function DashboardPosaunenratPage() {
                     />
                   </div>
                 ) : (
-                  <div className="dark:bg-dark-background-secondary flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100">
-                    <span className="dark:text-dark-muted text-sm font-medium text-gray-500">
+                  <div className="bg-rule/25 dark:bg-night-raised flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
+                    <span className="text-dark dark:text-night-muted text-sm font-medium">
                       {displayName.charAt(0).toUpperCase()}
                     </span>
                   </div>
@@ -186,11 +187,11 @@ export default function DashboardPosaunenratPage() {
                 <div className="min-w-0">
                   <Link
                     href={`/dashboard/posaunenrat/${member.id}`}
-                    className="hover:text-primary dark:text-dark-text font-medium text-gray-900"
+                    className="hover:text-primary-ink dark:hover:text-primary text-ink dark:text-night-text font-medium"
                   >
                     {displayName}
                   </Link>
-                  <p className="dark:text-dark-muted text-sm text-gray-500">
+                  <p className="text-dark dark:text-night-muted text-sm">
                     {memberEmail(member)}
                   </p>
                 </div>
@@ -204,11 +205,7 @@ export default function DashboardPosaunenratPage() {
             id: "role",
             header: "Rolle",
             meta: { filterVariant: "set" },
-            cell: ({ getValue }) => (
-              <span className="inline-flex items-center rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
-                {getValue()}
-              </span>
-            ),
+            cell: ({ getValue }) => <Tag tone="inverse">{getValue()}</Tag>,
           },
         ),
         column.accessor(
@@ -222,12 +219,12 @@ export default function DashboardPosaunenratPage() {
               row.original.user ? (
                 <Link
                   href={`/dashboard/users/${row.original.user.id}`}
-                  className="text-primary text-sm hover:underline"
+                  className="text-primary-ink dark:text-primary text-sm hover:underline"
                 >
                   Benutzer verknüpft
                 </Link>
               ) : (
-                <span className="dark:text-dark-muted text-sm text-gray-500">
+                <span className="text-dark dark:text-night-muted text-sm">
                   Manueller Eintrag
                 </span>
               ),
@@ -246,7 +243,7 @@ export default function DashboardPosaunenratPage() {
                   disabled={index <= 0 || isReordering}
                   aria-label="Nach oben"
                   title="Nach oben"
-                  className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-40 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+                  className="text-dark hover:bg-rule/25 hover:text-ink dark:text-night-muted dark:hover:bg-night-raised dark:hover:text-night-text p-2 transition-colors disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <ChevronUpIcon className="h-4 w-4" />
                 </button>
@@ -259,13 +256,13 @@ export default function DashboardPosaunenratPage() {
                   }
                   aria-label="Nach unten"
                   title="Nach unten"
-                  className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-40 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+                  className="text-dark hover:bg-rule/25 hover:text-ink dark:text-night-muted dark:hover:bg-night-raised dark:hover:text-night-text p-2 transition-colors disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <ChevronDownIcon className="h-4 w-4" />
                 </button>
                 <Link
                   href={`/dashboard/posaunenrat/${row.original.id}/edit`}
-                  className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+                  className="text-dark hover:bg-rule/25 hover:text-ink dark:text-night-muted dark:hover:bg-night-raised dark:hover:text-night-text p-2 transition-colors"
                   title="Bearbeiten"
                 >
                   <EditIcon className="h-4 w-4" />
@@ -273,7 +270,7 @@ export default function DashboardPosaunenratPage() {
                 <button
                   onClick={() => handleDelete(row.original.id)}
                   disabled={deletingId === row.original.id}
-                  className="rounded-lg p-2 text-red-500 transition-colors hover:bg-red-50 hover:text-red-700 disabled:opacity-50 dark:hover:bg-red-900/20"
+                  className="p-2 text-red-600 transition-colors hover:bg-red-50 hover:text-red-700 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-900/20"
                   title="Löschen"
                 >
                   {deletingId === row.original.id ? (
@@ -293,8 +290,8 @@ export default function DashboardPosaunenratPage() {
 
   if (isPending || profileLoading || membersLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
@@ -314,7 +311,7 @@ export default function DashboardPosaunenratPage() {
       actions={
         <Link
           href="/dashboard/posaunenrat/new"
-          className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2.5 font-medium text-white transition-colors"
+          className="bg-ink text-paper hover:bg-dark dark:bg-night-text dark:text-night dark:hover:bg-night-muted semi-condensed inline-flex min-h-11 items-center gap-2 px-4 py-2.5 font-semibold transition-colors"
         >
           <PlusIcon className="h-5 w-5" />
           Neues Mitglied
@@ -331,16 +328,16 @@ export default function DashboardPosaunenratPage() {
         initialSorting={[{ id: "position", desc: false }]}
         emptyState={
           <>
-            <UsersIcon className="dark:text-dark-muted mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="dark:text-dark-text mt-4 mb-2 text-lg font-semibold text-gray-900">
+            <UsersIcon className="text-dark dark:text-night-muted mx-auto h-12 w-12" />
+            <h3 className="condensed text-ink dark:text-night-text mt-4 mb-2 text-lg font-bold">
               Keine Posaunenratsmitglieder
             </h3>
-            <p className="dark:text-dark-muted mb-6 text-gray-600">
+            <p className="text-dark dark:text-night-muted mb-6">
               Es wurden noch keine Posaunenratsmitglieder angelegt.
             </p>
             <Link
               href="/dashboard/posaunenrat/new"
-              className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
+              className="bg-ink text-paper hover:bg-dark dark:bg-night-text dark:text-night dark:hover:bg-night-muted semi-condensed inline-flex min-h-11 items-center gap-2 px-4 py-2.5 font-semibold transition-colors"
             >
               Erstes Mitglied anlegen
             </Link>
