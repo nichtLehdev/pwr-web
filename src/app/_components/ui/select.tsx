@@ -274,19 +274,19 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
           <span
             className={cn(
               "min-w-0 flex-1 truncate",
-              mutedTrigger && "text-gray-500 dark:text-gray-400",
+              mutedTrigger && "text-dark dark:text-night-muted",
             )}
           >
             {displayText}
           </span>
           {selectedOption?.trailing ? (
-            <span className="shrink-0 font-medium text-gray-700 dark:text-gray-300">
+            <span className="text-ink dark:text-night-text shrink-0 font-medium">
               {selectedOption.trailing}
             </span>
           ) : null}
           <ChevronDown
             className={cn(
-              "h-4 w-4 shrink-0 text-gray-500 transition-transform dark:text-gray-400",
+              "text-dark dark:text-night-muted h-4 w-4 shrink-0 transition-transform",
               open && "rotate-180",
             )}
             aria-hidden
@@ -337,7 +337,7 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
                     {opt.label}
                   </span>
                   {opt.trailing ? (
-                    <span className="shrink-0 font-medium text-gray-700 dark:text-gray-300">
+                    <span className="text-ink dark:text-night-text shrink-0 font-medium">
                       {opt.trailing}
                     </span>
                   ) : null}
