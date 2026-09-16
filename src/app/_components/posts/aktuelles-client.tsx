@@ -157,6 +157,7 @@ export default function AktuellesClient() {
       <PublicPage
         title="Aktuelles"
         breadcrumbs={[{ label: "Start", href: "/" }, { label: "Aktuelles" }]}
+        stickyTitle={false}
       >
         <PageSection flush="top">
           <p className="text-dark dark:text-night-muted py-12 text-center text-lg">
@@ -172,6 +173,8 @@ export default function AktuellesClient() {
       title="Aktuelles"
       breadcrumbs={[{ label: "Start", href: "/" }, { label: "Aktuelles" }]}
       description={<p>News, Berichte und Ankündigungen aus dem Posaunenwerk</p>}
+      // Die Filterleiste dieser Seite trägt den Kolumnentitel bereits.
+      stickyTitle={false}
     >
       {/* Filter Bar */}
       <section

@@ -412,6 +412,8 @@ export default function EventsClient({
       title="Termine"
       breadcrumbs={[{ label: "Start", href: "/" }, { label: "Termine" }]}
       description={<p>Alle Konzerte, Gottesdienste und Lehrgänge</p>}
+      // Die Filterleiste dieser Seite trägt den Kolumnentitel bereits.
+      stickyTitle={false}
     >
       <div className="bg-paper dark:bg-night">
         {/* Filter & View Toggle */}
