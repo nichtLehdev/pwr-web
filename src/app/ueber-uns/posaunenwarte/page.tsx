@@ -105,49 +105,47 @@ export default async function PosaunenwartePage() {
 
       {/* Regionalposaunenwarte */}
       <PageSection labelledBy="rpw-heading" rule>
-        <Split
-          side="right"
-          head={
-            <Heading id="rpw-heading" className="hyphens-manual">
-              Regional&shy;posaunenwarte
-            </Heading>
-          }
-          bodyClassName="mt-8"
-        >
-          <ul className="border-ink dark:border-night-text border-t-2">
-            {rpw.map((pw) => (
-              <li key={pw.id}>
-                <PersonContactRow
-                  name={pw.name ?? ""}
-                  role={pw.districtRoleName || "Regionalposaunenwart"}
-                  image={pw.profileImage}
-                  email={pw.email}
-                  phone={pw.phone}
-                  bio={pw.bio}
-                  meta={
-                    pw.bezirke.length > 0 ? (
-                      <div className="mt-2">
-                        <p className="semi-condensed text-dark dark:text-night-muted text-sm font-semibold">
-                          Betreute Bezirke:
-                        </p>
-                        <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1.5">
-                          {pw.bezirke.map((bezirk) => (
-                            <span
-                              key={bezirk.id}
-                              className="text-ink dark:text-night-text text-sm"
-                            >
-                              <BezirkLabel bezirk={bezirk} />
-                            </span>
-                          ))}
-                        </div>
+        {/* Volle Satzbreite statt Kopfspalte: Jede Zeile bringt mit Foto und
+            Kurzporträt schon reichlich Höhe mit, bei fünf Personen wird die
+            Liste sehr lang. In einem Split stünde daneben eine dritte, ab
+            der Überschrift dauerhaft leere Spalte (vgl. materialien/literatur,
+            Abschnitt „Unsere Bläserhefte“). */}
+        <Heading id="rpw-heading" className="hyphens-manual">
+          Regional&shy;posaunenwarte
+        </Heading>
+        <ul className="border-ink dark:border-night-text mt-10 border-t-2">
+          {rpw.map((pw) => (
+            <li key={pw.id}>
+              <PersonContactRow
+                name={pw.name ?? ""}
+                role={pw.districtRoleName || "Regionalposaunenwart"}
+                image={pw.profileImage}
+                email={pw.email}
+                phone={pw.phone}
+                bio={pw.bio}
+                meta={
+                  pw.bezirke.length > 0 ? (
+                    <div className="mt-2">
+                      <p className="semi-condensed text-dark dark:text-night-muted text-sm font-semibold">
+                        Betreute Bezirke:
+                      </p>
+                      <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1.5">
+                        {pw.bezirke.map((bezirk) => (
+                          <span
+                            key={bezirk.id}
+                            className="text-ink dark:text-night-text text-sm"
+                          >
+                            <BezirkLabel bezirk={bezirk} />
+                          </span>
+                        ))}
                       </div>
-                    ) : undefined
-                  }
-                />
-              </li>
-            ))}
-          </ul>
-        </Split>
+                    </div>
+                  ) : undefined
+                }
+              />
+            </li>
+          ))}
+        </ul>
       </PageSection>
 
       {/* Aufgaben */}
