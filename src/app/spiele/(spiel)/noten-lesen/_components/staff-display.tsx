@@ -23,8 +23,34 @@ import type { ClefKind, WrittenPitch } from "../_lib/types";
 import { answerLabelForPitch } from "../_lib/pitch";
 import { writtenPitchToVexNoteKeyAndAccidental } from "../_lib/vex-pitch-key";
 
-/** Maximale Systembreite — eine einzelne Note braucht keine volle 5xl-Breite. */
-const MAX_STAVE_WIDTH = 480;
+/**
+ * Logischer Zeichenblock: Notenzeile plus Luft für Schlüssel und Hilfslinien.
+ * Alles unten rechnet in diesen logischen Einheiten; der Kontext skaliert sie
+ * anschließend auf die tatsächliche Kastenhöhe. Vorher war die Zeichenfläche
+ * an die Pixelhöhe gebunden — die Notenzeile blieb rund 37 px hoch, egal wie
+ * viel Platz der Kasten hatte.
+ */
+const LOGICAL_BLOCK_H = 120;
+
+/**
+ * VexFlow legt über und unter die fünf Linien von sich aus je vier
+ * Linienabstände für Hilfslinien (`space_above_staff_ln`, 4 × 10 Einheiten).
+ * Der Block beginnt deshalb bei 0 — ein eigener Vorschub kam oben zu den 40
+ * Einheiten hinzu und drückte die Notenzeile sichtbar nach unten.
+ */
+const LOGICAL_STAVE_Y = 0;
+
+/** Breiteste Notenzeile in logischen Einheiten (eine Note braucht keine 5xl). */
+const MAX_STAVE_WIDTH = 340;
+
+/** Schmalste logische Breite; darunter wird die Vergrößerung zurückgenommen. */
+const MIN_LOGICAL_W = 230;
+
+/** Unterhalb dieser logischen Breite greifen die kompakten Metriken. */
+const COMPACT_LOGICAL_W = 520;
+
+const MIN_SCALE = 0.85;
+const MAX_SCALE = 2.2;
 
 /** ResizeObserver-Neuzeichnen entprellen (Layout-Jitter, Scrollbars, …). */
 const REDRAW_DEBOUNCE_MS = 100;
@@ -89,6 +115,7 @@ export type StaffDisplayProps = {
   /** Fortgeschritten: abwechselnd nur Note-Vorzeichen vs. Tonart am System. */
   staffAccidentalLayout: StaffAccidentalLayout;
   flash?: StaffFlash;
+  /** Trägt die Höhe des Kastens (das Spiel gibt eine clamp()-Formel mit). */
   className?: string;
   /**
    * Optionales Label statt des Standard-Labels (das den Tonnamen nennt).
@@ -116,10 +143,23 @@ export function StaffDisplay({
 
     await ensureVexFlowFonts();
 
-    const containerW = Math.max(280, el.clientWidth);
-    const compact = containerW < 640;
-    const height = compact ? (containerW < 400 ? 200 : 212) : 240;
+    const containerW = Math.max(240, el.clientWidth);
+    const containerH = Math.max(120, el.clientHeight);
     const colors = notationColors(dark);
+
+    /* Die Notenschrift wächst mit der Kastenhöhe — und wird zurückgenommen,
+     * wenn dafür die Breite nicht reicht. */
+    let scale = Math.min(
+      MAX_SCALE,
+      Math.max(MIN_SCALE, containerH / LOGICAL_BLOCK_H),
+    );
+    if (containerW / scale < MIN_LOGICAL_W) {
+      scale = Math.max(MIN_SCALE, containerW / MIN_LOGICAL_W);
+    }
+
+    const logicalW = containerW / scale;
+    const logicalH = containerH / scale;
+    const compact = logicalW < COMPACT_LOGICAL_W;
 
     const compactMetrics = compact
       ? {
@@ -133,18 +173,22 @@ export function StaffDisplay({
 
     withCompactMetrics(compactMetrics, () => {
       const marginX = compact ? 8 : 14;
-      const staveY = compact ? 28 : 34;
-      const baseInner = containerW - marginX * 2;
-      /* Breite deckeln: über volle Containerbreite entstehen sonst ~700 px
-       * leere Notenlinien. Gedeckelt und zentriert (rein visuell). */
-      const staveWidth = Math.min(MAX_STAVE_WIDTH, Math.max(160, baseInner));
+      const baseInner = logicalW - marginX * 2;
+      /* Breite deckeln: über die volle Breite entstehen sonst lange leere
+       * Notenlinien. Gedeckelt und zentriert (rein visuell). */
+      const staveWidth = Math.min(MAX_STAVE_WIDTH, Math.max(150, baseInner));
+      /* Block mittig setzen, wenn die Höhe mehr hergibt als er braucht. */
+      const staveY =
+        LOGICAL_STAVE_Y + Math.max(0, (logicalH - LOGICAL_BLOCK_H) / 2);
 
       el.innerHTML = "";
 
-      const svgWidth = containerW;
       const renderer = new Renderer(el, RendererBackends.SVG);
-      renderer.resize(svgWidth, height);
+      /* resize() setzt die Gerätegröße, scale() die viewBox darin: gezeichnet
+       * wird in logischen Einheiten, das SVG bildet sie scharf darauf ab. */
+      renderer.resize(containerW, containerH);
       const ctx = renderer.getContext();
+      ctx.scale(scale, scale);
 
       const clefId =
         clef === "treble"
@@ -217,11 +261,15 @@ export function StaffDisplay({
     const el = containerRef.current;
     if (!el || typeof ResizeObserver === "undefined") return;
     let lastWidth = Math.round(el.clientWidth);
+    let lastHeight = Math.round(el.clientHeight);
     let timer: number | null = null;
     const ro = new ResizeObserver(() => {
       const width = Math.round(el.clientWidth);
-      if (width === lastWidth) return;
+      const height = Math.round(el.clientHeight);
+      /* Auch auf Höhe hören: die Notengröße hängt jetzt daran. */
+      if (width === lastWidth && height === lastHeight) return;
       lastWidth = width;
+      lastHeight = height;
       if (timer != null) window.clearTimeout(timer);
       timer = window.setTimeout(() => {
         timer = null;
@@ -238,19 +286,21 @@ export function StaffDisplay({
   return (
     <div
       className={cn(
-        "relative w-full overflow-x-hidden overflow-y-visible rounded-lg border transition-colors duration-200",
+        "relative flex w-full overflow-x-hidden overflow-y-visible border transition-colors duration-200 motion-reduce:transition-none",
+        /* Richtig ist ein Druckfeld, falsch bleibt Rot — kein Grün. */
         flash === "correct" &&
-          "border-emerald-500/80 bg-emerald-500/15 dark:bg-emerald-500/10",
-        flash === "wrong" &&
-          "border-rose-500/75 bg-rose-500/12 dark:bg-rose-500/10",
+          "border-ink dark:border-night-text bg-primary/15",
+        /* Die Fläche ist jetzt gross — die Tönung bleibt deshalb zurückhaltend,
+         * Rand und Marke oben rechts tragen das Signal. */
+        flash === "wrong" && "border-red-700 bg-red-700/5 dark:bg-red-500/10",
         flash === "none" &&
-          "border-dark-border/50 dark:border-dark-border dark:bg-dark-surface/50 bg-white/40",
+          "border-rule dark:border-night-rule dark:bg-night-raised bg-rule/25",
         className,
       )}
     >
       <div
         ref={containerRef}
-        className="min-h-[200px] w-full max-w-full p-2 pb-3 md:min-h-[240px] md:p-3"
+        className="h-full w-full max-w-full p-2 md:p-3"
         role="img"
         aria-label={
           ariaLabel ?? `Notensystem, ganze Note ${answerLabelForPitch(pitch)}`
