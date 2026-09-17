@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Mail, Phone } from "lucide-react";
 import type { Media } from "~/generated/prisma/client";
 import { cn } from "@/lib/utils";
+import ZoomableImage from "@/app/_components/general/zoomable-image";
 
 /** Textlink-Stimme wie bei `PersonRow`, wiederverwendet für Mail und Telefon. */
 const LINK =
@@ -55,9 +56,16 @@ export function PersonContactRow({
       )}
     >
       {image ? (
-        <div
+        // Ohne Lupe: Bei 56px deckte sie das halbe Gesicht zu, und im runden
+        // 112px-Foto schnitt der Kreis das Eckfeld zu einem Splitter an.
+        <ZoomableImage
+          src={image.url}
+          alt={image.alt || name}
+          copyright={image.copyright}
+          creator={image.creator}
+          hint={false}
           className={cn(
-            "bg-rule dark:bg-night-rule relative shrink-0 overflow-hidden rounded-full",
+            "bg-rule dark:bg-night-rule shrink-0 overflow-hidden rounded-full",
             photoSize,
           )}
         >
@@ -68,7 +76,7 @@ export function PersonContactRow({
             sizes="112px"
             className="object-cover"
           />
-        </div>
+        </ZoomableImage>
       ) : null}
       <div className="min-w-0">
         <p

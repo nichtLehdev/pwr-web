@@ -2,6 +2,7 @@ import PublicPage from "@/app/_components/general/public-page";
 import { api } from "@/trpc/server";
 import ConcertCard from "@/app/_components/events/concert-card";
 import ImageWithFallback from "@/app/_components/ui/image-with-fallback";
+import ZoomableImage from "@/app/_components/general/zoomable-image";
 import {
   ArrowLink,
   Heading,
@@ -20,6 +21,10 @@ export const metadata = buildPageMetadata({
     "Die Auswahlchöre des Posaunenwerks Rheinland: Besetzung, Leitung, Probenarbeit und Wege zur Mitwirkung.",
   path: "/ueber-uns/auswahlchoere",
 });
+
+/** Bildfeld im Kopf; mit Foto als Vergrößern-Button, ohne als Logo-Fläche. */
+const ENSEMBLE_FRAME =
+  "bg-ink dark:bg-night-raised relative mt-8 aspect-[3/2] w-full max-w-xl overflow-hidden";
 
 export default async function AuswahlchoerePage() {
   const ensembles = (await api.auswahlchoere.getAll({})).auswahlchoere;
@@ -84,16 +89,32 @@ export default async function AuswahlchoerePage() {
                     Spalten erhalten und die tote Fläche verschwindet, statt
                     dass der Abschnitt zu einer einzigen Spalte gestapelt
                     wird. */}
-                <div className="bg-ink dark:bg-night-raised relative mt-8 aspect-[3/2] max-w-xl overflow-hidden">
-                  <ImageWithFallback
-                    src={ensemble.image?.url}
+                {ensemble.image?.url ? (
+                  <ZoomableImage
+                    src={ensemble.image.url}
                     alt={`Ein Bild des Ensembles ${ensemble.name}`}
-                    fill
-                    priority={index < 2}
-                    sizes="(min-width: 1024px) 30vw, 100vw"
-                    className="object-cover"
-                  />
-                </div>
+                    copyright={ensemble.image.copyright}
+                    creator={ensemble.image.creator}
+                    className={ENSEMBLE_FRAME}
+                  >
+                    <ImageWithFallback
+                      src={ensemble.image.url}
+                      alt={`Ein Bild des Ensembles ${ensemble.name}`}
+                      fill
+                      priority={index < 2}
+                      sizes="(min-width: 1024px) 30vw, 100vw"
+                      className="object-cover"
+                    />
+                  </ZoomableImage>
+                ) : (
+                  <div className={ENSEMBLE_FRAME}>
+                    <ImageWithFallback
+                      src={null}
+                      alt={`Ein Bild des Ensembles ${ensemble.name}`}
+                      fill
+                    />
+                  </div>
+                )}
               </>
             }
             // Text, Termine und Hinweis teilen sich ein Satzmaß. `text-lg` am
