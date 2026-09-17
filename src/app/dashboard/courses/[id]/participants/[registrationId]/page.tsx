@@ -502,7 +502,9 @@ export default function RegistrationDetailPage() {
                   <Link
                     key={part.id}
                     href={`/dashboard/courses/${courseId}/participants/${part.id}`}
-                    className="border-rule dark:border-night-rule text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised semi-condensed inline-flex min-h-6 items-center border px-2 text-sm leading-none font-semibold whitespace-nowrap underline-offset-2 hover:underline"
+                    // Sieht aus wie die Etiketten daneben (24px), die
+                    // Trefferfläche reicht per ::before auf 44px.
+                    className="border-rule dark:border-night-rule text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised semi-condensed relative inline-flex min-h-6 items-center border px-2 text-sm leading-none font-semibold whitespace-nowrap underline-offset-2 before:absolute before:inset-x-0 before:-inset-y-2.5 before:content-[''] hover:underline"
                   >
                     Weiterer Teil:{" "}
                     {registrationStatusLabels[part.registrationStatus]} (

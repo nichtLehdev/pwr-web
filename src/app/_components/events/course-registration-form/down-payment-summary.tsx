@@ -93,7 +93,7 @@ export function DownPaymentSummary({
       />
 
       {waitlistAmount != null && waitlistAmount > 0 && (
-        <p className="mt-3 text-sm text-gray-700 dark:text-gray-300">
+        <p className="text-dark dark:text-night-muted mt-3 text-sm">
           Die Beträge gelten für die bestätigten Teilnehmer. Für die Teilnehmer
           auf der Warteliste wird eine Anzahlung von{" "}
           {formatEuro(waitlistAmount)} erst mit deren Platzbestätigung fällig.
