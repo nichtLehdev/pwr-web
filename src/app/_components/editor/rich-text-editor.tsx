@@ -3,7 +3,7 @@
 import { useEditor, EditorContent, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
-import Image from "@tiptap/extension-image";
+import { ArtikelBild } from "./bild-erweiterung";
 import Placeholder from "@tiptap/extension-placeholder";
 import Underline from "@tiptap/extension-underline";
 import TextAlign from "@tiptap/extension-text-align";
@@ -81,6 +81,44 @@ turndownService.addRule("strikethrough", {
   filter: ["del", "s"],
   replacement: function (content) {
     return `~~${content}~~`;
+  },
+});
+
+/**
+ * Bilder mit Breiten- oder Ausrichtungsklasse als rohes HTML schreiben.
+ *
+ * Gespeichert wird Markdown (hier unten: getHTML -> turndown -> onChange), und
+ * Markdown kennt keine Bildbreiten. `![alt](src)` verliert die Klasse beim
+ * Speichern — gemessen: Nach dem Ziehen auf „halb" stand in der Datenbank nur
+ * `![JuPo Plakat](/api/uploads/…)`, die Einstellung war weg.
+ *
+ * Dieselbe Lösung nutzt diese Datei bereits für Unterstreichung,
+ * Durchstreichung und Tabellen: rohes HTML ausgeben, wo Markdown nicht
+ * ausreicht. `marked` reicht es unverändert durch, und der Filter behält
+ * `class` — beides nachgemessen.
+ *
+ * Bilder ohne Klasse bleiben bewusst Markdown, damit sich am Bestand nichts
+ * ändert.
+ */
+turndownService.addRule("bildMitKlasse", {
+  filter: (node) =>
+    node.nodeName === "IMG" &&
+    /(^|\s)bild-/.test((node as HTMLElement).getAttribute("class") ?? ""),
+  replacement: function (_content, node) {
+    const el = node as HTMLElement;
+    const wert = (name: string) =>
+      (el.getAttribute(name) ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    // Nur das Vokabular übernehmen: Die Knotenansicht hängt bei Anwahl
+    // zusätzlich Umrandungsklassen an, die nichts im Beitrag zu suchen haben.
+    const klassen = (el.getAttribute("class") ?? "")
+      .split(/\s+/)
+      .filter((k) => k.startsWith("bild-"))
+      .join(" ");
+    return `\n\n<img src="${wert("src")}" alt="${wert("alt")}" class="${klassen}">\n\n`;
   },
 });
 
@@ -697,11 +735,11 @@ export default function RichTextEditor({
           class: "text-primary underline",
         },
       }),
-      Image.configure({
-        HTMLAttributes: {
-          class: "max-w-full rounded-lg",
-        },
-      }),
+      // Statt des schlichten Image: Breite und Ausrichtung als Klassen, mit
+      // einrastenden Ziehgriffen. Die alte Klasse `max-w-full rounded-lg`
+      // entfaellt — Bilder gestaltet jetzt article-content.css, und Rundungen
+      // gibt es im Programmheft nicht.
+      ArtikelBild,
       Placeholder.configure({
         placeholder,
       }),
