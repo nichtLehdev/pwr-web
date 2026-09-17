@@ -100,7 +100,7 @@ export function DashboardFormSideRail({
         className,
       )}
     >
-      <p className="dark:text-dark-muted mb-4 text-[10px] font-semibold tracking-widest text-gray-400 uppercase">
+      <p className="semi-condensed text-dark dark:text-night-muted mb-4 text-[10px] font-semibold tracking-widest uppercase">
         Auf dieser Seite
       </p>
       <ol className="space-y-0.5">
@@ -112,10 +112,12 @@ export function DashboardFormSideRail({
               <a
                 href={item.href}
                 className={cn(
-                  "group hover:border-primary/50 -ml-px flex items-baseline gap-2 border-l-2 border-transparent py-2 pl-3 text-sm transition-colors",
+                  "group hover:border-primary/50 -ml-px flex min-h-11 items-baseline gap-2 border-l-2 border-transparent py-2 pl-3 text-sm transition-colors",
                   isActive
-                    ? "border-primary text-primary font-semibold"
-                    : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100",
+                    ? // Orange als Textfarbe fällt auf Papier unter AA — Messing-Tinte
+                      // trägt denselben Akzent (nachts darf Orange selbst stehen).
+                      "border-primary text-primary-ink dark:text-primary font-semibold"
+                    : "text-dark dark:text-night-muted hover:text-ink dark:hover:text-night-text",
                 )}
                 onClick={(e) => {
                   e.preventDefault();
@@ -126,8 +128,8 @@ export function DashboardFormSideRail({
                   className={cn(
                     "w-6 font-mono text-[10px] transition-colors",
                     isActive
-                      ? "text-primary"
-                      : "text-gray-400 group-hover:text-gray-500 dark:group-hover:text-gray-400",
+                      ? "text-primary-ink dark:text-primary"
+                      : "text-dark dark:text-night-muted group-hover:text-ink dark:group-hover:text-night-text",
                   )}
                 >
                   {num}

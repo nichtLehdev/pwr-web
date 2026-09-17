@@ -7,13 +7,14 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const Card = React.forwardRef<HTMLDivElement, CardProps>(
   ({ className, variant = "default", ...props }, ref) => {
+    // Eckig und ohne Schatten. `elevated` hebt sich jetzt ueber die Linie ab
+    // statt ueber Tiefe — Schatten gibt es in dieser Gestaltung nicht.
     const variants = {
       default:
-        "rounded-lg border border-gray-200 bg-white shadow-sm dark:border-dark-border dark:bg-dark-surface",
-      outline:
-        "rounded-lg border-2 border-gray-200 bg-transparent dark:border-dark-border",
+        "border-rule dark:border-night-rule dark:bg-night-raised border bg-paper",
+      outline: "border-ink dark:border-night-text border-2 bg-transparent",
       elevated:
-        "rounded-lg border border-gray-200 bg-white shadow-lg dark:border-dark-border dark:bg-dark-surface",
+        "border-ink dark:border-night-text dark:bg-night-raised border-t-2 border-r border-b border-l bg-paper",
     };
 
     return (
@@ -47,7 +48,7 @@ const CardTitle = React.forwardRef<
     <h3
       ref={ref}
       className={cn(
-        "dark:text-dark-text text-lg leading-none font-semibold tracking-tight text-gray-900",
+        "condensed text-ink dark:text-night-text text-lg leading-none font-bold",
         className,
       )}
       {...props}
@@ -64,7 +65,7 @@ const CardDescription = React.forwardRef<
   return (
     <p
       ref={ref}
-      className={cn("text-sm text-gray-600 dark:text-gray-400", className)}
+      className={cn("text-dark dark:text-night-muted text-sm", className)}
       {...props}
     />
   );

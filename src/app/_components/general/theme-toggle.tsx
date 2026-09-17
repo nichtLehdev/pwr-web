@@ -141,7 +141,7 @@ export default function ThemeToggle() {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="text-dark dark:text-dark-text dark:hover:bg-dark-background-secondary flex items-center rounded-md p-2 transition-colors hover:bg-gray-100"
+        className="text-ink hover:bg-ink hover:text-paper dark:text-night-text dark:hover:bg-night-text dark:hover:text-night inline-flex h-11 w-11 items-center justify-center transition-colors"
         aria-label="Theme auswählen"
         aria-expanded={isOpen}
         aria-haspopup="true"
@@ -150,15 +150,14 @@ export default function ThemeToggle() {
       </button>
 
       {isOpen && (
-        <div className="dark:border-dark-border dark:bg-dark-surface absolute top-full right-0 z-50 mt-2 w-48 rounded-lg border border-gray-100 bg-white py-2 shadow-xl dark:shadow-2xl">
+        <div className="border-ink bg-paper dark:border-night-rule dark:bg-night-raised absolute top-full right-0 z-50 mt-2 w-48 border-2 py-1">
           {themeOptions.map((option) => (
             <button
               key={option.value}
               onClick={() => handleThemeChange(option.value)}
-              className={`flex w-full items-center gap-3 px-4 py-2 text-left transition-colors ${
-                theme === option.value
-                  ? "bg-primary/10 text-primary font-semibold"
-                  : "text-dark dark:text-dark-text hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary"
+              aria-pressed={theme === option.value}
+              className={`text-ink hover:bg-primary dark:text-night-text dark:hover:text-ink flex w-full items-center gap-3 px-4 py-3 text-left transition-colors ${
+                theme === option.value ? "font-semibold" : "font-medium"
               }`}
             >
               {option.icon}

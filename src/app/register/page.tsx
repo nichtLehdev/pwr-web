@@ -10,11 +10,19 @@ import {
   Button,
   Input,
   Label,
-  Alert,
-  AlertDescription,
   PasswordStrengthMeter,
 } from "@/app/_components/ui";
+import PublicPage from "@/app/_components/general/public-page";
+import { PageSection } from "@/app/_components/programmheft/page-section";
+import { Note } from "@/app/_components/programmheft/note";
 import { PASSWORD_MIN_LENGTH } from "@/lib/password-strength";
+
+/** Statuszeile unter einem Feld: neutral schiefergrau, verfügbar grün, vergeben rot. */
+const STATUS_TEXT: Record<"checking" | "available" | "unavailable", string> = {
+  checking: "text-dark dark:text-night-muted",
+  available: "text-green-600 dark:text-green-400",
+  unavailable: "text-red-600 dark:text-red-400",
+};
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -173,7 +181,7 @@ export default function RegisterPage() {
           updated.username =
             `${firstName.toLowerCase()}.${lastName.toLowerCase()}`
               .normalize("NFD")
-              .replace(/[\u0300-\u036f]/g, "")
+              .replace(/[̀-ͯ]/g, "")
               .replace(/[^a-z0-9.]/g, "");
         }
       }
@@ -264,32 +272,24 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="bg-background-secondary dark:bg-dark-background-secondary flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-8">
-      <div className="w-full max-w-md">
-        <div className="mb-6 text-center">
-          <h1 className="text-dark dark:text-dark-text mb-2 text-3xl font-bold">
-            Konto erstellen
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Bereits ein Konto?{" "}
-            <Link
-              href="/login"
-              className="text-primary hover:text-primary-dark font-medium"
-            >
-              Jetzt anmelden
-            </Link>
-          </p>
-        </div>
-
-        <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg md:p-8">
+    <PublicPage
+      title="Konto erstellen"
+      heroSize="compact"
+      breadcrumbs={[
+        { label: "Start", href: "/" },
+        { label: "Konto erstellen" },
+      ]}
+    >
+      <PageSection flush="top">
+        <div className="mx-auto max-w-md">
           {error && (
-            <Alert variant="error" className="mb-4">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
+            <Note tone="error" className="mb-6">
+              <p>{error}</p>
+            </Note>
           )}
 
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <div className="grid grid-cols-2 gap-3">
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="firstName" required>
                   Vorname
@@ -340,7 +340,7 @@ export default function RegisterPage() {
                 error={usernameStatus.available === false}
                 className={
                   usernameStatus.available === true
-                    ? "border-green-500 focus:border-green-500 focus:ring-green-500"
+                    ? "border-green-600 dark:border-green-400"
                     : ""
                 }
               />
@@ -348,10 +348,10 @@ export default function RegisterPage() {
                 <p
                   className={`mt-1 flex items-center gap-1 text-xs ${
                     usernameStatus.checking
-                      ? "text-gray-500 dark:text-gray-400"
+                      ? STATUS_TEXT.checking
                       : usernameStatus.available
-                        ? "text-green-600 dark:text-green-400"
-                        : "text-red-600 dark:text-red-400"
+                        ? STATUS_TEXT.available
+                        : STATUS_TEXT.unavailable
                   }`}
                 >
                   {usernameStatus.checking && (
@@ -360,7 +360,7 @@ export default function RegisterPage() {
                   {usernameStatus.message}
                 </p>
               ) : (
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-dark dark:text-night-muted mt-1 text-xs">
                   Wird automatisch aus Vor- und Nachname generiert
                 </p>
               )}
@@ -381,7 +381,7 @@ export default function RegisterPage() {
                 error={emailStatus.available === false}
                 className={
                   emailStatus.available === true
-                    ? "border-green-500 focus:border-green-500 focus:ring-green-500"
+                    ? "border-green-600 dark:border-green-400"
                     : ""
                 }
               />
@@ -389,10 +389,10 @@ export default function RegisterPage() {
                 <p
                   className={`mt-1 flex items-center gap-1 text-xs ${
                     emailStatus.checking
-                      ? "text-gray-500 dark:text-gray-400"
+                      ? STATUS_TEXT.checking
                       : emailStatus.available
-                        ? "text-green-600 dark:text-green-400"
-                        : "text-red-600 dark:text-red-400"
+                        ? STATUS_TEXT.available
+                        : STATUS_TEXT.unavailable
                   }`}
                 >
                   {emailStatus.checking && (
@@ -424,7 +424,7 @@ export default function RegisterPage() {
                   aria-label={
                     showPassword ? "Passwort verbergen" : "Passwort anzeigen"
                   }
-                  className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  className="text-dark hover:text-ink dark:text-night-muted dark:hover:text-night-text absolute top-1/2 right-3 -translate-y-1/2"
                 >
                   {showPassword ? (
                     <EyeOffIcon className="h-4 w-4" />
@@ -435,7 +435,7 @@ export default function RegisterPage() {
               </div>
               <PasswordStrengthMeter password={formData.password} />
               {!formData.password && (
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-dark dark:text-night-muted mt-1 text-xs">
                   Mindestens {PASSWORD_MIN_LENGTH} Zeichen
                 </p>
               )}
@@ -457,7 +457,7 @@ export default function RegisterPage() {
                 error={showMismatch}
                 className={
                   formData.confirmPassword.length > 0 && passwordsMatch
-                    ? "border-green-500 focus:border-green-500 focus:ring-green-500"
+                    ? "border-green-600 dark:border-green-400"
                     : ""
                 }
               />
@@ -483,19 +483,23 @@ export default function RegisterPage() {
               Konto erstellen
             </Button>
 
-            <p className="text-center text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-dark dark:text-night-muted text-center text-xs">
               Mit der Registrierung nimmst du unsere{" "}
-              <Link
-                href="/datenschutz"
-                className="text-primary hover:underline"
-              >
+              <Link href="/datenschutz" className="link-ink">
                 Datenschutzerklärung
               </Link>{" "}
               zur Kenntnis.
             </p>
           </form>
+
+          <p className="border-rule dark:border-night-rule text-dark dark:text-night-muted mt-8 border-t pt-6 text-center text-sm">
+            Bereits ein Konto?{" "}
+            <Link href="/login" className="link-ink">
+              Jetzt anmelden
+            </Link>
+          </p>
         </div>
-      </div>
-    </div>
+      </PageSection>
+    </PublicPage>
   );
 }

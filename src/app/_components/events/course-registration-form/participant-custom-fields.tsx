@@ -9,6 +9,17 @@ import {
   type CourseCustomFieldRule,
 } from "@/lib/course-custom-fields";
 import { cn } from "@/lib/utils";
+import { Checkbox } from "@/app/_components/programmheft/field";
+
+/**
+ * Überschreibt die gerundeten `ui/`-Inputs (`Input`, `Select`, `Textarea`) mit
+ * dem Programmheft-Feld — `cn` mergt nur, es entfernt keine widersprüchlichen
+ * Utilities, deshalb per `!`-Wichtigkeit statt Klassenreihenfolge.
+ */
+const CUSTOM_FIELD_INPUT_CLASS =
+  "rounded-none! border-2! border-rule dark:border-night-rule bg-paper! dark:bg-night! text-ink! dark:text-night-text! shadow-none! focus:border-ink! dark:focus:border-night-text! focus:ring-0!";
+const CUSTOM_FIELD_LABEL_CLASS =
+  "text-ink! dark:text-night-text! mb-1! block! text-sm! font-semibold!";
 
 function asCustomFieldsRecord(value: unknown): Record<string, unknown> {
   if (value && typeof value === "object" && !Array.isArray(value)) {
@@ -68,10 +79,10 @@ export function ParticipantCustomFields({
   customFields,
   onChange,
   invalidFieldNames = [],
-  labelClassName = "text-dark dark:text-dark-text mb-1 block text-sm font-medium",
-  inputClassName = "focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none",
+  labelClassName = CUSTOM_FIELD_LABEL_CLASS,
+  inputClassName = CUSTOM_FIELD_INPUT_CLASS,
   selectFieldSize,
-  choiceContainerClassName = "dark:bg-dark-background-secondary bg-white",
+  choiceContainerClassName = "bg-paper dark:bg-night",
 }: ParticipantCustomFieldsProps) {
   if (fields.length === 0) {
     return null;
@@ -113,10 +124,10 @@ export function ParticipantCustomFields({
             ) : field.fieldType === "MULTISELECT" && optionValues.length > 0 ? (
               <div
                 className={cn(
-                  "space-y-2 rounded-lg border px-3 py-2.5",
+                  "space-y-2 border-2 px-3 py-2.5",
                   isInvalid
-                    ? "border-red-500 dark:border-red-500"
-                    : "dark:border-dark-border border-gray-300",
+                    ? "border-red-700 dark:border-red-400"
+                    : "border-rule dark:border-night-rule",
                   choiceContainerClassName,
                 )}
               >
@@ -124,52 +135,48 @@ export function ParticipantCustomFields({
                   const selected = asStringArray(fieldValue);
                   const checked = selected.includes(opt);
                   return (
-                    <label
+                    <Checkbox
                       key={opt}
-                      className="flex cursor-pointer items-start gap-2.5 text-sm"
+                      id={`${field.fieldName}-${opt}`}
+                      checked={checked}
+                      onChange={(e) => {
+                        const next = e.target.checked
+                          ? [...selected, opt]
+                          : selected.filter((v) => v !== opt);
+                        // Course option order keeps values stable for export.
+                        setField(
+                          field.fieldName,
+                          optionValues.filter((o) => next.includes(o)),
+                        );
+                      }}
+                      className="min-h-0"
                     >
-                      <input
-                        type="checkbox"
-                        className="text-primary focus:ring-primary mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300"
-                        checked={checked}
-                        onChange={(e) => {
-                          const next = e.target.checked
-                            ? [...selected, opt]
-                            : selected.filter((v) => v !== opt);
-                          // Course option order keeps values stable for export.
-                          setField(
-                            field.fieldName,
-                            optionValues.filter((o) => next.includes(o)),
-                          );
-                        }}
-                      />
-                      <span className="text-dark dark:text-dark-text leading-snug">
-                        {opt}
-                      </span>
-                    </label>
+                      <span className="text-sm leading-snug">{opt}</span>
+                    </Checkbox>
                   );
                 })}
               </div>
             ) : field.fieldType === "CHECKBOX" ? (
-              <label
+              <div
                 className={cn(
-                  "flex cursor-pointer items-start gap-2.5 rounded-lg border px-3 py-2.5 text-sm",
+                  "border-2 px-3 py-2.5",
                   isInvalid
-                    ? "border-red-500 dark:border-red-500"
-                    : "dark:border-dark-border border-gray-300",
+                    ? "border-red-700 dark:border-red-400"
+                    : "border-rule dark:border-night-rule",
                   choiceContainerClassName,
                 )}
               >
-                <input
-                  type="checkbox"
-                  className="text-primary focus:ring-primary mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300"
+                <Checkbox
+                  id={`${field.fieldName}-checkbox`}
                   checked={fieldValue === true || fieldValue === "true"}
                   onChange={(e) => setField(field.fieldName, e.target.checked)}
-                />
-                <span className="text-dark dark:text-dark-text leading-snug">
-                  {field.helpText?.trim() ? field.helpText : "Ja, trifft zu"}
-                </span>
-              </label>
+                  className="min-h-0"
+                >
+                  <span className="text-sm leading-snug">
+                    {field.helpText?.trim() ? field.helpText : "Ja, trifft zu"}
+                  </span>
+                </Checkbox>
+              </div>
             ) : field.fieldType === "TEXTAREA" ? (
               <Textarea
                 value={fieldValue != null ? String(fieldValue) : ""}
@@ -177,7 +184,7 @@ export function ParticipantCustomFields({
                 rows={3}
                 className={cn(
                   inputClassName,
-                  isInvalid && "border-red-500 dark:border-red-500",
+                  isInvalid && "border-red-700! dark:border-red-400!",
                 )}
                 placeholder={field.helpText ?? ""}
               />
@@ -191,7 +198,7 @@ export function ParticipantCustomFields({
                 step={field.fieldType === "YEAR" ? 1 : undefined}
                 className={cn(
                   inputClassName,
-                  isInvalid && "border-red-500 dark:border-red-500",
+                  isInvalid && "border-red-700! dark:border-red-400!",
                 )}
                 placeholder={
                   field.fieldType === "YEAR"
@@ -201,7 +208,7 @@ export function ParticipantCustomFields({
               />
             )}
             {field.helpText && field.fieldType !== "CHECKBOX" ? (
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-dark dark:text-night-muted mt-1 text-xs">
                 {field.helpText}
               </p>
             ) : null}

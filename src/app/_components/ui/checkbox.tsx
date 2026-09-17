@@ -11,9 +11,11 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
       <input
         type="checkbox"
         className={cn(
-          "text-primary focus:ring-primary h-4 w-4 rounded border-gray-300 focus:ring-2",
-          "dark:border-dark-border",
-          error && "border-red-500 focus:ring-red-500",
+          // Eckig statt abgerundet; das Haekchen traegt Tinte statt Orange,
+          // weil Orange auf hellem Grund den Kontrast nicht erreicht.
+          "border-ink accent-ink h-4 w-4 border",
+          "dark:border-night-text dark:accent-night-text",
+          error && "border-red-600 dark:border-red-400",
           className,
         )}
         ref={ref}

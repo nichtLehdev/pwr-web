@@ -16,8 +16,12 @@ import {
 } from "~/generated/prisma/enums";
 import {
   DashboardFormSectionLayout,
+  DashboardOverflowMenu,
   DashboardPage,
+  EntryExportButton,
+  useEntryExport,
 } from "@/app/_components/dashboard";
+import { Tag, type TagTone } from "@/app/_components/programmheft/tag";
 import { ArrowLeftIcon, CheckIcon, Edit, Trash2, XIcon } from "lucide-react";
 import {
   ScrollableModal,
@@ -25,6 +29,8 @@ import {
   ScrollableModalBody,
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
+import { renderDescriptionHtml } from "@/lib/sanitize";
+import "@/styles/beschreibung.css";
 
 const categoryLabels: Record<EventCategory, string> = {
   KONZERT: "Konzert",
@@ -41,14 +47,17 @@ const statusLabels: Record<ContentStatus, string> = {
   ARCHIVED: "Archiviert",
 };
 
-const statusColors: Record<ContentStatus, string> = {
-  DRAFT: "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300",
-  PENDING:
-    "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-  APPROVED:
-    "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  REJECTED: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-  ARCHIVED: "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400",
+// Etikett statt pastelliger Pille: Zustaende sind rechteckige Druckflaechen
+// (siehe Tag-Komponente). Spiegelt die Zuordnung aus content-status.tsx —
+// derselbe Status muss ueberall gleich aussehen. Tag hat inzwischen einen
+// fuenften, umrandeten Ton: Entwurf und Archiviert sind Ruhezustaende ohne
+// Handlungsbedarf und standen bisher so laut gefuellt wie "Veroeffentlicht".
+const statusTones: Record<ContentStatus, TagTone> = {
+  DRAFT: "muted",
+  PENDING: "orange",
+  APPROVED: "ink",
+  REJECTED: "cancelled",
+  ARCHIVED: "muted",
 };
 
 const ensembleTypeLabels: Record<EventEnsembleType, string> = {
@@ -116,6 +125,8 @@ export default function EventDetailPage() {
     },
   });
 
+  const entryExport = useEntryExport("events", eventId);
+
   const deleteMutation = api.events.delete.useMutation({
     onSuccess: () => {
       toast.success("Termin erfolgreich gelöscht");
@@ -142,22 +153,22 @@ export default function EventDetailPage() {
 
   if (sessionLoading || profileLoading || permissionsLoading || eventLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="dark:bg-night bg-paper flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
 
   if (!session || !profile || !event) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="dark:bg-night bg-paper flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <h1 className="dark:text-dark-text text-xl font-semibold text-gray-900">
+          <h1 className="text-ink dark:text-night-text text-xl font-semibold">
             Termin nicht gefunden
           </h1>
           <Link
             href="/dashboard/events"
-            className="text-primary mt-4 inline-block hover:underline"
+            className="text-primary-ink dark:text-primary mt-4 inline-block hover:underline"
           >
             Zurück zur Übersicht
           </Link>
@@ -183,6 +194,7 @@ export default function EventDetailPage() {
     hour: "2-digit",
     minute: "2-digit",
   });
+  const beschreibungHtml = renderDescriptionHtml(event.description);
   const districtLabel = event.bezirk
     ? `Bezirk ${event.bezirk.number} - ${event.bezirk.shortName}`
     : event.districtName || "Übergreifend";
@@ -195,7 +207,7 @@ export default function EventDetailPage() {
       ? [{ href: "#event-detail-downloads", label: "Downloads" }]
       : []),
     { href: "#event-detail-info", label: "Details" },
-    ...(event.description
+    ...(beschreibungHtml
       ? [{ href: "#event-detail-description", label: "Beschreibung" }]
       : []),
     ...(event.location
@@ -259,24 +271,39 @@ export default function EventDetailPage() {
           { label: event.title },
         ]}
         actions={
-          <div className="flex flex-wrap gap-2">
+          // `w-full sm:w-auto`: Nur über die volle Breite kann `ml-auto` das
+          // „…“-Menü auf dem Telefon an den rechten Rand schieben — sein Panel
+          // ist rechts verankert.
+          <div className="flex w-full flex-wrap gap-2 sm:w-auto">
             {canEdit && (
               <Link
                 href={`/dashboard/events/${eventId}/edit`}
-                className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="border-ink dark:border-night-text dark:bg-night dark:text-night-text text-ink bg-paper hover:bg-rule/25 dark:hover:bg-night-raised inline-flex min-h-11 items-center gap-2 border px-4 py-2 text-sm font-medium transition-colors"
               >
                 <Edit className="h-4 w-4" />
                 Bearbeiten
               </Link>
             )}
+            {entryExport.canExport && (
+              <EntryExportButton exporter={entryExport} />
+            )}
             {canDelete && (
               <button
                 onClick={() => setShowDeleteModal(true)}
-                className="dark:bg-dark-surface inline-flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                className="dark:bg-night bg-paper inline-flex min-h-11 items-center gap-2 border border-red-300 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
               >
                 <Trash2 className="h-4 w-4" />
                 Löschen
               </button>
+            )}
+            {/* Auf dem Telefon steht der Export im „…“-Menü (siehe
+                EntryExportButton); ab sm als Knopf vor „Löschen“, damit die
+                zerstörerische Aktion am Ende der Reihe bleibt. */}
+            {entryExport.canExport && (
+              <DashboardOverflowMenu
+                className="ml-auto sm:hidden"
+                items={[entryExport.menuItem]}
+              />
             )}
           </div>
         }
@@ -284,11 +311,9 @@ export default function EventDetailPage() {
       >
         {/* Status Badge */}
         <div className="mb-5 flex flex-wrap items-center gap-3">
-          <span
-            className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${statusColors[event.status]}`}
-          >
+          <Tag tone={statusTones[event.status]} className="shrink-0">
             {statusLabels[event.status]}
-          </span>
+          </Tag>
         </div>
 
         <section
@@ -296,38 +321,38 @@ export default function EventDetailPage() {
           className="dashboard-form-scroll-anchor mb-8"
         >
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="dark:bg-dark-background-secondary rounded-lg bg-gray-50 p-3">
-              <p className="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">
+            <div className="dark:bg-night-raised bg-rule/25 p-3">
+              <p className="text-dark dark:text-night-muted text-xs font-medium tracking-wide uppercase">
                 Termin
               </p>
-              <p className="text-dark dark:text-dark-text mt-1 text-sm font-semibold">
+              <p className="text-ink dark:text-night-text mt-1 text-sm font-semibold">
                 {formattedDate}
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-dark dark:text-night-muted text-xs">
                 {formattedTime} Uhr
               </p>
             </div>
-            <div className="dark:bg-dark-background-secondary rounded-lg bg-gray-50 p-3">
-              <p className="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">
+            <div className="dark:bg-night-raised bg-rule/25 p-3">
+              <p className="text-dark dark:text-night-muted text-xs font-medium tracking-wide uppercase">
                 Bezirk
               </p>
-              <p className="text-dark dark:text-dark-text mt-1 text-sm font-semibold">
+              <p className="text-ink dark:text-night-text mt-1 text-sm font-semibold">
                 {districtLabel}
               </p>
             </div>
-            <div className="dark:bg-dark-background-secondary rounded-lg bg-gray-50 p-3">
-              <p className="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">
+            <div className="dark:bg-night-raised bg-rule/25 p-3">
+              <p className="text-dark dark:text-night-muted text-xs font-medium tracking-wide uppercase">
                 Kategorie
               </p>
-              <p className="text-dark dark:text-dark-text mt-1 text-sm font-semibold">
+              <p className="text-ink dark:text-night-text mt-1 text-sm font-semibold">
                 {categoryLabels[event.category]}
               </p>
             </div>
-            <div className="dark:bg-dark-background-secondary rounded-lg bg-gray-50 p-3">
-              <p className="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">
+            <div className="dark:bg-night-raised bg-rule/25 p-3">
+              <p className="text-dark dark:text-night-muted text-xs font-medium tracking-wide uppercase">
                 Ort
               </p>
-              <p className="text-dark dark:text-dark-text mt-1 text-sm font-semibold">
+              <p className="text-ink dark:text-night-text mt-1 text-sm font-semibold">
                 {locationLabel}
               </p>
             </div>
@@ -336,7 +361,7 @@ export default function EventDetailPage() {
 
         {/* Cancelled Banner */}
         {event.cancelled && (
-          <div className="mb-6 rounded-lg bg-red-50 p-4 dark:bg-red-900/20">
+          <div className="mb-6 bg-red-50 p-4 dark:bg-red-900/20">
             <p className="font-medium text-red-800 dark:text-red-300">
               ⚠️ Diese Veranstaltung wurde abgesagt.
             </p>
@@ -345,13 +370,13 @@ export default function EventDetailPage() {
 
         {/* Review Section (for reviewers with pending events) */}
         {canReview && (
-          <section className="mb-8 rounded-lg border-2 border-yellow-300 bg-yellow-50 p-6 dark:border-yellow-600 dark:bg-yellow-900/20">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+          <section className="border-rule dark:border-night-rule mb-8 border-2 p-6">
+            <h2 className="text-ink dark:text-night-text mb-4 text-lg font-semibold">
               Prüfung
             </h2>
             <div className="space-y-4">
               <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
                   Anmerkungen (optional für Genehmigung, erforderlich für
                   Ablehnung)
                 </label>
@@ -360,14 +385,14 @@ export default function EventDetailPage() {
                   onChange={(e) => setReviewNotes(e.target.value)}
                   rows={3}
                   placeholder="Anmerkungen zur Prüfung..."
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+                  className="border-ink dark:border-night-text dark:bg-night dark:text-night-text text-ink bg-paper block w-full border px-3 py-2"
                 />
               </div>
               <div className="flex flex-wrap gap-3">
                 <button
                   onClick={handleApprove}
                   disabled={approveMutation.isPending}
-                  className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+                  className="hover:bg-primary-dark bg-primary text-ink inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
                 >
                   <CheckIcon className="h-4 w-4" />
                   {approveMutation.isPending
@@ -376,7 +401,7 @@ export default function EventDetailPage() {
                 </button>
                 <button
                   onClick={() => setShowRejectModal(true)}
-                  className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
+                  className="inline-flex min-h-11 items-center gap-2 bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
                 >
                   <XIcon className="h-4 w-4" />
                   Ablehnen
@@ -388,15 +413,15 @@ export default function EventDetailPage() {
 
         {/* Review Notes (if exists) */}
         {event.reviewNotes && event.status !== ContentStatus.PENDING && (
-          <section className="dark:border-dark-border border-t border-gray-200/80 pt-10">
-            <h2 className="dark:text-dark-text mb-3 text-lg font-semibold text-gray-900">
+          <section className="border-rule dark:border-night-rule border-t pt-10">
+            <h2 className="text-ink dark:text-night-text mb-3 text-lg font-semibold">
               Prüfungsanmerkungen
             </h2>
-            <p className="dark:text-dark-muted text-gray-700">
+            <p className="text-ink dark:text-night-muted">
               {event.reviewNotes}
             </p>
             {event.reviewer && (
-              <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-dark dark:text-night-muted mt-2 text-sm">
                 — {event.reviewer.displayName}
                 {event.reviewDate && (
                   <>
@@ -417,7 +442,7 @@ export default function EventDetailPage() {
           <div className="space-y-0">
             {/* Cover Image */}
             {event.coverImage && (
-              <section className="mb-10 overflow-hidden rounded-xl">
+              <section className="border-rule dark:border-night-rule mb-10 overflow-hidden border">
                 <div className="relative aspect-video w-full">
                   <Image
                     src={event.coverImage.url}
@@ -433,9 +458,9 @@ export default function EventDetailPage() {
             {event.downloads && event.downloads.length > 0 && (
               <section
                 id="event-detail-downloads"
-                className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+                className="dashboard-form-scroll-anchor border-rule dark:border-night-rule border-t pt-10"
               >
-                <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+                <h2 className="text-ink dark:text-night-text mb-4 text-lg font-semibold">
                   Downloads
                 </h2>
                 <div className="space-y-2">
@@ -445,7 +470,7 @@ export default function EventDetailPage() {
                       href={ed.download.fileUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-primary hover:text-primary-dark dark:border-dark-border dark:hover:bg-dark-background-secondary flex items-center gap-3 rounded-lg border border-gray-200 p-3 transition-colors hover:bg-gray-50"
+                      className="text-primary-ink dark:text-primary border-rule dark:border-night-rule dark:hover:bg-night-raised hover:bg-rule/25 flex items-center gap-3 border p-3 transition-colors"
                     >
                       <svg
                         className="h-5 w-5"
@@ -464,7 +489,7 @@ export default function EventDetailPage() {
                         {ed.download.title}
                       </span>
                       {ed.download.description && (
-                        <span className="ml-auto text-sm text-gray-500 dark:text-gray-400">
+                        <span className="text-dark dark:text-night-muted ml-auto text-sm">
                           {ed.download.description}
                         </span>
                       )}
@@ -477,41 +502,41 @@ export default function EventDetailPage() {
             {/* Basic Info */}
             <section
               id="event-detail-info"
-              className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+              className="dashboard-form-scroll-anchor border-rule dark:border-night-rule border-t pt-10"
             >
-              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+              <h2 className="text-ink dark:text-night-text mb-4 text-lg font-semibold">
                 Veranstaltungsdetails
               </h2>
               <dl className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  <dt className="text-dark dark:text-night-muted text-sm font-medium">
                     Datum
                   </dt>
-                  <dd className="dark:text-dark-text mt-1 text-gray-900">
+                  <dd className="text-ink dark:text-night-text mt-1">
                     {formattedDate}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  <dt className="text-dark dark:text-night-muted text-sm font-medium">
                     Uhrzeit
                   </dt>
-                  <dd className="dark:text-dark-text mt-1 text-gray-900">
+                  <dd className="text-ink dark:text-night-text mt-1">
                     {formattedTime} Uhr
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  <dt className="text-dark dark:text-night-muted text-sm font-medium">
                     Kategorie
                   </dt>
-                  <dd className="dark:text-dark-text mt-1 text-gray-900">
+                  <dd className="text-ink dark:text-night-text mt-1">
                     {categoryLabels[event.category]}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  <dt className="text-dark dark:text-night-muted text-sm font-medium">
                     Bezirk
                   </dt>
-                  <dd className="dark:text-dark-text mt-1 text-gray-900">
+                  <dd className="text-ink dark:text-night-text mt-1">
                     {event.bezirk
                       ? `Bezirk ${event.bezirk.number} – ${event.bezirk.shortName}`
                       : event.districtName || "Übergreifend"}
@@ -520,18 +545,22 @@ export default function EventDetailPage() {
               </dl>
             </section>
 
-            {/* Description */}
-            {event.description && (
+            {/* Beschreibung wie auf der öffentlichen Seite gesetzt: dieselbe
+                Markdown-Quelle, dieselbe Filterung, dasselbe Stylesheet. Vorher
+                stand hier der Rohtext, Auszeichnung wäre also als Markdown
+                sichtbar geworden. */}
+            {beschreibungHtml && (
               <section
                 id="event-detail-description"
-                className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+                className="dashboard-form-scroll-anchor border-rule dark:border-night-rule border-t pt-10"
               >
-                <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+                <h2 className="text-ink dark:text-night-text mb-4 text-lg font-semibold">
                   Beschreibung
                 </h2>
-                <p className="whitespace-pre-wrap text-gray-700 dark:text-gray-300">
-                  {event.description}
-                </p>
+                <div
+                  className="beschreibung"
+                  dangerouslySetInnerHTML={{ __html: beschreibungHtml }}
+                />
               </section>
             )}
 
@@ -539,28 +568,28 @@ export default function EventDetailPage() {
             {event.location && (
               <section
                 id="event-detail-location"
-                className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+                className="dashboard-form-scroll-anchor border-rule dark:border-night-rule border-t pt-10"
               >
-                <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+                <h2 className="text-ink dark:text-night-text mb-4 text-lg font-semibold">
                   Veranstaltungsort
                 </h2>
-                <address className="text-gray-700 not-italic dark:text-gray-300">
+                <address className="text-ink dark:text-night-muted not-italic">
                   {event.location.name && (
-                    <span className="dark:text-dark-text block font-medium text-gray-900">
+                    <span className="text-ink dark:text-night-text block font-medium">
                       {event.location.name}
                     </span>
                   )}
                   {event.location.street && (
-                    <span className="block text-gray-700 dark:text-gray-300">
+                    <span className="text-ink dark:text-night-muted block">
                       {event.location.street}
                     </span>
                   )}
-                  <span className="block text-gray-700 dark:text-gray-300">
+                  <span className="text-ink dark:text-night-muted block">
                     {event.location.zipCode && `${event.location.zipCode} `}
                     {event.location.city}
                   </span>
                   {event.location.additionalInfo && (
-                    <span className="mt-2 block text-sm text-gray-500 dark:text-gray-400">
+                    <span className="text-dark dark:text-night-muted mt-2 block text-sm">
                       {event.location.additionalInfo}
                     </span>
                   )}
@@ -572,36 +601,36 @@ export default function EventDetailPage() {
             {event.performingEnsembleType && (
               <section
                 id="event-detail-ensemble"
-                className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+                className="dashboard-form-scroll-anchor border-rule dark:border-night-rule border-t pt-10"
               >
-                <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+                <h2 className="text-ink dark:text-night-text mb-4 text-lg font-semibold">
                   Auftretendes Ensemble
                 </h2>
                 <dl className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    <dt className="text-dark dark:text-night-muted text-sm font-medium">
                       Typ
                     </dt>
-                    <dd className="dark:text-dark-text mt-1 text-gray-900">
+                    <dd className="text-ink dark:text-night-text mt-1">
                       {ensembleTypeLabels[event.performingEnsembleType]}
                     </dd>
                   </div>
                   {getEnsembleName() && (
                     <div>
-                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                      <dt className="text-dark dark:text-night-muted text-sm font-medium">
                         Name
                       </dt>
-                      <dd className="dark:text-dark-text mt-1 text-gray-900">
+                      <dd className="text-ink dark:text-night-text mt-1">
                         {getEnsembleName()}
                       </dd>
                     </div>
                   )}
                   {event.leitung && (
                     <div>
-                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                      <dt className="text-dark dark:text-night-muted text-sm font-medium">
                         Leitung
                       </dt>
-                      <dd className="dark:text-dark-text mt-1 text-gray-900">
+                      <dd className="text-ink dark:text-night-text mt-1">
                         {event.leitung}
                       </dd>
                     </div>
@@ -614,12 +643,12 @@ export default function EventDetailPage() {
             {event.openToParticipants && (
               <section
                 id="event-detail-participation"
-                className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+                className="dashboard-form-scroll-anchor border-rule dark:border-night-rule border-t pt-10"
               >
-                <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+                <h2 className="text-ink dark:text-night-text mb-4 text-lg font-semibold">
                   Teilnahme
                 </h2>
-                <p className="text-gray-700 dark:text-gray-300">
+                <p className="text-ink dark:text-night-muted">
                   {event.participationInfo ||
                     "Offen für externe Teilnehmer / Mitwirkende"}
                 </p>
@@ -629,42 +658,42 @@ export default function EventDetailPage() {
             {/* Pricing */}
             <section
               id="event-detail-pricing"
-              className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+              className="dashboard-form-scroll-anchor border-rule dark:border-night-rule border-t pt-10"
             >
-              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+              <h2 className="text-ink dark:text-night-text mb-4 text-lg font-semibold">
                 Eintritt
               </h2>
               <div className="space-y-3">
-                <p className="dark:text-dark-text text-gray-900">
+                <p className="text-ink dark:text-night-text">
                   {event.isFree ? "Eintritt frei" : "Mit Eintritt"}
                 </p>
                 {event.priceInfo && (
-                  <p className="dark:text-dark-muted text-gray-700">
+                  <p className="text-ink dark:text-night-muted">
                     {event.priceInfo}
                   </p>
                 )}
                 {event.priceOptions && event.priceOptions.length > 0 && (
                   <div className="mt-3">
-                    <h3 className="mb-2 text-sm font-medium text-gray-500 dark:text-gray-400">
+                    <h3 className="text-dark dark:text-night-muted mb-2 text-sm font-medium">
                       Preiskategorien
                     </h3>
                     <ul className="space-y-2">
                       {event.priceOptions.map((option) => (
                         <li
                           key={option.id}
-                          className="dark:bg-dark-background-secondary flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2"
+                          className="dark:bg-night-raised bg-rule/25 flex items-center justify-between px-3 py-2"
                         >
                           <div>
-                            <span className="dark:text-dark-text font-medium text-gray-900">
+                            <span className="text-ink dark:text-night-text font-medium">
                               {option.label}
                             </span>
                             {option.description && (
-                              <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
+                              <span className="text-dark dark:text-night-muted ml-2 text-sm">
                                 – {option.description}
                               </span>
                             )}
                           </div>
-                          <span className="dark:text-dark-text font-semibold text-gray-900">
+                          <span className="text-ink dark:text-night-text font-semibold">
                             {option.price.toFixed(2)} €
                           </span>
                         </li>
@@ -678,25 +707,25 @@ export default function EventDetailPage() {
             {/* Meta Info */}
             <section
               id="event-detail-meta"
-              className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+              className="dashboard-form-scroll-anchor border-rule dark:border-night-rule border-t pt-10"
             >
-              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+              <h2 className="text-ink dark:text-night-text mb-4 text-lg font-semibold">
                 Informationen
               </h2>
               <dl className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  <dt className="text-dark dark:text-night-muted text-sm font-medium">
                     Erstellt von
                   </dt>
-                  <dd className="dark:text-dark-text mt-1 text-gray-900">
+                  <dd className="text-ink dark:text-night-text mt-1">
                     {event.createdBy?.displayName || "Unbekannt"}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  <dt className="text-dark dark:text-night-muted text-sm font-medium">
                     Erstellt am
                   </dt>
-                  <dd className="dark:text-dark-text mt-1 text-gray-900">
+                  <dd className="text-ink dark:text-night-text mt-1">
                     {new Date(event.createdAt).toLocaleDateString("de-DE", {
                       day: "numeric",
                       month: "long",
@@ -709,18 +738,18 @@ export default function EventDetailPage() {
                 {event.reviewer && (
                   <>
                     <div>
-                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                      <dt className="text-dark dark:text-night-muted text-sm font-medium">
                         Geprüft von
                       </dt>
-                      <dd className="dark:text-dark-text mt-1 text-gray-900">
+                      <dd className="text-ink dark:text-night-text mt-1">
                         {event.reviewer.displayName}
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                      <dt className="text-dark dark:text-night-muted text-sm font-medium">
                         Geprüft am
                       </dt>
-                      <dd className="dark:text-dark-text mt-1 text-gray-900">
+                      <dd className="text-ink dark:text-night-text mt-1">
                         {event.reviewDate
                           ? new Date(event.reviewDate).toLocaleDateString(
                               "de-DE",
@@ -739,10 +768,10 @@ export default function EventDetailPage() {
                 )}
                 {event.publishedAt && (
                   <div>
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    <dt className="text-dark dark:text-night-muted text-sm font-medium">
                       Veröffentlicht am
                     </dt>
-                    <dd className="dark:text-dark-text mt-1 text-gray-900">
+                    <dd className="text-ink dark:text-night-text mt-1">
                       {new Date(event.publishedAt).toLocaleDateString("de-DE", {
                         day: "numeric",
                         month: "long",
@@ -754,10 +783,10 @@ export default function EventDetailPage() {
                   </div>
                 )}
                 <div>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  <dt className="text-dark dark:text-night-muted text-sm font-medium">
                     Zuletzt aktualisiert
                   </dt>
-                  <dd className="dark:text-dark-text mt-1 text-gray-900">
+                  <dd className="text-ink dark:text-night-text mt-1">
                     {new Date(event.updatedAt).toLocaleDateString("de-DE", {
                       day: "numeric",
                       month: "long",
@@ -776,7 +805,7 @@ export default function EventDetailPage() {
         <div className="mt-8">
           <Link
             href="/dashboard/events"
-            className="hover:text-primary dark:text-dark-muted dark:hover:text-primary inline-flex items-center gap-2 text-sm font-medium text-gray-600"
+            className="text-dark dark:text-night-muted hover:text-primary-ink dark:hover:text-primary inline-flex items-center gap-2 text-sm font-medium"
           >
             <ArrowLeftIcon className="h-4 w-4" />
             Zurück zur Übersicht
@@ -789,10 +818,10 @@ export default function EventDetailPage() {
         <ScrollableModal>
           <ScrollableModalCard maxW="md">
             <ScrollableModalBody>
-              <h3 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+              <h3 className="text-ink dark:text-night-text mb-4 text-lg font-semibold">
                 Termin ablehnen
               </h3>
-              <p className="dark:text-dark-muted mb-4 text-sm text-gray-600">
+              <p className="text-dark dark:text-night-muted mb-4 text-sm">
                 Bitte gib einen Grund für die Ablehnung an. Der Ersteller wird
                 benachrichtigt.
               </p>
@@ -801,7 +830,7 @@ export default function EventDetailPage() {
                 onChange={(e) => setReviewNotes(e.target.value)}
                 rows={4}
                 placeholder="Begründung für die Ablehnung..."
-                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text mb-4 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+                className="border-ink dark:border-night-text dark:bg-night dark:text-night-text text-ink bg-paper mb-4 block w-full border px-3 py-2"
                 required
               />
             </ScrollableModalBody>
@@ -812,14 +841,14 @@ export default function EventDetailPage() {
                     setShowRejectModal(false);
                     setReviewNotes("");
                   }}
-                  className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+                  className="border-ink dark:border-night-text text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised min-h-11 border px-4 py-2 text-sm font-medium"
                 >
                   Abbrechen
                 </button>
                 <button
                   onClick={handleReject}
                   disabled={!reviewNotes.trim() || rejectMutation.isPending}
-                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                  className="min-h-11 bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
                 >
                   {rejectMutation.isPending ? "Wird abgelehnt..." : "Ablehnen"}
                 </button>
@@ -834,10 +863,10 @@ export default function EventDetailPage() {
         <ScrollableModal>
           <ScrollableModalCard maxW="md">
             <ScrollableModalBody>
-              <h3 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+              <h3 className="text-ink dark:text-night-text mb-4 text-lg font-semibold">
                 Termin löschen
               </h3>
-              <p className="dark:text-dark-muted mb-4 text-gray-600">
+              <p className="text-dark dark:text-night-muted mb-4">
                 Bist du sicher, dass du diesen Termin löschen möchtest? Diese
                 Aktion kann nicht rückgängig gemacht werden.
               </p>
@@ -846,14 +875,14 @@ export default function EventDetailPage() {
               <div className="flex justify-end gap-3">
                 <button
                   onClick={() => setShowDeleteModal(false)}
-                  className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+                  className="border-ink dark:border-night-text text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised min-h-11 border px-4 py-2 text-sm font-medium"
                 >
                   Abbrechen
                 </button>
                 <button
                   onClick={handleDelete}
                   disabled={deleteMutation.isPending}
-                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                  className="min-h-11 bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
                 >
                   {deleteMutation.isPending ? "Wird gelöscht..." : "Löschen"}
                 </button>
