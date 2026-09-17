@@ -500,8 +500,12 @@ export default function CourseDetailView({
             )}
           </div>
 
-          {/* Sidebar — pinned while the long main column scrolls */}
-          <div className="space-y-8 lg:sticky lg:top-24 lg:self-start">
+          {/* Randspalte läuft mit, während die lange Hauptspalte vorbeizieht.
+              `sticky-below-nav` statt `lg:top-24` wie in der Termin-Ansicht:
+              Mit den heutigen Daten ist die Randspalte so hoch wie ihre
+              Spalte und klebt deshalb nie — die 96px wären aber dieselbe
+              Überdeckung, sobald ein Kurs längeren Text bekommt. */}
+          <div className="sticky-below-nav space-y-8 lg:sticky lg:self-start">
             {/* Registration CTA */}
             {canRegister && (
               <Panel labelledBy="anmeldung-heading">
