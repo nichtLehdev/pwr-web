@@ -271,14 +271,22 @@ export default function CalendarView({ items }: CalendarViewProps) {
                       ),
                     )
                   }
-                  className={`text-ink dark:text-night-text relative flex aspect-square flex-col items-center justify-center transition-colors ${
+                  /*
+                   * Die Schriftfarbe steht in jedem Zweig, nicht als Grundwert
+                   * davor: `cn` und die Klassenliste entscheiden nichts, es
+                   * gilt die Reihenfolge im Stylesheet. Ein vorangestelltes
+                   * `dark:text-night-text` gewann deshalb gegen das
+                   * `dark:text-night` des ausgewählten Tages — im Nachtdruck
+                   * stand die helle Ziffer auf der hellen Fläche.
+                   */
+                  className={`relative flex aspect-square flex-col items-center justify-center transition-colors ${
                     selected
                       ? "bg-ink text-paper dark:bg-night-text dark:text-night font-bold"
                       : today
-                        ? "bg-ink/[0.06] dark:bg-night-text/[0.08] font-bold"
+                        ? "text-ink dark:text-night-text bg-ink/[0.06] dark:bg-night-text/[0.08] font-bold"
                         : courseStatus
-                          ? "bg-rule/20 dark:bg-night-rule/20"
-                          : "hover:bg-rule/20 dark:hover:bg-night-rule/20"
+                          ? "text-ink dark:text-night-text bg-rule/20 dark:bg-night-rule/20"
+                          : "text-ink dark:text-night-text hover:bg-rule/20 dark:hover:bg-night-rule/20"
                   }`}
                 >
                   {/* Cancelled Indicator oben links */}
