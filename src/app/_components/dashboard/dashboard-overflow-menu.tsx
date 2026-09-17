@@ -94,7 +94,7 @@ export function DashboardOverflowMenu({
                   <Icon
                     className={cn(
                       "h-4 w-4 shrink-0",
-                      !item.destructive && "text-gray-400",
+                      !item.destructive && "text-dark dark:text-night-muted",
                     )}
                   />
                 )}
