@@ -19,6 +19,13 @@ import {
  */
 const MAX_ROWS = 3;
 
+/**
+ * Zeilen für die Anmeldungen. Eine, weil eine Anmeldezeile mit Frist und
+ * Schaltfläche auf 390px 309px hoch ist: Zwei davon füllen den Bildschirm des
+ * Telefons, und von den eigentlichen nächsten Terminen bliebe nichts übrig.
+ */
+const MAX_OFFEN = 1;
+
 interface ProgrammProps {
   events: ProgrammeEvent[];
   courses: ProgrammeCourse[];
@@ -28,10 +35,40 @@ interface ProgrammProps {
 }
 
 /**
- * „Kommende Termine“ als Programm. Kurse mit offener Anmeldung stehen vorn
- * (früheste Frist zuerst), markiert durch ihr oranges Datumsfeld und eine
- * Anmelde-Schaltfläche; gibt es andere Termine, bleibt mindestens einer davon
- * im ersten Bildschirm.
+ * Marke über einer Gruppe: leiser als die Abschnittsüberschrift, im Ton der
+ * Monatszeile im Datumsfeld. Als Überschrift und nicht als Absatz, damit die
+ * Gruppen auch für Vorlesegeräte zwei Gruppen sind.
+ */
+function Gruppenmarke({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <h3
+      className={`semi-condensed text-dark dark:text-night-muted mb-1 text-[0.8125rem] font-semibold tracking-[0.08em] uppercase${
+        className ? ` ${className}` : ""
+      }`}
+    >
+      {children}
+    </h3>
+  );
+}
+
+/**
+ * „Kommende Termine“ als Programm, in zwei Gruppen: erst Kurse mit offener
+ * Anmeldung (früheste Frist zuerst), dann die nächsten Termine nach Datum.
+ *
+ * Die Gruppen tragen eigene Marken, weil die Liste sonst als eine einzige
+ * Reihe nach Datum gelesen wird und dann falsch aussieht: Auf dem Telefon
+ * stand hier „29. Okt – 02. Okt – 08. Okt“, und weil die erste Zeile mit
+ * Anmelde-Schaltfläche 309px hoch ist, sah man beim ersten Blick nur sie. Das
+ * späteste Datum wirkte so wie der nächste Termin.
+ *
+ * Nur eine Gruppe vorhanden (nichts offen, oder nur Offenes) heißt: keine
+ * Marken — dann erklärt die Abschnittsüberschrift die Liste bereits.
  */
 export default function Programm({
   events,
@@ -39,7 +76,7 @@ export default function Programm({
   isLoading,
   now,
 }: ProgrammProps) {
-  const entries = useMemo(() => {
+  const { offene, andere } = useMemo(() => {
     const openCourses = courses
       .filter((course) => isRegistrationOpen(course, now))
       .sort(
@@ -49,21 +86,22 @@ export default function Programm({
       );
     const openIds = new Set(openCourses.map((course) => course.id));
 
-    const others = [
+    const rest = [
       ...events.map(eventEntry),
       ...courses
         .filter((course) => !openIds.has(course.id))
         .map((course) => courseEntry(course, now)),
     ].sort((a, b) => a.start.getTime() - b.start.getTime());
 
-    const openSlots = others.length > 0 ? MAX_ROWS - 1 : MAX_ROWS;
-    return [
-      ...openCourses
-        .slice(0, openSlots)
-        .map((course) => courseEntry(course, now)),
-      ...others,
-    ].slice(0, MAX_ROWS);
+    const offeneZeilen = rest.length > 0 ? MAX_OFFEN : MAX_ROWS;
+    const offene = openCourses
+      .slice(0, offeneZeilen)
+      .map((course) => courseEntry(course, now));
+
+    return { offene, andere: rest.slice(0, MAX_ROWS - offene.length) };
   }, [events, courses, now]);
+
+  const zweiGruppen = offene.length > 0 && andere.length > 0;
 
   return (
     <section
@@ -74,14 +112,29 @@ export default function Programm({
         Kommende Termine
       </Heading>
 
-      <ProgrammeList
-        entries={entries}
-        now={now}
-        isLoading={isLoading}
-        fillTo={MAX_ROWS}
-      />
+      {isLoading || !zweiGruppen ? (
+        <ProgrammeList
+          entries={[...offene, ...andere]}
+          now={now}
+          isLoading={isLoading}
+          fillTo={MAX_ROWS}
+        />
+      ) : (
+        <>
+          <Gruppenmarke className="mt-3">Anmeldung läuft</Gruppenmarke>
+          <ProgrammeList entries={offene} now={now} titleAs="h4" />
 
-      <WayList className="mt-auto lg:mt-6">
+          <Gruppenmarke className="mt-4">Nächste Termine</Gruppenmarke>
+          <ProgrammeList
+            entries={andere}
+            now={now}
+            titleAs="h4"
+            fillTo={MAX_ROWS - offene.length}
+          />
+        </>
+      )}
+
+      <WayList className="mt-auto lg:mt-4">
         <WayRow href="/termine" title="Alle Termine" size="compact" />
         <WayRow
           href="/mitmachen/chor-finden"
