@@ -28,6 +28,7 @@ import LocationNavigationLink from "@/app/_components/general/location-navigatio
 import { participantPriceOptionLabel } from "@/lib/course-price-options";
 import { registrantMayCancelDownPayment } from "@/lib/course-down-payment";
 import { RegistrationDownPaymentCard } from "@/app/_components/events/registration-down-payment-card";
+import { PromotionOfferCard } from "@/app/_components/events/promotion-offer-card";
 import PublicPage from "@/app/_components/general/public-page";
 import { headMeta } from "@/app/_components/programmheft/page-head";
 import { PageSection } from "@/app/_components/programmheft/page-section";
@@ -332,6 +333,57 @@ export default function ViewRegistrationPage() {
     >
       <PageSection>
         <div className="space-y-10">
+          {registration.promotionOffer && (
+            <PromotionOfferCard
+              registrationId={registration.id}
+              accessToken={accessToken ?? undefined}
+              course={registration.course}
+              participants={registration.participants}
+              offer={registration.promotionOffer}
+              onChanged={() => {
+                void utils.registrations.getById.invalidate({
+                  id: registrationId,
+                });
+                void utils.registrations.getMyRegistrations.invalidate();
+              }}
+            />
+          )}
+
+          {registration.groupParts.length > 0 && (
+            <Note tone="important" title="Aufgeteilte Anmeldung">
+              <p>
+                Es waren nicht genug Plätze für alle frei. Die übrigen
+                Teilnehmer stehen in einer eigenen Anmeldung:
+              </p>
+              <ul className="mt-3 space-y-2">
+                {registration.groupParts.map((part) => (
+                  <li
+                    key={part.id}
+                    className="flex flex-wrap items-center gap-x-3 gap-y-1"
+                  >
+                    <Tag tone="ink">
+                      {STATUS_TAG[part.registrationStatus].label}
+                    </Tag>
+                    <span>
+                      {part.participants
+                        .map((p) => `${p.firstName} ${p.lastName}`)
+                        .join(", ")}
+                    </span>
+                    <Link
+                      href={withAccessToken(
+                        `/registrations/${part.id}`,
+                        part.accessToken ?? undefined,
+                      )}
+                      className="link-ink"
+                    >
+                      Ansehen
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </Note>
+          )}
+
           {/* Kursdetails */}
           <div>
             <Heading as="h2" size="list" rule>

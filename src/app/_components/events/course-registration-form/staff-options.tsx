@@ -15,7 +15,9 @@ interface StaffOptionsProps {
   /** Not enough free seats left for the participants entered here. */
   seatsShort: boolean;
   /** What the selected status actually becomes on the server. */
-  resolvedStatus: "CONFIRMED" | "WAITLIST";
+  resolvedStatus: "CONFIRMED" | "WAITLIST" | "SPLIT";
+  /** Seats are short, but some participants fit and a waiting list exists. */
+  canSplit: boolean;
   /** Down payment of the entered participants, `null` when none is due. */
   downPaymentAmount: number | null;
 }
@@ -33,6 +35,7 @@ export function StaffOptions({
   setOptions,
   seatsShort,
   resolvedStatus,
+  canSplit,
   downPaymentAmount,
 }: StaffOptionsProps) {
   // Only a confirmed entry can overbook; a waiting-list entry never does.
@@ -61,9 +64,11 @@ export function StaffOptions({
               ...prev,
               registrationStatus: e.target
                 .value as StaffRegistrationOptions["registrationStatus"],
-              // A waiting-list entry never overbooks anything.
+              // Neither a waiting-list entry nor a split overbooks anything.
               allowOverbooking:
-                e.target.value === "WAITLIST" ? false : prev.allowOverbooking,
+                e.target.value === "WAITLIST" || e.target.value === "SPLIT"
+                  ? false
+                  : prev.allowOverbooking,
             }))
           }
           className="border-ink! dark:border-night-text! text-ink! dark:text-night-text! bg-paper! dark:bg-night! w-full rounded-none! border-2! px-3 py-2 text-sm"
@@ -74,6 +79,11 @@ export function StaffOptions({
           <option value="CONFIRMED">Bestätigt</option>
           {course.allowWaitingList && (
             <option value="WAITLIST">Warteliste</option>
+          )}
+          {canSplit && (
+            <option value="SPLIT">
+              Aufteilen (freie Plätze bestätigen, Rest auf die Warteliste)
+            </option>
           )}
         </Select>
       </div>
