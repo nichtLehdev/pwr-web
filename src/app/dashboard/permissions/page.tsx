@@ -320,7 +320,7 @@ function RolesTab() {
             setFormData({ name: "", description: "", permissionKeys: [] });
             setShowCreateModal(true);
           }}
-          className="on-orange bg-primary text-ink hover:bg-primary-dark inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm font-semibold transition-colors"
+          className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-night-text dark:text-night dark:hover:bg-primary dark:hover:text-ink inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm font-semibold transition-colors"
         >
           <Plus className="h-5 w-5" />
           Neue Rolle
@@ -464,7 +464,7 @@ function RolesTab() {
                 <button
                   onClick={handleSave}
                   disabled={!editingId && !formData.name}
-                  className="on-orange bg-primary text-ink hover:bg-primary-dark inline-flex min-h-11 items-center px-4 py-2 text-sm font-semibold transition-colors disabled:opacity-50"
+                  className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-night-text dark:text-night dark:hover:bg-primary dark:hover:text-ink inline-flex min-h-11 items-center px-4 py-2 text-sm font-semibold transition-colors disabled:opacity-50"
                 >
                   Speichern
                 </button>
@@ -925,7 +925,7 @@ function UsersTab() {
                     })}
                     <button
                       onClick={handleSaveRoles}
-                      className="on-orange bg-primary text-ink hover:bg-primary-dark mt-3 inline-flex min-h-11 w-full items-center justify-center px-4 py-2 text-sm font-semibold transition-colors"
+                      className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-night-text dark:text-night dark:hover:bg-primary dark:hover:text-ink mt-3 inline-flex min-h-11 w-full items-center justify-center px-4 py-2 text-sm font-semibold transition-colors"
                     >
                       Rollen speichern
                     </button>
@@ -1000,7 +1000,7 @@ function UsersTab() {
                       className={`mt-3 inline-flex min-h-11 w-full items-center justify-center px-4 py-2 text-sm font-semibold transition-colors ${
                         hasAdminRole
                           ? "border-rule dark:border-night-rule text-dark dark:text-night-muted cursor-not-allowed border-2"
-                          : "on-orange bg-primary text-ink hover:bg-primary-dark"
+                          : "bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-night-text dark:text-night dark:hover:bg-primary dark:hover:text-ink"
                       }`}
                     >
                       Berechtigungen speichern

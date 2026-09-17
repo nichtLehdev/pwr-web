@@ -377,7 +377,7 @@ export default function EditUserPage() {
                 <button
                   type="button"
                   onClick={() => setIsMediaPickerOpen(true)}
-                  className="on-orange bg-primary text-ink hover:bg-primary-dark inline-flex min-h-11 items-center justify-center px-4 py-2 text-sm font-semibold transition-colors"
+                  className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-night-text dark:text-night dark:hover:bg-primary dark:hover:text-ink inline-flex min-h-11 items-center justify-center px-4 py-2 text-sm font-semibold transition-colors"
                 >
                   {profileImageUrl ? "Bild ändern" : "Bild auswählen"}
                 </button>
@@ -711,7 +711,7 @@ export default function EditUserPage() {
             <button
               type="submit"
               disabled={isSubmitting || updateUserMutation.isPending}
-              className="on-orange bg-primary text-ink hover:bg-primary-dark inline-flex min-h-11 items-center justify-center px-6 py-2.5 font-semibold transition-colors disabled:opacity-50"
+              className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-night-text dark:text-night dark:hover:bg-primary dark:hover:text-ink inline-flex min-h-11 items-center justify-center px-6 py-2.5 font-semibold transition-colors disabled:opacity-50"
             >
               {isSubmitting || updateUserMutation.isPending
                 ? "Wird gespeichert..."

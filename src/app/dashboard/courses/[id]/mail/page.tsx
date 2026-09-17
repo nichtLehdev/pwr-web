@@ -737,7 +737,7 @@ function CourseMailPageContent() {
                 <button
                   onClick={handleSend}
                   disabled={isSending || isUploading || recipientCount === 0}
-                  className="on-orange bg-primary text-ink hover:bg-primary/90 min-h-11 flex-1 px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                  className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-night-text dark:text-night dark:hover:bg-primary dark:hover:text-ink min-h-11 flex-1 px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isSending && sendMode === "all"
                     ? "Wird gesendet..."
@@ -1121,7 +1121,7 @@ function CourseMailPageContent() {
                 <button
                   onClick={confirmSend}
                   disabled={isSending}
-                  className="on-orange bg-primary text-ink hover:bg-primary/90 min-h-11 px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                  className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-night-text dark:text-night dark:hover:bg-primary dark:hover:text-ink min-h-11 px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isSending ? "Wird gesendet..." : "Senden"}
                 </button>

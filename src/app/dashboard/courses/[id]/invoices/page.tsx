@@ -476,7 +476,7 @@ export default function CourseInvoicesPage() {
                 ? undefined
                 : "Für diesen Kurs ist die Rechnungsstellung nicht freigeschaltet."
             }
-            className="on-orange bg-primary text-ink hover:bg-primary/90 inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
+            className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-night-text dark:text-night dark:hover:bg-primary dark:hover:text-ink inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
           >
             <PlusIcon className="h-4 w-4" />
             Rechnung erstellen
@@ -551,7 +551,7 @@ export default function CourseInvoicesPage() {
                     registrationIds: [...selected],
                   })
                 }
-                className="on-orange bg-primary text-ink hover:bg-primary/90 min-h-9 px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+                className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-night-text dark:text-night dark:hover:bg-primary dark:hover:text-ink min-h-9 px-3 py-1.5 text-sm font-medium disabled:opacity-50"
               >
                 {createDraftsBulk.isPending
                   ? "Erstelle…"
@@ -888,7 +888,7 @@ export default function CourseInvoicesPage() {
                     })
                   }
                   disabled={!reviewedConfirmed || publishAllDrafts.isPending}
-                  className="on-orange bg-primary text-ink hover:bg-primary/90 min-h-11 flex-1 px-4 py-2 text-sm font-medium disabled:opacity-50"
+                  className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-night-text dark:text-night dark:hover:bg-primary dark:hover:text-ink min-h-11 flex-1 px-4 py-2 text-sm font-medium disabled:opacity-50"
                 >
                   {publishAllDrafts.isPending
                     ? "Stelle aus…"

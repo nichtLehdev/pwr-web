@@ -412,7 +412,7 @@ export default function EditPostPage() {
   if (sessionLoading || profileLoading || permissionsLoading || postLoading) {
     return (
       <div className="dark:bg-night bg-paper flex min-h-screen items-center justify-center">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }

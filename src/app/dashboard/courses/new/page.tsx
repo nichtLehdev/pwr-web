@@ -1120,7 +1120,7 @@ export default function NewCoursePage() {
 
                   {/* Location Dropdown */}
                   {showLocationDropdown && locationsData && (
-                    <div className="dark:border-night-rule dark:bg-dark-surface absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
+                    <div className="border-ink bg-paper dark:border-night-text dark:bg-night-raised absolute z-10 mt-1 w-full overflow-hidden border-2">
                       <div
                         className="overflow-y-auto"
                         style={{ maxHeight: "240px" }}
@@ -1132,7 +1132,7 @@ export default function NewCoursePage() {
                                 key={location.id}
                                 type="button"
                                 onClick={() => handleLocationSelect(location)}
-                                className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
+                                className="hover:bg-rule/60 dark:hover:bg-night-rule block w-full px-4 py-2 text-left text-sm"
                               >
                                 <span className="dark:text-night-text text-ink font-medium">
                                   {location.name || location.city}
@@ -1163,7 +1163,7 @@ export default function NewCoursePage() {
                           setShowLocationDropdown(false);
                           setShowNewLocationForm(true);
                         }}
-                        className="text-primary dark:border-night-rule block w-full border-t border-gray-200 px-4 py-2 text-left text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-700"
+                        className="text-primary-ink border-rule hover:bg-rule/60 dark:border-night-rule dark:text-primary dark:hover:bg-night-rule block w-full border-t px-4 py-2 text-left text-sm font-semibold"
                       >
                         + Neuen Ort erstellen
                       </button>

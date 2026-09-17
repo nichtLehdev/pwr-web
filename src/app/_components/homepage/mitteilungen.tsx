@@ -1,4 +1,7 @@
-import { NewsColumns, type NewsPost } from "@/app/_components/programmheft/news";
+import {
+  NewsColumns,
+  type NewsPost,
+} from "@/app/_components/programmheft/news";
 import { PageSection } from "@/app/_components/programmheft/page-section";
 import { SectionHead } from "@/app/_components/programmheft/section-head";
 

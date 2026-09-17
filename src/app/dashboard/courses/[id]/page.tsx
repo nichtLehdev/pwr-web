@@ -205,7 +205,7 @@ export default function CourseDetailPage() {
   if (sessionLoading || profileLoading || permissionsLoading || courseLoading) {
     return (
       <div className="dark:bg-night bg-paper flex min-h-screen items-center justify-center">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
@@ -975,7 +975,7 @@ export default function CourseDetailPage() {
             )}
             <Link
               href={`/dashboard/courses/${courseId}/participants`}
-              className="on-orange bg-primary text-ink hover:bg-primary/90 inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm font-medium transition-colors"
+              className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-night-text dark:text-night dark:hover:bg-primary dark:hover:text-ink inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm font-medium transition-colors"
             >
               <ArrowRightIcon className="h-4 w-4" />
               Zur Teilnehmerverwaltung
@@ -1032,7 +1032,7 @@ export default function CourseDetailPage() {
             </h2>
             {registrationsLoading ? (
               <div className="flex items-center justify-center py-8">
-                <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+                <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
               </div>
             ) : registrationsData?.registrations.length === 0 ? (
               <p className="text-dark dark:text-night-muted py-8 text-center">

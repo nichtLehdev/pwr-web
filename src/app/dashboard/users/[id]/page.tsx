@@ -115,7 +115,7 @@ export default function UserDetailPage() {
         <div className="flex items-center gap-3">
           <Link
             href={`/dashboard/users/${userId}/edit`}
-            className="on-orange bg-primary text-ink hover:bg-primary-dark inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm font-semibold transition-colors"
+            className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-night-text dark:text-night dark:hover:bg-primary dark:hover:text-ink inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm font-semibold transition-colors"
           >
             <Edit className="h-4 w-4" />
             Bearbeiten
