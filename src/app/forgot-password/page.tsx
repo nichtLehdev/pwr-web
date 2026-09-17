@@ -3,8 +3,24 @@
 import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useToast } from "@/app/_components/ui/toast";
-import { Mail, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Button, Input, Label } from "@/app/_components/ui";
+import PublicPage from "@/app/_components/general/public-page";
+import { PageSection } from "@/app/_components/programmheft/page-section";
+import { Note } from "@/app/_components/programmheft/note";
+
+/** Platzhalter, während der Formularabschnitt lädt. */
+function FormSkeleton() {
+  return (
+    <div className="flex justify-center py-12">
+      <div
+        className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-2 border-t-transparent"
+        aria-hidden
+      />
+      <span className="sr-only">Lädt…</span>
+    </div>
+  );
+}
 
 function ForgotPasswordForm() {
   const toast = useToast();
@@ -44,102 +60,84 @@ function ForgotPasswordForm() {
 
   if (isSuccess) {
     return (
-      <div className="bg-background-secondary dark:bg-dark-background-secondary flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-8">
-        <div className="w-full max-w-md">
-          <div className="dark:bg-dark-surface rounded-lg bg-white p-6 shadow-lg md:p-8">
-            <div className="mb-4 text-center">
-              <div className="bg-primary/10 dark:bg-primary-light/20 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
-                <Mail className="text-primary dark:text-primary-light h-8 w-8" />
-              </div>
-              <h1 className="text-dark dark:text-dark-text mb-2 text-2xl font-bold">
-                E-Mail gesendet
-              </h1>
-              <p className="text-gray-600 dark:text-gray-400">
-                Falls ein Konto mit dieser E-Mail existiert, wurde eine E-Mail
-                zum Zurücksetzen des Passworts gesendet. Bitte überprüfe dein
-                E-Mail-Postfach und folge den Anweisungen.
-              </p>
-            </div>
+      <div className="mx-auto max-w-md">
+        <Note tone="info" title="E-Mail gesendet">
+          <p>
+            Falls ein Konto mit dieser E-Mail existiert, wurde eine E-Mail zum
+            Zurücksetzen des Passworts gesendet. Bitte überprüfe dein
+            E-Mail-Postfach und folge den Anweisungen.
+          </p>
+        </Note>
 
-            <div className="mt-6 text-center">
-              <Link
-                href="/login"
-                className="text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary inline-flex items-center gap-2 font-medium"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Zurück zur Anmeldung
-              </Link>
-            </div>
-          </div>
-        </div>
+        <Link
+          href="/login"
+          className="link-ink mt-8 inline-flex items-center gap-2 text-sm"
+        >
+          <ArrowLeft className="h-4 w-4" aria-hidden />
+          Zurück zur Anmeldung
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className="bg-background-secondary dark:bg-dark-background-secondary flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-8">
-      <div className="w-full max-w-md">
-        <div className="mb-6 text-center">
-          <h1 className="text-dark dark:text-dark-text mb-2 text-3xl font-bold">
-            Passwort vergessen?
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Gib deine E-Mail-Adresse ein und wir senden dir einen Link zum
-            Zurücksetzen deines Passworts.
-          </p>
+    <div className="mx-auto max-w-md">
+      <p className="text-ink dark:text-night-text mb-8 text-lg leading-relaxed">
+        Gib deine E-Mail-Adresse ein und wir senden dir einen Link zum
+        Zurücksetzen deines Passworts.
+      </p>
+
+      <form className="space-y-6" onSubmit={handleSubmit}>
+        <div>
+          <Label htmlFor="email">E-Mail-Adresse</Label>
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="deine@email.de"
+          />
         </div>
 
-        <div className="dark:bg-dark-surface rounded-lg bg-white p-6 shadow-lg md:p-8">
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <div>
-              <Label htmlFor="email">E-Mail-Adresse</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="deine@email.de"
-              />
-            </div>
+        <Button
+          type="submit"
+          disabled={isLoading}
+          isLoading={isLoading}
+          className="w-full"
+        >
+          Link senden
+        </Button>
+      </form>
 
-            <Button
-              type="submit"
-              disabled={isLoading}
-              isLoading={isLoading}
-              className="w-full"
-            >
-              Link senden
-            </Button>
-          </form>
-
-          <div className="mt-6 text-center">
-            <Link
-              href="/login"
-              className="text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary inline-flex items-center gap-2 text-sm font-medium"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Zurück zur Anmeldung
-            </Link>
-          </div>
-        </div>
-      </div>
+      <Link
+        href="/login"
+        className="link-ink mt-8 inline-flex items-center gap-2 text-sm"
+      >
+        <ArrowLeft className="h-4 w-4" aria-hidden />
+        Zurück zur Anmeldung
+      </Link>
     </div>
   );
 }
 
 export default function ForgotPasswordPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
-          <div className="border-primary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />
-        </div>
-      }
+    <PublicPage
+      title="Passwort vergessen?"
+      heroSize="compact"
+      breadcrumbs={[
+        { label: "Start", href: "/" },
+        { label: "Passwort vergessen?" },
+      ]}
     >
-      <ForgotPasswordForm />
-    </Suspense>
+      <PageSection flush="top">
+        <Suspense fallback={<FormSkeleton />}>
+          <ForgotPasswordForm />
+        </Suspense>
+      </PageSection>
+    </PublicPage>
   );
 }

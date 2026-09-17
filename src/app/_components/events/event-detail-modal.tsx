@@ -2,16 +2,9 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import { getDistrictColor } from "@/lib/district-color";
 import type { CalendarItem } from "@/lib/types/calendar";
 import { coursePath, eventPath } from "@/lib/slug";
-import {
-  CalendarIcon,
-  CheckCircleIcon,
-  CircleXIcon,
-  MapPinIcon,
-  X,
-} from "lucide-react";
+import { X } from "lucide-react";
 import {
   ScrollableModal,
   ScrollableModalCard,
@@ -19,6 +12,11 @@ import {
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
 import LocationNavigationLink from "@/app/_components/general/location-navigation-link";
+import { BezirkLabel } from "@/app/_components/programmheft/bezirk-label";
+import { Tag } from "@/app/_components/programmheft/tag";
+import { Note } from "@/app/_components/programmheft/note";
+import { headMeta } from "@/app/_components/programmheft/page-head";
+import { cn } from "@/lib/utils";
 
 interface EventDetailModalProps {
   event: CalendarItem & {
@@ -28,12 +26,15 @@ interface EventDetailModalProps {
   onClose: () => void;
 }
 
+const OUTLINE_BUTTON =
+  "semi-condensed border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night inline-flex min-h-12 flex-1 items-center justify-center gap-2 border-2 px-4 text-base font-semibold transition-colors";
+const PRIMARY_BUTTON =
+  "semi-condensed bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-primary dark:text-ink dark:hover:bg-paper inline-flex min-h-12 flex-1 items-center justify-center gap-3 px-4 text-base font-semibold transition-colors";
+
 export default function EventDetailModal({
   event,
   onClose,
 }: EventDetailModalProps) {
-  const districtColor = getDistrictColor(event.bezirk?.number);
-
   const eventDate = event.type === "event" ? event.date : null;
   const eventDuration =
     event.type === "event" && event.duration ? event.duration : null;
@@ -105,167 +106,126 @@ export default function EventDetailModal({
 
   const categoryLabel =
     event.type === "course" ? event.courseType : event.category;
+  const cancelled = event.type === "event" && event.cancelled;
 
   return (
     <ScrollableModal onBackdropClick={onClose} className="backdrop-blur-sm">
       <ScrollableModalCard
         maxW="2xl"
-        className="dark:bg-dark-surface dark:shadow-dark-border overflow-hidden rounded-xl shadow-2xl"
+        className="border-ink dark:border-night-text rounded-none! border-2 shadow-none!"
       >
-        {/* Header with color */}
-        <div
-          className="p-6 text-white"
-          style={{
-            backgroundColor:
-              event.type === "event" && event.cancelled
-                ? "#dc2626"
-                : districtColor,
-          }}
-        >
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
+        {/* Header */}
+        <div className="border-ink dark:border-night-text border-b-2 p-6">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                {event.type === "event" && event.cancelled && (
-                  <span className="inline-flex items-center gap-1 rounded bg-white/20 px-2 py-0.5 text-xs font-bold uppercase">
-                    <X className="h-3 w-3" />
-                    Abgesagt
+                {cancelled && <Tag tone="cancelled">Abgesagt</Tag>}
+                <span className={headMeta.label}>{categoryLabel}</span>
+                {event.bezirk && (
+                  <span className={headMeta.label}>
+                    <BezirkLabel bezirk={event.bezirk} />
                   </span>
                 )}
-                <span className="text-sm font-semibold opacity-90">
-                  {categoryLabel}
-                </span>
               </div>
               <h2
-                className={`mt-1 text-2xl font-bold wrap-break-word ${event.type === "event" && event.cancelled ? "line-through opacity-75" : ""}`}
+                className={cn(
+                  "condensed text-ink dark:text-night-text mt-2 text-2xl leading-tight font-extrabold wrap-break-word",
+                  cancelled && "text-dark dark:text-night-muted line-through",
+                )}
               >
                 {event.title}
               </h2>
               {event.motto && (
-                <p className="mt-1 text-sm italic opacity-90">{event.motto}</p>
+                <p className="text-dark dark:text-night-muted mt-1 text-sm italic">
+                  {event.motto}
+                </p>
               )}
             </div>
             <button
               onClick={onClose}
-              className="ml-4 rounded-lg p-2 transition-colors hover:bg-white/20"
+              className="text-ink hover:bg-ink hover:text-paper dark:text-night-text dark:hover:bg-night-text dark:hover:text-night -mt-2 -mr-2 flex h-11 w-11 shrink-0 items-center justify-center transition-colors"
               aria-label="Modal schließen"
             >
-              <X className="h-6 w-6" />
+              <X className="h-5 w-5" aria-hidden />
             </button>
           </div>
         </div>
 
-        <ScrollableModalBody className="space-y-6">
+        <ScrollableModalBody className="space-y-5">
           {/* Cancelled Warning */}
-          {event.type === "event" && event.cancelled && (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/30">
-              <div className="flex items-start gap-3">
-                <CircleXIcon className="mt-0.5 h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />
-                <div>
-                  <h3 className="mb-1 font-semibold text-red-900 dark:text-red-100">
-                    Veranstaltung abgesagt
-                  </h3>
-                  <p className="text-sm text-red-800 dark:text-red-200">
-                    Diese Veranstaltung findet nicht mehr statt.
-                  </p>
-                </div>
-              </div>
-            </div>
+          {cancelled && (
+            <Note tone="error">
+              <p>Diese Veranstaltung findet nicht mehr statt.</p>
+            </Note>
           )}
 
           {/* Date & Time */}
-          <div className="flex items-start gap-3">
-            <CalendarIcon className="mt-0.5 h-5 w-5 shrink-0 text-gray-400" />
-            <div>
-              <p className="text-dark dark:text-dark-text font-semibold">
-                {displayStartDate}
+          <div>
+            <p className="text-ink dark:text-night-text font-semibold">
+              {displayStartDate}
+            </p>
+            {event.type === "course" && isMultiDay ? (
+              <p className="text-dark dark:text-night-muted text-sm">
+                {startTime} Uhr - {endDateString}, {endTime} Uhr
               </p>
-              {event.type === "course" && isMultiDay ? (
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {startTime} Uhr - {endDateString}, {endTime} Uhr
-                </p>
-              ) : event.type === "course" ? (
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {startTime} Uhr - {endTime} Uhr
-                </p>
-              ) : (
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {startTime} Uhr
-                  {eventDuration && eventDuration > 0 && (
-                    <span>
-                      {" "}
-                      ({Math.floor(eventDuration / 60)}h{" "}
-                      {eventDuration % 60 > 0 ? `${eventDuration % 60}min` : ""}
-                      )
-                    </span>
-                  )}
-                </p>
-              )}
-            </div>
+            ) : event.type === "course" ? (
+              <p className="text-dark dark:text-night-muted text-sm">
+                {startTime} Uhr - {endTime} Uhr
+              </p>
+            ) : (
+              <p className="text-dark dark:text-night-muted text-sm">
+                {startTime} Uhr
+                {eventDuration && eventDuration > 0 && (
+                  <span>
+                    {" "}
+                    ({Math.floor(eventDuration / 60)}h{" "}
+                    {eventDuration % 60 > 0 ? `${eventDuration % 60}min` : ""})
+                  </span>
+                )}
+              </p>
+            )}
           </div>
 
           {/* Location */}
           {event.location && (
-            <div className="flex items-start gap-3">
-              <MapPinIcon className="mt-0.5 h-5 w-5 shrink-0 text-gray-400" />
-              <div>
-                <p className="text-dark dark:text-dark-text font-semibold">
-                  {event.location.name || event.location.city}
+            <div>
+              <p className="text-ink dark:text-night-text font-semibold">
+                {event.location.name || event.location.city}
+              </p>
+              {event.location.street && (
+                <p className="text-dark dark:text-night-muted text-sm">
+                  {event.location.street}
                 </p>
-                {event.location.street && (
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {event.location.street}
-                  </p>
-                )}
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {event.location.zipCode && `${event.location.zipCode} `}
-                  {event.location.city}
-                </p>
-                <LocationNavigationLink
-                  location={event.location}
-                  variant="inline"
-                  className="mt-1"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* District */}
-          {event.bezirk && (
-            <div className="flex items-start gap-3">
-              <CheckCircleIcon className="mt-0.5 h-5 w-5 shrink-0 text-gray-400" />
-              <div>
-                <p className="text-dark dark:text-dark-text font-semibold">
-                  {event.bezirk.name}
-                </p>
-              </div>
+              )}
+              <p className="text-dark dark:text-night-muted text-sm">
+                {event.location.zipCode && `${event.location.zipCode} `}
+                {event.location.city}
+              </p>
+              <LocationNavigationLink
+                location={event.location}
+                variant="inline"
+                className="mt-1"
+              />
             </div>
           )}
 
           {/* Participation offer - only for events */}
           {event.type === "event" && event.openToParticipants && (
-            <div className="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/30">
-              <div className="flex items-start gap-3">
-                <CheckCircleIcon className="mt-0.5 h-5 w-5 shrink-0 text-green-600 dark:text-green-400" />
-                <div>
-                  <h3 className="mb-1 font-semibold text-green-900 dark:text-green-100">
-                    Mitmachangebot
-                  </h3>
-                  <p className="text-sm text-green-800 dark:text-green-200">
-                    {event.participationInfo ||
-                      "Bei dieser Veranstaltung können Sie gerne mitspielen! Kontaktieren Sie die Veranstalter für weitere Informationen."}
-                  </p>
-                </div>
-              </div>
-            </div>
+            <Note tone="important" title="Mitmachangebot" titleAs="h3">
+              <p>
+                {event.participationInfo ||
+                  "Bei dieser Veranstaltung können Sie gerne mitspielen! Kontaktieren Sie die Veranstalter für weitere Informationen."}
+              </p>
+            </Note>
           )}
 
           {/* Description */}
           {event.description && (
             <div>
-              <h3 className="text-dark dark:text-dark-text mb-2 font-semibold">
+              <h3 className="text-ink dark:text-night-text mb-1 font-semibold">
                 Beschreibung
               </h3>
-              <div className="whitespace-pre-wrap text-gray-600 dark:text-gray-400">
+              <div className="text-dark dark:text-night-muted whitespace-pre-wrap">
                 {event.description}
               </div>
             </div>
@@ -274,10 +234,10 @@ export default function EventDetailModal({
           {/* Ensemble info - only for events */}
           {event.type === "event" && event.performingEnsembleName && (
             <div>
-              <h3 className="text-dark dark:text-dark-text mb-2 font-semibold">
+              <h3 className="text-ink dark:text-night-text mb-1 font-semibold">
                 Mitwirkende
               </h3>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-dark dark:text-night-muted">
                 {event.performingEnsembleName}
               </p>
             </div>
@@ -286,12 +246,10 @@ export default function EventDetailModal({
           {/* Conductor */}
           {event.type === "event" && event.leitung && (
             <div>
-              <h3 className="text-dark dark:text-dark-text mb-2 font-semibold">
+              <h3 className="text-ink dark:text-night-text mb-1 font-semibold">
                 Leitung
               </h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                {event.leitung}
-              </p>
+              <p className="text-dark dark:text-night-muted">{event.leitung}</p>
             </div>
           )}
 
@@ -300,48 +258,41 @@ export default function EventDetailModal({
             <>
               {event.prerequisites && (
                 <div>
-                  <h3 className="text-dark dark:text-dark-text mb-2 font-semibold">
+                  <h3 className="text-ink dark:text-night-text mb-1 font-semibold">
                     Voraussetzungen
                   </h3>
-                  <p className="text-gray-600 dark:text-gray-400">
+                  <p className="text-dark dark:text-night-muted">
                     {event.prerequisites}
                   </p>
                 </div>
               )}
 
               {event.maxParticipants && (
-                <div className="dark:bg-dark-background-secondary rounded-lg bg-gray-50 p-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-dark dark:text-dark-text font-semibold">
-                      Max. Teilnehmer
-                    </span>
-                    <span className="text-primary text-lg font-bold">
-                      {event.maxParticipants}
-                    </span>
-                  </div>
+                <div className="border-rule dark:border-night-rule flex items-center justify-between border-t pt-4">
+                  <span className="text-ink dark:text-night-text font-semibold">
+                    Max. Teilnehmer
+                  </span>
+                  <span className="condensed text-ink dark:text-night-text text-[1.75rem] leading-none font-extrabold tabular-nums">
+                    {event.maxParticipants}
+                  </span>
                 </div>
               )}
             </>
           )}
         </ScrollableModalBody>
-        <ScrollableModalFooter>
-          <div className="flex gap-3">
-            <Link
-              href={
-                event.type === "course" ? coursePath(event) : eventPath(event)
-              }
-              className="bg-primary hover:bg-primary-dark flex-1 rounded-lg px-6 py-3 text-center font-semibold text-white transition-colors"
-              onClick={onClose}
-            >
-              Alle Details ansehen
-            </Link>
-            <button
-              onClick={onClose}
-              className="dark:border-dark-border dark:hover:bg-dark-background-secondary rounded-lg border-2 border-gray-300 px-6 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-300"
-            >
-              Schließen
-            </button>
-          </div>
+        <ScrollableModalFooter className="border-ink dark:border-night-text flex gap-3 border-t-2">
+          <Link
+            href={
+              event.type === "course" ? coursePath(event) : eventPath(event)
+            }
+            className={PRIMARY_BUTTON}
+            onClick={onClose}
+          >
+            Alle Details ansehen
+          </Link>
+          <button onClick={onClose} className={OUTLINE_BUTTON}>
+            Schließen
+          </button>
         </ScrollableModalFooter>
       </ScrollableModalCard>
     </ScrollableModal>

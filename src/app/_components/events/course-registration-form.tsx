@@ -36,6 +36,8 @@ import {
   ScrollableModalBody,
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
+import { Heading } from "@/app/_components/programmheft/section-head";
+import { Note } from "@/app/_components/programmheft/note";
 
 export default function CourseRegistrationForm({
   course,
@@ -557,12 +559,15 @@ export default function CourseRegistrationForm({
 
   const discardConfirm = showDiscardConfirm ? (
     <ScrollableModal>
-      <ScrollableModalCard maxW="md">
+      <ScrollableModalCard
+        maxW="md"
+        className="border-ink dark:border-night-text rounded-none! border-2 shadow-none!"
+      >
         <ScrollableModalBody>
-          <h3 className="text-dark dark:text-dark-text mb-4 text-lg font-bold">
+          <Heading as="h3" size="list" className="text-lg">
             Anmeldung verwerfen?
-          </h3>
-          <p className="mb-2 text-gray-600 dark:text-gray-400">
+          </Heading>
+          <p className="text-dark dark:text-night-muted mt-2">
             Ihre bisherigen Eingaben
             {registrationData.participants.length > 0
               ? ` (${registrationData.participants.length} Teilnehmer)`
@@ -570,12 +575,12 @@ export default function CourseRegistrationForm({
             gehen dabei verloren.
           </p>
         </ScrollableModalBody>
-        <ScrollableModalFooter>
+        <ScrollableModalFooter className="border-ink dark:border-night-text border-t-2">
           <div className="flex gap-3">
             <button
               type="button"
               onClick={() => setShowDiscardConfirm(false)}
-              className="dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+              className="border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night semi-condensed flex-1 border-2 px-4 py-2 font-semibold transition-colors"
             >
               Weiter ausfüllen
             </button>
@@ -585,7 +590,7 @@ export default function CourseRegistrationForm({
                 setShowDiscardConfirm(false);
                 onClose();
               }}
-              className="flex-1 rounded-lg bg-red-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-red-700"
+              className="semi-condensed flex-1 bg-red-700 px-4 py-2 font-semibold text-white transition-colors hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-700"
             >
               Verwerfen
             </button>
@@ -667,14 +672,9 @@ export default function CourseRegistrationForm({
         />
       )}
       {currentStep === 3 && submitError && (
-        <div
-          role="alert"
-          className="mt-4 rounded-md border-l-4 border-red-500 bg-red-50 p-3 dark:border-red-400 dark:bg-red-900/20"
-        >
-          <p className="text-sm text-red-800 dark:text-red-300">
-            {submitError}
-          </p>
-        </div>
+        <Note tone="error" className="mt-4">
+          <p>{submitError}</p>
+        </Note>
       )}
     </>
   );
@@ -687,11 +687,11 @@ export default function CourseRegistrationForm({
           currentStep > 1 && setCurrentStep((currentStep - 1) as Step)
         }
         disabled={currentStep === 1}
-        className="text-dark dark:text-dark-text dark:border-dark-border dark:hover:bg-dark-background order-2 rounded-lg border-2 border-gray-300 px-4 py-2 text-sm font-semibold transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 sm:order-1 sm:px-5"
+        className="border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night semi-condensed order-2 border-2 px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:order-1 sm:px-5"
       >
         Zurück
       </button>
-      <div className="order-1 text-center text-xs whitespace-nowrap text-gray-600 sm:order-2 sm:flex-1 sm:text-sm dark:text-gray-400">
+      <div className="text-dark dark:text-night-muted order-1 text-center text-xs whitespace-nowrap sm:order-2 sm:flex-1 sm:text-sm">
         Schritt {currentStep} von 3
       </div>
       {currentStep < 3 ? (
@@ -707,7 +707,7 @@ export default function CourseRegistrationForm({
             !canProceed ||
             (currentStep === 2 && Object.keys(validationErrors).length > 0)
           }
-          className="bg-primary hover:bg-primary-dark order-3 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:px-5"
+          className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-primary dark:text-ink dark:hover:bg-paper semi-condensed order-3 px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:px-5"
         >
           {currentStep === 1 ? "Weiter zu Teilnehmern" : "Weiter zur Übersicht"}
         </button>
@@ -721,7 +721,7 @@ export default function CourseRegistrationForm({
             blockedByFull ||
             seatSelectionIssue !== null
           }
-          className="order-3 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50 sm:px-5"
+          className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-primary dark:text-ink dark:hover:bg-paper semi-condensed order-3 px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:px-5"
         >
           {submitMutation.isPending
             ? staffMode
@@ -737,18 +737,18 @@ export default function CourseRegistrationForm({
 
   return (
     <div className="w-full">
-      <div className="dark:border-dark-border dark:bg-dark-surface border-b border-gray-200 bg-white shadow-sm">
-        <div className="container mx-auto max-w-3xl px-4 py-4 sm:py-5">
+      <div className="border-ink dark:border-night-text bg-paper dark:bg-night border-b-2">
+        <div className="sheet max-w-3xl py-4 sm:py-5">
           <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <p className="text-dark dark:text-dark-text text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
+              <p className="semi-condensed text-dark dark:text-night-muted text-xs font-semibold">
                 {staffMode
                   ? "Anmeldung erfassen"
                   : isWaitlist
                     ? "Warteliste"
                     : "Anmeldung"}
               </p>
-              <p className="text-dark dark:text-dark-text mt-1 max-w-xl text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-ink dark:text-night-text mt-1 max-w-xl text-sm">
                 {staffMode
                   ? "Anmeldung im Namen des Anmelders erfassen — Anmeldeschluss und Anmeldestatus des Kurses werden dabei nicht geprüft. Adresse und Telefon sind optional, für Rechnungen aber nötig."
                   : "Bitte alle Schritte vollständig ausfüllen. Ihre Daten werden nur für diese Anmeldung verwendet."}
@@ -757,7 +757,7 @@ export default function CourseRegistrationForm({
             <button
               type="button"
               onClick={requestClose}
-              className="text-dark dark:text-dark-text dark:border-dark-border dark:hover:bg-dark-background self-start rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-100 sm:mt-1"
+              className="border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night semi-condensed self-start border-2 px-3 py-1.5 text-sm font-semibold transition-colors sm:mt-1"
             >
               Abbrechen
             </button>
@@ -771,25 +771,25 @@ export default function CourseRegistrationForm({
                   <li key={step.num} className="flex flex-col items-center">
                     <div
                       className={cn(
-                        "flex h-10 w-10 items-center justify-center rounded-full border-2 text-sm font-bold transition-colors",
+                        "flex h-10 w-10 items-center justify-center border-2 text-sm font-bold transition-colors",
                         done &&
-                          "border-primary bg-primary dark:border-primary dark:bg-primary text-white",
+                          "border-ink bg-ink text-paper dark:border-night-text dark:bg-night-text dark:text-night",
                         active &&
                           !done &&
-                          "border-primary text-primary dark:border-primary dark:text-primary-light",
+                          "border-ink text-ink dark:border-night-text dark:text-night-text",
                         !active &&
                           !done &&
-                          "dark:border-dark-border border-gray-200 text-gray-400 dark:text-gray-500",
+                          "border-rule text-dark dark:border-night-rule dark:text-night-muted",
                       )}
                     >
                       {step.num}
                     </div>
                     <span
                       className={cn(
-                        "mt-2 text-center text-[11px] leading-tight font-medium sm:text-xs",
+                        "semi-condensed mt-2 text-center text-[11px] leading-tight font-semibold sm:text-xs",
                         active || done
-                          ? "text-dark dark:text-dark-text"
-                          : "text-gray-500 dark:text-gray-500",
+                          ? "text-ink dark:text-night-text"
+                          : "text-dark dark:text-night-muted",
                       )}
                     >
                       {step.label}
@@ -802,13 +802,11 @@ export default function CourseRegistrationForm({
         </div>
       </div>
 
-      <div className="container mx-auto max-w-3xl px-4 py-5 pb-20 md:py-6 md:pb-24">
-        <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg border border-gray-200 bg-white p-5 shadow-md sm:p-6">
-          {stepBody}
-        </div>
+      <div className="sheet max-w-3xl py-5 pb-20 md:py-6 md:pb-24">
+        {stepBody}
       </div>
 
-      <div className="dark:border-dark-border dark:bg-dark-background-secondary sticky bottom-0 z-20 border-t border-gray-200 bg-gray-50/90 px-4 py-2.5 pt-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] backdrop-blur-sm sm:py-3">
+      <div className="border-ink dark:border-night-text bg-paper/95 dark:bg-night/95 sticky bottom-0 z-20 border-t-2 px-4 py-2.5 pt-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] backdrop-blur-sm sm:py-3">
         <div className="container mx-auto flex max-w-3xl flex-col items-stretch justify-between gap-2 sm:flex-row sm:items-center sm:gap-3">
           {footerButtons}
         </div>

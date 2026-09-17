@@ -827,6 +827,13 @@ export const coursesRouter = createTRPCRouter({
               }),
             )
             .optional(),
+          // Fehlte hier vollstaendig: Die Auswahl im Formular („Direkt
+          // veroeffentlichen" / „Zur Pruefung einreichen" / „Als Entwurf
+          // speichern") erreichte den Server nie, jeder Kurs landete auf dem
+          // Prisma-Vorgabewert PENDING — auch wenn die Oberflaeche „wird
+          // sofort auf der Webseite angezeigt" versprach. Termine fuehren das
+          // Feld laengst, siehe events.create.
+          status: z.enum(ContentStatus).default(ContentStatus.PENDING),
         })
         .refine((data) => data.endDate >= data.startDate, {
           message: "Enddatum muss nach oder gleich dem Startdatum sein",
@@ -905,6 +912,22 @@ export const coursesRouter = createTRPCRouter({
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Keine Berechtigung, Kurse anzulegen",
+        });
+      }
+
+      // Freigeben ist die Freigabe selbst, nicht bloss ein Statuswechsel —
+      // ohne diese Pruefung koennte sich jeder Autor seine eigenen Kurse
+      // veroeffentlichen, sobald das Feld ueberhaupt durchgereicht wird.
+      // Wortgleich zu events.create.
+      const canApprove = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.COURSES_APPROVE,
+        ctx.permissionCache,
+      );
+      if (input.status === ContentStatus.APPROVED && !canApprove) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Keine Berechtigung, Kurse freizugeben",
         });
       }
 
@@ -1781,6 +1804,25 @@ export const coursesRouter = createTRPCRouter({
         });
       }
 
+      // Invoice.course stand auf onDelete: Cascade — ein geloeschter Kurs riss
+      // seine Rechnungen mit, samt fortlaufender Nummer, archiviertem PDF und
+      // Veroeffentlichungsdatum. Das widersprach dem Schema an anderer Stelle:
+      // Invoice.registration steht auf SetNull, mit dem Kommentar „die Rechnung
+      // ist aufbewahrungspflichtig". Eine Nummer haben nur veroeffentlichte und
+      // stornierte Rechnungen; Entwuerfe duerfen mitgehen.
+      const belege = await ctx.db.invoice.count({
+        where: { courseId: input.id, invoiceNumber: { not: null } },
+      });
+      if (belege > 0) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message:
+            belege === 1
+              ? "Zu diesem Kurs gehört eine ausgestellte Rechnung. Kurse mit ausgestellten Rechnungen lassen sich nicht löschen — die Belege sind aufbewahrungspflichtig."
+              : `Zu diesem Kurs gehören ${belege} ausgestellte Rechnungen. Kurse mit ausgestellten Rechnungen lassen sich nicht löschen — die Belege sind aufbewahrungspflichtig.`,
+        });
+      }
+
       await ctx.db.course.delete({
         where: { id: input.id },
       });
@@ -2266,6 +2308,28 @@ export const coursesRouter = createTRPCRouter({
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "No permission to delete any of the selected courses",
+        });
+      }
+
+      // Dieselbe Sperre wie in `delete` — ohne sie waere sie ueber die
+      // Mehrfachauswahl der Kursliste trivial zu umgehen. Bewusst alles oder
+      // nichts: eine stillschweigende Teilloeschung waere schlimmer als eine
+      // klare Absage.
+      const mitBelegen = await ctx.db.invoice.findMany({
+        where: {
+          courseId: { in: canDeleteIds },
+          invoiceNumber: { not: null },
+        },
+        select: { courseId: true },
+        distinct: ["courseId"],
+      });
+      if (mitBelegen.length > 0) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message:
+            mitBelegen.length === 1
+              ? "Zu einem der ausgewählten Kurse gehören ausgestellte Rechnungen. Kurse mit ausgestellten Rechnungen lassen sich nicht löschen — die Belege sind aufbewahrungspflichtig."
+              : `Zu ${mitBelegen.length} der ausgewählten Kurse gehören ausgestellte Rechnungen. Kurse mit ausgestellten Rechnungen lassen sich nicht löschen — die Belege sind aufbewahrungspflichtig.`,
         });
       }
 

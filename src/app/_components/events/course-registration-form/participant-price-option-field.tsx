@@ -5,6 +5,7 @@ import { Select } from "@/app/_components/ui";
 import { cn } from "@/lib/utils";
 import { FIELD_SELECT_SIZE } from "./field-styles";
 import { priceOptionDisplayLabel } from "@/lib/course-price-options";
+import { formatEuro } from "@/lib/invoice-document";
 import {
   ageOnDate,
   isAgeWithinPriceOption,
@@ -67,7 +68,7 @@ export function ParticipantPriceOptionField({
   allowAgeMismatch = false,
   ageExemptOptionId,
   className,
-  labelClassName = "text-dark dark:text-dark-text mb-1 block text-sm font-medium",
+  labelClassName = "text-ink dark:text-night-text mb-1 block text-sm font-semibold",
 }: ParticipantPriceOptionFieldProps) {
   if (priceOptions.length === 0) {
     return null;
@@ -111,10 +112,10 @@ export function ParticipantPriceOptionField({
       <div className="flex items-center gap-2.5 sm:gap-3">
         <div
           className={cn(
-            "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg sm:h-10 sm:w-10",
+            "flex h-9 w-9 shrink-0 items-center justify-center sm:h-10 sm:w-10",
             error || ageMismatchIsError
               ? "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300"
-              : "bg-primary/15 text-primary dark:bg-primary/25",
+              : "bg-rule dark:bg-night-rule text-ink dark:text-night-text",
           )}
           aria-hidden
         >
@@ -126,6 +127,7 @@ export function ParticipantPriceOptionField({
             onChange={(e) => onChange(e.target.value)}
             error={error || ageMismatchIsError}
             fieldSize={FIELD_SELECT_SIZE}
+            className="border-ink! dark:border-night-text! text-ink! dark:text-night-text! bg-paper! dark:bg-night! rounded-none!"
           >
             {placeholderOption ? <option value="">Bitte wählen</option> : null}
             {orderedOptions.map((option) => {
@@ -138,7 +140,7 @@ export function ParticipantPriceOptionField({
                   // Price (and availability) as trailing text, so a long option
                   // name truncates on narrow screens without taking the price
                   // with it.
-                  data-trailing={`${option.price.toFixed(2)} €${
+                  data-trailing={`${formatEuro(option.price)}${
                     getOptionSuffix?.(option.id) ?? ""
                   }`}
                 >
@@ -155,7 +157,7 @@ export function ParticipantPriceOptionField({
                 "mt-1.5 text-sm",
                 ageMismatchIsError
                   ? "text-red-700 dark:text-red-400"
-                  : "text-amber-700 dark:text-amber-400",
+                  : "text-primary-ink dark:text-primary",
               )}
             >
               {ageMismatch}
@@ -173,7 +175,7 @@ export function ParticipantPriceOptionField({
               Kursteam.
             </p>
           ) : selected?.description ? (
-            <p className="mt-1.5 text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-dark dark:text-night-muted mt-1.5 text-sm">
               {selected.description}
             </p>
           ) : null}

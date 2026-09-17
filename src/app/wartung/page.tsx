@@ -28,48 +28,43 @@ export default async function WartungPage() {
   const until = formatUntil(verdict.until);
 
   return (
-    <div className="bg-background dark:bg-dark-background flex min-h-[80vh] items-center py-12 md:py-16 lg:py-20">
-      <div className="container">
-        <div className="mx-auto max-w-2xl text-center">
-          <div className="mb-8">
-            <div className="bg-primary/10 dark:bg-primary/20 mx-auto inline-flex h-24 w-24 items-center justify-center rounded-full">
-              <Wrench className="text-primary h-12 w-12" />
-            </div>
-          </div>
+    <div className="programm font-programm bg-paper text-ink dark:bg-night dark:text-night-text flex min-h-screen items-center">
+      <div className="sheet py-16 text-center md:py-24">
+        <div className="mx-auto max-w-2xl">
+          <Wrench
+            className="text-primary-ink dark:text-primary mx-auto h-12 w-12"
+            aria-hidden
+          />
 
-          <h1 className="text-dark dark:text-dark-text mb-6 text-2xl font-bold md:text-3xl lg:text-4xl">
+          <h1 className="condensed mt-6 text-[clamp(2.25rem,4.5vw,3.5rem)] leading-[0.95] font-extrabold">
             Wartungsarbeiten
           </h1>
 
-          <p className="text-dark-light dark:text-dark-text-secondary mb-8 text-lg">
+          <p className="mt-6 text-lg leading-relaxed">
             {verdict.message || MAINTENANCE_DEFAULT_MESSAGE}
           </p>
 
           {until && (
-            <p className="text-dark-light dark:text-dark-text-secondary mb-8 text-sm">
-              Voraussichtlich bis <strong>{until}</strong>.
+            <p className="text-dark dark:text-night-muted mt-4 text-sm">
+              Voraussichtlich bis{" "}
+              <strong className="font-semibold">{until}</strong>.
             </p>
           )}
 
-          <div className="dark:border-dark-border mt-12 border-t border-gray-200 pt-8">
-            <p className="text-dark-light dark:text-dark-text-secondary text-sm">
-              In dringenden Fällen erreichen Sie uns unter{" "}
-              <a
-                href="mailto:info@posaunenwerk-rheinland.de"
-                className="text-primary hover:text-primary-dark dark:text-primary-light font-medium transition-colors"
-              >
-                info@posaunenwerk-rheinland.de
-              </a>{" "}
-              oder telefonisch unter{" "}
-              <a
-                href="tel:02613000011"
-                className="text-primary hover:text-primary-dark dark:text-primary-light font-medium transition-colors"
-              >
-                0261 3000011
-              </a>
-              .
-            </p>
-          </div>
+          <p className="border-ink dark:border-night-rule text-dark dark:text-night-muted mt-12 border-t-2 pt-8 text-sm">
+            In dringenden Fällen erreichen Sie uns unter{" "}
+            <a
+              href="mailto:info@posaunenwerk-rheinland.de"
+              className="link-ink"
+            >
+              info@posaunenwerk-rheinland.de
+            </a>{" "}
+            oder telefonisch unter{" "}
+            <a href="tel:02613000011" className="link-ink">
+              0261 3000011
+            </a>
+            .
+          </p>
         </div>
       </div>
     </div>

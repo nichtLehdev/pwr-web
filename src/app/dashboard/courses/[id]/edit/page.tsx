@@ -573,7 +573,7 @@ export default function EditCoursePage() {
   }, [registrationOpensAt, startDate, startTime]);
 
   const registrationFieldInputClass =
-    "focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none";
+    "border-ink dark:border-night-text dark:bg-night dark:text-night-text w-full border bg-paper px-3 py-2 text-ink";
 
   const teamDenseInputClass = cn(
     registrationFieldInputClass,
@@ -1172,22 +1172,22 @@ export default function EditCoursePage() {
 
   if (sessionLoading || profileLoading || permissionsLoading || courseLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="dark:bg-night bg-paper flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
 
   if (!session || !course) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="dark:bg-night bg-paper flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <h1 className="dark:text-dark-text text-xl font-semibold text-gray-900">
+          <h1 className="dark:text-night-text text-ink text-xl font-semibold">
             Kurs nicht gefunden
           </h1>
           <Link
             href="/dashboard/courses"
-            className="text-primary mt-4 inline-block hover:underline"
+            className="link-ink mt-4 inline-block"
           >
             Zurück zur Übersicht
           </Link>
@@ -1219,7 +1219,7 @@ export default function EditCoursePage() {
 
         {/* Error */}
         {error && (
-          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950/30">
+          <div className="mb-6 border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950/30">
             <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
           </div>
         )}
@@ -1252,7 +1252,7 @@ export default function EditCoursePage() {
                         <div>
                           <label
                             htmlFor="title"
-                            className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                            className="dark:text-night-text text-ink mb-2 block text-sm font-medium"
                           >
                             Titel *
                           </label>
@@ -1261,7 +1261,7 @@ export default function EditCoursePage() {
                             id="title"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
-                            className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                            className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper text-ink w-full border px-4 py-2.5"
                             placeholder="z.B. Bläserlehrgang 2025"
                             required
                             maxLength={200}
@@ -1279,7 +1279,7 @@ export default function EditCoursePage() {
                         <div>
                           <label
                             htmlFor="motto"
-                            className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                            className="dark:text-night-text text-ink mb-2 block text-sm font-medium"
                           >
                             Motto (optional)
                           </label>
@@ -1288,7 +1288,7 @@ export default function EditCoursePage() {
                             id="motto"
                             value={motto}
                             onChange={(e) => setMotto(e.target.value)}
-                            className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                            className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper text-ink w-full border px-4 py-2.5"
                             placeholder="z.B. Gemeinsam musizieren"
                           />
                         </div>
@@ -1296,7 +1296,7 @@ export default function EditCoursePage() {
                         <div>
                           <label
                             htmlFor="description"
-                            className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                            className="dark:text-night-text text-ink mb-2 block text-sm font-medium"
                           >
                             Beschreibung *
                           </label>
@@ -1305,7 +1305,7 @@ export default function EditCoursePage() {
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                             rows={5}
-                            className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                            className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper text-ink w-full border px-4 py-2.5"
                             placeholder="Beschreibe den Kurs..."
                             required
                             maxLength={10000}
@@ -1316,7 +1316,7 @@ export default function EditCoursePage() {
                           <div>
                             <label
                               htmlFor="courseType"
-                              className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                              className="dark:text-night-text text-ink mb-2 block text-sm font-medium"
                             >
                               Kurstyp *
                             </label>
@@ -1326,7 +1326,7 @@ export default function EditCoursePage() {
                               onChange={(e) =>
                                 setCourseType(e.target.value as CourseType)
                               }
-                              className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                              className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper text-ink w-full border px-4 py-2.5"
                             >
                               {Object.entries(courseTypeLabels).map(
                                 ([value, label]) => (
@@ -1346,7 +1346,7 @@ export default function EditCoursePage() {
                         <div>
                           <label
                             htmlFor="prerequisites"
-                            className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                            className="dark:text-night-text text-ink mb-2 block text-sm font-medium"
                           >
                             Voraussetzungen (optional)
                           </label>
@@ -1355,7 +1355,7 @@ export default function EditCoursePage() {
                             value={prerequisites}
                             onChange={(e) => setPrerequisites(e.target.value)}
                             rows={3}
-                            className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                            className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper text-ink w-full border px-4 py-2.5"
                             placeholder="z.B. Grundkenntnisse auf dem Instrument"
                           />
                         </div>
@@ -1363,7 +1363,7 @@ export default function EditCoursePage() {
                         <div>
                           <label
                             htmlFor="whatToBring"
-                            className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                            className="dark:text-night-text text-ink mb-2 block text-sm font-medium"
                           >
                             Mitzubringen (optional)
                           </label>
@@ -1372,7 +1372,7 @@ export default function EditCoursePage() {
                             value={whatToBring}
                             onChange={(e) => setWhatToBring(e.target.value)}
                             rows={3}
-                            className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                            className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper text-ink w-full border px-4 py-2.5"
                             placeholder="z.B. Instrument, Notenständer, ..."
                           />
                         </div>
@@ -1385,7 +1385,7 @@ export default function EditCoursePage() {
                     <div className="space-y-4">
                       {imageUrl ? (
                         <div className="relative">
-                          <div className="dark:border-dark-border relative aspect-video w-full overflow-hidden rounded-xl border border-gray-200 shadow-sm">
+                          <div className="dark:border-night-rule border-rule relative aspect-video w-full overflow-hidden border">
                             <Image
                               src={imageUrl}
                               alt="Kursbild"
@@ -1397,7 +1397,7 @@ export default function EditCoursePage() {
                             <button
                               type="button"
                               onClick={() => setShowMediaPicker(true)}
-                              className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-background-secondary rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
+                              className="border-rule dark:border-night-rule dark:text-night-text text-ink hover:bg-rule/25 dark:hover:bg-night-raised border px-4 py-2 text-sm font-medium transition-colors"
                             >
                               Bild ändern
                             </button>
@@ -1407,7 +1407,7 @@ export default function EditCoursePage() {
                                 setImageId(null);
                                 setImageUrl(null);
                               }}
-                              className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                              className="min-h-11 border border-red-300 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
                             >
                               Bild entfernen
                             </button>
@@ -1417,13 +1417,13 @@ export default function EditCoursePage() {
                         <button
                           type="button"
                           onClick={() => setShowMediaPicker(true)}
-                          className="dark:border-dark-border hover:border-primary dark:hover:bg-dark-background-secondary flex w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 p-6 transition-colors hover:bg-gray-50 sm:p-8"
+                          className="dark:border-night-rule hover:border-primary dark:hover:bg-night-raised border-rule hover:bg-rule/25 flex w-full flex-col items-center justify-center border-2 border-dashed p-6 transition-colors sm:p-8"
                         >
-                          <ImageIcon className="h-10 w-10 text-gray-400 sm:h-12 sm:w-12" />
-                          <span className="dark:text-dark-text mt-2 text-sm font-medium text-gray-700">
+                          <ImageIcon className="text-dark dark:text-night-muted h-10 w-10 sm:h-12 sm:w-12" />
+                          <span className="dark:text-night-text text-ink mt-2 text-sm font-medium">
                             Bild auswählen
                           </span>
-                          <span className="mt-1 text-center text-xs text-gray-500 dark:text-gray-400">
+                          <span className="text-dark dark:text-night-muted mt-1 text-center text-xs">
                             Mediathek oder neu hochladen
                           </span>
                         </button>
@@ -1436,7 +1436,7 @@ export default function EditCoursePage() {
 
             <div
               id="kurs-form-termin"
-              className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-14"
+              className="dark:border-night-rule dashboard-form-scroll-anchor border-rule border-t pt-14"
             >
               <DashboardFormZoneHeader
                 step={2}
@@ -1449,7 +1449,7 @@ export default function EditCoursePage() {
                     <div>
                       <label
                         htmlFor="startDate"
-                        className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                        className="dark:text-night-text text-ink mb-2 block text-sm font-medium"
                       >
                         Startdatum *
                       </label>
@@ -1458,14 +1458,14 @@ export default function EditCoursePage() {
                         id="startDate"
                         value={startDate}
                         onChange={(e) => setStartDate(e.target.value)}
-                        className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                        className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper text-ink w-full border px-4 py-2.5"
                         required
                       />
                     </div>
                     <div>
                       <label
                         htmlFor="startTime"
-                        className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                        className="dark:text-night-text text-ink mb-2 block text-sm font-medium"
                       >
                         Startzeit *
                       </label>
@@ -1474,14 +1474,14 @@ export default function EditCoursePage() {
                         id="startTime"
                         value={startTime}
                         onChange={(e) => setStartTime(e.target.value)}
-                        className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                        className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper text-ink w-full border px-4 py-2.5"
                         required
                       />
                     </div>
                     <div>
                       <label
                         htmlFor="endDate"
-                        className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                        className="dark:text-night-text text-ink mb-2 block text-sm font-medium"
                       >
                         Enddatum *
                       </label>
@@ -1492,14 +1492,14 @@ export default function EditCoursePage() {
                         onChange={(e) => setEndDate(e.target.value)}
                         min={startDate || undefined}
                         title="Enddatum muss nach oder gleich dem Startdatum sein"
-                        className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                        className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper text-ink w-full border px-4 py-2.5"
                         required
                       />
                     </div>
                     <div>
                       <label
                         htmlFor="endTime"
-                        className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                        className="dark:text-night-text text-ink mb-2 block text-sm font-medium"
                       >
                         Endzeit *
                       </label>
@@ -1508,7 +1508,7 @@ export default function EditCoursePage() {
                         id="endTime"
                         value={endTime}
                         onChange={(e) => setEndTime(e.target.value)}
-                        className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                        className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper text-ink w-full border px-4 py-2.5"
                         required
                       />
                     </div>
@@ -1517,7 +1517,7 @@ export default function EditCoursePage() {
                   <div>
                     <label
                       htmlFor="bezirk"
-                      className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                      className="dark:text-night-text text-ink mb-2 block text-sm font-medium"
                     >
                       Bezirk
                     </label>
@@ -1534,16 +1534,16 @@ export default function EditCoursePage() {
                                 : "Übergreifend / Kein Bezirk"
                           }
                           disabled
-                          className="dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full cursor-not-allowed rounded-lg border border-gray-300 bg-gray-100 px-4 py-2.5 text-gray-900 opacity-60"
+                          className="dark:border-night-rule dark:bg-night-raised dark:text-night-text border-rule bg-rule/40 text-ink w-full cursor-not-allowed border px-4 py-2.5 opacity-60"
                         />
-                        <Lock className="h-5 w-5 shrink-0 text-gray-400" />
+                        <Lock className="text-dark dark:text-night-muted h-5 w-5 shrink-0" />
                       </div>
                     ) : (
                       <Select
                         id="bezirk"
                         value={bezirkId}
                         onChange={(e) => setBezirkId(e.target.value)}
-                        className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                        className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper text-ink w-full border px-4 py-2.5"
                       >
                         {selectableBezirkIds === null && (
                           <option value="">Übergreifend / Kein Bezirk</option>
@@ -1560,7 +1560,7 @@ export default function EditCoursePage() {
                   <div ref={locationDropdownRef} className="relative">
                     <label
                       htmlFor="location"
-                      className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                      className="dark:text-night-text text-ink mb-2 block text-sm font-medium"
                     >
                       Veranstaltungsort (optional)
                     </label>
@@ -1576,12 +1576,12 @@ export default function EditCoursePage() {
                         }
                       }}
                       onFocus={() => setShowLocationDropdown(true)}
-                      className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                      className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper text-ink w-full border px-4 py-2.5"
                       placeholder="Suche nach Ort..."
                       autoComplete="off"
                     />
                     {showLocationDropdown && (
-                      <div className="dark:border-dark-border dark:bg-dark-surface absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
+                      <div className="border-ink bg-paper dark:border-night-text dark:bg-night-raised absolute z-10 mt-1 w-full overflow-hidden border-2">
                         <div
                           className="overflow-y-auto"
                           style={{ maxHeight: "240px" }}
@@ -1598,21 +1598,21 @@ export default function EditCoursePage() {
                                   );
                                   setShowLocationDropdown(false);
                                 }}
-                                className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700"
+                                className="hover:bg-rule/60 dark:hover:bg-night-rule w-full px-4 py-2 text-left"
                               >
-                                <span className="dark:text-dark-text font-medium text-gray-900">
+                                <span className="dark:text-night-text text-ink font-medium">
                                   {loc.name ? `${loc.name}, ` : ""}
                                   {loc.city}
                                 </span>
                                 {loc.street && (
-                                  <span className="ml-2 text-sm text-gray-500">
+                                  <span className="text-dark dark:text-night-muted ml-2 text-sm">
                                     {loc.street}
                                   </span>
                                 )}
                               </button>
                             ))
                           ) : (
-                            <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                            <div className="text-dark dark:text-night-muted px-4 py-3 text-sm">
                               Keine Orte gefunden
                             </div>
                           )}
@@ -1623,7 +1623,7 @@ export default function EditCoursePage() {
                             setShowLocationDropdown(false);
                             setShowNewLocationForm(true);
                           }}
-                          className="text-primary dark:border-dark-border block w-full border-t border-gray-200 px-4 py-2 text-left text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-700"
+                          className="text-primary-ink border-rule hover:bg-rule/60 dark:border-night-rule dark:text-primary dark:hover:bg-night-rule block w-full border-t px-4 py-2 text-left text-sm font-semibold"
                         >
                           + Neuen Ort erstellen
                         </button>
@@ -1651,7 +1651,7 @@ export default function EditCoursePage() {
 
             <div
               id="kurs-form-anmeldung"
-              className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-14"
+              className="dark:border-night-rule dashboard-form-scroll-anchor border-rule border-t pt-14"
             >
               <DashboardFormZoneHeader
                 step={3}
@@ -1665,7 +1665,7 @@ export default function EditCoursePage() {
               <div className="space-y-10">
                 <DashboardFormBlock title="Anmeldeeinstellungen">
                   <div className="space-y-6">
-                    <div className="dark:border-dark-border rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+                    <div className="dark:border-night-rule border-rule border p-4">
                       <label className="flex cursor-pointer items-start gap-3">
                         <input
                           type="checkbox"
@@ -1675,13 +1675,13 @@ export default function EditCoursePage() {
                           onChange={(e) =>
                             setIsExternalProvider(e.target.checked)
                           }
-                          className="text-primary focus:ring-primary mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 disabled:opacity-50"
+                          className="text-primary border-rule dark:border-night-text mt-0.5 h-4 w-4 shrink-0 disabled:opacity-50"
                         />
                         <span className="min-w-0">
-                          <span className="dark:text-dark-text block text-sm leading-snug font-medium text-gray-700">
+                          <span className="dark:text-night-text text-ink block text-sm leading-snug font-medium">
                             Externer Anbieter
                           </span>
-                          <span className="mt-1 block text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+                          <span className="text-dark dark:text-night-muted mt-1 block text-xs leading-relaxed">
                             Die Anmeldung erfolgt auf einer externen Website.
                             {hasRegistrations && !isExternalProvider
                               ? " Nicht verfügbar, solange Anmeldungen vorhanden sind."
@@ -1691,11 +1691,11 @@ export default function EditCoursePage() {
                       </label>
 
                       {isExternalProvider ? (
-                        <div className="mt-4 space-y-4 border-t border-gray-200 pt-4 dark:border-gray-700">
+                        <div className="dark:border-night-rule border-rule mt-4 space-y-4 border-t pt-4">
                           <div>
                             <label
                               htmlFor="edit-course-external-provider-name"
-                              className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700"
+                              className="dark:text-night-text text-ink mb-1.5 block text-sm font-medium"
                             >
                               Name des Anbieters (optional)
                             </label>
@@ -1713,7 +1713,7 @@ export default function EditCoursePage() {
                           <div>
                             <label
                               htmlFor="edit-course-external-registration-url"
-                              className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700"
+                              className="dark:text-night-text text-ink mb-1.5 block text-sm font-medium"
                             >
                               Link zur Anmeldung *
                             </label>
@@ -1732,7 +1732,7 @@ export default function EditCoursePage() {
                           <div>
                             <label
                               htmlFor="edit-course-external-price-info"
-                              className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700"
+                              className="dark:text-night-text text-ink mb-1.5 block text-sm font-medium"
                             >
                               Hinweis zu Kosten (optional)
                             </label>
@@ -1749,7 +1749,7 @@ export default function EditCoursePage() {
                       ) : null}
                     </div>
 
-                    <fieldset className="dark:border-dark-border rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+                    <fieldset className="dark:border-night-rule border-rule border p-4">
                       <legend className="sr-only">
                         Anmeldezeitpunkt und -fenster
                       </legend>
@@ -1762,17 +1762,17 @@ export default function EditCoursePage() {
                             onChange={(e) =>
                               setRegistrationOpen(e.target.checked)
                             }
-                            className="text-primary focus:ring-primary mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300"
+                            className="text-primary border-rule dark:border-night-text mt-0.5 h-4 w-4 shrink-0"
                           />
                           <label
                             htmlFor="registrationOpen"
-                            className="dark:text-dark-text cursor-pointer text-sm leading-snug font-medium text-gray-700"
+                            className="dark:text-night-text text-ink cursor-pointer text-sm leading-snug font-medium"
                           >
                             Anmeldung geöffnet
                           </label>
                         </div>
 
-                        <div className="border-t border-gray-200 pt-4 dark:border-gray-700">
+                        <div className="dark:border-night-rule border-rule border-t pt-4">
                           <label className="flex cursor-pointer items-start gap-3">
                             <input
                               type="checkbox"
@@ -1783,13 +1783,13 @@ export default function EditCoursePage() {
                                 setScheduledRegistrationOpens(on);
                                 if (!on) setRegistrationOpensAt("");
                               }}
-                              className="text-primary focus:ring-primary mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300"
+                              className="text-primary border-rule dark:border-night-text mt-0.5 h-4 w-4 shrink-0"
                             />
                             <span className="min-w-0">
-                              <span className="dark:text-dark-text block text-sm leading-snug font-medium text-gray-700">
+                              <span className="dark:text-night-text text-ink block text-sm leading-snug font-medium">
                                 Anmeldebeginn später planen
                               </span>
-                              <span className="mt-1 block text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+                              <span className="text-dark dark:text-night-muted mt-1 block text-xs leading-relaxed">
                                 {scheduledRegistrationOpens
                                   ? "Datum und Uhrzeit vor Kursbeginn wählen; Kursbeschreibung ist schon vorher sichtbar."
                                   : "Ohne Planung gilt der normale Zeitpunkt, sobald die Anmeldung freigeschaltet ist."}
@@ -1799,14 +1799,14 @@ export default function EditCoursePage() {
 
                           {scheduledRegistrationOpens ? (
                             <div className="mt-4 space-y-2">
-                              <p className="dark:text-dark-text text-sm font-medium text-gray-900">
+                              <p className="dark:text-night-text text-ink text-sm font-medium">
                                 Anmeldung öffnet ab
                               </p>
                               <div className="grid max-w-xl grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
                                 <div>
                                   <label
                                     htmlFor="registrationOpensDate"
-                                    className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700"
+                                    className="dark:text-night-text text-ink mb-1.5 block text-sm font-medium"
                                   >
                                     Datum
                                   </label>
@@ -1830,7 +1830,7 @@ export default function EditCoursePage() {
                                 <div>
                                   <label
                                     htmlFor="registrationOpensTime"
-                                    className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700"
+                                    className="dark:text-night-text text-ink mb-1.5 block text-sm font-medium"
                                   >
                                     Uhrzeit
                                   </label>
@@ -1855,7 +1855,7 @@ export default function EditCoursePage() {
                                   />
                                 </div>
                               </div>
-                              <p className="max-w-xl text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+                              <p className="text-dark dark:text-night-muted max-w-xl text-xs leading-relaxed">
                                 Die Buttons zum Anmelden erscheinen erst ab
                                 diesem Zeitpunkt; der Kurstext bleibt sichtbar.
                               </p>
@@ -1863,7 +1863,7 @@ export default function EditCoursePage() {
                           ) : null}
                         </div>
 
-                        <div className="border-t border-gray-200 pt-4 dark:border-gray-700">
+                        <div className="dark:border-night-rule border-rule border-t pt-4">
                           <label className="flex cursor-pointer items-start gap-3">
                             <input
                               type="checkbox"
@@ -1874,13 +1874,13 @@ export default function EditCoursePage() {
                                 setHasRegistrationDeadline(on);
                                 if (!on) setRegistrationDeadline("");
                               }}
-                              className="text-primary focus:ring-primary mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300"
+                              className="text-primary border-rule dark:border-night-text mt-0.5 h-4 w-4 shrink-0"
                             />
                             <span className="min-w-0">
-                              <span className="dark:text-dark-text block text-sm leading-snug font-medium text-gray-700">
+                              <span className="dark:text-night-text text-ink block text-sm leading-snug font-medium">
                                 Anmeldeschluss festlegen
                               </span>
-                              <span className="mt-1 block text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+                              <span className="text-dark dark:text-night-muted mt-1 block text-xs leading-relaxed">
                                 {hasRegistrationDeadline
                                   ? isExternalProvider
                                     ? "Datum wählen, bis wann der Anmelde-Link sichtbar bleibt."
@@ -1894,7 +1894,7 @@ export default function EditCoursePage() {
                             <div className="mt-4 max-w-xs">
                               <label
                                 htmlFor="registrationDeadline"
-                                className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700"
+                                className="dark:text-night-text text-ink mb-1.5 block text-sm font-medium"
                               >
                                 Anmeldeschluss
                               </label>
@@ -1928,7 +1928,7 @@ export default function EditCoursePage() {
                         <div className="max-w-xs">
                           <label
                             htmlFor="maxParticipants"
-                            className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700"
+                            className="dark:text-night-text text-ink mb-1.5 block text-sm font-medium"
                           >
                             Maximale Teilnehmerzahl *
                           </label>
@@ -1943,7 +1943,7 @@ export default function EditCoursePage() {
                             required
                           />
                           {hasRegistrations ? (
-                            <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                            <p className="text-dark dark:text-night-muted mt-1.5 text-xs">
                               {registrationCount} bereits angemeldet. Erhöhen
                               oder Verringern möglich, solange nicht unter die
                               aktuelle Anmeldungszahl.
@@ -1959,11 +1959,11 @@ export default function EditCoursePage() {
                             onChange={(e) =>
                               setAllowWaitingList(e.target.checked)
                             }
-                            className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                            className="text-primary border-rule dark:border-night-text h-4 w-4"
                           />
                           <label
                             htmlFor="allowWaitingList"
-                            className="dark:text-dark-text text-sm font-medium text-gray-700"
+                            className="dark:text-night-text text-ink text-sm font-medium"
                           >
                             Warteliste aktivieren
                           </label>
@@ -1982,11 +1982,11 @@ export default function EditCoursePage() {
                             onChange={(e) =>
                               setAllowSiblingDiscount(e.target.checked)
                             }
-                            className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                            className="text-primary border-rule dark:border-night-text h-4 w-4"
                           />
                           <label
                             htmlFor="allowSiblingDiscount"
-                            className="dark:text-dark-text text-sm font-medium text-gray-700"
+                            className="dark:text-night-text text-ink text-sm font-medium"
                           >
                             Geschwisterkindrabatt erlauben (20% auf die Gebühr
                             jedes weiteren Geschwisterkindes ab dem zweiten
@@ -1998,7 +1998,7 @@ export default function EditCoursePage() {
                         // changes what registrants pay, so an organizer needs
                         // to see it even when they cannot switch it.
                         allowSiblingDiscount && (
-                          <p className="dark:text-dark-muted text-sm text-gray-500">
+                          <p className="dark:text-night-muted text-dark text-sm">
                             Geschwisterkindrabatt ist für diesen Kurs aktiv. Nur
                             Landesposaunenwarte und Administratoren können das
                             ändern.
@@ -2014,8 +2014,10 @@ export default function EditCoursePage() {
                     description="Felder, die direkt beim Ausfüllen der Anmeldung abgefragt werden."
                   >
                     {hasRegistrations && customFieldsChanged && (
-                      <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-900/50 dark:bg-amber-900/20">
-                        <p className="text-sm text-amber-700 dark:text-amber-300">
+                      // Hinweis statt Alarm: Tinte auf Papier an einer
+                      // Haarlinie statt bernsteinfarbenem Kasten.
+                      <div className="border-ink dark:border-night-text mb-4 border-l-2 py-1 pl-4">
+                        <p className="text-dark dark:text-night-muted text-sm">
                           <strong>Hinweis:</strong> Es sind bereits Anmeldungen
                           vorhanden. Die Anmeldefelder können nicht mehr
                           geändert werden.
@@ -2024,7 +2026,7 @@ export default function EditCoursePage() {
                     )}
 
                     {hasRegistrations && originalCustomFields.length > 0 && (
-                      <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-900/50 dark:bg-blue-900/20">
+                      <div className="mb-4 border border-blue-200 bg-blue-50 p-3 dark:border-blue-900/50 dark:bg-blue-900/20">
                         <p className="text-sm text-blue-700 dark:text-blue-300">
                           <strong>Hinweis:</strong> Es sind bereits{" "}
                           {registrationCount} Anmeldung
@@ -2049,7 +2051,7 @@ export default function EditCoursePage() {
 
             <div
               id="kurs-form-team"
-              className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-14"
+              className="dark:border-night-rule dashboard-form-scroll-anchor border-rule border-t pt-14"
             >
               <DashboardFormZoneHeader
                 step={4}
@@ -2060,7 +2062,7 @@ export default function EditCoursePage() {
               {!canManageCourseTeamUi &&
                 course.viewerCollaboratorRole ===
                   CourseCollaboratorRole.STAFF && (
-                  <div className="dark:border-dark-border mb-8 rounded-xl border border-sky-200/80 bg-sky-50/80 px-4 py-4 text-sm text-sky-950 dark:border-sky-900/60 dark:bg-sky-950/35 dark:text-sky-100">
+                  <div className="dark:border-night-rule mb-8 border border-sky-200/80 bg-sky-50/80 px-4 py-4 text-sm text-sky-950 dark:border-sky-900/60 dark:bg-sky-950/35 dark:text-sky-100">
                     <p className="font-medium">
                       Du bist diesem Kurs als Teammitglied zugeordnet.
                     </p>
@@ -2084,19 +2086,19 @@ export default function EditCoursePage() {
                     }. Auf der öffentlichen Seite erscheint das mit Profilbild und Kurztext (falls im Profil gepflegt).`}
                   >
                     <div className="space-y-3">
-                      <p className="text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+                      <p className="text-dark dark:text-night-muted text-xs leading-relaxed">
                         Änderungen an Konten und Rollen werden sofort
                         gespeichert — unabhängig vom Kurs-Formular weiter unten.
                       </p>
 
-                      <div className="dark:border-dark-border dark:bg-dark-surface overflow-hidden rounded-lg border border-gray-200 bg-white">
-                        <div className="dark:border-dark-border dark:bg-dark-background-secondary/70 border-b border-gray-200 bg-gray-50 px-3 py-2.5">
+                      <div className="border-rule dark:border-night-rule overflow-hidden border">
+                        <div className="border-rule dark:border-night-rule bg-rule/25 dark:bg-night-raised/70 border-b px-3 py-2.5">
                           <label
                             htmlFor="course-team-search"
-                            className="dark:text-dark-text mb-1.5 flex items-center gap-1.5 text-xs font-medium text-gray-600"
+                            className="dark:text-night-text text-dark mb-1.5 flex items-center gap-1.5 text-xs font-medium"
                           >
                             <UserPlus
-                              className="text-primary h-3.5 w-3.5 shrink-0"
+                              className="text-primary-ink dark:text-primary h-3.5 w-3.5 shrink-0"
                               aria-hidden
                             />
                             Person suchen &amp; hinzufügen
@@ -2118,7 +2120,7 @@ export default function EditCoursePage() {
                               courseTeamPickUsers &&
                               courseTeamPickUsers.length > 0 && (
                                 <ul
-                                  className="dark:border-dark-border dark:bg-dark-surface absolute z-20 mt-1 max-h-48 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg"
+                                  className="border-rule dark:border-night-rule bg-paper dark:bg-night-raised absolute z-20 mt-1 max-h-48 w-full overflow-auto border"
                                   role="listbox"
                                 >
                                   {courseTeamPickUsers.map((u) => {
@@ -2139,7 +2141,7 @@ export default function EditCoursePage() {
                                           type="button"
                                           disabled={teamMutationBusy}
                                           role="option"
-                                          className="dark:hover:bg-dark-background-secondary dark:text-dark-text w-full px-3 py-2 text-left text-sm text-gray-800 hover:bg-gray-100 disabled:opacity-50"
+                                          className="text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-rule w-full px-3 py-2 text-left text-sm disabled:opacity-50"
                                           onClick={() => {
                                             setCollaboratorsMutation.mutate({
                                               courseId,
@@ -2164,7 +2166,7 @@ export default function EditCoursePage() {
                                               u.username ??
                                               u.email}
                                           </span>
-                                          <span className="dark:text-dark-muted mt-0.5 block text-xs text-gray-500">
+                                          <span className="dark:text-night-muted text-dark mt-0.5 block text-xs">
                                             {u.email}
                                           </span>
                                         </button>
@@ -2177,12 +2179,12 @@ export default function EditCoursePage() {
                         </div>
 
                         {courseTeamListed.length === 0 ? (
-                          <p className="px-3 py-5 text-center text-sm text-gray-500 dark:text-gray-400">
+                          <p className="text-dark dark:text-night-muted px-3 py-5 text-center text-sm">
                             Keine zusätzlichen Team-Mitglied:innen.
                           </p>
                         ) : (
                           <ul
-                            className="dark:divide-dark-border divide-y divide-gray-200"
+                            className="dark:divide-night-rule divide-rule divide-y"
                             role="list"
                           >
                             {courseTeamListed.map((row) => (
@@ -2191,10 +2193,10 @@ export default function EditCoursePage() {
                                 className="flex flex-col gap-2 px-3 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3"
                               >
                                 <div className="min-w-0 flex-1">
-                                  <p className="dark:text-dark-text truncate text-sm font-medium text-gray-900">
+                                  <p className="dark:text-night-text text-ink truncate text-sm font-medium">
                                     {row.user.displayName ?? row.user.email}
                                   </p>
-                                  <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+                                  <p className="text-dark dark:text-night-muted truncate text-xs">
                                     {row.user.email}
                                   </p>
                                 </div>
@@ -2223,8 +2225,8 @@ export default function EditCoursePage() {
                                       });
                                     }}
                                     className={cn(
-                                      "focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text",
-                                      "h-9 w-full min-w-0 rounded-lg border border-gray-300 bg-white px-2.5 text-sm focus:ring-1 focus:outline-none sm:w-auto sm:min-w-[220px]",
+                                      "border-ink dark:border-night-text dark:bg-night dark:text-night-text",
+                                      "bg-paper h-9 w-full min-w-0 border px-2.5 text-sm sm:w-auto sm:min-w-[220px]",
                                     )}
                                   >
                                     {(
@@ -2241,7 +2243,7 @@ export default function EditCoursePage() {
                                     type="button"
                                     title="Zuordnung entfernen"
                                     disabled={teamMutationBusy}
-                                    className="dark:hover:bg-dark-background-secondary rounded-md p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-red-600 disabled:opacity-40 dark:hover:text-red-400"
+                                    className="dark:hover:bg-night-raised text-dark dark:text-night-muted hover:bg-rule/25 p-2 transition-colors hover:text-red-600 disabled:opacity-40 dark:hover:text-red-400"
                                     onClick={() => {
                                       setCollaboratorsMutation.mutate({
                                         courseId,
@@ -2272,8 +2274,8 @@ export default function EditCoursePage() {
                       title="Weitere Namen (ohne Vereinskonto)"
                       description="Nur Darstellung auf der öffentlichen Kursseite: kein Zugriff auf den Kurs, keine Teilnehmerliste. Praktisch z.&nbsp;B. für Gastreferent:innen ohne Account. Hier ein optionaler Kurztext pro Person möglich."
                     >
-                      <div className="dark:border-dark-border dark:bg-dark-surface overflow-hidden rounded-lg border border-gray-200 bg-white">
-                        <div className="dark:border-dark-border dark:border-dark-border border-b border-gray-200 bg-amber-50/80 px-3 py-2 text-xs leading-snug text-amber-950 dark:bg-amber-950/25 dark:text-amber-100">
+                      <div className="border-rule dark:border-night-rule overflow-hidden border">
+                        <div className="border-rule dark:border-night-rule bg-rule/25 dark:bg-night-raised text-dark dark:text-night-muted border-b px-3 py-2 text-xs leading-snug">
                           Diese Einträge werden erst nach Klick auf{" "}
                           <strong className="font-semibold">
                             Mitwirkende ohne Konto speichern
@@ -2284,7 +2286,7 @@ export default function EditCoursePage() {
 
                         {guestTeamDraft.length === 0 ? (
                           <div className="flex flex-col items-center gap-3 px-4 py-10">
-                            <p className="max-w-sm text-center text-sm text-gray-600 dark:text-gray-400">
+                            <p className="text-dark dark:text-night-muted max-w-sm text-center text-sm">
                               Noch keine freien Namen. Nutze das unten, wenn
                               z.&nbsp;B. Referent:innen ohne Vereinskonto auf
                               der Kursseite erscheinen sollen.
@@ -2292,7 +2294,7 @@ export default function EditCoursePage() {
                             <button
                               type="button"
                               disabled={guestTeamMutationBusy}
-                              className="text-primary hover:text-primary-dark text-sm font-semibold underline-offset-2 hover:underline disabled:opacity-50"
+                              className="text-primary-ink dark:text-primary text-sm font-semibold underline-offset-2 hover:underline disabled:opacity-50"
                               onClick={() =>
                                 setGuestTeamDraft((rows) => [
                                   ...rows,
@@ -2305,7 +2307,7 @@ export default function EditCoursePage() {
                           </div>
                         ) : (
                           <>
-                            <ul className="dark:divide-dark-border divide-y divide-gray-200">
+                            <ul className="dark:divide-night-rule divide-rule divide-y">
                               {guestTeamDraft.map((row, idx) => (
                                 <li
                                   key={idx}
@@ -2359,7 +2361,7 @@ export default function EditCoursePage() {
                                       disabled={
                                         guestTeamMutationBusy || idx === 0
                                       }
-                                      className="dark:hover:bg-dark-background-secondary rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-800 disabled:opacity-25 dark:hover:text-gray-200"
+                                      className="dark:hover:bg-night-raised text-dark dark:text-night-muted hover:bg-rule/25 hover:text-ink dark:hover:text-night-text p-1.5 disabled:opacity-25"
                                       title="Nach oben"
                                       onClick={() => {
                                         if (idx === 0) return;
@@ -2382,7 +2384,7 @@ export default function EditCoursePage() {
                                         guestTeamMutationBusy ||
                                         idx >= guestTeamDraft.length - 1
                                       }
-                                      className="dark:hover:bg-dark-background-secondary rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-800 disabled:opacity-25 dark:hover:text-gray-200"
+                                      className="dark:hover:bg-night-raised text-dark dark:text-night-muted hover:bg-rule/25 hover:text-ink dark:hover:text-night-text p-1.5 disabled:opacity-25"
                                       title="Nach unten"
                                       onClick={() => {
                                         if (idx >= guestTeamDraft.length - 1)
@@ -2404,7 +2406,7 @@ export default function EditCoursePage() {
                                       type="button"
                                       disabled={guestTeamMutationBusy}
                                       title="Zeile entfernen"
-                                      className="dark:hover:bg-dark-background-secondary rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-red-600 disabled:opacity-40 dark:hover:text-red-400"
+                                      className="dark:hover:bg-night-raised text-dark dark:text-night-muted hover:bg-rule/25 p-1.5 hover:text-red-600 disabled:opacity-40 dark:hover:text-red-400"
                                       onClick={() =>
                                         setGuestTeamDraft((rows) =>
                                           rows.filter((_, i) => i !== idx),
@@ -2417,11 +2419,11 @@ export default function EditCoursePage() {
                                 </li>
                               ))}
                             </ul>
-                            <div className="dark:border-dark-border dark:bg-dark-background-secondary/70 flex flex-col gap-2 border-t border-gray-200 bg-gray-50 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="border-rule dark:border-night-rule dark:bg-night-raised/70 bg-rule/25 flex flex-col gap-2 border-t px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
                               <button
                                 type="button"
                                 disabled={guestTeamMutationBusy}
-                                className="text-primary hover:text-primary-dark text-left text-sm font-medium disabled:opacity-50 sm:text-center"
+                                className="text-primary-ink dark:text-primary text-left text-sm font-medium underline-offset-2 hover:underline disabled:opacity-50 sm:text-center"
                                 onClick={() =>
                                   setGuestTeamDraft((rows) => [
                                     ...rows,
@@ -2434,7 +2436,7 @@ export default function EditCoursePage() {
                               <button
                                 type="button"
                                 disabled={guestTeamMutationBusy}
-                                className="bg-primary hover:bg-primary-dark shrink-0 rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                                className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-night-text dark:text-night dark:hover:bg-primary dark:hover:text-ink min-h-11 shrink-0 px-4 py-2 text-sm font-medium disabled:opacity-50"
                                 onClick={() => {
                                   const nonempty = guestTeamDraft.filter(
                                     (r) => r.displayName.trim().length > 0,
@@ -2472,7 +2474,7 @@ export default function EditCoursePage() {
             {!isExternalProvider ? (
               <div
                 id="kurs-form-preise"
-                className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-14"
+                className="dark:border-night-rule dashboard-form-scroll-anchor border-rule border-t pt-14"
               >
                 <DashboardFormZoneHeader
                   step={5}
@@ -2482,14 +2484,16 @@ export default function EditCoursePage() {
 
                 {/* Warning when there are registrations */}
                 {hasRegistrations && (
-                  <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-600 dark:bg-amber-950/50">
+                  // Hinweis statt Alarm: Tinte auf Papier an einer Haarlinie
+                  // statt bernsteinfarbenem Kasten.
+                  <div className="border-ink dark:border-night-text mb-4 border-l-2 py-2 pl-4">
                     <div className="flex items-start gap-3">
-                      <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+                      <AlertTriangle className="dark:text-night-text text-ink mt-0.5 h-5 w-5 shrink-0" />
                       <div>
-                        <p className="dark:text-dark-text font-medium text-gray-700">
+                        <p className="dark:text-night-text text-ink font-medium">
                           Preisänderungen eingeschränkt
                         </p>
-                        <p className="mt-1 text-sm text-amber-700 dark:text-amber-200">
+                        <p className="text-dark dark:text-night-muted mt-1 text-sm">
                           Es gibt bereits {registrationCount} Teilnehmer für
                           diesen Kurs. Bezeichnung, Preis und Altersgrenzen der
                           Preiskategorien können nicht mehr geändert werden. Die
@@ -2514,11 +2518,11 @@ export default function EditCoursePage() {
                           setIsFree(e.target.checked);
                         }}
                         disabled={hasRegistrations}
-                        className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="text-primary border-rule dark:border-night-text h-4 w-4 disabled:cursor-not-allowed disabled:opacity-50"
                       />
                       <label
                         htmlFor="isFree"
-                        className={`text-sm font-medium ${hasRegistrations ? "text-gray-400 dark:text-gray-500" : "dark:text-dark-text text-gray-700"}`}
+                        className={`text-sm font-medium ${hasRegistrations ? "text-dark/60 dark:text-night-muted/60" : "dark:text-night-text text-ink"}`}
                       >
                         Kostenlos
                       </label>
@@ -2529,7 +2533,7 @@ export default function EditCoursePage() {
                         <div>
                           <label
                             htmlFor="priceInfo"
-                            className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                            className="dark:text-night-text text-ink mb-2 block text-sm font-medium"
                           >
                             Preisinformationen (optional)
                           </label>
@@ -2538,16 +2542,16 @@ export default function EditCoursePage() {
                             value={priceInfo}
                             onChange={(e) => setPriceInfo(e.target.value)}
                             rows={2}
-                            className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                            className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper text-ink w-full border px-4 py-2.5"
                             placeholder="z.B. Frühbucherrabatt bis zum..."
                           />
                         </div>
 
-                        <div className="dark:border-dark-border space-y-3 rounded-lg border border-gray-200 p-4 dark:border-gray-600">
-                          <p className="dark:text-dark-text text-sm font-medium text-gray-700">
+                        <div className="dark:border-night-rule border-rule space-y-3 border p-4">
+                          <p className="dark:text-night-text text-ink text-sm font-medium">
                             Zahlungsweisen für Teilnehmer
                           </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                          <p className="text-dark dark:text-night-muted text-xs">
                             Mindestens eine Option aktivieren.
                           </p>
                           <label className="flex cursor-pointer items-center gap-3">
@@ -2557,9 +2561,9 @@ export default function EditCoursePage() {
                               onChange={(e) =>
                                 setPaymentCashAllowed(e.target.checked)
                               }
-                              className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                              className="text-primary border-rule dark:border-night-text h-4 w-4"
                             />
-                            <span className="dark:text-dark-text text-sm text-gray-700">
+                            <span className="dark:text-night-text text-ink text-sm">
                               Barzahlung vor Ort
                             </span>
                           </label>
@@ -2570,16 +2574,16 @@ export default function EditCoursePage() {
                               onChange={(e) =>
                                 setPaymentInvoiceAllowed(e.target.checked)
                               }
-                              className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                              className="text-primary border-rule dark:border-night-text h-4 w-4"
                             />
-                            <span className="dark:text-dark-text text-sm text-gray-700">
+                            <span className="dark:text-night-text text-ink text-sm">
                               Überweisung nach Rechnung
                             </span>
                           </label>
                         </div>
 
                         {canEnableInvoicing || canEnableDownPayment ? (
-                          <div className="dark:border-dark-border space-y-2 rounded-lg border border-gray-200 p-4">
+                          <div className="dark:border-night-rule border-rule space-y-2 border p-4">
                             {canEnableInvoicing && (
                               <label className="flex cursor-pointer items-start gap-3">
                                 <input
@@ -2588,13 +2592,13 @@ export default function EditCoursePage() {
                                   onChange={(e) =>
                                     setInvoicingEnabled(e.target.checked)
                                   }
-                                  className="text-primary focus:ring-primary mt-0.5 h-4 w-4 rounded border-gray-300"
+                                  className="text-primary border-rule dark:border-night-text mt-0.5 h-4 w-4"
                                 />
                                 <span>
-                                  <span className="dark:text-dark-text block text-sm font-medium text-gray-700">
+                                  <span className="dark:text-night-text text-ink block text-sm font-medium">
                                     Rechnungsstellung aktivieren
                                   </span>
-                                  <span className="block text-xs text-gray-500 dark:text-gray-400">
+                                  <span className="text-dark dark:text-night-muted block text-xs">
                                     Erlaubt dem Kurs-Team, für diesen Kurs
                                     Rechnungen zu erstellen, zu bearbeiten und
                                     an die Anmelder:innen auszustellen.
@@ -2606,16 +2610,16 @@ export default function EditCoursePage() {
                             <div
                               className={
                                 canEnableInvoicing
-                                  ? "dark:border-dark-border border-t border-gray-200 pt-3"
+                                  ? "dark:border-night-rule border-rule border-t pt-3"
                                   : undefined
                               }
                             >
                               <label
                                 htmlFor="courseNumber"
-                                className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700"
+                                className="dark:text-night-text text-ink mb-1 block text-sm font-medium"
                               >
                                 Kursnummer{" "}
-                                <span className="font-normal text-gray-500 dark:text-gray-400">
+                                <span className="text-dark dark:text-night-muted font-normal">
                                   (optional)
                                 </span>
                               </label>
@@ -2633,9 +2637,9 @@ export default function EditCoursePage() {
                                   )
                                 }
                                 placeholder="z.B. 2601"
-                                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full max-w-[12rem] rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:bg-gray-800"
+                                className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper text-ink disabled:bg-rule/40 disabled:text-dark dark:disabled:bg-night-raised w-full max-w-[12rem] border px-4 py-2.5 disabled:cursor-not-allowed"
                               />
-                              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                              <p className="text-dark dark:text-night-muted mt-1 text-xs">
                                 {courseNumberLocked ? (
                                   courseNumberLockedBy === "DOWN_PAYMENTS" ? (
                                     <>
@@ -2672,12 +2676,12 @@ export default function EditCoursePage() {
                           </div>
                         ) : (
                           invoicingEnabled && (
-                            <div className="dark:border-dark-border dark:bg-dark-background-secondary rounded-lg border border-gray-200 bg-gray-50 p-4">
-                              <p className="dark:text-dark-text text-sm font-medium text-gray-700">
+                            <div className="dark:border-night-rule dark:bg-night-raised border-rule bg-rule/25 border p-4">
+                              <p className="dark:text-night-text text-ink text-sm font-medium">
                                 Rechnungsstellung ist für diesen Kurs
                                 freigeschaltet
                               </p>
-                              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                              <p className="text-dark dark:text-night-muted mt-1 text-xs">
                                 Nur Landes-/Regionalposaunenwarte und
                                 Administratoren können diese Einstellung ändern.
                               </p>
@@ -2706,14 +2710,14 @@ export default function EditCoursePage() {
 
                         <div>
                           <div className="mb-2 flex items-center justify-between">
-                            <label className="dark:text-dark-text text-sm font-medium text-gray-700">
+                            <label className="dark:text-night-text text-ink text-sm font-medium">
                               Preiskategorien
                             </label>
                             {!hasRegistrations && (
                               <button
                                 type="button"
                                 onClick={addPriceOption}
-                                className="text-primary hover:text-primary/80 text-sm font-medium"
+                                className="text-primary-ink dark:text-primary text-sm font-medium underline-offset-2 hover:underline"
                               >
                                 + Kategorie hinzufügen
                               </button>
@@ -2721,7 +2725,7 @@ export default function EditCoursePage() {
                           </div>
 
                           {priceOptions.length === 0 ? (
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                            <p className="text-dark dark:text-night-muted text-sm">
                               Noch keine Preiskategorien angelegt
                             </p>
                           ) : (
@@ -2729,10 +2733,10 @@ export default function EditCoursePage() {
                               {priceOptions.map((option, index) => (
                                 <div
                                   key={option.id}
-                                  className={`rounded-lg border p-4 ${hasRegistrations ? "dark:border-dark-border dark:bg-dark-background-secondary border-gray-100 bg-gray-50" : "dark:border-dark-border border-gray-200"}`}
+                                  className={`border p-4 ${hasRegistrations ? "dark:border-night-rule dark:bg-night-raised border-rule bg-rule/25" : "dark:border-night-rule border-rule"}`}
                                 >
                                   <div className="mb-3 flex items-center justify-between">
-                                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                                    <span className="text-dark dark:text-night-muted text-sm font-medium">
                                       Preiskategorie {index + 1}
                                     </span>
                                     {!hasRegistrations && (
@@ -2741,7 +2745,7 @@ export default function EditCoursePage() {
                                         onClick={() =>
                                           removePriceOption(option.id)
                                         }
-                                        className="p-1 text-gray-400 hover:text-red-500"
+                                        className="text-dark dark:text-night-muted p-1 hover:text-red-500"
                                         title="Kategorie entfernen"
                                       >
                                         <TrashIcon className="h-4 w-4" />
@@ -2750,7 +2754,7 @@ export default function EditCoursePage() {
                                   </div>
                                   <div className="grid gap-4 sm:grid-cols-3">
                                     <div>
-                                      <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">
+                                      <label className="text-dark dark:text-night-muted mb-1 block text-xs font-medium">
                                         Bezeichnung
                                       </label>
                                       <input
@@ -2765,11 +2769,11 @@ export default function EditCoursePage() {
                                         }
                                         placeholder="z.B. Erwachsene"
                                         disabled={hasRegistrations}
-                                        className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text dark:disabled:bg-dark-background w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-1 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:text-gray-500"
+                                        className="border-ink dark:border-night-text dark:bg-night dark:text-night-text dark:disabled:bg-night-raised bg-paper disabled:bg-rule/40 disabled:text-dark dark:disabled:text-night-muted w-full border px-3 py-2 text-sm disabled:cursor-not-allowed"
                                       />
                                     </div>
                                     <div>
-                                      <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">
+                                      <label className="text-dark dark:text-night-muted mb-1 block text-xs font-medium">
                                         Preis (€)
                                       </label>
                                       <div className="flex items-center gap-1">
@@ -2786,15 +2790,15 @@ export default function EditCoursePage() {
                                           min="0"
                                           step="0.01"
                                           disabled={hasRegistrations}
-                                          className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text dark:disabled:bg-dark-background w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-1 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:text-gray-500"
+                                          className="border-ink dark:border-night-text dark:bg-night dark:text-night-text dark:disabled:bg-night-raised bg-paper disabled:bg-rule/40 disabled:text-dark dark:disabled:text-night-muted w-full border px-3 py-2 text-sm disabled:cursor-not-allowed"
                                         />
-                                        <span className="text-sm text-gray-500">
+                                        <span className="text-dark dark:text-night-muted text-sm">
                                           €
                                         </span>
                                       </div>
                                     </div>
                                     <div>
-                                      <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">
+                                      <label className="text-dark dark:text-night-muted mb-1 block text-xs font-medium">
                                         Max. Teilnehmer
                                       </label>
                                       <input
@@ -2821,12 +2825,12 @@ export default function EditCoursePage() {
                                         }
                                         max="500"
                                         placeholder="Unbegrenzt"
-                                        className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text dark:disabled:bg-dark-background w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-1 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:text-gray-500"
+                                        className="border-ink dark:border-night-text dark:bg-night dark:text-night-text dark:disabled:bg-night-raised bg-paper disabled:bg-rule/40 disabled:text-dark dark:disabled:text-night-muted w-full border px-3 py-2 text-sm disabled:cursor-not-allowed"
                                       />
                                       {hasRegistrations &&
                                       (participantsByPriceOption[option.id] ??
                                         0) > 0 ? (
-                                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                        <p className="text-dark dark:text-night-muted mt-1 text-xs">
                                           {participantsByPriceOption[
                                             option.id
                                           ] ?? 0}{" "}
@@ -2836,7 +2840,7 @@ export default function EditCoursePage() {
                                     </div>
                                   </div>
                                   <div className="mt-3">
-                                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">
+                                    <label className="text-dark dark:text-night-muted mb-1 block text-xs font-medium">
                                       Beschreibung (optional)
                                     </label>
                                     <input
@@ -2850,13 +2854,13 @@ export default function EditCoursePage() {
                                         )
                                       }
                                       placeholder="z.B. Inkl. Verpflegung und Übernachtung"
-                                      className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-1 focus:outline-none"
+                                      className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper w-full border px-3 py-2 text-sm"
                                     />
                                     {needsDistinguishingDescription(
                                       option,
                                       priceOptions,
                                     ) && (
-                                      <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+                                      <p className="text-primary-ink dark:text-primary mt-1 text-xs">
                                         Dieser Name kommt mehrfach vor — ohne
                                         unterscheidende Beschreibung sind die
                                         Kategorien bei der Anmeldung nicht
@@ -2875,7 +2879,7 @@ export default function EditCoursePage() {
                                         )
                                       }
                                       disabled={hasRegistrations}
-                                      inputClassName="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text dark:disabled:bg-dark-background w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-1 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:text-gray-500"
+                                      inputClassName="border-ink dark:border-night-text dark:bg-night dark:text-night-text dark:disabled:bg-night-raised w-full border bg-paper px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-rule/40 disabled:text-dark dark:disabled:text-night-muted"
                                     />
                                   </div>
                                 </div>
@@ -2892,7 +2896,7 @@ export default function EditCoursePage() {
 
             <div
               id="kurs-form-veroeffentlichung"
-              className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-14"
+              className="dark:border-night-rule dashboard-form-scroll-anchor border-rule border-t pt-14"
             >
               <DashboardFormZoneHeader
                 step={isExternalProvider ? 5 : 6}
@@ -2905,16 +2909,18 @@ export default function EditCoursePage() {
                 {(course?.status === ContentStatus.APPROVED ||
                   course?.status === ContentStatus.REJECTED) &&
                   !isHigherRole && (
-                    <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/50 dark:bg-amber-900/20">
+                    // Hinweis statt Alarm: Tinte auf Papier an einer
+                    // Haarlinie statt bernsteinfarbenem Kasten.
+                    <div className="border-ink dark:border-night-text mb-4 border-l-2 py-2 pl-4">
                       <div className="flex items-start gap-3">
-                        <AlertTriangleIcon className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-500" />
+                        <AlertTriangleIcon className="dark:text-night-text text-ink mt-0.5 h-5 w-5 shrink-0" />
                         <div>
-                          <p className="font-medium text-amber-800 dark:text-amber-200">
+                          <p className="dark:text-night-text text-ink font-medium">
                             {course?.status === ContentStatus.APPROVED
                               ? "Hinweis zur erneuten Freigabe"
                               : "Hinweis zur erneuten Prüfung"}
                           </p>
-                          <p className="mt-1 text-sm text-amber-700 dark:text-amber-300">
+                          <p className="text-dark dark:text-night-muted mt-1 text-sm">
                             {course?.status === ContentStatus.APPROVED
                               ? "Dieser Kurs ist bereits freigegeben. Nach dem Speichern wird er erneut zur Prüfung eingereicht und muss wieder freigegeben werden."
                               : "Dieser Kurs wurde abgelehnt. Nach dem Speichern wird er erneut zur Prüfung eingereicht."}
@@ -2930,7 +2936,7 @@ export default function EditCoursePage() {
                       status === ContentStatus.APPROVED) ||
                       (course?.status === ContentStatus.REJECTED &&
                         status === ContentStatus.REJECTED)) && (
-                      <p className="mb-3 text-sm text-gray-500 dark:text-gray-400">
+                      <p className="text-dark dark:text-night-muted mb-3 text-sm">
                         Hinweis: Bei Änderungen wird der Status automatisch auf
                         &quot;Ausstehend&quot; zurückgesetzt, es sei denn, du
                         wählst einen anderen Status.
@@ -2946,9 +2952,9 @@ export default function EditCoursePage() {
                           name="status"
                           checked={status === value}
                           onChange={() => setStatus(value as ContentStatus)}
-                          className="text-primary focus:ring-primary h-4 w-4 border-gray-300"
+                          className="text-primary border-rule dark:border-night-text h-4 w-4"
                         />
-                        <span className="dark:text-dark-text text-sm text-gray-700">
+                        <span className="dark:text-night-text text-ink text-sm">
                           {label}
                         </span>
                       </label>
@@ -2957,7 +2963,7 @@ export default function EditCoursePage() {
                 ) : course?.status === ContentStatus.DRAFT ||
                   course?.status === ContentStatus.REJECTED ? (
                   <div className="space-y-3">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <p className="text-dark dark:text-night-muted text-sm">
                       Lege fest, ob der Kurs nur gespeichert oder zur
                       redaktionellen Prüfung eingereicht werden soll.
                     </p>
@@ -2967,9 +2973,9 @@ export default function EditCoursePage() {
                         name="status-author"
                         checked={status === ContentStatus.DRAFT}
                         onChange={() => setStatus(ContentStatus.DRAFT)}
-                        className="text-primary focus:ring-primary h-4 w-4 border-gray-300"
+                        className="text-primary border-rule dark:border-night-text h-4 w-4"
                       />
-                      <span className="dark:text-dark-text text-sm text-gray-700">
+                      <span className="dark:text-night-text text-ink text-sm">
                         {statusLabels[ContentStatus.DRAFT]} (nur für dich
                         sichtbar)
                       </span>
@@ -2980,15 +2986,15 @@ export default function EditCoursePage() {
                         name="status-author"
                         checked={status === ContentStatus.PENDING}
                         onChange={() => setStatus(ContentStatus.PENDING)}
-                        className="text-primary focus:ring-primary h-4 w-4 border-gray-300"
+                        className="text-primary border-rule dark:border-night-text h-4 w-4"
                       />
-                      <span className="dark:text-dark-text text-sm text-gray-700">
+                      <span className="dark:text-night-text text-ink text-sm">
                         {statusLabels[ContentStatus.PENDING]}
                       </span>
                     </label>
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-dark dark:text-night-muted text-sm">
                     Aktueller Status:{" "}
                     <span className="font-medium">
                       {statusLabels[course?.status ?? ContentStatus.DRAFT]}
@@ -3004,19 +3010,19 @@ export default function EditCoursePage() {
             </div>
 
             {/* Actions */}
-            <div className="dark:border-dark-border mt-16 flex flex-col gap-3 border-t border-gray-200/80 pt-10 sm:flex-row sm:justify-end">
+            <div className="dark:border-night-rule border-rule mt-16 flex flex-col gap-3 border-t pt-10 sm:flex-row sm:justify-end">
               <Link
                 href={`/dashboard/courses/${courseId}`}
                 data-skip-warning
                 onClick={() => clear()}
-                className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-6 py-2.5 text-center font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="border-rule dark:border-night-rule dark:text-night-text text-ink hover:bg-rule/25 dark:hover:bg-night-raised border px-6 py-2.5 text-center font-medium transition-colors"
               >
                 Abbrechen
               </Link>
               <button
                 type="submit"
                 disabled={isSubmitting || updateCourseMutation.isPending}
-                className="bg-primary hover:bg-primary/90 rounded-lg px-6 py-2.5 font-medium text-white transition-colors disabled:opacity-50"
+                className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-night-text dark:text-night dark:hover:bg-primary dark:hover:text-ink min-h-11 px-6 py-2.5 font-medium transition-colors disabled:opacity-50"
               >
                 {isSubmitting || updateCourseMutation.isPending
                   ? "Wird gespeichert..."

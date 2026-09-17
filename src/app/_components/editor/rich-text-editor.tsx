@@ -3,7 +3,7 @@
 import { useEditor, EditorContent, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
-import Image from "@tiptap/extension-image";
+import { ArtikelBild } from "./bild-erweiterung";
 import Placeholder from "@tiptap/extension-placeholder";
 import Underline from "@tiptap/extension-underline";
 import TextAlign from "@tiptap/extension-text-align";
@@ -22,6 +22,8 @@ import {
 import { marked } from "marked";
 import MediaPickerModal from "./media-picker-modal";
 import DownloadPickerModal from "./download-picker-modal";
+import { Button, Input } from "@/app/_components/ui";
+import { cn } from "@/lib/utils";
 import "@/styles/article-content.css";
 import {
   Bold,
@@ -79,6 +81,44 @@ turndownService.addRule("strikethrough", {
   filter: ["del", "s"],
   replacement: function (content) {
     return `~~${content}~~`;
+  },
+});
+
+/**
+ * Bilder mit Breiten- oder Ausrichtungsklasse als rohes HTML schreiben.
+ *
+ * Gespeichert wird Markdown (hier unten: getHTML -> turndown -> onChange), und
+ * Markdown kennt keine Bildbreiten. `![alt](src)` verliert die Klasse beim
+ * Speichern — gemessen: Nach dem Ziehen auf „halb" stand in der Datenbank nur
+ * `![JuPo Plakat](/api/uploads/…)`, die Einstellung war weg.
+ *
+ * Dieselbe Lösung nutzt diese Datei bereits für Unterstreichung,
+ * Durchstreichung und Tabellen: rohes HTML ausgeben, wo Markdown nicht
+ * ausreicht. `marked` reicht es unverändert durch, und der Filter behält
+ * `class` — beides nachgemessen.
+ *
+ * Bilder ohne Klasse bleiben bewusst Markdown, damit sich am Bestand nichts
+ * ändert.
+ */
+turndownService.addRule("bildMitKlasse", {
+  filter: (node) =>
+    node.nodeName === "IMG" &&
+    /(^|\s)bild-/.test((node as HTMLElement).getAttribute("class") ?? ""),
+  replacement: function (_content, node) {
+    const el = node as HTMLElement;
+    const wert = (name: string) =>
+      (el.getAttribute(name) ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    // Nur das Vokabular übernehmen: Die Knotenansicht hängt bei Anwahl
+    // zusätzlich Umrandungsklassen an, die nichts im Beitrag zu suchen haben.
+    const klassen = (el.getAttribute("class") ?? "")
+      .split(/\s+/)
+      .filter((k) => k.startsWith("bild-"))
+      .join(" ");
+    return `\n\n<img src="${wert("src")}" alt="${wert("alt")}" class="${klassen}">\n\n`;
   },
 });
 
@@ -159,11 +199,13 @@ function ToolbarButton({
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className={`rounded p-2 transition-colors ${
+      className={cn(
+        "p-2 transition-colors",
         isActive
-          ? "bg-primary text-white"
-          : "dark:hover:bg-dark-background-secondary text-gray-700 hover:bg-gray-100 dark:text-gray-300"
-      } ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
+          ? "bg-primary text-ink"
+          : "text-ink hover:bg-rule/60 dark:text-night-text dark:hover:bg-night-rule",
+        disabled && "cursor-not-allowed opacity-50",
+      )}
     >
       {children}
     </button>
@@ -171,7 +213,7 @@ function ToolbarButton({
 }
 
 function ToolbarSeparator() {
-  return <div className="dark:bg-dark-border mx-1 h-6 w-px bg-gray-300" />;
+  return <div className="bg-rule dark:bg-night-rule mx-1 h-6 w-px" />;
 }
 
 function ContextMenuItem({
@@ -192,13 +234,14 @@ function ContextMenuItem({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`flex w-full items-center gap-2 rounded px-3 py-1.5 text-left text-sm transition-colors ${
+      className={cn(
+        "flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm transition-colors",
         disabled
           ? "cursor-not-allowed opacity-40"
           : destructive
-            ? "text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
-            : "dark:hover:bg-dark-background-secondary text-gray-700 hover:bg-gray-100 dark:text-gray-300"
-      }`}
+            ? "text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+            : "text-ink hover:bg-rule/60 dark:text-night-text dark:hover:bg-night-rule",
+      )}
     >
       {Icon && <Icon className="h-3.5 w-3.5 shrink-0" />}
       {children}
@@ -207,7 +250,7 @@ function ContextMenuItem({
 }
 
 function ContextMenuSeparator() {
-  return <div className="dark:bg-dark-border my-1 h-px bg-gray-200" />;
+  return <div className="bg-rule dark:bg-night-rule my-1 h-px" />;
 }
 
 function TableContextMenu({
@@ -257,10 +300,10 @@ function TableContextMenu({
   return (
     <div
       ref={menuRef}
-      className="dark:border-dark-border dark:bg-dark-surface fixed z-[200] min-w-52 rounded-lg border border-gray-200 bg-white p-1 shadow-xl"
+      className="border-ink bg-paper dark:border-night-text dark:bg-night-raised fixed z-[200] min-w-52 border-2 p-1"
       style={{ left: position.x, top: position.y }}
     >
-      <div className="px-3 py-1.5 text-xs font-semibold tracking-wide text-gray-400 uppercase dark:text-gray-500">
+      <div className="text-dark dark:text-night-muted semi-condensed px-3 py-1.5 text-xs font-semibold tracking-wide uppercase">
         Zeile
       </div>
       <ContextMenuItem
@@ -285,7 +328,7 @@ function TableContextMenu({
 
       <ContextMenuSeparator />
 
-      <div className="px-3 py-1.5 text-xs font-semibold tracking-wide text-gray-400 uppercase dark:text-gray-500">
+      <div className="text-dark dark:text-night-muted semi-condensed px-3 py-1.5 text-xs font-semibold tracking-wide uppercase">
         Spalte
       </div>
       <ContextMenuItem
@@ -312,7 +355,7 @@ function TableContextMenu({
 
       <ContextMenuSeparator />
 
-      <div className="px-3 py-1.5 text-xs font-semibold tracking-wide text-gray-400 uppercase dark:text-gray-500">
+      <div className="text-dark dark:text-night-muted semi-condensed px-3 py-1.5 text-xs font-semibold tracking-wide uppercase">
         Zelle
       </div>
       <ContextMenuItem
@@ -414,7 +457,7 @@ function Toolbar({
   if (!editor) return null;
 
   return (
-    <div className="dark:border-dark-border dark:bg-dark-surface bg-opacity-95 dark:bg-opacity-95 sticky top-0 z-10 flex flex-wrap items-center gap-1 border-b border-gray-200 bg-gray-50 p-2 backdrop-blur-sm">
+    <div className="border-rule dark:border-night-rule bg-rule/25 dark:bg-night-raised sticky top-0 z-10 flex flex-wrap items-center gap-1 border-b p-2 backdrop-blur-sm">
       {/* Text formatting */}
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBold().run()}
@@ -552,30 +595,28 @@ function Toolbar({
           <LinkIcon className="h-4 w-4" />
         </ToolbarButton>
         {showLinkInput && (
-          <div className="dark:border-dark-border dark:bg-dark-surface absolute top-full right-0 z-50 mt-1 flex items-center gap-2 rounded-lg border border-gray-200 bg-white p-2 shadow-xl">
-            <input
+          <div className="border-ink bg-paper dark:border-night-text dark:bg-night-raised absolute top-full right-0 z-50 mt-1 flex items-center gap-2 border-2 p-2">
+            <Input
               type="url"
-              placeholder="https://..."
+              placeholder="https://…"
+              aria-label="Link-URL"
               value={linkUrl}
               onChange={(e) => setLinkUrl(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && setLink()}
-              className="dark:border-dark-border dark:bg-dark-background-secondary w-64 rounded border border-gray-300 px-2 py-1 text-sm dark:text-gray-100"
+              className="w-64 py-1 text-sm"
               autoFocus
             />
-            <button
-              type="button"
-              onClick={setLink}
-              className="bg-primary rounded px-2 py-1 text-sm text-white"
-            >
+            <Button type="button" onClick={setLink} size="sm">
               OK
-            </button>
+            </Button>
             <button
               type="button"
               onClick={() => {
                 setShowLinkInput(false);
                 setLinkUrl("");
               }}
-              className="rounded px-2 py-1 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-400"
+              aria-label="Abbrechen"
+              className="text-dark hover:bg-rule/60 hover:text-ink dark:text-night-muted dark:hover:bg-night-rule dark:hover:text-night-text px-2 py-1 text-sm transition-colors"
             >
               <X className="h-4 w-4" />
             </button>
@@ -603,7 +644,7 @@ function Toolbar({
           <TableIcon className="h-4 w-4" />
         </ToolbarButton>
         {showTableMenu && (
-          <div className="dark:border-dark-border dark:bg-dark-surface absolute top-full left-0 z-50 mt-1 min-w-48 rounded-lg border border-gray-200 bg-white p-1 shadow-xl">
+          <div className="border-ink bg-paper dark:border-night-text dark:bg-night-raised absolute top-full left-0 z-50 mt-1 min-w-48 border-2 p-1">
             <button
               type="button"
               onClick={() => {
@@ -615,7 +656,7 @@ function Toolbar({
                 setShowTableMenu(false);
               }}
               disabled={editor.isActive("table")}
-              className="dark:hover:bg-dark-background-secondary flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+              className="text-ink hover:bg-rule/60 dark:text-night-text dark:hover:bg-night-rule flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Plus className="h-4 w-4" />
               Tabelle einfügen (3×3)
@@ -628,13 +669,13 @@ function Toolbar({
                     editor.chain().focus().deleteTable().run();
                     setShowTableMenu(false);
                   }}
-                  className="flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm text-red-600 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-red-900/20"
+                  className="hover:bg-rule/60 dark:hover:bg-night-rule flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-700 transition-colors dark:text-red-400"
                 >
                   <Trash2 className="h-4 w-4" />
                   Tabelle löschen
                 </button>
-                <div className="dark:bg-dark-border my-1 h-px bg-gray-200" />
-                <p className="px-3 py-1.5 text-xs text-gray-400 dark:text-gray-500">
+                <div className="bg-rule dark:bg-night-rule my-1 h-px" />
+                <p className="text-dark dark:text-night-muted px-3 py-1.5 text-xs">
                   Rechtsklick auf Zelle für weitere Optionen
                 </p>
               </>
@@ -688,17 +729,20 @@ export default function RichTextEditor({
           levels: [2, 3, 4],
         },
       }),
+      // Ohne eigene Klasse: Links gestaltet article-content.css — Brauntinte
+      // auf Papier, Druckorange im Nachtdruck, dauerhaft unterstrichen.
+      // Nachgemessen an einem Link ohne Klasse: 5,26:1 hell, 9,16:1 dunkel.
+      // Die alte Inline-Klasse war nicht nur wirkungslos, sie schrieb
+      // ausgerechnet `text-primary` in jeden gespeicherten Beitrag — Orange als
+      // Schriftfarbe auf Papier sind 1,99:1.
       Link.configure({
         openOnClick: false,
-        HTMLAttributes: {
-          class: "text-primary underline",
-        },
       }),
-      Image.configure({
-        HTMLAttributes: {
-          class: "max-w-full rounded-lg",
-        },
-      }),
+      // Statt des schlichten Image: Breite und Ausrichtung als Klassen, mit
+      // einrastenden Ziehgriffen. Die alte Klasse `max-w-full rounded-lg`
+      // entfaellt — Bilder gestaltet jetzt article-content.css, und Rundungen
+      // gibt es im Programmheft nicht.
+      ArtikelBild,
       Placeholder.configure({
         placeholder,
       }),
@@ -707,24 +751,20 @@ export default function RichTextEditor({
         types: ["heading", "paragraph"],
         defaultAlignment: "left",
       }),
+      // Breite, Linienmodell und Abstand der Tabelle stehen ebenfalls im
+      // Stylesheet — die Klasse hier war doppelt gemoppelt. `resizable`
+      // bleibt: Das ist Verhalten, keine Gestaltung.
       Table.configure({
         resizable: true,
-        HTMLAttributes: {
-          class: "border-collapse w-full my-4",
-        },
       }),
       TableRow,
-      TableCell.configure({
-        HTMLAttributes: {
-          class: "border border-gray-300 dark:border-gray-600 p-2",
-        },
-      }),
-      TableHeader.configure({
-        HTMLAttributes: {
-          class:
-            "border border-gray-300 dark:border-gray-600 p-2 bg-gray-100 dark:bg-gray-800 font-semibold",
-        },
-      }),
+      // Ohne eigene Klassen: Tabellenlinien und Kopfzeile bestimmt
+      // article-content.css — in der Schreibflaeche und im veroeffentlichten
+      // Beitrag gleichermassen, weil beide dieselbe Datei nutzen. Die
+      // Grautoene hier waren sichtbar wirkungslos (das Stylesheet ueberstimmt
+      // sie), schrieben sich aber als tote Klassen in jeden neuen Beitrag.
+      TableCell,
+      TableHeader,
     ],
     content: initialHtml,
     immediatelyRender: false,
@@ -800,7 +840,10 @@ export default function RichTextEditor({
   return (
     <>
       <div
-        className={`dark:border-dark-border dark:bg-dark-background-secondary relative flex flex-col rounded-lg border border-gray-300 bg-white ${className}`}
+        className={cn(
+          "border-rule dark:border-night-rule dark:bg-night-raised bg-paper relative flex flex-col border",
+          className,
+        )}
         style={{ maxHeight: "600px", overflowY: "auto" }}
       >
         <Toolbar
@@ -809,7 +852,7 @@ export default function RichTextEditor({
           onOpenDownloadPicker={() => setShowDownloadPicker(true)}
         />
         <div
-          className="text-gray-900 dark:text-gray-100"
+          className="text-ink dark:text-night-text"
           onContextMenu={handleContextMenu}
         >
           <EditorContent editor={editor} />

@@ -122,15 +122,15 @@ export default function EnsembleMap({
       */}
       <div
         ref={mapContainerRef}
-        className="dark:border-dark-border isolate h-[300px] w-full overflow-hidden rounded-lg border border-gray-200"
+        className="border-rule dark:border-night-rule isolate h-[300px] w-full overflow-hidden border"
         style={{ minHeight: "300px" }}
       />
-      <div className="dark:border-dark-border dark:bg-dark-background-secondary border-t border-gray-200 bg-gray-50 p-2 text-center">
+      <div className="border-rule dark:border-night-rule bg-rule/25 dark:bg-night-raised border-t p-2 text-center">
         <Link
           href={`https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}&zoom=15`}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 text-xs text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+          className="text-dark hover:text-ink dark:text-night-muted dark:hover:text-night-text inline-flex items-center gap-1.5 text-xs"
         >
           <span>Größere Karte anzeigen</span>
           <ExternalLinkIcon className="h-3 w-3" aria-hidden="true" />

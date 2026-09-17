@@ -231,7 +231,7 @@ export function MediaUploadModal({ onClose }: { onClose: () => void }) {
     <ScrollableModal onClose={isSaving ? undefined : onClose}>
       <ScrollableModalCard maxW="2xl">
         <ScrollableModalHeader>
-          <h2 className="dark:text-dark-text text-xl font-semibold text-gray-900">
+          <h2 className="text-ink dark:text-night-text text-xl font-semibold">
             Medien hochladen
           </h2>
         </ScrollableModalHeader>
@@ -254,17 +254,17 @@ export function MediaUploadModal({ onClose }: { onClose: () => void }) {
               event.dataTransfer.dropEffect = "copy";
             }}
             onDrop={handleDrop}
-            className={`rounded-lg border-2 border-dashed p-6 text-center transition-colors ${
+            className={`border-2 border-dashed p-6 text-center transition-colors ${
               isDragging
-                ? "border-primary bg-primary/5"
-                : "dark:border-dark-border border-gray-300"
+                ? "border-ink bg-rule/25 dark:border-night-text dark:bg-night-raised"
+                : "border-rule dark:border-night-rule"
             }`}
           >
-            <ArrowUpIcon className="mx-auto h-8 w-8 text-gray-400" />
-            <p className="dark:text-dark-text mt-2 text-sm font-medium text-gray-900">
+            <ArrowUpIcon className="text-dark dark:text-night-muted mx-auto h-8 w-8" />
+            <p className="text-ink dark:text-night-text mt-2 text-sm font-medium">
               Dateien hierher ziehen
             </p>
-            <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+            <p className="text-dark dark:text-night-muted mt-1 text-xs">
               {MEDIA_UPLOAD_EXTENSIONS_LABEL}, bis {MEDIA_UPLOAD_MAX_LABEL} je
               Datei
             </p>
@@ -296,9 +296,9 @@ export function MediaUploadModal({ onClose }: { onClose: () => void }) {
               {queue.map((entry) => (
                 <li
                   key={entry.id}
-                  className="dark:border-dark-border flex items-center gap-3 rounded-lg border border-gray-200 p-2"
+                  className="border-rule dark:border-night-rule flex items-center gap-3 border p-2"
                 >
-                  <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded bg-gray-100 dark:bg-gray-800">
+                  <div className="bg-rule/25 dark:bg-night-raised relative h-12 w-12 shrink-0 overflow-hidden">
                     {/* Lokale Vorschau aus dem Blob — next/image kann object
                         URLs nicht optimieren, hier also bewusst ein <img>. */}
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -320,23 +320,25 @@ export function MediaUploadModal({ onClose }: { onClose: () => void }) {
                       className="py-1 text-sm"
                     />
                     {entry.error && (
-                      <p className="mt-1 text-xs text-red-600">{entry.error}</p>
+                      <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                        {entry.error}
+                      </p>
                     )}
                   </div>
 
                   <div className="flex w-8 shrink-0 justify-center">
                     {entry.state === "uploading" && (
-                      <Loader2Icon className="h-4 w-4 animate-spin text-gray-400" />
+                      <Loader2Icon className="text-dark dark:text-night-muted h-4 w-4 animate-spin" />
                     )}
                     {entry.state === "saved" && (
-                      <CheckIcon className="h-4 w-4 text-green-600" />
+                      <CheckIcon className="h-4 w-4 text-green-700 dark:text-green-400" />
                     )}
                     {(entry.state === "ready" || entry.state === "error") && (
                       <button
                         type="button"
                         onClick={() => removeEntry(entry.id)}
                         title="Entfernen"
-                        className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700"
+                        className="text-dark hover:bg-rule/60 hover:text-ink dark:text-night-muted dark:hover:bg-night-rule dark:hover:text-night-text p-1"
                       >
                         <XIcon className="h-4 w-4" />
                       </button>
@@ -348,7 +350,7 @@ export function MediaUploadModal({ onClose }: { onClose: () => void }) {
           )}
 
           {queue.length > 0 && (
-            <div className="dark:border-dark-border grid gap-4 border-t border-gray-200 pt-4 sm:grid-cols-2">
+            <div className="border-rule dark:border-night-rule grid gap-4 border-t pt-4 sm:grid-cols-2">
               <div>
                 <Label htmlFor="uploadCopyright">Copyright</Label>
                 <Input
@@ -367,7 +369,7 @@ export function MediaUploadModal({ onClose }: { onClose: () => void }) {
                   placeholder="Name der Urheberin"
                 />
               </div>
-              <p className="dark:text-dark-muted text-xs text-gray-500 sm:col-span-2">
+              <p className="text-dark dark:text-night-muted text-xs sm:col-span-2">
                 Gilt für alle Dateien in dieser Liste; einzeln anpassen lässt es
                 sich danach über „Bearbeiten“.
               </p>

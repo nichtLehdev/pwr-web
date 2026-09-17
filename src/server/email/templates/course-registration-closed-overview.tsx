@@ -1,14 +1,15 @@
-import {
-  Html,
-  Head,
-  Body,
-  Container,
-  Section,
-  Text,
-  Hr,
-  Link,
-} from "@react-email/components";
+import { Link, Text } from "@react-email/components";
 import type { CourseRegistrationStats } from "@/lib/course-participants-export";
+import {
+  EmailLayout,
+  Regel,
+  abschnittskopf,
+  farben,
+  grundtext,
+  kleintext,
+  link,
+} from "./email-layout";
+import { emailText, textZeile } from "./email-text";
 
 interface CourseRegistrationClosedOverviewProps {
   courseTitle: string;
@@ -47,6 +48,49 @@ function formatPrice(price: number) {
   }).format(price);
 }
 
+function teilnehmerWert(count: number) {
+  return `${count} ${count === 1 ? "Person" : "Personen"}`;
+}
+
+/** Eine Angabe als Zeile im Tabellensatz — das HTML-Pendant zu textZeile. */
+function Werttabelle({
+  zeilen,
+}: {
+  zeilen: { label: string; wert: string }[];
+}) {
+  return (
+    <table
+      role="presentation"
+      width="100%"
+      cellPadding={0}
+      cellSpacing={0}
+      style={werttabelle}
+    >
+      <tbody>
+        {zeilen.map((zeile, i) => {
+          const letzte = i === zeilen.length - 1;
+          return (
+            <tr key={zeile.label}>
+              <td
+                style={
+                  letzte
+                    ? werttabelleBeschriftungLetzte
+                    : werttabelleBeschriftung
+                }
+              >
+                {zeile.label}
+              </td>
+              <td style={letzte ? werttabelleWertLetzte : werttabelleWert}>
+                {zeile.wert}
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+}
+
 export function CourseRegistrationClosedOverview({
   courseTitle,
   registrationDeadline,
@@ -58,270 +102,239 @@ export function CourseRegistrationClosedOverview({
   stats,
   participantsUrl,
 }: CourseRegistrationClosedOverviewProps) {
+  const kursZeilen: { label: string; wert: string }[] = [
+    { label: "Anmeldefrist endete", wert: formatDate(registrationDeadline) },
+    { label: "Kursbeginn", wert: formatDateOnly(startDate) },
+    { label: "Kursende", wert: formatDateOnly(endDate) },
+  ];
+  if (locationName) {
+    kursZeilen.push({ label: "Ort", wert: locationName });
+  }
+  if (maxParticipants != null && maxParticipants > 0) {
+    kursZeilen.push({
+      label: "Max. Teilnehmerzahl",
+      wert: String(maxParticipants),
+    });
+  }
+
+  const uebersichtZeilen: { label: string; wert: string }[] = [
+    {
+      label: "Bestätigte Teilnehmende",
+      wert: teilnehmerWert(stats.confirmedParticipants),
+    },
+    {
+      label: "Anmeldungen (aktiv)",
+      wert: String(stats.activeRegistrations),
+    },
+  ];
+  if (allowWaitingList && stats.waitlistParticipants > 0) {
+    uebersichtZeilen.push({
+      label: "Warteliste",
+      wert: teilnehmerWert(stats.waitlistParticipants),
+    });
+  }
+  if (stats.cancelledParticipants > 0) {
+    uebersichtZeilen.push({
+      label: "Storniert",
+      wert: teilnehmerWert(stats.cancelledParticipants),
+    });
+  }
+  if (stats.totalRevenueConfirmed > 0) {
+    uebersichtZeilen.push(
+      {
+        label: "Umsatz (bestätigt)",
+        wert: formatPrice(stats.totalRevenueConfirmed),
+      },
+      { label: "Bereits bezahlt", wert: formatPrice(stats.paidRevenue) },
+    );
+  }
+  if (stats.downPaymentsReceived > 0 || stats.downPaymentsOpen > 0) {
+    uebersichtZeilen.push({
+      label: "Anzahlungen",
+      wert: `${formatPrice(stats.downPaymentsReceived)} eingegangen, ${formatPrice(stats.downPaymentsOpen)} offen`,
+    });
+  }
+
+  const zuKlaeren: string[] = [];
+  if (stats.pendingDiscountRegistrations > 0) {
+    zuKlaeren.push(
+      `Offene Rabattprüfungen: ${stats.pendingDiscountRegistrations} – bitte im Dashboard bearbeiten.`,
+    );
+  }
+  if (stats.refundPendingRegistrations > 0) {
+    zuKlaeren.push(
+      `Anzahlung nach Stornierung zu klären: ${stats.refundPendingRegistrations} – bitte mit der Kasse abstimmen.`,
+    );
+  }
+
   return (
-    <Html lang="de">
-      <Head />
-      <Body style={main}>
-        <Container style={container}>
-          <Section style={header}>
-            <Text style={logoText}>Posaunenwerk Rheinland</Text>
-            <Text style={tagline}>
-              Posaunenwerk der Evangelischen Kirche im Rheinland
+    <EmailLayout preview="Anmeldefrist beendet">
+      <Text style={abschnittskopf}>Anmeldefrist beendet</Text>
+
+      <Text style={grundtext}>
+        Die Anmeldefrist für den folgenden Kurs ist abgelaufen. Im Anhang finden
+        Sie eine Excel-Liste aller Teilnehmenden (ohne stornierte Anmeldungen).
+      </Text>
+
+      <Text style={kursname}>{courseTitle}</Text>
+      <Werttabelle zeilen={kursZeilen} />
+
+      <Regel />
+
+      <Text style={abschnittskopf}>Übersicht für die Planung</Text>
+      <Werttabelle zeilen={uebersichtZeilen} />
+
+      {zuKlaeren.length > 0 ? (
+        <>
+          <Regel stark />
+          {zuKlaeren.map((zeile) => (
+            <Text key={zeile} style={hinweiszeile}>
+              {zeile}
             </Text>
-          </Section>
+          ))}
+        </>
+      ) : null}
 
-          <Section style={content}>
-            <Text style={heading}>Anmeldefrist beendet</Text>
+      <Text style={grundtext}>
+        <Link href={participantsUrl} style={link}>
+          Teilnehmer im Dashboard verwalten
+        </Link>
+      </Text>
 
-            <Text style={paragraph}>
-              Die Anmeldefrist für den folgenden Kurs ist abgelaufen. Im Anhang
-              finden Sie eine Excel-Liste aller Teilnehmenden (ohne stornierte
-              Anmeldungen).
-            </Text>
+      <Regel />
 
-            <Section style={courseInfo}>
-              <Text style={courseTitleStyle}>{courseTitle}</Text>
-              <Text style={courseDetail}>
-                <strong>Anmeldefrist endete:</strong>{" "}
-                {formatDate(registrationDeadline)}
-              </Text>
-              <Text style={courseDetail}>
-                <strong>Kursbeginn:</strong> {formatDateOnly(startDate)}
-              </Text>
-              <Text style={courseDetail}>
-                <strong>Kursende:</strong> {formatDateOnly(endDate)}
-              </Text>
-              {locationName ? (
-                <Text style={courseDetail}>
-                  <strong>Ort:</strong> {locationName}
-                </Text>
-              ) : null}
-              {maxParticipants != null && maxParticipants > 0 ? (
-                <Text style={courseDetail}>
-                  <strong>Max. Teilnehmerzahl:</strong> {maxParticipants}
-                </Text>
-              ) : null}
-            </Section>
-
-            <Section style={statsBox}>
-              <Text style={statsTitle}>Übersicht für die Planung</Text>
-              <Text style={statsLine}>
-                <strong>Bestätigte Teilnehmende:</strong>{" "}
-                {stats.confirmedParticipants}{" "}
-                {stats.confirmedParticipants === 1 ? "Person" : "Personen"}
-              </Text>
-              <Text style={statsLine}>
-                <strong>Anmeldungen (aktiv):</strong>{" "}
-                {stats.activeRegistrations}
-              </Text>
-              {allowWaitingList && stats.waitlistParticipants > 0 ? (
-                <Text style={statsLine}>
-                  <strong>Warteliste:</strong> {stats.waitlistParticipants}{" "}
-                  {stats.waitlistParticipants === 1 ? "Person" : "Personen"}
-                </Text>
-              ) : null}
-              {stats.cancelledParticipants > 0 ? (
-                <Text style={statsLine}>
-                  <strong>Storniert:</strong> {stats.cancelledParticipants}{" "}
-                  {stats.cancelledParticipants === 1 ? "Person" : "Personen"}
-                </Text>
-              ) : null}
-              {stats.pendingDiscountRegistrations > 0 ? (
-                <Text style={statsLineHighlight}>
-                  <strong>Offene Rabattprüfungen:</strong>{" "}
-                  {stats.pendingDiscountRegistrations} – bitte im Dashboard
-                  bearbeiten.
-                </Text>
-              ) : null}
-              {stats.totalRevenueConfirmed > 0 ? (
-                <>
-                  <Text style={statsLine}>
-                    <strong>Umsatz (bestätigt):</strong>{" "}
-                    {formatPrice(stats.totalRevenueConfirmed)}
-                  </Text>
-                  <Text style={statsLine}>
-                    <strong>Bereits bezahlt:</strong>{" "}
-                    {formatPrice(stats.paidRevenue)}
-                  </Text>
-                </>
-              ) : null}
-              {stats.downPaymentsReceived > 0 || stats.downPaymentsOpen > 0 ? (
-                <Text style={statsLine}>
-                  <strong>Anzahlungen:</strong>{" "}
-                  {formatPrice(stats.downPaymentsReceived)} eingegangen,{" "}
-                  {formatPrice(stats.downPaymentsOpen)} offen
-                </Text>
-              ) : null}
-              {stats.refundPendingRegistrations > 0 ? (
-                <Text style={statsLineHighlight}>
-                  <strong>Anzahlung nach Stornierung zu klären:</strong>{" "}
-                  {stats.refundPendingRegistrations} – bitte mit der Kasse
-                  abstimmen.
-                </Text>
-              ) : null}
-            </Section>
-
-            <Text style={paragraph}>
-              <Link href={participantsUrl} style={link}>
-                Teilnehmer im Dashboard verwalten
-              </Link>
-            </Text>
-
-            <Hr style={hr} />
-
-            <Text style={paragraphSmall}>
-              Diese E-Mail wurde automatisch versendet, sobald die Anmeldefrist
-              abgelaufen ist.
-            </Text>
-          </Section>
-
-          <Section style={footerSection}>
-            <Text style={footerText}>
-              Posaunenwerk der Evangelischen Kirche im Rheinland
-            </Text>
-          </Section>
-        </Container>
-      </Body>
-    </Html>
+      <Text style={kleintext}>
+        Diese E-Mail wurde automatisch versendet, sobald die Anmeldefrist
+        abgelaufen ist.
+      </Text>
+    </EmailLayout>
   );
 }
 
-const main = {
-  backgroundColor: "#f5f5f5",
-  fontFamily:
-    '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Ubuntu,sans-serif',
+/** Nur-Text-Fassung — gleicher Wortlaut, ohne Auszeichnung. */
+export function courseRegistrationClosedOverviewText({
+  courseTitle,
+  registrationDeadline,
+  startDate,
+  endDate,
+  locationName,
+  maxParticipants,
+  allowWaitingList,
+  stats,
+  participantsUrl,
+}: CourseRegistrationClosedOverviewProps): string {
+  const kursZeilen = [
+    textZeile("Anmeldefrist endete", formatDate(registrationDeadline)),
+    textZeile("Kursbeginn", formatDateOnly(startDate)),
+    textZeile("Kursende", formatDateOnly(endDate)),
+    locationName ? textZeile("Ort", locationName) : null,
+    maxParticipants != null && maxParticipants > 0
+      ? textZeile("Max. Teilnehmerzahl", String(maxParticipants))
+      : null,
+  ];
+
+  const uebersichtZeilen = [
+    textZeile(
+      "Bestätigte Teilnehmende",
+      teilnehmerWert(stats.confirmedParticipants),
+    ),
+    textZeile("Anmeldungen (aktiv)", String(stats.activeRegistrations)),
+    allowWaitingList && stats.waitlistParticipants > 0
+      ? textZeile("Warteliste", teilnehmerWert(stats.waitlistParticipants))
+      : null,
+    stats.cancelledParticipants > 0
+      ? textZeile("Storniert", teilnehmerWert(stats.cancelledParticipants))
+      : null,
+    stats.totalRevenueConfirmed > 0
+      ? textZeile(
+          "Umsatz (bestätigt)",
+          formatPrice(stats.totalRevenueConfirmed),
+        )
+      : null,
+    stats.totalRevenueConfirmed > 0
+      ? textZeile("Bereits bezahlt", formatPrice(stats.paidRevenue))
+      : null,
+    stats.downPaymentsReceived > 0 || stats.downPaymentsOpen > 0
+      ? textZeile(
+          "Anzahlungen",
+          `${formatPrice(stats.downPaymentsReceived)} eingegangen, ${formatPrice(stats.downPaymentsOpen)} offen`,
+        )
+      : null,
+    stats.pendingDiscountRegistrations > 0
+      ? textZeile(
+          "Offene Rabattprüfungen",
+          `${stats.pendingDiscountRegistrations} – bitte im Dashboard bearbeiten.`,
+        )
+      : null,
+    stats.refundPendingRegistrations > 0
+      ? textZeile(
+          "Anzahlung nach Stornierung zu klären",
+          `${stats.refundPendingRegistrations} – bitte mit der Kasse abstimmen.`,
+        )
+      : null,
+  ];
+
+  return emailText([
+    "ANMELDEFRIST BEENDET",
+    "",
+    "Die Anmeldefrist für den folgenden Kurs ist abgelaufen. Im Anhang finden Sie eine Excel-Liste aller Teilnehmenden (ohne stornierte Anmeldungen).",
+    "",
+    courseTitle,
+    ...kursZeilen,
+    "",
+    "ÜBERSICHT FÜR DIE PLANUNG",
+    ...uebersichtZeilen,
+    "",
+    "Teilnehmer im Dashboard verwalten:",
+    participantsUrl,
+    "",
+    "Diese E-Mail wurde automatisch versendet, sobald die Anmeldefrist abgelaufen ist.",
+  ]);
+}
+
+const kursname = {
+  ...grundtext,
+  fontWeight: "bold" as const,
+  fontSize: "17px",
+  margin: "0 0 10px 0",
 };
 
-const container = {
-  backgroundColor: "#ffffff",
-  margin: "0 auto",
-  padding: "0",
-  marginBottom: "64px",
-  maxWidth: "600px",
-  borderRadius: "8px",
-  boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-};
-
-const header = {
-  backgroundColor: "#faa619",
-  padding: "32px 24px",
-  textAlign: "center" as const,
-  borderRadius: "8px 8px 0 0",
-};
-
-const logoText = {
-  color: "#ffffff",
-  fontSize: "28px",
-  fontWeight: "bold",
-  margin: "0 0 8px 0",
-  letterSpacing: "0.5px",
-};
-
-const tagline = {
-  color: "#ffffff",
-  fontSize: "12px",
-  fontWeight: "normal",
-  margin: "0",
-  opacity: 0.95,
-  letterSpacing: "0.3px",
-};
-
-const content = {
-  padding: "32px 24px",
-};
-
-const heading = {
-  fontSize: "24px",
-  fontWeight: "bold",
-  color: "#58595b",
-  marginBottom: "24px",
-};
-
-const paragraph = {
-  fontSize: "16px",
-  lineHeight: "26px",
-  color: "#58595b",
-  marginBottom: "16px",
-};
-
-const paragraphSmall = {
-  fontSize: "14px",
-  lineHeight: "22px",
-  color: "#6b7280",
-  marginBottom: "0",
-};
-
-const courseInfo = {
-  backgroundColor: "#f9fafb",
-  padding: "20px",
-  borderRadius: "8px",
-  margin: "24px 0",
-  border: "1px solid #e5e7eb",
-};
-
-const courseTitleStyle = {
-  fontSize: "20px",
-  fontWeight: "bold",
-  color: "#58595b",
-  marginBottom: "16px",
-};
-
-const courseDetail = {
-  fontSize: "16px",
-  lineHeight: "24px",
-  color: "#58595b",
-  marginBottom: "8px",
-};
-
-const statsBox = {
-  backgroundColor: "#eff6ff",
-  padding: "20px",
-  borderRadius: "8px",
-  margin: "24px 0",
-  border: "1px solid #bfdbfe",
-};
-
-const statsTitle = {
-  fontSize: "18px",
-  fontWeight: "bold",
-  color: "#1e40af",
-  marginBottom: "12px",
-};
-
-const statsLine = {
+const hinweiszeile = {
+  ...grundtext,
+  fontWeight: "bold" as const,
   fontSize: "15px",
-  lineHeight: "24px",
-  color: "#374151",
-  marginBottom: "6px",
+  margin: "14px 0 16px 0",
 };
 
-const statsLineHighlight = {
+const werttabelle = {
+  width: "100%",
+  borderCollapse: "collapse" as const,
+  margin: "0 0 20px 0",
+};
+
+const werttabelleBeschriftung = {
+  ...kleintext,
+  width: "220px",
+  padding: "7px 12px 7px 0",
+  borderBottom: `1px solid ${farben.rule}`,
+  verticalAlign: "top" as const,
+  margin: 0,
+};
+
+const werttabelleBeschriftungLetzte = {
+  ...werttabelleBeschriftung,
+  borderBottom: "none",
+};
+
+const werttabelleWert = {
+  ...grundtext,
   fontSize: "15px",
-  lineHeight: "24px",
-  color: "#92400e",
-  marginBottom: "6px",
-  marginTop: "8px",
+  padding: "7px 0",
+  borderBottom: `1px solid ${farben.rule}`,
+  margin: 0,
 };
 
-const link = {
-  color: "#faa619",
-  fontWeight: "bold",
-};
-
-const hr = {
-  borderColor: "#e5e7eb",
-  margin: "32px 0",
-};
-
-const footerSection = {
-  padding: "24px",
-  backgroundColor: "#f9fafb",
-  textAlign: "center" as const,
-  borderRadius: "0 0 8px 8px",
-};
-
-const footerText = {
-  fontSize: "12px",
-  color: "#9ca3af",
-  margin: "0",
+const werttabelleWertLetzte = {
+  ...werttabelleWert,
+  borderBottom: "none",
 };

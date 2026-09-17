@@ -12,6 +12,19 @@ import { isRegistrationDeadlinePassed } from "@/lib/registration-deadline";
 import { calendarDaysInclusive } from "@/lib/format-date-range";
 import { formatAvailableSlots } from "@/lib/format-available-slots";
 import PublicPage from "../general/public-page";
+import { BezirkLabel } from "@/app/_components/programmheft/bezirk-label";
+import { headMeta } from "@/app/_components/programmheft/page-head";
+import { Tag } from "@/app/_components/programmheft/tag";
+import { Note } from "@/app/_components/programmheft/note";
+import { Panel } from "@/app/_components/programmheft/panel";
+import { ButtonLink } from "@/app/_components/programmheft/button-link";
+import { ValueTable } from "@/app/_components/programmheft/value-table";
+import { Heading } from "@/app/_components/programmheft/section-head";
+import {
+  PersonList,
+  PersonRow,
+} from "@/app/_components/programmheft/person-row";
+import { courseTypeLabel } from "@/lib/termine-labels";
 import MediaCredit from "@/app/_components/general/media-credit";
 import PublicShareButton from "@/app/_components/general/public-share-button";
 import {
@@ -19,15 +32,9 @@ import {
   Calendar,
   CalendarArrowDownIcon,
   MapPin,
-  MapPinIcon,
   Users,
   Wallet,
-  CheckCircleIcon,
-  UsersIcon,
-  CircleXIcon,
   EditIcon,
-  ExternalLink,
-  UserIcon,
 } from "lucide-react";
 import { formatAcceptedCoursePaymentMethods } from "@/lib/course-payment-methods";
 import {
@@ -40,6 +47,7 @@ import { isExternalCourse } from "@/lib/course-external";
 import { priceOptionAgeLabel } from "@/lib/course-price-option-age";
 import { coursePath, courseRegistrationPath } from "@/lib/slug";
 import LocationNavigationLink from "@/app/_components/general/location-navigation-link";
+import { cn } from "@/lib/utils";
 
 type CourseWithRelations = RouterOutputs["courses"]["getById"];
 type CourseSpots = RouterOutputs["courses"]["getAvailableSlots"];
@@ -79,6 +87,10 @@ function formatCourseSchedule(course: {
     year: "numeric",
   })}`;
 }
+
+/** Outline-Schaltfläche für nicht-navigierende Aktionen (ICS-Download). */
+const OUTLINE_BUTTON =
+  "semi-condensed border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night inline-flex min-h-12 w-full items-center justify-center gap-2 border-2 px-4 text-base font-semibold transition-colors";
 
 export default function CourseDetailView({
   course,
@@ -133,24 +145,6 @@ export default function CourseDetailView({
     !isRegistrationNotOpenYet &&
     (isExternal || !spots.isFull || course.allowWaitingList);
 
-  const district = !course.bezirk
-    ? "primary"
-    : (`district-${course.bezirk.number}` as
-        | "district-1"
-        | "district-2"
-        | "district-3"
-        | "district-4"
-        | "district-5"
-        | "district-6"
-        | "district-7"
-        | "district-8"
-        | "district-9"
-        | "district-10"
-        | "district-11"
-        | "district-12"
-        | "district-13"
-        | undefined);
-
   const handleDownloadIcs = () => {
     // Server-generated single-item ICS: proper escaping, description, URL
     window.location.href = `/api/feed/ical?courseId=${course.id}`;
@@ -178,43 +172,37 @@ export default function CourseDetailView({
   const acceptedPaymentHero = formatAcceptedCoursePaymentMethods(course);
 
   const heroDescription = (
-    <div className="mt-1 space-y-4">
+    <div className="space-y-4">
       {course.motto ? (
-        <p className="italic opacity-90">{course.motto}</p>
+        <p className="semi-condensed text-xl leading-snug font-medium">
+          {course.motto}
+        </p>
       ) : null}
       <div className="flex flex-wrap items-center gap-2">
-        <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-semibold">
-          {course.courseType}
+        <span className={headMeta.label}>
+          {courseTypeLabel(course.courseType)}
         </span>
         {course.bezirk && (
-          <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-semibold">
-            {`Bezirk ${course.bezirk.number} (${course.bezirk.shortName})`}
+          <span className={headMeta.label}>
+            <BezirkLabel bezirk={course.bezirk} />
           </span>
         )}
         {!isSameDay && (
-          <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-semibold">
+          <span className={headMeta.label}>
             {durationDays} {durationDays === 1 ? "Tag" : "Tage"}
           </span>
         )}
-        {isPast && (
-          <span className="rounded-full bg-gray-600 px-2.5 py-0.5 text-xs font-semibold">
-            Vergangen
-          </span>
-        )}
+        {isPast && <Tag>Vergangen</Tag>}
         {!isExternal && spots.isFull && !course.allowWaitingList && (
-          <span className="rounded-full bg-red-600 px-2.5 py-0.5 text-xs font-semibold">
-            Ausgebucht
-          </span>
+          <Tag>Ausgebucht</Tag>
         )}
         {!isExternal && spots.isFull && course.allowWaitingList && (
-          <span className="rounded-full bg-orange-600 px-2.5 py-0.5 text-xs font-semibold">
-            Nur Warteliste
-          </span>
+          <Tag tone="orange">Nur Warteliste</Tag>
         )}
         {canEdit && (
           <Link
             href={`/dashboard/courses/${course.id}/edit`}
-            className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-white/20 px-2.5 py-1 text-xs font-semibold transition-colors hover:bg-white/30 sm:gap-2 sm:px-3 sm:py-1.5"
+            className={headMeta.action}
           >
             <EditIcon className="h-4 w-4 shrink-0" aria-hidden />
             Bearbeiten
@@ -223,52 +211,43 @@ export default function CourseDetailView({
         <PublicShareButton
           title={course.title}
           text={course.motto || course.description || course.title}
-          className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-white/20 px-2.5 py-1 text-xs font-semibold transition-colors hover:bg-white/30 sm:gap-2 sm:px-3 sm:py-1.5"
+          className={headMeta.action}
         />
       </div>
-      <div className="flex flex-col gap-2 border-t border-white/20 pt-3 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-1 sm:gap-y-2">
+      <div className={headMeta.line}>
         <span className="flex items-center gap-2">
-          <Calendar className="h-4 w-4 shrink-0 text-white/90" aria-hidden />
+          <Calendar className={headMeta.icon} aria-hidden />
           {formatCourseSchedule(course)}
         </span>
         {locationLine ? (
           <>
-            <span
-              className="hidden shrink-0 px-1 text-white/45 sm:inline"
-              aria-hidden
-            >
+            <span className={headMeta.separator} aria-hidden>
               ·
             </span>
             <span className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 shrink-0 text-white/90" aria-hidden />
+              <MapPin className={headMeta.icon} aria-hidden />
               {locationLine}
             </span>
           </>
         ) : null}
         {!isPast && capacityMeta ? (
           <>
-            <span
-              className="hidden shrink-0 px-1 text-white/45 sm:inline"
-              aria-hidden
-            >
+            <span className={headMeta.separator} aria-hidden>
               ·
             </span>
             <span className="flex items-center gap-2">
-              <Users className="h-4 w-4 shrink-0 text-white/90" aria-hidden />
+              <Users className={headMeta.icon} aria-hidden />
               {capacityMeta}
             </span>
           </>
         ) : null}
         {!isExternal && !course.isFree && acceptedPaymentHero ? (
           <>
-            <span
-              className="hidden shrink-0 px-1 text-white/45 sm:inline"
-              aria-hidden
-            >
+            <span className={headMeta.separator} aria-hidden>
               ·
             </span>
             <span className="flex min-w-0 items-center gap-2">
-              <Wallet className="h-4 w-4 shrink-0 text-white/90" aria-hidden />
+              <Wallet className={headMeta.icon} aria-hidden />
               <span className="truncate">{acceptedPaymentHero}</span>
             </span>
           </>
@@ -276,10 +255,10 @@ export default function CourseDetailView({
       </div>
       {(registrationOpensAt && isRegistrationNotOpenYet) ||
       (registrationDeadline && !isPast) ? (
-        <div className="flex flex-col gap-2 border-t border-white/20 pt-3 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-1 sm:gap-y-2">
+        <div className={headMeta.line}>
           {registrationOpensAt && isRegistrationNotOpenYet && (
             <span className="flex items-center gap-2">
-              <Clock className="h-4 w-4 shrink-0 text-white/90" aria-hidden />
+              <Clock className={headMeta.icon} aria-hidden />
               Anmeldung ab:{" "}
               {registrationOpensAt.toLocaleDateString("de-DE", {
                 day: "2-digit",
@@ -294,15 +273,12 @@ export default function CourseDetailView({
           {registrationDeadline && !isPast ? (
             <>
               {registrationOpensAt && isRegistrationNotOpenYet ? (
-                <span
-                  className="hidden shrink-0 px-1 text-white/45 sm:inline"
-                  aria-hidden
-                >
+                <span className={headMeta.separator} aria-hidden>
                   ·
                 </span>
               ) : null}
               <span className="flex items-center gap-2">
-                <Clock className="h-4 w-4 shrink-0 text-white/90" aria-hidden />
+                <Clock className={headMeta.icon} aria-hidden />
                 Anmeldeschluss:{" "}
                 {registrationDeadline.toLocaleDateString("de-DE", {
                   day: "2-digit",
@@ -320,7 +296,6 @@ export default function CourseDetailView({
   return (
     <PublicPage
       title={course.title}
-      color={district}
       breadcrumbs={[
         { label: "Start", href: "/" },
         { label: "Termine", href: "/termine" },
@@ -329,512 +304,416 @@ export default function CourseDetailView({
       heroSize="compact"
       description={heroDescription}
     >
-      <div className="bg-background dark:bg-dark-background -mt-2 min-h-screen md:-mt-4">
-        <section className="py-8 md:py-12">
-          <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-              {/* Main Content */}
-              <div className="space-y-6 lg:col-span-2">
-                {/* Course Image */}
-                {course.image && (
-                  <div className="dark:bg-dark-surface dark:shadow-dark-border overflow-hidden rounded-lg bg-white shadow-md">
-                    <div className="relative aspect-video w-full">
-                      <Image
-                        src={course.image.url}
-                        alt={course.image.alt || course.title}
-                        fill
-                        className="object-cover"
-                      />
-                      {(course.image.copyright || course.image.creator) && (
-                        <div className="absolute right-2 bottom-2 flex justify-end">
-                          <MediaCredit
-                            copyright={course.image.copyright}
-                            creator={course.image.creator}
-                            showCreatorIcon
-                            className="text-right text-white/90 drop-shadow-sm"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Date & Time */}
-                <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
-                  <h2 className="text-dark dark:text-dark-text mb-4 flex items-center gap-2 text-xl font-bold">
-                    <Calendar className="text-primary h-6 w-6" />
-                    Termin
-                  </h2>
-                  <div className="space-y-2">
-                    {isSameDay ? (
-                      <>
-                        <p className="text-dark dark:text-dark-text text-lg font-semibold">
-                          {startDate.toLocaleDateString("de-DE", {
-                            weekday: "long",
-                            day: "numeric",
-                            month: "long",
-                            year: "numeric",
-                          })}
-                        </p>
-                        <p className="text-gray-600 dark:text-gray-400">
-                          {startDate.toLocaleTimeString("de-DE", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}{" "}
-                          -{" "}
-                          {endDate.toLocaleTimeString("de-DE", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}{" "}
-                          Uhr
-                        </p>
-                      </>
-                    ) : (
-                      <>
-                        <p className="text-dark dark:text-dark-text text-lg font-semibold">
-                          {startDate.toLocaleDateString("de-DE", {
-                            day: "numeric",
-                            month: "long",
-                          })}{" "}
-                          -{" "}
-                          {endDate.toLocaleDateString("de-DE", {
-                            day: "numeric",
-                            month: "long",
-                            year: "numeric",
-                          })}
-                        </p>
-                        <p className="text-gray-600 dark:text-gray-400">
-                          {durationDays} {durationDays === 1 ? "Tag" : "Tage"}
-                        </p>
-                      </>
-                    )}
-                    {registrationOpensAt && isRegistrationNotOpenYet && (
-                      <div className="mt-4 rounded-lg border-2 border-purple-300 bg-purple-50 p-4 dark:border-purple-700 dark:bg-purple-900/30">
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-5 w-5 text-purple-700 dark:text-purple-300" />
-                          <div>
-                            <p className="font-semibold text-purple-900 dark:text-purple-200">
-                              Anmeldung öffnet am
-                            </p>
-                            <p className="text-lg font-bold text-purple-800 dark:text-purple-100">
-                              {registrationOpensAt.toLocaleDateString("de-DE", {
-                                weekday: "long",
-                                day: "numeric",
-                                month: "long",
-                                year: "numeric",
-                              })}{" "}
-                              um{" "}
-                              {registrationOpensAt.toLocaleTimeString("de-DE", {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}{" "}
-                              Uhr
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    <div className="pt-4">
-                      <button
-                        onClick={handleDownloadIcs}
-                        className="border-primary text-primary hover:bg-primary/10 flex w-full items-center justify-center gap-2 rounded-lg border-2 px-4 py-2 text-sm font-semibold transition-colors"
-                      >
-                        <CalendarArrowDownIcon className="h-5 w-5" />
-                        Zum Kalender hinzufügen (ICS)
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Location */}
-                {course.location && (
-                  <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
-                    <h2 className="text-dark dark:text-dark-text mb-4 flex items-center gap-2 text-xl font-bold">
-                      <MapPinIcon className="text-primary h-6 w-6" />
-                      Veranstaltungsort
-                    </h2>
-                    <div className="space-y-2">
-                      {course.location.name && (
-                        <p className="text-dark dark:text-dark-text font-semibold">
-                          {course.location.name}
-                        </p>
-                      )}
-                      {course.location.street && (
-                        <p className="text-gray-600 dark:text-gray-400">
-                          {course.location.street}
-                        </p>
-                      )}
-                      <p className="text-gray-600 dark:text-gray-400">
-                        {course.location.zipCode &&
-                          `${course.location.zipCode} `}
-                        {course.location.city}
-                      </p>
-                      {course.location.additionalInfo && (
-                        <p className="mt-2 text-sm text-gray-500 dark:text-gray-500">
-                          {course.location.additionalInfo}
-                        </p>
-                      )}
-                      {/* Navigation Button */}
-                      <LocationNavigationLink location={course.location} />
-                    </div>
-                  </div>
-                )}
-
-                {/* Description */}
-                {course.description && (
-                  <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
-                    <h2 className="text-dark dark:text-dark-text mb-4 text-xl font-bold">
-                      Beschreibung
-                    </h2>
-                    <div
-                      className="prose max-w-none text-gray-700 dark:text-gray-300"
-                      dangerouslySetInnerHTML={{
-                        __html: sanitizeHtml(course.description),
-                      }}
+      <div className="sheet py-10 md:py-14">
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-3">
+          {/* Main Content */}
+          <div className="space-y-10 lg:col-span-2">
+            {/* Course Image */}
+            {course.image && (
+              <div className="relative aspect-video w-full">
+                <Image
+                  src={course.image.url}
+                  alt={course.image.alt || course.title}
+                  fill
+                  className="object-cover"
+                />
+                {(course.image.copyright || course.image.creator) && (
+                  <div className="absolute right-2 bottom-2 flex justify-end">
+                    <MediaCredit
+                      copyright={course.image.copyright}
+                      creator={course.image.creator}
+                      showCreatorIcon
+                      className="text-right text-white/90 drop-shadow-sm"
                     />
                   </div>
                 )}
+              </div>
+            )}
 
-                {/* Prerequisites */}
-                {course.prerequisites && (
-                  <div className="rounded-r-lg border-l-4 border-blue-500 bg-blue-50 p-6 dark:bg-blue-900/30">
-                    <h3 className="mb-2 flex items-center gap-2 text-lg font-bold text-blue-900 dark:text-blue-200">
-                      <CheckCircleIcon className="h-5 w-5" />
-                      Voraussetzungen
-                    </h3>
-                    <p className="text-blue-800 dark:text-blue-300">
-                      {course.prerequisites}
+            {/* Date & Time */}
+            <div>
+              <Heading as="h2" size="list" rule>
+                Termin
+              </Heading>
+              <div className="mt-4 space-y-2">
+                {isSameDay ? (
+                  <>
+                    <p className="text-ink dark:text-night-text text-lg font-semibold">
+                      {startDate.toLocaleDateString("de-DE", {
+                        weekday: "long",
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })}
                     </p>
-                  </div>
-                )}
-
-                {/* What to Bring */}
-                {course.whatToBring && (
-                  <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
-                    <h3 className="text-dark dark:text-dark-text mb-3 flex items-center gap-2 text-lg font-bold">
-                      <CheckCircleIcon className="text-primary h-5 w-5" />
-                      Mitzubringen
-                    </h3>
-                    <p className="text-gray-700 dark:text-gray-300">
-                      {course.whatToBring}
+                    <p className="text-dark dark:text-night-muted">
+                      {startDate.toLocaleTimeString("de-DE", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}{" "}
+                      -{" "}
+                      {endDate.toLocaleTimeString("de-DE", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}{" "}
+                      Uhr
                     </p>
-                  </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-ink dark:text-night-text text-lg font-semibold">
+                      {startDate.toLocaleDateString("de-DE", {
+                        day: "numeric",
+                        month: "long",
+                      })}{" "}
+                      -{" "}
+                      {endDate.toLocaleDateString("de-DE", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </p>
+                    <p className="text-dark dark:text-night-muted">
+                      {durationDays} {durationDays === 1 ? "Tag" : "Tage"}
+                    </p>
+                  </>
                 )}
-
-                {/* Kurs-Team (öffentlich): Konten + freie Namen */}
-                {((course.collaborators?.length ?? 0) > 0 ||
-                  (course.guestTeamMembers?.length ?? 0) > 0) && (
-                  <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
-                    <h2 className="text-dark dark:text-dark-text mb-4 flex items-center gap-2 text-xl font-bold">
-                      <UsersIcon className="text-primary h-6 w-6" />
-                      Kurs-Team
-                    </h2>
-                    <div className="space-y-3">
-                      {course.collaborators?.map((entry) => (
-                        <div
-                          key={entry.user.id}
-                          className="flex items-start gap-3"
-                        >
-                          <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
-                            {entry.user.profileImage?.url ? (
-                              <Image
-                                src={entry.user.profileImage.url}
-                                alt={
-                                  entry.user.profileImage.alt ||
-                                  entry.user.displayName ||
-                                  "Profilbild"
-                                }
-                                fill
-                                sizes="48px"
-                                className="object-cover"
-                              />
-                            ) : (
-                              <span className="flex h-full w-full items-center justify-center text-gray-400">
-                                <UserIcon className="h-6 w-6" />
-                              </span>
-                            )}
-                          </div>
-                          <div>
-                            <p className="text-dark dark:text-dark-text font-semibold">
-                              {entry.user.displayName}
-                            </p>
-                            {entry.user.bio && (
-                              <p className="text-sm text-gray-600 dark:text-gray-400">
-                                {entry.user.bio}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                      {course.guestTeamMembers?.map((row) => (
-                        <div key={row.id} className="flex items-start gap-3">
-                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
-                            <UserIcon className="h-6 w-6 text-gray-400" />
-                          </div>
-                          <div>
-                            <p className="text-dark dark:text-dark-text font-semibold">
-                              {row.displayName}
-                            </p>
-                            {row.bio ? (
-                              <p className="text-sm text-gray-600 dark:text-gray-400">
-                                {row.bio}
-                              </p>
-                            ) : null}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                {registrationOpensAt && isRegistrationNotOpenYet && (
+                  <Note tone="info" className="mt-4">
+                    <p className="font-semibold">Anmeldung öffnet am</p>
+                    <p>
+                      {registrationOpensAt.toLocaleDateString("de-DE", {
+                        weekday: "long",
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })}{" "}
+                      um{" "}
+                      {registrationOpensAt.toLocaleTimeString("de-DE", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}{" "}
+                      Uhr
+                    </p>
+                  </Note>
                 )}
               </div>
-
-              {/* Sidebar — pinned while the long main column scrolls */}
-              <div className="space-y-6 lg:sticky lg:top-24 lg:self-start">
-                {/* Registration CTA */}
-                {canRegister && (
-                  <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
-                    <h3 className="text-dark dark:text-dark-text mb-4 text-lg font-bold">
-                      Anmeldung
-                    </h3>
-
-                    {isExternal ? (
-                      <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-900/30">
-                        <p className="text-sm text-blue-900 dark:text-blue-200">
-                          {course.externalProviderName
-                            ? `Die Anmeldung erfolgt über ${course.externalProviderName}.`
-                            : "Die Anmeldung erfolgt über einen externen Anbieter."}
-                        </p>
-                      </div>
-                    ) : spots.isFull && course.allowWaitingList ? (
-                      <div className="mb-4 rounded-lg border border-orange-200 bg-orange-50 p-3 dark:border-orange-800 dark:bg-orange-900/30">
-                        <p className="text-sm font-semibold text-orange-800 dark:text-orange-300">
-                          Der Kurs ist ausgebucht. Sie können sich auf die
-                          Warteliste setzen lassen.
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="mb-4">
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {formatAvailableSlots(
-                            spots.availableSlots,
-                            spots.totalCapacity,
-                          )}
-                        </p>
-                      </div>
-                    )}
-
-                    {isExternal ? (
-                      <a
-                        href={anmeldenHref}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="bg-primary hover:bg-primary-dark mb-3 flex w-full items-center justify-center gap-2 rounded-lg px-6 py-3 text-center font-bold text-white transition-colors"
-                      >
-                        Zur Anmeldung
-                        <ExternalLink className="h-4 w-4 shrink-0" />
-                      </a>
-                    ) : (
-                      <>
-                        <Link
-                          href={anmeldenHref}
-                          className="bg-primary hover:bg-primary-dark mb-3 block w-full rounded-lg px-6 py-3 text-center font-bold text-white transition-colors"
-                        >
-                          {spots.isFull && course.allowWaitingList
-                            ? "Auf Warteliste setzen"
-                            : "Jetzt anmelden"}
-                        </Link>
-                        {existingRegistration && (
-                          <Link
-                            href={`/registrations/${existingRegistration.id}/edit`}
-                            className="border-primary text-primary hover:bg-primary/10 mb-3 flex w-full items-center justify-center gap-2 rounded-lg border-2 px-6 py-2.5 text-center font-semibold transition-colors"
-                          >
-                            <EditIcon className="h-5 w-5" aria-hidden />
-                            Bestehende Anmeldung bearbeiten
-                          </Link>
-                        )}
-                      </>
-                    )}
-
-                    {registrationDeadline && !isDeadlinePassed && (
-                      <p className="text-center text-xs text-gray-500">
-                        Anmeldung bis{" "}
-                        {registrationDeadline.toLocaleDateString("de-DE")}{" "}
-                        möglich
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {/* Registration Closed Notice */}
-                {!canRegister && !isPast && (
-                  <div className="dark:bg-dark-surface dark:shadow-dark-border sticky top-20 rounded-lg bg-white p-6 shadow-md">
-                    <h3 className="text-dark dark:text-dark-text mb-4 text-lg font-bold">
-                      Anmeldung
-                    </h3>
-                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
-                      <div className="flex items-start gap-3">
-                        <CircleXIcon className="mt-0.5 h-5 w-5 shrink-0 text-gray-500 dark:text-gray-400" />
-                        <div>
-                          <p className="font-semibold text-gray-700 dark:text-gray-300">
-                            {isRegistrationNotOpenYet
-                              ? "Anmeldung noch nicht geöffnet"
-                              : isDeadlinePassed
-                                ? "Anmeldefrist abgelaufen"
-                                : !isExternal &&
-                                    spots.isFull &&
-                                    !course.allowWaitingList
-                                  ? "Kurs ausgebucht"
-                                  : "Anmeldung geschlossen"}
-                          </p>
-                          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                            {isRegistrationNotOpenYet
-                              ? `Die Anmeldung für diesen Kurs öffnet am ${registrationOpensAt?.toLocaleDateString(
-                                  "de-DE",
-                                  {
-                                    day: "2-digit",
-                                    month: "long",
-                                    year: "numeric",
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                  },
-                                )} Uhr. Die Kursdetails sind bereits verfügbar.`
-                              : isDeadlinePassed
-                                ? `Die Anmeldefrist für diesen Kurs ist am ${registrationDeadline?.toLocaleDateString("de-DE")} abgelaufen.`
-                                : !isExternal &&
-                                    spots.isFull &&
-                                    !course.allowWaitingList
-                                  ? "Alle Plätze sind belegt und es gibt keine Warteliste."
-                                  : "Die Anmeldung für diesen Kurs ist derzeit nicht möglich."}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Price Info */}
-                {!isExternal || course.priceInfo ? (
-                  <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
-                    <h3 className="text-dark dark:text-dark-text mb-4 text-lg font-bold">
-                      {isExternal
-                        ? "Kosten"
-                        : course.isFree
-                          ? "Kostenlos"
-                          : "Preise"}
-                    </h3>
-                    {!isExternal &&
-                      (course.isFree ? (
-                        <p className="flex items-center gap-2 font-semibold text-green-700">
-                          <CheckCircleIcon className="h-5 w-5" />
-                          Dieser Kurs ist kostenfrei
-                        </p>
-                      ) : (
-                        <div className="space-y-3">
-                          {course.priceOptions.map((option, idx) => (
-                            <div
-                              key={idx}
-                              className="dark:border-dark-border flex items-start justify-between gap-3 border-b border-gray-200 pb-3 last:border-0"
-                            >
-                              <div className="min-w-0 flex-1">
-                                <p className="text-dark dark:text-dark-text font-semibold">
-                                  {option.label}
-                                </p>
-                                {option.description && (
-                                  <p className="text-xs text-gray-500 dark:text-gray-500">
-                                    {option.description}
-                                  </p>
-                                )}
-                                {priceOptionAgeLabel(option) && (
-                                  <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                                    {priceOptionAgeLabel(option)} — Alter am
-                                    ersten Kurstag
-                                  </p>
-                                )}
-                              </div>
-                              <div className="shrink-0 text-right">
-                                <p className="text-primary text-lg font-bold whitespace-nowrap tabular-nums">
-                                  {option.price.toFixed(2)}&nbsp;€
-                                </p>
-                                {/* Nur je Kategorie: ein Betrag pro Teilnehmer
-                                    steht einmal im Hinweis unter „Zahlung“. */}
-                                {course.downPaymentMode === "TICKET" &&
-                                  downPaymentForPriceOption(course, option.id) >
-                                    0 && (
-                                    <p className="text-xs whitespace-nowrap text-gray-600 tabular-nums dark:text-gray-400">
-                                      davon{" "}
-                                      {formatEuro(
-                                        downPaymentForPriceOption(
-                                          course,
-                                          option.id,
-                                        ),
-                                      )}{" "}
-                                      Anzahlung
-                                    </p>
-                                  )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ))}
-                    {course.priceInfo && (
-                      <p
-                        className={
-                          isExternal || course.isFree
-                            ? "text-sm text-gray-600 dark:text-gray-400"
-                            : "mt-4 text-xs text-gray-500 dark:text-gray-500"
-                        }
-                      >
-                        {course.priceInfo}
-                      </p>
-                    )}
-                    {!isExternal &&
-                      !course.isFree &&
-                      formatAcceptedCoursePaymentMethods(course) && (
-                        <div className="dark:border-dark-border mt-4 border-t border-gray-200 pt-4 dark:border-gray-700">
-                          <p className="text-dark dark:text-dark-text mb-1 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
-                            Zahlung
-                          </p>
-                          <p className="text-dark dark:text-dark-text flex gap-2 text-sm">
-                            <Wallet
-                              className="text-primary h-4 w-4 shrink-0"
-                              aria-hidden
-                            />
-                            {formatAcceptedCoursePaymentMethods(course)}
-                          </p>
-                          {/* Vor dem Klick auf „Jetzt anmelden“: dass und wie die
-                              Anzahlung fällig wird, und ob sie erstattet wird. */}
-                          {courseHasDownPayment(course) && (
-                            <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-gray-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-gray-300">
-                              <p>
-                                {course.downPaymentMode === "COURSE" &&
-                                course.downPaymentAmount
-                                  ? `Bei der Anmeldung wird eine Anzahlung von ${formatEuro(course.downPaymentAmount)} pro Teilnehmer per Überweisung fällig.`
-                                  : "Bei der Anmeldung wird je nach Preiskategorie eine Anzahlung per Überweisung fällig (siehe oben)."}{" "}
-                                Der Restbetrag folgt mit der Rechnung.
-                              </p>
-                              {downPaymentRefundNotice(course) && (
-                                <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
-                                  {downPaymentRefundNotice(course)}
-                                </p>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                  </div>
-                ) : null}
-
-                {/* Back to Overview */}
-                <Link
-                  href="/termine"
-                  className="text-dark dark:text-dark-text dark:border-dark-border dark:hover:bg-dark-surface block w-full rounded-lg border-2 border-gray-300 px-4 py-3 text-center font-semibold transition-colors hover:bg-gray-50"
-                >
-                  ← Zurück zur Übersicht
-                </Link>
-              </div>
+              <button
+                onClick={handleDownloadIcs}
+                className={cn(OUTLINE_BUTTON, "mt-4 sm:w-auto")}
+              >
+                <CalendarArrowDownIcon className="h-5 w-5" aria-hidden />
+                Zum Kalender hinzufügen (ICS)
+              </button>
             </div>
+
+            {/* Location */}
+            {course.location && (
+              <div>
+                <Heading as="h2" size="list" rule>
+                  Veranstaltungsort
+                </Heading>
+                <div className="mt-4 space-y-2">
+                  {course.location.name && (
+                    <p className="text-ink dark:text-night-text font-semibold">
+                      {course.location.name}
+                    </p>
+                  )}
+                  {course.location.street && (
+                    <p className="text-dark dark:text-night-muted">
+                      {course.location.street}
+                    </p>
+                  )}
+                  <p className="text-dark dark:text-night-muted">
+                    {course.location.zipCode && `${course.location.zipCode} `}
+                    {course.location.city}
+                  </p>
+                  {course.location.additionalInfo && (
+                    <p className="text-dark dark:text-night-muted mt-2 text-sm">
+                      {course.location.additionalInfo}
+                    </p>
+                  )}
+                  <LocationNavigationLink location={course.location} />
+                </div>
+              </div>
+            )}
+
+            {/* Description */}
+            {course.description && (
+              <div>
+                <Heading as="h2" size="list" rule>
+                  Beschreibung
+                </Heading>
+                <div
+                  className="prose dark:prose-invert text-ink dark:text-night-text mt-4 max-w-none"
+                  dangerouslySetInnerHTML={{
+                    __html: sanitizeHtml(course.description),
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Prerequisites */}
+            {course.prerequisites && (
+              <Note tone="important" title="Voraussetzungen" titleAs="h3">
+                <p>{course.prerequisites}</p>
+              </Note>
+            )}
+
+            {/* What to Bring */}
+            {course.whatToBring && (
+              <div>
+                <Heading as="h2" size="list" rule>
+                  Mitzubringen
+                </Heading>
+                <p className="text-ink dark:text-night-text mt-4">
+                  {course.whatToBring}
+                </p>
+              </div>
+            )}
+
+            {/* Kurs-Team (öffentlich): Konten + freie Namen */}
+            {((course.collaborators?.length ?? 0) > 0 ||
+              (course.guestTeamMembers?.length ?? 0) > 0) && (
+              <div>
+                <Heading as="h2" size="list" rule>
+                  Kurs-Team
+                </Heading>
+                <PersonList columns={2} className="mt-4">
+                  {course.collaborators?.map((entry) => (
+                    <PersonRow
+                      key={entry.user.id}
+                      name={entry.user.displayName ?? ""}
+                      role={entry.user.bio}
+                      image={entry.user.profileImage}
+                    />
+                  ))}
+                  {course.guestTeamMembers?.map((row) => (
+                    <PersonRow
+                      key={row.id}
+                      name={row.displayName}
+                      role={row.bio}
+                    />
+                  ))}
+                </PersonList>
+              </div>
+            )}
           </div>
-        </section>
+
+          {/* Randspalte läuft mit, während die lange Hauptspalte vorbeizieht.
+              `sticky-below-nav` statt `lg:top-24` wie in der Termin-Ansicht:
+              Mit den heutigen Daten ist die Randspalte so hoch wie ihre
+              Spalte und klebt deshalb nie — die 96px wären aber dieselbe
+              Überdeckung, sobald ein Kurs längeren Text bekommt. */}
+          <div className="sticky-below-nav space-y-8 lg:sticky lg:self-start">
+            {/* Registration CTA */}
+            {canRegister && (
+              <Panel labelledBy="anmeldung-heading">
+                <Heading as="h3" id="anmeldung-heading" size="list">
+                  Anmeldung
+                </Heading>
+
+                {isExternal ? (
+                  <p className="text-dark dark:text-night-muted mt-4 text-sm">
+                    {course.externalProviderName
+                      ? `Die Anmeldung erfolgt über ${course.externalProviderName}.`
+                      : "Die Anmeldung erfolgt über einen externen Anbieter."}
+                  </p>
+                ) : spots.isFull && course.allowWaitingList ? (
+                  <p className="text-ink dark:text-night-text mt-4 text-sm font-semibold">
+                    Der Kurs ist ausgebucht. Sie können sich auf die Warteliste
+                    setzen lassen.
+                  </p>
+                ) : (
+                  <p className="text-dark dark:text-night-muted mt-4 text-sm">
+                    {formatAvailableSlots(
+                      spots.availableSlots,
+                      spots.totalCapacity,
+                    )}
+                  </p>
+                )}
+
+                {isExternal ? (
+                  <ButtonLink
+                    href={anmeldenHref}
+                    kind="external"
+                    className="mt-4 w-full justify-center"
+                  >
+                    Zur Anmeldung
+                  </ButtonLink>
+                ) : (
+                  <>
+                    <ButtonLink
+                      href={anmeldenHref}
+                      className="mt-4 w-full justify-center"
+                    >
+                      {spots.isFull && course.allowWaitingList
+                        ? "Auf Warteliste setzen"
+                        : "Jetzt anmelden"}
+                    </ButtonLink>
+                    {existingRegistration && (
+                      <Link
+                        href={`/registrations/${existingRegistration.id}/edit`}
+                        className={cn(OUTLINE_BUTTON, "mt-3")}
+                      >
+                        <EditIcon className="h-4 w-4 shrink-0" aria-hidden />
+                        Bestehende Anmeldung bearbeiten
+                      </Link>
+                    )}
+                  </>
+                )}
+
+                {registrationDeadline && !isDeadlinePassed && (
+                  <p className="text-dark dark:text-night-muted mt-3 text-center text-xs">
+                    Anmeldung bis{" "}
+                    {registrationDeadline.toLocaleDateString("de-DE")} möglich
+                  </p>
+                )}
+              </Panel>
+            )}
+
+            {/* Registration Closed Notice */}
+            {!canRegister && !isPast && (
+              <Panel labelledBy="anmeldung-geschlossen-heading">
+                <Heading as="h3" id="anmeldung-geschlossen-heading" size="list">
+                  Anmeldung
+                </Heading>
+                <p className="text-ink dark:text-night-text mt-4 font-semibold">
+                  {isRegistrationNotOpenYet
+                    ? "Anmeldung noch nicht geöffnet"
+                    : isDeadlinePassed
+                      ? "Anmeldefrist abgelaufen"
+                      : !isExternal && spots.isFull && !course.allowWaitingList
+                        ? "Kurs ausgebucht"
+                        : "Anmeldung geschlossen"}
+                </p>
+                <p className="text-dark dark:text-night-muted mt-1 text-sm">
+                  {isRegistrationNotOpenYet
+                    ? `Die Anmeldung für diesen Kurs öffnet am ${registrationOpensAt?.toLocaleDateString(
+                        "de-DE",
+                        {
+                          day: "2-digit",
+                          month: "long",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        },
+                      )} Uhr. Die Kursdetails sind bereits verfügbar.`
+                    : isDeadlinePassed
+                      ? `Die Anmeldefrist für diesen Kurs ist am ${registrationDeadline?.toLocaleDateString("de-DE")} abgelaufen.`
+                      : !isExternal && spots.isFull && !course.allowWaitingList
+                        ? "Alle Plätze sind belegt und es gibt keine Warteliste."
+                        : "Die Anmeldung für diesen Kurs ist derzeit nicht möglich."}
+                </p>
+              </Panel>
+            )}
+
+            {/* Price Info */}
+            {!isExternal || course.priceInfo ? (
+              <div>
+                <Heading as="h3" size="list" rule>
+                  {isExternal
+                    ? "Kosten"
+                    : course.isFree
+                      ? "Kostenlos"
+                      : "Preise"}
+                </Heading>
+                {!isExternal &&
+                  (course.isFree ? (
+                    <p className="mt-4">
+                      <Tag>Dieser Kurs ist kostenfrei</Tag>
+                    </p>
+                  ) : (
+                    <ValueTable
+                      className="mt-4"
+                      rows={course.priceOptions.map((option, idx) => {
+                        const ageRange = priceOptionAgeLabel(option);
+                        const downPayment =
+                          course.downPaymentMode === "TICKET"
+                            ? downPaymentForPriceOption(course, option.id)
+                            : 0;
+                        return {
+                          label: (
+                            <span key={idx}>
+                              {option.label}
+                              {option.description && (
+                                <span className="text-dark dark:text-night-muted block text-xs">
+                                  {option.description}
+                                </span>
+                              )}
+                              {ageRange && (
+                                <span className="text-dark dark:text-night-muted block text-xs">
+                                  {ageRange} — Alter am ersten Kurstag
+                                </span>
+                              )}
+                            </span>
+                          ),
+                          value: (
+                            <span className="block">
+                              {formatEuro(option.price)}
+                              {downPayment > 0 && (
+                                <span className="text-dark dark:text-night-muted mt-1 block text-xs font-normal normal-case">
+                                  davon {formatEuro(downPayment)} Anzahlung
+                                </span>
+                              )}
+                            </span>
+                          ),
+                        };
+                      })}
+                    />
+                  ))}
+                {course.priceInfo && (
+                  <p
+                    className={
+                      isExternal || course.isFree
+                        ? "text-dark dark:text-night-muted mt-3 text-sm"
+                        : "text-dark dark:text-night-muted mt-3 text-xs"
+                    }
+                  >
+                    {course.priceInfo}
+                  </p>
+                )}
+                {!isExternal &&
+                  !course.isFree &&
+                  formatAcceptedCoursePaymentMethods(course) && (
+                    <div className="border-rule dark:border-night-rule mt-4 border-t pt-4">
+                      <p className={headMeta.label}>Zahlung</p>
+                      <p className="text-ink dark:text-night-text mt-1 flex gap-2 text-sm">
+                        <Wallet
+                          className="text-dark dark:text-night-muted h-4 w-4 shrink-0"
+                          aria-hidden
+                        />
+                        {formatAcceptedCoursePaymentMethods(course)}
+                      </p>
+                      {/* Vor dem Klick auf „Jetzt anmelden“: dass und wie die
+                          Anzahlung fällig wird, und ob sie erstattet wird. */}
+                      {courseHasDownPayment(course) && (
+                        <Note tone="info" className="mt-3">
+                          <p>
+                            {course.downPaymentMode === "COURSE" &&
+                            course.downPaymentAmount
+                              ? `Bei der Anmeldung wird eine Anzahlung von ${formatEuro(course.downPaymentAmount)} pro Teilnehmer per Überweisung fällig.`
+                              : "Bei der Anmeldung wird je nach Preiskategorie eine Anzahlung per Überweisung fällig (siehe oben)."}{" "}
+                            Der Restbetrag folgt mit der Rechnung.
+                          </p>
+                          {downPaymentRefundNotice(course) && (
+                            <p className="mt-1 text-sm">
+                              {downPaymentRefundNotice(course)}
+                            </p>
+                          )}
+                        </Note>
+                      )}
+                    </div>
+                  )}
+              </div>
+            ) : null}
+
+            {/* Back to Overview */}
+            <Link href="/termine" className={OUTLINE_BUTTON}>
+              ← Zurück zur Übersicht
+            </Link>
+          </div>
+        </div>
       </div>
     </PublicPage>
   );

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Landmark } from "lucide-react";
 import { api } from "@/trpc/react";
 import { useToast } from "@/app/_components/ui/toast";
+import { Tag, type TagTone } from "@/app/_components/programmheft/tag";
 import {
   dateFromInput,
   todayInputValue,
@@ -21,15 +22,19 @@ import {
   type DownPaymentStatusValue,
 } from "@/lib/course-down-payment";
 
-const stateClasses: Record<DownPaymentState, string> = {
-  NONE: "bg-gray-100 text-gray-600 dark:bg-gray-700/40 dark:text-gray-300",
-  OPEN: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
-  PARTIAL: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
-  PAID: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
-  REFUND_PENDING:
-    "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
-  REFUNDED: "bg-gray-100 text-gray-700 dark:bg-gray-700/40 dark:text-gray-300",
-  RETAINED: "bg-gray-100 text-gray-700 dark:bg-gray-700/40 dark:text-gray-300",
+// Nur vier Etikett-Töne stehen zur Verfügung (siehe Tag-Komponente) — sieben
+// Anzahlungs-Zustände lassen sich darauf nicht eins-zu-eins abbilden. Offen
+// bekommt Orange (wartet auf Aktion), Teilzahlung sticht als Tinte-Etikett
+// hervor, das Erstattungsproblem bekommt den Warnton; erledigte Zustände
+// (bezahlt, erstattet, einbehalten) teilen sich den ruhigen Ton.
+const stateTones: Record<DownPaymentState, TagTone> = {
+  NONE: "inverse",
+  OPEN: "orange",
+  PARTIAL: "ink",
+  PAID: "inverse",
+  REFUND_PENDING: "cancelled",
+  REFUNDED: "inverse",
+  RETAINED: "inverse",
 };
 
 /** Stand der Anzahlung als Badge; ohne Anzahlung rendert er nichts. */
@@ -46,21 +51,19 @@ export function DownPaymentBadge({
   const state = downPaymentState(registration);
   if (state === "NONE") return null;
   return (
-    <span
-      className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${stateClasses[state]} ${className}`}
-    >
+    <Tag tone={stateTones[state]} className={className}>
       {withPrefix ? "Anzahlung: " : ""}
       {DOWN_PAYMENT_STATE_LABELS[state]}
-    </span>
+    </Tag>
   );
 }
 
 const buttonClass =
-  "dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background-secondary rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50";
+  "border-ink dark:border-night-text dark:bg-night dark:text-night-text dark:hover:bg-night-raised min-h-11 border bg-paper px-2.5 py-1.5 text-sm font-medium text-ink transition-colors hover:bg-rule/30 disabled:opacity-50";
 const primaryButtonClass =
-  "bg-primary hover:bg-primary-dark rounded-lg px-3 py-1.5 text-sm font-medium text-white transition-colors disabled:opacity-50";
+  "bg-primary hover:bg-primary-dark min-h-11 px-3 py-1.5 text-sm font-medium text-ink transition-colors disabled:opacity-50";
 const inputClass =
-  "dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none";
+  "border-ink dark:border-night-text dark:bg-night dark:text-night-text w-full border px-3 py-2 text-sm";
 
 const successMessages: Record<DownPaymentStatusValue, string> = {
   OPEN: "Anzahlung wieder auf offen gesetzt",
@@ -136,10 +139,10 @@ export function DownPaymentPanel({
   const amountValid = Number.isFinite(parsedAmount) && parsedAmount > 0;
 
   return (
-    <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg border border-gray-200 bg-white shadow-sm">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 p-6 dark:border-gray-700">
-        <h2 className="text-dark dark:text-dark-text flex items-center gap-2 text-lg font-semibold">
-          <Landmark className="text-primary h-5 w-5" />
+    <div className="border-rule dark:border-night-rule dark:bg-night bg-paper mb-6 border">
+      <div className="border-rule dark:border-night-rule flex flex-wrap items-center justify-between gap-3 border-b p-6">
+        <h2 className="text-ink dark:text-night-text flex items-center gap-2 text-lg font-semibold">
+          <Landmark className="text-primary-ink dark:text-primary h-5 w-5" />
           Anzahlung
         </h2>
         <DownPaymentBadge
@@ -151,23 +154,23 @@ export function DownPaymentPanel({
       <div className="space-y-4 p-6">
         <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
           <div className="flex justify-between gap-3">
-            <dt className="text-gray-600 dark:text-gray-400">Anzahlung</dt>
-            <dd className="font-semibold text-gray-900 dark:text-gray-100">
+            <dt className="text-dark dark:text-night-muted">Anzahlung</dt>
+            <dd className="text-ink dark:text-night-text font-semibold">
               {formatEuro(total)}
             </dd>
           </div>
           <div className="flex justify-between gap-3">
-            <dt className="text-gray-600 dark:text-gray-400">
+            <dt className="text-dark dark:text-night-muted">
               Restbetrag (Rechnung)
             </dt>
-            <dd className="text-gray-900 dark:text-gray-100">
+            <dd className="text-ink dark:text-night-text">
               {formatEuro(remainder)}
             </dd>
           </div>
           {received > 0 && (
             <div className="flex justify-between gap-3">
-              <dt className="text-gray-600 dark:text-gray-400">Eingegangen</dt>
-              <dd className="text-gray-900 dark:text-gray-100">
+              <dt className="text-dark dark:text-night-muted">Eingegangen</dt>
+              <dd className="text-ink dark:text-night-text">
                 {formatEuro(received)}
                 {registration.downPaymentPaidAt &&
                   ` am ${new Date(registration.downPaymentPaidAt).toLocaleDateString("de-DE")}`}
@@ -176,17 +179,17 @@ export function DownPaymentPanel({
           )}
           {open > 0 && received > 0 && (
             <div className="flex justify-between gap-3">
-              <dt className="text-gray-600 dark:text-gray-400">Noch offen</dt>
-              <dd className="text-gray-900 dark:text-gray-100">
+              <dt className="text-dark dark:text-night-muted">Noch offen</dt>
+              <dd className="text-ink dark:text-night-text">
                 {formatEuro(open)}
               </dd>
             </div>
           )}
           <div className="flex justify-between gap-3 sm:col-span-2">
-            <dt className="text-gray-600 dark:text-gray-400">
+            <dt className="text-dark dark:text-night-muted">
               Verwendungszweck
             </dt>
-            <dd className="text-right break-words text-gray-900 dark:text-gray-100">
+            <dd className="text-ink dark:text-night-text text-right break-words">
               {downPaymentReference(
                 courseNumber,
                 registration.registrantFirstName,
@@ -196,8 +199,8 @@ export function DownPaymentPanel({
           </div>
           {registration.downPaymentNote && (
             <div className="flex justify-between gap-3 sm:col-span-2">
-              <dt className="text-gray-600 dark:text-gray-400">Notiz</dt>
-              <dd className="text-right break-words text-gray-900 dark:text-gray-100">
+              <dt className="text-dark dark:text-night-muted">Notiz</dt>
+              <dd className="text-ink dark:text-night-text text-right break-words">
                 {registration.downPaymentNote}
               </dd>
             </div>
@@ -205,14 +208,14 @@ export function DownPaymentPanel({
         </dl>
 
         {state === "REFUND_PENDING" && (
-          <p className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300">
+          <p className="border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300">
             Die Anmeldung ist storniert, die Anzahlung aber eingegangen. Bitte
             mit der Kasse klären, ob sie erstattet oder einbehalten wird, und
             das Ergebnis hier vermerken.
           </p>
         )}
         {state === "OPEN" && registration.registrationStatus === "WAITLIST" && (
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-dark dark:text-night-muted text-sm">
             Auf der Warteliste — die Anzahlung wird erst mit der
             Platzbestätigung fällig.
           </p>
@@ -292,10 +295,10 @@ export function DownPaymentPanel({
         )}
 
         {canBook && formOpen && (
-          <div className="dark:border-dark-border dark:bg-dark-background-secondary space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
+          <div className="border-rule dark:border-night-rule dark:bg-night-raised bg-rule/25 space-y-3 border p-4">
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="block text-sm">
-                <span className="dark:text-dark-text mb-1 block font-medium text-gray-700">
+                <span className="text-ink dark:text-night-text mb-1 block font-medium">
                   Betrag
                 </span>
                 <input
@@ -308,7 +311,7 @@ export function DownPaymentPanel({
                 />
               </label>
               <label className="block text-sm">
-                <span className="dark:text-dark-text mb-1 block font-medium text-gray-700">
+                <span className="text-ink dark:text-night-text mb-1 block font-medium">
                   Wertstellung
                 </span>
                 <input
@@ -320,7 +323,7 @@ export function DownPaymentPanel({
               </label>
             </div>
             <label className="block text-sm">
-              <span className="dark:text-dark-text mb-1 block font-medium text-gray-700">
+              <span className="text-ink dark:text-night-text mb-1 block font-medium">
                 Notiz (intern)
               </span>
               <input

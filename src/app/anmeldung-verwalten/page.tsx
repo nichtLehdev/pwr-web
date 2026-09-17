@@ -5,6 +5,8 @@ import Link from "next/link";
 import { api } from "@/trpc/react";
 import { getErrorMessage } from "@/lib/utils";
 import { MailCheck, MailIcon } from "lucide-react";
+import PublicPage from "@/app/_components/general/public-page";
+import { Note } from "@/app/_components/programmheft/note";
 
 /**
  * Self-service entry point for people who registered for a course without a
@@ -32,88 +34,83 @@ export default function ManageRegistrationPage() {
   };
 
   return (
-    <main className="bg-background-secondary dark:bg-dark-background-secondary min-h-[calc(100vh-4rem)] px-4 py-16">
-      <div className="container mx-auto max-w-2xl">
-        <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg border border-gray-200 bg-white p-8 shadow-sm">
-          <h1 className="text-dark dark:text-dark-text mb-4 text-3xl font-bold">
-            Anmeldung verwalten
-          </h1>
+    <PublicPage
+      title="Anmeldung verwalten"
+      breadcrumbs={[
+        { label: "Start", href: "/" },
+        { label: "Anmeldung verwalten" },
+      ]}
+      heroSize="compact"
+      description={
+        <p>Zugangslink für eine Kursanmeldung ohne Benutzerkonto anfordern.</p>
+      }
+    >
+      <div className="sheet max-w-xl py-10 md:py-14">
+        {sent ? (
+          <Note tone="important" title="E-Mail unterwegs" titleAs="h3">
+            <p className="flex items-start gap-2">
+              <MailCheck className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
+              Falls es zu dieser Adresse Anmeldungen gibt, haben wir dir gerade
+              einen Zugangslink geschickt. Schau bitte auch im Spam-Ordner nach.
+            </p>
+          </Note>
+        ) : (
+          <>
+            <p className="text-ink dark:text-night-text max-w-[65ch] text-lg leading-relaxed">
+              Du hast dich ohne Benutzerkonto für einen Kurs angemeldet? Gib
+              hier die E-Mail-Adresse ein, mit der du dich angemeldet hast. Wir
+              schicken dir einen Link, über den du deine Anmeldung ansehen,
+              ändern oder stornieren kannst.
+            </p>
 
-          {sent ? (
-            <div className="rounded-lg border border-green-200 bg-green-50 p-6 dark:border-green-800 dark:bg-green-900/20">
-              <MailCheck className="mb-3 h-8 w-8 text-green-600 dark:text-green-400" />
-              <p className="mb-2 font-semibold text-green-800 dark:text-green-300">
-                E-Mail unterwegs
-              </p>
-              <p className="text-sm text-green-800 dark:text-green-300">
-                Falls es zu dieser Adresse Anmeldungen gibt, haben wir dir
-                gerade einen Zugangslink geschickt. Schau bitte auch im
-                Spam-Ordner nach.
-              </p>
-            </div>
-          ) : (
-            <>
-              <p className="mb-8 text-gray-600 dark:text-gray-400">
-                Du hast dich ohne Benutzerkonto für einen Kurs angemeldet? Gib
-                hier die E-Mail-Adresse ein, mit der du dich angemeldet hast.
-                Wir schicken dir einen Link, über den du deine Anmeldung
-                ansehen, ändern oder stornieren kannst.
-              </p>
-
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div>
-                  <label
-                    htmlFor="email"
-                    className="text-dark dark:text-dark-text mb-2 block text-sm font-medium"
-                  >
-                    E-Mail-Adresse
-                  </label>
-                  <input
-                    id="email"
-                    type="email"
-                    required
-                    autoComplete="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="name@beispiel.de"
-                    className="dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text focus:border-primary focus:ring-primary block w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-1 focus:outline-none"
-                  />
-                </div>
-
-                {error && (
-                  <div className="rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20">
-                    <p className="text-sm text-red-800 dark:text-red-300">
-                      {error}
-                    </p>
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={requestMutation.isPending}
-                  className="bg-primary hover:bg-primary-dark inline-flex w-full items-center justify-center gap-2 rounded-lg px-6 py-3 font-semibold text-white transition-colors disabled:opacity-50"
+            <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+              <div>
+                <label
+                  htmlFor="email"
+                  className="text-ink dark:text-night-text mb-1 block text-sm font-semibold"
                 >
-                  <MailIcon className="h-5 w-5" />
-                  {requestMutation.isPending
-                    ? "Wird gesendet..."
-                    : "Zugangslink anfordern"}
-                </button>
-              </form>
-            </>
-          )}
+                  E-Mail-Adresse
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  required
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="name@beispiel.de"
+                  className="border-ink dark:border-night-text bg-paper text-ink dark:bg-night dark:text-night-text min-h-11 w-full border-2 px-3 py-2 text-base"
+                />
+              </div>
 
-          <p className="mt-8 border-t border-gray-200 pt-6 text-sm text-gray-600 dark:border-gray-700 dark:text-gray-400">
-            Du hast ein Benutzerkonto?{" "}
-            <Link
-              href="/login?redirect=%2Fregistrations"
-              className="text-primary font-medium hover:underline"
-            >
-              Melde dich an
-            </Link>{" "}
-            — dort findest du alle deine Anmeldungen auf einen Blick.
-          </p>
-        </div>
+              {error && (
+                <Note tone="error">
+                  <p>{error}</p>
+                </Note>
+              )}
+
+              <button
+                type="submit"
+                disabled={requestMutation.isPending}
+                className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-primary dark:text-ink dark:hover:bg-paper semi-condensed inline-flex min-h-12 w-full items-center justify-center gap-3 px-6 text-lg font-semibold transition-colors disabled:opacity-50"
+              >
+                <MailIcon className="h-5 w-5 shrink-0" aria-hidden />
+                {requestMutation.isPending
+                  ? "Wird gesendet..."
+                  : "Zugangslink anfordern"}
+              </button>
+            </form>
+          </>
+        )}
+
+        <p className="border-rule dark:border-night-rule text-dark dark:text-night-muted mt-8 border-t pt-6 text-sm">
+          Du hast ein Benutzerkonto?{" "}
+          <Link href="/login?redirect=%2Fregistrations" className="link-ink">
+            Melde dich an
+          </Link>{" "}
+          — dort findest du alle deine Anmeldungen auf einen Blick.
+        </p>
       </div>
-    </main>
+    </PublicPage>
   );
 }

@@ -58,6 +58,5 @@ export {
 export {
   ContentStatusBadge,
   CONTENT_STATUS_LABELS,
-  CONTENT_STATUS_BADGE_CLASSES,
   CONTENT_STATUS_OPTIONS,
 } from "./content-status";

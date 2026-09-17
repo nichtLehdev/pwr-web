@@ -42,6 +42,7 @@ import {
 import { RegistrationPaymentBadge } from "@/app/_components/dashboard/invoice-payment-badge";
 import { participantPriceOptionLabel } from "@/lib/course-price-options";
 import { priceOptionAgeLabel } from "@/lib/course-price-option-age";
+import { Tag, type TagTone } from "@/app/_components/programmheft/tag";
 
 const courseTypeLabels: Record<CourseType, string> = {
   LEHRGANG: "Lehrgang",
@@ -60,14 +61,20 @@ const statusLabels: Record<ContentStatus, string> = {
   ARCHIVED: "Archiviert",
 };
 
-const statusColors: Record<ContentStatus, string> = {
-  DRAFT: "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300",
-  PENDING:
-    "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-  APPROVED:
-    "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  REJECTED: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-  ARCHIVED: "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400",
+/**
+ * Spiegelt die Zuordnung aus `content-status.tsx` — derselbe Status muss
+ * überall gleich aussehen. Vorher lag „Abgelehnt" auf `ink` und
+ * „Veröffentlicht" auf `inverse`: im Hellmodus sind beide Töne identisch
+ * gefüllt, das Gewicht war also vertauscht und nichts unterscheidbar.
+ *
+ * Gefüllt heißt „das musst du sehen", umrandet „das ist nur der Stand".
+ */
+const statusTones: Record<ContentStatus, TagTone> = {
+  DRAFT: "muted",
+  PENDING: "orange",
+  APPROVED: "ink",
+  REJECTED: "cancelled",
+  ARCHIVED: "muted",
 };
 
 const registrationStatusLabels: Record<RegistrationStatus, string> = {
@@ -76,12 +83,10 @@ const registrationStatusLabels: Record<RegistrationStatus, string> = {
   CANCELLED: "Storniert",
 };
 
-const registrationStatusColors: Record<RegistrationStatus, string> = {
-  CONFIRMED:
-    "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  WAITLIST:
-    "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-  CANCELLED: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+const registrationStatusTones: Record<RegistrationStatus, TagTone> = {
+  CONFIRMED: "inverse",
+  WAITLIST: "orange",
+  CANCELLED: "cancelled",
 };
 
 // Dashboard access is now controlled by permissions
@@ -199,22 +204,22 @@ export default function CourseDetailPage() {
 
   if (sessionLoading || profileLoading || permissionsLoading || courseLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="dark:bg-night bg-paper flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
 
   if (!session || !profile || !course) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="dark:bg-night bg-paper flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <h1 className="dark:text-dark-text text-xl font-semibold text-gray-900">
+          <h1 className="dark:text-night-text text-ink text-xl font-semibold">
             Kurs nicht gefunden
           </h1>
           <Link
             href="/dashboard/courses"
-            className="text-primary mt-4 inline-block hover:underline"
+            className="link-ink mt-4 inline-block"
           >
             Zurück zur Übersicht
           </Link>
@@ -317,54 +322,54 @@ export default function CourseDetailPage() {
   ];
   const renderCourseInfoSection = (className: string) => (
     <section id="course-detail-info" className={className}>
-      <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+      <h2 className="dark:text-night-text text-ink mb-4 text-lg font-semibold">
         Kursinformationen
       </h2>
       <dl className="grid gap-4 sm:grid-cols-2">
         <div>
-          <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+          <dt className="text-dark dark:text-night-muted text-sm font-medium">
             Kurstyp
           </dt>
-          <dd className="dark:text-dark-text mt-1 text-gray-900">
+          <dd className="dark:text-night-text text-ink mt-1">
             {courseTypeLabels[course.courseType]}
           </dd>
         </div>
         <div>
-          <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+          <dt className="text-dark dark:text-night-muted text-sm font-medium">
             Beginn
           </dt>
-          <dd className="dark:text-dark-text mt-1 text-gray-900">
+          <dd className="dark:text-night-text text-ink mt-1">
             {formattedStartDate}
           </dd>
         </div>
         <div>
-          <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+          <dt className="text-dark dark:text-night-muted text-sm font-medium">
             Ende
           </dt>
-          <dd className="dark:text-dark-text mt-1 text-gray-900">
+          <dd className="dark:text-night-text text-ink mt-1">
             {formattedEndDate}
           </dd>
         </div>
         {course.bezirk && (
           <div>
-            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+            <dt className="text-dark dark:text-night-muted text-sm font-medium">
               Bezirk
             </dt>
-            <dd className="dark:text-dark-text mt-1 text-gray-900">
+            <dd className="dark:text-night-text text-ink mt-1">
               {course.bezirk.name}
             </dd>
           </div>
         )}
         {course.location && (
           <div>
-            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+            <dt className="text-dark dark:text-night-muted text-sm font-medium">
               Veranstaltungsort
             </dt>
-            <dd className="dark:text-dark-text mt-1 text-gray-900">
+            <dd className="dark:text-night-text text-ink mt-1">
               {course.location.name && `${course.location.name}, `}
               {course.location.city}
               {course.location.street && (
-                <span className="block text-sm text-gray-500">
+                <span className="text-dark dark:text-night-muted block text-sm">
                   {course.location.street}, {course.location.zipCode}{" "}
                   {course.location.city}
                 </span>
@@ -374,17 +379,17 @@ export default function CourseDetailPage() {
         )}
         {isExternal ? (
           <div>
-            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+            <dt className="text-dark dark:text-night-muted text-sm font-medium">
               Externe Anmeldung
             </dt>
-            <dd className="dark:text-dark-text mt-1 text-gray-900">
+            <dd className="dark:text-night-text text-ink mt-1">
               {course.externalProviderName || "Externer Anbieter"}
               {course.externalRegistrationUrl ? (
                 <a
                   href={course.externalRegistrationUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-primary mt-1 inline-flex items-center gap-1 text-sm hover:underline"
+                  className="link-ink mt-1 inline-flex items-center gap-1 text-sm"
                 >
                   Zur Anmeldung
                   <ExternalLink className="h-3.5 w-3.5" />
@@ -394,14 +399,14 @@ export default function CourseDetailPage() {
           </div>
         ) : (
           <div>
-            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+            <dt className="text-dark dark:text-night-muted text-sm font-medium">
               Teilnehmer
             </dt>
-            <dd className="dark:text-dark-text mt-1 text-gray-900">
+            <dd className="dark:text-night-text text-ink mt-1">
               {confirmedCount}
               {course.maxParticipants && ` / ${course.maxParticipants}`}
               {course.allowWaitingList && (
-                <span className="ml-2 text-sm text-gray-500">
+                <span className="text-dark dark:text-night-muted ml-2 text-sm">
                   (Warteliste aktiviert)
                 </span>
               )}
@@ -410,10 +415,10 @@ export default function CourseDetailPage() {
         )}
         {course.registrationOpensAt && (
           <div>
-            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+            <dt className="text-dark dark:text-night-muted text-sm font-medium">
               Anmeldung öffnet ab
             </dt>
-            <dd className="dark:text-dark-text mt-1 text-gray-900">
+            <dd className="dark:text-night-text text-ink mt-1">
               {new Date(course.registrationOpensAt).toLocaleDateString(
                 "de-DE",
                 {
@@ -437,10 +442,10 @@ export default function CourseDetailPage() {
         )}
         {course.registrationDeadline && (
           <div>
-            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+            <dt className="text-dark dark:text-night-muted text-sm font-medium">
               Anmeldeschluss
             </dt>
-            <dd className="dark:text-dark-text mt-1 text-gray-900">
+            <dd className="dark:text-night-text text-ink mt-1">
               {new Date(course.registrationDeadline).toLocaleDateString(
                 "de-DE",
               )}
@@ -466,7 +471,7 @@ export default function CourseDetailPage() {
           {canEdit && (
             <Link
               href={`/dashboard/courses/${courseId}/edit`}
-              className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+              className="border-rule dark:border-night-rule text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised inline-flex min-h-11 items-center gap-2 border px-4 py-2 text-sm font-medium transition-colors"
             >
               <Edit className="h-4 w-4" />
               Bearbeiten
@@ -475,7 +480,7 @@ export default function CourseDetailPage() {
           {canDelete && (
             <button
               onClick={() => setShowDeleteModal(true)}
-              className="dark:bg-dark-surface inline-flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+              className="inline-flex min-h-11 items-center gap-2 border border-red-300 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
             >
               <Trash2 className="h-4 w-4" />
               Löschen
@@ -487,30 +492,24 @@ export default function CourseDetailPage() {
     >
       {/* Status Badges */}
       <div className="mb-5 flex flex-wrap items-center gap-2">
-        <span
-          className={`inline-flex rounded-full px-3 py-1 text-sm font-medium ${statusColors[course.status]}`}
-        >
+        <Tag tone={statusTones[course.status]}>
           {statusLabels[course.status]}
-        </span>
+        </Tag>
         {course.registrationOpen &&
         course.registrationOpensAt &&
         new Date(course.registrationOpensAt) > new Date() ? (
-          <span className="inline-flex rounded-full bg-purple-100 px-3 py-1 text-sm font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+          <Tag tone="orange">
             Öffnet{" "}
             {new Date(course.registrationOpensAt).toLocaleDateString("de-DE", {
               day: "2-digit",
               month: "short",
             })}
-          </span>
+          </Tag>
         ) : course.registrationOpen ? (
-          <span className="inline-flex rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-            Anmeldung offen
-          </span>
+          <Tag tone="inverse">Anmeldung offen</Tag>
         ) : null}
         {course.maxParticipants && confirmedCount >= course.maxParticipants && (
-          <span className="inline-flex rounded-full bg-orange-100 px-3 py-1 text-sm font-medium text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
-            Ausgebucht
-          </span>
+          <Tag tone="orange">Ausgebucht</Tag>
         )}
       </div>
 
@@ -519,38 +518,38 @@ export default function CourseDetailPage() {
         className="dashboard-form-scroll-anchor mb-8"
       >
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="dark:bg-dark-background-secondary rounded-lg bg-gray-50 p-3">
-            <p className="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">
+          <div className="bg-rule/25 dark:bg-night-raised p-3">
+            <p className="text-dark dark:text-night-muted text-xs font-medium tracking-wide uppercase">
               Zeitraum
             </p>
-            <p className="text-dark dark:text-dark-text mt-1 text-sm font-semibold">
+            <p className="text-dark dark:text-night-text mt-1 text-sm font-semibold">
               {formattedStartDate}
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-dark dark:text-night-muted text-xs">
               bis {formattedEndDate}
             </p>
           </div>
-          <div className="dark:bg-dark-background-secondary rounded-lg bg-gray-50 p-3">
-            <p className="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">
+          <div className="bg-rule/25 dark:bg-night-raised p-3">
+            <p className="text-dark dark:text-night-muted text-xs font-medium tracking-wide uppercase">
               Bezirk
             </p>
-            <p className="text-dark dark:text-dark-text mt-1 text-sm font-semibold">
+            <p className="text-dark dark:text-night-text mt-1 text-sm font-semibold">
               {districtLabel}
             </p>
           </div>
-          <div className="dark:bg-dark-background-secondary rounded-lg bg-gray-50 p-3">
-            <p className="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">
+          <div className="bg-rule/25 dark:bg-night-raised p-3">
+            <p className="text-dark dark:text-night-muted text-xs font-medium tracking-wide uppercase">
               Anmeldung
             </p>
-            <p className="text-dark dark:text-dark-text mt-1 text-sm font-semibold">
+            <p className="text-dark dark:text-night-text mt-1 text-sm font-semibold">
               {registrationLabel}
             </p>
           </div>
-          <div className="dark:bg-dark-background-secondary rounded-lg bg-gray-50 p-3">
-            <p className="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">
+          <div className="bg-rule/25 dark:bg-night-raised p-3">
+            <p className="text-dark dark:text-night-muted text-xs font-medium tracking-wide uppercase">
               {isExternal ? "Anbieter" : "Teilnehmer"}
             </p>
-            <p className="text-dark dark:text-dark-text mt-1 text-sm font-semibold">
+            <p className="text-dark dark:text-night-text mt-1 text-sm font-semibold">
               {isExternal
                 ? course.externalProviderName || "Extern"
                 : `${confirmedCount}${course.maxParticipants ? ` / ${course.maxParticipants}` : ""}`}
@@ -561,24 +560,24 @@ export default function CourseDetailPage() {
 
       {/* Tabs */}
       {canViewParticipants && !isExternal && (
-        <div className="dark:border-dark-border mb-6 border-b border-gray-200">
+        <div className="dark:border-night-rule border-rule mb-6 border-b">
           <nav className="-mb-px flex gap-4">
             <button
               onClick={() => setActiveTab("details")}
-              className={`border-b-2 pb-3 text-sm font-medium transition-colors ${
+              className={`min-h-11 border-b-2 pb-3 text-sm font-medium transition-colors ${
                 activeTab === "details"
-                  ? "border-primary text-primary"
-                  : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400"
+                  ? "border-primary text-primary-ink dark:text-primary"
+                  : "text-dark hover:border-rule hover:text-ink dark:text-night-muted dark:hover:text-night-text border-transparent"
               }`}
             >
               Details
             </button>
             <button
               onClick={() => setActiveTab("participants")}
-              className={`border-b-2 pb-3 text-sm font-medium transition-colors ${
+              className={`min-h-11 border-b-2 pb-3 text-sm font-medium transition-colors ${
                 activeTab === "participants"
-                  ? "border-primary text-primary"
-                  : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400"
+                  ? "border-primary text-primary-ink dark:text-primary"
+                  : "text-dark hover:border-rule hover:text-ink dark:text-night-muted dark:hover:text-night-text border-transparent"
               }`}
             >
               Teilnehmer ({confirmedCount})
@@ -597,13 +596,13 @@ export default function CourseDetailPage() {
           <div className="space-y-0">
             {/* Review Section - Only for pending courses */}
             {canReview && (
-              <section className="mb-8 rounded-lg border border-yellow-200 bg-yellow-50 p-6 dark:border-yellow-900/50 dark:bg-yellow-900/20">
-                <h2 className="mb-4 text-lg font-semibold text-yellow-800 dark:text-yellow-300">
+              <section className="border-rule dark:border-night-rule mb-8 border p-6">
+                <h2 className="dark:text-night-text text-ink mb-4 text-lg font-semibold">
                   Kurs prüfen
                 </h2>
                 <div className="space-y-4">
                   <div>
-                    <label className="mb-2 block text-sm font-medium text-yellow-800 dark:text-yellow-300">
+                    <label className="dark:text-night-text text-ink mb-2 block text-sm font-medium">
                       Anmerkungen (optional bei Genehmigung, erforderlich bei
                       Ablehnung)
                     </label>
@@ -611,7 +610,7 @@ export default function CourseDetailPage() {
                       value={reviewNotes}
                       onChange={(e) => setReviewNotes(e.target.value)}
                       rows={3}
-                      className="focus:border-primary focus:ring-primary dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-yellow-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none dark:border-yellow-800"
+                      className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper text-ink w-full border px-4 py-2.5"
                       placeholder="Anmerkungen zur Prüfung..."
                     />
                   </div>
@@ -619,7 +618,7 @@ export default function CourseDetailPage() {
                     <button
                       onClick={handleApprove}
                       disabled={approveMutation.isPending}
-                      className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+                      className="hover:bg-primary-dark bg-primary text-ink min-h-11 px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
                     >
                       {approveMutation.isPending
                         ? "Wird genehmigt..."
@@ -627,7 +626,7 @@ export default function CourseDetailPage() {
                     </button>
                     <button
                       onClick={() => setShowRejectModal(true)}
-                      className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
+                      className="min-h-11 bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
                     >
                       Ablehnen
                     </button>
@@ -638,7 +637,7 @@ export default function CourseDetailPage() {
 
             {/* Rejection Notice */}
             {course.status === ContentStatus.REJECTED && course.reviewNotes && (
-              <section className="mb-8 rounded-lg border border-red-200 bg-red-50 p-6 dark:border-red-900/50 dark:bg-red-900/20">
+              <section className="mb-8 border border-red-200 bg-red-50 p-6 dark:border-red-900/50 dark:bg-red-900/20">
                 <h2 className="mb-2 text-lg font-semibold text-red-800 dark:text-red-300">
                   Ablehnungsgrund
                 </h2>
@@ -658,10 +657,10 @@ export default function CourseDetailPage() {
 
             {course.image ? (
               <DashboardFormMediaSplit
-                className="dark:border-dark-border mb-10 border-t border-gray-200/80 pt-10"
+                className="dark:border-night-rule border-rule mb-10 border-t pt-10"
                 main={renderCourseInfoSection("dashboard-form-scroll-anchor")}
                 aside={
-                  <section className="overflow-hidden rounded-xl">
+                  <section className="overflow-hidden">
                     <div className="relative aspect-video w-full">
                       <Image
                         src={course.image.url}
@@ -675,7 +674,7 @@ export default function CourseDetailPage() {
               />
             ) : (
               renderCourseInfoSection(
-                "dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10",
+                "dashboard-form-scroll-anchor dark:border-night-rule border-t border-rule pt-10",
               )
             )}
 
@@ -683,12 +682,12 @@ export default function CourseDetailPage() {
             {course.description && (
               <section
                 id="course-detail-description"
-                className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+                className="dashboard-form-scroll-anchor dark:border-night-rule border-rule border-t pt-10"
               >
-                <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+                <h2 className="dark:text-night-text text-ink mb-4 text-lg font-semibold">
                   Beschreibung
                 </h2>
-                <div className="prose prose-sm max-w-none text-gray-700 dark:text-gray-300">
+                <div className="prose prose-sm text-ink dark:text-night-text max-w-none">
                   {course.description.split("\n").map((paragraph, i) => (
                     <p key={i}>{paragraph}</p>
                   ))}
@@ -701,9 +700,9 @@ export default function CourseDetailPage() {
               (course.guestTeamMembers?.length ?? 0) > 0) && (
               <section
                 id="course-detail-team"
-                className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+                className="dashboard-form-scroll-anchor dark:border-night-rule border-rule border-t pt-10"
               >
-                <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+                <h2 className="dark:text-night-text text-ink mb-4 text-lg font-semibold">
                   Kurs-Team
                 </h2>
                 <ul className="space-y-2">
@@ -718,26 +717,26 @@ export default function CourseDetailPage() {
                           className="h-10 w-10 rounded-full object-cover"
                         />
                       ) : (
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700">
-                          <UserIcon className="h-5 w-5 text-gray-500" />
+                        <div className="bg-rule dark:bg-night-rule flex h-10 w-10 items-center justify-center rounded-full">
+                          <UserIcon className="text-dark dark:text-night-muted h-5 w-5" />
                         </div>
                       )}
-                      <span className="dark:text-dark-text text-gray-900">
+                      <span className="dark:text-night-text text-ink">
                         {entry.user.displayName}
                       </span>
                     </li>
                   ))}
                   {course.guestTeamMembers?.map((row) => (
                     <li key={row.id} className="flex items-start gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700">
-                        <UserIcon className="h-5 w-5 text-gray-500" />
+                      <div className="bg-rule dark:bg-night-rule flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
+                        <UserIcon className="text-dark dark:text-night-muted h-5 w-5" />
                       </div>
                       <div className="min-w-0">
-                        <span className="dark:text-dark-text block text-gray-900">
+                        <span className="dark:text-night-text text-ink block">
                           {row.displayName}
                         </span>
                         {row.bio ? (
-                          <span className="text-sm text-gray-600 dark:text-gray-400">
+                          <span className="text-dark dark:text-night-muted text-sm">
                             {row.bio}
                           </span>
                         ) : null}
@@ -752,28 +751,28 @@ export default function CourseDetailPage() {
             {(course.prerequisites || course.whatToBring) && (
               <section
                 id="course-detail-more"
-                className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+                className="dashboard-form-scroll-anchor dark:border-night-rule border-rule border-t pt-10"
               >
-                <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+                <h2 className="dark:text-night-text text-ink mb-4 text-lg font-semibold">
                   Weitere Informationen
                 </h2>
                 <div className="space-y-4">
                   {course.prerequisites && (
                     <div>
-                      <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                      <h3 className="text-dark dark:text-night-muted text-sm font-medium">
                         Voraussetzungen
                       </h3>
-                      <p className="dark:text-dark-text mt-1 text-gray-900">
+                      <p className="dark:text-night-text text-ink mt-1">
                         {course.prerequisites}
                       </p>
                     </div>
                   )}
                   {course.whatToBring && (
                     <div>
-                      <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                      <h3 className="text-dark dark:text-night-muted text-sm font-medium">
                         Mitzubringen
                       </h3>
-                      <p className="dark:text-dark-text mt-1 text-gray-900">
+                      <p className="dark:text-night-text text-ink mt-1">
                         {course.whatToBring}
                       </p>
                     </div>
@@ -786,12 +785,12 @@ export default function CourseDetailPage() {
             {course.customFields && course.customFields.length > 0 && (
               <section
                 id="course-detail-fields"
-                className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+                className="dashboard-form-scroll-anchor dark:border-night-rule border-rule border-t pt-10"
               >
-                <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+                <h2 className="dark:text-night-text text-ink mb-4 text-lg font-semibold">
                   Zusätzliche Felder bei Anmeldung
                 </h2>
-                <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+                <p className="text-dark dark:text-night-muted mb-4 text-sm">
                   Diese Felder werden bei der Anmeldung von den Teilnehmern
                   abgefragt.
                 </p>
@@ -801,34 +800,32 @@ export default function CourseDetailPage() {
                     .map((field) => (
                       <div
                         key={field.id}
-                        className="dark:border-dark-border rounded-lg border border-gray-100 p-4"
+                        className="dark:border-night-rule border-rule border p-4"
                       >
                         <div className="flex flex-wrap items-start justify-between gap-2">
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
-                              <span className="dark:text-dark-text font-medium text-gray-900">
+                              <span className="dark:text-night-text text-ink font-medium">
                                 {field.fieldName}
                               </span>
                               {field.isRequired && (
-                                <span className="rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">
-                                  Pflichtfeld
-                                </span>
+                                <Tag tone="orange">Pflichtfeld</Tag>
                               )}
                             </div>
                             {field.helpText && (
-                              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                              <p className="text-dark dark:text-night-muted mt-1 text-sm">
                                 {field.helpText}
                               </p>
                             )}
                           </div>
-                          <span className="rounded bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                          <Tag tone="inverse">
                             {customFieldTypeLabels[field.fieldType]}
-                          </span>
+                          </Tag>
                         </div>
                         {customFieldTypeNeedsOptions(field.fieldType) &&
                           field.options && (
-                            <div className="mt-2 flex flex-wrap gap-1">
-                              <span className="text-xs text-gray-500 dark:text-gray-400">
+                            <div className="mt-2 flex flex-wrap items-center gap-1">
+                              <span className="text-dark dark:text-night-muted text-xs">
                                 Optionen:
                               </span>
                               {(typeof field.options === "string"
@@ -840,12 +837,9 @@ export default function CourseDetailPage() {
                                   ? (field.options as string[])
                                   : []
                               ).map((option: string, idx: number) => (
-                                <span
-                                  key={idx}
-                                  className="rounded bg-gray-50 px-1.5 py-0.5 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-400"
-                                >
+                                <Tag key={idx} tone="inverse">
                                   {option}
-                                </span>
+                                </Tag>
                               ))}
                             </div>
                           )}
@@ -858,48 +852,48 @@ export default function CourseDetailPage() {
             {/* Pricing */}
             <section
               id="course-detail-prices"
-              className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+              className="dashboard-form-scroll-anchor dark:border-night-rule border-rule border-t pt-10"
             >
-              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+              <h2 className="dark:text-night-text text-ink mb-4 text-lg font-semibold">
                 Preise
               </h2>
               {course.isFree ? (
-                <p className="dark:text-dark-text text-gray-900">Kostenlos</p>
+                <p className="dark:text-night-text text-ink">Kostenlos</p>
               ) : course.priceOptions && course.priceOptions.length > 0 ? (
                 <div className="space-y-2">
                   {course.priceOptions.map((option) => (
                     <div
                       key={option.id}
-                      className="dark:border-dark-border flex items-start justify-between gap-3 rounded-lg border border-gray-100 p-3"
+                      className="dark:border-night-rule border-rule flex items-start justify-between gap-3 border p-3"
                     >
                       <div className="min-w-0 flex-1">
-                        <span className="dark:text-dark-text font-medium text-gray-900">
+                        <span className="dark:text-night-text text-ink font-medium">
                           {option.label}
                         </span>
                         {option.description && (
-                          <p className="text-sm text-gray-500">
+                          <p className="text-dark dark:text-night-muted text-sm">
                             {option.description}
                           </p>
                         )}
                         {priceOptionAgeLabel(option) && (
-                          <p className="text-sm text-gray-500">
+                          <p className="text-dark dark:text-night-muted text-sm">
                             {priceOptionAgeLabel(option)} — Alter am ersten
                             Kurstag
                           </p>
                         )}
                       </div>
-                      <span className="dark:text-dark-text shrink-0 font-semibold whitespace-nowrap text-gray-900 tabular-nums">
+                      <span className="dark:text-night-text text-ink shrink-0 font-semibold whitespace-nowrap tabular-nums">
                         {option.price.toFixed(2)}&nbsp;€
                       </span>
                     </div>
                   ))}
                 </div>
               ) : course.priceInfo ? (
-                <p className="dark:text-dark-text text-gray-900">
+                <p className="dark:text-night-text text-ink">
                   {course.priceInfo}
                 </p>
               ) : (
-                <p className="text-gray-500">
+                <p className="text-dark dark:text-night-muted">
                   Keine Preisinformationen verfügbar
                 </p>
               )}
@@ -908,46 +902,46 @@ export default function CourseDetailPage() {
             {/* Meta Info */}
             <section
               id="course-detail-meta"
-              className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+              className="dashboard-form-scroll-anchor dark:border-night-rule border-rule border-t pt-10"
             >
-              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+              <h2 className="dark:text-night-text text-ink mb-4 text-lg font-semibold">
                 Metadaten
               </h2>
               <dl className="grid gap-4 sm:grid-cols-2">
                 {course.createdBy && (
                   <div>
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    <dt className="text-dark dark:text-night-muted text-sm font-medium">
                       Erstellt von
                     </dt>
-                    <dd className="dark:text-dark-text mt-1 text-gray-900">
+                    <dd className="dark:text-night-text text-ink mt-1">
                       {course.createdBy.displayName}
                     </dd>
                   </div>
                 )}
                 <div>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  <dt className="text-dark dark:text-night-muted text-sm font-medium">
                     Erstellt am
                   </dt>
-                  <dd className="dark:text-dark-text mt-1 text-gray-900">
+                  <dd className="dark:text-night-text text-ink mt-1">
                     {new Date(course.createdAt).toLocaleDateString("de-DE")}
                   </dd>
                 </div>
                 {course.reviewer && (
                   <div>
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    <dt className="text-dark dark:text-night-muted text-sm font-medium">
                       Geprüft von
                     </dt>
-                    <dd className="dark:text-dark-text mt-1 text-gray-900">
+                    <dd className="dark:text-night-text text-ink mt-1">
                       {course.reviewer.displayName}
                     </dd>
                   </div>
                 )}
                 {course.reviewDate && (
                   <div>
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    <dt className="text-dark dark:text-night-muted text-sm font-medium">
                       Geprüft am
                     </dt>
-                    <dd className="dark:text-dark-text mt-1 text-gray-900">
+                    <dd className="dark:text-night-text text-ink mt-1">
                       {new Date(course.reviewDate).toLocaleDateString("de-DE")}
                     </dd>
                   </div>
@@ -966,7 +960,7 @@ export default function CourseDetailPage() {
             {canMailRegistrants && (
               <Link
                 href={`/dashboard/courses/${courseId}/mail`}
-                className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="border-rule dark:border-night-rule text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised inline-flex min-h-11 items-center gap-2 border px-4 py-2 text-sm font-medium transition-colors"
               >
                 <MailIcon className="h-4 w-4" />
                 Anmelder:innen anschreiben
@@ -975,7 +969,7 @@ export default function CourseDetailPage() {
             {canAddRegistrations && (
               <Link
                 href={`/dashboard/courses/${courseId}/participants/new`}
-                className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700"
+                className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-night-text dark:text-night dark:hover:bg-primary dark:hover:text-ink inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm font-medium transition-colors"
               >
                 <PlusIcon className="h-4 w-4" />
                 Anmeldung hinzufügen
@@ -983,7 +977,7 @@ export default function CourseDetailPage() {
             )}
             <Link
               href={`/dashboard/courses/${courseId}/participants`}
-              className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors"
+              className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-night-text dark:text-night dark:hover:bg-primary dark:hover:text-ink inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm font-medium transition-colors"
             >
               <ArrowRightIcon className="h-4 w-4" />
               Zur Teilnehmerverwaltung
@@ -991,13 +985,13 @@ export default function CourseDetailPage() {
           </div>
 
           {/* Summary */}
-          <section className="dark:border-dark-border border-t border-gray-200/80 pt-10">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+          <section className="dark:border-night-rule border-rule border-t pt-10">
+            <h2 className="dark:text-night-text text-ink mb-4 text-lg font-semibold">
               Übersicht
             </h2>
             <div className="grid gap-4 sm:grid-cols-3">
-              <div className="rounded-lg bg-green-50 p-4 dark:bg-green-900/20">
-                <div className="text-2xl font-bold text-green-700 dark:text-green-400">
+              <div className="bg-rule/25 dark:bg-night-raised p-4">
+                <div className="dark:text-night-text text-ink text-2xl font-bold">
                   {registrationsData?.registrations
                     .filter(
                       (r) =>
@@ -1005,12 +999,12 @@ export default function CourseDetailPage() {
                     )
                     .reduce((sum, r) => sum + r.participants.length, 0) ?? 0}
                 </div>
-                <div className="text-sm text-green-600 dark:text-green-500">
+                <div className="text-dark dark:text-night-muted text-sm">
                   Bestätigte Teilnehmer
                 </div>
               </div>
-              <div className="rounded-lg bg-yellow-50 p-4 dark:bg-yellow-900/20">
-                <div className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">
+              <div className="bg-rule/25 dark:bg-night-raised p-4">
+                <div className="dark:text-night-text text-ink text-2xl font-bold">
                   {registrationsData?.registrations
                     .filter(
                       (r) =>
@@ -1018,11 +1012,11 @@ export default function CourseDetailPage() {
                     )
                     .reduce((sum, r) => sum + r.participants.length, 0) ?? 0}
                 </div>
-                <div className="text-sm text-yellow-600 dark:text-yellow-500">
+                <div className="text-dark dark:text-night-muted text-sm">
                   Auf Warteliste
                 </div>
               </div>
-              <div className="rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
+              <div className="bg-blue-50 p-4 dark:bg-blue-900/20">
                 <div className="text-2xl font-bold text-blue-700 dark:text-blue-400">
                   {registrationsData?.total ?? 0}
                 </div>
@@ -1034,16 +1028,16 @@ export default function CourseDetailPage() {
           </section>
 
           {/* Registrations List */}
-          <section className="dark:border-dark-border border-t border-gray-200/80 pt-10">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+          <section className="dark:border-night-rule border-rule border-t pt-10">
+            <h2 className="dark:text-night-text text-ink mb-4 text-lg font-semibold">
               Anmeldungen
             </h2>
             {registrationsLoading ? (
               <div className="flex items-center justify-center py-8">
-                <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+                <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
               </div>
             ) : registrationsData?.registrations.length === 0 ? (
-              <p className="py-8 text-center text-gray-500 dark:text-gray-400">
+              <p className="text-dark dark:text-night-muted py-8 text-center">
                 Noch keine Anmeldungen vorhanden.
               </p>
             ) : (
@@ -1051,40 +1045,40 @@ export default function CourseDetailPage() {
                 {registrationsData?.registrations.map((registration) => (
                   <div
                     key={registration.id}
-                    className="dark:border-dark-border rounded-lg border border-gray-200 p-4"
+                    className="dark:border-night-rule border-rule border p-4"
                   >
                     {/* Registration Header */}
                     <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
                       <div>
-                        <h3 className="dark:text-dark-text font-medium text-gray-900">
+                        <h3 className="dark:text-night-text text-ink font-medium">
                           <Link
                             href={`/dashboard/courses/${courseId}/participants/${registration.id}`}
-                            className="hover:text-primary transition-colors"
+                            className="hover:text-primary-ink dark:hover:text-primary transition-colors"
                           >
                             {registration.registrantFirstName}{" "}
                             {registration.registrantLastName}
                           </Link>
                         </h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                        <p className="text-dark dark:text-night-muted text-sm">
                           {registration.registrantEmail}
                           {registration.registrantPhone &&
                             ` • ${registration.registrantPhone}`}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span
-                          className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                            registrationStatusColors[
+                        <Tag
+                          tone={
+                            registrationStatusTones[
                               registration.registrationStatus
                             ]
-                          }`}
+                          }
                         >
                           {
                             registrationStatusLabels[
                               registration.registrationStatus
                             ]
                           }
-                        </span>
+                        </Tag>
                         <RegistrationPaymentBadge
                           invoices={registration.invoices}
                         />
@@ -1093,33 +1087,33 @@ export default function CourseDetailPage() {
 
                     {/* Participants */}
                     {registration.participants.length > 0 && (
-                      <div className="mt-3 border-t border-gray-100 pt-3 dark:border-gray-700">
-                        <h4 className="mb-2 text-sm font-medium text-gray-500 dark:text-gray-400">
+                      <div className="dark:border-night-rule border-rule mt-3 border-t pt-3">
+                        <h4 className="text-dark dark:text-night-muted mb-2 text-sm font-medium">
                           Teilnehmer ({registration.participants.length})
                         </h4>
                         <div className="space-y-2">
                           {registration.participants.map((participant) => (
                             <div
                               key={participant.id}
-                              className="dark:bg-dark-background-secondary flex items-center justify-between rounded bg-gray-50 px-3 py-2 text-sm"
+                              className="bg-rule/25 dark:bg-night-raised flex items-center justify-between px-3 py-2 text-sm"
                             >
                               <div>
-                                <span className="dark:text-dark-text font-medium text-gray-900">
+                                <span className="dark:text-night-text text-ink font-medium">
                                   {participant.firstName} {participant.lastName}
                                 </span>
                                 {participant.city && (
-                                  <span className="ml-2 text-gray-500">
+                                  <span className="text-dark dark:text-night-muted ml-2">
                                     aus {participant.city}
                                   </span>
                                 )}
                                 {participant.instrument && (
-                                  <span className="ml-2 text-gray-500">
+                                  <span className="text-dark dark:text-night-muted ml-2">
                                     ({participant.instrument})
                                   </span>
                                 )}
                               </div>
                               {participant.priceOption && (
-                                <span className="text-gray-500">
+                                <span className="text-dark dark:text-night-muted">
                                   {participantPriceOptionLabel(
                                     participant,
                                     course.priceOptions,
@@ -1133,14 +1127,14 @@ export default function CourseDetailPage() {
                     )}
 
                     {/* Registration Meta */}
-                    <div className="mt-3 flex items-center justify-between border-t border-gray-100 pt-3 text-sm dark:border-gray-700">
-                      <span className="text-gray-500 dark:text-gray-400">
+                    <div className="dark:border-night-rule border-rule mt-3 flex items-center justify-between border-t pt-3 text-sm">
+                      <span className="text-dark dark:text-night-muted">
                         Angemeldet am{" "}
                         {new Date(registration.createdAt).toLocaleDateString(
                           "de-DE",
                         )}
                       </span>
-                      <span className="dark:text-dark-text font-medium text-gray-900">
+                      <span className="dark:text-night-text text-ink font-medium">
                         {registration.totalPrice.toFixed(2)} €
                       </span>
                     </div>
@@ -1157,10 +1151,10 @@ export default function CourseDetailPage() {
         <ScrollableModal>
           <ScrollableModalCard maxW="md">
             <ScrollableModalBody>
-              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+              <h2 className="dark:text-night-text text-ink mb-4 text-lg font-semibold">
                 Kurs ablehnen
               </h2>
-              <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-dark dark:text-night-muted mb-4 text-sm">
                 Bitte gib einen Grund für die Ablehnung an. Dieser wird dem
                 Ersteller angezeigt.
               </p>
@@ -1168,7 +1162,7 @@ export default function CourseDetailPage() {
                 value={reviewNotes}
                 onChange={(e) => setReviewNotes(e.target.value)}
                 rows={4}
-                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text mb-4 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper text-ink mb-4 w-full border px-4 py-2.5"
                 placeholder="Ablehnungsgrund..."
               />
             </ScrollableModalBody>
@@ -1179,14 +1173,14 @@ export default function CourseDetailPage() {
                     setShowRejectModal(false);
                     setReviewNotes("");
                   }}
-                  className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+                  className="border-rule dark:border-night-rule text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised min-h-11 border px-4 py-2 text-sm font-medium transition-colors"
                 >
                   Abbrechen
                 </button>
                 <button
                   onClick={handleReject}
                   disabled={!reviewNotes.trim() || rejectMutation.isPending}
-                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+                  className="min-h-11 bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
                 >
                   {rejectMutation.isPending ? "Wird abgelehnt..." : "Ablehnen"}
                 </button>
@@ -1201,26 +1195,34 @@ export default function CourseDetailPage() {
         <ScrollableModal>
           <ScrollableModalCard maxW="md">
             <ScrollableModalBody>
-              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+              <h2 className="dark:text-night-text text-ink mb-4 text-lg font-semibold">
                 Kurs löschen
               </h2>
-              <p className="mb-4 text-gray-600 dark:text-gray-400">
+              <p className="text-dark dark:text-night-muted mb-4">
                 Bist du sicher, dass du diesen Kurs löschen möchtest? Diese
-                Aktion kann nicht rückgängig gemacht werden.
+                Aktion kann nicht rückgängig gemacht werden. Anmeldungen,
+                Preiskategorien und eigene Felder des Kurses gehen mit.
+              </p>
+              {/* Vorher wusste man das erst aus der Fehlermeldung nach dem
+                  Klick. Die Regel gehört vor die Entscheidung. */}
+              <p className="text-dark dark:text-night-muted mb-4 text-sm">
+                Ausgestellte Rechnungen bleiben erhalten: Gibt es welche, lässt
+                sich der Kurs nicht löschen — die Belege sind
+                aufbewahrungspflichtig. Reine Entwürfe stehen dem nicht im Weg.
               </p>
             </ScrollableModalBody>
             <ScrollableModalFooter>
               <div className="flex justify-end gap-3">
                 <button
                   onClick={() => setShowDeleteModal(false)}
-                  className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+                  className="border-rule dark:border-night-rule text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised min-h-11 border px-4 py-2 text-sm font-medium transition-colors"
                 >
                   Abbrechen
                 </button>
                 <button
                   onClick={handleDelete}
                   disabled={deleteMutation.isPending}
-                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+                  className="min-h-11 bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
                 >
                   {deleteMutation.isPending ? "Wird gelöscht..." : "Löschen"}
                 </button>

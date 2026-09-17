@@ -25,6 +25,7 @@ import {
   DashboardFormSectionLayout,
   DashboardPage,
 } from "@/app/_components/dashboard";
+import { Tag, type TagTone } from "@/app/_components/programmheft/tag";
 import { ArrowLeftIcon, EyeIcon } from "lucide-react";
 import {
   ScrollableModal,
@@ -49,14 +50,17 @@ const statusLabels: Record<ContentStatus, string> = {
   ARCHIVED: "Archiviert",
 };
 
-const statusColors: Record<ContentStatus, string> = {
-  DRAFT: "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300",
-  PENDING:
-    "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-  APPROVED:
-    "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  REJECTED: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-  ARCHIVED: "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400",
+// Etikett statt pastelliger Pille: Zustaende sind rechteckige Druckflaechen
+// (siehe Tag-Komponente). Spiegelt die Zuordnung aus content-status.tsx —
+// derselbe Status muss ueberall gleich aussehen. Tag hat inzwischen einen
+// fuenften, umrandeten Ton: Entwurf und Archiviert sind Ruhezustaende ohne
+// Handlungsbedarf und standen bisher so laut gefuellt wie "Veroeffentlicht".
+const statusTones: Record<ContentStatus, TagTone> = {
+  DRAFT: "muted",
+  PENDING: "orange",
+  APPROVED: "ink",
+  REJECTED: "cancelled",
+  ARCHIVED: "muted",
 };
 
 // Dashboard access is now controlled by permissions
@@ -159,22 +163,22 @@ export default function PostDetailPage() {
 
   if (sessionLoading || profileLoading || permissionsLoading || postLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="dark:bg-night bg-paper flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
 
   if (!session || !profile || !post) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="dark:bg-night bg-paper flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <h1 className="dark:text-dark-text text-xl font-semibold text-gray-900">
+          <h1 className="text-ink dark:text-night-text text-xl font-semibold">
             Beitrag nicht gefunden
           </h1>
           <Link
             href="/dashboard/posts"
-            className="text-primary mt-4 inline-block hover:underline"
+            className="text-primary-ink dark:text-primary mt-4 inline-block hover:underline"
           >
             Zurück zur Übersicht
           </Link>
@@ -250,7 +254,7 @@ export default function PostDetailPage() {
             {canEdit && (
               <Link
                 href={`/dashboard/posts/${postId}/edit`}
-                className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="border-ink dark:border-night-text dark:bg-night dark:text-night-text text-ink bg-paper hover:bg-rule/25 dark:hover:bg-night-raised inline-flex min-h-11 items-center gap-2 border px-4 py-2 text-sm font-medium transition-colors"
               >
                 <Edit className="h-4 w-4" />
                 Bearbeiten
@@ -259,7 +263,7 @@ export default function PostDetailPage() {
             {canDelete && (
               <button
                 onClick={() => setShowDeleteModal(true)}
-                className="dark:bg-dark-surface inline-flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                className="dark:bg-night bg-paper inline-flex min-h-11 items-center gap-2 border border-red-300 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
               >
                 <Trash2 className="h-4 w-4" />
                 Löschen
@@ -274,29 +278,27 @@ export default function PostDetailPage() {
           id="post-detail-overview"
           className="dashboard-form-scroll-anchor mb-5 flex flex-wrap items-center gap-3"
         >
-          <span
-            className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${statusColors[post.status]}`}
-          >
+          <Tag tone={statusTones[post.status]} className="shrink-0">
             {statusLabels[post.status]}
-          </span>
+          </Tag>
           {post.pinned && (
-            <span className="flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+            <Tag tone="orange" className="shrink-0 gap-1">
               <PinIcon className="h-3 w-3" />
               Gepinnt
-            </span>
+            </Tag>
           )}
         </div>
 
         {/* Review Section (for reviewers with pending posts) */}
         {canReview && (
-          <section className="mb-6 rounded-lg border-2 border-yellow-300 bg-yellow-50 p-6 dark:border-yellow-600 dark:bg-yellow-900/20">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+          <section className="border-rule dark:border-night-rule mb-6 border-2 p-6">
+            <h2 className="text-ink dark:text-night-text mb-4 text-lg font-semibold">
               Prüfung
             </h2>
             <div className="space-y-4">
               {/* Warning if there's unapproved content */}
               {hasUnapprovedContent && (
-                <div className="flex items-start gap-3 rounded-lg border border-red-300 bg-red-50 p-3 dark:border-red-700 dark:bg-red-900/20">
+                <div className="flex items-start gap-3 border border-red-300 bg-red-50 p-3 dark:border-red-700 dark:bg-red-900/20">
                   <AlertTriangleIcon className="h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />
                   <div>
                     <p className="text-sm font-medium text-red-800 dark:text-red-300">
@@ -310,7 +312,7 @@ export default function PostDetailPage() {
                 </div>
               )}
               <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
                   Anmerkungen (optional für Genehmigung, erforderlich für
                   Ablehnung)
                 </label>
@@ -319,7 +321,7 @@ export default function PostDetailPage() {
                   onChange={(e) => setReviewNotes(e.target.value)}
                   rows={3}
                   placeholder="Anmerkungen zur Prüfung..."
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+                  className="border-ink dark:border-night-text dark:bg-night dark:text-night-text text-ink bg-paper block w-full border px-3 py-2"
                 />
               </div>
               <div className="flex flex-wrap gap-3">
@@ -331,7 +333,7 @@ export default function PostDetailPage() {
                       ? "Alle Inhalte müssen zuerst freigegeben werden"
                       : undefined
                   }
-                  className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="hover:bg-primary-dark bg-primary text-ink inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <CheckIcon className="h-4 w-4" />
                   {approveMutation.isPending
@@ -340,7 +342,7 @@ export default function PostDetailPage() {
                 </button>
                 <button
                   onClick={() => setShowRejectModal(true)}
-                  className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
+                  className="inline-flex min-h-11 items-center gap-2 bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
                 >
                   <TrashIcon className="h-4 w-4" />
                   Ablehnen
@@ -354,15 +356,15 @@ export default function PostDetailPage() {
         {isReviewer && attachedContent && (
           <section
             id="post-detail-attached"
-            className="dashboard-form-scroll-anchor dark:border-dark-border mb-8 border-t border-gray-200/80 pt-10"
+            className="dashboard-form-scroll-anchor border-rule dark:border-night-rule mb-8 border-t pt-10"
           >
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+            <h2 className="text-ink dark:text-night-text mb-4 text-lg font-semibold">
               Angehängte Inhalte
             </h2>
 
             {attachedContent.downloads.length === 0 &&
               attachedContent.media.length === 0 && (
-                <p className="dark:text-dark-muted text-sm text-gray-500">
+                <p className="text-dark dark:text-night-muted text-sm">
                   Keine Downloads oder Medien im Inhalt gefunden.
                 </p>
               )}
@@ -370,14 +372,14 @@ export default function PostDetailPage() {
             {/* Downloads */}
             {attachedContent.downloads.length > 0 && (
               <div className="mb-4">
-                <h3 className="dark:text-dark-text mb-2 text-sm font-medium text-gray-700">
+                <h3 className="text-ink dark:text-night-text mb-2 text-sm font-medium">
                   Downloads ({attachedContent.downloads.length})
                 </h3>
                 <div className="space-y-2">
                   {attachedContent.downloads.map((download) => (
                     <div
                       key={download.id}
-                      className="dark:border-dark-border dark:bg-dark-background-secondary flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 p-3"
+                      className="border-rule dark:border-night-rule dark:bg-night-raised bg-rule/25 flex items-center justify-between border p-3"
                     >
                       <div className="flex items-center gap-3">
                         <span className="text-lg">
@@ -394,10 +396,10 @@ export default function PostDetailPage() {
                                     : "📁"}
                         </span>
                         <div>
-                          <p className="dark:text-dark-text text-sm font-medium text-gray-900">
+                          <p className="text-ink dark:text-night-text text-sm font-medium">
                             {download.title}
                           </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                          <p className="text-dark dark:text-night-muted text-xs">
                             {download.uploadedBy?.displayName ?? "Unbekannt"}
                           </p>
                         </div>
@@ -408,17 +410,15 @@ export default function PostDetailPage() {
                           href={download.fileUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 rounded bg-gray-600 px-2 py-1 text-xs font-medium text-white hover:bg-gray-700"
+                          className="bg-ink text-paper hover:bg-dark inline-flex min-h-6 items-center gap-1 px-2 py-1 text-xs font-medium"
                           title="Herunterladen"
                         >
                           <DownloadIcon className="h-3 w-3" />
                           Öffnen
                         </a>
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[download.status]}`}
-                        >
+                        <Tag tone={statusTones[download.status]}>
                           {statusLabels[download.status]}
-                        </span>
+                        </Tag>
                         {download.status === ContentStatus.PENDING && (
                           <button
                             onClick={() =>
@@ -428,7 +428,7 @@ export default function PostDetailPage() {
                               })
                             }
                             disabled={approveDownloadMutation.isPending}
-                            className="inline-flex items-center gap-1 rounded bg-green-600 px-2 py-1 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
+                            className="hover:bg-primary-dark bg-primary text-ink inline-flex min-h-6 items-center gap-1 px-2 py-1 text-xs font-medium disabled:opacity-50"
                           >
                             <CheckIcon className="h-3 w-3" />
                             Freigeben
@@ -444,14 +444,14 @@ export default function PostDetailPage() {
             {/* Media */}
             {attachedContent.media.length > 0 && (
               <div>
-                <h3 className="dark:text-dark-text mb-2 text-sm font-medium text-gray-700">
+                <h3 className="text-ink dark:text-night-text mb-2 text-sm font-medium">
                   Medien ({attachedContent.media.length})
                 </h3>
                 <div className="space-y-3">
                   {attachedContent.media.map((media) => (
                     <div
                       key={media.id}
-                      className="dark:border-dark-border dark:bg-dark-background-secondary rounded-lg border border-gray-200 bg-gray-50 p-3"
+                      className="border-rule dark:border-night-rule dark:bg-night-raised bg-rule/25 border p-3"
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex items-center gap-3">
@@ -468,9 +468,9 @@ export default function PostDetailPage() {
                                 alt={media.name}
                                 width={80}
                                 height={80}
-                                className="rounded object-cover transition-opacity group-hover:opacity-75"
+                                className="object-cover transition-opacity group-hover:opacity-75"
                               />
-                              <span className="absolute inset-0 flex items-center justify-center rounded bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+                              <span className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
                                 <EyeIcon className="h-6 w-6 text-white" />
                               </span>
                             </a>
@@ -478,7 +478,7 @@ export default function PostDetailPage() {
                             <span className="text-2xl">📎</span>
                           )}
                           <div>
-                            <p className="dark:text-dark-text text-sm font-medium text-gray-900">
+                            <p className="text-ink dark:text-night-text text-sm font-medium">
                               {media.name}
                             </p>
                             {media.mimeType.startsWith("image/") && (
@@ -486,7 +486,7 @@ export default function PostDetailPage() {
                                 href={media.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-primary hover:text-primary-dark text-xs underline"
+                                className="text-primary-ink dark:text-primary text-xs underline"
                               >
                                 In neuem Tab öffnen
                               </a>
@@ -494,11 +494,9 @@ export default function PostDetailPage() {
                           </div>
                         </div>
                         <div className="flex shrink-0 items-center gap-2">
-                          <span
-                            className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[media.status]}`}
-                          >
+                          <Tag tone={statusTones[media.status]}>
                             {statusLabels[media.status]}
-                          </span>
+                          </Tag>
                           {media.status === ContentStatus.PENDING && (
                             <button
                               onClick={() =>
@@ -508,7 +506,7 @@ export default function PostDetailPage() {
                                 })
                               }
                               disabled={approveMediaMutation.isPending}
-                              className="inline-flex items-center gap-1 rounded bg-green-600 px-2 py-1 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
+                              className="hover:bg-primary-dark bg-primary text-ink inline-flex min-h-6 items-center gap-1 px-2 py-1 text-xs font-medium disabled:opacity-50"
                             >
                               <CheckIcon className="h-3 w-3" />
                               Freigeben
@@ -526,15 +524,13 @@ export default function PostDetailPage() {
 
         {/* Review Notes (if exists) */}
         {post.reviewNotes && post.status !== ContentStatus.PENDING && (
-          <section className="dark:border-dark-border mb-8 border-t border-gray-200/80 pt-10">
-            <h2 className="dark:text-dark-text mb-3 text-lg font-semibold text-gray-900">
+          <section className="border-rule dark:border-night-rule mb-8 border-t pt-10">
+            <h2 className="text-ink dark:text-night-text mb-3 text-lg font-semibold">
               Prüfungsanmerkungen
             </h2>
-            <p className="dark:text-dark-muted text-gray-700">
-              {post.reviewNotes}
-            </p>
+            <p className="text-ink dark:text-night-muted">{post.reviewNotes}</p>
             {post.reviewer && (
-              <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-dark dark:text-night-muted mt-2 text-sm">
                 — {post.reviewer.displayName}
                 {post.reviewDate && (
                   <>, {new Date(post.reviewDate).toLocaleDateString("de-DE")}</>
@@ -554,25 +550,25 @@ export default function PostDetailPage() {
             {/* Basic Info */}
             <section
               id="post-detail-info"
-              className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+              className="dashboard-form-scroll-anchor border-rule dark:border-night-rule border-t pt-10"
             >
-              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+              <h2 className="text-ink dark:text-night-text mb-4 text-lg font-semibold">
                 Beitragsdetails
               </h2>
               <dl className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  <dt className="text-dark dark:text-night-muted text-sm font-medium">
                     Kategorie
                   </dt>
-                  <dd className="dark:text-dark-text mt-1 text-gray-900">
+                  <dd className="text-ink dark:text-night-text mt-1">
                     {categoryLabels[post.category]}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  <dt className="text-dark dark:text-night-muted text-sm font-medium">
                     Bezirk
                   </dt>
-                  <dd className="dark:text-dark-text mt-1 text-gray-900">
+                  <dd className="text-ink dark:text-night-text mt-1">
                     {post.bezirk
                       ? `Bezirk ${post.bezirk.number} – ${post.bezirk.shortName}`
                       : "Übergreifend"}
@@ -585,19 +581,17 @@ export default function PostDetailPage() {
             {post.coverImage && (
               <section
                 id="post-detail-cover"
-                className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+                className="dashboard-form-scroll-anchor border-rule dark:border-night-rule border-t pt-10"
               >
                 <div className="mb-4 flex items-center justify-between">
-                  <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
+                  <h2 className="text-ink dark:text-night-text text-lg font-semibold">
                     Titelbild
                   </h2>
                   {isReviewer && post.coverImage.status && (
                     <div className="flex items-center gap-2">
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[post.coverImage.status]}`}
-                      >
+                      <Tag tone={statusTones[post.coverImage.status]}>
                         {statusLabels[post.coverImage.status]}
-                      </span>
+                      </Tag>
                       {post.coverImage.status === ContentStatus.PENDING && (
                         <button
                           onClick={() =>
@@ -607,7 +601,7 @@ export default function PostDetailPage() {
                             })
                           }
                           disabled={approveMediaMutation.isPending}
-                          className="inline-flex items-center gap-1 rounded bg-green-600 px-2 py-1 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
+                          className="hover:bg-primary-dark bg-primary text-ink inline-flex min-h-6 items-center gap-1 px-2 py-1 text-xs font-medium disabled:opacity-50"
                         >
                           <CheckIcon className="h-3 w-3" />
                           Freigeben
@@ -616,7 +610,7 @@ export default function PostDetailPage() {
                     </div>
                   )}
                 </div>
-                <div className="relative aspect-video w-full overflow-hidden rounded-lg">
+                <div className="border-rule dark:border-night-rule relative aspect-video w-full overflow-hidden border">
                   <Image
                     src={post.coverImage.url}
                     alt={post.coverImage.alt || post.title}
@@ -630,9 +624,9 @@ export default function PostDetailPage() {
             {/* Content */}
             <section
               id="post-detail-content"
-              className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+              className="dashboard-form-scroll-anchor border-rule dark:border-night-rule border-t pt-10"
             >
-              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+              <h2 className="text-ink dark:text-night-text mb-4 text-lg font-semibold">
                 Inhalt
               </h2>
               {post.contentHtml ? (
@@ -643,18 +637,18 @@ export default function PostDetailPage() {
                   }}
                 />
               ) : (
-                <pre className="dark:text-dark-muted font-sans whitespace-pre-wrap text-gray-700">
+                <pre className="text-ink dark:text-night-muted font-sans whitespace-pre-wrap">
                   {post.content}
                 </pre>
               )}
             </section>
 
             {/* Markdown Source */}
-            <section className="dark:border-dark-border border-t border-gray-200/80 pt-10">
-              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+            <section className="border-rule dark:border-night-rule border-t pt-10">
+              <h2 className="text-ink dark:text-night-text mb-4 text-lg font-semibold">
                 Markdown-Quelltext
               </h2>
-              <pre className="dark:bg-dark-background-secondary overflow-x-auto rounded-lg bg-gray-50 p-4 font-mono text-sm text-gray-700 dark:text-gray-300">
+              <pre className="dark:bg-night-raised bg-rule/25 text-ink dark:text-night-text overflow-x-auto p-4 font-mono text-sm">
                 {post.content}
               </pre>
             </section>
@@ -662,25 +656,25 @@ export default function PostDetailPage() {
             {/* Meta Info */}
             <section
               id="post-detail-meta"
-              className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+              className="dashboard-form-scroll-anchor border-rule dark:border-night-rule border-t pt-10"
             >
-              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+              <h2 className="text-ink dark:text-night-text mb-4 text-lg font-semibold">
                 Informationen
               </h2>
               <dl className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  <dt className="text-dark dark:text-night-muted text-sm font-medium">
                     Erstellt von
                   </dt>
-                  <dd className="dark:text-dark-text mt-1 text-gray-900">
+                  <dd className="text-ink dark:text-night-text mt-1">
                     {post.createdBy?.displayName || "Unbekannt"}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  <dt className="text-dark dark:text-night-muted text-sm font-medium">
                     Erstellt am
                   </dt>
-                  <dd className="dark:text-dark-text mt-1 text-gray-900">
+                  <dd className="text-ink dark:text-night-text mt-1">
                     {new Date(post.createdAt).toLocaleDateString("de-DE", {
                       day: "numeric",
                       month: "long",
@@ -693,18 +687,18 @@ export default function PostDetailPage() {
                 {post.reviewer && (
                   <>
                     <div>
-                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                      <dt className="text-dark dark:text-night-muted text-sm font-medium">
                         Geprüft von
                       </dt>
-                      <dd className="dark:text-dark-text mt-1 text-gray-900">
+                      <dd className="text-ink dark:text-night-text mt-1">
                         {post.reviewer.displayName}
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                      <dt className="text-dark dark:text-night-muted text-sm font-medium">
                         Geprüft am
                       </dt>
-                      <dd className="dark:text-dark-text mt-1 text-gray-900">
+                      <dd className="text-ink dark:text-night-text mt-1">
                         {post.reviewDate
                           ? new Date(post.reviewDate).toLocaleDateString(
                               "de-DE",
@@ -723,10 +717,10 @@ export default function PostDetailPage() {
                 )}
                 {post.publishedAt && (
                   <div>
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    <dt className="text-dark dark:text-night-muted text-sm font-medium">
                       Veröffentlicht am
                     </dt>
-                    <dd className="dark:text-dark-text mt-1 text-gray-900">
+                    <dd className="text-ink dark:text-night-text mt-1">
                       {new Date(post.publishedAt).toLocaleDateString("de-DE", {
                         day: "numeric",
                         month: "long",
@@ -738,10 +732,10 @@ export default function PostDetailPage() {
                   </div>
                 )}
                 <div>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  <dt className="text-dark dark:text-night-muted text-sm font-medium">
                     Zuletzt aktualisiert
                   </dt>
-                  <dd className="dark:text-dark-text mt-1 text-gray-900">
+                  <dd className="text-ink dark:text-night-text mt-1">
                     {new Date(post.updatedAt).toLocaleDateString("de-DE", {
                       day: "numeric",
                       month: "long",
@@ -760,7 +754,7 @@ export default function PostDetailPage() {
         <div className="mt-8">
           <Link
             href="/dashboard/posts"
-            className="hover:text-primary dark:text-dark-muted dark:hover:text-primary inline-flex items-center gap-2 text-sm font-medium text-gray-600"
+            className="text-dark dark:text-night-muted hover:text-primary-ink dark:hover:text-primary inline-flex items-center gap-2 text-sm font-medium"
           >
             <ArrowLeftIcon className="h-4 w-4" />
             Zurück zur Übersicht
@@ -773,10 +767,10 @@ export default function PostDetailPage() {
         <ScrollableModal>
           <ScrollableModalCard maxW="md">
             <ScrollableModalBody>
-              <h3 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+              <h3 className="text-ink dark:text-night-text mb-4 text-lg font-semibold">
                 Beitrag ablehnen
               </h3>
-              <p className="dark:text-dark-muted mb-4 text-sm text-gray-600">
+              <p className="text-dark dark:text-night-muted mb-4 text-sm">
                 Bitte gib einen Grund für die Ablehnung an. Der Ersteller wird
                 benachrichtigt.
               </p>
@@ -785,7 +779,7 @@ export default function PostDetailPage() {
                 onChange={(e) => setReviewNotes(e.target.value)}
                 rows={4}
                 placeholder="Begründung für die Ablehnung..."
-                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text mb-4 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+                className="border-ink dark:border-night-text dark:bg-night dark:text-night-text text-ink bg-paper mb-4 block w-full border px-3 py-2"
                 required
               />
             </ScrollableModalBody>
@@ -796,14 +790,14 @@ export default function PostDetailPage() {
                     setShowRejectModal(false);
                     setReviewNotes("");
                   }}
-                  className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+                  className="border-ink dark:border-night-text text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised min-h-11 border px-4 py-2 text-sm font-medium"
                 >
                   Abbrechen
                 </button>
                 <button
                   onClick={handleReject}
                   disabled={!reviewNotes.trim() || rejectMutation.isPending}
-                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                  className="min-h-11 bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
                 >
                   {rejectMutation.isPending ? "Wird abgelehnt..." : "Ablehnen"}
                 </button>
@@ -818,10 +812,10 @@ export default function PostDetailPage() {
         <ScrollableModal>
           <ScrollableModalCard maxW="md">
             <ScrollableModalBody>
-              <h3 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+              <h3 className="text-ink dark:text-night-text mb-4 text-lg font-semibold">
                 Beitrag löschen
               </h3>
-              <p className="dark:text-dark-muted mb-4 text-gray-600">
+              <p className="text-dark dark:text-night-muted mb-4">
                 Bist du sicher, dass du diesen Beitrag löschen möchtest? Diese
                 Aktion kann nicht rückgängig gemacht werden.
               </p>
@@ -830,14 +824,14 @@ export default function PostDetailPage() {
               <div className="flex justify-end gap-3">
                 <button
                   onClick={() => setShowDeleteModal(false)}
-                  className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+                  className="border-ink dark:border-night-text text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised min-h-11 border px-4 py-2 text-sm font-medium"
                 >
                   Abbrechen
                 </button>
                 <button
                   onClick={handleDelete}
                   disabled={deleteMutation.isPending}
-                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                  className="min-h-11 bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
                 >
                   {deleteMutation.isPending ? "Wird gelöscht..." : "Löschen"}
                 </button>

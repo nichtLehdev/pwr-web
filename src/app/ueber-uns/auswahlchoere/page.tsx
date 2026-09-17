@@ -1,10 +1,18 @@
 import PublicPage from "@/app/_components/general/public-page";
-import Link from "next/link";
-import Image from "next/image";
 import { api } from "@/trpc/server";
 import ConcertCard from "@/app/_components/events/concert-card";
-import { Music, Calendar, Users, ChevronRight, User } from "lucide-react";
+import ImageWithFallback from "@/app/_components/ui/image-with-fallback";
+import {
+  ArrowLink,
+  Heading,
+} from "@/app/_components/programmheft/section-head";
+import { Note } from "@/app/_components/programmheft/note";
+import {
+  PageSection,
+  Split,
+} from "@/app/_components/programmheft/page-section";
 import { buildPageMetadata } from "@/lib/seo";
+import { cn } from "@/lib/utils";
 
 export const metadata = buildPageMetadata({
   title: "Auswahlchöre",
@@ -20,7 +28,6 @@ export default async function AuswahlchoerePage() {
     <PublicPage
       title="Auswahlchöre"
       heroTitle="Unsere Auswahlchöre"
-      color="district-3"
       breadcrumbs={[
         { label: "Start", href: "/" },
         { label: "Über Uns", href: "/ueber-uns" },
@@ -37,132 +44,107 @@ export default async function AuswahlchoerePage() {
     >
       {/* Ensembles */}
       {ensembles.map((ensemble, index) => (
-        <section
+        <PageSection
           key={ensemble.name}
           id={ensemble.slug}
-          className={`scroll-mt-20 py-12 md:py-16 lg:py-20 ${
-            index % 2 === 0
-              ? "bg-background dark:bg-dark-background"
-              : "bg-background-secondary dark:bg-dark-background-secondary"
-          }`}
+          labelledBy={`${ensemble.slug}-heading`}
+          rule={index > 0}
+          className="scroll-mt-24"
         >
-          <div className="container">
-            <div
-              className={`flex flex-col ${
-                index % 2 === 0 ? "lg:flex-row" : "lg:flex-row-reverse"
-              } mx-auto max-w-6xl items-start gap-8 lg:gap-12`}
-            >
-              <div className="w-full lg:w-1/2">
-                <div className="relative h-full overflow-hidden rounded-lg shadow-xl">
-                  {!ensemble.image && (
-                    <div
-                      className={`absolute inset-0 ${ensemble.color} flex items-center justify-center`}
-                    >
-                      <Music className="h-32 w-32 text-white opacity-50" />
-                    </div>
-                  )}
-
-                  {ensemble.image && (
-                    <div className="relative h-full w-full">
-                      <Image
-                        src={ensemble.image.url}
-                        alt={`Ein Bild des Ensembles ${ensemble.name}`}
-                        priority={index < 2}
-                        width={800}
-                        height={533}
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Content */}
-              <div className="w-full lg:w-1/2">
-                <h2 className="text-dark dark:text-dark-text mb-2 text-3xl font-bold wrap-break-word md:text-4xl">
+          <Split
+            side={index % 2 === 0 ? "left" : "right"}
+            head={
+              <>
+                <Heading
+                  id={`${ensemble.slug}-heading`}
+                  className="text-balance break-words hyphens-auto"
+                >
                   {ensemble.name}
-                </h2>
-                <p className="text-primary mb-6 text-xl font-semibold">
+                </Heading>
+                <p className="text-primary-ink dark:text-primary mt-3 text-xl font-semibold">
                   {ensemble.subtitle}
                 </p>
-
-                {/* Metadaten */}
-                <div className="mb-6 flex flex-wrap gap-4">
-                  <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                    <Calendar className="h-5 w-5" />
-                    <span className="font-semibold">
-                      Seit {ensemble.founded}
+                <p className="text-dark dark:text-night-muted mt-4 flex flex-wrap gap-x-4 gap-y-1 text-[0.9375rem]">
+                  <span>Seit {ensemble.founded}</span>
+                  <span>{ensemble.members}</span>
+                  {ensemble.conductor ? (
+                    <span>
+                      {ensemble.conductor.districtRoleName
+                        ? `${ensemble.conductor.districtRoleName} `
+                        : ""}
+                      {ensemble.conductor.displayName}
                     </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                    <Users className="h-5 w-5" />
-                    <span className="font-semibold">{ensemble.members}</span>
-                  </div>
-                  {ensemble.conductor && (
-                    <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                      <User className="h-5 w-5" />
-                      <span className="font-semibold">
-                        {ensemble.conductor.districtRoleName &&
-                          `${ensemble.conductor.districtRoleName} `}
-                        {ensemble.conductor.displayName}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                <p className="mb-6 leading-relaxed text-gray-600 dark:text-gray-400">
-                  {ensemble.description}
+                  ) : null}
                 </p>
+                {/* Das Bild gehört in den Kopf, nicht in den Inhalt: Sonst
+                    endet die Kopfspalte nach Name, Untertitel und Angaben und
+                    läuft neben Text und Terminen mehrere hundert Pixel leer
+                    mit — auf dieser Seite waren das bis zu 629px. Mit dem Bild
+                    trägt sie eigene Höhe. So bleiben die zwei alternierenden
+                    Spalten erhalten und die tote Fläche verschwindet, statt
+                    dass der Abschnitt zu einer einzigen Spalte gestapelt
+                    wird. */}
+                <div className="bg-ink dark:bg-night-raised relative mt-8 aspect-[3/2] max-w-xl overflow-hidden">
+                  <ImageWithFallback
+                    src={ensemble.image?.url}
+                    alt={`Ein Bild des Ensembles ${ensemble.name}`}
+                    fill
+                    priority={index < 2}
+                    sizes="(min-width: 1024px) 30vw, 100vw"
+                    className="object-cover"
+                  />
+                </div>
+              </>
+            }
+            // Text, Termine und Hinweis teilen sich ein Satzmaß. `text-lg` am
+            // Block, damit `65ch` in der Schriftgröße des Fließtexts rechnet;
+            // Termine und Hinweis setzen ihre Größen selbst.
+            //
+            // Steht der Kopf mit dem Bild rechts, rückt der Block an ihn
+            // heran. Sonst endet er bei 65 Zeichen linksbündig mitten in der
+            // Spalte: gemessen 242px Leere bis zur Bildkante, während es bei
+            // linksstehendem Kopf die 40px Rasterabstand sind.
+            bodyClassName={cn(
+              "mt-8 max-w-[65ch] space-y-10 text-lg",
+              index % 2 !== 0 && "lg:ml-auto",
+            )}
+          >
+            <p className="text-ink dark:text-night-text leading-relaxed">
+              {ensemble.description}
+            </p>
 
-                {/* Kommende Konzerte */}
-                {ensemble.events && ensemble.events.length > 0 && (
-                  <div className="dark:bg-dark-surface dark:shadow-dark-border mb-6 rounded-lg bg-white p-6 shadow-md">
-                    <h3 className="text-dark dark:text-dark-text mb-4 text-lg font-bold">
-                      Kommende Termine
-                    </h3>
-                    <div className="space-y-4">
-                      {ensemble.events.map((event, i: number) => (
-                        <ConcertCard
-                          key={i}
-                          concert={event}
-                          ensemble={ensemble}
-                          i={i}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Bewerbung für LaJuPo */}
-                {ensemble.showApplication && (
-                  <div className={`p-6 ${ensemble.color}/10 rounded-lg`}>
-                    <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
-                      Interesse am LaJuPo?
-                    </h3>
-                    <p className="mb-4 text-gray-600 dark:text-gray-400">
-                      Teilnehmen kann, wer 15-25 Jahre alt ist. Die Teilnahme
-                      erfolgt über ein Vorspiel, das alle 2 Jahre stattfindet.
-                      Mit der Teilnahme verpflichtet man sich für 2 Jahre bei
-                      den 3-4 Proben&shy;wochenenden und Konzerten pro Jahr. Die
-                      nächste Legislatur beginnt 2027.
-                    </p>
-                    <Link
-                      href="/kontakt"
-                      className={`inline-flex items-center px-6 py-3 ${ensemble.color} rounded-lg font-semibold text-white transition-opacity hover:opacity-90`}
-                    >
-                      Jetzt informieren
-                      <ChevronRight className="ml-2 h-5 w-5" />
-                    </Link>
-                  </div>
-                )}
+            {ensemble.events && ensemble.events.length > 0 ? (
+              <div>
+                <Heading as="h3" size="list" rule>
+                  Kommende Termine
+                </Heading>
+                <ul className="mt-3">
+                  {ensemble.events.map((event, i) => (
+                    <li key={i}>
+                      <ConcertCard concert={event} ensemble={ensemble} i={i} />
+                    </li>
+                  ))}
+                </ul>
               </div>
-            </div>
-          </div>
-        </section>
+            ) : null}
+
+            {ensemble.showApplication ? (
+              <Note tone="info" title="Interesse am LaJuPo?" titleAs="h3">
+                <p>
+                  Teilnehmen kann, wer 15-25 Jahre alt ist. Die Teilnahme
+                  erfolgt über ein Vorspiel, das alle 2 Jahre stattfindet. Mit
+                  der Teilnahme verpflichtet man sich für 2 Jahre bei den 3-4
+                  Proben&shy;wochenenden und Konzerten pro Jahr. Die nächste
+                  Legislatur beginnt 2027.
+                </p>
+                <ArrowLink href="/kontakt" className="mt-4">
+                  Jetzt informieren
+                </ArrowLink>
+              </Note>
+            ) : null}
+          </Split>
+        </PageSection>
       ))}
-
-      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20"></section>
-
-      <section className="bg-primary py-12 text-white md:py-16 lg:py-20"></section>
     </PublicPage>
   );
 }

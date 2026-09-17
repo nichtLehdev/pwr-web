@@ -13,7 +13,10 @@ import {
   DashboardListViewToggle,
   useDashboardListView,
 } from "./dashboard-list-view";
-import { CONTENT_STATUS_OPTIONS, ContentStatusBadge } from "./content-status";
+import {
+  CONTENT_STATUS_LABELS,
+  CONTENT_STATUS_OPTIONS,
+} from "./content-status";
 import {
   DataTable,
   createDataTableColumnHelper,
@@ -47,6 +50,7 @@ import {
   ScrollableModalBody,
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
+import { Tag, type TagTone } from "@/app/_components/programmheft/tag";
 import { cn } from "@/lib/utils";
 
 type DashboardCoursesListProps = Record<string, never>;
@@ -100,6 +104,67 @@ const sortOptions: {
   { value: "createdAt", label: "Erstellt am" },
   { value: "status", label: "Status" },
 ];
+
+/**
+ * Spiegelt die Zuordnung aus `content-status.tsx` — derselbe Status muss in
+ * der Liste genauso aussehen wie auf der Kachel. Vorher lief hier eine eigene
+ * Tabelle, und zwar mit umgekehrtem Gewicht: „Entwurf" stand gefüllt,
+ * „Veröffentlicht" zurückgenommen.
+ *
+ * Gefüllt heißt „das musst du sehen", umrandet „das ist nur der Stand".
+ * `Tag` hat dafür den umrandeten `muted`-Ton bekommen.
+ *
+ * Dass diese Tabelle hier überhaupt doppelt steht, bleibt ein offener Punkt —
+ * richtig wäre `ContentStatusBadge` aus `content-status.tsx`.
+ */
+const STATUS_TONE: Record<ContentStatus, TagTone> = {
+  DRAFT: "muted",
+  PENDING: "orange",
+  APPROVED: "ink",
+  REJECTED: "cancelled",
+  ARCHIVED: "muted",
+};
+
+/**
+ * Zeitraum-Segmente, Auswahlfelder und der Sortier-Knopf stehen als
+ * ungleichartige Bedienelemente nebeneinander — die Kastenform bleibt hier
+ * richtig (wie in /registrations für Termine und Aktuelles begründet), nur
+ * eckig statt rund und aus der Programmheft-Palette statt Grau/Weiß/Schatten.
+ */
+const TOOLBAR_SEGMENT_WRAP =
+  "border-ink dark:border-night-text bg-paper dark:bg-night inline-flex max-w-full shrink-0 border p-0.5";
+const toolbarSegmentButtonClass = (active: boolean) =>
+  cn(
+    "semi-condensed inline-flex min-h-11 min-w-0 shrink-0 items-center justify-center px-2.5 text-center text-xs font-semibold whitespace-nowrap transition-colors sm:text-sm",
+    active
+      ? "bg-ink text-paper dark:bg-night-text dark:text-night"
+      : "text-dark hover:text-ink dark:text-night-muted dark:hover:text-night-text",
+  );
+const TOOLBAR_SELECT_CLASS =
+  "border-ink dark:border-night-text dark:bg-night min-h-11 min-w-0 border bg-paper px-2.5 py-1.5 text-sm text-ink dark:text-night-text";
+
+/**
+ * Bestätigungs-Knöpfe in den Massenaktions-Dialogen, wie öffentlich
+ * (`BTN_PRIMARY`/`BTN_OUTLINE` in /settings, /registrations): Tinte gefüllt
+ * für die Hauptaktion statt Orange mit weißer Schrift (1,99:1, fällt durch).
+ * Orange bleibt Auswahl-/Zustandsfarbe (Seitenleiste, Etiketten) vorbehalten
+ * — dieselbe Farbe zusätzlich für "Bestätigen" zu verwenden, würde beides
+ * vermischen.
+ */
+const MODAL_BTN_PRIMARY =
+  "bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-primary dark:text-ink dark:hover:bg-paper semi-condensed inline-flex min-h-11 items-center justify-center px-4 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60";
+const MODAL_BTN_OUTLINE =
+  "border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night semi-condensed inline-flex min-h-11 items-center justify-center border-2 px-4 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60";
+const MODAL_BTN_DANGER =
+  "bg-red-700 text-paper hover:bg-red-800 dark:bg-red-400 dark:text-night dark:hover:bg-red-300 semi-condensed inline-flex min-h-11 items-center justify-center px-4 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60";
+/** Status-Auswahl im Dialog: gefüllt, wenn aktiv — wie die Design-Theme-Wahl in /settings. */
+const statusChoiceClass = (active: boolean) =>
+  cn(
+    "semi-condensed inline-flex min-h-11 items-center justify-center border-2 px-3 text-sm font-semibold transition-colors",
+    active
+      ? "bg-ink text-paper border-ink dark:bg-night-text dark:text-night dark:border-night-text"
+      : "border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night",
+  );
 
 export default function DashboardCoursesList({}: DashboardCoursesListProps) {
   const router = useRouter();
@@ -318,7 +383,7 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
         cell: ({ row }) => (
           <Link
             href={`/dashboard/courses/${row.original.id}`}
-            className="hover:text-primary dark:text-dark-text font-medium text-gray-900"
+            className="hover:text-primary-ink dark:hover:text-primary text-ink dark:text-night-text font-medium"
           >
             {row.original.title}
           </Link>
@@ -370,11 +435,15 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
           const number = row.original.bezirk?.number;
           if (!number) return "–";
           return (
-            <span
-              className="inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-white"
-              style={{ backgroundColor: getDistrictColor(number) }}
-            >
-              {number}
+            <span className="inline-flex items-center gap-1.5">
+              <span
+                className="h-2.5 w-2.5 shrink-0"
+                style={{ backgroundColor: getDistrictColor(number) }}
+                aria-hidden
+              />
+              <span className="text-ink dark:text-night-text tabular-nums">
+                {number}
+              </span>
             </span>
           );
         },
@@ -402,15 +471,9 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
           enableSorting: false,
           enableColumnFilter: false,
           cell: ({ row }) => (
-            <span
-              className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap ${
-                row.original.registrationOpen
-                  ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
-                  : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
-              }`}
-            >
+            <Tag tone={row.original.registrationOpen ? "inverse" : "ink"}>
               {row.original.registrationOpen ? "Offen" : "Geschlossen"}
-            </span>
+            </Tag>
           ),
         },
       ),
@@ -418,7 +481,11 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
         id: "status",
         header: "Status",
         meta: { filterVariant: "set", filterOptions: statusColumnOptions },
-        cell: ({ row }) => <ContentStatusBadge status={row.original.status} />,
+        cell: ({ row }) => (
+          <Tag tone={STATUS_TONE[row.original.status]}>
+            {CONTENT_STATUS_LABELS[row.original.status]}
+          </Tag>
+        ),
       }),
       column.accessor((course) => course.createdBy?.displayName ?? "", {
         id: "createdBy",
@@ -443,7 +510,7 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
           <div className="flex items-center justify-end gap-2">
             <Link
               href={`/dashboard/courses/${row.original.id}/edit`}
-              className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
+              className="text-dark hover:text-ink hover:bg-rule/40 dark:text-night-muted dark:hover:text-night-text dark:hover:bg-night-raised p-1.5 transition-colors"
               title="Bearbeiten"
             >
               <PencilIcon className="h-4 w-4" />
@@ -455,7 +522,7 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
               })}
               target="_blank"
               rel="noopener noreferrer"
-              className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
+              className="text-dark hover:text-ink hover:bg-rule/40 dark:text-night-muted dark:hover:text-night-text dark:hover:bg-night-raised p-1.5 transition-colors"
               title="Öffentliche Seite"
             >
               <ExternalLinkIcon className="h-4 w-4" />
@@ -517,8 +584,8 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
 
   if (error) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950/30">
-        <p className="text-sm text-red-800 dark:text-red-300">
+      <div className="bg-paper dark:bg-night border-t-2 border-red-700 p-4 dark:border-red-400">
+        <p className="text-sm text-red-700 dark:text-red-400">
           Fehler beim Laden der Kurse: {error.message}
         </p>
       </div>
@@ -526,7 +593,7 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
   }
 
   const scheduleSegment = (
-    <div className="dark:border-dark-border inline-flex max-w-full rounded-md border border-gray-200/90 p-0.5">
+    <div className={TOOLBAR_SEGMENT_WRAP}>
       {scheduleFilters.map((sf) => (
         <button
           key={sf.value}
@@ -535,12 +602,8 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
             setScheduleFilter(sf.value);
             setPage(1);
           }}
-          className={cn(
-            "min-w-0 shrink-0 rounded px-2.5 py-1.5 text-center text-xs font-medium transition-colors sm:text-sm",
-            scheduleFilter === sf.value
-              ? "dark:bg-dark-surface dark:text-dark-text bg-white text-gray-900 shadow-sm"
-              : "text-gray-500 hover:text-gray-800 dark:hover:text-gray-200",
-          )}
+          aria-pressed={scheduleFilter === sf.value}
+          className={toolbarSegmentButtonClass(scheduleFilter === sf.value)}
         >
           {sf.label}
         </button>
@@ -548,8 +611,7 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
     </div>
   );
 
-  const selectClass =
-    "dark:border-dark-border dark:bg-dark-background min-h-9 min-w-0 rounded-md border border-gray-200/90 bg-white px-2.5 py-1.5 text-sm text-gray-900 dark:text-dark-text";
+  const selectClass = TOOLBAR_SELECT_CLASS;
 
   // In der Tabelle sitzen Status und Sortierung in den Spaltenköpfen — beides
   // zusätzlich in der Leiste zu zeigen wären zwei Schalter für dieselbe Sache.
@@ -617,7 +679,7 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
             <button
               type="button"
               onClick={toggleSortOrder}
-              className="text-dark dark:text-dark-text dark:border-dark-border dark:bg-dark-background-secondary dark:hover:bg-dark-surface inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-gray-200/90 bg-white text-gray-600 transition-colors hover:bg-gray-50"
+              className="border-ink dark:border-night-text bg-paper dark:bg-night text-ink dark:text-night-text hover:bg-rule/40 dark:hover:bg-night-raised inline-flex h-11 w-11 shrink-0 items-center justify-center border transition-colors"
               title={sortOrder === "asc" ? "Aufsteigend" : "Absteigend"}
             >
               {sortOrder === "asc" ? (
@@ -635,18 +697,18 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
   return (
     <div className="space-y-3">
       {!selectionMode && (
-        <div className="dark:border-dark-border border-b border-gray-200/80 pb-2">
+        <div className="border-rule dark:border-night-rule border-b pb-2">
           {/* Zählung und Ansichtsschalter oben, die Filter darunter über die
               volle Breite: die Selects haben feste Breiten und drängeln sich in
               einer gemeinsamen Zeile bei mittleren Fenstern gegenseitig weg. */}
           <div className="hidden space-y-2 sm:block">
             <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-              <p className="min-w-0 text-sm text-gray-600 tabular-nums dark:text-gray-400">
+              <p className="text-dark dark:text-night-muted min-w-0 text-sm tabular-nums">
                 {isLoading ? (
-                  <span className="text-gray-500">Liste wird geladen…</span>
+                  <span>Liste wird geladen…</span>
                 ) : data ? (
                   <>
-                    <span className="text-dark dark:text-dark-text font-semibold">
+                    <span className="text-ink dark:text-night-text font-semibold">
                       {data.total}
                     </span>{" "}
                     {data.total === 1 ? "Kurs" : "Kurse"}
@@ -678,12 +740,12 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
           </div>
 
           <div className="flex flex-wrap items-end justify-between gap-3 sm:hidden">
-            <p className="text-sm text-gray-600 tabular-nums dark:text-gray-400">
+            <p className="text-dark dark:text-night-muted text-sm tabular-nums">
               {isLoading ? (
-                <span className="text-gray-500">Liste wird geladen…</span>
+                <span>Liste wird geladen…</span>
               ) : data ? (
                 <>
-                  <span className="text-dark dark:text-dark-text font-semibold">
+                  <span className="text-ink dark:text-night-text font-semibold">
                     {data.total}
                   </span>{" "}
                   {data.total === 1 ? "Kurs" : "Kurse"}
@@ -714,20 +776,18 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
             <button
               type="button"
               onClick={() => setFiltersOpen(!filtersOpen)}
-              className="dark:border-dark-border flex w-full items-center justify-between gap-2 rounded-md border border-gray-200/80 px-3 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-300"
+              className="border-ink dark:border-night-text text-ink dark:text-night-text flex min-h-11 w-full items-center justify-between gap-2 border px-3 py-2 text-left text-sm font-semibold"
             >
               <span className="flex items-center gap-2">
-                <FilterIcon className="h-4 w-4 text-gray-400" />
+                <FilterIcon className="text-dark dark:text-night-muted h-4 w-4" />
                 Zeitraum, Status, Bezirk, Sortierung
               </span>
               {adjustedFilterCount > 0 ? (
-                <span className="dark:bg-dark-border rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-700 tabular-nums dark:text-gray-200">
-                  {adjustedFilterCount}
-                </span>
+                <Tag tone="orange">{adjustedFilterCount}</Tag>
               ) : null}
             </button>
             {filtersOpen ? (
-              <div className="dark:border-dark-border mt-2 space-y-3 rounded-md border border-gray-200/80 p-3">
+              <div className="border-ink dark:border-night-text mt-2 space-y-3 border p-3">
                 {filterControlsRow}
               </div>
             ) : null}
@@ -736,24 +796,24 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
       )}
 
       {selectionMode && (
-        <div className="dark:border-dark-border flex flex-wrap items-center gap-3 gap-y-2 border-b border-gray-200/80 pb-2">
-          <span className="text-dark dark:text-dark-text text-sm font-medium tabular-nums">
+        <div className="border-rule dark:border-night-rule flex flex-wrap items-center gap-3 gap-y-2 border-b pb-2">
+          <span className="text-ink dark:text-night-text text-sm font-medium tabular-nums">
             {selectedIds.size} ausgewählt
           </span>
 
-          <div className="dark:border-dark-border flex items-center gap-2 border-l border-gray-200/90 pl-3">
+          <div className="border-rule dark:border-night-rule flex items-center gap-2 border-l pl-3">
             <button
               type="button"
               onClick={selectAll}
-              className="hover:text-primary text-sm font-medium text-gray-600 dark:text-gray-400"
+              className="hover:text-primary-ink dark:hover:text-primary text-dark dark:text-night-muted text-sm font-medium"
             >
               Alle
             </button>
-            <span className="text-gray-300 dark:text-gray-600">·</span>
+            <span className="text-dark dark:text-night-muted">·</span>
             <button
               type="button"
               onClick={deselectAll}
-              className="hover:text-primary text-sm font-medium text-gray-600 dark:text-gray-400"
+              className="hover:text-primary-ink dark:hover:text-primary text-dark dark:text-night-muted text-sm font-medium"
             >
               Keine
             </button>
@@ -827,11 +887,11 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
           pageSizeOptions={[25, 50, 100]}
           emptyState={
             <>
-              <SquareDashed className="mx-auto h-10 w-10 text-gray-400/80 dark:text-gray-500" />
-              <h3 className="text-dark dark:text-dark-text mt-4 text-lg font-semibold">
+              <SquareDashed className="text-dark dark:text-night-muted mx-auto h-10 w-10" />
+              <h3 className="text-ink dark:text-night-text mt-4 text-lg font-semibold">
                 Keine Kurse gefunden
               </h3>
-              <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-dark dark:text-night-muted mt-2 text-sm">
                 Passe Zeitraum, Status oder Suche an.
               </p>
             </>
@@ -884,7 +944,7 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
               {[...Array(6)].map((_, i) => (
                 <div
                   key={i}
-                  className="dark:border-dark-border dark:bg-dark-surface h-52 animate-pulse rounded-lg border border-gray-200/70 bg-gray-100"
+                  className="border-rule dark:border-night-rule bg-rule/25 dark:bg-night-raised h-52 animate-pulse border"
                 />
               ))}
             </div>
@@ -897,19 +957,19 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
                 <div key={course.id} className="relative">
                   {selectionMode && (
                     <div
-                      className={`absolute inset-0 z-10 cursor-pointer rounded-lg border-2 transition-colors ${
+                      className={`absolute inset-0 z-10 cursor-pointer border-2 transition-colors ${
                         selectedIds.has(course.id)
                           ? "border-primary bg-primary/10"
-                          : "border-transparent hover:border-gray-300 hover:bg-gray-50/50 dark:hover:border-gray-600"
+                          : "hover:border-ink/40 hover:bg-rule/20 dark:hover:border-night-text/40 border-transparent"
                       }`}
                       onClick={() => toggleSelection(course.id)}
                     >
                       <div className="absolute top-3 left-3">
                         <div
-                          className={`flex h-6 w-6 items-center justify-center rounded border-2 transition-colors ${
+                          className={`flex h-6 w-6 items-center justify-center border-2 transition-colors ${
                             selectedIds.has(course.id)
-                              ? "border-primary bg-primary text-white"
-                              : "dark:bg-dark-surface border-gray-300 bg-white dark:border-gray-600"
+                              ? "border-ink bg-primary text-ink dark:border-night-text"
+                              : "border-ink dark:border-night-text bg-paper dark:bg-night"
                           }`}
                         >
                           {selectedIds.has(course.id) && (
@@ -952,12 +1012,12 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
 
           {/* Empty State */}
           {!isLoading && data?.courses && data.courses.length === 0 && (
-            <div className="dark:border-dark-border border-t border-gray-200/80 py-14 text-center">
-              <SquareDashed className="mx-auto h-10 w-10 text-gray-400/80 dark:text-gray-500" />
-              <h3 className="text-dark dark:text-dark-text mt-4 text-lg font-semibold">
+            <div className="border-rule dark:border-night-rule border-t py-14 text-center">
+              <SquareDashed className="text-dark dark:text-night-muted mx-auto h-10 w-10" />
+              <h3 className="text-ink dark:text-night-text mt-4 text-lg font-semibold">
                 Keine Kurse gefunden
               </h3>
-              <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-dark dark:text-night-muted mt-2 text-sm">
                 {statusFilter !== "all"
                   ? "Für diese Statusfilter gibt es keine Treffer."
                   : scheduleFilter === "active"
@@ -976,12 +1036,12 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
                 type="button"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="dark:border-dark-border dark:bg-dark-surface dark:hover:bg-dark-background-secondary rounded-lg border border-gray-200/90 bg-white px-3 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                className="border-ink dark:border-night-text bg-paper dark:bg-night text-ink dark:text-night-text hover:bg-rule/40 dark:hover:bg-night-raised inline-flex h-11 w-11 items-center justify-center border text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <ArrowLeftIcon className="h-4 w-4" />
               </button>
 
-              <span className="text-dark dark:text-dark-text text-sm tabular-nums">
+              <span className="text-ink dark:text-night-text text-sm tabular-nums">
                 Seite {page} von {data.pages}
               </span>
 
@@ -989,7 +1049,7 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
                 type="button"
                 onClick={() => setPage((p) => Math.min(data.pages, p + 1))}
                 disabled={page === data.pages}
-                className="dark:border-dark-border dark:bg-dark-surface dark:hover:bg-dark-background-secondary rounded-lg border border-gray-200/90 bg-white px-3 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                className="border-ink dark:border-night-text bg-paper dark:bg-night text-ink dark:text-night-text hover:bg-rule/40 dark:hover:bg-night-raised inline-flex h-11 w-11 items-center justify-center border text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <ArrowRightIcon className="h-4 w-4" />
               </button>
@@ -1004,10 +1064,10 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
         <ScrollableModal>
           <ScrollableModalCard maxW="md">
             <ScrollableModalBody>
-              <h3 className="text-dark dark:text-dark-text text-lg font-bold">
+              <h3 className="text-ink dark:text-night-text text-lg font-bold">
                 Kurse löschen?
               </h3>
-              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-dark dark:text-night-muted mt-2 text-sm">
                 Möchtest du wirklich {selectedIds.size} Kurs(e) unwiderruflich
                 löschen? Alle zugehörigen Anmeldungen werden ebenfalls gelöscht.
               </p>
@@ -1015,15 +1075,17 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
             <ScrollableModalFooter>
               <div className="flex justify-end gap-3">
                 <button
+                  type="button"
                   onClick={() => setShowDeleteConfirm(false)}
-                  className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+                  className={MODAL_BTN_OUTLINE}
                 >
                   Abbrechen
                 </button>
                 <button
+                  type="button"
                   onClick={handleBulkDelete}
                   disabled={bulkDeleteMutation.isPending}
-                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+                  className={MODAL_BTN_DANGER}
                 >
                   {bulkDeleteMutation.isPending ? "Löschen..." : "Löschen"}
                 </button>
@@ -1038,10 +1100,10 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
         <ScrollableModal>
           <ScrollableModalCard maxW="md">
             <ScrollableModalBody>
-              <h3 className="text-dark dark:text-dark-text text-lg font-bold">
+              <h3 className="text-ink dark:text-night-text text-lg font-bold">
                 Status ändern
               </h3>
-              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-dark dark:text-night-muted mt-2 text-sm">
                 Wähle den neuen Status für {selectedIds.size} Kurs(e):
               </p>
               <div className="mt-4 grid grid-cols-2 gap-2">
@@ -1050,14 +1112,12 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
                   .map((status) => (
                     <button
                       key={status.value}
+                      type="button"
                       onClick={() =>
                         setNewStatus(status.value as ContentStatus)
                       }
-                      className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                        newStatus === status.value
-                          ? "bg-primary text-white"
-                          : "dark:bg-dark-background-secondary dark:text-dark-text bg-gray-100 text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700"
-                      }`}
+                      aria-pressed={newStatus === status.value}
+                      className={statusChoiceClass(newStatus === status.value)}
                     >
                       {status.label}
                     </button>
@@ -1067,11 +1127,12 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
             <ScrollableModalFooter>
               <div className="flex justify-end gap-3">
                 <button
+                  type="button"
                   onClick={() => {
                     setShowStatusChange(false);
                     setNewStatus(null);
                   }}
-                  className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+                  className={MODAL_BTN_OUTLINE}
                 >
                   Abbrechen
                 </button>
@@ -1079,7 +1140,7 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
                   type="button"
                   onClick={handleBulkStatusChange}
                   disabled={!newStatus || bulkStatusChangeMutation.isPending}
-                  className="bg-primary hover:bg-primary-dark rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50"
+                  className={MODAL_BTN_PRIMARY}
                 >
                   {bulkStatusChangeMutation.isPending
                     ? "Ändern..."

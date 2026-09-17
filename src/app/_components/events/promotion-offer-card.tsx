@@ -15,6 +15,18 @@ import {
   type SplitChoiceParticipant,
 } from "./course-registration-form/seat-split-choice";
 import type { ShortageCourse } from "./course-registration-form/seat-shortage-notice";
+import { Note } from "@/app/_components/programmheft/note";
+
+/**
+ * Schaltflächen-Stimmen des Programmhefts, wie auf der Anmeldungsseite, die
+ * diese Karte trägt (`registrations/[id]/page.tsx`).
+ */
+const BTN_BASE =
+  "semi-condensed inline-flex min-h-12 items-center justify-center gap-2 px-6 text-base font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60";
+const BTN_PRIMARY = `bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-primary dark:text-ink dark:hover:bg-paper ${BTN_BASE}`;
+const BTN_OUTLINE = `border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night border-2 ${BTN_BASE}`;
+/** Rot wie „Verwerfen“ im Anmeldeformular: gibt die Plätze unwiderruflich ab. */
+const BTN_DESTRUCTIVE = `bg-red-700 text-paper hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-700 ${BTN_BASE}`;
 
 const formatDateTime = (date: Date) =>
   new Date(date).toLocaleString("de-DE", {
@@ -95,53 +107,52 @@ export function PromotionOfferCard({
   const pending = accept.isPending || decline.isPending;
 
   return (
-    <div className="border-primary bg-primary/5 dark:bg-primary/10 mb-6 rounded-lg border-2 p-5">
-      <h2 className="text-dark dark:text-dark-text text-lg font-semibold">
-        Plätze frei geworden
-      </h2>
-      <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
-        Bis <strong>{formatDateTime(offer.expiresAt)} Uhr</strong> kannst du
-        wählen, wer nachrückt. Die Gewählten sind dann bestätigt, die übrigen
-        bleiben auf der Warteliste. Lehnst du ab oder verstreicht die Frist,
-        gehen die Plätze an die Nächsten – deine Anmeldung behält ihren Platz.
-      </p>
+    <div className="space-y-6">
+      {/* Die Frist ist der Handlungsbedarf — sie steht auf der orangen Fläche,
+          die Auswahl darunter auf Papier wie im Anmeldeformular. */}
+      <Note tone="important" title="Plätze frei geworden" titleAs="h2">
+        <p>
+          Bis <strong>{formatDateTime(offer.expiresAt)} Uhr</strong> kannst du
+          wählen, wer nachrückt. Die Gewählten sind dann bestätigt, die übrigen
+          bleiben auf der Warteliste. Lehnst du ab oder verstreicht die Frist,
+          gehen die Plätze an die Nächsten – deine Anmeldung behält ihren Platz.
+        </p>
+      </Note>
 
-      <div className="mt-4">
-        {shortage ? (
-          <SeatSplitChoice
-            course={course}
-            participants={participants}
-            shortage={shortage}
-            availability={offer.availability}
-            showModeChoice={false}
-            waiting
-            splitting
-            onSplittingChange={() => undefined}
-            selectedIndexes={selectedIndexes}
-            onSelectedIndexesChange={setSelectedIndexes}
-            problem={problem}
-          />
-        ) : (
-          <p className="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800 dark:border-green-800 dark:bg-green-900/20 dark:text-green-300">
-            Inzwischen sind genug Plätze für alle Teilnehmer frei.
-          </p>
-        )}
-      </div>
+      {shortage ? (
+        <SeatSplitChoice
+          course={course}
+          participants={participants}
+          shortage={shortage}
+          availability={offer.availability}
+          showModeChoice={false}
+          waiting
+          splitting
+          onSplittingChange={() => undefined}
+          selectedIndexes={selectedIndexes}
+          onSelectedIndexesChange={setSelectedIndexes}
+          problem={problem}
+        />
+      ) : (
+        <p className="text-ink dark:text-night-text font-semibold">
+          Inzwischen sind genug Plätze für alle Teilnehmer frei.
+        </p>
+      )}
 
       {confirmDecline ? (
-        <div className="mt-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-          <p className="text-sm text-gray-700 dark:text-gray-300">
+        <div className="border-ink dark:border-night-text border-t-2 pt-4">
+          <p className="text-ink dark:text-night-text">
             Angebot wirklich ablehnen? Die freien Plätze gehen dann an die
             Nächsten auf der Warteliste.
           </p>
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-4 flex flex-wrap gap-3">
             <button
               type="button"
               onClick={() =>
                 decline.mutate({ id: registrationId, accessToken })
               }
               disabled={pending}
-              className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+              className={BTN_DESTRUCTIVE}
             >
               {decline.isPending ? "Wird abgelehnt…" : "Ja, ablehnen"}
             </button>
@@ -149,14 +160,14 @@ export function PromotionOfferCard({
               type="button"
               onClick={() => setConfirmDecline(false)}
               disabled={pending}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+              className={BTN_OUTLINE}
             >
               Zurück
             </button>
           </div>
         </div>
       ) : (
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-3">
           <button
             type="button"
             onClick={() =>
@@ -167,7 +178,7 @@ export function PromotionOfferCard({
               })
             }
             disabled={pending || problem !== null}
-            className="bg-primary hover:bg-primary-dark rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+            className={BTN_PRIMARY}
           >
             {accept.isPending
               ? "Wird bestätigt…"
@@ -179,7 +190,7 @@ export function PromotionOfferCard({
             type="button"
             onClick={() => setConfirmDecline(true)}
             disabled={pending}
-            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+            className={BTN_OUTLINE}
           >
             Angebot ablehnen
           </button>
