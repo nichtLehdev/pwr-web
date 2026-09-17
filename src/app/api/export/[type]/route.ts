@@ -153,6 +153,16 @@ export async function GET(
                 image: true,
               },
             },
+            priceOptions: true,
+            // Die Datei selbst hat einen eigenen Export; hier reisen nur die
+            // Merkmale mit, an denen der Import sie wiederfindet.
+            downloads: {
+              include: {
+                download: {
+                  select: { id: true, title: true, fileUrl: true },
+                },
+              },
+            },
           },
           orderBy: { eventDate: "desc" },
         });
@@ -163,6 +173,11 @@ export async function GET(
         jsonData = {
           events: events.map((event) => ({
             ...event,
+            downloads: event.downloads.map((link) => ({
+              downloadId: link.downloadId,
+              title: link.download.title,
+              fileUrl: link.download.fileUrl,
+            })),
             coverImageUrl: event.coverImage?.url,
             locationName: event.location?.name,
             bezirkName: event.bezirk?.name,
@@ -391,11 +406,24 @@ export async function GET(
         // Bewusst ohne Anmeldungen, Teilnehmende und Rechnungen: Das sind
         // personenbezogene Daten, und ein Kurs soll sich weitergeben lassen,
         // ohne sie mitzunehmen.
+        // Ebenfalls draußen bleibt das Kursteam mit Zugang (`collaborators`):
+        // Das sind Berechtigungen auf Konten dieses Bestands, kein Inhalt —
+        // über ein ZIP vergeben ließen sich damit stillschweigend Zugriffe
+        // einrichten. Öffentlich genannte Teammitglieder ohne Zugang
+        // (`guestTeamMembers`) stehen dagegen auf der Kursseite und wandern mit.
         const courses = await db.course.findMany({
           where: idFilter,
           include: {
+            // Das Kursbild reist als Media-Zeile mit, genau wie das Titelbild
+            // eines Termins oder Beitrags — kein Sonderweg nötig.
+            image: true,
             location: true,
             bezirk: true,
+            // Preiskategorien, Anmeldefelder und das öffentlich genannte
+            // Kursteam gehören zum Kurs und fehlten bisher ganz.
+            priceOptions: { orderBy: { createdAt: "asc" } },
+            customFields: { orderBy: { sortOrder: "asc" } },
+            guestTeamMembers: { orderBy: { sortOrder: "asc" } },
             createdBy: {
               select: {
                 id: true,
@@ -420,6 +448,7 @@ export async function GET(
         jsonData = {
           courses: courses.map((course) => ({
             ...course,
+            imageUrl: course.image?.url,
             locationName: course.location?.name,
             bezirkName: course.bezirk?.name,
             createdByEmail: course.createdBy?.email,
@@ -429,19 +458,13 @@ export async function GET(
           count: courses.length,
         };
 
-        const zipBuffer = await createExportZip(jsonData, [], "courses.json");
+        mediaFiles = courses;
         filename = buildExportFilename(
           type,
           date,
           selectedIds ? courses : null,
         );
-
-        return new NextResponse(zipBuffer as unknown as BodyInit, {
-          headers: {
-            "Content-Type": "application/zip",
-            "Content-Disposition": `attachment; filename="${filename}"`,
-          },
-        });
+        break;
       }
 
       default:
