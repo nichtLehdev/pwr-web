@@ -1,107 +1,141 @@
-/* Article Content Styling */
+/*
+ * Artikelkörper im Programmheft.
+ *
+ * Diese Datei gestaltet den gespeicherten Beitrags-HTML an drei Stellen
+ * gleichzeitig: der öffentlichen Beitragsansicht, der Dashboard-Vorschau und
+ * der Editorfläche. Was hier steht, sieht die Redakteurin beim Schreiben
+ * genauso wie die Leserin auf der Website.
+ *
+ * Das `!important` bleibt mit Absicht erhalten. Im bereits gespeicherten HTML
+ * stehen Tailwind-Klassen aus der TipTap-Konfiguration (`border-gray-300`,
+ * `rounded-lg`, `text-primary underline`). Weil dieses Stylesheet sie
+ * überstimmt, wirkt eine Korrektur hier auf alle Artikel — auch auf die, die
+ * längst in der Datenbank liegen. Ohne `!important` müsste jeder Altbeitrag
+ * neu gespeichert werden.
+ *
+ * Gemessen vor der Umstellung: Links standen auf #faa619, also Druckorange als
+ * Schriftfarbe auf Papier — 1,99:1, durchgefallen. In allen drei veröffentlichten
+ * Beiträgen mit Links. Orange ist im Heft eine Fläche, keine Schriftfarbe;
+ * dafür gibt es --color-primary-ink (5,26:1). Auf Nachtgrund trägt das Orange
+ * selbst (9,4:1) und darf dort stehen bleiben.
+ */
+
 .article-content {
   max-width: 100%;
-  color: #374151;
+  color: var(--color-ink);
   line-height: 1.75;
 }
 
 :root.dark .article-content {
-  color: #d1d5db;
+  color: var(--color-night-text);
 }
 
-/* Headings */
+/* Überschriften — schmale Achse wie die Programmköpfe der öffentlichen Seiten */
+.article-content h1,
+.article-content h2,
+.article-content h3 {
+  font-family: var(--font-programm) !important;
+  font-variation-settings: "wdth" 68 !important;
+  color: var(--color-ink) !important;
+}
+
+.article-content h4 {
+  font-family: var(--font-programm) !important;
+  font-variation-settings: "wdth" 84 !important;
+  color: var(--color-ink) !important;
+}
+
+:root.dark .article-content h1,
+:root.dark .article-content h2,
+:root.dark .article-content h3,
+:root.dark .article-content h4 {
+  color: var(--color-night-text) !important;
+}
+
 .article-content h1 {
   font-size: 2.25rem !important;
   font-weight: 700 !important;
-  color: #58595b !important;
   margin-top: 2rem !important;
   margin-bottom: 1.25rem !important;
   line-height: 1.2 !important;
 }
 
-:root.dark .article-content h1 {
-  color: #e5e7eb !important;
-}
-
 .article-content h2 {
   font-size: 1.875rem !important;
   font-weight: 700 !important;
-  color: #58595b !important;
   margin-top: 3rem !important;
   margin-bottom: 1rem !important;
   line-height: 1.3 !important;
 }
 
-:root.dark .article-content h2 {
-  color: #e5e7eb !important;
-}
-
 .article-content h3 {
   font-size: 1.5rem !important;
   font-weight: 700 !important;
-  color: #58595b !important;
   margin-top: 2rem !important;
   margin-bottom: 0.75rem !important;
   line-height: 1.4 !important;
 }
 
-:root.dark .article-content h3 {
-  color: #e5e7eb !important;
-}
-
 .article-content h4 {
   font-size: 1.25rem !important;
   font-weight: 600 !important;
-  color: #58595b !important;
   margin-top: 1.5rem !important;
   margin-bottom: 0.5rem !important;
 }
 
-:root.dark .article-content h4 {
-  color: #e5e7eb !important;
-}
-
-/* Paragraphs */
+/* Fließtext */
 .article-content p {
   margin-bottom: 1.5rem !important;
-  color: #4b5563 !important;
+  color: var(--color-ink) !important;
   line-height: 1.75 !important;
 }
 
 :root.dark .article-content p {
-  color: #9ca3af !important;
+  color: var(--color-night-text) !important;
 }
 
-/* Links */
+/*
+ * Links: Braunton statt Druckorange. Zusätzlich dauerhaft unterstrichen —
+ * vorher waren Links im Fließtext allein an der Farbe zu erkennen, was für
+ * farbfehlsichtige Leser nicht reicht (WCAG 1.4.1).
+ */
 .article-content a {
-  color: #faa619 !important;
-  text-decoration: none !important;
+  color: var(--color-primary-ink) !important;
+  text-decoration: underline !important;
+  text-underline-offset: 0.2em !important;
   font-weight: 500 !important;
 }
 
 .article-content a:hover {
-  text-decoration: underline !important;
+  color: var(--color-ink) !important;
 }
 
-/* Strong/Bold */
+:root.dark .article-content a {
+  color: var(--color-primary) !important;
+}
+
+:root.dark .article-content a:hover {
+  color: var(--color-night-text) !important;
+}
+
+/* Fett und kursiv */
 .article-content strong,
 .article-content b {
   font-weight: 700 !important;
-  color: #1f2937 !important;
+  color: var(--color-ink) !important;
 }
 
 :root.dark .article-content strong,
 :root.dark .article-content b {
-  color: #f3f4f6 !important;
+  color: var(--color-night-text) !important;
 }
 
-/* Emphasis/Italic */
 .article-content em,
 .article-content i {
   font-style: italic !important;
 }
 
-/* Lists */
+/* Listen */
 .article-content ul,
 .article-content ol {
   margin: 1.5rem 0 !important;
@@ -110,12 +144,12 @@
 
 .article-content li {
   margin: 0.5rem 0 !important;
-  color: #4b5563 !important;
+  color: var(--color-ink) !important;
   line-height: 1.75 !important;
 }
 
 :root.dark .article-content li {
-  color: #9ca3af !important;
+  color: var(--color-night-text) !important;
 }
 
 .article-content ul li {
@@ -126,33 +160,28 @@
   list-style-type: decimal !important;
 }
 
-/* Nested lists */
 .article-content ul ul,
 .article-content ol ul {
   margin-top: 0.5rem !important;
   margin-bottom: 0.5rem !important;
 }
 
-/* Images */
+/*
+ * Bilder: ohne Rundung und ohne Schlagschatten. `cursor: pointer` bleibt —
+ * post-detail-view hängt am Artikelkörper einen Klick-Horcher, der Bilder in
+ * der Leuchtkastenansicht öffnet; ohne den Zeiger fehlte der Hinweis darauf.
+ */
 .article-content img {
   max-width: 100% !important;
   height: auto !important;
-  border-radius: 0.5rem !important;
-  box-shadow:
-    0 10px 15px -3px rgba(0, 0, 0, 0.1),
-    0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
   margin: 2rem auto !important;
   display: block !important;
   cursor: pointer !important;
 }
 
-:root.dark .article-content img {
-  box-shadow:
-    0 10px 15px -3px rgba(0, 0, 0, 0.3),
-    0 4px 6px -2px rgba(0, 0, 0, 0.2) !important;
-}
-
-/* Image with credit (figure + figcaption) */
+/* Bild mit Bildnachweis */
 .article-content-figure {
   position: relative !important;
   display: inline-block !important;
@@ -164,48 +193,53 @@
   margin: 0 !important;
 }
 
+/* Steht auf dem Foto, nicht auf Papier — helle Schrift auf dunkler Auflage. */
 .article-content-figcaption {
   position: absolute !important;
-  bottom: 0.5rem !important;
-  right: 0.5rem !important;
+  bottom: 0 !important;
+  right: 0 !important;
   max-width: 85% !important;
   padding: 0.25rem 0.5rem !important;
   font-size: 0.75rem !important;
   line-height: 1.3 !important;
-  color: rgba(255, 255, 255, 0.9) !important;
-  background: rgba(0, 0, 0, 0.5) !important;
-  border-radius: 0.25rem !important;
+  color: #ffffff !important;
+  background: rgba(0, 0, 0, 0.66) !important;
+  border-radius: 0 !important;
   text-align: right !important;
   pointer-events: none !important;
 }
 
 :root.dark .article-content-figcaption {
-  color: rgba(255, 255, 255, 0.9) !important;
-  background: rgba(0, 0, 0, 0.6) !important;
+  color: #ffffff !important;
+  background: rgba(0, 0, 0, 0.72) !important;
 }
 
-/* Blockquotes */
+/* Zitat: Orange darf als Linie stehen, nur nicht als Schrift. */
 .article-content blockquote {
-  border-left: 4px solid #faa619 !important;
+  border-left: 4px solid var(--color-primary) !important;
   padding-left: 1.5rem !important;
   margin: 2rem 0 !important;
   font-style: italic !important;
-  color: #6b7280 !important;
+  color: var(--color-dark) !important;
 }
 
 :root.dark .article-content blockquote {
-  color: #9ca3af !important;
+  color: var(--color-night-muted) !important;
 }
 
 .article-content blockquote p {
   margin-bottom: 0.5rem !important;
+  color: var(--color-dark) !important;
 }
 
 :root.dark .article-content blockquote p {
-  color: #9ca3af !important;
+  color: var(--color-night-muted) !important;
 }
 
-/* Tables */
+/*
+ * Tabellen: Haarlinien statt Kästen. Der Kopf trägt keine Füllung, sondern
+ * eine kräftigere Linie darunter — im Heft trennen Linien, nicht Flächen.
+ */
 .article-content table {
   width: 100% !important;
   border-collapse: collapse !important;
@@ -215,78 +249,88 @@
 .article-content th,
 .article-content td {
   padding: 0.75rem !important;
-  border: 1px solid #e5e7eb !important;
+  border: 1px solid var(--color-rule) !important;
   text-align: left !important;
 }
 
 :root.dark .article-content th,
 :root.dark .article-content td {
-  border-color: #374151 !important;
+  border-color: var(--color-night-rule) !important;
 }
 
 .article-content th {
-  background-color: #f9fafb !important;
+  background-color: transparent !important;
+  border-bottom: 2px solid var(--color-ink) !important;
   font-weight: 600 !important;
-  color: #1f2937 !important;
+  color: var(--color-ink) !important;
 }
 
 :root.dark .article-content th {
-  background-color: #1f2937 !important;
-  color: #f3f4f6 !important;
+  border-bottom-color: var(--color-night-text) !important;
+  color: var(--color-night-text) !important;
 }
 
 .article-content td {
-  color: #4b5563 !important;
+  color: var(--color-ink) !important;
 }
 
 :root.dark .article-content td {
-  color: #9ca3af !important;
+  color: var(--color-night-text) !important;
 }
 
-/* Code blocks */
+/*
+ * Code: vorher Magenta (#d946ef, 3,46:1 — durchgefallen). Jetzt Tinte auf
+ * einem hauchdünn getönten Grund; der Codeblock kehrt um, wie die gefüllten
+ * Etiketten des Hefts.
+ */
 .article-content code {
-  background-color: #f3f4f6 !important;
+  background-color: var(--color-rule) !important;
   padding: 0.125rem 0.25rem !important;
-  border-radius: 0.25rem !important;
+  border-radius: 0 !important;
   font-family:
     ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
     "Courier New", monospace !important;
   font-size: 0.875rem !important;
-  color: #d946ef !important;
+  color: var(--color-ink) !important;
 }
 
 :root.dark .article-content code {
-  background-color: #374151 !important;
-  color: #f472b6 !important;
+  background-color: var(--color-night-rule) !important;
+  color: var(--color-night-text) !important;
 }
 
 .article-content pre {
-  background-color: #1f2937 !important;
-  color: #f9fafb !important;
+  background-color: var(--color-ink) !important;
+  color: var(--color-paper) !important;
   padding: 1rem !important;
-  border-radius: 0.5rem !important;
+  border-radius: 0 !important;
   overflow-x: auto !important;
   margin: 2rem 0 !important;
+}
+
+:root.dark .article-content pre {
+  background-color: var(--color-night-raised) !important;
+  color: var(--color-night-text) !important;
 }
 
 .article-content pre code {
   background-color: transparent !important;
   padding: 0 !important;
-  color: #f9fafb !important;
+  color: inherit !important;
 }
 
-/* Horizontal Rule */
+/* Trennlinie: Haarlinie statt Balken. */
 .article-content hr {
   border: none !important;
-  border-top: 2px solid #e5e7eb !important;
+  border-top: 1px solid var(--color-rule) !important;
   margin: 3rem 0 !important;
 }
 
 :root.dark .article-content hr {
-  border-top-color: #374151 !important;
+  border-top-color: var(--color-night-rule) !important;
 }
 
-/* Responsive adjustments */
+/* Schmale Fenster */
 @media (max-width: 768px) {
   .article-content h2 {
     font-size: 1.5rem !important;
