@@ -126,7 +126,9 @@ export default function AuswahlchorDetailPage() {
           </div>
         ) : (
           <div
-            className="flex h-20 w-20 shrink-0 items-center justify-center text-white"
+            // Tinte statt Weiss: Die Standardfarbe ist Druckorange, auf dem
+            // weisse Schrift nur 1,99:1 erreicht.
+            className="text-ink flex h-20 w-20 shrink-0 items-center justify-center"
             style={{
               backgroundColor: auswahlchor.colorHex || "#faa619",
             }}

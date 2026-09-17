@@ -161,13 +161,17 @@ export default function DashboardEnsemblesPage() {
           meta: { filterVariant: "set" },
           cell: ({ row }) =>
             row.original.bezirk ? (
-              <span
-                className="semi-condensed inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-semibold text-white"
-                style={{
-                  backgroundColor: `var(--color-district-${row.original.bezirk.number})`,
-                }}
-              >
-                {row.original.bezirk.shortName}
+              <span className="semi-condensed inline-flex items-center gap-1.5 text-xs font-semibold">
+                <span
+                  className="h-2.5 w-2.5 shrink-0"
+                  style={{
+                    backgroundColor: `var(--color-district-${row.original.bezirk.number})`,
+                  }}
+                  aria-hidden
+                />
+                <span className="text-ink dark:text-night-text">
+                  {row.original.bezirk.shortName}
+                </span>
               </span>
             ) : (
               <span className="text-dark dark:text-night-muted text-sm italic">
