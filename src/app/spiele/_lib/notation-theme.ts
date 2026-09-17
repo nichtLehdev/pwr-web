@@ -1,7 +1,16 @@
 /**
  * Farben für die VexFlow-Notation — zentral statt in jedem Renderer hart codiert.
- * Dunkle Werte folgen den Design-Tokens aus `globals.css` (`--color-dark-text*`);
- * helle Notation bleibt nahezu schwarz (Druckbild), wofür es keinen Token gibt.
+ *
+ * Beide Schemata folgen den Programmheft-Tokens aus `globals.css`: hell die
+ * Tinte, dunkel der Nachtdruck. Die helle Notation stand vorher hart auf
+ * `#171717`, mit dem Vermerk, es gebe dafür keinen Token — den gibt es seit
+ * der Programmheft-Palette mit `--color-ink`. Der Dunkelzweig las die
+ * Alt-Namen `--color-dark-text*`; die zeigen inzwischen zwar auf die
+ * Nachtpalette, hängen aber an einer Umleitung, die jederzeit wieder
+ * umgehängt werden kann. Er liest jetzt die Nachtfarben direkt.
+ *
+ * Die Rückfallwerte greifen nur beim Rendern auf dem Server, wo es kein
+ * `getComputedStyle` gibt; sie sind deshalb auf denselben Stand gebracht.
  */
 
 export type NotationColors = {
@@ -23,12 +32,16 @@ function cssToken(name: string, fallback: string): string {
 
 export function notationColors(dark: boolean): NotationColors {
   if (dark) {
-    const text = cssToken("--color-dark-text", "#e4e6eb");
+    const text = cssToken("--color-night-text", "#ecebe8");
     return {
       note: text,
       stave: text,
-      barline: cssToken("--color-dark-text-secondary", "#b0b3ba"),
+      barline: cssToken("--color-night-muted", "#a6a8ad"),
     };
   }
-  return { note: "#171717", stave: "#171717", barline: "#1a1a1a" };
+  // Hell stand der Taktstrich auf `#1a1a1a` gegen `#171717` für Noten und
+  // Linien — drei Stufen Unterschied, auf dem Schirm nicht zu sehen. Die
+  // Unterscheidung fällt weg, alles steht in Tinte.
+  const ink = cssToken("--color-ink", "#1c1d1f");
+  return { note: ink, stave: ink, barline: ink };
 }
