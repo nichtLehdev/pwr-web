@@ -16,7 +16,7 @@ import ImageLightbox from "@/app/_components/general/image-lightbox";
 import ZoomableImage from "@/app/_components/general/zoomable-image";
 import MediaCredit from "@/app/_components/general/media-credit";
 import PublicShareButton from "@/app/_components/general/public-share-button";
-import type { FileType } from "~/generated/prisma/enums";
+import { DOWNLOAD_FILE_TYPE_LABELS } from "@/lib/download-file-types";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
@@ -33,14 +33,6 @@ const DATE = new Intl.DateTimeFormat("de-DE", {
   month: "long",
   year: "numeric",
 });
-
-const fileTypeLabels: Record<FileType, string> = {
-  PDF: "PDF",
-  DOCX: "Word",
-  XLSX: "Excel",
-  ZIP: "ZIP",
-  MP3: "Audio",
-};
 
 function formatFileSize(bytes: number | null): string {
   if (!bytes) return "";
@@ -387,15 +379,15 @@ export default function PostDetailView({
                   key={download.id}
                   href={download.fileUrl}
                   kind="download"
-                  fileType={fileTypeLabels[download.fileType]}
+                  fileType={DOWNLOAD_FILE_TYPE_LABELS[download.fileType]}
                   title={download.title}
                   description={
                     download.description || download.fileSize
                       ? [
                           download.description,
                           download.fileSize
-                            ? `${fileTypeLabels[download.fileType]} · ${formatFileSize(download.fileSize)}`
-                            : fileTypeLabels[download.fileType],
+                            ? `${DOWNLOAD_FILE_TYPE_LABELS[download.fileType]} · ${formatFileSize(download.fileSize)}`
+                            : DOWNLOAD_FILE_TYPE_LABELS[download.fileType],
                         ]
                           .filter(Boolean)
                           .join(" — ")
