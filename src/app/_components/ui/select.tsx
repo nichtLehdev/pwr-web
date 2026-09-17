@@ -97,6 +97,7 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
       name,
       required,
       autoFocus,
+      "aria-label": ariaLabel,
       "aria-invalid": ariaInvalid,
       "aria-describedby": ariaDescribedBy,
       "aria-labelledby": ariaLabelledBy,
@@ -234,17 +235,34 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
       }
     };
 
+    // `role="combobox"` verbietet „Name aus Inhalt": Der sichtbare Text im
+    // Auslöser zählt nicht als Name. Ohne aria-label, aria-labelledby oder ein
+    // `id`, auf das ein <label for> zeigt, bleibt der Knopf namenlos — axe meldet
+    // das als `button-name`, WCAG 4.1.2 Stufe A.
+    //
+    // Der Platzhalter (die Option mit leerem Wert, „Alle Bezirke", „Bitte
+    // wählen") ist der einzige Text, der den Zweck benennt und im Gegensatz zu
+    // `displayText` nicht mit der Auswahl wechselt — ein Name, der sich beim
+    // Auswählen ändert, wäre für Sprachsteuerung unbrauchbar.
+    //
+    // Gibt der Aufrufer ein `id` mit, hat er die Kopplung über <label for>
+    // selbst in der Hand; ein aria-label würde dessen sichtbaren Text
+    // überschreiben und „sprich, was du siehst" brechen. Deshalb hier nichts.
+    const platzhalterLabel = options.find((o) => o.value === "")?.label;
+    const hatEigenenNamen = Boolean(ariaLabel ?? ariaLabelledBy ?? id);
+    const ariaLabelEffektiv = hatEigenenNamen ? ariaLabel : platzhalterLabel;
+
     const triggerClasses = cn(
-      "flex w-full min-w-0 items-center justify-between gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-left text-gray-900 shadow-sm transition-colors",
+      "border-ink bg-paper text-ink flex w-full min-w-0 items-center justify-between gap-2 border px-3 py-2 text-left transition-colors",
       fieldSize === "md" ? "h-11 text-base sm:px-4" : "text-sm",
-      "focus:border-primary focus:ring-primary focus:ring-1 focus:outline-none",
-      "dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text",
-      "hover:bg-gray-50 dark:hover:bg-dark-background",
+      "dark:border-night-text dark:bg-night dark:text-night-text",
+      "hover:bg-rule/30 dark:hover:bg-night-raised",
       disabled &&
-        "cursor-not-allowed opacity-50 hover:bg-white dark:hover:bg-dark-background-secondary",
-      error &&
-        "border-red-500 focus:border-red-500 focus:ring-red-500 dark:border-red-500",
-      open && "border-primary ring-primary ring-1 dark:border-primary",
+        "hover:bg-paper dark:hover:bg-night cursor-not-allowed opacity-50",
+      error && "border-red-600 dark:border-red-400",
+      // Geoeffnet: zweite Linie statt Farbwechsel — der Zustand soll sich
+      // abheben, ohne dass Orange zur Rahmenfarbe wird.
+      open && "border-2",
       className,
     );
 
@@ -265,6 +283,7 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
           aria-invalid={ariaInvalid}
           aria-describedby={ariaDescribedBy}
           aria-labelledby={ariaLabelledBy}
+          aria-label={ariaLabelEffektiv}
           disabled={disabled}
           autoFocus={autoFocus}
           className={triggerClasses}
@@ -274,19 +293,19 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
           <span
             className={cn(
               "min-w-0 flex-1 truncate",
-              mutedTrigger && "text-gray-500 dark:text-gray-400",
+              mutedTrigger && "text-dark dark:text-night-muted",
             )}
           >
             {displayText}
           </span>
           {selectedOption?.trailing ? (
-            <span className="shrink-0 font-medium text-gray-700 dark:text-gray-300">
+            <span className="text-ink dark:text-night-text shrink-0 font-medium">
               {selectedOption.trailing}
             </span>
           ) : null}
           <ChevronDown
             className={cn(
-              "h-4 w-4 shrink-0 text-gray-500 transition-transform dark:text-gray-400",
+              "text-dark dark:text-night-muted h-4 w-4 shrink-0 transition-transform",
               open && "rotate-180",
             )}
             aria-hidden
@@ -300,7 +319,7 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
             role="listbox"
             tabIndex={-1}
             onKeyDown={onKeyDownList}
-            className="dark:border-dark-border dark:bg-dark-surface absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:shadow-black/40"
+            className="border-ink bg-paper dark:border-night-text dark:bg-night-raised absolute z-50 mt-1 max-h-60 w-full overflow-auto border py-1"
           >
             {options.map((opt, index) => {
               const selected = opt.value === value;
@@ -311,9 +330,9 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
                   aria-selected={selected}
                   data-index={index}
                   className={cn(
-                    "dark:text-dark-text flex cursor-pointer items-start gap-2 px-3 py-2 text-gray-900",
+                    "text-ink dark:text-night-text flex cursor-pointer items-start gap-2 px-3 py-2",
                     fieldSize === "md" ? "text-base" : "text-sm",
-                    index === highlight && "bg-primary/10 dark:bg-primary/15",
+                    index === highlight && "bg-rule/60 dark:bg-night-rule",
                     opt.disabled && "cursor-not-allowed opacity-40",
                     selected && "font-medium",
                   )}
@@ -337,13 +356,13 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
                     {opt.label}
                   </span>
                   {opt.trailing ? (
-                    <span className="shrink-0 font-medium text-gray-700 dark:text-gray-300">
+                    <span className="text-ink dark:text-night-text shrink-0 font-medium">
                       {opt.trailing}
                     </span>
                   ) : null}
                   {selected && (
                     <Check
-                      className="text-primary mt-1 h-4 w-4 shrink-0"
+                      className="text-ink dark:text-night-text mt-1 h-4 w-4 shrink-0"
                       aria-hidden
                     />
                   )}

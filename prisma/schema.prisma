@@ -91,6 +91,8 @@ model User {
   publishedInvoices Invoice[] @relation("InvoicePublisher")
   paidInvoices      Invoice[] @relation("InvoicePayer")
 
+  bookedDownPayments CourseRegistration[] @relation("DownPaymentBooker")
+
   @@index([bezirkId])
   @@map("user")
 }
@@ -373,6 +375,35 @@ enum SiblingDiscountStatus {
   REJECTED // Discount rejected
 }
 
+/**
+ * Woran sich die Anzahlung eines Kurses bemisst: ein fester Betrag pro
+ * Teilnehmer für alle Kategorien (COURSE) oder je Preiskategorie (TICKET).
+ */
+enum DownPaymentMode {
+  NONE
+  COURSE
+  TICKET
+}
+
+/** Welcher Hinweis zur Erstattung bei der Anmeldung bestätigt werden muss. */
+enum DownPaymentRefundPolicy {
+  NON_REFUNDABLE
+  REFUNDABLE
+  CUSTOM
+}
+
+/**
+ * Stand der Anzahlung einer Anmeldung. REFUNDED und RETAINED sind die beiden
+ * Ausgänge nach einer Stornierung — welcher gilt, klärt das Kursteam mit der
+ * Kasse, deshalb setzt die Stornierung ihn nicht selbst.
+ */
+enum DownPaymentStatus {
+  OPEN
+  PAID
+  REFUNDED
+  RETAINED
+}
+
 enum PosaunenwartRoleType {
   LPW // Landesposaunenwart (responsible for all Bezirke)
   RPW // Regionalposaunenwart (responsible for multiple Bezirke)
@@ -422,6 +453,7 @@ enum FileType {
   XLSX
   ZIP
   MP3
+  IMAGE // JPG, PNG oder WebP – z. B. Flyer an Terminen
 }
 
 enum ContentStatus {
@@ -597,6 +629,19 @@ model Course {
    */
   invoicingEnabled      Boolean @default(false)
 
+  /**
+   * Anzahlung, die bei der Anmeldung per Überweisung fällig wird. Nur mit
+   * courses.enable_down_payment setzbar, verlangt eine Kursnummer (sie steht im
+   * Verwendungszweck) und ist gesperrt, solange aktive Anmeldungen bestehen.
+   * Bei TICKET trägt jede Preiskategorie ihren eigenen Betrag.
+   */
+  downPaymentMode         DownPaymentMode         @default(NONE)
+  /** Betrag pro Teilnehmer bei DownPaymentMode.COURSE. */
+  downPaymentAmount       Float?
+  downPaymentRefundPolicy DownPaymentRefundPolicy @default(NON_REFUNDABLE)
+  /** Eigener Erstattungshinweis bei DownPaymentRefundPolicy.CUSTOM. */
+  downPaymentRefundText   String?
+
   // Additional Info
   prerequisites String?
   whatToBring   String?
@@ -681,6 +726,12 @@ model CoursePriceOption {
    */
   minAge Int?
   maxAge Int?
+
+  /**
+   * Anzahlung pro Teilnehmer dieser Kategorie, nur bei Course.downPaymentMode
+   * TICKET. Leer heißt: für diese Kategorie wird keine Anzahlung fällig.
+   */
+  downPaymentAmount Float?
 
   participants Participant[]
 
@@ -768,10 +819,49 @@ model CourseRegistration {
   originalTotalPrice     Float? // Price before discount
   siblingDiscountAmount  Float? // Discount amount (20% for each sibling after first)
 
+  /**
+   * Anzahlung dieser Anmeldung, bei Anmeldung aus den Kurseinstellungen
+   * berechnet und festgehalten. null heißt: keine Anzahlung — dann gelten die
+   * üblichen Regeln zum Bearbeiten und Stornieren.
+   */
+  downPaymentAmount     Float?
+  /** null genau dann, wenn downPaymentAmount null ist. */
+  downPaymentStatus     DownPaymentStatus?
+  downPaymentPaidAt     DateTime?
+  /** Tatsächlich eingegangener Betrag; null heißt "voller Betrag" (wie Invoice.paidAmount). */
+  downPaymentPaidAmount Float?
+  downPaymentPaidById   String?
+  downPaymentPaidBy     User?              @relation("DownPaymentBooker", fields: [downPaymentPaidById], references: [id], onDelete: SetNull)
+  /** Interner Vermerk (Kontoauszug, Absprache mit der Kasse zur Erstattung). */
+  downPaymentNote       String?
+
   // Invoice
   invoiceGenerated Boolean   @default(false)
   invoiceId        String?   @unique
   invoiceDate      DateTime?
+
+  /**
+   * Teile einer aufgeteilten Anmeldung tragen dieselbe Gruppe: reichten die
+   * freien Plätze nicht für alle, wurden die Gewählten bestätigt und die
+   * übrigen auf die Warteliste gesetzt — als eigene Anmeldungen, weil
+   * Kapazität, Rechnungen und Anzahlung an der Anmeldung hängen. Der
+   * Geschwisterkindrabatt wird über die Gruppe berechnet. null: nicht geteilt.
+   */
+  registrationGroupId String?
+
+  /**
+   * Nachrück-Angebot: Es wurden Plätze frei, die nicht für alle Teilnehmer
+   * dieser wartenden Anmeldung reichen. Bis zu diesem Zeitpunkt wählen die
+   * Anmeldenden, wer nachrückt — so lange hält die Warteliste an.
+   */
+  promotionOfferExpiresAt      DateTime?
+  /** Wann das Kursteam an das auslaufende Angebot erinnert wurde. */
+  promotionOfferReminderSentAt DateTime?
+  /**
+   * Angebot abgelehnt oder verfallen, als so viele Plätze nutzbar waren: bis
+   * mehr frei werden, gehen sie an die Nächsten auf der Warteliste.
+   */
+  promotionOfferPassedSeats    Int?
 
   // Relations
   participants Participant[]
@@ -787,6 +877,8 @@ model CourseRegistration {
   @@index([siblingDiscountStatus])
   @@index([courseId, registrationStatus])
   @@index([registrantId])
+  @@index([registrationGroupId])
+  @@index([promotionOfferExpiresAt])
 }
 
 /// One e-mail an organizer sent to the registrants of a course, archived so

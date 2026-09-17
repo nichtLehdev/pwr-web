@@ -9,6 +9,7 @@ import {
 import {
   buildInvoiceSummaryRows,
   invoiceSummaryColumns,
+  invoiceSummaryDownPaymentColumns,
 } from "@/lib/invoice-summary-export";
 import { buildXlsxBuffer, exportDateStamp } from "@/server/utils/xlsx";
 
@@ -59,16 +60,24 @@ export async function buildCourseParticipantsXlsx(params: {
 }
 
 export async function buildInvoiceSummaryXlsx(params: {
-  course: { title: string; courseNumber: string | null };
+  course: {
+    title: string;
+    courseNumber: string | null;
+    downPaymentMode?: "NONE" | "COURSE" | "TICKET";
+  };
   invoices: Parameters<typeof buildInvoiceSummaryRows>[0];
   now?: Date;
 }): Promise<CourseExportFile> {
   const now = params.now ?? new Date();
   const rows = buildInvoiceSummaryRows(params.invoices, params.course);
+  const withDownPayment =
+    !!params.course.downPaymentMode && params.course.downPaymentMode !== "NONE";
 
   const buffer = await buildXlsxBuffer({
     sheetName: "Rechnungen",
-    columns: invoiceSummaryColumns,
+    columns: withDownPayment
+      ? [...invoiceSummaryColumns, ...invoiceSummaryDownPaymentColumns]
+      : invoiceSummaryColumns,
     rows,
     caption: [
       `${params.course.title} — Rechnungsübersicht`,

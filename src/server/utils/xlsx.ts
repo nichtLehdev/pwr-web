@@ -29,7 +29,22 @@ export type XlsxColumn = {
 export type XlsxRow = Record<string, XlsxCellValue>;
 
 const CURRENCY_FORMAT = '#,##0.00 "€"';
-const DATE_FORMAT = "DD.MM.YYYY";
+// Kleingeschrieben, weil das die Schreibweise aus der OOXML-Spezifikation ist.
+// Excel nimmt es auch groß, Apples Tabellendarstellung (Numbers, Vorschau auf
+// iPhone und Mac) liest `DD` dagegen als Tag-im-Jahr und `YYYY` als
+// wochenbasiertes Jahr: aus dem 15.06.2010 wurde dort "166.06.2010" und aus
+// dem 01.01.1999 das Jahr 1998.
+const DATE_FORMAT = "dd.mm.yyyy";
+
+/** Zeitzone, in der die Geschäftsstelle auf die Exporte schaut. */
+const EXPORT_TIME_ZONE = "Europe/Berlin";
+
+const EXPORT_DATE_PARTS = new Intl.DateTimeFormat("en-CA", {
+  timeZone: EXPORT_TIME_ZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
 
 const BRAND_ARGB = "FFFAA619";
 const HEADER_TEXT_ARGB = "FF1F2937";
@@ -38,6 +53,18 @@ const TOTALS_FILL_ARGB = "FFF3F4F6";
 
 const MIN_WIDTH = 10;
 const MAX_WIDTH = 48;
+
+/**
+ * Auf den Kalendertag in Europe/Berlin normalisiert, ohne Uhrzeit.
+ *
+ * ExcelJS rechnet ein Date über seine UTC-Anteile in die Excel-Seriennummer
+ * um. Eine Anmeldung um 01:30 deutscher Zeit stand damit im Export einen Tag
+ * zu früh. Wir legen den gemeinten Tag deshalb selbst auf UTC-Mitternacht —
+ * die Spalte zeigt ohnehin nur das Datum.
+ */
+function toExportDay(value: Date): Date {
+  return new Date(`${EXPORT_DATE_PARTS.format(value)}T00:00:00Z`);
+}
 
 /** Excel verbietet `[]:*?/\` im Blattnamen und kappt bei 31 Zeichen. */
 function sanitizeSheetName(name: string): string {
@@ -116,7 +143,10 @@ export async function buildXlsxBuffer(options: {
 
   for (const row of rows) {
     const added = sheet.addRow(
-      columns.map((column) => row[column.key] ?? null),
+      columns.map((column) => {
+        const value = row[column.key] ?? null;
+        return value instanceof Date ? toExportDay(value) : value;
+      }),
     );
     added.eachCell({ includeEmpty: true }, (cell, columnNumber) => {
       const column = columns[columnNumber - 1];

@@ -473,8 +473,8 @@ function CourseMailPageContent() {
 
   if (sessionLoading || profileLoading || courseLoading || canSendLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="dark:bg-night bg-paper flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
@@ -483,17 +483,17 @@ function CourseMailPageContent() {
 
   if (!course || canSend === false) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="dark:bg-night bg-paper flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <h1 className="dark:text-dark-text text-xl font-semibold text-gray-900">
+          <h1 className="dark:text-night-text text-ink text-xl font-semibold">
             Keine Berechtigung
           </h1>
-          <p className="dark:text-dark-muted mt-2 text-gray-600">
+          <p className="dark:text-night-muted text-dark mt-2">
             Du kannst die Anmelder:innen dieses Kurses nicht anschreiben.
           </p>
           <Link
             href="/dashboard/courses"
-            className="text-primary mt-4 inline-block hover:underline"
+            className="link-ink mt-4 inline-block"
           >
             Zurück zur Übersicht
           </Link>
@@ -506,15 +506,15 @@ function CourseMailPageContent() {
   const isSending = sendMail.isPending;
 
   return (
-    <main className="dark:bg-dark-background min-h-screen bg-gray-50">
+    <main className="programm font-programm dark:bg-night dark:text-night-text bg-paper text-ink min-h-screen">
       <div className="container mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="dark:text-dark-text text-2xl font-bold text-gray-900 sm:text-3xl">
+            <h1 className="dark:text-night-text text-ink text-2xl font-bold sm:text-3xl">
               Anmelder:innen anschreiben
             </h1>
-            <p className="dark:text-dark-muted mt-1 truncate text-gray-600">
+            <p className="dark:text-night-muted text-dark mt-1 truncate">
               {course.title}
             </p>
           </div>
@@ -522,7 +522,7 @@ function CourseMailPageContent() {
             <CourseInvoicesButton courseId={courseId} short />
             <Link
               href={`/dashboard/courses/${courseId}/participants`}
-              className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+              className="border-rule dark:border-night-rule text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised inline-flex min-h-11 items-center gap-2 border px-4 py-2 text-sm font-medium transition-colors"
             >
               <ArrowLeftIcon className="h-4 w-4" />
               Zurück zu den Teilnehmern
@@ -531,7 +531,7 @@ function CourseMailPageContent() {
         </div>
 
         {selectedRegistrationIds.length > 0 && (
-          <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-200">
+          <div className="mb-6 border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-200">
             Diese Nachricht geht nur an die{" "}
             <strong>{selectedRegistrationIds.length} ausgewählten</strong>{" "}
             Anmeldungen aus der Teilnehmerliste.{" "}
@@ -554,9 +554,9 @@ function CourseMailPageContent() {
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           {/* Composer */}
           <div className="lg:col-span-2">
-            <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700">
+            <div className="dark:border-night-rule border-rule border p-6">
               <div className="mb-6">
-                <label className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700">
+                <label className="dark:text-night-text text-ink mb-2 block text-sm font-medium">
                   Betreff *
                 </label>
                 <input
@@ -566,12 +566,12 @@ function CourseMailPageContent() {
                   onChange={(event) => setSubject(event.target.value)}
                   onFocus={() => setLastFocused("subject")}
                   placeholder={`Informationen zu ${course.title}`}
-                  className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary/20 w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:outline-none"
+                  className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper w-full border px-4 py-2"
                 />
               </div>
 
               <div className="mb-6">
-                <label className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700">
+                <label className="dark:text-night-text text-ink mb-2 block text-sm font-medium">
                   Nachricht *
                 </label>
                 <div onFocus={() => setLastFocused("body")}>
@@ -582,25 +582,25 @@ function CourseMailPageContent() {
                     placeholder="Schreibe hier deine Nachricht an die Anmelder:innen..."
                   />
                 </div>
-                <label className="dark:text-dark-text mt-3 flex items-center gap-2 text-sm text-gray-700">
+                <label className="dark:text-night-text text-ink mt-3 flex items-center gap-2 text-sm">
                   <input
                     type="checkbox"
                     checked={includeGreeting}
                     onChange={(event) =>
                       setIncludeGreeting(event.target.checked)
                     }
-                    className="text-primary focus:ring-primary rounded border-gray-300"
+                    className="text-primary border-rule dark:border-night-text"
                   />
                   Automatische Anrede („Hallo Vorname,“) voranstellen
                 </label>
-                <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                <p className="dark:text-night-muted text-dark mt-1 text-xs">
                   Schalte das aus, wenn du deine Anrede mit Platzhaltern selbst
                   schreibst. Der Kurs-Kopf wird immer ergänzt.
                 </p>
               </div>
 
               {unknownPlaceholders.length > 0 && (
-                <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
+                <div className="mb-6 border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
                   Unbekannte Platzhalter:{" "}
                   {unknownPlaceholders
                     .map((token) => `{{${token}}}`)
@@ -611,21 +611,21 @@ function CourseMailPageContent() {
 
               {/* Invoices */}
               {(invoiceAccess?.canManage ?? false) && (
-                <div className="dark:border-dark-border mb-6 rounded-lg border border-gray-200 p-4">
-                  <label className="dark:text-dark-text flex cursor-pointer items-start gap-3 text-sm text-gray-700">
+                <div className="dark:border-night-rule border-rule mb-6 border p-4">
+                  <label className="dark:text-night-text text-ink flex cursor-pointer items-start gap-3 text-sm">
                     <input
                       type="checkbox"
                       checked={attachInvoices}
                       onChange={(event) =>
                         setAttachInvoices(event.target.checked)
                       }
-                      className="text-primary focus:ring-primary mt-0.5 rounded border-gray-300"
+                      className="text-primary border-rule dark:border-night-text mt-0.5"
                     />
                     <span>
                       <span className="block font-medium">
                         Rechnung anhängen
                       </span>
-                      <span className="dark:text-dark-muted block text-xs text-gray-500">
+                      <span className="dark:text-night-muted text-dark block text-xs">
                         Jede:r Empfänger:in bekommt die eigene ausgestellte
                         Rechnung als PDF. Wer keine hat, erhält die Nachricht
                         ohne Anhang. Dazu passen die Platzhalter der Gruppe
@@ -638,7 +638,7 @@ function CourseMailPageContent() {
 
               {/* Attachments */}
               <div className="mb-6">
-                <label className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700">
+                <label className="dark:text-night-text text-ink mb-2 block text-sm font-medium">
                   Anhänge
                 </label>
                 {attachments.length > 0 && (
@@ -646,16 +646,16 @@ function CourseMailPageContent() {
                     {attachments.map((attachment) => (
                       <li
                         key={attachment.url}
-                        className="dark:border-dark-border dark:bg-dark-background flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm"
+                        className="dark:border-night-rule dark:bg-night-raised border-rule bg-rule/25 flex items-center justify-between gap-3 border px-3 py-2 text-sm"
                       >
-                        <span className="dark:text-dark-text flex min-w-0 items-center gap-2 text-gray-700">
+                        <span className="dark:text-night-text text-ink flex min-w-0 items-center gap-2">
                           <PaperclipIcon className="h-4 w-4 shrink-0" />
                           <span className="truncate">
                             {attachment.filename}
                           </span>
                         </span>
                         <span className="flex shrink-0 items-center gap-3">
-                          <span className="dark:text-dark-muted text-xs text-gray-500">
+                          <span className="dark:text-night-muted text-dark text-xs">
                             {formatBytes(attachment.size)}
                           </span>
                           <button
@@ -667,7 +667,7 @@ function CourseMailPageContent() {
                                 ),
                               )
                             }
-                            className="text-gray-400 transition-colors hover:text-red-600"
+                            className="text-dark dark:text-night-muted transition-colors hover:text-red-600"
                             aria-label={`${attachment.filename} entfernen`}
                           >
                             <Trash2Icon className="h-4 w-4" />
@@ -685,9 +685,9 @@ function CourseMailPageContent() {
                   onChange={(event) =>
                     void handleFilesSelected(event.target.files)
                   }
-                  className="dark:text-dark-muted file:bg-primary/10 file:text-primary hover:file:bg-primary/20 block w-full text-sm text-gray-500 file:mr-4 file:rounded-lg file:border-0 file:px-4 file:py-2 file:text-sm file:font-medium"
+                  className="dark:text-night-muted file:bg-primary file:text-ink hover:file:bg-primary/90 text-dark file:border-ink dark:file:border-night-text block w-full text-sm file:mr-4 file:border file:px-4 file:py-2 file:text-sm file:font-medium"
                 />
-                <p className="dark:text-dark-muted mt-2 text-xs text-gray-500">
+                <p className="dark:text-night-muted text-dark mt-2 text-xs">
                   PDF, Word, Excel oder Bilder – zusammen höchstens{" "}
                   {formatBytes(MAX_TOTAL_ATTACHMENT_BYTES)}
                   {totalAttachmentBytes > 0 &&
@@ -697,7 +697,7 @@ function CourseMailPageContent() {
               </div>
 
               <div className="mb-4">
-                <label className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700">
+                <label className="dark:text-night-text text-ink mb-2 block text-sm font-medium">
                   Test-E-Mail an
                 </label>
                 <input
@@ -705,9 +705,9 @@ function CourseMailPageContent() {
                   value={testEmail}
                   onChange={(event) => setTestEmail(event.target.value)}
                   placeholder="test@example.com"
-                  className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary/20 w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-2 focus:outline-none"
+                  className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper w-full border px-4 py-2 text-sm"
                 />
-                <p className="dark:text-dark-muted mt-2 text-xs text-gray-500">
+                <p className="dark:text-night-muted text-dark mt-2 text-xs">
                   Der Testversand geht nur an diese Adresse — vorbelegt mit
                   deiner eigenen.
                 </p>
@@ -719,7 +719,7 @@ function CourseMailPageContent() {
                   onClick={handlePreview}
                   disabled={isSending || isUploading}
                   title="Zeigt die fertige E-Mail so, wie eine ausgewählte Person sie bekommt — ohne etwas zu versenden."
-                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-gray-700"
+                  className="border-rule dark:border-night-rule text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 border px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <EyeIcon className="h-4 w-4" />
                   Vorschau
@@ -728,7 +728,7 @@ function CourseMailPageContent() {
                   onClick={handleTestSend}
                   disabled={isSending || isUploading || !testEmail.trim()}
                   title="Sendet die Nachricht nur an die Test-Adresse — mit den echten Daten des ersten Empfängers, damit du die Platzhalter siehst."
-                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-gray-700"
+                  className="border-rule dark:border-night-rule text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised min-h-11 flex-1 border px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isSending && sendMode === "test"
                     ? "Test wird gesendet..."
@@ -737,7 +737,7 @@ function CourseMailPageContent() {
                 <button
                   onClick={handleSend}
                   disabled={isSending || isUploading || recipientCount === 0}
-                  className="bg-primary hover:bg-primary/90 flex-1 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                  className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-night-text dark:text-night dark:hover:bg-primary dark:hover:text-ink min-h-11 flex-1 px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isSending && sendMode === "all"
                     ? "Wird gesendet..."
@@ -749,12 +749,12 @@ function CourseMailPageContent() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700">
-              <h2 className="dark:text-dark-text mb-2 flex items-center gap-2 text-lg font-semibold text-gray-900">
+            <div className="dark:border-night-rule border-rule border p-6">
+              <h2 className="dark:text-night-text text-ink mb-2 flex items-center gap-2 text-lg font-semibold">
                 <BracesIcon className="h-5 w-5" />
                 Platzhalter
               </h2>
-              <p className="dark:text-dark-muted mb-4 text-xs text-gray-500">
+              <p className="dark:text-night-muted text-dark mb-4 text-xs">
                 Klicken, um an der Cursor-Position einzufügen — sie werden für
                 jede Empfängerin und jeden Empfänger einzeln ersetzt. Wirkt auch
                 im Betreff.
@@ -762,10 +762,10 @@ function CourseMailPageContent() {
               <div className="space-y-4">
                 {COURSE_MAIL_PLACEHOLDER_GROUPS.map((group) => (
                   <div key={group.id}>
-                    <h3 className="dark:text-dark-text text-xs font-semibold text-gray-900">
+                    <h3 className="dark:text-night-text text-ink text-xs font-semibold">
                       {group.label}
                     </h3>
-                    <p className="dark:text-dark-muted text-[11px] text-gray-500">
+                    <p className="dark:text-night-muted text-dark text-[11px]">
                       {group.description}
                     </p>
                     <div className="mt-2 flex flex-wrap gap-1.5">
@@ -775,12 +775,12 @@ function CourseMailPageContent() {
                           type="button"
                           onClick={() => insertPlaceholder(placeholder.token)}
                           title={`Beispiel: ${placeholder.example}`}
-                          className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text flex flex-col items-start rounded-md border border-gray-200 bg-gray-50 px-2 py-1 text-left text-gray-700 transition-colors hover:border-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                          className="border-rule dark:border-night-rule dark:bg-night-raised dark:text-night-text bg-rule/25 text-ink hover:bg-rule/50 flex flex-col items-start border px-2 py-1 text-left transition-colors"
                         >
                           <span className="text-xs font-medium">
                             {placeholder.label}
                           </span>
-                          <span className="dark:text-dark-muted font-mono text-[10px] text-gray-500">
+                          <span className="dark:text-night-muted text-dark font-mono text-[10px]">
                             {`{{${placeholder.token}}}`}
                           </span>
                         </button>
@@ -789,15 +789,15 @@ function CourseMailPageContent() {
                   </div>
                 ))}
               </div>
-              <p className="dark:text-dark-muted mt-4 text-xs text-gray-500">
+              <p className="dark:text-night-muted text-dark mt-4 text-xs">
                 Hat jemand mehrere Anmeldungen, fasst{" "}
                 <span className="font-mono">{"{{teilnehmer.namen}}"}</span> alle
                 angemeldeten Personen zusammen.
               </p>
             </div>
 
-            <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700">
-              <h2 className="dark:text-dark-text mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
+            <div className="dark:border-night-rule border-rule border p-6">
+              <h2 className="dark:text-night-text text-ink mb-4 flex items-center gap-2 text-lg font-semibold">
                 <UsersIcon className="h-5 w-5" />
                 Empfänger
               </h2>
@@ -813,13 +813,13 @@ function CourseMailPageContent() {
                   ).map((status) => (
                     <label
                       key={status}
-                      className="dark:text-dark-text flex items-center gap-2 text-sm text-gray-700"
+                      className="dark:text-night-text text-ink flex items-center gap-2 text-sm"
                     >
                       <input
                         type="checkbox"
                         checked={statuses.includes(status)}
                         onChange={() => toggleStatus(status)}
-                        className="text-primary focus:ring-primary rounded border-gray-300"
+                        className="text-primary border-rule dark:border-night-text"
                       />
                       {statusLabels[status]}
                     </label>
@@ -827,7 +827,7 @@ function CourseMailPageContent() {
                 </div>
               )}
 
-              <p className="dark:text-dark-muted text-sm text-gray-600">
+              <p className="dark:text-night-muted text-dark text-sm">
                 {recipientQuery.isLoading
                   ? "Empfänger werden geladen..."
                   : `${recipientCount} ${recipientCount === 1 ? "Adresse" : "Adressen"} (Mehrfach-Anmeldungen zusammengefasst)`}
@@ -838,7 +838,7 @@ function CourseMailPageContent() {
                   type="button"
                   onClick={() => setShowRecipients((current) => !current)}
                   disabled={recipientCount === 0}
-                  className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-gray-700"
+                  className="border-rule dark:border-night-rule text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised min-h-9 border px-3 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {showRecipients ? "Liste ausblenden" : "Liste anzeigen"}
                 </button>
@@ -846,7 +846,7 @@ function CourseMailPageContent() {
                   type="button"
                   onClick={() => void copyAddresses()}
                   disabled={recipientCount === 0}
-                  className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-gray-700"
+                  className="border-rule dark:border-night-rule text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised inline-flex min-h-9 items-center gap-1.5 border px-3 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                   title="Adressen kopieren, um die Mail im eigenen Programm zu schreiben"
                 >
                   <ClipboardCopyIcon className="h-3.5 w-3.5" />
@@ -855,15 +855,15 @@ function CourseMailPageContent() {
               </div>
 
               {showRecipients && (
-                <ul className="dark:border-dark-border mt-3 max-h-56 space-y-1 overflow-y-auto rounded-lg border border-gray-200 p-2 text-xs">
+                <ul className="dark:border-night-rule border-rule mt-3 max-h-56 space-y-1 overflow-y-auto border p-2 text-xs">
                   {recipientQuery.data?.recipients.map((recipient) => (
                     <li
                       key={recipient.email}
-                      className="dark:text-dark-muted text-gray-600"
+                      className="dark:text-night-muted text-dark"
                     >
                       {recipient.name} &lt;{recipient.email}&gt;
                       {recipient.registrationCount > 1 && (
-                        <span className="dark:text-dark-muted text-gray-400">
+                        <span className="text-dark dark:text-night-muted">
                           {" "}
                           ({recipient.registrationCount} Anmeldungen)
                         </span>
@@ -874,51 +874,51 @@ function CourseMailPageContent() {
               )}
             </div>
 
-            <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700">
-              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+            <div className="dark:border-night-rule border-rule border p-6">
+              <h2 className="dark:text-night-text text-ink mb-4 text-lg font-semibold">
                 Absender
               </h2>
-              <p className="dark:text-dark-muted mb-4 text-xs text-gray-500">
+              <p className="dark:text-night-muted text-dark mb-4 text-xs">
                 Versendet wird über die Adresse des Posaunenwerks. Antworten
                 gehen an die Adresse, die du hier einträgst.
               </p>
-              <label className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700">
+              <label className="dark:text-night-text text-ink mb-2 block text-sm font-medium">
                 Antwort-Adresse *
               </label>
               <input
                 type="email"
                 value={replyToEmail}
                 onChange={(event) => setReplyToEmail(event.target.value)}
-                className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary/20 w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-2 focus:outline-none"
+                className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper w-full border px-4 py-2 text-sm"
               />
-              <label className="dark:text-dark-text mt-4 flex items-center gap-2 text-sm text-gray-700">
+              <label className="dark:text-night-text text-ink mt-4 flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"
                   checked={sendCopyToSender}
                   onChange={(event) =>
                     setSendCopyToSender(event.target.checked)
                   }
-                  className="text-primary focus:ring-primary rounded border-gray-300"
+                  className="text-primary border-rule dark:border-night-text"
                 />
                 Kopie an mich senden
               </label>
             </div>
 
             {(sentMails.data?.length ?? 0) > 0 && (
-              <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700">
-                <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+              <div className="dark:border-night-rule border-rule border p-6">
+                <h2 className="dark:text-night-text text-ink mb-4 text-lg font-semibold">
                   Bereits versendet
                 </h2>
                 <ul className="space-y-3">
                   {sentMails.data?.map((mail) => (
                     <li
                       key={mail.id}
-                      className="dark:border-dark-border border-b border-gray-100 pb-3 last:border-0 last:pb-0"
+                      className="dark:border-night-rule border-rule border-b pb-3 last:border-0 last:pb-0"
                     >
-                      <p className="dark:text-dark-text text-sm font-medium text-gray-900">
+                      <p className="dark:text-night-text text-ink text-sm font-medium">
                         {mail.subject}
                       </p>
-                      <p className="dark:text-dark-muted text-xs text-gray-500">
+                      <p className="dark:text-night-muted text-dark text-xs">
                         {new Intl.DateTimeFormat("de-DE", {
                           dateStyle: "medium",
                           timeStyle: "short",
@@ -943,17 +943,17 @@ function CourseMailPageContent() {
             <ScrollableModalHeader>
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h3 className="dark:text-dark-text text-lg font-bold">
+                  <h3 className="dark:text-night-text text-lg font-bold">
                     Vorschau
                   </h3>
-                  <p className="dark:text-dark-muted text-sm text-gray-600">
+                  <p className="dark:text-night-muted text-dark text-sm">
                     So kommt die E-Mail an — es wird nichts versendet.
                   </p>
                 </div>
               </div>
 
               <div className="mt-4">
-                <label className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700">
+                <label className="dark:text-night-text text-ink mb-2 block text-sm font-medium">
                   Anzeigen für
                 </label>
                 <select
@@ -962,7 +962,7 @@ function CourseMailPageContent() {
                     handlePreviewRecipientChange(event.target.value)
                   }
                   disabled={recipientCount === 0 || previewMail.isPending}
-                  className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary/20 w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-2 focus:outline-none disabled:opacity-50"
+                  className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper w-full border px-4 py-2 text-sm disabled:opacity-50"
                 >
                   {recipientCount === 0 && (
                     <option value="">Keine Empfänger — Beispieldaten</option>
@@ -981,7 +981,7 @@ function CourseMailPageContent() {
 
             <ScrollableModalBody>
               {previewMail.isPending && (
-                <p className="dark:text-dark-muted py-8 text-center text-sm text-gray-500">
+                <p className="dark:text-night-muted text-dark py-8 text-center text-sm">
                   Vorschau wird erstellt...
                 </p>
               )}
@@ -989,9 +989,11 @@ function CourseMailPageContent() {
               {!previewMail.isPending && previewMail.data && (
                 <div className="space-y-4">
                   {previewMail.data.unknownPlaceholders.length > 0 && (
-                    <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-900/20">
-                      <AlertTriangleIcon className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
-                      <p className="text-sm text-amber-800 dark:text-amber-300">
+                    // Hinweis statt Alarm: Tinte auf Papier an einer
+                    // Haarlinie statt bernsteinfarbenem Kasten.
+                    <div className="border-ink dark:border-night-text flex items-start gap-3 border-l-2 py-2 pl-4">
+                      <AlertTriangleIcon className="dark:text-night-text text-ink mt-0.5 h-4 w-4 shrink-0" />
+                      <p className="text-dark dark:text-night-muted text-sm">
                         Unbekannte Platzhalter:{" "}
                         {previewMail.data.unknownPlaceholders
                           .map((token) => `{{${token}}}`)
@@ -1003,46 +1005,46 @@ function CourseMailPageContent() {
                   )}
 
                   {previewMail.data.usesExampleData && (
-                    <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
+                    <div className="border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
                       Für diese Auswahl gibt es keine Anmeldungen — die
                       Platzhalter sind mit Beispieldaten gefüllt.
                     </div>
                   )}
 
-                  <dl className="dark:border-dark-border dark:bg-dark-background space-y-1 rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm">
+                  <dl className="dark:border-night-rule dark:bg-night-raised border-rule bg-rule/25 space-y-1 border p-3 text-sm">
                     <div className="flex gap-2">
-                      <dt className="dark:text-dark-muted shrink-0 text-gray-500">
+                      <dt className="dark:text-night-muted text-dark shrink-0">
                         An:
                       </dt>
-                      <dd className="dark:text-dark-text text-gray-900">
+                      <dd className="dark:text-night-text text-ink">
                         {previewMail.data.recipient
                           ? `${previewMail.data.recipient.name} <${previewMail.data.recipient.email}>`
                           : "Beispielempfänger"}
                       </dd>
                     </div>
                     <div className="flex gap-2">
-                      <dt className="dark:text-dark-muted shrink-0 text-gray-500">
+                      <dt className="dark:text-night-muted text-dark shrink-0">
                         Antwort an:
                       </dt>
-                      <dd className="dark:text-dark-text text-gray-900">
+                      <dd className="dark:text-night-text text-ink">
                         {replyToEmail}
                       </dd>
                     </div>
                     <div className="flex gap-2">
-                      <dt className="dark:text-dark-muted shrink-0 text-gray-500">
+                      <dt className="dark:text-night-muted text-dark shrink-0">
                         Betreff:
                       </dt>
-                      <dd className="dark:text-dark-text font-medium text-gray-900">
+                      <dd className="dark:text-night-text text-ink font-medium">
                         {previewMail.data.subject}
                       </dd>
                     </div>
                     {(attachments.length > 0 ||
                       previewMail.data.invoiceAttachments.length > 0) && (
                       <div className="flex gap-2">
-                        <dt className="dark:text-dark-muted shrink-0 text-gray-500">
+                        <dt className="dark:text-night-muted text-dark shrink-0">
                           Anhänge:
                         </dt>
-                        <dd className="dark:text-dark-text text-gray-900">
+                        <dd className="dark:text-night-text text-ink">
                           {[
                             ...attachments.map(
                               (attachment) => attachment.filename,
@@ -1057,10 +1059,10 @@ function CourseMailPageContent() {
                       previewMail.data.recipient &&
                       previewMail.data.invoiceAttachments.length === 0 && (
                         <div className="flex gap-2">
-                          <dt className="dark:text-dark-muted shrink-0 text-gray-500">
+                          <dt className="dark:text-night-muted text-dark shrink-0">
                             Rechnung:
                           </dt>
-                          <dd className="dark:text-dark-text text-gray-900">
+                          <dd className="dark:text-night-text text-ink">
                             Für diese Person gibt es keine veröffentlichte
                             Rechnung — sie bekommt die Mail ohne Anhang.
                           </dd>
@@ -1075,7 +1077,7 @@ function CourseMailPageContent() {
                     title="E-Mail-Vorschau"
                     srcDoc={previewMail.data.html}
                     sandbox=""
-                    className="dark:border-dark-border h-[60vh] w-full rounded-lg border border-gray-200 bg-white"
+                    className="dark:border-night-rule border-rule bg-paper h-[60vh] w-full border"
                   />
                 </div>
               )}
@@ -1085,7 +1087,7 @@ function CourseMailPageContent() {
               <button
                 type="button"
                 onClick={() => setShowPreview(false)}
-                className="dark:border-dark-border dark:text-dark-text w-full rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="border-rule dark:border-night-rule text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised min-h-11 w-full border px-4 py-2 text-sm font-medium transition-colors"
               >
                 Schließen
               </button>
@@ -1098,15 +1100,15 @@ function CourseMailPageContent() {
         <ScrollableModal onBackdropClick={() => setShowConfirm(false)}>
           <ScrollableModalCard maxW="md">
             <ScrollableModalBody>
-              <h3 className="dark:text-dark-text mb-4 text-lg font-bold">
+              <h3 className="dark:text-night-text mb-4 text-lg font-bold">
                 E-Mail senden?
               </h3>
-              <p className="dark:text-dark-muted mb-2 text-sm text-gray-600">
+              <p className="dark:text-night-muted text-dark mb-2 text-sm">
                 Die Nachricht geht an <strong>{recipientCount}</strong>{" "}
                 {recipientCount === 1 ? "Adresse" : "Adressen"} des Kurses „
                 {course.title}“.
               </p>
-              <p className="dark:text-dark-muted mb-4 text-xs text-gray-500">
+              <p className="dark:text-night-muted text-dark mb-4 text-xs">
                 Diese Aktion kann nicht rückgängig gemacht werden.
               </p>
             </ScrollableModalBody>
@@ -1114,14 +1116,14 @@ function CourseMailPageContent() {
               <div className="flex justify-end gap-3">
                 <button
                   onClick={() => setShowConfirm(false)}
-                  className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+                  className="border-rule dark:border-night-rule text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised min-h-11 border px-4 py-2 text-sm font-medium transition-colors"
                 >
                   Abbrechen
                 </button>
                 <button
                   onClick={confirmSend}
                   disabled={isSending}
-                  className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                  className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-night-text dark:text-night dark:hover:bg-primary dark:hover:text-ink min-h-11 px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isSending ? "Wird gesendet..." : "Senden"}
                 </button>
@@ -1138,8 +1140,8 @@ export default function CourseMailPage() {
   return (
     <Suspense
       fallback={
-        <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-          <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+        <div className="dark:bg-night bg-paper flex min-h-screen items-center justify-center">
+          <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
         </div>
       }
     >

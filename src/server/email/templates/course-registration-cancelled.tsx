@@ -1,13 +1,6 @@
-import {
-  Html,
-  Head,
-  Body,
-  Container,
-  Section,
-  Text,
-  Hr,
-} from "@react-email/components";
-import * as React from "react";
+import { Text } from "@react-email/components";
+import { EmailLayout, Regel, abschnittskopf, grundtext } from "./email-layout";
+import { emailText, textZeile } from "./email-text";
 
 interface CourseRegistrationCancelledProps {
   registrantFirstName: string;
@@ -19,6 +12,13 @@ interface CourseRegistrationCancelledProps {
   registrationId: string;
 }
 
+const formatDate = (date: Date) =>
+  new Intl.DateTimeFormat("de-DE", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(date);
+
 export function CourseRegistrationCancelled({
   registrantFirstName,
   registrantLastName,
@@ -28,201 +28,90 @@ export function CourseRegistrationCancelled({
   participantsCount,
   registrationId,
 }: CourseRegistrationCancelledProps) {
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat("de-DE", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    }).format(date);
-  };
-
   return (
-    <Html lang="de">
-      <Head />
-      <Body style={main}>
-        <Container style={container}>
-          <Section style={header}>
-            <Text style={logoText}>Posaunenwerk Rheinland</Text>
-            <Text style={tagline}>
-              Posaunenwerk der Evangelischen Kirche im Rheinland
-            </Text>
-          </Section>
+    <EmailLayout preview="Anmeldung storniert">
+      <Text style={abschnittskopf}>Anmeldung storniert</Text>
 
-          <Section style={content}>
-            <Text style={heading}>Anmeldung storniert</Text>
+      <Text style={grundtext}>
+        Hallo {registrantFirstName} {registrantLastName},
+      </Text>
 
-            <Text style={paragraph}>
-              Hallo {registrantFirstName} {registrantLastName},
-            </Text>
+      <Text style={grundtext}>
+        deine Anmeldung für den folgenden Kurs wurde erfolgreich storniert:
+      </Text>
 
-            <Text style={paragraph}>
-              deine Anmeldung für den folgenden Kurs wurde erfolgreich
-              storniert:
-            </Text>
+      <Regel stark />
+      <Text style={kursTitel}>{courseTitle}</Text>
+      <Text style={grundtext}>
+        <strong>Start:</strong> {formatDate(startDate)}
+      </Text>
+      <Text style={grundtext}>
+        <strong>Ende:</strong> {formatDate(endDate)}
+      </Text>
+      <Text style={grundtext}>
+        <strong>Teilnehmer:</strong> {participantsCount}{" "}
+        {participantsCount === 1 ? "Person" : "Personen"}
+      </Text>
 
-            <Section style={courseInfo}>
-              <Text style={courseTitleStyle}>{courseTitle}</Text>
-              <Text style={courseDetail}>
-                <strong>Start:</strong> {formatDate(startDate)}
-              </Text>
-              <Text style={courseDetail}>
-                <strong>Ende:</strong> {formatDate(endDate)}
-              </Text>
-              <Text style={courseDetail}>
-                <strong>Teilnehmer:</strong> {participantsCount}{" "}
-                {participantsCount === 1 ? "Person" : "Personen"}
-              </Text>
-            </Section>
+      <Regel />
 
-            <Hr style={hr} />
+      <Text style={kursTitel}>ℹ️ Wichtige Informationen</Text>
+      <Text style={grundtext}>
+        Deine Anmeldung wurde vollständig storniert. Falls bereits eine Zahlung
+        erfolgt ist, wende dich bitte an uns, um die Rückerstattung zu klären.
+      </Text>
 
-            <Section style={infoBox}>
-              <Text style={infoBoxTitle}>ℹ️ Wichtige Informationen</Text>
-              <Text style={infoBoxText}>
-                Deine Anmeldung wurde vollständig storniert. Falls bereits eine
-                Zahlung erfolgt ist, wende dich bitte an uns, um die
-                Rückerstattung zu klären.
-              </Text>
-            </Section>
+      <Regel />
 
-            <Hr style={hr} />
+      <Text style={grundtext}>
+        Bei Fragen kannst du dich gerne an uns wenden.
+      </Text>
 
-            <Text style={paragraph}>
-              Bei Fragen kannst du dich gerne an uns wenden.
-            </Text>
-
-            <Text style={paragraph}>
-              Deine Anmelde-ID: <strong>{registrationId}</strong>
-            </Text>
-          </Section>
-
-          <Section style={footerSection}>
-            <Text style={footerText}>
-              Posaunenwerk der Evangelischen Kirche im Rheinland
-            </Text>
-          </Section>
-        </Container>
-      </Body>
-    </Html>
+      <Text style={grundtext}>
+        Deine Anmelde-ID: <strong>{registrationId}</strong>
+      </Text>
+    </EmailLayout>
   );
 }
 
-const main = {
-  backgroundColor: "#f5f5f5",
-  fontFamily:
-    '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Ubuntu,sans-serif',
-};
-
-const container = {
-  backgroundColor: "#ffffff",
-  margin: "0 auto",
-  padding: "0",
-  marginBottom: "64px",
-  maxWidth: "600px",
-  borderRadius: "8px",
-  boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-};
-
-const header = {
-  backgroundColor: "#faa619",
-  padding: "32px 24px",
-  textAlign: "center" as const,
-  borderRadius: "8px 8px 0 0",
-};
-
-const logoText = {
-  color: "#ffffff",
-  fontSize: "28px",
-  fontWeight: "bold",
-  margin: "0 0 8px 0",
-  letterSpacing: "0.5px",
-};
-
-const tagline = {
-  color: "#ffffff",
-  fontSize: "12px",
-  fontWeight: "normal",
-  margin: "0",
-  opacity: 0.95,
-  letterSpacing: "0.3px",
-};
-
-const content = {
-  padding: "32px 24px",
-};
-
-const heading = {
-  fontSize: "24px",
-  fontWeight: "bold",
-  color: "#58595b",
-  marginBottom: "24px",
-};
-
-const paragraph = {
-  fontSize: "16px",
-  lineHeight: "26px",
-  color: "#58595b",
-  marginBottom: "16px",
-};
-
-const courseInfo = {
-  backgroundColor: "#f9fafb",
-  padding: "20px",
-  borderRadius: "8px",
-  margin: "24px 0",
-  border: "1px solid #e5e7eb",
-};
-
-const courseTitleStyle = {
-  fontSize: "20px",
-  fontWeight: "bold",
-  color: "#58595b",
-  marginBottom: "16px",
-};
-
-const courseDetail = {
-  fontSize: "16px",
+/** Kurstitel als Sub-Überschrift über der Werttabelle. */
+const kursTitel = {
+  ...abschnittskopf,
+  fontSize: "18px",
   lineHeight: "24px",
-  color: "#58595b",
-  marginBottom: "8px",
+  margin: "0 0 12px 0",
 };
 
-const hr = {
-  borderColor: "#e5e7eb",
-  margin: "32px 0",
-};
-
-const infoBox = {
-  backgroundColor: "#eff6ff",
-  padding: "16px",
-  borderRadius: "8px",
-  margin: "24px 0",
-  border: "2px solid #3b82f6",
-};
-
-const infoBoxTitle = {
-  fontSize: "16px",
-  fontWeight: "bold",
-  color: "#1e40af",
-  marginBottom: "8px",
-};
-
-const infoBoxText = {
-  fontSize: "14px",
-  lineHeight: "20px",
-  color: "#1e3a8a",
-  margin: "0",
-};
-
-const footerSection = {
-  padding: "24px",
-  backgroundColor: "#f9fafb",
-  textAlign: "center" as const,
-  borderRadius: "0 0 8px 8px",
-};
-
-const footerText = {
-  fontSize: "12px",
-  color: "#9ca3af",
-  margin: "0",
-};
+/** Nur-Text-Fassung — gleicher Wortlaut, ohne Auszeichnung. */
+export function courseRegistrationCancelledText({
+  registrantFirstName,
+  registrantLastName,
+  courseTitle,
+  startDate,
+  endDate,
+  participantsCount,
+  registrationId,
+}: CourseRegistrationCancelledProps): string {
+  return emailText([
+    "ANMELDUNG STORNIERT",
+    "",
+    `Hallo ${registrantFirstName} ${registrantLastName},`,
+    "",
+    "deine Anmeldung für den folgenden Kurs wurde erfolgreich storniert:",
+    "",
+    courseTitle,
+    textZeile("Start", formatDate(startDate)),
+    textZeile("Ende", formatDate(endDate)),
+    textZeile(
+      "Teilnehmer",
+      `${participantsCount} ${participantsCount === 1 ? "Person" : "Personen"}`,
+    ),
+    "",
+    "WICHTIGE INFORMATIONEN",
+    "Deine Anmeldung wurde vollständig storniert. Falls bereits eine Zahlung erfolgt ist, wende dich bitte an uns, um die Rückerstattung zu klären.",
+    "",
+    "Bei Fragen kannst du dich gerne an uns wenden.",
+    "",
+    `Deine Anmelde-ID: ${registrationId}`,
+  ]);
+}

@@ -1,5 +1,7 @@
 import { describe, expect, it } from "@jest/globals";
 import {
+  formatDate,
+  formatLongDate,
   invoiceFilename,
   invoicePaymentReference,
   invoiceTotal,
@@ -15,6 +17,34 @@ const line = (overrides: Partial<InvoiceLineItem> = {}): InvoiceLineItem => ({
   quantity: 1,
   unitPrice: 145,
   ...overrides,
+});
+
+describe("formatDate / formatLongDate", () => {
+  it("uses the German calendar day, not the server's UTC day", () => {
+    // 01:30 on 15 September German summer time
+    expect(formatDate(new Date("2026-09-14T23:30:00Z"))).toBe("15.9.2026");
+    expect(formatLongDate(new Date("2026-09-14T23:30:00Z"))).toBe(
+      "15. September 2026",
+    );
+  });
+
+  it("keeps a date picked in the browser on its day", () => {
+    // Local midnight in Berlin, as a date input sends it
+    expect(formatDate("2026-09-14T22:00:00.000Z")).toBe("15.9.2026");
+  });
+
+  it("crosses the year boundary in winter time as well", () => {
+    expect(formatDate(new Date("2026-12-31T23:30:00Z"))).toBe("1.1.2027");
+  });
+
+  it("leaves days stored at UTC midnight unchanged", () => {
+    expect(formatDate(new Date("2010-06-15T00:00:00Z"))).toBe("15.6.2010");
+  });
+
+  it("returns an empty string without a date", () => {
+    expect(formatDate(null)).toBe("");
+    expect(formatLongDate("not a date")).toBe("");
+  });
 });
 
 describe("lineItemTotal", () => {
