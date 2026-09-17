@@ -860,7 +860,7 @@ export default function CourseParticipantsPage() {
             {canMailRegistrants && (
               <Link
                 href={`/dashboard/courses/${courseId}/mail`}
-                className="on-orange bg-primary text-ink hover:bg-primary/90 inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm font-medium transition-colors"
+                className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-night-text dark:text-night dark:hover:bg-primary dark:hover:text-ink inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm font-medium transition-colors"
               >
                 <MailIcon className="h-4 w-4" />
                 Anschreiben
@@ -1148,7 +1148,7 @@ export default function CourseParticipantsPage() {
                       type="button"
                       onClick={() => void runBulkAction("paid")}
                       disabled={bulkAction !== null || selectedUnpaid === 0}
-                      className="on-orange bg-primary text-ink hover:bg-primary/90 min-h-11 px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                      className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-night-text dark:text-night dark:hover:bg-primary dark:hover:text-ink min-h-11 px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {bulkAction === "paid"
                         ? "Wird gespeichert..."

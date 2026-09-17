@@ -1,13 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  Camera,
-  ChevronLeft,
-  ChevronRight,
-  Pause,
-  Play,
-} from "lucide-react";
+import { Camera, ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 import type { RouterOutputs } from "@/trpc/react";
 import ImageWithFallback from "@/app/_components/ui/image-with-fallback";
 import { ButtonLink } from "@/app/_components/programmheft/button-link";

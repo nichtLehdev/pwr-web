@@ -328,7 +328,7 @@ export default function DownloadPickerModal({
               {/* Downloads List */}
               {isLoading ? (
                 <div className="flex items-center justify-center py-12">
-                  <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+                  <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
                 </div>
               ) : downloadsData?.downloads.length === 0 ? (
                 <div className="py-12 text-center">

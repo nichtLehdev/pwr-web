@@ -43,15 +43,16 @@ const statusLabels: Record<ContentStatus, string> = {
 };
 
 // Etikett statt pastelliger Pille: Zustaende sind rechteckige Druckflaechen
-// (siehe Tag-Komponente). Vier Toene fuer fuenf Status — Entwurf und
-// Archiviert teilen sich "inverse", beide sind neutrale Ruhezustaende und
-// bleiben durch den Text unterscheidbar.
+// (siehe Tag-Komponente). Spiegelt die Zuordnung aus content-status.tsx —
+// derselbe Status muss ueberall gleich aussehen. Tag hat inzwischen einen
+// fuenften, umrandeten Ton: Entwurf und Archiviert sind Ruhezustaende ohne
+// Handlungsbedarf und standen bisher so laut gefuellt wie "Veroeffentlicht".
 const statusTones: Record<ContentStatus, TagTone> = {
-  DRAFT: "inverse",
+  DRAFT: "muted",
   PENDING: "orange",
   APPROVED: "ink",
   REJECTED: "cancelled",
-  ARCHIVED: "inverse",
+  ARCHIVED: "muted",
 };
 
 const ensembleTypeLabels: Record<EventEnsembleType, string> = {
@@ -146,7 +147,7 @@ export default function EventDetailPage() {
   if (sessionLoading || profileLoading || permissionsLoading || eventLoading) {
     return (
       <div className="dark:bg-night bg-paper flex min-h-screen items-center justify-center">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }

@@ -15,10 +15,7 @@ export function ValueTable({
 }) {
   return (
     <dl
-      className={cn(
-        "border-ink dark:border-night-text border-t-2",
-        className,
-      )}
+      className={cn("border-ink dark:border-night-text border-t-2", className)}
     >
       {rows.map((row, index) => (
         <div

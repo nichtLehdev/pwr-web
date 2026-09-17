@@ -453,7 +453,7 @@ export default function InvoiceEditorPage() {
                 title={
                   isDirty ? "Bitte zuerst die Änderungen speichern." : undefined
                 }
-                className="on-orange bg-primary text-ink hover:bg-primary/90 inline-flex min-h-9 items-center gap-2 px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+                className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-night-text dark:text-night dark:hover:bg-primary dark:hover:text-ink inline-flex min-h-9 items-center gap-2 px-3 py-1.5 text-sm font-medium disabled:opacity-50"
               >
                 <SendIcon className="h-4 w-4" />
                 Ausstellen
@@ -498,7 +498,7 @@ export default function InvoiceEditorPage() {
                   type="button"
                   onClick={() => markPaid.mutate({ id: invoiceId })}
                   disabled={markPaid.isPending}
-                  className="on-orange bg-primary text-ink hover:bg-primary/90 inline-flex min-h-9 items-center gap-2 px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+                  className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-night-text dark:text-night dark:hover:bg-primary dark:hover:text-ink inline-flex min-h-9 items-center gap-2 px-3 py-1.5 text-sm font-medium disabled:opacity-50"
                 >
                   {markPaid.isPending ? "Verbuche…" : "Als bezahlt markieren"}
                 </button>
@@ -1107,7 +1107,7 @@ export default function InvoiceEditorPage() {
                     })
                   }
                   disabled={publishInvoice.isPending}
-                  className="on-orange bg-primary text-ink hover:bg-primary/90 min-h-11 flex-1 px-4 py-2 text-sm font-medium disabled:opacity-50"
+                  className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-night-text dark:text-night dark:hover:bg-primary dark:hover:text-ink min-h-11 flex-1 px-4 py-2 text-sm font-medium disabled:opacity-50"
                 >
                   {publishInvoice.isPending ? "Stelle aus…" : "Ausstellen"}
                 </button>
@@ -1157,7 +1157,7 @@ export default function InvoiceEditorPage() {
                     cancelAndReplace.isPending ||
                     cancelInvoice.isPending
                   }
-                  className="on-orange bg-primary text-ink hover:bg-primary/90 min-h-11 w-full px-4 py-2 text-sm font-medium disabled:opacity-50"
+                  className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-night-text dark:text-night dark:hover:bg-primary dark:hover:text-ink min-h-11 w-full px-4 py-2 text-sm font-medium disabled:opacity-50"
                 >
                   {cancelAndReplace.isPending
                     ? "Storniere…"
