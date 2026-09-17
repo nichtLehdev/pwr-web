@@ -31,15 +31,16 @@ import {
   readEventPriceOptions,
 } from "@/server/utils/event-import";
 import { readText } from "@/server/utils/import-values";
+import { readPostContent } from "@/server/utils/post-import";
 import {
   importCourseSlug,
   importEventSlug,
+  importPostSlug,
 } from "@/server/api/helpers/content-slug";
 import { normalizeCourseNumber } from "@/lib/invoice-document";
 import { formatPhoneNumberOrNull } from "@/lib/phone-number";
 import {
   ContentStatus,
-  PostCategory,
   DownloadCategory,
   FileType,
   HistoryCategory,
@@ -233,22 +234,26 @@ export async function POST(
             ? mediaIdMap[coverImageId] || coverImageId
             : null;
 
+          const content = readPostContent(postData);
+
           results.push(
             await db.post.create({
               data: {
-                title: postData.title as string,
-                excerpt: (postData.excerpt as string) || null,
-                content: postData.content as string,
-                category: postData.category as string as PostCategory,
+                ...content,
+                slug: await importPostSlug(db, content.title, postData.slug),
                 bezirkId: await references.bezirkId(
                   postData.bezirkId,
                   postData.bezirk,
-                  (postData.title as string) || "ohne Titel",
+                  content.title,
                 ),
-                pinned: (postData.pinned as boolean) || false,
-                status:
-                  (postData.status as string as ContentStatus) ||
-                  ContentStatus.DRAFT,
+                // Die verfasste Person wird über ihre Adresse gesucht; fehlt
+                // sie im Zielbestand, trägt der Beitrag weiter ihren Namen.
+                authorId: await references.userId(
+                  postData.authorId,
+                  postData.authorEmail,
+                  content.title,
+                  "authorId",
+                ),
                 coverImageId: newCoverImageId,
                 createdById: session.user.id,
               },
