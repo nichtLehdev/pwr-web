@@ -205,11 +205,9 @@ export default function UserDetailPage() {
               </dt>
               <dd className="text-ink dark:text-night-text mt-1">
                 {user.emailVerified ? (
-                  <span className="text-green-600 dark:text-green-400">Ja</span>
+                  <span className="dark:text-night-text text-ink">Ja</span>
                 ) : (
-                  <span className="text-amber-600 dark:text-amber-400">
-                    Nein
-                  </span>
+                  <span className="text-dark dark:text-night-muted">Nein</span>
                 )}
               </dd>
             </div>

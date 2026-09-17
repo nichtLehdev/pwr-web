@@ -349,7 +349,7 @@ export default function DashboardHomepagePage() {
                       onClick={() => handleToggleActive(item)}
                       className={`border px-2 py-1 text-xs font-medium ${
                         item.isActive
-                          ? "border-green-700 text-green-700 dark:border-green-400 dark:text-green-400"
+                          ? "border-ink dark:border-night-text text-ink dark:text-night-text"
                           : "border-rule dark:border-night-rule text-dark dark:text-night-muted"
                       }`}
                     >

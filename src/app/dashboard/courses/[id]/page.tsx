@@ -369,7 +369,7 @@ export default function CourseDetailPage() {
               {course.location.name && `${course.location.name}, `}
               {course.location.city}
               {course.location.street && (
-                <span className="text-dark block text-sm">
+                <span className="text-dark dark:text-night-muted block text-sm">
                   {course.location.street}, {course.location.zipCode}{" "}
                   {course.location.city}
                 </span>
@@ -406,7 +406,7 @@ export default function CourseDetailPage() {
               {confirmedCount}
               {course.maxParticipants && ` / ${course.maxParticipants}`}
               {course.allowWaitingList && (
-                <span className="text-dark ml-2 text-sm">
+                <span className="text-dark dark:text-night-muted ml-2 text-sm">
                   (Warteliste aktiviert)
                 </span>
               )}
@@ -596,13 +596,13 @@ export default function CourseDetailPage() {
           <div className="space-y-0">
             {/* Review Section - Only for pending courses */}
             {canReview && (
-              <section className="mb-8 border border-yellow-200 bg-yellow-50 p-6 dark:border-yellow-900/50 dark:bg-yellow-900/20">
-                <h2 className="mb-4 text-lg font-semibold text-yellow-800 dark:text-yellow-300">
+              <section className="border-rule dark:border-night-rule mb-8 border p-6">
+                <h2 className="dark:text-night-text text-ink mb-4 text-lg font-semibold">
                   Kurs prüfen
                 </h2>
                 <div className="space-y-4">
                   <div>
-                    <label className="mb-2 block text-sm font-medium text-yellow-800 dark:text-yellow-300">
+                    <label className="dark:text-night-text text-ink mb-2 block text-sm font-medium">
                       Anmerkungen (optional bei Genehmigung, erforderlich bei
                       Ablehnung)
                     </label>
@@ -618,7 +618,7 @@ export default function CourseDetailPage() {
                     <button
                       onClick={handleApprove}
                       disabled={approveMutation.isPending}
-                      className="min-h-11 bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+                      className="hover:bg-primary-dark bg-primary text-ink min-h-11 px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
                     >
                       {approveMutation.isPending
                         ? "Wird genehmigt..."
@@ -718,7 +718,7 @@ export default function CourseDetailPage() {
                         />
                       ) : (
                         <div className="bg-rule dark:bg-night-rule flex h-10 w-10 items-center justify-center rounded-full">
-                          <UserIcon className="text-dark h-5 w-5" />
+                          <UserIcon className="text-dark dark:text-night-muted h-5 w-5" />
                         </div>
                       )}
                       <span className="dark:text-night-text text-ink">
@@ -729,7 +729,7 @@ export default function CourseDetailPage() {
                   {course.guestTeamMembers?.map((row) => (
                     <li key={row.id} className="flex items-start gap-3">
                       <div className="bg-rule dark:bg-night-rule flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
-                        <UserIcon className="text-dark h-5 w-5" />
+                        <UserIcon className="text-dark dark:text-night-muted h-5 w-5" />
                       </div>
                       <div className="min-w-0">
                         <span className="dark:text-night-text text-ink block">
@@ -871,12 +871,12 @@ export default function CourseDetailPage() {
                           {option.label}
                         </span>
                         {option.description && (
-                          <p className="text-dark text-sm">
+                          <p className="text-dark dark:text-night-muted text-sm">
                             {option.description}
                           </p>
                         )}
                         {priceOptionAgeLabel(option) && (
-                          <p className="text-dark text-sm">
+                          <p className="text-dark dark:text-night-muted text-sm">
                             {priceOptionAgeLabel(option)} — Alter am ersten
                             Kurstag
                           </p>
@@ -893,7 +893,9 @@ export default function CourseDetailPage() {
                   {course.priceInfo}
                 </p>
               ) : (
-                <p className="text-dark">Keine Preisinformationen verfügbar</p>
+                <p className="text-dark dark:text-night-muted">
+                  Keine Preisinformationen verfügbar
+                </p>
               )}
             </section>
 
@@ -967,7 +969,7 @@ export default function CourseDetailPage() {
             {canAddRegistrations && (
               <Link
                 href={`/dashboard/courses/${courseId}/participants/new`}
-                className="inline-flex min-h-11 items-center gap-2 bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700"
+                className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-night-text dark:text-night dark:hover:bg-primary dark:hover:text-ink inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm font-medium transition-colors"
               >
                 <PlusIcon className="h-4 w-4" />
                 Anmeldung hinzufügen
@@ -988,8 +990,8 @@ export default function CourseDetailPage() {
               Übersicht
             </h2>
             <div className="grid gap-4 sm:grid-cols-3">
-              <div className="bg-green-50 p-4 dark:bg-green-900/20">
-                <div className="text-2xl font-bold text-green-700 dark:text-green-400">
+              <div className="bg-rule/25 dark:bg-night-raised p-4">
+                <div className="dark:text-night-text text-ink text-2xl font-bold">
                   {registrationsData?.registrations
                     .filter(
                       (r) =>
@@ -997,12 +999,12 @@ export default function CourseDetailPage() {
                     )
                     .reduce((sum, r) => sum + r.participants.length, 0) ?? 0}
                 </div>
-                <div className="text-sm text-green-600 dark:text-green-500">
+                <div className="text-dark dark:text-night-muted text-sm">
                   Bestätigte Teilnehmer
                 </div>
               </div>
-              <div className="bg-yellow-50 p-4 dark:bg-yellow-900/20">
-                <div className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">
+              <div className="bg-rule/25 dark:bg-night-raised p-4">
+                <div className="dark:text-night-text text-ink text-2xl font-bold">
                   {registrationsData?.registrations
                     .filter(
                       (r) =>
@@ -1010,7 +1012,7 @@ export default function CourseDetailPage() {
                     )
                     .reduce((sum, r) => sum + r.participants.length, 0) ?? 0}
                 </div>
-                <div className="text-sm text-yellow-600 dark:text-yellow-500">
+                <div className="text-dark dark:text-night-muted text-sm">
                   Auf Warteliste
                 </div>
               </div>
@@ -1100,18 +1102,18 @@ export default function CourseDetailPage() {
                                   {participant.firstName} {participant.lastName}
                                 </span>
                                 {participant.city && (
-                                  <span className="text-dark ml-2">
+                                  <span className="text-dark dark:text-night-muted ml-2">
                                     aus {participant.city}
                                   </span>
                                 )}
                                 {participant.instrument && (
-                                  <span className="text-dark ml-2">
+                                  <span className="text-dark dark:text-night-muted ml-2">
                                     ({participant.instrument})
                                   </span>
                                 )}
                               </div>
                               {participant.priceOption && (
-                                <span className="text-dark">
+                                <span className="text-dark dark:text-night-muted">
                                   {participantPriceOptionLabel(
                                     participant,
                                     course.priceOptions,

@@ -305,7 +305,7 @@ export default function CourseInvoicesPage() {
             <>
               {formatEuro(getValue())}
               {lacksDownPaymentCredit(row.original) && (
-                <span className="mt-0.5 block text-xs font-medium whitespace-nowrap text-amber-600 dark:text-amber-400">
+                <span className="text-primary-ink dark:text-primary mt-0.5 block text-xs font-medium whitespace-nowrap">
                   Anzahlung nicht abgezogen
                 </span>
               )}
@@ -485,11 +485,13 @@ export default function CourseInvoicesPage() {
       }
     >
       {!access?.invoicingEnabled && (
-        <div className="mb-6 border-2 border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-900/50 dark:bg-yellow-900/20">
-          <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+        // Hinweis statt Alarm: Tinte auf Papier an einer Haarlinie statt
+        // Kasten in Signalfarbe.
+        <div className="border-ink dark:border-night-text mb-6 border-l-2 py-2 pl-4">
+          <p className="text-ink dark:text-night-text text-sm font-medium">
             Rechnungsstellung ist für diesen Kurs nicht freigeschaltet
           </p>
-          <p className="mt-1 text-xs text-yellow-700 dark:text-yellow-300">
+          <p className="text-dark dark:text-night-muted mt-1 text-xs">
             Ein Landes-/Regionalposaunenwart oder Administrator kann sie in den
             Kurseinstellungen aktivieren. Bestehende Rechnungen bleiben
             sichtbar.

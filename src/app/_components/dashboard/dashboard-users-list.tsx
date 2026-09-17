@@ -199,9 +199,9 @@ export default function DashboardUsersList() {
           meta: { align: "center", label: "E-Mail bestätigt" },
           cell: ({ getValue }) =>
             getValue() ? (
-              <CheckCircle2 className="mx-auto h-5 w-5 text-green-600 dark:text-green-400" />
+              <CheckCircle2 className="dark:text-night-text text-ink mx-auto h-5 w-5" />
             ) : (
-              <XCircle className="mx-auto h-5 w-5 text-amber-600 dark:text-amber-400" />
+              <XCircle className="text-dark dark:text-night-muted mx-auto h-5 w-5" />
             ),
         }),
         column.accessor((user) => user.createdAt, {
@@ -274,7 +274,7 @@ export default function DashboardUsersList() {
             <p className="text-dark dark:text-night-muted text-sm">
               Neue (30 Tage)
             </p>
-            <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+            <p className="dark:text-night-text text-ink text-2xl font-bold">
               {stats.recentUsers}
             </p>
           </div>

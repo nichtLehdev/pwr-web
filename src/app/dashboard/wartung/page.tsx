@@ -7,6 +7,7 @@ import { usePermissions } from "@/lib/use-permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 import { useToast } from "@/app/_components/ui/toast";
 import { DashboardPage } from "@/app/_components/dashboard";
+import { Tag } from "@/app/_components/programmheft/tag";
 import {
   Button,
   Card,
@@ -86,10 +87,12 @@ export default function MaintenanceDashboardPage() {
       description="Schließt die öffentliche Seite für Besucher. Angemeldete Personen mit Dashboard-Zugriff arbeiten normal weiter."
     >
       {forced && (
-        <div className="mb-6 flex gap-3 border border-amber-300 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/40">
-          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
-          <div className="text-sm text-amber-900 dark:text-amber-200">
-            <p className="font-semibold">
+        // Hinweis statt Alarm: Tinte auf Papier an einer Haarlinie statt
+        // bernsteinfarbenem Kasten.
+        <div className="border-ink dark:border-night-text mb-6 flex gap-3 border-l-2 py-2 pl-4">
+          <AlertTriangle className="dark:text-night-text text-ink mt-0.5 h-5 w-5 shrink-0" />
+          <div className="text-dark dark:text-night-muted text-sm">
+            <p className="text-ink dark:text-night-text font-semibold">
               Die Wartung ist über die Umgebungsvariable erzwungen.
             </p>
             <p className="mt-1">
@@ -107,20 +110,14 @@ export default function MaintenanceDashboardPage() {
             <p className="text-ink dark:text-night-text font-semibold">
               Aktueller Zustand
             </p>
-            {/* Folgenreiche Aktion, kein zurückgenommener Hinweis: die Farbe
-                trägt hier bewusst den vollen Kontrast des Wartungstons statt
-                eines gedämpften Grautons. */}
-            <p
-              className={`mt-1 text-sm font-medium ${
-                enabled
-                  ? "text-amber-800 dark:text-amber-300"
-                  : "text-green-700 dark:text-green-400"
-              }`}
-            >
+            {/* Folgenreiche Aktion, kein zurückgenommener Hinweis: aktive
+                Wartung ist ein Zustand, den man sehen muss, deshalb gefülltes
+                Orange statt eines zurückgenommenen Tons. */}
+            <Tag tone={enabled ? "orange" : "ink"} className="mt-1">
               {enabled
                 ? "Wartungsmodus aktiv — Besucher sehen die Wartungsseite"
                 : "Seite ist offen"}
-            </p>
+            </Tag>
             {data?.updatedAt && (
               <p className="text-dark dark:text-night-muted mt-1 text-xs">
                 Zuletzt geändert am{" "}

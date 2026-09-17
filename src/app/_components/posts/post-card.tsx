@@ -1,6 +1,6 @@
 import Link from "next/link";
 import ImageWithFallback from "@/app/_components/ui/image-with-fallback";
-import { getDistrictColor } from "@/lib/district-color";
+import { getDistrictColor, getDistrictTextColor } from "@/lib/district-color";
 import { extractPlainTextFromMarkdown } from "@/lib/utils";
 import { ArrowRightIcon, PinIcon } from "lucide-react";
 import { postPath } from "@/lib/slug";
@@ -43,11 +43,11 @@ export default function PostCard({
   return (
     <Link href={postPath({ id, slug })} className="group block h-full">
       <article
-        className="dark:bg-dark-surface dark:shadow-dark-border flex h-full cursor-pointer flex-col overflow-hidden rounded-lg border-l-4 bg-white shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
+        className="border-rule dark:border-night-rule dark:bg-night-raised bg-paper flex h-full cursor-pointer flex-col overflow-hidden border border-l-4 transition-transform duration-300 hover:scale-[1.02]"
         style={{ borderLeftColor: districtColor || "transparent" }}
       >
         {/* Beitragsbild */}
-        <div className="relative h-48 w-full overflow-hidden bg-gray-200 dark:bg-gray-700">
+        <div className="bg-rule/25 dark:bg-night-raised relative h-48 w-full overflow-hidden">
           <ImageWithFallback
             src={image}
             alt={title}
@@ -70,24 +70,27 @@ export default function PostCard({
             <div className="flex items-center gap-2">
               {pinned && (
                 <PinIcon
-                  className="text-primary h-4 w-4"
+                  className="text-primary-ink h-4 w-4"
                   aria-label="Angepinnt"
                 />
               )}
-              <span className="text-primary text-xs font-semibold">
+              <span className="text-primary-ink text-xs font-semibold">
                 {category}
               </span>
             </div>
             <div className="flex items-center gap-2">
               {district && (
                 <span
-                  className="rounded-full px-3 py-1 text-xs font-semibold text-white"
-                  style={{ backgroundColor: districtColor }}
+                  className="px-3 py-1 text-xs font-semibold"
+                  style={{
+                    backgroundColor: districtColor,
+                    color: getDistrictTextColor(district),
+                  }}
                 >
                   {`Bezirk ${district}`}
                 </span>
               )}
-              <time className="text-xs text-gray-500 dark:text-gray-400">
+              <time className="text-dark dark:text-night-muted text-xs">
                 {new Date(date).toLocaleDateString("de-DE", {
                   day: "2-digit",
                   month: "long",
@@ -97,17 +100,17 @@ export default function PostCard({
             </div>
           </div>
 
-          <h3 className="text-dark dark:text-dark-text group-hover:text-primary mb-3 line-clamp-2 text-xl font-bold transition-colors">
+          <h3 className="text-ink dark:text-night-text group-hover:text-primary-ink dark:group-hover:text-primary mb-3 line-clamp-2 text-xl font-bold transition-colors">
             {title}
           </h3>
 
           {displayExcerpt && (
-            <p className="mb-4 line-clamp-3 grow text-gray-600 dark:text-gray-400">
+            <p className="text-dark dark:text-night-muted mb-4 line-clamp-3 grow">
               {displayExcerpt}
             </p>
           )}
 
-          <div className="text-primary mt-auto inline-flex items-center text-sm font-semibold">
+          <div className="text-primary-ink dark:text-primary mt-auto inline-flex items-center text-sm font-semibold">
             Weiterlesen
             <ArrowRightIcon className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
           </div>

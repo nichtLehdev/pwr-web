@@ -4,6 +4,7 @@ import { signOut } from "@/lib/auth";
 import type { Session } from "@/server/better-auth/client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Button } from "@/app/_components/ui";
 import { useToast } from "../ui/toast";
 
 export function UserMenu({ session }: { session: Session }) {
@@ -29,13 +30,13 @@ export function UserMenu({ session }: { session: Session }) {
       <div className="flex items-center gap-4">
         <Link
           href="/login"
-          className="text-sm font-medium text-gray-700 hover:text-gray-900"
+          className="text-dark hover:text-ink dark:text-night-muted dark:hover:text-night-text text-sm font-medium transition-colors"
         >
           Anmelden
         </Link>
         <Link
           href="/register"
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500"
+          className="semi-condensed bg-ink text-paper hover:bg-dark dark:bg-night-text dark:text-night dark:hover:bg-night-muted inline-flex h-10 items-center justify-center px-4 text-sm font-semibold transition-colors"
         >
           Registrieren
         </Link>
@@ -45,15 +46,17 @@ export function UserMenu({ session }: { session: Session }) {
 
   return (
     <div className="flex items-center gap-4">
-      <span className="text-sm text-gray-700">
+      <span className="text-ink dark:text-night-text text-sm">
         {session.user.name || session.user.email}
       </span>
-      <button
-        onClick={handleSignOut}
-        className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300"
+      <Button
+        type="button"
+        variant="secondary"
+        size="sm"
+        onClick={() => void handleSignOut()}
       >
         Abmelden
-      </button>
+      </Button>
     </div>
   );
 }

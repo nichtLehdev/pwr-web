@@ -273,7 +273,7 @@ export default function DashboardNewsletterSubscribersPage() {
           </div>
           <div className="bg-rule/25 dark:bg-night-raised p-4">
             <p className="text-dark dark:text-night-muted text-sm">Bestätigt</p>
-            <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+            <p className="dark:text-night-text text-ink text-2xl font-bold">
               {statistics.active}
             </p>
           </div>

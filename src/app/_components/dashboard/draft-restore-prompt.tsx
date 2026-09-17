@@ -72,12 +72,14 @@ export function DraftRestorePrompt({
       )}
 
       {storageFailed && (
+        // Hinweis statt Alarm: Tinte auf Papier an einer Haarlinie statt
+        // bernsteinfarbenem Kasten.
         <div
           role="alert"
-          className="flex items-start gap-3 border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20"
+          className="border-ink dark:border-night-text flex items-start gap-3 border-l-2 py-2 pl-4"
         >
-          <AlertTriangleIcon className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
-          <p className="text-sm text-amber-800 dark:text-amber-300">
+          <AlertTriangleIcon className="dark:text-night-text text-ink mt-0.5 h-5 w-5 shrink-0" />
+          <p className="text-dark dark:text-night-muted text-sm">
             Deine Eingaben können auf diesem Gerät nicht zwischengespeichert
             werden (Speicher voll oder privater Modus). Bei einem Neuladen gehen
             sie verloren.

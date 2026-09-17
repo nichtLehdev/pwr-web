@@ -465,7 +465,7 @@ export default function EditUserPage() {
                       usernameStatus.checking
                         ? "text-dark dark:text-night-muted"
                         : usernameStatus.available
-                          ? "text-green-600 dark:text-green-400"
+                          ? "text-dark dark:text-night-muted"
                           : "text-red-700 dark:text-red-400"
                     }`}
                   >

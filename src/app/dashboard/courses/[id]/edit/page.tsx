@@ -1605,7 +1605,7 @@ export default function EditCoursePage() {
                                   {loc.city}
                                 </span>
                                 {loc.street && (
-                                  <span className="text-dark ml-2 text-sm">
+                                  <span className="text-dark dark:text-night-muted ml-2 text-sm">
                                     {loc.street}
                                   </span>
                                 )}
@@ -2014,8 +2014,10 @@ export default function EditCoursePage() {
                     description="Felder, die direkt beim Ausfüllen der Anmeldung abgefragt werden."
                   >
                     {hasRegistrations && customFieldsChanged && (
-                      <div className="mb-4 border border-amber-200 bg-amber-50 p-3 dark:border-amber-900/50 dark:bg-amber-900/20">
-                        <p className="text-sm text-amber-700 dark:text-amber-300">
+                      // Hinweis statt Alarm: Tinte auf Papier an einer
+                      // Haarlinie statt bernsteinfarbenem Kasten.
+                      <div className="border-ink dark:border-night-text mb-4 border-l-2 py-1 pl-4">
+                        <p className="text-dark dark:text-night-muted text-sm">
                           <strong>Hinweis:</strong> Es sind bereits Anmeldungen
                           vorhanden. Die Anmeldefelder können nicht mehr
                           geändert werden.
@@ -2273,7 +2275,7 @@ export default function EditCoursePage() {
                       description="Nur Darstellung auf der öffentlichen Kursseite: kein Zugriff auf den Kurs, keine Teilnehmerliste. Praktisch z.&nbsp;B. für Gastreferent:innen ohne Account. Hier ein optionaler Kurztext pro Person möglich."
                     >
                       <div className="border-rule dark:border-night-rule overflow-hidden border">
-                        <div className="border-rule dark:border-night-rule border-b bg-amber-50/80 px-3 py-2 text-xs leading-snug text-amber-950 dark:bg-amber-950/25 dark:text-amber-100">
+                        <div className="border-rule dark:border-night-rule bg-rule/25 dark:bg-night-raised text-dark dark:text-night-muted border-b px-3 py-2 text-xs leading-snug">
                           Diese Einträge werden erst nach Klick auf{" "}
                           <strong className="font-semibold">
                             Mitwirkende ohne Konto speichern
@@ -2359,7 +2361,7 @@ export default function EditCoursePage() {
                                       disabled={
                                         guestTeamMutationBusy || idx === 0
                                       }
-                                      className="dark:hover:bg-night-raised text-dark hover:bg-rule/25 hover:text-ink dark:hover:text-night-text p-1.5 disabled:opacity-25"
+                                      className="dark:hover:bg-night-raised text-dark dark:text-night-muted hover:bg-rule/25 hover:text-ink dark:hover:text-night-text p-1.5 disabled:opacity-25"
                                       title="Nach oben"
                                       onClick={() => {
                                         if (idx === 0) return;
@@ -2382,7 +2384,7 @@ export default function EditCoursePage() {
                                         guestTeamMutationBusy ||
                                         idx >= guestTeamDraft.length - 1
                                       }
-                                      className="dark:hover:bg-night-raised text-dark hover:bg-rule/25 hover:text-ink dark:hover:text-night-text p-1.5 disabled:opacity-25"
+                                      className="dark:hover:bg-night-raised text-dark dark:text-night-muted hover:bg-rule/25 hover:text-ink dark:hover:text-night-text p-1.5 disabled:opacity-25"
                                       title="Nach unten"
                                       onClick={() => {
                                         if (idx >= guestTeamDraft.length - 1)
@@ -2482,14 +2484,16 @@ export default function EditCoursePage() {
 
                 {/* Warning when there are registrations */}
                 {hasRegistrations && (
-                  <div className="mb-4 border border-amber-300 bg-amber-50 p-4 dark:border-amber-600 dark:bg-amber-950/50">
+                  // Hinweis statt Alarm: Tinte auf Papier an einer Haarlinie
+                  // statt bernsteinfarbenem Kasten.
+                  <div className="border-ink dark:border-night-text mb-4 border-l-2 py-2 pl-4">
                     <div className="flex items-start gap-3">
-                      <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+                      <AlertTriangle className="dark:text-night-text text-ink mt-0.5 h-5 w-5 shrink-0" />
                       <div>
                         <p className="dark:text-night-text text-ink font-medium">
                           Preisänderungen eingeschränkt
                         </p>
-                        <p className="mt-1 text-sm text-amber-700 dark:text-amber-200">
+                        <p className="text-dark dark:text-night-muted mt-1 text-sm">
                           Es gibt bereits {registrationCount} Teilnehmer für
                           diesen Kurs. Bezeichnung, Preis und Altersgrenzen der
                           Preiskategorien können nicht mehr geändert werden. Die
@@ -2788,7 +2792,7 @@ export default function EditCoursePage() {
                                           disabled={hasRegistrations}
                                           className="border-ink dark:border-night-text dark:bg-night dark:text-night-text dark:disabled:bg-night-raised bg-paper disabled:bg-rule/40 disabled:text-dark dark:disabled:text-night-muted w-full border px-3 py-2 text-sm disabled:cursor-not-allowed"
                                         />
-                                        <span className="text-dark text-sm">
+                                        <span className="text-dark dark:text-night-muted text-sm">
                                           €
                                         </span>
                                       </div>
@@ -2856,7 +2860,7 @@ export default function EditCoursePage() {
                                       option,
                                       priceOptions,
                                     ) && (
-                                      <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+                                      <p className="text-primary-ink dark:text-primary mt-1 text-xs">
                                         Dieser Name kommt mehrfach vor — ohne
                                         unterscheidende Beschreibung sind die
                                         Kategorien bei der Anmeldung nicht
@@ -2905,16 +2909,18 @@ export default function EditCoursePage() {
                 {(course?.status === ContentStatus.APPROVED ||
                   course?.status === ContentStatus.REJECTED) &&
                   !isHigherRole && (
-                    <div className="mb-4 border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/50 dark:bg-amber-900/20">
+                    // Hinweis statt Alarm: Tinte auf Papier an einer
+                    // Haarlinie statt bernsteinfarbenem Kasten.
+                    <div className="border-ink dark:border-night-text mb-4 border-l-2 py-2 pl-4">
                       <div className="flex items-start gap-3">
-                        <AlertTriangleIcon className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-500" />
+                        <AlertTriangleIcon className="dark:text-night-text text-ink mt-0.5 h-5 w-5 shrink-0" />
                         <div>
-                          <p className="font-medium text-amber-800 dark:text-amber-200">
+                          <p className="dark:text-night-text text-ink font-medium">
                             {course?.status === ContentStatus.APPROVED
                               ? "Hinweis zur erneuten Freigabe"
                               : "Hinweis zur erneuten Prüfung"}
                           </p>
-                          <p className="mt-1 text-sm text-amber-700 dark:text-amber-300">
+                          <p className="text-dark dark:text-night-muted mt-1 text-sm">
                             {course?.status === ContentStatus.APPROVED
                               ? "Dieser Kurs ist bereits freigegeben. Nach dem Speichern wird er erneut zur Prüfung eingereicht und muss wieder freigegeben werden."
                               : "Dieser Kurs wurde abgelehnt. Nach dem Speichern wird er erneut zur Prüfung eingereicht."}

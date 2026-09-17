@@ -391,7 +391,7 @@ export default function NewUserPage() {
                       emailStatus.available === false
                         ? "text-red-600 dark:text-red-400"
                         : emailStatus.available === true
-                          ? "text-green-600 dark:text-green-400"
+                          ? "text-dark dark:text-night-muted"
                           : "text-dark dark:text-night-muted"
                     }`}
                   >
@@ -427,7 +427,7 @@ export default function NewUserPage() {
                       usernameStatus.available === false
                         ? "text-red-600 dark:text-red-400"
                         : usernameStatus.available === true
-                          ? "text-green-600 dark:text-green-400"
+                          ? "text-dark dark:text-night-muted"
                           : "text-dark dark:text-night-muted"
                     }`}
                   >

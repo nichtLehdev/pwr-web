@@ -103,7 +103,7 @@ export default function SlugField({
         )}
 
         {isRename ? (
-          <p className="text-xs text-amber-700 dark:text-amber-500">
+          <p className="text-primary-ink dark:text-primary text-xs">
             Achtung: Die bisherige Adresse{" "}
             <span className="font-mono break-all">
               {basePath}

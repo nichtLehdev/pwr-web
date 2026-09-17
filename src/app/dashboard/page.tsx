@@ -248,7 +248,7 @@ export default function DashboardPageRoute() {
             }
           >
             {pendingTotal === 0 ? (
-              <div className="flex items-center gap-2 py-2 text-sm text-green-700 dark:text-green-400">
+              <div className="dark:text-night-text text-ink flex items-center gap-2 py-2 text-sm">
                 <CheckCircle2 className="h-4 w-4" aria-hidden />
                 Alles erledigt — nichts wartet auf Freigabe.
               </div>
