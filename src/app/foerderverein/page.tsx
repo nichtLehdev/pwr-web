@@ -90,7 +90,11 @@ export default async function FoerdervereinPage() {
       }
     >
       {/* Was wir tun */}
-      <PageSection labelledBy="was-wir-tun-heading" flush="top">
+      {/* Kein `flush="top"`: Diese Seite war die einzige ohne oberes Polster am
+          ersten Abschnitt — gemessen 85px zwischen Titel und erster
+          Überschrift, während /mitmachen, /materialien und /kontakt
+          übereinstimmend bei 181px liegen. */}
+      <PageSection labelledBy="was-wir-tun-heading">
         <Split
           head={<Heading id="was-wir-tun-heading">Was wir tun</Heading>}
           bodyClassName="mt-8"
