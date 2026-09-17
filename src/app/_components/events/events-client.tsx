@@ -23,6 +23,7 @@ import {
   type ProgrammeEntry,
 } from "@/app/_components/programmheft/programme-data";
 import { ProgrammeList } from "@/app/_components/programmheft/programme";
+import { isRegistrationOpen } from "@/app/_components/programmheft/programme-data";
 import { COURSE_TYPE_MAP, EVENT_CATEGORY_MAP } from "@/lib/termine-labels";
 import { useStickyTop } from "@/lib/use-sticky-top";
 import { useTitelVorbei } from "@/lib/use-titel-vorbei";
@@ -201,6 +202,13 @@ export default function EventsClient({
   const [selectedCategory, setSelectedCategory] = useState<string>(
     params.get("category") || "all",
   );
+  /**
+   * `?anmeldung=offen` — die Startseite zeigt nur einen Lehrgang mit offener
+   * Anmeldung und verweist für die übrigen hierher.
+   */
+  const [nurOffeneAnmeldung, setNurOffeneAnmeldung] = useState(
+    params.get("anmeldung") === "offen",
+  );
   const [monthGrouping, setMonthGrouping] = useStoredPreference<MonthGrouping>(
     "termineMonthGrouping",
     "on",
@@ -233,6 +241,15 @@ export default function EventsClient({
         if (filterType === "events" && item.type !== "event") return false;
         if (filterType === "courses" && item.type !== "course") return false;
 
+        // Termine nehmen keine Anmeldungen entgegen; der Filter lässt also
+        // nur Lehrgänge übrig, deren Anmeldung gerade läuft.
+        if (
+          nurOffeneAnmeldung &&
+          (item.type !== "course" || !isRegistrationOpen(item, now))
+        ) {
+          return false;
+        }
+
         if (selectedDistrict !== "all") {
           if (selectedDistrict === "Bezirksübergreifend") {
             if (item.bezirk !== null) return false;
@@ -261,7 +278,7 @@ export default function EventsClient({
         return true;
       });
     },
-    [filterType, selectedDistrict, selectedCategory],
+    [filterType, selectedDistrict, selectedCategory, nurOffeneAnmeldung, now],
   );
 
   const futureItems = useMemo(() => {
@@ -398,12 +415,14 @@ export default function EventsClient({
   const hasActiveFilters =
     filterType !== "all" ||
     selectedDistrict !== "all" ||
-    selectedCategory !== "all";
+    selectedCategory !== "all" ||
+    nurOffeneAnmeldung;
 
   const resetFilters = () => {
     setFilterType("all");
     setSelectedDistrict("all");
     setSelectedCategory("all");
+    setNurOffeneAnmeldung(false);
   };
 
   const selectFieldClass =
@@ -553,6 +572,19 @@ export default function EventsClient({
                     ))}
                   </div>
                 </div>
+
+                {/* Anmeldung */}
+                <label className="flex min-h-11 cursor-pointer items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={nurOffeneAnmeldung}
+                    onChange={(e) => setNurOffeneAnmeldung(e.target.checked)}
+                    className="border-ink checked:bg-ink dark:border-night-text dark:checked:bg-night-text bg-paper dark:bg-night h-5 w-5 shrink-0 cursor-pointer appearance-none border-2"
+                  />
+                  <span className="semi-condensed text-ink dark:text-night-text text-sm font-semibold">
+                    Nur Lehrgänge mit offener Anmeldung
+                  </span>
+                </label>
 
                 {/* District & Category */}
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

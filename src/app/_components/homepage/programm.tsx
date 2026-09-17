@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import Link from "next/link";
 import { Heading } from "@/app/_components/programmheft/section-head";
 import { ProgrammeList } from "@/app/_components/programmheft/programme";
 import { WayList, WayRow } from "@/app/_components/programmheft/way-list";
@@ -67,6 +68,10 @@ function Gruppenmarke({
  * Anmelde-Schaltfläche 309px hoch ist, sah man beim ersten Blick nur sie. Das
  * späteste Datum wirkte so wie der nächste Termin.
  *
+ * Offen steht nur eine Zeile: Mehr wird zu voll, und die übrigen offenen
+ * Anmeldungen führt eine Zeile darunter auf die Terminseite, gefiltert auf
+ * offene Anmeldungen.
+ *
  * Nur eine Gruppe vorhanden (nichts offen, oder nur Offenes) heißt: keine
  * Marken — dann erklärt die Abschnittsüberschrift die Liste bereits.
  */
@@ -76,7 +81,7 @@ export default function Programm({
   isLoading,
   now,
 }: ProgrammProps) {
-  const { offene, andere } = useMemo(() => {
+  const { offene, andere, weitereOffene } = useMemo(() => {
     const openCourses = courses
       .filter((course) => isRegistrationOpen(course, now))
       .sort(
@@ -98,7 +103,11 @@ export default function Programm({
       .slice(0, offeneZeilen)
       .map((course) => courseEntry(course, now));
 
-    return { offene, andere: rest.slice(0, MAX_ROWS - offene.length) };
+    return {
+      offene,
+      andere: rest.slice(0, MAX_ROWS - offene.length),
+      weitereOffene: openCourses.length - offene.length,
+    };
   }, [events, courses, now]);
 
   const zweiGruppen = offene.length > 0 && andere.length > 0;
@@ -123,6 +132,15 @@ export default function Programm({
         <>
           <Gruppenmarke className="mt-3">Anmeldung läuft</Gruppenmarke>
           <ProgrammeList entries={offene} now={now} titleAs="h4" />
+          {weitereOffene > 0 ? (
+            <p className="border-rule dark:border-night-rule text-dark dark:text-night-muted border-b px-1 py-3 text-[0.9375rem]">
+              <Link href="/termine?anmeldung=offen" className="link-ink">
+                {weitereOffene === 1
+                  ? "Ein weiterer Lehrgang nimmt Anmeldungen an"
+                  : `${weitereOffene} weitere Lehrgänge nehmen Anmeldungen an`}
+              </Link>
+            </p>
+          ) : null}
 
           <Gruppenmarke className="mt-4">Nächste Termine</Gruppenmarke>
           <ProgrammeList
