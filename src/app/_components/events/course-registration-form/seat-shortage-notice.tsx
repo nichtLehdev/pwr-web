@@ -2,6 +2,7 @@
 
 import { priceOptionDisplayLabel } from "@/lib/course-price-options";
 import type { SeatShortage } from "@/lib/registration-seat-shortage";
+import { Note } from "@/app/_components/programmheft/note";
 import type { CourseWithRelations } from "./types";
 
 function seats(count: number): string {
@@ -65,30 +66,30 @@ export function SeatShortageNotice({
 }) {
   const cause = seatShortageCause(course, shortage);
 
+  // Ohne Warteliste lässt sich so nicht absenden: ein Fehler, der vorliest
+  // (`Note` setzt `role="alert"`). Mit Warteliste ist es eine Folge, die man
+  // vor dem Absenden kennen muss — die orange Fläche.
   if (!course.allowWaitingList) {
     return (
-      <div
-        role="alert"
-        className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20"
-      >
-        <p className="text-sm text-red-800 dark:text-red-300">
+      <Note tone="error">
+        <p>
           <strong>Nicht genug freie Plätze:</strong> {cause}{" "}
           {shortage.kind === "course"
             ? "Bitte reduzieren Sie die Anzahl der Teilnehmer."
             : "Bitte wählen Sie eine andere Preiskategorie oder reduzieren Sie die Anzahl der Teilnehmer."}
         </p>
-      </div>
+      </Note>
     );
   }
 
   return (
-    <div className="rounded-lg border border-orange-200 bg-orange-50 p-4 dark:border-orange-800 dark:bg-orange-900/20">
-      <p className="text-sm text-orange-800 dark:text-orange-300">
+    <Note tone="important">
+      <p>
         <strong>Hinweis:</strong> {cause}{" "}
         {participantCount > 1
           ? `Alle ${participantCount} Teilnehmer kommen auf die Warteliste und werden gemeinsam bestätigt, sobald genug Plätze frei sind.`
           : "Sie werden auf die Warteliste gesetzt und bei einem freigewordenen Platz benachrichtigt."}
       </p>
-    </div>
+    </Note>
   );
 }

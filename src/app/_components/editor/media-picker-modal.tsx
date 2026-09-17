@@ -14,6 +14,21 @@ import {
 } from "@/app/_components/ui/scrollable-modal";
 import ImageCropEditor from "@/app/_components/posts/image-crop-editor";
 import { useToast } from "@/app/_components/ui/toast";
+import { Button, Input, Label } from "@/app/_components/ui";
+import { cn } from "@/lib/utils";
+
+/**
+ * Register-Reihe wie im restlichen Dashboard: gefüllte Unterstreichung in
+ * Tinte statt Orange — Orange markiert hier Zustände, nicht Navigation.
+ */
+function tabClass(active: boolean) {
+  return cn(
+    "semi-condensed border-b-2 px-6 py-3 text-sm font-semibold transition-colors",
+    active
+      ? "border-ink text-ink dark:border-night-text dark:text-night-text"
+      : "text-dark hover:text-ink dark:text-night-muted dark:hover:text-night-text border-transparent",
+  );
+}
 
 interface MediaPickerModalProps {
   isOpen: boolean;
@@ -334,19 +349,17 @@ export default function MediaPickerModal({
 
   return (
     <ScrollableModal zIndex="z-100">
-      <ScrollableModalCard
-        maxW="4xl"
-        className="dark:bg-dark-surface overflow-hidden rounded-xl shadow-2xl"
-      >
-        <ScrollableModalHeader className="dark:border-dark-border border-b border-gray-200 pb-4">
+      <ScrollableModalCard maxW="4xl" className="overflow-hidden">
+        <ScrollableModalHeader className="border-rule dark:border-night-rule border-b pb-4">
           <div className="flex items-center justify-between">
-            <h2 className="dark:text-dark-text text-xl font-semibold text-gray-900">
+            <h2 className="text-ink dark:text-night-text text-xl font-semibold">
               Bild einfügen
             </h2>
             <button
               type="button"
               onClick={onClose}
-              className="dark:hover:bg-dark-background-secondary rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-400"
+              aria-label="Schließen"
+              className="text-dark hover:bg-rule/60 hover:text-ink dark:text-night-muted dark:hover:bg-night-rule dark:hover:text-night-text p-2 transition-colors"
             >
               <X className="h-5 w-5" />
             </button>
@@ -354,26 +367,18 @@ export default function MediaPickerModal({
         </ScrollableModalHeader>
 
         {/* Tabs */}
-        <div className="dark:border-dark-border flex border-b border-gray-200">
+        <div className="border-rule dark:border-night-rule flex border-b">
           <button
             type="button"
             onClick={() => setActiveTab("library")}
-            className={`px-6 py-3 font-medium transition-colors ${
-              activeTab === "library"
-                ? "border-primary text-primary border-b-2"
-                : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
-            }`}
+            className={tabClass(activeTab === "library")}
           >
             Medienbibliothek
           </button>
           <button
             type="button"
             onClick={() => setActiveTab("upload")}
-            className={`px-6 py-3 font-medium transition-colors ${
-              activeTab === "upload"
-                ? "border-primary text-primary border-b-2"
-                : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
-            }`}
+            className={tabClass(activeTab === "upload")}
           >
             Bild hochladen
           </button>
@@ -384,24 +389,24 @@ export default function MediaPickerModal({
             <div>
               {/* Search */}
               <div className="mb-4">
-                <input
+                <Input
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Bilder durchsuchen..."
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
+                  placeholder="Bilder durchsuchen…"
+                  aria-label="Bilder durchsuchen"
                 />
               </div>
 
               {/* Media Grid */}
               {isLoading ? (
                 <div className="flex items-center justify-center py-12">
-                  <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+                  <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
                 </div>
               ) : mediaData?.media.length === 0 ? (
                 <div className="py-12 text-center">
-                  <X className="mx-auto h-12 w-12 text-gray-400" />
-                  <p className="mt-4 text-gray-500 dark:text-gray-400">
+                  <X className="text-dark dark:text-night-muted mx-auto h-12 w-12" />
+                  <p className="text-dark dark:text-night-muted mt-4">
                     Keine Bilder gefunden
                   </p>
                 </div>
@@ -421,11 +426,12 @@ export default function MediaPickerModal({
                           focalPointY: media.focalPointY ?? undefined,
                         })
                       }
-                      className={`group relative aspect-square overflow-hidden rounded-lg border-2 transition-all ${
+                      className={cn(
+                        "group bg-rule/25 dark:bg-night-raised relative aspect-square overflow-hidden border-2 transition-colors",
                         selectedMedia?.id === media.id
-                          ? "border-primary ring-primary ring-2"
-                          : "dark:hover:border-dark-border border-transparent hover:border-gray-300"
-                      }`}
+                          ? "border-ink dark:border-night-text"
+                          : "hover:border-ink dark:hover:border-night-text border-transparent",
+                      )}
                     >
                       <Image
                         src={media.url}
@@ -443,8 +449,8 @@ export default function MediaPickerModal({
                       />
                       <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10" />
                       {selectedMedia?.id === media.id && (
-                        <div className="bg-primary absolute top-2 right-2 rounded-full p-1">
-                          <CheckIcon className="h-4 w-4 text-white" />
+                        <div className="bg-ink dark:bg-night-text absolute top-2 right-2 p-1">
+                          <CheckIcon className="text-paper dark:text-night h-4 w-4" />
                         </div>
                       )}
                     </button>
@@ -457,8 +463,8 @@ export default function MediaPickerModal({
               {isUploading && !pendingUpload ? (
                 /* Upload in progress */
                 <div className="flex flex-col items-center justify-center py-12">
-                  <div className="border-t-primary mb-4 h-12 w-12 animate-spin rounded-full border-4 border-gray-300" />
-                  <p className="text-gray-600 dark:text-gray-400">
+                  <div className="border-ink dark:border-night-text mb-4 h-12 w-12 animate-spin rounded-full border-b-2" />
+                  <p className="text-dark dark:text-night-muted">
                     Wird hochgeladen... {uploadProgress}%
                   </p>
                 </div>
@@ -466,7 +472,7 @@ export default function MediaPickerModal({
                 /* Preview + metadata form: edit attributes then save */
                 <div className="space-y-6">
                   <div className="flex flex-col gap-4 sm:flex-row">
-                    <div className="relative h-48 w-48 shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800">
+                    <div className="bg-rule/25 dark:bg-night-raised relative h-48 w-48 shrink-0 overflow-hidden">
                       <Image
                         src={pendingUpload.url}
                         alt={newImageAlt || pendingUpload.name}
@@ -480,13 +486,13 @@ export default function MediaPickerModal({
                       />
                     </div>
                     <div className="min-w-0 flex-1 space-y-4">
-                      <p className="dark:text-dark-text text-sm font-medium text-gray-700">
+                      <p className="text-ink dark:text-night-text text-sm font-medium">
                         {pendingUpload.name}
                       </p>
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="text-primary hover:text-primary/80 text-sm font-medium underline focus:outline-none"
+                        className="text-primary-ink dark:text-primary text-sm font-medium underline underline-offset-4"
                       >
                         Anderes Bild wählen
                       </button>
@@ -494,86 +500,86 @@ export default function MediaPickerModal({
                   </div>
 
                   {/* Metadata – edit before saving to library */}
-                  <div className="dark:border-dark-border border-t border-gray-200 pt-6">
-                    <p className="dark:text-dark-text mb-4 text-sm font-medium text-gray-700">
+                  <div className="border-rule dark:border-night-rule border-t pt-6">
+                    <p className="text-ink dark:text-night-text mb-4 text-sm font-medium">
                       Metadaten (vor dem Speichern bearbeiten)
                     </p>
                     <div className="space-y-4">
                       <div>
-                        <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                        <Label htmlFor="mediaPickerAlt">
                           Alt-Text (für Barrierefreiheit)
-                        </label>
-                        <input
+                        </Label>
+                        <Input
+                          id="mediaPickerAlt"
                           type="text"
                           value={newImageAlt}
                           onChange={(e) => setNewImageAlt(e.target.value)}
-                          placeholder="Beschreibe das Bild..."
-                          className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
+                          placeholder="Beschreibe das Bild…"
                         />
                       </div>
                       <div>
-                        <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                        <Label htmlFor="mediaPickerTitle">
                           Titel (optional)
-                        </label>
-                        <input
+                        </Label>
+                        <Input
+                          id="mediaPickerTitle"
                           type="text"
                           value={newImageTitle}
                           onChange={(e) => setNewImageTitle(e.target.value)}
-                          placeholder="Bildtitel..."
-                          className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
+                          placeholder="Bildtitel…"
                         />
                       </div>
                       <div>
-                        <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                        <Label htmlFor="mediaPickerCopyright">
                           Copyright / Urheberrecht (optional)
-                        </label>
-                        <input
+                        </Label>
+                        <Input
+                          id="mediaPickerCopyright"
                           type="text"
                           value={newImageCopyright}
                           onChange={(e) => setNewImageCopyright(e.target.value)}
                           placeholder="z. B. © 2025 Posaunenwerk"
-                          className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
                         />
                       </div>
                       <div>
-                        <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                        <Label htmlFor="mediaPickerCreator">
                           Fotograf:in / Urheber:in (optional)
-                        </label>
-                        <input
+                        </Label>
+                        <Input
+                          id="mediaPickerCreator"
                           type="text"
                           value={newImageCreator}
                           onChange={(e) => setNewImageCreator(e.target.value)}
                           placeholder="Name des Fotografen oder der Fotografin"
-                          className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
                         />
                       </div>
                     </div>
                   </div>
 
                   {uploadError && (
-                    <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
+                    <div className="border border-red-700 p-3 text-sm text-red-700 dark:border-red-400 dark:text-red-400">
                       {uploadError}
                     </div>
                   )}
 
                   <div className="flex flex-wrap gap-3">
-                    <button
+                    <Button
                       type="button"
                       onClick={handleSaveToLibrary}
                       disabled={createMediaMutation.isPending}
-                      className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 font-medium text-white transition-colors disabled:opacity-50"
+                      isLoading={createMediaMutation.isPending}
                     >
                       {createMediaMutation.isPending
                         ? "Wird gespeichert..."
                         : "In Bibliothek speichern"}
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
+                      variant="outline"
                       onClick={handleChooseOtherImage}
-                      className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-background-secondary rounded-lg border border-gray-300 px-4 py-2 font-medium text-gray-700 transition-colors hover:bg-gray-50"
                     >
                       Abbrechen (Zurück)
-                    </button>
+                    </Button>
                   </div>
                 </div>
               ) : (
@@ -585,25 +591,25 @@ export default function MediaPickerModal({
                     onDragLeave={handleDragLeave}
                     onDragOver={handleDragOver}
                     onDrop={handleDrop}
-                    className={`dark:border-dark-border cursor-pointer rounded-xl border-2 border-dashed p-12 text-center transition-colors ${
+                    className={`cursor-pointer border-2 border-dashed p-12 text-center transition-colors ${
                       isDragging
-                        ? "border-primary bg-primary/5 dark:bg-primary/10"
-                        : "hover:border-primary dark:hover:bg-dark-background-secondary border-gray-300 hover:bg-gray-50"
+                        ? "border-ink bg-rule/25 dark:border-night-text dark:bg-night-raised"
+                        : "border-rule dark:border-night-rule hover:border-ink dark:hover:border-night-text"
                     }`}
                   >
-                    <ArrowUpIcon className="mx-auto h-12 w-12 text-gray-400" />
-                    <p className="dark:text-dark-text mt-4 font-medium text-gray-700">
+                    <ArrowUpIcon className="text-dark dark:text-night-muted mx-auto h-12 w-12" />
+                    <p className="text-ink dark:text-night-text mt-4 font-medium">
                       {isDragging
                         ? "Bild hier ablegen"
                         : "Klicke oder ziehe ein Bild hierher"}
                     </p>
-                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    <p className="text-dark dark:text-night-muted mt-1 text-sm">
                       PNG, JPG, GIF, WebP bis zu 10MB
                     </p>
                   </div>
 
                   {uploadError && (
-                    <div className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
+                    <div className="mt-4 border border-red-700 p-3 text-sm text-red-700 dark:border-red-400 dark:text-red-400">
                       {uploadError}
                     </div>
                   )}
@@ -626,13 +632,13 @@ export default function MediaPickerModal({
           <div className="flex flex-wrap items-center gap-3">
             {activeTab === "library" && selectedMedia && (
               <>
-                <span className="text-sm text-gray-500 dark:text-gray-400">
+                <span className="text-dark dark:text-night-muted text-sm">
                   Ausgewählt: {selectedMedia.name}
                 </span>
                 <button
                   type="button"
                   onClick={() => setShowRecrop(true)}
-                  className="text-primary hover:text-primary/80 inline-flex items-center gap-1.5 text-sm font-medium transition-colors"
+                  className="text-primary-ink dark:text-primary inline-flex items-center gap-1.5 text-sm font-medium underline-offset-4 hover:underline"
                 >
                   <CropIcon className="h-4 w-4" />
                   Bild zuschneiden
@@ -641,22 +647,17 @@ export default function MediaPickerModal({
             )}
           </div>
           <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-background-secondary rounded-lg border border-gray-300 px-4 py-2 font-medium text-gray-700 transition-colors hover:bg-gray-100"
-            >
+            <Button type="button" variant="outline" onClick={onClose}>
               Abbrechen
-            </button>
+            </Button>
             {activeTab === "library" && (
-              <button
+              <Button
                 type="button"
                 onClick={handleInsert}
                 disabled={!selectedMedia}
-                className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Bild einfügen
-              </button>
+              </Button>
             )}
           </div>
         </ScrollableModalFooter>

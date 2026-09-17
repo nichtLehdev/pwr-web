@@ -17,6 +17,39 @@ import { useToast } from "../ui/toast";
 import { ChevronDown, Search, Menu, X } from "lucide-react";
 // Dashboard access is now controlled by permissions
 
+/** Programmheft-Bausteine der Navigation. */
+const ICON_BUTTON =
+  "text-ink hover:bg-ink hover:text-paper dark:text-night-text dark:hover:bg-night-text dark:hover:text-night inline-flex h-11 w-11 items-center justify-center transition-colors";
+const PANEL =
+  "border-ink bg-paper dark:border-night-rule dark:bg-night-raised absolute top-full z-50 mt-2 border-2 py-1";
+const PANEL_ITEM =
+  "text-ink hover:bg-primary dark:text-night-text dark:hover:bg-primary dark:hover:text-ink flex w-full items-center gap-3 px-4 py-3 text-left text-base font-medium transition-colors";
+
+function CurrentMarker({ active }: { active: boolean }) {
+  return (
+    <span
+      aria-hidden
+      className={`h-2 w-2 shrink-0 ${
+        active ? "bg-ink dark:bg-primary" : "bg-transparent"
+      }`}
+    />
+  );
+}
+
+const topLinkClass = (active: boolean) =>
+  `semi-condensed inline-flex h-11 items-center gap-1 border-b-[3px] px-0.5 text-[1.0625rem] font-semibold transition-colors ${
+    active
+      ? "border-primary text-ink dark:text-night-text"
+      : "text-dark hover:border-ink hover:text-ink dark:text-night-muted dark:hover:border-night-text dark:hover:text-night-text border-transparent"
+  }`;
+
+const mobileRowClass = (active: boolean) =>
+  `semi-condensed flex flex-1 items-center gap-3 px-5 py-4 text-xl transition-colors hover:bg-primary hover:text-ink dark:hover:text-ink ${
+    active
+      ? "text-ink dark:text-night-text font-bold"
+      : "text-ink dark:text-night-text font-semibold"
+  }`;
+
 export default function Navigation() {
   const pathname = usePathname();
   const { bannerHeight } = useBanner();
@@ -114,6 +147,10 @@ export default function Navigation() {
         { href: "/mitmachen/bildung", label: "Aus- und Weiterbildung" },
         { href: "/mitmachen/jungblaeser", label: "Jungbläserarbeit" },
         { href: "/mitmachen/ehrenamt", label: "Ehrenamtlich engagieren" },
+        {
+          href: "/mitmachen/mitgliedschaft",
+          label: "Mitgliedschaft & Versicherung",
+        },
       ],
     },
     {
@@ -185,7 +222,7 @@ export default function Navigation() {
 
   return (
     <nav
-      className="dark:bg-dark-surface dark:shadow-dark-border fixed right-0 left-0 z-50 w-full bg-white shadow-md transition-[top] duration-200"
+      className="programm font-programm bg-paper dark:bg-night fixed right-0 left-0 z-50 w-full shadow-[inset_0_-2px_0_var(--color-ink)] transition-[top] duration-200 dark:shadow-[inset_0_-2px_0_var(--color-night-rule)]"
       style={{
         top: bannerHeight,
         // Ohne Banner ist die Nav das oberste Element — sie reserviert die Notch-Fläche.
@@ -193,9 +230,12 @@ export default function Navigation() {
           bannerHeight === 0 ? "env(safe-area-inset-top, 0px)" : undefined,
       }}
     >
-      <div className="container mx-auto px-4">
+      <div className="sheet">
         <div className="flex h-16 items-center justify-between lg:h-20">
-          <Link href="/" className="shrink-0">
+          <Link
+            href="/"
+            className="-ml-2 inline-flex h-12 min-w-12 shrink-0 items-center justify-center px-2 lg:h-16"
+          >
             <div className="relative h-10 lg:h-14">
               <Image
                 src={
@@ -226,32 +266,33 @@ export default function Navigation() {
             </div>
           </Link>
 
-          <div className="hidden items-center space-x-6 text-nowrap lg:flex">
+          <div className="hidden items-center gap-5 text-nowrap lg:flex xl:gap-7">
             {navLinks.map((link) => (
               <div
                 key={link.href}
-                className="group relative"
+                className="relative"
                 onMouseEnter={() =>
                   link.dropdown && handleMouseEnter(link.label)
                 }
                 onMouseLeave={() => link.dropdown && handleMouseLeave()}
+                onFocus={() => link.dropdown && handleMouseEnter(link.label)}
+                onBlur={() => link.dropdown && handleMouseLeave()}
               >
                 {link.dropdown ? (
                   <>
                     <Link
                       href={link.href}
-                      className={`flex items-center gap-1 font-medium transition-colors ${
-                        isActive(link.href, link.dropdown)
-                          ? "text-primary"
-                          : "text-dark dark:text-dark-text hover:text-primary dark:hover:text-primary"
-                      }`}
+                      className={topLinkClass(
+                        isActive(link.href, link.dropdown),
+                      )}
+                      aria-expanded={openDropdown === link.label}
                     >
                       {link.label}
-                      <ChevronDown className="h-4 w-4" />
+                      <ChevronDown className="h-4 w-4" aria-hidden />
                     </Link>
                     {openDropdown === link.label && (
                       <div
-                        className="dark:border-dark-border dark:bg-dark-surface absolute top-full left-0 z-50 mt-2 w-64 rounded-lg border border-gray-100 bg-white py-2 shadow-xl dark:shadow-2xl"
+                        className={`${PANEL} left-0 w-72`}
                         onMouseEnter={() =>
                           link.dropdown && handleMouseEnter(link.label)
                         }
@@ -261,12 +302,14 @@ export default function Navigation() {
                           <Link
                             key={sublink.href}
                             href={sublink.href}
-                            className={`block px-4 py-2 transition-colors ${
-                              pathname === sublink.href
-                                ? "bg-primary/10 text-primary font-semibold"
-                                : "text-dark dark:text-dark-text hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary"
+                            aria-current={
+                              pathname === sublink.href ? "page" : undefined
+                            }
+                            className={`${PANEL_ITEM} ${
+                              pathname === sublink.href ? "font-semibold" : ""
                             }`}
                           >
+                            <CurrentMarker active={pathname === sublink.href} />
                             {sublink.label}
                           </Link>
                         ))}
@@ -276,11 +319,8 @@ export default function Navigation() {
                 ) : (
                   <Link
                     href={link.href}
-                    className={`font-medium transition-colors ${
-                      isActive(link.href)
-                        ? "text-primary"
-                        : "text-dark dark:text-dark-text hover:text-primary dark:hover:text-primary"
-                    }`}
+                    aria-current={pathname === link.href ? "page" : undefined}
+                    className={topLinkClass(isActive(link.href))}
                   >
                     {link.label}
                   </Link>
@@ -288,14 +328,14 @@ export default function Navigation() {
               </div>
             ))}
 
-            <div className="ml-4 flex items-center space-x-4">
+            <div className="ml-2 flex items-center gap-1">
               <ThemeToggle />
               <button
                 onClick={() => setSearchOpen(true)}
-                className="text-dark dark:text-dark-text hover:text-primary dark:hover:text-primary flex items-center gap-2 transition-colors"
+                className={ICON_BUTTON}
                 aria-label="Suchen"
               >
-                <Search className="h-5 w-5" />
+                <Search className="h-5 w-5" aria-hidden />
               </button>
 
               {session?.user && <NotificationBell />}
@@ -304,9 +344,11 @@ export default function Navigation() {
                 <div className="relative" ref={userMenuRef}>
                   <button
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
-                    className="dark:hover:bg-dark-background-secondary flex items-center gap-2 rounded-md p-2 transition-colors hover:bg-gray-100"
+                    className="hover:bg-ink/5 dark:hover:bg-night-raised flex h-11 items-center gap-2 px-1.5 transition-colors"
+                    aria-label="Benutzermenü"
+                    aria-expanded={userMenuOpen}
                   >
-                    <div className="bg-primary relative h-8 w-8 overflow-hidden rounded-full text-sm font-semibold text-white">
+                    <div className="bg-primary text-ink relative h-8 w-8 overflow-hidden rounded-full text-sm font-semibold">
                       {profile?.profileImage?.url ? (
                         <Image
                           src={profile.profileImage.url}
@@ -322,19 +364,20 @@ export default function Navigation() {
                     </div>
 
                     <ChevronDown
-                      className={`text-dark dark:text-dark-text h-4 w-4 transition-transform ${
+                      aria-hidden
+                      className={`text-ink dark:text-night-text h-4 w-4 transition-transform ${
                         userMenuOpen ? "rotate-180" : ""
                       }`}
                     />
                   </button>
 
                   {userMenuOpen && (
-                    <div className="dark:border-dark-border dark:bg-dark-surface absolute top-full right-0 z-50 mt-2 w-48 rounded-lg border border-gray-100 bg-white py-2 shadow-xl dark:shadow-2xl">
+                    <div className={`${PANEL} right-0 w-56`}>
                       {hasDashboardAccess && (
                         <Link
                           href="/dashboard"
                           onClick={() => setUserMenuOpen(false)}
-                          className="text-dark dark:text-dark-text hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary block px-4 py-2 transition-colors"
+                          className={PANEL_ITEM}
                         >
                           Dashboard
                         </Link>
@@ -342,22 +385,19 @@ export default function Navigation() {
                       <Link
                         href="/registrations"
                         onClick={() => setUserMenuOpen(false)}
-                        className="text-dark dark:text-dark-text hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary block px-4 py-2 transition-colors"
+                        className={PANEL_ITEM}
                       >
                         Meine Anmeldungen
                       </Link>
                       <Link
                         href="/settings"
                         onClick={() => setUserMenuOpen(false)}
-                        className="text-dark dark:text-dark-text hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary block px-4 py-2 transition-colors"
+                        className={PANEL_ITEM}
                       >
                         Einstellungen
                       </Link>
-                      <hr className="dark:border-dark-border my-2 border-gray-200" />
-                      <button
-                        onClick={handleLogout}
-                        className="text-dark dark:text-dark-text hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary block w-full px-4 py-2 text-left transition-colors"
-                      >
+                      <hr className="border-rule dark:border-night-rule my-1" />
+                      <button onClick={handleLogout} className={PANEL_ITEM}>
                         Abmelden
                       </button>
                     </div>
@@ -366,7 +406,7 @@ export default function Navigation() {
               ) : (
                 <Link
                   href="/login"
-                  className="bg-primary hover:bg-primary-dark dark:bg-primary-light dark:hover:bg-primary rounded-md px-4 py-2 text-white transition-colors"
+                  className="semi-condensed bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-primary dark:text-ink dark:hover:bg-paper ml-2 inline-flex h-11 items-center px-5 text-base font-semibold transition-colors"
                 >
                   Login
                 </Link>
@@ -375,184 +415,196 @@ export default function Navigation() {
           </div>
 
           {/* Mobile Menu Button - nur auf Mobile */}
-          <div className="flex items-center gap-2 lg:hidden">
+          <div className="-mr-2 flex items-center lg:hidden">
             <ThemeToggle />
             {session?.user && <NotificationBell />}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="text-dark dark:text-dark-text dark:hover:bg-dark-background-secondary rounded-md p-2 hover:bg-gray-100"
-              aria-label="Menü öffnen"
+              className={ICON_BUTTON}
+              aria-label={mobileMenuOpen ? "Menü schließen" : "Menü öffnen"}
+              aria-expanded={mobileMenuOpen}
             >
               {mobileMenuOpen ? (
-                <X className="h-6 w-6" />
+                <X className="h-6 w-6" aria-hidden />
               ) : (
-                <Menu className="h-6 w-6" />
+                <Menu className="h-6 w-6" aria-hidden />
               )}
             </button>
           </div>
         </div>
+      </div>
 
-        {/* Mobile Menu - slide down */}
-        {mobileMenuOpen && (
-          <div
-            className="dark:border-dark-border dark:bg-dark-surface fixed inset-x-0 bottom-0 overflow-y-auto border-t border-gray-200 bg-white pt-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] lg:hidden"
-            style={{
-              top:
-                bannerHeight === 0
-                  ? "calc(64px + env(safe-area-inset-top, 0px))"
-                  : bannerHeight + 64,
-            }}
-          >
-            <div className="flex flex-col space-y-1 px-4">
-              {navLinks.map((link) => (
-                <div key={link.href}>
-                  {link.dropdown ? (
-                    <>
-                      <div className="flex items-center">
-                        <Link
-                          href={link.href}
-                          onClick={() => setMobileMenuOpen(false)}
-                          className={`flex-1 rounded-md px-4 py-3 transition-colors ${
-                            isActive(link.href, link.dropdown)
-                              ? "text-primary bg-primary/10 font-semibold"
-                              : "text-dark dark:text-dark-text hover:text-primary dark:hover:bg-dark-background-secondary hover:bg-gray-100"
+      {/* Mobile Menu - slide down */}
+      {mobileMenuOpen && (
+        <div
+          className="bg-paper dark:bg-night fixed inset-x-0 bottom-0 overflow-y-auto pb-[max(1rem,env(safe-area-inset-bottom,0px))] shadow-[inset_0_2px_0_var(--color-ink)] lg:hidden dark:shadow-[inset_0_2px_0_var(--color-night-rule)]"
+          style={{
+            top:
+              bannerHeight === 0
+                ? "calc(64px + env(safe-area-inset-top, 0px))"
+                : bannerHeight + 64,
+          }}
+        >
+          <ul className="pt-0.5">
+            {navLinks.map((link) => (
+              <li
+                key={link.href}
+                className="border-rule dark:border-night-rule border-b"
+              >
+                {link.dropdown ? (
+                  <>
+                    <div className="flex items-stretch">
+                      <Link
+                        href={link.href}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={mobileRowClass(
+                          isActive(link.href, link.dropdown),
+                        )}
+                      >
+                        <CurrentMarker
+                          active={isActive(link.href, link.dropdown)}
+                        />
+                        {link.label}
+                      </Link>
+                      <button
+                        onClick={() => toggleDropdown(link.label)}
+                        className="text-ink hover:bg-primary dark:text-night-text dark:hover:text-ink border-rule dark:border-night-rule flex w-16 items-center justify-center border-l transition-colors"
+                        aria-label={`${link.label} Untermenü öffnen`}
+                        aria-expanded={openDropdown === link.label}
+                      >
+                        <ChevronDown
+                          aria-hidden
+                          className={`h-5 w-5 transition-transform ${
+                            openDropdown === link.label ? "rotate-180" : ""
                           }`}
-                        >
-                          {link.label}
-                        </Link>
-                        <button
-                          onClick={() => toggleDropdown(link.label)}
-                          className="text-dark dark:text-dark-text dark:hover:bg-dark-background-secondary rounded-md p-3 transition-colors hover:bg-gray-100"
-                          aria-label={`${link.label} Untermenü öffnen`}
-                        >
-                          <ChevronDown
-                            className={`h-5 w-5 transition-transform ${
-                              openDropdown === link.label ? "rotate-180" : ""
-                            }`}
-                          />
-                        </button>
-                      </div>
-                      {openDropdown === link.label && (
-                        <div className="mt-1 ml-4 space-y-1">
-                          {link.dropdown.map((sublink) => (
+                        />
+                      </button>
+                    </div>
+                    {openDropdown === link.label && (
+                      <ul className="border-rule dark:border-night-rule border-t pb-2">
+                        {link.dropdown.map((sublink) => (
+                          <li key={sublink.href}>
                             <Link
-                              key={sublink.href}
                               href={sublink.href}
                               onClick={() => setMobileMenuOpen(false)}
-                              className={`block rounded-md px-4 py-3 text-sm transition-colors ${
+                              aria-current={
+                                pathname === sublink.href ? "page" : undefined
+                              }
+                              className={`hover:bg-primary hover:text-ink dark:hover:text-ink flex items-center gap-3 py-3 pr-5 pl-10 text-lg transition-colors ${
                                 pathname === sublink.href
-                                  ? "text-primary bg-primary/10 font-semibold"
-                                  : "hover:text-primary dark:hover:bg-dark-background-secondary text-gray-600 hover:bg-gray-100 dark:text-gray-400"
+                                  ? "text-ink dark:text-night-text font-semibold"
+                                  : "text-dark dark:text-night-muted font-medium"
                               }`}
                             >
+                              <CurrentMarker
+                                active={pathname === sublink.href}
+                              />
                               {sublink.label}
                             </Link>
-                          ))}
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <Link
-                      href={link.href}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={`block rounded-md px-4 py-3 transition-colors ${
-                        isActive(link.href)
-                          ? "text-primary bg-primary/10 font-semibold"
-                          : "text-dark dark:text-dark-text hover:text-primary dark:hover:bg-dark-background-secondary hover:bg-gray-100"
-                      }`}
-                    >
-                      {link.label}
-                    </Link>
-                  )}
-                </div>
-              ))}
-
-              {/* Mobile Suche & Login/User Menu */}
-              <div className="dark:border-dark-border mt-4 space-y-2 border-t border-gray-200 pt-4">
-                <button
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    setSearchOpen(true);
-                  }}
-                  className="text-dark dark:text-dark-text dark:hover:bg-dark-background-secondary flex w-full items-center rounded-md px-4 py-3 hover:bg-gray-100"
-                >
-                  <Search className="mr-2 h-5 w-5" />
-                  Suchen
-                </button>
-
-                {session?.user ? (
-                  <>
-                    <div className="flex items-center gap-2 px-4 py-3">
-                      <div className="bg-primary relative h-8 w-8 overflow-hidden rounded-full text-sm font-semibold text-white">
-                        {profile?.profileImage?.url ? (
-                          <Image
-                            src={profile.profileImage.url}
-                            alt={profile.profileImage.alt || "Profilbild"}
-                            fill
-                            className="object-cover"
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center">
-                            {getInitials(
-                              session.user.name || session.user.email,
-                            )}
-                          </div>
-                        )}
-                      </div>
-                      <span className="text-dark dark:text-dark-text text-sm font-medium">
-                        Hi,{" "}
-                        {(session.user as any).firstName ||
-                          session.user.name?.split(" ")[0] ||
-                          "User"}
-                      </span>
-                    </div>
-                    {hasDashboardAccess && (
-                      <Link
-                        href="/dashboard"
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="text-dark dark:text-dark-text dark:hover:bg-dark-background-secondary block w-full rounded-md px-4 py-3 text-left hover:bg-gray-100"
-                      >
-                        Dashboard
-                      </Link>
+                          </li>
+                        ))}
+                      </ul>
                     )}
-                    <Link
-                      href="/registrations"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="text-dark dark:text-dark-text dark:hover:bg-dark-background-secondary block w-full rounded-md px-4 py-3 text-left hover:bg-gray-100"
-                    >
-                      Meine Anmeldungen
-                    </Link>
-                    <Link
-                      href="/settings"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="text-dark dark:text-dark-text dark:hover:bg-dark-background-secondary block w-full rounded-md px-4 py-3 text-left hover:bg-gray-100"
-                    >
-                      Einstellungen
-                    </Link>
-                    <button
-                      onClick={() => {
-                        handleLogout();
-                        setMobileMenuOpen(false);
-                      }}
-                      className="text-dark dark:text-dark-text dark:hover:bg-dark-background-secondary block w-full rounded-md px-4 py-3 text-left hover:bg-gray-100"
-                    >
-                      Abmelden
-                    </button>
                   </>
                 ) : (
                   <Link
-                    href="/login"
+                    href={link.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className="bg-primary hover:bg-primary-dark dark:bg-primary-light dark:hover:bg-primary block w-full rounded-md px-4 py-3 text-center text-white transition-colors"
+                    aria-current={pathname === link.href ? "page" : undefined}
+                    className={mobileRowClass(isActive(link.href))}
                   >
-                    Login
+                    <CurrentMarker active={isActive(link.href)} />
+                    {link.label}
                   </Link>
                 )}
+              </li>
+            ))}
+          </ul>
+
+          {/* Mobile Suche & Login/User Menu */}
+          <div className="border-ink dark:border-night-text mt-6 border-t-2">
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                setSearchOpen(true);
+              }}
+              className="border-rule text-ink hover:bg-primary dark:border-night-rule dark:text-night-text dark:hover:text-ink flex w-full items-center gap-3 border-b px-5 py-4 text-lg font-medium transition-colors"
+            >
+              <Search className="h-5 w-5" aria-hidden />
+              Suchen
+            </button>
+
+            {session?.user ? (
+              <>
+                <div className="flex items-center gap-3 px-5 py-4">
+                  <div className="bg-primary text-ink relative h-8 w-8 overflow-hidden rounded-full text-sm font-semibold">
+                    {profile?.profileImage?.url ? (
+                      <Image
+                        src={profile.profileImage.url}
+                        alt={profile.profileImage.alt || "Profilbild"}
+                        fill
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center">
+                        {getInitials(session.user.name || session.user.email)}
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-ink dark:text-night-text text-base font-medium">
+                    Hi,{" "}
+                    {(session.user as any).firstName ||
+                      session.user.name?.split(" ")[0] ||
+                      "User"}
+                  </span>
+                </div>
+                {hasDashboardAccess && (
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="border-rule text-ink hover:bg-primary dark:border-night-rule dark:text-night-text dark:hover:text-ink block border-t px-5 py-4 text-lg font-medium transition-colors"
+                  >
+                    Dashboard
+                  </Link>
+                )}
+                <Link
+                  href="/registrations"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="border-rule text-ink hover:bg-primary dark:border-night-rule dark:text-night-text dark:hover:text-ink block border-t px-5 py-4 text-lg font-medium transition-colors"
+                >
+                  Meine Anmeldungen
+                </Link>
+                <Link
+                  href="/settings"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="border-rule text-ink hover:bg-primary dark:border-night-rule dark:text-night-text dark:hover:text-ink block border-t px-5 py-4 text-lg font-medium transition-colors"
+                >
+                  Einstellungen
+                </Link>
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="border-rule text-ink hover:bg-primary dark:border-night-rule dark:text-night-text dark:hover:text-ink block w-full border-t px-5 py-4 text-left text-lg font-medium transition-colors"
+                >
+                  Abmelden
+                </button>
+              </>
+            ) : (
+              <div className="px-5 pt-5">
+                <Link
+                  href="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="semi-condensed bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-primary dark:text-ink flex h-14 w-full items-center justify-center text-xl font-semibold transition-colors"
+                >
+                  Login
+                </Link>
               </div>
-            </div>
+            )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Search Modal */}
       <SearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />

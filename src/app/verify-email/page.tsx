@@ -4,7 +4,26 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useToast } from "@/app/_components/ui/toast";
-import { CheckCircle, Mail } from "lucide-react";
+import PublicPage from "@/app/_components/general/public-page";
+import { PageSection } from "@/app/_components/programmheft/page-section";
+import { Note } from "@/app/_components/programmheft/note";
+
+/** Primäraktion als Link statt Knopf (Weiterleitung, kein Submit). */
+const PRIMARY_LINK =
+  "semi-condensed bg-ink text-paper hover:bg-dark dark:bg-night-text dark:text-night dark:hover:bg-night-muted inline-flex min-h-12 w-full items-center justify-center px-6 text-lg font-semibold transition-colors";
+
+/** Platzhalter, während `useSearchParams` (E-Mail/Token aus der URL) lädt. */
+function FormSkeleton() {
+  return (
+    <div className="flex justify-center py-12">
+      <div
+        className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-2 border-t-transparent"
+        aria-hidden
+      />
+      <span className="sr-only">Lädt…</span>
+    </div>
+  );
+}
 
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
@@ -108,127 +127,93 @@ function VerifyEmailContent() {
 
   if (verificationStatus === "success") {
     return (
-      <div className="bg-background-secondary dark:bg-dark-background-secondary flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-8">
-        <div className="w-full max-w-md">
-          <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg md:p-8">
-            <div className="mb-6 text-center">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20">
-                <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
-              </div>
-              <h1 className="text-dark dark:text-dark-text mb-2 text-3xl font-bold">
-                E-Mail bestätigt!
-              </h1>
-              <p className="text-gray-600 dark:text-gray-400">
-                Deine E-Mail-Adresse wurde erfolgreich bestätigt. Du kannst dich
-                jetzt anmelden.
-              </p>
-            </div>
+      <div className="mx-auto max-w-md">
+        <Note tone="info" title="E-Mail bestätigt!">
+          <p>
+            Deine E-Mail-Adresse wurde erfolgreich bestätigt. Du kannst dich
+            jetzt anmelden.
+          </p>
+        </Note>
 
-            <Link
-              href="/login"
-              className="bg-primary hover:bg-primary-dark block w-full rounded-lg px-4 py-2.5 text-center font-semibold text-white shadow-lg transition-colors"
-            >
-              Zur Anmeldung
-            </Link>
-          </div>
-        </div>
+        <Link href="/login" className={`${PRIMARY_LINK} mt-8`}>
+          Zur Anmeldung
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className="bg-background-secondary dark:bg-dark-background-secondary flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-8">
-      <div className="w-full max-w-md">
-        <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg md:p-8">
-          <div className="mb-6 text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/20">
-              <Mail className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-            </div>
-            <h1 className="text-dark dark:text-dark-text mb-2 text-3xl font-bold">
-              E-Mail bestätigen
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              {token
-                ? "Bitte warte, während wir deine E-Mail-Adresse bestätigen..."
-                : email
-                  ? `Wir haben eine Bestätigungs-E-Mail an ${email} gesendet.`
-                  : "Bitte bestätige deine E-Mail-Adresse."}
-            </p>
-          </div>
+    <div className="mx-auto max-w-md">
+      <p className="text-ink dark:text-night-text text-lg leading-relaxed">
+        {token
+          ? "Bitte warte, während wir deine E-Mail-Adresse bestätigen..."
+          : email
+            ? `Wir haben eine Bestätigungs-E-Mail an ${email} gesendet.`
+            : "Bitte bestätige deine E-Mail-Adresse."}
+      </p>
 
-          {error && (
-            <div className="mb-4 rounded-md border-l-4 border-red-500 bg-red-50 p-3 dark:bg-red-900/20">
-              <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
-            </div>
-          )}
+      {error && (
+        <Note tone="error" className="mt-6">
+          <p>{error}</p>
+        </Note>
+      )}
 
-          {isVerifying && (
-            <div className="mb-4 text-center">
-              <div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
-            </div>
-          )}
-
-          {!token && (
-            <div className="space-y-4">
-              <div className="rounded-md bg-blue-50 p-4 dark:bg-blue-900/20">
-                <p className="text-sm text-blue-800 dark:text-blue-300">
-                  <strong>Nächste Schritte:</strong>
-                </p>
-                <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-blue-700 dark:text-blue-400">
-                  <li>Öffne dein E-Mail-Postfach</li>
-                  <li>Klicke auf den Link in der E-Mail</li>
-                  <li>Oder kopiere den Link in deinen Browser</li>
-                </ul>
-              </div>
-
-              {email && (
-                <button
-                  onClick={handleResendEmail}
-                  disabled={isVerifying}
-                  className="text-primary hover:text-primary-dark w-full text-center text-sm font-medium underline disabled:opacity-50"
-                >
-                  E-Mail erneut senden
-                </button>
-              )}
-
-              <div className="pt-4">
-                <Link
-                  href="/login"
-                  className="text-primary hover:text-primary-dark block text-center text-sm font-medium"
-                >
-                  Zurück zur Anmeldung
-                </Link>
-              </div>
-            </div>
-          )}
+      {isVerifying && (
+        <div className="mt-6 flex justify-center">
+          <div
+            className="border-ink dark:border-night-text h-6 w-6 animate-spin rounded-full border-2 border-t-transparent"
+            aria-hidden
+          />
+          <span className="sr-only">Wird überprüft…</span>
         </div>
-      </div>
+      )}
+
+      {!token && (
+        <div className="mt-8 space-y-6">
+          <Note tone="info" title="Nächste Schritte">
+            <ul className="list-inside list-disc space-y-1">
+              <li>Öffne dein E-Mail-Postfach</li>
+              <li>Klicke auf den Link in der E-Mail</li>
+              <li>Oder kopiere den Link in deinen Browser</li>
+            </ul>
+          </Note>
+
+          {email && (
+            <button
+              onClick={handleResendEmail}
+              disabled={isVerifying}
+              className="link-ink block w-full text-center text-sm disabled:opacity-50"
+            >
+              E-Mail erneut senden
+            </button>
+          )}
+
+          <div className="border-rule dark:border-night-rule border-t pt-6 text-center">
+            <Link href="/login" className="link-ink text-sm">
+              Zurück zur Anmeldung
+            </Link>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 export default function VerifyEmailPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="bg-background-secondary dark:bg-dark-background-secondary flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-8">
-          <div className="w-full max-w-md">
-            <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg md:p-8">
-              <div className="mb-6 text-center">
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/20">
-                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
-                </div>
-                <h1 className="text-dark dark:text-dark-text mb-2 text-3xl font-bold">
-                  E-Mail bestätigen
-                </h1>
-                <p className="text-gray-600 dark:text-gray-400">Lade...</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      }
+    <PublicPage
+      title="E-Mail bestätigen"
+      heroSize="compact"
+      breadcrumbs={[
+        { label: "Start", href: "/" },
+        { label: "E-Mail bestätigen" },
+      ]}
     >
-      <VerifyEmailContent />
-    </Suspense>
+      <PageSection flush="top">
+        <Suspense fallback={<FormSkeleton />}>
+          <VerifyEmailContent />
+        </Suspense>
+      </PageSection>
+    </PublicPage>
   );
 }

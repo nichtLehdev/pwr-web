@@ -120,12 +120,12 @@ export default function DashboardLocationsPage() {
             <div>
               <Link
                 href={`/dashboard/locations/${row.original.id}`}
-                className="hover:text-primary dark:text-dark-text font-medium text-gray-900"
+                className="hover:text-primary-ink dark:hover:text-primary text-ink dark:text-night-text font-medium"
               >
                 {row.original.name || "Unbenannter Standort"}
               </Link>
               {row.original.additionalInfo && (
-                <p className="dark:text-dark-muted text-sm text-gray-500">
+                <p className="text-dark dark:text-night-muted text-sm">
                   {row.original.additionalInfo}
                 </p>
               )}
@@ -142,7 +142,7 @@ export default function DashboardLocationsPage() {
           header: "Adresse",
           cell: ({ getValue }) =>
             getValue() || (
-              <span className="dark:text-dark-muted text-gray-400 italic">
+              <span className="text-dark dark:text-night-muted italic">
                 Keine Adresse
               </span>
             ),
@@ -155,7 +155,7 @@ export default function DashboardLocationsPage() {
             const location = row.original;
             if (usageCount(location) === 0) {
               return (
-                <span className="dark:text-dark-muted text-gray-400 italic">
+                <span className="text-dark dark:text-night-muted italic">
                   Nicht verwendet
                 </span>
               );
@@ -192,14 +192,14 @@ export default function DashboardLocationsPage() {
             <div className="flex items-center justify-end gap-2">
               <Link
                 href={`/dashboard/locations/${row.original.id}`}
-                className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
+                className="text-dark hover:bg-rule/25 hover:text-ink dark:text-night-muted dark:hover:bg-night-raised dark:hover:text-night-text p-2 transition-colors"
                 title="Details anzeigen"
               >
                 <Eye className="h-4 w-4" />
               </Link>
               <Link
                 href={`/dashboard/locations/${row.original.id}/edit`}
-                className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
+                className="text-dark hover:bg-rule/25 hover:text-ink dark:text-night-muted dark:hover:bg-night-raised dark:hover:text-night-text p-2 transition-colors"
                 title="Bearbeiten"
               >
                 <Edit className="h-4 w-4" />
@@ -214,7 +214,7 @@ export default function DashboardLocationsPage() {
                 disabled={
                   deletingId === row.original.id || usageCount(row.original) > 0
                 }
-                className="rounded p-1.5 text-red-500 transition-colors hover:bg-red-50 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                className="p-2 text-red-600 transition-colors hover:bg-red-50 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-900/20"
                 title="Löschen"
               >
                 {deletingId === row.original.id ? (
@@ -233,8 +233,8 @@ export default function DashboardLocationsPage() {
 
   if (isPending || profileLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
@@ -254,7 +254,7 @@ export default function DashboardLocationsPage() {
       actions={
         <Link
           href="/dashboard/locations/new"
-          className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
+          className="bg-ink text-paper hover:bg-dark dark:bg-night-text dark:text-night dark:hover:bg-night-muted semi-condensed inline-flex min-h-11 items-center gap-2 px-4 py-2.5 font-semibold transition-colors"
         >
           <Plus className="h-5 w-5" />
           Neuer Standort
@@ -271,16 +271,16 @@ export default function DashboardLocationsPage() {
         initialSorting={[{ id: "city", desc: false }]}
         emptyState={
           <>
-            <MapPin className="dark:text-dark-muted mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="dark:text-dark-text mt-4 mb-2 text-lg font-semibold text-gray-900">
+            <MapPin className="text-dark dark:text-night-muted mx-auto h-12 w-12" />
+            <h3 className="condensed text-ink dark:text-night-text mt-4 mb-2 text-lg font-bold">
               Keine Standorte gefunden
             </h3>
-            <p className="dark:text-dark-muted mb-6 text-gray-600">
+            <p className="text-dark dark:text-night-muted mb-6">
               Erstelle den ersten Standort, um ihn hier anzuzeigen.
             </p>
             <Link
               href="/dashboard/locations/new"
-              className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
+              className="bg-ink text-paper hover:bg-dark dark:bg-night-text dark:text-night dark:hover:bg-night-muted semi-condensed inline-flex min-h-11 items-center gap-2 px-4 py-2.5 font-semibold transition-colors"
             >
               <Plus className="h-5 w-5" />
               Standort erstellen

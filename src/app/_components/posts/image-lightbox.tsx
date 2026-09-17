@@ -39,21 +39,21 @@ export default function ImageLightbox({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex flex-col bg-black/95"
       onClick={onClose}
     >
       {/* Close button */}
       <button
         onClick={onClose}
-        className="absolute top-4 right-4 z-10 rounded-lg p-2 text-white transition-colors hover:bg-white/10"
+        className="text-paper hover:bg-paper hover:text-ink absolute top-4 right-4 z-10 flex h-11 w-11 items-center justify-center transition-colors"
         aria-label="Schließen"
       >
-        <XIcon className="h-8 w-8" />
+        <XIcon className="h-6 w-6" aria-hidden />
       </button>
 
       {/* Image */}
       <div
-        className="relative max-h-[90vh] max-w-7xl"
+        className="flex flex-1 items-center justify-center p-4"
         onClick={(e) => e.stopPropagation()}
       >
         <Image
@@ -61,31 +61,25 @@ export default function ImageLightbox({
           alt={alt}
           width={1920}
           height={1080}
-          className="h-auto max-h-[90vh] w-auto max-w-full rounded-lg object-contain"
+          className="h-auto max-h-[80vh] w-auto max-w-full object-contain"
         />
       </div>
 
-      {/* Caption (alt) */}
-      {alt && (
-        <div className="absolute right-4 bottom-4 left-4 text-center">
-          <p className="inline-block max-w-3xl rounded-lg bg-black/50 px-4 py-2 text-sm text-white backdrop-blur-sm md:text-base">
-            {alt}
-          </p>
+      {/* Caption (alt) & credit */}
+      {alt || copyright || creator ? (
+        <div className="text-paper flex flex-wrap items-end justify-between gap-x-4 gap-y-1 px-4 pb-4 text-sm">
+          {alt ? <p className="max-w-3xl">{alt}</p> : <span />}
+          {copyright || creator ? (
+            <MediaCredit
+              copyright={copyright}
+              creator={creator}
+              variant="light"
+              showCreatorIcon
+              className="text-right"
+            />
+          ) : null}
         </div>
-      )}
-
-      {/* Copyright / Creator – bottom right */}
-      {(copyright || creator) && (
-        <div className="absolute right-4 bottom-4 z-10 flex justify-end">
-          <MediaCredit
-            copyright={copyright}
-            creator={creator}
-            variant="light"
-            showCreatorIcon
-            className="text-right"
-          />
-        </div>
-      )}
+      ) : null}
     </div>
   );
 }

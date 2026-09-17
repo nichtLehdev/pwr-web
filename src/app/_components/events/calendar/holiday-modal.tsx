@@ -9,6 +9,7 @@ import {
   ScrollableModalBody,
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
+import { Note } from "@/app/_components/programmheft/note";
 
 interface HolidayModalProps {
   holiday: Holiday;
@@ -31,32 +32,32 @@ export default function HolidayModal({ holiday, onClose }: HolidayModalProps) {
     <ScrollableModal zIndex="z-100" onBackdropClick={onClose}>
       <ScrollableModalCard
         maxW="md"
-        className="bg-background dark:bg-dark-surface relative"
+        className="border-ink dark:border-night-text relative rounded-none! border-2 shadow-none!"
       >
         <ScrollableModalBody>
           {/* Close button */}
           <button
             onClick={onClose}
-            className="text-dark dark:text-dark-text absolute top-4 right-4 rounded-full p-1 transition-colors hover:bg-gray-200 dark:hover:bg-gray-700"
+            className="text-ink hover:bg-ink hover:text-paper dark:text-night-text dark:hover:bg-night-text dark:hover:text-night absolute top-3 right-3 flex h-9 w-9 items-center justify-center transition-colors"
             aria-label="Schließen"
           >
-            <X className="h-6 w-6" />
+            <X className="h-5 w-5" aria-hidden />
           </button>
 
           {/* Holiday Icon */}
           <div className="mb-4 flex items-center gap-3">
-            <span className="text-amber-600 dark:text-amber-400">
+            <span className="text-primary-ink dark:text-primary">
               {/* Scale up the icon */}
               <div className="scale-[2]">{holiday.icon}</div>
             </span>
-            <h2 className="text-dark dark:text-dark-text ml-4 text-2xl font-bold">
+            <h2 className="condensed text-ink dark:text-night-text ml-4 text-2xl font-extrabold">
               {holiday.name}
             </h2>
           </div>
 
           {/* Date */}
           <div className="mb-4">
-            <p className="text-gray-600 dark:text-gray-300">
+            <p className="text-dark dark:text-night-muted">
               {holiday.date.toLocaleDateString("de-DE", {
                 weekday: "long",
                 day: "numeric",
@@ -69,23 +70,26 @@ export default function HolidayModal({ holiday, onClose }: HolidayModalProps) {
           {/* Description */}
           {holiday.description && (
             <div className="mb-4">
-              <p className="text-dark dark:text-dark-text text-sm">
+              <p className="text-ink dark:text-night-text text-sm">
                 {holiday.description}
               </p>
             </div>
           )}
 
           {/* Validity */}
-          <div className="dark:border-dark-border rounded-lg border border-gray-200 bg-gray-50 p-4 dark:bg-gray-800">
-            <h3 className="text-dark dark:text-dark-text mb-2 text-sm font-semibold">
-              {holiday.isLegalHoliday === false
+          <Note
+            tone="info"
+            title={
+              holiday.isLegalHoliday === false
                 ? "Kirchlicher Feiertag"
-                : "Gesetzlicher Feiertag"}
-            </h3>
+                : "Gesetzlicher Feiertag"
+            }
+            titleAs="h3"
+          >
             {holiday.isNationwide ? (
               <div className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
-                <span className="text-sm text-gray-700 dark:text-gray-300">
+                <CheckCircle className="h-5 w-5 shrink-0" aria-hidden />
+                <span>
                   {holiday.isLegalHoliday === false
                     ? "Bundesweit"
                     : "Bundesweiter Feiertag"}
@@ -93,18 +97,15 @@ export default function HolidayModal({ holiday, onClose }: HolidayModalProps) {
               </div>
             ) : (
               <div>
-                <p className="mb-2 text-xs text-gray-600 dark:text-gray-400">
+                <p className="text-sm">
                   {holiday.isLegalHoliday === false
                     ? "Kirchlicher Feiertag (kein arbeitsfreier Tag)"
                     : "Gesetzlicher Feiertag in folgenden Bundesländern:"}
                 </p>
                 {holiday.states && (
-                  <ul className="ml-4 space-y-1">
+                  <ul className="mt-2 ml-4 space-y-1">
                     {holiday.states.map((state) => (
-                      <li
-                        key={state}
-                        className="text-sm text-gray-700 dark:text-gray-300"
-                      >
+                      <li key={state} className="text-sm">
                         • {state}
                       </li>
                     ))}
@@ -112,14 +113,14 @@ export default function HolidayModal({ holiday, onClose }: HolidayModalProps) {
                 )}
               </div>
             )}
-          </div>
+          </Note>
         </ScrollableModalBody>
 
-        <ScrollableModalFooter>
+        <ScrollableModalFooter className="border-ink dark:border-night-text border-t-2">
           <div className="flex justify-end">
             <button
               onClick={onClose}
-              className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors"
+              className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-primary dark:text-ink dark:hover:bg-paper semi-condensed inline-flex h-10 items-center px-4 text-sm font-semibold transition-colors"
             >
               Schließen
             </button>

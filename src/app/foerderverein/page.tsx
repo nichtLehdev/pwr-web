@@ -1,32 +1,15 @@
-import Link from "next/link";
 import PublicPage from "../_components/general/public-page";
 import { api } from "@/trpc/server";
-import PeopleCard from "../_components/general/people-card";
+import { ClosingCall } from "../_components/programmheft/closing-call";
+import { Panel } from "../_components/programmheft/panel";
+import { PageSection, Split } from "../_components/programmheft/page-section";
+import { PersonList, PersonRow } from "../_components/programmheft/person-row";
+import { PointList, type Point } from "../_components/programmheft/point-list";
+import { Heading } from "../_components/programmheft/section-head";
+import { ValueTable } from "../_components/programmheft/value-table";
+import { WayList, WayRow } from "../_components/programmheft/way-list";
 import { capitalizeFirstLetter } from "@/lib/utils";
-import {
-  DownloadIcon,
-  HandCoinsIcon,
-  MusicIcon,
-  CalendarIcon,
-} from "lucide-react";
-import { MailIcon, GiftIcon } from "lucide-react";
-import { UsersIcon } from "lucide-react";
 import { buildPageMetadata } from "@/lib/seo";
-
-const sonderaktionen = [
-  {
-    title: "Geschenk-CD für Neumitglieder",
-    description:
-      "Wer bis zum 31. Dezember 2025 Mitglied wird, erhält eine CD zum Bläserheft nach Wahl geschenkt!",
-    options: ["England", "Skandinavien", "Osteuropa", "Italien", "USA"],
-  },
-  {
-    title: "Werbeaktion mit Verlosung",
-    description:
-      "Wer bis Ende Juni 2025 ein Mitglied wirbt, bekommt die Chance auf einen der drei Hauptpreise!",
-    subtitle: "Verlosung am 12. Juli in Bonn während unseres Fördervereintags.",
-  },
-];
 
 export const metadata = buildPageMetadata({
   title: "Förderverein",
@@ -35,6 +18,52 @@ export const metadata = buildPageMetadata({
   path: "/foerderverein",
 });
 
+/** Fließtext der Seite: Tinte, ruhige Zeilenlänge. */
+const PROSE =
+  "text-ink dark:text-night-text max-w-[65ch] text-lg leading-relaxed";
+
+const WAS_WIR_TUN: Point[] = [
+  {
+    title: "Auswahlchorarbeit",
+    text: "Förderung junger, talentierter Bläserinnen und Bläser in unseren Auswahlensembles wie dem Landesjugendposaunenchor und ConSpirito.",
+  },
+  {
+    title: "Geschwisterermäßigung",
+    text: "20 % Ermäßigung auf die Lehrgangskosten ab dem zweiten Geschwisterkind – der Förderverein gleicht den Betrag aus.",
+  },
+  {
+    title: "Lehrgangskosten",
+    text: "Bis zu 1.000 € pro Jahr zur Reduzierung der Teilnehmerbeiträge für Lehrgänge – das hilft allen Teilnehmenden.",
+  },
+  {
+    title: "Projektförderung",
+    text: "CD-Produktionen, Drucksachen, Werbemittel und weitere Projekte des Posaunenwerks – finanziert aus Mitteln des Fördervereins.",
+  },
+];
+
+const MITGLIED_VORTEILE: Point[] = [
+  { title: <strong>Günstiger Jahresbeitrag: nur 36 €</strong> },
+  {
+    title:
+      "Einladung zur jährlichen Mitgliederversammlung mit Berichten und Zukunftsplanungen",
+  },
+  { title: "Flexible Kündigung möglich bis 3 Monate vor Jahresende" },
+  {
+    title: (
+      <>
+        <strong>Geschenk-CD</strong> zum Bläserheft nach Wahl für alle
+        Neumitglieder
+      </>
+    ),
+  },
+];
+
+/**
+ * Förderverein-Seite: die einzige Seite, auf der die blaue Druckfläche für
+ * den eigenen Werbeabschnitt „Mitglied werden“ steht (One Field Rule); der
+ * Schlussaufruf bleibt wie überall orange. Anrede „Sie“ wie auf den übrigen
+ * Über-uns-Seiten.
+ */
 export default async function FoerdervereinPage() {
   const foerdervereinMembers = await api.organization.getFoerderverein();
   const boardMembers = foerdervereinMembers.filter(
@@ -47,7 +76,7 @@ export default async function FoerdervereinPage() {
   return (
     <PublicPage
       title="Förderverein Rheinisches Posaunenwerk"
-      color="foerderverein"
+      tone="foerderverein"
       breadcrumbs={[
         { label: "Start", href: "/" },
         { label: "Über Uns", href: "/ueber-uns" },
@@ -60,366 +89,207 @@ export default async function FoerdervereinPage() {
         </p>
       }
     >
-      {/* Sonderaktionen 2025 */}
-      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
-        <div className="container">
-          <div className="mx-auto max-w-4xl">
-            <div className="mb-8 text-center">
-              <h2 className="text-dark dark:text-dark-text mb-4 text-2xl font-bold md:text-3xl lg:text-4xl">
-                Sonderaktionen 2025
-              </h2>
-              <p className="text-lg text-gray-600 dark:text-gray-400">
-                Jetzt Mitglied werden und von exklusiven Vorteilen profitieren!
+      {/* Was wir tun */}
+      {/* Kein `flush="top"`: Diese Seite war die einzige ohne oberes Polster am
+          ersten Abschnitt — gemessen 85px zwischen Titel und erster
+          Überschrift, während /mitmachen, /materialien und /kontakt
+          übereinstimmend bei 181px liegen. */}
+      <PageSection labelledBy="was-wir-tun-heading">
+        <Split
+          head={<Heading id="was-wir-tun-heading">Was wir tun</Heading>}
+          bodyClassName="mt-8"
+        >
+          <p className={PROSE}>
+            Seit 2008 unterstützt der Förderverein das Posaunenwerk bei seinen
+            Aufgaben. Durch zweckgebundene Spenden bauen wir einen
+            Vermögensstock auf, mit dessen Erträgen wir die Arbeit des
+            Posaunenwerks nachhaltig fördern.
+          </p>
+          <PointList items={WAS_WIR_TUN} columns={2} className="mt-10" />
+        </Split>
+      </PageSection>
+
+      {/* Mitglied werden — die eine blaue Fläche dieser Seite (One Field Rule) */}
+      <PageSection labelledBy="mitglied-heading" surface="foerderverein">
+        <Split
+          side="right"
+          head={
+            <>
+              <Heading id="mitglied-heading" className="text-balance">
+                Mitglied werden
+              </Heading>
+              <span aria-hidden className="bg-ink mt-6 block h-1.5 w-24" />
+              <p className="mt-6 max-w-[40ch] text-xl leading-relaxed">
+                Unterstützen Sie die Arbeit des Posaunenwerks kontinuierlich und
+                werden Sie Teil unserer Gemeinschaft. Ihre Beiträge fließen
+                direkt in Förderprojekte, Werbemittel und weitere wichtige
+                Aufgaben.
+              </p>
+            </>
+          }
+          bodyClassName="mt-10"
+        >
+          <PointList items={MITGLIED_VORTEILE} columns={2} titleAs="p" />
+          <WayList className="mt-10">
+            <WayRow
+              href="mailto:foerderverein@posaunenwerk-rheinland.de?subject=Mitgliedschaft im Förderverein"
+              title="Mitglied werden"
+            />
+            <WayRow
+              href="/downloads/foerderverein-flyer.pdf"
+              title="Flyer herunterladen"
+              kind="download"
+              fileType="PDF"
+            />
+          </WayList>
+        </Split>
+      </PageSection>
+
+      {/* Weitere Unterstützungsmöglichkeiten */}
+      <PageSection labelledBy="unterstuetzung-heading" rule>
+        <Split
+          head={
+            <Heading id="unterstuetzung-heading" className="hyphens-manual">
+              Weitere Unterstützungs&shy;möglichkeiten
+            </Heading>
+          }
+          bodyClassName="mt-8"
+        >
+          <div className="grid gap-12 md:grid-cols-2 md:gap-10">
+            <div>
+              <Heading as="h3" size="list" rule>
+                Spenden &amp; Kollekten
+              </Heading>
+              <p className={`${PROSE} mt-5`}>
+                Gerne werden wir bei freudigen oder traurigen Anlässen als
+                Spendenempfänger benannt. Wir stellen Spendenbescheinigungen aus
+                und sind als steuerbegünstigt anerkannt.
+              </p>
+
+              <Panel
+                as="section"
+                labelledBy="bankverbindung-heading"
+                className="mt-6"
+              >
+                <Heading as="h3" id="bankverbindung-heading" size="list">
+                  Bankverbindung
+                </Heading>
+                <p className="text-ink dark:text-night-text mt-4 text-lg leading-relaxed">
+                  Förderverein Rheinisches Posaunenwerk e.V.
+                  <br />
+                  KD-Bank Dortmund
+                  <br />
+                  <strong className="font-semibold">IBAN:</strong> DE65 3506
+                  0190 1014 1990 19
+                  <br />
+                  <strong className="font-semibold">BIC:</strong> GENODED1DKD
+                </p>
+              </Panel>
+
+              <p className="text-dark dark:text-night-muted mt-4 text-sm leading-relaxed">
+                Das Finanzamt Essen-Süd hat den Förderverein als
+                steuerbegünstigt anerkannt und berechtigt,
+                Spendenbescheinigungen auszustellen.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              {sonderaktionen.map((aktion, i) => (
-                <div
-                  key={i}
-                  className="border-foerderverein dark:bg-dark-surface dark:shadow-dark-border rounded-lg border-l-4 bg-white p-6 shadow-lg"
-                >
-                  <div className="mb-4 flex items-start gap-3">
-                    <MusicIcon className="text-foerderverein h-8 w-8 shrink-0" />
-                    <div>
-                      <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
-                        {aktion.title}
-                      </h3>
-                      <p className="mb-3 text-gray-600 dark:text-gray-400">
-                        {aktion.description}
-                      </p>
-                      {aktion.options && (
-                        <p className="text-sm text-gray-500 dark:text-gray-500">
-                          Auswahl: {aktion.options.join(", ")}
-                          <br />
-                          <em>
-                            (Bitte bei der Anmeldung die Auswahl vermerken)
-                          </em>
-                        </p>
-                      )}
-                      {aktion.subtitle && (
-                        <p className="text-sm text-gray-500 dark:text-gray-500">
-                          {aktion.subtitle}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-8 text-center">
-              <a
-                href="mailto:foerderverein@posaunenwerk-rheinland.de?subject=Mitgliedschaft im Förderverein"
-                className="bg-foerderverein inline-flex items-center rounded-lg px-8 py-4 text-lg font-semibold text-white shadow-lg transition-opacity hover:opacity-90"
-              >
-                <MailIcon className="mr-2 h-6 w-6" />
-                Jetzt Mitglied werden
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Was wir tun */}
-      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
-        <div className="container">
-          <div className="mx-auto max-w-4xl">
-            <h2 className="text-dark dark:text-dark-text mb-6 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
-              Was wir tun
-            </h2>
-            <p className="mx-auto mb-12 max-w-3xl text-center text-lg leading-relaxed text-gray-600 dark:text-gray-400">
-              Seit 2008 unterstützt der Förderverein das Posaunenwerk bei seinen
-              Aufgaben. Durch zweckgebundene Spenden bauen wir einen
-              Vermögensstock auf, mit dessen Erträgen wir die Arbeit des
-              Posaunenwerks nachhaltig fördern.
-            </p>
-
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
-                <div className="bg-foerderverein mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                  <UsersIcon className="h-6 w-6 text-white" />
-                </div>
-                <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
-                  Auswahlchorarbeit
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Förderung junger, talentierter Bläserinnen und Bläser in
-                  unseren Auswahlensembles wie dem Landesjugendposaunenchor und
-                  ConSpirito.
-                </p>
-              </div>
-
-              <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
-                <div className="bg-foerderverein mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                  <UsersIcon className="h-6 w-6 text-white" />
-                </div>
-                <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
-                  Geschwisterermäßigung
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  25 € Ermäßigung pro weiteres Geschwisterkind bei Lehrgängen
-                  des Posaunenwerks – der Förderverein gleicht den Betrag aus.
-                </p>
-              </div>
-
-              <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
-                <div className="bg-foerderverein mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                  <UsersIcon className="h-6 w-6 text-white" />
-                </div>
-                <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
-                  Lehrgangskosten
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Bis zu 1.000 € pro Jahr zur Reduzierung der Teilnehmerbeiträge
-                  für Lehrgänge – das hilft allen Teilnehmenden.
-                </p>
-              </div>
-
-              <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
-                <div className="bg-foerderverein mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                  <UsersIcon className="h-6 w-6 text-white" />
-                </div>
-                <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
-                  Projektförderung
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  CD-Produktionen, Drucksachen, Werbemittel und weitere Projekte
-                  des Posaunenwerks – finanziert aus Mitteln des Fördervereins.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Mitglied werden */}
-      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
-        <div className="container">
-          <div className="mx-auto max-w-4xl">
-            <h2 className="text-dark dark:text-dark-text mb-6 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
-              Mitglied werden
-            </h2>
-            <p className="mb-12 text-center text-lg leading-relaxed text-gray-600 dark:text-gray-400">
-              Unterstützen Sie die Arbeit des Posaunenwerks kontinuierlich und
-              werden Sie Teil unserer Gemeinschaft. Ihre Beiträge fließen direkt
-              in Förderprojekte, Werbemittel und weitere wichtige Aufgaben.
-            </p>
-
-            <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-8 shadow-xl md:p-12">
-              <h3 className="text-dark dark:text-dark-text mb-6 text-2xl font-bold">
-                Ihre Vorteile als Mitglied:
-              </h3>
-
-              <div className="mb-8 space-y-4">
-                <div className="flex items-start gap-3">
-                  <HandCoinsIcon className="text-foerderverein mt-0.5 h-6 w-6 shrink-0" />
-                  <p className="text-gray-700 dark:text-gray-300">
-                    <strong>Günstiger Jahresbeitrag: nur 36 €</strong>
-                  </p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <MusicIcon className="text-foerderverein mt-0.5 h-6 w-6 shrink-0" />
-                  <p className="text-gray-700 dark:text-gray-300">
-                    Einladung zur jährlichen Mitgliederversammlung mit Berichten
-                    und Zukunftsplanungen
-                  </p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <CalendarIcon className="text-foerderverein mt-0.5 h-6 w-6 shrink-0" />
-                  <p className="text-gray-700 dark:text-gray-300">
-                    Flexible Kündigung möglich bis 3 Monate vor Jahresende
-                  </p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <GiftIcon className="text-foerderverein mt-0.5 h-6 w-6 shrink-0" />
-                  <p className="text-gray-700 dark:text-gray-300">
-                    <strong>2025:</strong> Geschenk-CD für Neumitglieder!
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-4 sm:flex-row">
-                <a
-                  href="mailto:foerderverein@posaunenwerk-rheinland.de?subject=Mitgliedschaft im Förderverein"
-                  className="bg-foerderverein inline-flex items-center justify-center rounded-lg px-8 py-3 font-semibold text-white transition-opacity hover:opacity-90"
-                >
-                  <MailIcon className="mr-2 h-5 w-5" />
-                  Mitglied werden
-                </a>
-                <a
-                  href="/downloads/foerderverein-flyer.pdf"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="border-foerderverein text-foerderverein hover:bg-foerderverein inline-flex items-center justify-center rounded-lg border-2 bg-white px-8 py-3 font-semibold transition-colors hover:text-white"
-                >
-                  <DownloadIcon className="mr-2 h-5 w-5" />
-                  Flyer herunterladen
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Spenden & CD */}
-      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
-        <div className="container">
-          <div className="mx-auto max-w-4xl">
-            <h2 className="text-dark dark:text-dark-text mb-12 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
-              Weitere Unterstützungsmöglichkeiten
-            </h2>
-
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-              {/* Spenden */}
-              <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-8 shadow-lg">
-                <h3 className="text-dark dark:text-dark-text mb-4 text-2xl font-bold">
-                  Spenden & Kollekten
-                </h3>
-                <p className="mb-6 leading-relaxed text-gray-600 dark:text-gray-400">
-                  Gerne werden wir bei freudigen oder traurigen Anlässen als
-                  Spendenempfänger benannt. Wir stellen Spendenbescheinigungen
-                  aus und sind als steuerbegünstigt anerkannt.
-                </p>
-
-                <div className="bg-background-secondary dark:bg-dark-background-secondary mb-6 rounded-lg p-4">
-                  <p className="text-dark dark:text-dark-text mb-2 font-semibold">
-                    Bankverbindung:
-                  </p>
-                  <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-                    Förderverein Rheinisches Posaunenwerk e.V.
-                    <br />
-                    KD-Bank Dortmund
-                    <br />
-                    <strong>IBAN:</strong> DE65 3506 0190 1014 1990 19
-                    <br />
-                    <strong>BIC:</strong> GENODED1DKD
-                  </p>
-                </div>
-
-                <p className="text-sm text-gray-500 italic dark:text-gray-500">
-                  Das Finanzamt Essen-Süd hat den Förderverein als
-                  steuerbegünstigt anerkannt und berechtigt,
-                  Spendenbescheinigungen auszustellen.
-                </p>
-              </div>
-
-              {/* CD */}
-              <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-8 shadow-lg">
-                <h3 className="text-dark dark:text-dark-text mb-4 text-2xl font-bold">
-                  CD &quot;Unter Sternen und Satelliten&quot;
-                </h3>
-                <p className="mb-4 leading-relaxed text-gray-600 dark:text-gray-400">
+            <div className="md:border-rule md:dark:border-night-rule md:border-l md:pl-10">
+              <Heading as="h3" size="list" rule>
+                CD &quot;Unter Sternen und Satelliten&quot;
+              </Heading>
+              <div className={`${PROSE} mt-5 space-y-4`}>
+                <p>
                   Unsere Ensembles haben eine wunderbare CD eingespielt – mit
-                  Trompeter <strong>Markus Stockhausen</strong> als Solist.
-                  Komplett vom Förderverein finanziert!
+                  Trompeter{" "}
+                  <strong className="font-semibold">Markus Stockhausen</strong>{" "}
+                  als Solist. Komplett vom Förderverein finanziert!
                 </p>
-                <p className="mb-6 text-gray-600 dark:text-gray-400">
+                <p>
                   Die CD wurde bereits auf dem Deutschen Evangelischen
                   Posaunentag präsentiert und erhielt viel Applaus.
                 </p>
-
-                <div className="bg-foerderverein/10 dark:bg-foerderverein/20 mb-6 rounded-lg p-4">
-                  <p className="text-dark dark:text-dark-text mb-1 text-2xl font-bold">
-                    15 €
-                  </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    zzgl. 2 € Versandkostenpauschale
-                  </p>
-                </div>
-
-                <a
-                  href="mailto:foerderverein@posaunenwerk-rheinland.de?subject=CD-Bestellung 'Unter Sternen und Satelliten'"
-                  className="bg-foerderverein inline-flex w-full items-center justify-center rounded-lg px-6 py-3 font-semibold text-white transition-opacity hover:opacity-90"
-                >
-                  <MailIcon className="mr-2 h-5 w-5" />
-                  Jetzt bestellen
-                </a>
               </div>
+
+              <ValueTable
+                rows={[{ label: "CD-Bestellung", value: "15 €" }]}
+                className="mt-6 max-w-xs"
+              />
+              <p className="text-dark dark:text-night-muted mt-2 text-sm">
+                zzgl. 2 € Versandkostenpauschale
+              </p>
+
+              <WayList className="mt-8">
+                <WayRow
+                  href="mailto:foerderverein@posaunenwerk-rheinland.de?subject=CD-Bestellung 'Unter Sternen und Satelliten'"
+                  title="Jetzt bestellen"
+                />
+              </WayList>
             </div>
           </div>
-        </div>
-      </section>
+        </Split>
+      </PageSection>
 
       {/* Vorstand */}
-      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
-        <div className="container">
-          <div className="mx-auto max-w-4xl">
-            <h2 className="text-dark dark:text-dark-text mb-8 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
-              Unser Vorstand
-            </h2>
+      <PageSection labelledBy="vorstand-heading" rule>
+        <Split
+          side="right"
+          head={<Heading id="vorstand-heading">Unser Vorstand</Heading>}
+          bodyClassName="mt-8"
+        >
+          <PersonList columns={2}>
+            {boardMembers.map((member) => (
+              <PersonRow
+                key={member.id}
+                image={member.person.image}
+                name={member.person.name ?? "Unbekannt"}
+                role={capitalizeFirstLetter(member.role)}
+                email={member.person.email}
+              />
+            ))}
+          </PersonList>
 
-            <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-8 shadow-lg">
-              <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-                {boardMembers.map((member) => (
-                  <PeopleCard
+          {beisitzMembers.length > 0 ? (
+            <>
+              <Heading as="h3" size="list" rule className="mt-12">
+                Beisitzer
+              </Heading>
+              <ul className="mt-3 grid gap-x-10 sm:grid-cols-2">
+                {beisitzMembers.map((member) => (
+                  <li
                     key={member.id}
-                    image={member.person.image ?? undefined}
-                    name={member.person.name ?? "Unbekannt"}
-                    subtitle={capitalizeFirstLetter(member.role)}
-                    email={member.person.email ?? undefined}
-                  />
+                    className="border-rule dark:border-night-rule text-ink dark:text-night-text border-b py-3 text-lg"
+                  >
+                    {member.person.name}{" "}
+                    {member.person.city && `(${member.person.city})`}
+                  </li>
                 ))}
-              </div>
+              </ul>
+            </>
+          ) : null}
 
-              <div className="dark:border-dark-border border-t border-gray-200 pt-6">
-                <h3 className="text-dark dark:text-dark-text mb-3 font-bold">
-                  Beisitzer
-                </h3>
-                <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                  {beisitzMembers.map((member) => (
-                    <p
-                      key={member.id}
-                      className="text-gray-700 dark:text-gray-300"
-                    >
-                      {member.person.name}{" "}
-                      {member.person.city && `(${member.person.city})`}
-                    </p>
-                  ))}
-                </div>
-              </div>
+          <p className="border-rule dark:border-night-rule text-dark dark:text-night-muted mt-10 border-t pt-6 text-sm leading-relaxed">
+            <strong className="text-ink dark:text-night-text font-semibold">
+              Sitz des Fördervereins:
+            </strong>{" "}
+            Zweigertstraße 52, 45130 Essen
+            <br />
+            Geführt beim Amtsgericht Essen, Aktenzeichen VR 4887
+          </p>
+        </Split>
+      </PageSection>
 
-              <div className="dark:border-dark-border mt-6 border-t border-gray-200 pt-6">
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  <strong>Sitz des Fördervereins:</strong> Zweigertstraße 52,
-                  45130 Essen
-                  <br />
-                  Geführt beim Amtsgericht Essen, Aktenzeichen VR 4887
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="bg-foerderverein py-12 text-white md:py-16">
-        <div className="container">
-          <div className="mx-auto max-w-3xl text-center">
-            <h2 className="mb-4 text-2xl font-bold md:text-3xl">
-              Werden Sie Teil unserer Gemeinschaft!
-            </h2>
-            <p className="mb-8 text-lg">
-              Unterstützen Sie die Arbeit des Posaunenwerks und profitieren Sie
-              von exklusiven Vorteilen.
-            </p>
-            <div className="flex flex-col justify-center gap-4 sm:flex-row">
-              <a
-                href="mailto:foerderverein@posaunenwerk-rheinland.de?subject=Mitgliedschaft im Förderverein"
-                className="text-foerderverein inline-block rounded-lg bg-white px-8 py-3 font-semibold transition-colors hover:bg-gray-100"
-              >
-                Mitglied werden
-              </a>
-              <Link
-                href="/kontakt"
-                className="inline-block rounded-lg border-2 border-white bg-transparent px-8 py-3 font-semibold text-white transition-colors hover:bg-white/10"
-              >
-                Kontakt aufnehmen
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+      <ClosingCall
+        id="cta-heading"
+        title="Werden Sie Teil unserer Gemeinschaft!"
+        text="Unterstützen Sie die Arbeit des Posaunenwerks und profitieren Sie von exklusiven Vorteilen."
+        actions={[
+          {
+            href: "mailto:foerderverein@posaunenwerk-rheinland.de?subject=Mitgliedschaft im Förderverein",
+            label: "Mitglied werden",
+          },
+          { href: "/kontakt", label: "Kontakt aufnehmen" },
+        ]}
+      />
     </PublicPage>
   );
 }

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Archivo, Inter } from "next/font/google";
 import "../styles/globals.css";
 import { AppChrome } from "./_components/general/app-chrome";
 import { TRPCReactProvider } from "@/trpc/react";
@@ -21,6 +21,18 @@ import {
 } from "@/lib/seo";
 
 const inter = Inter({ subsets: ["latin"] });
+
+/**
+ * Programmheft-Schrift der öffentlichen Website. Die Breitenachse trägt beide
+ * Stimmen einer Familie: schmal für Titel, Daten und Programmköpfe, normal für
+ * Text. Nur als Variable geladen — das Dashboard bleibt bei Inter.
+ */
+const archivo = Archivo({
+  subsets: ["latin", "latin-ext"],
+  axes: ["wdth"],
+  variable: "--font-archivo",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   // Makes every relative URL in child metadata (canonicals, og:image) absolute.
@@ -81,7 +93,7 @@ export const viewport: Viewport = {
   viewportFit: "cover",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0f1419" },
+    { media: "(prefers-color-scheme: dark)", color: "#141517" },
   ],
 };
 
@@ -91,7 +103,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="de" className="scroll-smooth" suppressHydrationWarning>
+    <html
+      lang="de"
+      className={`${archivo.variable} scroll-smooth`}
+      suppressHydrationWarning
+    >
       <head>
         <script
           suppressHydrationWarning
