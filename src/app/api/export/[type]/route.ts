@@ -84,6 +84,15 @@ export async function GET(
           include: {
             coverImage: true,
             bezirk: true,
+            // Konten reisen nicht mit; die Adresse ist das Einzige, woran der
+            // Import dieselbe Person im Zielbestand wiedererkennt.
+            author: {
+              select: {
+                id: true,
+                displayName: true,
+                email: true,
+              },
+            },
             createdBy: {
               select: {
                 id: true,
@@ -108,6 +117,7 @@ export async function GET(
         jsonData = {
           posts: posts.map((post) => ({
             ...post,
+            authorEmail: post.author?.email,
             coverImageUrl: post.coverImage?.url,
             bezirkName: post.bezirk?.name,
             createdByEmail: post.createdBy?.email,
