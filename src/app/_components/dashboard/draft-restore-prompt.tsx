@@ -36,7 +36,7 @@ export function DraftRestorePrompt({
       {draft && (
         <div
           role="status"
-          className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20"
+          className="border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20"
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-start gap-3">
@@ -55,14 +55,14 @@ export function DraftRestorePrompt({
               <button
                 type="button"
                 onClick={onRestore}
-                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+                className="min-h-11 bg-blue-600 px-4 text-sm font-medium text-white transition-colors hover:bg-blue-700"
               >
                 Übernehmen
               </button>
               <button
                 type="button"
                 onClick={onDiscard}
-                className="rounded-lg border border-blue-300 px-4 py-2 text-sm font-medium text-blue-800 transition-colors hover:bg-blue-100 dark:border-blue-700 dark:text-blue-200 dark:hover:bg-blue-900/40"
+                className="min-h-11 border border-blue-300 px-4 text-sm font-medium text-blue-800 transition-colors hover:bg-blue-100 dark:border-blue-700 dark:text-blue-200 dark:hover:bg-blue-900/40"
               >
                 Verwerfen
               </button>
@@ -72,12 +72,14 @@ export function DraftRestorePrompt({
       )}
 
       {storageFailed && (
+        // Hinweis statt Alarm: Tinte auf Papier an einer Haarlinie statt
+        // bernsteinfarbenem Kasten.
         <div
           role="alert"
-          className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20"
+          className="border-ink dark:border-night-text flex items-start gap-3 border-l-2 py-2 pl-4"
         >
-          <AlertTriangleIcon className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
-          <p className="text-sm text-amber-800 dark:text-amber-300">
+          <AlertTriangleIcon className="dark:text-night-text text-ink mt-0.5 h-5 w-5 shrink-0" />
+          <p className="text-dark dark:text-night-muted text-sm">
             Deine Eingaben können auf diesem Gerät nicht zwischengespeichert
             werden (Speicher voll oder privater Modus). Bei einem Neuladen gehen
             sie verloren.

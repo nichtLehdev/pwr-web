@@ -1,12 +1,13 @@
+import { Button, Section, Text } from "@react-email/components";
 import {
-  Html,
-  Head,
-  Body,
-  Container,
-  Section,
-  Text,
-  Button,
-} from "@react-email/components";
+  EmailLayout,
+  Regel,
+  abschnittskopf,
+  farben,
+  grundtext,
+  knopf,
+} from "./email-layout";
+import { emailText, textLink } from "./email-text";
 
 export type ReviewedContentType = "event" | "course" | "post";
 
@@ -34,189 +35,115 @@ export function ContentReviewResult({
   dashboardUrl,
 }: ContentReviewResultProps) {
   const typeLabel = CONTENT_TYPE_LABELS[contentType];
+  const kopfzeile = approved
+    ? `${typeLabel} veröffentlicht`
+    : `${typeLabel} abgelehnt`;
 
   return (
-    <Html lang="de">
-      <Head />
-      <Body style={main}>
-        <Container style={container}>
-          <Section style={header}>
-            <Text style={logoText}>Posaunenwerk Rheinland</Text>
-            <Text style={tagline}>
-              Posaunenwerk der Evangelischen Kirche im Rheinland
-            </Text>
+    <EmailLayout preview={kopfzeile}>
+      <Text style={abschnittskopf}>{kopfzeile}</Text>
+
+      <Text style={grundtext}>Hallo {recipientName},</Text>
+
+      <Text style={grundtext}>
+        {approved
+          ? `${contentType === "post" ? "dein" : "deine"} ${typeLabel} wurde geprüft und ist jetzt veröffentlicht:`
+          : `${contentType === "post" ? "dein" : "deine"} ${typeLabel} wurde geprüft und leider abgelehnt:`}
+      </Text>
+
+      <Regel stark />
+      <Text style={titelStil}>{title}</Text>
+      <Regel />
+
+      {reviewNotes ? (
+        <>
+          <Text style={grundtext}>
+            <strong>Anmerkungen der Prüfung:</strong>
+          </Text>
+          <Section style={anmerkungenFeld}>
+            <Text style={anmerkungenText}>{reviewNotes}</Text>
           </Section>
+        </>
+      ) : null}
 
-          <Section style={content}>
-            <Text style={heading}>
-              {approved
-                ? `${typeLabel} veröffentlicht`
-                : `${typeLabel} abgelehnt`}
-            </Text>
+      {!approved && (
+        <Text style={grundtext}>
+          Du kannst {contentType === "post" ? "den Beitrag" : "sie"} im
+          Dashboard überarbeiten und erneut zur Prüfung einreichen.
+        </Text>
+      )}
 
-            <Text style={paragraph}>Hallo {recipientName},</Text>
+      <Section style={knopfFeld}>
+        <Button style={knopf} href={dashboardUrl}>
+          Im Dashboard ansehen
+        </Button>
+      </Section>
 
-            <Text style={paragraph}>
-              {approved
-                ? `${contentType === "post" ? "dein" : "deine"} ${typeLabel} wurde geprüft und ist jetzt veröffentlicht:`
-                : `${contentType === "post" ? "dein" : "deine"} ${typeLabel} wurde geprüft und leider abgelehnt:`}
-            </Text>
-
-            <Section style={infoBox}>
-              <Text style={titleStyle}>{title}</Text>
-            </Section>
-
-            {reviewNotes ? (
-              <>
-                <Text style={paragraph}>
-                  <strong>Anmerkungen der Prüfung:</strong>
-                </Text>
-                <Section style={notesBox}>
-                  <Text style={notesText}>{reviewNotes}</Text>
-                </Section>
-              </>
-            ) : null}
-
-            {!approved && (
-              <Text style={paragraph}>
-                Du kannst {contentType === "post" ? "den Beitrag" : "sie"} im
-                Dashboard überarbeiten und erneut zur Prüfung einreichen.
-              </Text>
-            )}
-
-            <Section style={buttonSection}>
-              <Button style={button} href={dashboardUrl}>
-                Im Dashboard ansehen
-              </Button>
-            </Section>
-
-            <Text style={paragraph}>
-              Bei Fragen kannst du dich gerne an uns wenden.
-            </Text>
-          </Section>
-
-          <Section style={footerSection}>
-            <Text style={footerText}>
-              Posaunenwerk der Evangelischen Kirche im Rheinland
-            </Text>
-          </Section>
-        </Container>
-      </Body>
-    </Html>
+      <Text style={grundtext}>
+        Bei Fragen kannst du dich gerne an uns wenden.
+      </Text>
+    </EmailLayout>
   );
 }
 
-const main = {
-  backgroundColor: "#f5f5f5",
-  fontFamily:
-    '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Ubuntu,sans-serif',
+/** Nur-Text-Fassung — gleicher Wortlaut, ohne Auszeichnung. */
+export function contentReviewResultText({
+  recipientName,
+  contentType,
+  title,
+  approved,
+  reviewNotes,
+  dashboardUrl,
+}: ContentReviewResultProps): string {
+  const typeLabel = CONTENT_TYPE_LABELS[contentType];
+  const kopfzeile = approved
+    ? `${typeLabel} veröffentlicht`
+    : `${typeLabel} abgelehnt`;
+
+  return emailText([
+    kopfzeile.toUpperCase(),
+    "",
+    `Hallo ${recipientName},`,
+    "",
+    approved
+      ? `${contentType === "post" ? "dein" : "deine"} ${typeLabel} wurde geprüft und ist jetzt veröffentlicht:`
+      : `${contentType === "post" ? "dein" : "deine"} ${typeLabel} wurde geprüft und leider abgelehnt:`,
+    "",
+    title,
+    "",
+    reviewNotes ? "Anmerkungen der Prüfung:" : null,
+    reviewNotes ? reviewNotes : null,
+    reviewNotes ? "" : null,
+    !approved
+      ? `Du kannst ${contentType === "post" ? "den Beitrag" : "sie"} im Dashboard überarbeiten und erneut zur Prüfung einreichen.`
+      : null,
+    !approved ? "" : null,
+    textLink("Im Dashboard ansehen:", dashboardUrl),
+    "",
+    "Bei Fragen kannst du dich gerne an uns wenden.",
+  ]);
+}
+
+const titelStil = {
+  ...grundtext,
+  fontSize: "18px",
+  fontWeight: "bold" as const,
+  margin: "16px 0",
 };
 
-const container = {
-  backgroundColor: "#ffffff",
-  margin: "0 auto",
-  padding: "0",
-  marginBottom: "64px",
-  maxWidth: "600px",
-  borderRadius: "8px",
-  boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-};
-
-const header = {
-  backgroundColor: "#faa619",
-  padding: "32px 24px",
-  textAlign: "center" as const,
-  borderRadius: "8px 8px 0 0",
-};
-
-const logoText = {
-  color: "#ffffff",
-  fontSize: "28px",
-  fontWeight: "bold",
-  margin: "0 0 8px 0",
-  letterSpacing: "0.5px",
-};
-
-const tagline = {
-  color: "#ffffff",
-  fontSize: "12px",
-  fontWeight: "normal",
-  margin: "0",
-  opacity: 0.95,
-  letterSpacing: "0.3px",
-};
-
-const content = {
-  padding: "32px 24px",
-};
-
-const heading = {
-  fontSize: "24px",
-  fontWeight: "bold",
-  color: "#1a1a1a",
-  margin: "0 0 24px 0",
-};
-
-const paragraph = {
-  fontSize: "15px",
-  lineHeight: "24px",
-  color: "#333333",
+const anmerkungenFeld = {
+  borderLeft: `2px solid ${farben.ink}`,
+  paddingLeft: "16px",
   margin: "0 0 16px 0",
 };
 
-const infoBox = {
-  backgroundColor: "#f9f9f9",
-  borderRadius: "6px",
-  padding: "16px 20px",
-  margin: "0 0 16px 0",
-};
-
-const titleStyle = {
-  fontSize: "17px",
-  fontWeight: "bold",
-  color: "#1a1a1a",
-  margin: "0",
-};
-
-const notesBox = {
-  backgroundColor: "#fff8ec",
-  borderLeft: "4px solid #faa619",
-  borderRadius: "4px",
-  padding: "12px 16px",
-  margin: "0 0 16px 0",
-};
-
-const notesText = {
-  fontSize: "14px",
-  lineHeight: "22px",
-  color: "#333333",
+const anmerkungenText = {
+  ...grundtext,
   margin: "0",
   whiteSpace: "pre-wrap" as const,
 };
 
-const buttonSection = {
+const knopfFeld = {
   textAlign: "center" as const,
-  margin: "24px 0",
-};
-
-const button = {
-  backgroundColor: "#faa619",
-  borderRadius: "6px",
-  color: "#ffffff",
-  fontSize: "15px",
-  fontWeight: "bold",
-  textDecoration: "none",
-  padding: "12px 24px",
-  display: "inline-block",
-};
-
-const footerSection = {
-  padding: "24px",
-  textAlign: "center" as const,
-};
-
-const footerText = {
-  fontSize: "12px",
-  color: "#999999",
-  margin: "0",
+  margin: "28px 0",
 };

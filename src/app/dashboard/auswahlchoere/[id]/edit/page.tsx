@@ -17,6 +17,17 @@ import {
   type DashboardSectionNavItem,
 } from "@/app/_components/dashboard";
 import { ImageIcon, X } from "lucide-react";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Checkbox,
+  Input,
+  Label,
+  Textarea,
+} from "@/app/_components/ui";
 
 const AUSWAHLCHOR_FORM_NAV: DashboardSectionNavItem[] = [
   { href: "#auswahlchor-form-grundlagen", label: "Grundlagen" },
@@ -205,8 +216,8 @@ export default function EditAuswahlchorPage() {
 
   if (sessionLoading || profileLoading || auswahlchorLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
@@ -217,14 +228,14 @@ export default function EditAuswahlchorPage() {
 
   if (!auswahlchor) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <h1 className="dark:text-dark-text text-xl font-semibold text-gray-900">
+          <h1 className="text-ink dark:text-night-text text-xl font-semibold">
             Auswahlchor nicht gefunden
           </h1>
           <Link
             href="/dashboard/auswahlchoere"
-            className="text-primary mt-4 inline-block hover:underline"
+            className="link-ink mt-4 inline-block"
           >
             Zurück zur Übersicht
           </Link>
@@ -251,7 +262,7 @@ export default function EditAuswahlchorPage() {
       >
         {/* Error */}
         {error && (
-          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
+          <div className="mb-6 border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
             <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
           </div>
         )}
@@ -267,361 +278,335 @@ export default function EditAuswahlchorPage() {
               className="dashboard-form-scroll-anchor"
             >
               {/* Basic Information */}
-              <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-                <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
-                  Grundinformationen
-                </h2>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Grundinformationen</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Name */}
+                  <div>
+                    <Label required>Name</Label>
+                    <Input
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      required
+                      maxLength={255}
+                      placeholder="z.B. Con Spirito"
+                    />
+                  </div>
 
-                {/* Name */}
-                <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    Name *
-                  </label>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
-                    maxLength={255}
-                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                    placeholder="z.B. Con Spirito"
-                  />
-                </div>
+                  {/* Slug */}
+                  <div>
+                    <Label required>Slug</Label>
+                    <Input
+                      type="text"
+                      value={slug}
+                      onChange={(e) =>
+                        setSlug(
+                          e.target.value.toLowerCase().replace(/\s+/g, "-"),
+                        )
+                      }
+                      required
+                      maxLength={15}
+                      placeholder="z.B. conspirito"
+                    />
+                    <p className="text-dark dark:text-night-muted mt-1 text-xs">
+                      URL-freundlicher Name (max. 15 Zeichen, nur
+                      Kleinbuchstaben und Bindestriche)
+                    </p>
+                  </div>
 
-                {/* Slug */}
-                <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    Slug *
-                  </label>
-                  <input
-                    type="text"
-                    value={slug}
-                    onChange={(e) =>
-                      setSlug(e.target.value.toLowerCase().replace(/\s+/g, "-"))
-                    }
-                    required
-                    maxLength={15}
-                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                    placeholder="z.B. conspirito"
-                  />
-                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                    URL-freundlicher Name (max. 15 Zeichen, nur Kleinbuchstaben
-                    und Bindestriche)
-                  </p>
-                </div>
+                  {/* Subtitle */}
+                  <div>
+                    <Label required>Untertitel</Label>
+                    <Input
+                      type="text"
+                      value={subtitle}
+                      onChange={(e) => setSubtitle(e.target.value)}
+                      required
+                      maxLength={200}
+                      placeholder="z.B. Das Spitzenensemble"
+                    />
+                  </div>
 
-                {/* Subtitle */}
-                <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    Untertitel *
-                  </label>
-                  <input
-                    type="text"
-                    value={subtitle}
-                    onChange={(e) => setSubtitle(e.target.value)}
-                    required
-                    maxLength={200}
-                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                    placeholder="z.B. Das Spitzenensemble"
-                  />
-                </div>
+                  {/* Founded */}
+                  <div>
+                    <Label required>Gegründet</Label>
+                    <Input
+                      type="text"
+                      value={founded}
+                      onChange={(e) => setFounded(e.target.value)}
+                      required
+                      maxLength={100}
+                      placeholder="z.B. 1995"
+                    />
+                  </div>
 
-                {/* Founded */}
-                <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    Gegründet *
-                  </label>
-                  <input
-                    type="text"
-                    value={founded}
-                    onChange={(e) => setFounded(e.target.value)}
-                    required
-                    maxLength={100}
-                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                    placeholder="z.B. 1995"
-                  />
-                </div>
+                  {/* Members */}
+                  <div>
+                    <Label required>Mitglieder</Label>
+                    <Input
+                      type="text"
+                      value={members}
+                      onChange={(e) => setMembers(e.target.value)}
+                      required
+                      maxLength={200}
+                      placeholder="z.B. ca. 25 Bläser"
+                    />
+                  </div>
 
-                {/* Members */}
-                <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    Mitglieder *
-                  </label>
-                  <input
-                    type="text"
-                    value={members}
-                    onChange={(e) => setMembers(e.target.value)}
-                    required
-                    maxLength={200}
-                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                    placeholder="z.B. ca. 25 Bläser"
-                  />
-                </div>
+                  {/* Description */}
+                  <div>
+                    <Label required>Beschreibung</Label>
+                    <Textarea
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      required
+                      rows={6}
+                      maxLength={5000}
+                      placeholder="Beschreibe den Auswahlchor..."
+                    />
+                  </div>
 
-                {/* Description */}
-                <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    Beschreibung *
-                  </label>
-                  <textarea
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    required
-                    rows={6}
-                    maxLength={5000}
-                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                    placeholder="Beschreibe den Auswahlchor..."
-                  />
-                </div>
-
-                {/* Image */}
-                <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    Bild
-                  </label>
-                  {imageUrl ? (
-                    <div className="flex items-start gap-4">
-                      <div className="relative h-24 w-24 overflow-hidden rounded-lg">
-                        <Image
-                          src={imageUrl}
-                          alt="Auswahlchor Bild"
-                          fill
-                          className="object-cover"
-                        />
+                  {/* Image */}
+                  <div>
+                    <Label>Bild</Label>
+                    {imageUrl ? (
+                      <div className="flex items-start gap-4">
+                        <div className="border-rule dark:border-night-rule relative h-24 w-24 overflow-hidden border">
+                          <Image
+                            src={imageUrl}
+                            alt="Auswahlchor Bild"
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Button
+                            type="button"
+                            onClick={() => setShowMediaPicker(true)}
+                            variant="outline"
+                            size="sm"
+                          >
+                            Ändern
+                          </Button>
+                          <Button
+                            type="button"
+                            onClick={() => {
+                              setImageUrl("");
+                              setImageId(null);
+                            }}
+                            variant="outline"
+                            size="sm"
+                            className="border-red-300 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                          >
+                            Entfernen
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex flex-col gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setShowMediaPicker(true)}
-                          className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-3 py-1.5 text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-                        >
-                          Ändern
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setImageUrl("");
-                            setImageId(null);
-                          }}
-                          className="rounded-lg border border-red-300 px-3 py-1.5 text-sm text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
-                        >
-                          Entfernen
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setShowMediaPicker(true)}
-                      className="dark:border-dark-border dark:text-dark-text flex h-24 w-full items-center justify-center rounded-lg border-2 border-dashed border-gray-300 text-gray-500 transition-colors hover:border-gray-400 hover:text-gray-600"
-                    >
-                      <div className="text-center">
-                        <ImageIcon className="mx-auto h-8 w-8" />
-                        <span className="mt-1 block text-sm">
-                          Bild auswählen
-                        </span>
-                      </div>
-                    </button>
-                  )}
-                </div>
-              </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setShowMediaPicker(true)}
+                        className="border-ink dark:border-night-text hover:border-primary-ink dark:hover:bg-night-raised text-dark dark:text-night-muted hover:bg-rule/25 flex h-24 w-full items-center justify-center border-2 border-dashed transition-colors"
+                      >
+                        <div className="text-center">
+                          <ImageIcon className="mx-auto h-8 w-8" />
+                          <span className="mt-1 block text-sm">
+                            Bild auswählen
+                          </span>
+                        </div>
+                      </button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
             {/* Styling */}
             <div
               id="auswahlchor-form-styling"
-              className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-10"
+              className="border-rule dark:border-night-rule dashboard-form-scroll-anchor border-t pt-10"
             >
-              <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-                <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
-                  Styling
-                </h2>
-
-                {/* Color */}
-                <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    Tailwind-Farbe
-                  </label>
-                  <input
-                    type="text"
-                    value={color}
-                    onChange={(e) => setColor(e.target.value)}
-                    maxLength={50}
-                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                    placeholder="z.B. bg-primary"
-                  />
-                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                    Tailwind CSS-Klasse für die Farbe
-                  </p>
-                </div>
-
-                {/* Color Hex */}
-                <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    Hex-Farbe
-                  </label>
-                  <div className="flex items-center gap-3">
-                    <input
+              <Card>
+                <CardHeader>
+                  <CardTitle>Styling</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Color */}
+                  <div>
+                    <Label>Tailwind-Farbe</Label>
+                    <Input
                       type="text"
-                      value={colorHex}
-                      onChange={(e) => setColorHex(e.target.value)}
-                      maxLength={7}
-                      className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                      placeholder="#faa619"
+                      value={color}
+                      onChange={(e) => setColor(e.target.value)}
+                      maxLength={50}
+                      placeholder="z.B. bg-primary"
                     />
-                    {colorHex && (
-                      <div
-                        className="h-10 w-10 rounded border border-gray-300"
-                        style={{ backgroundColor: colorHex }}
-                      />
-                    )}
+                    <p className="text-dark dark:text-night-muted mt-1 text-xs">
+                      Tailwind CSS-Klasse für die Farbe
+                    </p>
                   </div>
-                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                    Hexadezimaler Farbcode (z.B. #faa619)
-                  </p>
-                </div>
-              </div>
+
+                  {/* Color Hex */}
+                  <div>
+                    <Label>Hex-Farbe</Label>
+                    <div className="flex items-center gap-3">
+                      <Input
+                        type="text"
+                        value={colorHex}
+                        onChange={(e) => setColorHex(e.target.value)}
+                        maxLength={7}
+                        placeholder="#faa619"
+                      />
+                      {colorHex && (
+                        <div
+                          className="border-rule dark:border-night-rule h-10 w-10 shrink-0 border"
+                          style={{ backgroundColor: colorHex }}
+                        />
+                      )}
+                    </div>
+                    <p className="text-dark dark:text-night-muted mt-1 text-xs">
+                      Hexadezimaler Farbcode (z.B. #faa619)
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
             {/* People */}
             <div
               id="auswahlchor-form-personen"
-              className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-10"
+              className="border-rule dark:border-night-rule dashboard-form-scroll-anchor border-t pt-10"
             >
-              <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-                <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
-                  Personen
-                </h2>
-
-                {/* Conductor */}
-                <div className="relative" data-dropdown>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    Chorleitung
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={conductorSearch}
-                      onChange={(e) => {
-                        setConductorSearch(e.target.value);
-                        setShowConductorDropdown(true);
-                        if (!e.target.value) setConductorId(null);
-                      }}
-                      onFocus={() => setShowConductorDropdown(true)}
-                      placeholder="Name oder E-Mail eingeben..."
-                      className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 pr-10 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                    />
-                    {conductorId && (
-                      <button
-                        type="button"
-                        onClick={handleClearConductor}
-                        className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Conductor Dropdown */}
-                  {showConductorDropdown && (
-                    <div className="dark:border-dark-border dark:bg-dark-surface absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
-                      <div
-                        className="overflow-y-auto"
-                        style={{ maxHeight: "240px" }}
-                      >
-                        {filteredConductorUsers &&
-                        filteredConductorUsers.length > 0 ? (
-                          filteredConductorUsers.map((user) => (
-                            <button
-                              key={user.id}
-                              type="button"
-                              onClick={() => handleConductorSelect(user)}
-                              className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
-                            >
-                              <span className="dark:text-dark-text font-medium text-gray-900">
-                                {user.displayName || user.email}
-                              </span>
-                              {user.displayName && (
-                                <span className="text-gray-500 dark:text-gray-400">
-                                  {" "}
-                                  – {user.email}
-                                </span>
-                              )}
-                            </button>
-                          ))
-                        ) : (
-                          <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                            {conductorSearch
-                              ? "Keine Benutzer gefunden"
-                              : "Tippe, um Benutzer zu suchen"}
-                          </div>
-                        )}
-                      </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Personen</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {/* Conductor */}
+                  <div className="relative" data-dropdown>
+                    <Label>Chorleitung</Label>
+                    <div className="relative">
+                      <Input
+                        type="text"
+                        value={conductorSearch}
+                        onChange={(e) => {
+                          setConductorSearch(e.target.value);
+                          setShowConductorDropdown(true);
+                          if (!e.target.value) setConductorId(null);
+                        }}
+                        onFocus={() => setShowConductorDropdown(true)}
+                        placeholder="Name oder E-Mail eingeben..."
+                        className="pr-10"
+                      />
                       {conductorId && (
                         <button
                           type="button"
                           onClick={handleClearConductor}
-                          className="dark:border-dark-border block w-full border-t border-gray-200 px-4 py-2 text-left text-sm font-medium text-red-600 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700"
+                          className="text-dark hover:text-ink dark:text-night-muted dark:hover:text-night-text absolute top-1/2 right-3 -translate-y-1/2"
                         >
-                          Verknüpfung entfernen
+                          <X className="h-4 w-4" />
                         </button>
                       )}
                     </div>
-                  )}
 
-                  {/* Selected conductor indicator */}
-                  {conductorId && (
-                    <p className="mt-2 text-sm text-green-600 dark:text-green-400">
-                      ✓ Chorleitung verknüpft
-                    </p>
-                  )}
-                </div>
-              </div>
+                    {/* Conductor Dropdown */}
+                    {showConductorDropdown && (
+                      <div className="border-ink dark:border-night-text dark:bg-night-raised bg-paper absolute z-10 mt-1 w-full overflow-hidden border">
+                        <div
+                          className="overflow-y-auto"
+                          style={{ maxHeight: "240px" }}
+                        >
+                          {filteredConductorUsers &&
+                          filteredConductorUsers.length > 0 ? (
+                            filteredConductorUsers.map((user) => (
+                              <button
+                                key={user.id}
+                                type="button"
+                                onClick={() => handleConductorSelect(user)}
+                                className="hover:bg-rule/25 dark:hover:bg-night-rule block w-full px-4 py-2 text-left text-sm transition-colors"
+                              >
+                                <span className="text-ink dark:text-night-text font-medium">
+                                  {user.displayName || user.email}
+                                </span>
+                                {user.displayName && (
+                                  <span className="text-dark dark:text-night-muted">
+                                    {" "}
+                                    – {user.email}
+                                  </span>
+                                )}
+                              </button>
+                            ))
+                          ) : (
+                            <div className="text-dark dark:text-night-muted px-4 py-3 text-sm">
+                              {conductorSearch
+                                ? "Keine Benutzer gefunden"
+                                : "Tippe, um Benutzer zu suchen"}
+                            </div>
+                          )}
+                        </div>
+                        {conductorId && (
+                          <button
+                            type="button"
+                            onClick={handleClearConductor}
+                            className="border-rule dark:border-night-rule hover:bg-rule/25 dark:hover:bg-night-rule block w-full border-t px-4 py-2 text-left text-sm font-medium text-red-600 transition-colors dark:text-red-400"
+                          >
+                            Verknüpfung entfernen
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Selected conductor indicator */}
+                    {conductorId && (
+                      <p className="text-dark dark:text-night-muted mt-2 text-sm">
+                        ✓ Chorleitung verknüpft
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
             {/* Settings */}
             <div
               id="auswahlchor-form-einstellungen"
-              className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-10"
+              className="border-rule dark:border-night-rule dashboard-form-scroll-anchor border-t pt-10"
             >
-              <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-                <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
-                  Einstellungen
-                </h2>
-
-                {/* Show Application */}
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="showApplication"
-                    checked={showApplication}
-                    onChange={(e) => setShowApplication(e.target.checked)}
-                    className="text-primary h-4 w-4 rounded border-gray-300 focus:ring-blue-500"
-                  />
-                  <label
-                    htmlFor="showApplication"
-                    className="dark:text-dark-text text-sm font-medium text-gray-700"
-                  >
-                    Bewerbung anzeigen
-                  </label>
-                </div>
-              </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Einstellungen</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {/* Show Application */}
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="showApplication"
+                      checked={showApplication}
+                      onChange={(e) => setShowApplication(e.target.checked)}
+                    />
+                    <Label htmlFor="showApplication" className="mb-0">
+                      Bewerbung anzeigen
+                    </Label>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
             {/* Actions */}
-            <div className="dark:border-dark-border mt-16 flex flex-col gap-3 border-t border-gray-200/80 pt-10 sm:flex-row sm:justify-end">
-              <button
+            <div className="border-rule dark:border-night-rule mt-16 flex flex-col gap-3 border-t pt-10 sm:flex-row sm:justify-end">
+              <Button
                 type="submit"
                 disabled={isSubmitting || updateMutation.isPending}
-                className="bg-primary hover:bg-primary/90 rounded-lg px-6 py-2.5 font-medium text-white transition-colors disabled:opacity-50"
+                isLoading={isSubmitting || updateMutation.isPending}
               >
-                {isSubmitting || updateMutation.isPending
-                  ? "Wird gespeichert..."
-                  : "Änderungen speichern"}
-              </button>
+                Änderungen speichern
+              </Button>
               <Link
                 href={`/dashboard/auswahlchoere/${auswahlchorId}`}
-                className="dark:border-dark-border dark:text-dark-text inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-2.5 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="border-ink dark:border-night-text text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised inline-flex min-h-11 items-center justify-center gap-2 border px-4 py-2.5 transition-colors"
               >
                 Abbrechen
               </Link>

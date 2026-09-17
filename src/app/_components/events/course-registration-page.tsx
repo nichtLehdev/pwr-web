@@ -10,6 +10,10 @@ import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import type { RouterOutputs } from "@/trpc/react";
 import PublicPage from "@/app/_components/general/public-page";
+import { BezirkLabel } from "@/app/_components/programmheft/bezirk-label";
+import { headMeta } from "@/app/_components/programmheft/page-head";
+import { Tag } from "@/app/_components/programmheft/tag";
+import { courseTypeLabel } from "@/lib/termine-labels";
 import CourseRegistrationForm from "@/app/_components/events/course-registration-form";
 import { CourseExistingRegistrationOptions } from "@/app/_components/events/course-existing-registration-options";
 import { coursePath } from "@/lib/slug";
@@ -65,24 +69,6 @@ export default function CourseRegistrationPage({
 
   const [optionsResolved, setOptionsResolved] = useState(false);
 
-  const district = !course.bezirk
-    ? "primary"
-    : (`district-${course.bezirk.number}` as
-        | "district-1"
-        | "district-2"
-        | "district-3"
-        | "district-4"
-        | "district-5"
-        | "district-6"
-        | "district-7"
-        | "district-8"
-        | "district-9"
-        | "district-10"
-        | "district-11"
-        | "district-12"
-        | "district-13"
-        | undefined);
-
   const courseUrl = coursePath(course);
   const isWaitlist = spots.isFull && course.allowWaitingList;
 
@@ -129,68 +115,55 @@ export default function CourseRegistrationPage({
   const acceptedPaymentMethods = formatAcceptedCoursePaymentMethods(course);
 
   const heroDescription = (
-    <div className="mt-1 space-y-4">
+    <div className="space-y-4">
       <p>
         {isWaitlist
           ? "Dieser Lehrgang ist ausgebucht. Sie können sich hier auf die Warteliste setzen lassen."
           : "Füllen Sie die folgenden Schritte aus, um Ihre Anmeldung abzuschließen."}
       </p>
       <div className="flex flex-wrap items-center gap-2">
-        <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-semibold">
-          {course.courseType}
+        <span className={headMeta.label}>
+          {courseTypeLabel(course.courseType)}
         </span>
         {course.bezirk && (
-          <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-semibold">
-            {`Bezirk ${course.bezirk.number} (${course.bezirk.shortName})`}
+          <span className={headMeta.label}>
+            <BezirkLabel bezirk={course.bezirk} />
           </span>
         )}
-        {isWaitlist && (
-          <span className="rounded-full bg-orange-600 px-2.5 py-0.5 text-xs font-semibold">
-            Nur Warteliste
-          </span>
-        )}
+        {isWaitlist && <Tag tone="orange">Nur Warteliste</Tag>}
       </div>
-      <div className="flex flex-col gap-2 border-t border-white/20 pt-3 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-1 sm:gap-y-2">
+      <div className={headMeta.line}>
         <span className="flex items-center gap-2">
-          <Calendar className="h-4 w-4 shrink-0 text-white/90" aria-hidden />
+          <Calendar className={headMeta.icon} aria-hidden />
           {formatCourseSchedule(course)}
         </span>
         {locationLine ? (
           <>
-            <span
-              className="hidden shrink-0 px-1 text-white/45 sm:inline"
-              aria-hidden
-            >
+            <span className={headMeta.separator} aria-hidden>
               ·
             </span>
             <span className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 shrink-0 text-white/90" aria-hidden />
+              <MapPin className={headMeta.icon} aria-hidden />
               {locationLine}
             </span>
           </>
         ) : null}
-        <span
-          className="hidden shrink-0 px-1 text-white/45 sm:inline"
-          aria-hidden
-        >
+        <span className={headMeta.separator} aria-hidden>
           ·
         </span>
         <span className="flex items-center gap-2">
-          <Users className="h-4 w-4 shrink-0 text-white/90" aria-hidden />
+          <Users className={headMeta.icon} aria-hidden />
           {isWaitlist
             ? "Warteliste"
             : formatAvailableSlots(spots.availableSlots, spots.totalCapacity)}
         </span>
         {!course.isFree && acceptedPaymentMethods ? (
           <>
-            <span
-              className="hidden shrink-0 px-1 text-white/45 sm:inline"
-              aria-hidden
-            >
+            <span className={headMeta.separator} aria-hidden>
               ·
             </span>
             <span className="flex min-w-0 items-center gap-2">
-              <Wallet className="h-4 w-4 shrink-0 text-white/90" aria-hidden />
+              <Wallet className={headMeta.icon} aria-hidden />
               <span className="truncate">{acceptedPaymentMethods}</span>
             </span>
           </>
@@ -199,7 +172,7 @@ export default function CourseRegistrationPage({
       <p>
         <Link
           href={courseUrl}
-          className="text-sm font-semibold text-white underline decoration-white/50 underline-offset-4 transition-colors hover:decoration-white"
+          className="semi-condensed text-primary-ink dark:text-primary inline-flex min-h-11 items-center text-base font-semibold underline underline-offset-4 hover:decoration-2"
         >
           ← Zurück zur Kursseite
         </Link>
@@ -211,7 +184,6 @@ export default function CourseRegistrationPage({
     <PublicPage
       title="Anmeldung"
       heroTitle={course.title}
-      color={district}
       breadcrumbs={[
         { label: "Start", href: "/" },
         { label: "Termine", href: "/termine" },
@@ -221,10 +193,10 @@ export default function CourseRegistrationPage({
       heroSize="compact"
       description={heroDescription}
     >
-      <div className="bg-background-secondary dark:bg-dark-background-secondary -mt-2 min-h-[calc(100vh-12rem)] pb-8 md:-mt-4 md:pb-12">
+      <div className="bg-paper dark:bg-night min-h-[calc(100vh-12rem)] pb-8 md:pb-12">
         {session?.user && existingRegistrationLoading && (
-          <div className="container mx-auto px-4 py-16 text-center">
-            <p className="text-dark dark:text-dark-text">Laden…</p>
+          <div className="sheet py-16 text-center">
+            <p className="text-ink dark:text-night-text">Laden…</p>
           </div>
         )}
         {showForm && !existingRegistrationLoading && (
@@ -233,6 +205,8 @@ export default function CourseRegistrationPage({
             onClose={onCloseForm}
             onSuccess={onSuccessForm}
             isWaitlist={isWaitlist}
+            availableSlots={spots.availableSlots}
+            capacityByPriceOption={spots.capacityByPriceOption}
             currentUser={userProfile ?? null}
           />
         )}

@@ -29,7 +29,7 @@ export function GameStepIndicator({
           className={cn(
             "rounded-lg px-2.5 py-1 text-[10px] font-bold tracking-wide transition-colors md:px-3 md:text-xs",
             i === current
-              ? "bg-primary text-white"
+              ? "on-orange bg-primary text-ink"
               : i < current
                 ? "bg-emerald-500/15 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-200"
                 : "text-dark/55 dark:text-dark-text-muted bg-transparent",

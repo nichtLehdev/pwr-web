@@ -2,14 +2,12 @@ import Link from "next/link";
 import { getDistrictColor } from "@/lib/district-color";
 import { coursePath } from "@/lib/slug";
 import type { ContentStatus, CourseType } from "~/generated/prisma/enums";
-import {
-  CONTENT_STATUS_BADGE_CLASSES,
-  CONTENT_STATUS_LABELS,
-} from "./content-status";
+import { Tag } from "@/app/_components/programmheft/tag";
+import { ContentStatusBadge } from "./content-status";
 import {
   Calendar,
   MapPin,
-  Tag,
+  Tag as TagIcon,
   Users,
   User,
   Eye,
@@ -67,7 +65,6 @@ export default function DashboardCourseCard({
   createdAt,
 }: DashboardCourseCardProps) {
   const districtColor = getDistrictColor(district);
-  const statusClasses = CONTENT_STATUS_BADGE_CLASSES[status];
   const isFull = maxParticipants ? confirmedCount >= maxParticipants : false;
   const isDeadlinePassed = registrationDeadline
     ? new Date(registrationDeadline) < new Date()
@@ -103,42 +100,41 @@ export default function DashboardCourseCard({
   const districtLabel = district ? `Bezirk ${district}` : "Übergreifend";
 
   const metaIconClass =
-    "mt-0.5 h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500";
+    "text-dark dark:text-night-muted mt-0.5 h-4 w-4 shrink-0";
 
   return (
-    <div className="dark:border-dark-border dark:bg-dark-surface relative flex flex-col rounded-lg border border-gray-200/80 bg-white p-4 pb-5 shadow-sm transition-shadow hover:shadow-md dark:shadow-none">
+    // Karte statt Kasten mit Rundung und Schatten: eine Haarlinie umschließt
+    // sie, wie es die Übersetzungstabelle für Karten/Tabellen vorsieht. Die
+    // Grammatik der öffentlichen Listen (Haarlinie, Tinte auf Papier) kommt
+    // mit, ihre großen Editorial-Maße (Programm-Zeilen, py-5 etc.) nicht —
+    // das Dashboard bleibt dicht.
+    <div className="border-rule dark:border-night-rule bg-paper dark:bg-night relative flex flex-col border p-4 pb-5">
       <div className="mb-2.5 flex flex-wrap items-start justify-between gap-x-3 gap-y-1.5">
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1.5">
-          <span
-            className={`inline-flex max-w-full shrink-0 items-center rounded-md px-2 py-1 text-xs font-medium ${statusClasses}`}
-          >
-            <span className="truncate">{CONTENT_STATUS_LABELS[status]}</span>
-          </span>
+          <ContentStatusBadge status={status} className="shrink-0" />
           {isRegistrationNotOpenYet && registrationOpen ? (
-            <span className="inline-flex shrink-0 rounded-md bg-purple-500/10 px-2 py-1 text-xs font-medium text-purple-900 dark:text-purple-200">
+            <Tag tone="inverse">
               Öffnet{" "}
               {registrationOpensAt?.toLocaleDateString("de-DE", {
                 day: "2-digit",
                 month: "short",
               })}
-            </span>
+            </Tag>
           ) : isEffectivelyOpen ? (
-            <span className="inline-flex shrink-0 rounded-md bg-sky-500/10 px-2 py-1 text-xs font-medium text-sky-900 dark:text-sky-200">
-              Anmeldung offen
-            </span>
+            <Tag tone="ink">Anmeldung offen</Tag>
           ) : (
-            <span className="inline-flex shrink-0 rounded-md bg-gray-500/10 px-2 py-1 text-xs font-medium text-gray-700 dark:text-gray-300">
+            // Geschlossene Anmeldung verlangt nichts mehr — umrandet statt
+            // gefüllt. Gefüllt sahen „Anmeldung offen" und „Frist vorbei" im
+            // Hellmodus identisch aus (beide Tinte auf Papier), der Zustand
+            // war nur am Wort ablesbar.
+            <Tag tone="muted">
               {isDeadlinePassed ? "Frist vorbei" : "Anmeldung zu"}
-            </span>
+            </Tag>
           )}
-          {isFull ? (
-            <span className="inline-flex shrink-0 rounded-md bg-amber-500/10 px-2 py-1 text-xs font-medium text-amber-950 dark:text-amber-200">
-              Ausgebucht
-            </span>
-          ) : null}
+          {isFull ? <Tag tone="orange">Ausgebucht</Tag> : null}
         </div>
         <span
-          className="inline-flex shrink-0 items-center gap-1.5 text-xs leading-none font-medium whitespace-nowrap text-gray-700 dark:text-gray-300"
+          className="text-ink dark:text-night-text inline-flex shrink-0 items-center gap-1.5 text-xs leading-none font-medium whitespace-nowrap"
           title={districtLabel}
         >
           <span
@@ -150,11 +146,11 @@ export default function DashboardCourseCard({
         </span>
       </div>
 
-      <h3 className="text-dark dark:text-dark-text mb-2.5 line-clamp-2 text-base leading-snug font-semibold tracking-tight sm:text-[1.0625rem]">
+      <h3 className="semi-condensed text-ink dark:text-night-text mb-2.5 line-clamp-2 text-base leading-snug font-semibold sm:text-[1.0625rem]">
         {title}
       </h3>
 
-      <div className="mb-3 space-y-1.5 text-sm leading-snug text-gray-600 dark:text-gray-400">
+      <div className="text-dark dark:text-night-muted mb-3 space-y-1.5 text-sm leading-snug">
         <div className="flex gap-2">
           <Calendar className={metaIconClass} aria-hidden />
           <span className="min-w-0">{formatDateRange()}</span>
@@ -166,7 +162,7 @@ export default function DashboardCourseCard({
           </div>
         ) : null}
         <div className="flex gap-2">
-          <Tag className={metaIconClass} aria-hidden />
+          <TagIcon className={metaIconClass} aria-hidden />
           <span>{courseTypeLabels[courseType]}</span>
         </div>
         <div className="flex gap-2">
@@ -179,9 +175,9 @@ export default function DashboardCourseCard({
       </div>
 
       {creatorLine ? (
-        <p className="mb-3 flex items-center gap-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+        <p className="text-dark dark:text-night-muted mb-3 flex items-center gap-2 text-xs leading-normal">
           <User
-            className="size-[0.9375rem] shrink-0 text-gray-400 dark:text-gray-500"
+            className="size-[0.9375rem] shrink-0"
             aria-hidden
             strokeWidth={1.75}
           />
@@ -189,10 +185,12 @@ export default function DashboardCourseCard({
         </p>
       ) : null}
 
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-gray-100 pt-3.5 dark:border-gray-700/60">
+      <div className="border-rule dark:border-night-rule flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t pt-3.5">
         <Link
           href={`/dashboard/courses/${id}`}
-          className="text-primary hover:text-primary-dark inline-flex items-center gap-1 text-sm font-medium whitespace-nowrap transition-colors"
+          // Orange als Textfarbe fällt auf Papier unter AA — Messing-Tinte
+          // trägt denselben Akzent (nachts darf Orange selbst stehen).
+          className="text-primary-ink dark:text-primary inline-flex min-h-11 items-center gap-1 text-sm font-medium whitespace-nowrap hover:underline"
         >
           <Eye className="h-3.5 w-3.5" />
           Ansehen
@@ -200,7 +198,7 @@ export default function DashboardCourseCard({
 
         <Link
           href={`/dashboard/courses/${id}/edit`}
-          className="inline-flex items-center gap-1 text-sm whitespace-nowrap text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+          className="text-dark dark:text-night-muted hover:text-ink dark:hover:text-night-text inline-flex min-h-11 items-center gap-1 text-sm whitespace-nowrap transition-colors"
         >
           <Edit className="h-3.5 w-3.5" />
           Bearbeiten
@@ -208,7 +206,7 @@ export default function DashboardCourseCard({
 
         <Link
           href={`/dashboard/courses/${id}/participants`}
-          className="inline-flex items-center gap-1 text-sm whitespace-nowrap text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+          className="text-dark dark:text-night-muted hover:text-ink dark:hover:text-night-text inline-flex min-h-11 items-center gap-1 text-sm whitespace-nowrap transition-colors"
         >
           <Users className="h-3.5 w-3.5" />
           Teilnehmer
@@ -216,7 +214,7 @@ export default function DashboardCourseCard({
 
         <Link
           href={coursePath({ id, slug })}
-          className="hover:text-primary dark:hover:text-primary ml-auto inline-flex items-center text-gray-500 transition-colors dark:text-gray-500"
+          className="text-dark dark:text-night-muted hover:text-primary-ink dark:hover:text-primary ml-auto inline-flex min-h-11 min-w-11 items-center justify-center transition-colors"
           target="_blank"
           rel="noopener noreferrer"
           title="Öffentliche Kursseite"

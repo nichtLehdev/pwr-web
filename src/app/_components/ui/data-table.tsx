@@ -245,7 +245,7 @@ function Popover({
         left: position?.left ?? -9999,
         visibility: position ? "visible" : "hidden",
       }}
-      className="dark:border-dark-border dark:bg-dark-surface fixed z-50 w-64 rounded-lg border border-gray-200 bg-white p-3 text-sm normal-case shadow-xl"
+      className="border-ink bg-paper dark:border-night-text dark:bg-night-raised fixed z-50 w-64 border-2 p-3 text-sm normal-case"
     >
       {children}
     </div>,
@@ -257,8 +257,10 @@ function Popover({
 /* Column filters                                                             */
 /* -------------------------------------------------------------------------- */
 
+// Haarlinie statt 2px: Auf einer Arbeitsfläche mit vielen Feldern wird ein
+// doppelter Tintenrahmen zum Lärm. 2px bleibt den Hauptaktionen vorbehalten.
 const inputClass =
-  "dark:border-dark-border dark:bg-dark-background dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:ring-1 focus:outline-none";
+  "border-ink dark:border-night-text dark:bg-night dark:text-night-text w-full border bg-paper px-2 py-1.5 text-sm";
 
 function SetFilter<TData extends RowData>({
   column,
@@ -308,34 +310,34 @@ function SetFilter<TData extends RowData>({
         <button
           type="button"
           onClick={() => setSelection(visible.map((option) => option.value))}
-          className="text-primary hover:underline"
+          className="text-primary-ink dark:text-primary hover:underline"
         >
           Alle
         </button>
         <button
           type="button"
           onClick={() => setSelection([])}
-          className="dark:text-dark-muted text-gray-500 hover:underline"
+          className="text-dark dark:text-night-muted hover:underline"
         >
           Keine
         </button>
       </div>
-      <ul className="dark:border-dark-border max-h-56 space-y-1 overflow-y-auto rounded-md border border-gray-100 p-1">
+      <ul className="border-rule dark:border-night-rule max-h-56 space-y-1 overflow-y-auto border p-1">
         {visible.length === 0 ? (
-          <li className="dark:text-dark-muted px-1 py-2 text-xs text-gray-500">
+          <li className="text-dark dark:text-night-muted px-1 py-2 text-xs">
             Keine Werte
           </li>
         ) : (
           visible.map((option) => (
             <li key={option.value}>
-              <label className="dark:hover:bg-dark-background-secondary flex cursor-pointer items-center gap-2 rounded px-1 py-1 hover:bg-gray-50">
+              <label className="hover:bg-rule/60 dark:hover:bg-night-rule flex cursor-pointer items-center gap-2 px-1 py-1">
                 <input
                   type="checkbox"
                   checked={selected.includes(option.value)}
                   onChange={() => toggle(option.value)}
-                  className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                  className="accent-ink border-ink dark:accent-night-text dark:border-night-text h-4 w-4 border"
                 />
-                <span className="dark:text-dark-text truncate text-sm text-gray-700">
+                <span className="text-ink dark:text-night-text truncate text-sm">
                   {option.label}
                 </span>
               </label>
@@ -370,7 +372,7 @@ function RangeFilter<TData extends RowData>({
   return (
     <div className="space-y-2">
       <label className="block">
-        <span className="dark:text-dark-muted mb-1 block text-xs text-gray-500">
+        <span className="text-dark dark:text-night-muted mb-1 block text-xs">
           {type === "date" ? "Von" : "Mindestens"}
         </span>
         <input
@@ -381,7 +383,7 @@ function RangeFilter<TData extends RowData>({
         />
       </label>
       <label className="block">
-        <span className="dark:text-dark-muted mb-1 block text-xs text-gray-500">
+        <span className="text-dark dark:text-night-muted mb-1 block text-xs">
           {type === "date" ? "Bis" : "Höchstens"}
         </span>
         <input
@@ -435,10 +437,10 @@ function ColumnFilterMenu<TData extends RowData>({
         aria-label={`${columnLabel(column)} filtern`}
         aria-expanded={open}
         onClick={(event) => setAnchor(open ? null : event.currentTarget)}
-        className={`shrink-0 rounded p-1 transition-colors ${
+        className={`shrink-0 p-1 transition-colors ${
           isFiltered
-            ? "text-primary bg-primary/10"
-            : "dark:hover:bg-dark-background dark:hover:text-dark-text text-gray-400 hover:bg-gray-200 hover:text-gray-700"
+            ? "bg-ink text-paper dark:bg-night-text dark:text-night"
+            : "text-dark hover:bg-rule/60 hover:text-ink dark:text-night-muted dark:hover:bg-night-rule dark:hover:text-night-text"
         }`}
       >
         <FilterIcon className="h-3.5 w-3.5" />
@@ -446,14 +448,14 @@ function ColumnFilterMenu<TData extends RowData>({
       {open && (
         <Popover anchor={anchor} onClose={() => setAnchor(null)} align="end">
           <div className="mb-2 flex items-center justify-between gap-2">
-            <span className="dark:text-dark-text text-xs font-semibold tracking-wide text-gray-700 uppercase">
+            <span className="semi-condensed text-ink dark:text-night-text text-xs font-semibold tracking-wide uppercase">
               {columnLabel(column)}
             </span>
             <button
               type="button"
               onClick={() => setAnchor(null)}
               aria-label="Schließen"
-              className="dark:text-dark-muted text-gray-400 hover:text-gray-600"
+              className="text-dark hover:text-ink dark:text-night-muted dark:hover:text-night-text"
             >
               <XIcon className="h-4 w-4" />
             </button>
@@ -469,7 +471,7 @@ function ColumnFilterMenu<TData extends RowData>({
             <button
               type="button"
               onClick={() => column.setFilterValue(undefined)}
-              className="dark:text-dark-muted mt-2 flex w-full items-center justify-center gap-1 rounded-md border border-gray-200 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50 dark:border-gray-700"
+              className="border-rule text-dark hover:bg-rule/60 hover:text-ink dark:border-night-rule dark:text-night-muted dark:hover:bg-night-rule dark:hover:text-night-text mt-2 flex w-full items-center justify-center gap-1 border px-2 py-1 text-xs"
             >
               <FilterXIcon className="h-3.5 w-3.5" />
               Filter entfernen
@@ -506,27 +508,27 @@ function ColumnVisibilityMenu<TData extends RowData>({
         type="button"
         onClick={(event) => setAnchor(open ? null : event.currentTarget)}
         aria-expanded={open}
-        className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+        className="semi-condensed border-ink bg-paper text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:bg-night dark:text-night-text dark:hover:bg-night-text dark:hover:text-night inline-flex items-center gap-2 border px-3 py-2 text-sm font-semibold transition-colors"
       >
         <Columns3Icon className="h-4 w-4" />
         Spalten
       </button>
       {open && (
         <Popover anchor={anchor} onClose={() => setAnchor(null)} align="end">
-          <p className="dark:text-dark-text mb-2 text-xs font-semibold tracking-wide text-gray-700 uppercase">
+          <p className="semi-condensed text-ink dark:text-night-text mb-2 text-xs font-semibold tracking-wide uppercase">
             Spalten anzeigen
           </p>
           <ul className="max-h-72 space-y-1 overflow-y-auto">
             {hideable.map((column) => (
               <li key={column.id}>
-                <label className="dark:hover:bg-dark-background-secondary flex cursor-pointer items-center gap-2 rounded px-1 py-1 hover:bg-gray-50">
+                <label className="hover:bg-rule/60 dark:hover:bg-night-rule flex cursor-pointer items-center gap-2 px-1 py-1">
                   <input
                     type="checkbox"
                     checked={column.getIsVisible()}
                     onChange={column.getToggleVisibilityHandler()}
-                    className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                    className="accent-ink border-ink dark:accent-night-text dark:border-night-text h-4 w-4 border"
                   />
-                  <span className="dark:text-dark-text truncate text-sm text-gray-700">
+                  <span className="text-ink dark:text-night-text truncate text-sm">
                     {columnLabel(column)}
                   </span>
                 </label>
@@ -724,12 +726,12 @@ export function DataTable<TData extends RowData>({
 
   const columnCount = table.getVisibleLeafColumns().length;
   const emptyContent = emptyState ?? (
-    <span className="dark:text-dark-muted text-sm text-gray-500">
+    <span className="text-dark dark:text-night-muted text-sm">
       Keine Daten vorhanden.
     </span>
   );
   const noMatchContent = noMatchState ?? (
-    <span className="dark:text-dark-muted text-sm text-gray-500">
+    <span className="text-dark dark:text-night-muted text-sm">
       Keine Treffer für die aktuellen Filter.
     </span>
   );
@@ -742,14 +744,14 @@ export function DataTable<TData extends RowData>({
         <div className="mb-3 flex flex-wrap items-center gap-2">
           {searchable && (
             <div className="relative min-w-[200px] flex-1">
-              <SearchIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <SearchIcon className="text-dark dark:text-night-muted absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
               <input
                 type="search"
                 value={searchInput}
                 onChange={(event) => setSearchInput(event.target.value)}
                 placeholder={searchPlaceholder}
                 aria-label={searchPlaceholder}
-                className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 py-2 pr-3 pl-9 text-sm focus:ring-1 focus:outline-none"
+                className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper w-full border py-2 pr-3 pl-9 text-sm"
               />
             </div>
           )}
@@ -757,7 +759,7 @@ export function DataTable<TData extends RowData>({
             <button
               type="button"
               onClick={resetAll}
-              className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+              className="semi-condensed border-ink bg-paper text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:bg-night dark:text-night-text dark:hover:bg-night-text dark:hover:text-night inline-flex items-center gap-2 border px-3 py-2 text-sm font-semibold transition-colors"
             >
               <FilterXIcon className="h-4 w-4" />
               Filter zurücksetzen
@@ -768,11 +770,13 @@ export function DataTable<TData extends RowData>({
         </div>
       )}
 
-      <div className="dark:bg-dark-surface dark:border-dark-border overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+      {/* Kein Kasten mit Rundung und Schatten: Die Tabelle öffnet wie im Heft
+          mit einem 2px-Tintenstrich, die Zeilen trennen Haarlinien. */}
+      <div className="border-ink dark:border-night-text dark:bg-night bg-paper overflow-hidden border-t-2">
         {renderMobileRow && (
           <div className="md:hidden">
             {isLoading ? (
-              <p className="dark:text-dark-muted px-4 py-10 text-center text-sm text-gray-500">
+              <p className="text-dark dark:text-night-muted px-4 py-10 text-center text-sm">
                 Lade…
               </p>
             ) : pageRows.length === 0 ? (
@@ -780,7 +784,7 @@ export function DataTable<TData extends RowData>({
                 {rows.length === 0 ? emptyContent : noMatchContent}
               </div>
             ) : (
-              <ul className="dark:divide-dark-border divide-y divide-gray-200">
+              <ul className="divide-rule dark:divide-night-rule divide-y">
                 {pageRows.map((row) => (
                   <li
                     key={row.id}
@@ -802,7 +806,7 @@ export function DataTable<TData extends RowData>({
           className={`overflow-x-auto ${renderMobileRow ? "hidden md:block" : ""}`}
         >
           <table className="w-full text-left text-sm">
-            <thead className="dark:bg-dark-background-secondary dark:text-dark-muted bg-gray-50 text-xs tracking-wide text-gray-500 uppercase">
+            <thead className="semi-condensed border-rule dark:border-night-rule text-dark dark:text-night-muted border-b text-xs tracking-wide uppercase">
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map((header) => {
@@ -843,21 +847,21 @@ export function DataTable<TData extends RowData>({
                                 type="button"
                                 onClick={header.column.getToggleSortingHandler()}
                                 title="Sortieren — Umschalt+Klick sortiert nach mehreren Spalten"
-                                className="dark:hover:text-dark-text inline-flex min-w-0 items-center gap-1 hover:text-gray-800"
+                                className="hover:text-ink dark:hover:text-night-text inline-flex min-w-0 items-center gap-1"
                               >
                                 <span className="truncate">
                                   <table.FlexRender header={header} />
                                 </span>
                                 {sorted === "asc" ? (
-                                  <ArrowUpIcon className="text-primary h-3.5 w-3.5 shrink-0" />
+                                  <ArrowUpIcon className="text-ink dark:text-night-text h-3.5 w-3.5 shrink-0" />
                                 ) : sorted === "desc" ? (
-                                  <ArrowDownIcon className="text-primary h-3.5 w-3.5 shrink-0" />
+                                  <ArrowDownIcon className="text-ink dark:text-night-text h-3.5 w-3.5 shrink-0" />
                                 ) : (
-                                  <ChevronsUpDownIcon className="h-3.5 w-3.5 shrink-0 text-gray-300" />
+                                  <ChevronsUpDownIcon className="text-rule dark:text-night-rule h-3.5 w-3.5 shrink-0" />
                                 )}
                                 {sorting.length > 1 &&
                                   header.column.getSortIndex() > -1 && (
-                                    <span className="text-primary text-[10px]">
+                                    <span className="text-primary-ink dark:text-primary text-[10px]">
                                       {header.column.getSortIndex() + 1}
                                     </span>
                                   )}
@@ -878,12 +882,12 @@ export function DataTable<TData extends RowData>({
                 </tr>
               ))}
             </thead>
-            <tbody className="dark:divide-dark-border divide-y divide-gray-200">
+            <tbody className="divide-rule dark:divide-night-rule divide-y">
               {isLoading ? (
                 <tr>
                   <td
                     colSpan={columnCount}
-                    className="dark:text-dark-muted px-4 py-10 text-center text-sm text-gray-500"
+                    className="text-dark dark:text-night-muted px-4 py-10 text-center text-sm"
                   >
                     Lade…
                   </td>
@@ -901,7 +905,7 @@ export function DataTable<TData extends RowData>({
                     onClick={
                       onRowClick ? () => onRowClick(row.original) : undefined
                     }
-                    className={`dark:hover:bg-dark-background-secondary hover:bg-gray-50 ${
+                    className={`dark:hover:bg-night-raised hover:bg-rule/30 ${
                       onRowClick ? "cursor-pointer" : ""
                     } ${rowClassName?.(row.original) ?? ""}`}
                   >
@@ -910,7 +914,7 @@ export function DataTable<TData extends RowData>({
                       return (
                         <td
                           key={cell.id}
-                          className={`dark:text-dark-text px-4 py-3 align-middle text-gray-700 ${alignClass(meta?.align)} ${meta?.cellClassName ?? ""}`}
+                          className={`text-ink dark:text-night-text px-4 py-3 align-middle ${alignClass(meta?.align)} ${meta?.cellClassName ?? ""}`}
                         >
                           <table.FlexRender cell={cell} />
                         </td>
@@ -925,7 +929,7 @@ export function DataTable<TData extends RowData>({
       </div>
 
       {!hideFooter && !isLoading && totalCount > 0 && (
-        <div className="dark:text-dark-muted mt-3 flex flex-wrap items-center justify-between gap-3 text-sm text-gray-600">
+        <div className="text-dark dark:text-night-muted mt-3 flex flex-wrap items-center justify-between gap-3 text-sm">
           <span>
             {filteredCount} {filteredCount === 1 ? rowNoun[0] : rowNoun[1]}
             {canReset && filteredCount !== totalCount
@@ -941,7 +945,7 @@ export function DataTable<TData extends RowData>({
                   onChange={(event) =>
                     table.setPageSize(Number(event.target.value))
                   }
-                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text rounded-md border border-gray-300 px-2 py-1 text-sm"
+                  className="border-ink bg-paper text-ink dark:border-night-text dark:bg-night dark:text-night-text border px-2 py-1 text-sm"
                 >
                   {pageSizeOptions.map((size) => (
                     <option key={size} value={size}>
@@ -954,7 +958,7 @@ export function DataTable<TData extends RowData>({
                 type="button"
                 onClick={() => table.previousPage()}
                 disabled={!table.getCanPreviousPage()}
-                className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text rounded-md border border-gray-300 bg-white px-3 py-1 font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:hover:bg-white dark:hover:bg-gray-700 dark:disabled:hover:bg-transparent"
+                className="semi-condensed border-ink bg-paper text-ink hover:bg-ink hover:text-paper disabled:hover:bg-paper disabled:hover:text-ink dark:border-night-text dark:bg-night dark:text-night-text dark:hover:bg-night-text dark:hover:text-night dark:disabled:hover:bg-night dark:disabled:hover:text-night-text border px-3 py-1 font-semibold transition-colors disabled:opacity-40"
               >
                 Zurück
               </button>
@@ -965,7 +969,7 @@ export function DataTable<TData extends RowData>({
                 type="button"
                 onClick={() => table.nextPage()}
                 disabled={!table.getCanNextPage()}
-                className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text rounded-md border border-gray-300 bg-white px-3 py-1 font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:hover:bg-white dark:hover:bg-gray-700 dark:disabled:hover:bg-transparent"
+                className="semi-condensed border-ink bg-paper text-ink hover:bg-ink hover:text-paper disabled:hover:bg-paper disabled:hover:text-ink dark:border-night-text dark:bg-night dark:text-night-text dark:hover:bg-night-text dark:hover:text-night dark:disabled:hover:bg-night dark:disabled:hover:text-night-text border px-3 py-1 font-semibold transition-colors disabled:opacity-40"
               >
                 Weiter
               </button>

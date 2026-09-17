@@ -1,5 +1,4 @@
 "use client";
-import { Select } from "@/app/_components/ui";
 
 import {
   useState,
@@ -12,7 +11,15 @@ import {
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { api } from "@/trpc/react";
+import { cn } from "@/lib/utils";
 import PublicPage from "@/app/_components/general/public-page";
+import { ButtonLink } from "@/app/_components/programmheft/button-link";
+import { Heading } from "@/app/_components/programmheft/section-head";
+import { Panel } from "@/app/_components/programmheft/panel";
+import {
+  FieldLabel,
+  fieldControlClasses,
+} from "@/app/_components/programmheft/field";
 import { getDistrictColor } from "@/lib/district-color";
 import { geoToBezirkeMapPoint } from "@/lib/bezirke-map-geo";
 import {
@@ -22,18 +29,15 @@ import {
 } from "@/lib/bezirke-map-bounds";
 import { BEZIRK_REFERENCE_CITIES } from "@/lib/bezirke-reference-cities";
 import { wrapSvgText } from "@/lib/wrap-svg-text";
+import { ensemblePath } from "@/lib/slug";
 import LoadingSpinner from "@/app/_components/general/loading-spinner";
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
-  ClockIcon,
-  GlobeIcon,
-  MapPinIcon,
-  PhoneIcon,
+  ChevronDownIcon,
   SearchIcon,
 } from "lucide-react";
-import { MailIcon } from "lucide-react";
-import { ensemblePath } from "@/lib/slug";
+import { ChoirRow } from "./_components/choir-row";
 
 function ChorFindenContent() {
   const searchParams = useSearchParams();
@@ -193,10 +197,13 @@ function ChorFindenContent() {
   const bezirkPathStyle = (bezirkNumber: number) => ({
     opacity:
       selectedBezirk !== null && selectedBezirk !== bezirkNumber ? 0.1 : 1,
+    // Die Fläche ist über .bezirk-path standardmäßig ein Tonwert (45 %); der
+    // ausgewählte Bezirk hebt sich davon in voller Sättigung ab.
+    fillOpacity: selectedBezirk === bezirkNumber ? 1 : undefined,
     pointerEvents: (selectedBezirk !== null && selectedBezirk !== bezirkNumber
       ? "none"
       : "auto") as CSSProperties["pointerEvents"],
-    transition: "opacity 0.3s ease",
+    transition: "opacity 0.3s ease, fill-opacity 0.3s ease",
   });
 
   const filteredChoirs = useMemo(() => {
@@ -299,33 +306,40 @@ function ChorFindenContent() {
     };
 
     return (
-      <div className="mt-8 flex items-center justify-center gap-2">
+      <nav
+        aria-label="Seiten"
+        className="mt-10 flex items-center justify-center gap-2"
+      >
         <button
+          type="button"
           onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
           disabled={currentPage === 1}
-          className="dark:border-dark-border dark:hover:bg-dark-background-secondary rounded-lg border border-gray-300 px-3 py-2 text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-300"
+          className="text-ink hover:bg-ink hover:text-paper dark:text-night-text dark:hover:bg-night-text dark:hover:text-night disabled:hover:text-ink dark:disabled:hover:text-night-text flex h-11 w-11 items-center justify-center transition-colors disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
           aria-label="Vorherige Seite"
         >
-          <ArrowLeftIcon className="h-5 w-5" />
+          <ArrowLeftIcon aria-hidden className="h-5 w-5" />
         </button>
 
         {getPageNumbers().map((page, index) =>
           page === "..." ? (
             <span
               key={`ellipsis-${index}`}
-              className="px-2 text-gray-500 dark:text-gray-400"
+              className="text-dark dark:text-night-muted px-1"
             >
-              ...
+              …
             </span>
           ) : (
             <button
               key={page}
+              type="button"
               onClick={() => setCurrentPage(page as number)}
-              className={`rounded-lg border px-4 py-2 transition-colors ${
+              aria-current={currentPage === page ? "page" : undefined}
+              className={cn(
+                "semi-condensed border-ink dark:border-night-text flex h-11 min-w-11 items-center justify-center border-2 px-3 text-base font-semibold transition-colors",
                 currentPage === page
-                  ? "bg-primary border-primary text-white"
-                  : "dark:border-dark-border dark:hover:bg-dark-background-secondary border-gray-300 text-gray-700 hover:bg-gray-50 dark:text-gray-300"
-              }`}
+                  ? "bg-ink text-paper dark:bg-night-text dark:text-night"
+                  : "text-ink hover:bg-ink hover:text-paper dark:text-night-text dark:hover:bg-night-text dark:hover:text-night",
+              )}
             >
               {page}
             </button>
@@ -333,21 +347,21 @@ function ChorFindenContent() {
         )}
 
         <button
+          type="button"
           onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
           disabled={currentPage === totalPages}
-          className="dark:border-dark-border dark:hover:bg-dark-background-secondary rounded-lg border border-gray-300 px-3 py-2 text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-300"
+          className="text-ink hover:bg-ink hover:text-paper dark:text-night-text dark:hover:bg-night-text dark:hover:text-night disabled:hover:text-ink dark:disabled:hover:text-night-text flex h-11 w-11 items-center justify-center transition-colors disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
           aria-label="Nächste Seite"
         >
-          <ArrowRightIcon className="h-5 w-5" />
+          <ArrowRightIcon aria-hidden className="h-5 w-5" />
         </button>
-      </div>
+      </nav>
     );
   }
 
   return (
     <PublicPage
       title="Finde deinen Posaunenchor"
-      color="primary"
       breadcrumbs={[
         { label: "Start", href: "/" },
         { label: "Mitmachen", href: "/mitmachen" },
@@ -361,201 +375,197 @@ function ChorFindenContent() {
         </p>
       }
     >
-      {/* Kontakt-Info */}
-      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16">
-        <div className="container">
-          <div className="mx-auto max-w-4xl">
-            <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-8 shadow-lg md:p-10">
-              <div className="flex items-start gap-6">
-                <div className="bg-primary flex h-14 w-14 shrink-0 items-center justify-center rounded-full">
-                  <MapPinIcon className="h-7 w-7 text-white" />
-                </div>
-                <div className="flex-1">
-                  <h2 className="text-dark dark:text-dark-text mb-3 text-2xl font-bold">
-                    Persönliche Beratung gewünscht?
-                  </h2>
-                  <p className="mb-6 leading-relaxed text-gray-600 dark:text-gray-400">
-                    Unsere Regionalposaunenwarte und Bezirksobleute helfen dir
-                    gerne bei der Suche nach dem passenden Chor in deiner
-                    Region. Sie kennen die Chöre vor Ort und können dich
-                    individuell beraten.
-                  </p>
-                  <Link
-                    href="/kontakt"
-                    className="bg-primary hover:bg-primary-dark inline-flex items-center rounded-lg px-6 py-3 font-semibold text-white transition-colors"
-                  >
-                    <MailIcon className="mr-2 h-5 w-5" />
-                    Kontakt aufnehmen
-                  </Link>
-                </div>
-              </div>
-            </div>
+      {/* Persönliche Beratung */}
+      <section
+        aria-labelledby="beratung-heading"
+        className="bg-paper dark:bg-night py-16 md:py-24"
+      >
+        <div className="sheet lg:grid lg:grid-cols-12 lg:gap-10">
+          <div className="lg:col-span-4">
+            <Heading id="beratung-heading" className="hyphens-manual">
+              Persönliche Beratung gewünscht?
+            </Heading>
+          </div>
+          <div className="mt-8 lg:col-span-8 lg:mt-0">
+            <p className="text-ink dark:text-night-text max-w-[60ch] text-lg leading-relaxed">
+              Unsere Regionalposaunenwarte und Bezirksobleute helfen dir gerne
+              bei der Suche nach dem passenden Chor in deiner Region. Sie kennen
+              die Chöre vor Ort und können dich individuell beraten.
+            </p>
+            <ButtonLink href="/kontakt" className="mt-6">
+              Kontakt aufnehmen
+            </ButtonLink>
           </div>
         </div>
       </section>
 
       {/* Chor-Liste mit Filter */}
-      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
-        <div className="container">
-          <div className="mx-auto max-w-7xl">
-            <h2 className="text-dark dark:text-dark-text mb-6 text-2xl font-bold md:text-3xl lg:text-4xl">
-              Alle Posaunenchöre
-            </h2>
+      <section
+        aria-labelledby="choere-heading"
+        className="bg-paper dark:bg-night border-ink dark:border-night-rule border-t-2 py-16 md:py-24"
+      >
+        <div className="sheet">
+          <Heading id="choere-heading" rule>
+            Alle Posaunenchöre
+          </Heading>
 
-            <div className="mb-8 inline-flex rounded-lg border border-gray-300 p-1 dark:border-gray-600">
-              <button
-                type="button"
-                onClick={() => setViewMode("list")}
-                className={`rounded-md px-4 py-2 text-sm font-semibold transition-colors ${
-                  viewMode === "list"
-                    ? "bg-primary text-white"
-                    : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
-                }`}
-              >
-                Liste
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("map")}
-                className={`rounded-md px-4 py-2 text-sm font-semibold transition-colors ${
-                  viewMode === "map"
-                    ? "bg-primary text-white"
-                    : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
-                }`}
-              >
-                Karte
-              </button>
-            </div>
+          <div className="border-ink dark:border-night-text mt-6 inline-flex border-2">
+            <button
+              type="button"
+              onClick={() => setViewMode("list")}
+              aria-pressed={viewMode === "list"}
+              className={cn(
+                "semi-condensed min-h-11 px-5 text-base font-semibold transition-colors",
+                viewMode === "list"
+                  ? "bg-ink text-paper dark:bg-night-text dark:text-night"
+                  : "text-ink hover:bg-ink hover:text-paper dark:text-night-text dark:hover:bg-night-text dark:hover:text-night",
+              )}
+            >
+              Liste
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("map")}
+              aria-pressed={viewMode === "map"}
+              className={cn(
+                "semi-condensed border-ink dark:border-night-text min-h-11 border-l-2 px-5 text-base font-semibold transition-colors",
+                viewMode === "map"
+                  ? "bg-ink text-paper dark:bg-night-text dark:text-night"
+                  : "text-ink hover:bg-ink hover:text-paper dark:text-night-text dark:hover:bg-night-text dark:hover:text-night",
+              )}
+            >
+              Karte
+            </button>
+          </div>
 
-            <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-              {/* Left Column: Filters */}
+          <div
+            className={cn(
+              "mt-8",
+              viewMode === "list" && "lg:grid lg:grid-cols-12 lg:gap-10",
+            )}
+          >
+            {/* Left Column: Filters + map */}
+            <div
+              className={cn(
+                "space-y-8",
+                viewMode === "list" && "lg:col-span-4",
+              )}
+            >
+              {/* Filter */}
               <div
                 className={
                   viewMode === "map"
-                    ? "space-y-6 lg:col-span-3"
-                    : "space-y-6 lg:col-span-1"
+                    ? "flex flex-wrap items-end gap-6"
+                    : "space-y-6"
                 }
               >
-                {/* Traditional Filters */}
-                <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
-                  <h3 className="text-dark dark:text-dark-text mb-4 text-lg font-bold">
-                    Filter
-                  </h3>
-
-                  <div
-                    className={
-                      viewMode === "map"
-                        ? "flex flex-wrap items-end gap-4"
-                        : "space-y-4"
-                    }
-                  >
-                    {/* Bezirk-Filter */}
-                    <div className={viewMode === "map" ? "w-56" : undefined}>
-                      <label
-                        htmlFor="district"
-                        className="text-dark dark:text-dark-text mb-2 block text-sm font-semibold"
-                      >
-                        Bezirk
-                      </label>
-                      <Select
-                        id="district"
-                        value={selectedBezirk?.toString() || "all"}
-                        onChange={(e) => {
-                          setSelectedBezirk(
-                            e.target.value === "all"
-                              ? null
-                              : parseInt(e.target.value),
-                          );
-                          setCurrentPage(1);
-                        }}
-                        className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
-                      >
-                        <option value="all">Alle Bezirke</option>
-                        {allBezirke.map((bezirk) => (
-                          <option
-                            key={bezirk.id}
-                            value={bezirk.number.toString()}
-                          >
-                            Bezirk {bezirk.number} - {bezirk.shortName}
-                          </option>
-                        ))}
-                      </Select>
-                    </div>
-
-                    {/* Stadt/PLZ-Suche */}
-                    <div className={viewMode === "map" ? "w-64" : undefined}>
-                      <label
-                        htmlFor="search"
-                        className="text-dark dark:text-dark-text mb-2 block text-sm font-semibold"
-                      >
-                        Suche
-                      </label>
-                      <input
-                        id="search"
-                        type="text"
-                        value={searchTerm}
-                        onChange={(e) => {
-                          setSearchTerm(e.target.value);
-                          setCurrentPage(1);
-                        }}
-                        placeholder="Stadt, PLZ oder Chorname"
-                        className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 placeholder:text-gray-400 focus:border-transparent focus:ring-2 dark:placeholder:text-gray-500"
-                      />
-                    </div>
-
-                    {/* Results count */}
-                    <div
-                      className={
-                        viewMode === "map"
-                          ? "flex items-center gap-3 pb-2"
-                          : "flex items-center justify-between pt-2"
-                      }
+                {/* Bezirk-Filter */}
+                <div className={viewMode === "map" ? "w-56" : undefined}>
+                  <FieldLabel htmlFor="district">Bezirk</FieldLabel>
+                  <div className="relative">
+                    <select
+                      id="district"
+                      value={selectedBezirk?.toString() || "all"}
+                      onChange={(e) => {
+                        setSelectedBezirk(
+                          e.target.value === "all"
+                            ? null
+                            : parseInt(e.target.value),
+                        );
+                        setCurrentPage(1);
+                      }}
+                      className={cn(
+                        fieldControlClasses,
+                        "appearance-none pr-10",
+                      )}
                     >
-                      <div className="text-sm text-gray-600 dark:text-gray-400">
-                        <span className="font-semibold">
-                          {filteredChoirs.length}
-                        </span>{" "}
-                        {filteredChoirs.length === 1 ? "Chor" : "Chöre"}{" "}
-                        gefunden
-                      </div>
-                      {hasActiveFilters && (
-                        <button
-                          onClick={clearFilters}
-                          className="text-primary hover:text-primary-dark text-sm font-semibold"
+                      <option value="all">Alle Bezirke</option>
+                      {allBezirke.map((bezirk) => (
+                        <option
+                          key={bezirk.id}
+                          value={bezirk.number.toString()}
                         >
-                          Zurücksetzen
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Pagination info */}
-                    {viewMode === "list" &&
-                      filteredChoirs.length > CHOIRS_PER_PAGE && (
-                        <div className="dark:border-dark-border w-full border-t pt-2 text-sm text-gray-600 dark:text-gray-400">
-                          Zeige {startIndex + 1} bis{" "}
-                          {Math.min(endIndex, filteredChoirs.length)} von{" "}
-                          {filteredChoirs.length}
-                        </div>
-                      )}
+                          Bezirk {bezirk.number} · {bezirk.shortName}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDownIcon
+                      aria-hidden
+                      className="text-dark dark:text-night-muted pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2"
+                    />
                   </div>
                 </div>
 
-                {/* Map placeholder - you can add your interactive map here */}
+                {/* Stadt/PLZ-Suche */}
+                <div className={viewMode === "map" ? "w-64" : undefined}>
+                  <FieldLabel htmlFor="search">Suche</FieldLabel>
+                  <div className="border-rule dark:border-night-rule focus-within:border-ink dark:focus-within:border-night-text bg-paper dark:bg-night flex min-h-11 items-center gap-2 border-2 px-3 transition-colors">
+                    <SearchIcon
+                      aria-hidden
+                      className="text-dark dark:text-night-muted h-5 w-5 shrink-0"
+                    />
+                    <input
+                      id="search"
+                      type="text"
+                      value={searchTerm}
+                      onChange={(e) => {
+                        setSearchTerm(e.target.value);
+                        setCurrentPage(1);
+                      }}
+                      placeholder="Stadt, PLZ oder Chorname"
+                      className="text-ink dark:text-night-text placeholder:text-dark dark:placeholder:text-night-muted w-full bg-transparent text-base outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Results count */}
                 <div
-                  className={`dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md ${
-                    viewMode === "map" ? "block" : "hidden lg:block"
-                  }`}
+                  className={
+                    viewMode === "map"
+                      ? "flex items-center gap-4 pb-2"
+                      : "flex items-center justify-between pt-2"
+                  }
                 >
-                  <h3 className="text-dark dark:text-dark-text mb-4 text-lg font-bold">
+                  <p className="text-dark dark:text-night-muted text-sm">
+                    <span className="text-ink dark:text-night-text font-semibold">
+                      {filteredChoirs.length}
+                    </span>{" "}
+                    {filteredChoirs.length === 1 ? "Chor" : "Chöre"} gefunden
+                  </p>
+                  {hasActiveFilters && (
+                    <button
+                      type="button"
+                      onClick={clearFilters}
+                      className="link-ink inline-flex min-h-11 items-center"
+                    >
+                      Zurücksetzen
+                    </button>
+                  )}
+                </div>
+
+                {/* Pagination info */}
+                {viewMode === "list" &&
+                  filteredChoirs.length > CHOIRS_PER_PAGE && (
+                    <p className="border-rule dark:border-night-rule text-dark dark:text-night-muted w-full border-t pt-3 text-sm">
+                      Zeige {startIndex + 1} bis{" "}
+                      {Math.min(endIndex, filteredChoirs.length)} von{" "}
+                      {filteredChoirs.length}
+                    </p>
+                  )}
+              </div>
+
+              {/* Karte */}
+              <div className={viewMode === "map" ? "block" : "hidden lg:block"}>
+                <Panel>
+                  <h3 className="condensed text-ink dark:text-night-text text-[1.5rem] leading-tight font-bold">
                     Bezirk auf Karte wählen
                   </h3>
-                  <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-dark dark:text-night-muted mt-2 text-[0.9375rem]">
                     Klicke auf einen Bezirk, um Chöre zu filtern
                   </p>
-                  {/* Add your SVG map here */}
                   <div
                     ref={mapContainerRef}
-                    className="relative"
+                    className="relative mt-4"
                     onClick={handleMapBackgroundClick}
                     onMouseMove={(e) => {
                       if (isCoarsePointer) return;
@@ -590,7 +600,7 @@ function ChorFindenContent() {
                           fillRule="nonzero"
                           stroke="currentColor"
                           strokeWidth={2}
-                          className="text-dark"
+                          className="text-dark dark:text-night-muted"
                         />
                         <path
                           d="M1479.387,1079.239c-7.498,4.452 -14.059,16.636 -17.339,32.336c-4.686,22.494 -4.218,26.712 5.155,45.223c8.201,16.168 8.67,16.402 15.699,14.996c16.402,-3.515 27.884,-23.9 28.352,-50.612c0.234,-12.184 0.703,-13.825 5.858,-14.996c4.686,-1.172 5.155,-2.343 3.983,-8.904c-2.109,-11.247 -14.059,-20.151 -27.181,-20.151c-5.858,0 -12.419,0.937 -14.528,2.109Zm29.29,10.544c7.732,7.264 7.732,7.732 0.469,10.544c-5.389,2.109 -5.858,3.28 -4.452,11.247c3.046,19.448 -7.498,48.035 -19.448,52.253c-4.452,1.64 -5.858,0.703 -8.904,-4.921c-2.812,-5.389 -6.268,-12.371 -7.58,-14.884c-2.984,-5.716 -3.901,-15.108 -0.855,-27.293c1.172,-4.452 2.812,-11.013 3.515,-14.293c0.703,-3.28 3.515,-8.904 6.327,-12.184c6.795,-8.67 21.557,-8.904 30.93,-0.469Z"
@@ -598,7 +608,7 @@ function ChorFindenContent() {
                           fillRule="nonzero"
                           stroke="currentColor"
                           strokeWidth={2}
-                          className="text-dark"
+                          className="text-dark dark:text-night-muted"
                         />
                         <path
                           d="M135.669,2.171c9.714,-2.208 10.155,-1.987 19.648,6.844c5.298,5.078 11.038,12.363 12.805,16.558l3.091,7.506l24.064,-1.545l24.064,-1.325l5.961,7.727c3.091,4.195 7.285,7.727 9.052,7.727c5.961,0 24.947,9.272 24.947,12.363c0,3.312 7.727,6.182 11.038,4.195c1.104,-0.662 2.208,-2.649 2.208,-4.195c0,-1.766 3.091,-3.532 6.844,-4.415c5.298,-1.104 11.701,1.104 30.245,9.935c38.855,18.545 58.283,26.713 63.14,26.492c2.649,-0.221 10.376,-0.883 17.22,-1.545c9.052,-0.883 15.454,-0.221 22.077,2.428c8.831,3.312 10.155,3.312 18.324,-0.221c4.857,-1.987 14.571,-3.753 21.635,-3.974c15.233,-0.221 19.428,3.312 24.505,20.752c1.766,5.961 4.857,13.246 7.065,16.558c3.091,4.636 4.857,5.519 10.155,4.415c3.532,-0.883 11.259,-0.883 17.441,0c10.155,1.325 11.259,2.208 16.778,11.701c3.312,5.74 9.272,14.35 13.246,19.428c5.078,6.402 7.285,11.259 7.285,16.999c0,13.246 1.325,14.792 14.571,14.792c9.714,0 12.142,0.883 14.35,4.636c3.312,6.623 -0.662,13.688 -13.688,23.181c-16.558,12.142 -26.272,24.064 -26.272,32.453c0,3.753 -2.428,11.038 -5.519,15.895c-6.623,10.818 -6.623,11.259 -1.104,12.805c2.87,0.662 4.415,3.091 4.415,6.623c0,2.87 1.545,6.844 3.532,8.389c1.987,1.766 5.519,7.065 7.506,11.922c1.987,4.857 5.298,10.155 7.285,11.701c1.987,1.766 4.636,6.402 5.961,10.597c1.987,5.74 3.753,7.506 7.727,7.506c7.065,0 29.804,-11.701 36.206,-18.545c7.065,-7.506 21.194,-8.168 23.402,-1.325c0.883,2.428 4.415,5.961 7.948,7.727c3.532,1.987 8.831,7.506 11.922,12.363c3.974,5.961 7.727,9.052 12.142,10.155c8.389,1.545 19.869,14.35 19.869,21.856c0,3.312 2.208,9.493 4.636,14.129c4.195,7.506 4.415,9.272 1.987,15.233c-1.325,3.532 -5.078,8.168 -7.948,10.155c-6.402,4.195 -7.065,13.467 -1.325,15.454c2.428,0.662 6.623,6.844 9.935,14.35c5.298,12.584 5.961,13.246 13.467,13.246c8.831,0 9.493,1.766 5.519,13.025c-3.091,8.61 0.221,21.856 7.727,32.232c2.649,3.532 6.182,9.935 7.727,13.688c3.753,9.052 9.272,9.493 19.428,1.545c5.298,-3.974 9.493,-5.298 15.454,-4.857c10.376,0.883 15.895,8.168 17.662,23.843c0.662,6.623 2.208,13.246 3.312,14.571c1.104,1.545 6.623,3.312 12.363,4.195c5.74,0.662 12.584,2.87 15.233,4.636c6.844,4.415 15.454,3.753 22.077,-1.325c13.467,-10.597 33.336,-2.208 37.752,15.895c2.208,9.052 0.442,31.791 -2.87,37.089c-0.662,1.104 0.662,4.857 3.091,7.948c2.649,3.312 4.636,7.285 4.636,8.831c0,2.208 3.091,3.091 11.038,3.091l11.038,0l0,7.727c0,5.961 1.987,9.935 8.831,17.441c4.857,5.298 8.831,11.038 8.831,13.025c0,1.987 2.208,5.74 5.078,8.168c4.415,4.415 6.402,4.636 22.518,3.312c19.207,-1.545 20.752,-0.883 30.245,14.571c5.078,8.168 19.207,9.935 31.128,3.974c6.402,-3.312 10.818,-4.195 17.22,-3.091c10.155,1.766 10.376,1.987 12.363,15.895c0.662,5.74 3.091,13.246 5.298,16.558c2.649,3.753 4.195,9.714 4.195,16.558c0,15.675 7.506,29.362 19.207,34.661c9.052,4.415 14.35,12.805 16.558,26.713c0.662,4.195 12.142,9.052 31.128,13.246c4.636,0.883 5.961,2.428 5.961,7.285c0,3.312 -1.545,7.948 -3.312,10.155c-1.766,2.428 -3.312,8.61 -3.312,13.688l0,9.272l10.818,2.649c8.831,1.987 12.584,4.636 20.09,13.467c5.078,5.961 12.142,12.363 15.895,14.35c5.961,3.091 6.623,4.195 5.519,11.259c-0.883,4.857 -0.221,10.155 1.987,14.129c2.649,5.298 4.636,6.402 11.038,6.402c4.195,0 10.597,1.545 14.129,3.312c5.961,3.091 6.623,4.415 6.623,14.792c0,11.922 5.961,23.843 20.973,42.608c3.974,4.857 8.389,12.363 9.935,16.778c2.649,7.506 2.428,8.61 -5.078,19.869c-4.415,6.623 -10.376,14.35 -13.467,17.22c-6.844,6.402 -11.48,4.415 -26.713,-12.363c-8.389,-9.052 -13.025,-12.142 -19.207,-13.246c-11.701,-1.766 -15.675,1.987 -13.908,13.025c1.987,11.701 -1.325,15.012 -14.571,15.012c-10.376,0 -10.818,-0.221 -10.818,-6.402c0,-11.48 -1.766,-13.467 -12.363,-13.467c-8.831,0 -10.155,-0.662 -15.454,-8.831c-4.636,-7.065 -6.844,-8.61 -10.818,-7.506c-2.87,0.662 -5.74,0.221 -6.402,-1.104c-3.753,-5.961 -13.025,-2.208 -24.947,9.714c-6.623,6.623 -11.48,12.805 -10.818,13.908c0.662,1.104 4.195,3.312 7.948,4.857c10.818,4.415 8.389,10.818 -12.584,33.115l-7.285,7.948l6.844,10.818c4.415,6.844 6.182,11.922 5.078,13.467c-10.818,14.35 -10.818,13.908 -7.285,27.375c3.312,12.363 3.312,12.805 -1.766,17.22c-6.844,5.961 -6.402,9.052 1.325,11.701c4.195,1.545 7.285,4.636 8.831,9.272c2.208,5.961 1.766,7.948 -3.091,15.233c-3.532,5.298 -5.519,11.48 -5.519,16.999c0,10.155 -4.195,14.35 -24.064,23.622c-13.688,6.623 -17.662,10.597 -17.882,17.882c0,6.402 5.961,6.623 17.662,0.662c4.857,-2.428 9.052,-4.415 9.493,-4.415c0.662,0 1.766,4.415 2.649,10.155c1.104,7.727 2.649,10.376 6.844,11.922c3.091,1.325 5.298,3.974 5.298,6.182c0,2.428 2.87,9.714 6.623,16.558l6.402,12.142l-6.402,2.649c-8.61,3.532 -8.389,7.285 1.104,11.701c6.182,2.87 7.727,4.857 7.727,10.155c0,3.532 -1.545,7.506 -3.312,9.052c-1.766,1.325 -4.636,7.727 -6.402,14.129c-4.636,15.454 -8.831,18.986 -22.739,18.986c-23.181,0 -23.622,3.532 -2.87,26.492c12.805,14.35 15.454,18.324 15.454,24.726c0,9.935 -4.857,14.129 -18.103,16.116c-8.389,1.325 -10.597,2.428 -10.597,5.74c0,2.428 1.545,4.195 3.312,4.195c5.961,0 18.103,13.025 24.947,27.155c6.182,12.363 8.168,14.571 16.558,17.882c23.843,9.052 41.284,31.57 41.284,53.205c0,8.168 1.325,11.48 7.506,18.103c3.974,4.636 11.48,14.571 16.558,22.077c5.078,7.506 12.584,15.675 16.778,18.324c3.974,2.428 15.233,13.025 24.947,23.181c13.688,14.35 18.545,21.415 21.415,30.245c2.208,6.402 6.844,18.103 10.155,25.83c3.532,7.727 6.402,17.441 6.402,21.635c0,4.857 2.649,11.48 7.727,18.986c9.272,13.688 9.714,20.311 1.766,28.479c-5.74,6.182 -5.961,7.285 -6.182,30.025c0,20.973 -0.662,24.947 -5.74,34.661c-4.636,9.052 -6.623,11.259 -12.142,11.701c-4.415,0.442 -7.948,-0.883 -10.818,-3.974c-6.623,-7.285 -17.882,-5.961 -26.272,3.312c-5.74,6.182 -8.831,7.727 -15.233,7.727c-4.415,0 -8.61,-1.104 -9.272,-2.208c-2.87,-4.636 -11.259,-2.208 -15.233,4.636c-2.208,3.532 -7.285,9.714 -11.48,13.467c-4.415,3.974 -7.506,9.052 -7.506,11.922c0,2.87 -3.091,8.61 -6.623,12.584c-3.753,4.195 -6.623,8.61 -6.623,9.714c0,1.325 3.532,3.974 7.727,6.182c9.052,5.078 9.935,9.052 5.961,25.83c-2.428,9.493 -4.195,12.805 -7.727,13.688c-2.87,0.662 -5.519,0 -6.623,-1.987c-2.649,-5.078 -16.778,-3.974 -28.258,1.987c-5.74,2.649 -12.363,5.74 -15.012,6.402c-4.195,1.104 -4.636,2.649 -4.636,15.454c0,9.714 1.766,18.765 5.519,28.7c5.961,16.337 4.857,18.324 -9.272,15.675c-5.961,-1.104 -8.61,-0.442 -13.025,3.753c-5.078,4.636 -5.961,4.857 -14.792,2.208c-19.207,-5.74 -19.207,-5.74 -19.207,0.442c0,16.999 -15.454,29.362 -18.324,14.792c-1.545,-7.506 -7.065,-8.831 -9.272,-2.208c-1.987,6.402 -12.363,11.038 -24.505,11.038c-17.22,0 -26.272,11.922 -16.116,21.194c10.818,9.935 -1.766,32.232 -24.285,43.271c-25.388,12.363 -41.063,22.96 -47.465,32.232l-6.623,9.272l5.74,5.961c3.091,3.532 8.168,10.155 11.259,15.012c7.948,12.363 10.597,15.233 17.441,19.648c4.636,3.091 6.182,5.74 6.182,11.259c0,6.402 -0.883,7.506 -9.714,10.818c-7.506,2.87 -10.818,5.74 -15.454,14.35c-6.182,11.48 -7.506,21.856 -3.091,26.272c1.987,1.987 1.545,4.195 -2.649,9.714l-5.078,7.065l4.636,3.091c5.519,3.532 6.182,10.597 1.545,16.778c-3.091,4.195 -6.844,4.857 -59.387,9.935c-21.194,1.987 -27.155,5.519 -24.726,14.571c0.662,2.428 1.325,9.052 1.325,14.792c0,7.506 1.325,11.922 5.078,16.558c5.078,5.961 5.078,6.844 3.091,28.7c-1.104,12.363 -1.545,23.843 -0.883,25.388c0.662,1.766 12.915,15.844 6.844,20.532c-0.662,2.87 -2.649,6.402 -4.415,7.948c-1.766,1.325 -3.091,5.74 -3.091,9.935c0,5.298 -1.104,7.506 -4.415,8.61c-3.091,0.883 -4.415,3.312 -4.415,7.727c0,4.857 -1.325,6.402 -5.961,7.727c-6.844,1.545 -13.025,-3.974 -15.233,-14.129c-0.883,-3.091 -2.87,-8.168 -4.857,-11.259c-1.987,-3.091 -4.636,-11.038 -5.961,-17.662c-2.208,-11.701 -2.649,-12.142 -10.155,-12.805c-6.182,-0.442 -8.61,-2.208 -13.025,-9.272c-5.078,-8.168 -5.961,-8.61 -13.246,-7.506c-6.182,1.104 -8.61,0.221 -11.922,-3.312c-5.078,-5.519 -10.818,-5.961 -14.792,-1.104c-2.87,3.532 -14.792,3.532 -28.921,-0.221c-5.078,-1.325 -6.182,-0.883 -7.285,3.974c-0.883,3.091 -0.221,7.948 1.325,10.818c5.298,9.714 -0.442,33.778 -9.493,40.401c-3.974,2.649 -5.298,2.428 -10.376,-1.104c-7.285,-5.298 -21.856,-8.61 -37.972,-8.831c-11.038,0 -12.805,-0.662 -19.428,-7.506c-7.065,-7.285 -7.506,-8.389 -6.182,-20.09c1.104,-10.597 0.662,-12.363 -3.312,-14.571c-2.428,-1.325 -7.285,-8.61 -10.818,-16.337c-3.312,-7.727 -8.61,-15.895 -11.701,-18.103c-3.753,-3.091 -5.74,-7.065 -6.182,-13.025c-0.662,-7.506 -1.987,-9.493 -11.701,-16.337c-16.116,-11.48 -26.934,-23.402 -28.479,-32.012c-1.104,-5.078 -4.195,-9.714 -9.935,-14.129c-6.844,-5.298 -8.168,-7.948 -7.285,-12.363c0.662,-4.415 2.208,-5.519 7.285,-5.519c3.532,0 6.402,-0.221 6.402,-0.662c0,-4.415 -10.597,-18.765 -17.662,-23.843c-10.155,-7.506 -15.454,-16.116 -11.701,-19.869c1.545,-1.545 1.545,-4.195 0,-8.831c-1.987,-4.857 -4.857,-7.065 -13.688,-9.935c-5.961,-1.987 -15.454,-6.844 -20.973,-10.818c-5.519,-3.974 -15.233,-9.052 -21.635,-11.259c-11.038,-3.974 -11.922,-3.974 -18.324,-0.221c-10.155,5.74 -18.545,4.857 -23.402,-2.208c-6.623,-9.493 -10.155,-35.985 -9.493,-69.101c0.442,-31.791 2.208,-38.193 14.129,-52.322c3.091,-3.753 8.61,-13.025 12.363,-20.752c5.74,-12.142 6.623,-15.675 5.519,-25.388l-1.325,-11.038l19.207,-21.415c10.376,-11.701 19.869,-21.415 20.973,-21.415c2.87,0 2.428,-8.389 -1.104,-20.09c-2.87,-9.052 -2.649,-10.376 0.883,-15.233c3.091,-4.195 3.532,-6.623 1.766,-10.818c-1.104,-3.091 -1.325,-11.48 -0.662,-18.545c1.325,-10.597 0.883,-13.688 -2.428,-17.22c-4.415,-5.078 -7.948,-5.078 -19.648,-0.883c-12.363,4.415 -21.856,4.195 -26.272,-0.883c-1.987,-2.208 -7.506,-5.74 -12.363,-7.948c-4.857,-2.208 -9.272,-5.961 -10.155,-8.61c-2.649,-9.052 -5.078,-10.376 -12.142,-6.844c-7.727,4.195 -18.324,4.195 -22.298,0.221c-1.766,-1.545 -4.857,-6.844 -7.065,-11.48c-2.87,-6.623 -7.506,-10.818 -20.973,-18.986c-15.233,-9.272 -17.441,-11.259 -19.869,-19.869c-1.545,-5.078 -5.298,-13.908 -8.168,-19.428c-2.649,-5.519 -6.182,-12.584 -7.285,-16.116c-1.987,-4.857 -3.532,-5.961 -10.155,-5.961c-6.844,0 -8.168,-1.104 -12.363,-9.272c-2.649,-5.298 -7.285,-13.246 -10.376,-17.882c-7.727,-11.701 -13.908,-29.142 -15.233,-42.388c-0.442,-6.182 -2.87,-14.571 -5.078,-18.986c-3.753,-7.065 -4.195,-9.935 -2.208,-23.181c3.091,-22.518 8.168,-50.115 9.935,-54.309c0.883,-1.987 0.221,-5.74 -1.104,-8.389c-2.208,-3.974 -1.545,-6.844 3.312,-16.778c3.312,-6.623 8.389,-13.688 11.259,-15.675c4.857,-3.091 5.298,-4.857 5.298,-20.532c0,-19.648 4.195,-29.804 13.025,-32.012c3.091,-0.883 6.844,-3.312 8.61,-5.74c1.545,-2.208 10.376,-8.389 19.428,-13.246c17.441,-9.714 20.311,-13.246 25.168,-31.791c1.325,-4.857 4.636,-11.48 7.285,-14.792c4.857,-5.961 5.298,-6.182 20.09,-4.415c13.688,1.766 15.675,1.545 20.752,-2.87c8.168,-7.065 4.636,-13.688 -16.778,-32.674c-8.61,-7.285 -9.052,-15.233 -2.649,-37.972c5.74,-20.311 5.74,-32.232 0,-37.531c-8.61,-7.727 -13.908,-18.545 -12.363,-25.609c1.545,-8.389 -4.195,-8.831 -6.402,-0.442c-1.766,7.285 -7.285,13.908 -11.259,13.908c-1.545,0 -6.402,-4.636 -11.038,-10.155c-10.155,-12.142 -18.324,-16.778 -29.142,-15.895c-7.285,0.662 -8.61,0 -11.48,-6.402c-2.208,-4.857 -4.857,-7.285 -7.948,-7.285c-5.298,0 -8.389,-7.506 -5.519,-13.025c1.325,-1.987 0.442,-6.182 -2.208,-11.038c-6.182,-11.48 -5.298,-15.012 5.961,-26.492c5.519,-5.519 11.259,-11.701 12.805,-13.467c1.325,-1.987 5.078,-5.078 8.61,-7.285c7.285,-4.636 7.727,-10.376 1.104,-16.337c-8.389,-7.727 -13.246,-9.052 -24.285,-7.285c-9.714,1.325 -10.818,1.104 -14.129,-3.974c-2.649,-3.974 -3.312,-8.168 -2.208,-15.012c1.104,-8.61 0.442,-10.376 -7.506,-19.869c-4.857,-5.74 -11.259,-16.778 -14.571,-24.505l-5.961,-13.908l-10.155,0.221c-5.519,0.221 -13.467,-0.442 -17.441,-1.325c-5.74,-1.325 -8.831,-0.662 -13.688,3.091c-3.532,2.428 -6.844,3.753 -7.285,2.87c-0.442,-0.883 -1.545,-7.727 -2.428,-15.233c-2.428,-22.077 -7.065,-34.219 -15.895,-42.608c-4.415,-4.195 -9.493,-11.038 -11.259,-15.233c-3.091,-7.285 -2.87,-7.727 2.428,-13.246c4.857,-4.857 6.402,-5.298 9.935,-3.091c3.974,2.428 4.415,1.766 6.623,-8.389c4.415,-19.869 13.246,-31.57 24.064,-31.791l5.961,0l0.442,-49.894l-6.182,-1.325c-3.532,-0.662 -7.506,-2.649 -8.831,-4.195c-1.325,-1.766 -6.182,-3.091 -10.597,-3.091l-8.168,0l-2.87,-13.467c-2.428,-10.376 -2.428,-14.571 -0.442,-18.986c1.987,-4.195 1.987,-6.402 0.221,-8.168c-3.312,-3.312 -46.141,-4.636 -49.231,-1.545c-1.325,1.325 -6.182,2.428 -10.818,2.428l-8.389,0l0,-12.805c0,-10.376 -1.104,-14.35 -6.623,-22.518c-4.195,-6.182 -6.623,-12.805 -6.623,-17.441c0,-7.948 5.078,-15.675 10.376,-15.675c1.766,0 5.961,-3.091 9.493,-7.065c6.402,-7.065 6.402,-7.065 11.259,-2.649c2.649,2.208 7.506,9.052 10.818,14.792c5.961,10.597 5.961,10.597 9.272,5.519c1.766,-2.87 4.857,-9.493 6.844,-15.012c6.623,-17.22 13.467,-27.155 23.402,-34.219c5.519,-3.532 17.662,-14.35 27.375,-23.843c9.714,-9.493 19.207,-16.999 21.635,-16.999c2.428,0 6.623,-2.428 9.272,-5.298c2.649,-2.87 7.065,-5.961 9.935,-6.844c3.753,-1.104 4.857,-2.649 3.753,-5.078c-0.883,-2.208 -1.987,-5.078 -2.649,-6.402c-0.662,-1.545 1.987,-5.961 5.961,-9.493c9.935,-9.272 6.844,-10.597 -5.961,-2.87c-16.116,9.493 -22.077,11.701 -29.362,10.376c-7.285,-1.545 -7.065,-1.545 -11.922,-25.609l-3.532,-16.999l7.727,-14.792c4.415,-8.389 9.272,-16.558 10.818,-18.545c7.065,-8.168 25.388,-41.725 27.817,-50.777c3.753,-14.35 6.844,-19.648 11.48,-21.194c2.208,-0.662 6.623,-6.402 9.935,-12.584c4.636,-9.052 5.961,-15.012 6.182,-27.375c0.442,-11.48 -0.442,-16.116 -2.649,-16.999c-3.753,-1.545 -3.753,-9.493 0.442,-21.194c4.415,-12.363 4.195,-42.829 -0.221,-64.023c-2.649,-13.025 -4.857,-18.103 -10.597,-24.285c-3.974,-4.195 -11.701,-14.129 -16.778,-22.077c-5.298,-7.948 -15.454,-19.869 -22.739,-26.492c-18.103,-16.558 -19.648,-20.973 -15.675,-44.154c1.766,-10.155 2.649,-19.869 2.208,-21.415c-0.662,-1.766 -4.857,-2.87 -10.597,-2.87c-16.116,-0.221 -26.934,-12.805 -29.583,-34.219c-1.766,-15.012 -4.415,-23.402 -8.168,-25.83c-1.545,-0.883 -6.402,-1.766 -11.038,-1.766c-5.961,0 -9.935,-1.545 -13.688,-5.298l-5.298,-5.298l4.415,-13.467c4.415,-12.805 4.415,-13.908 0.883,-24.505c-2.428,-7.285 -7.065,-14.35 -13.908,-20.973l-10.376,-10.155l6.182,-4.857c3.312,-2.87 5.961,-6.402 5.961,-7.948c0,-2.208 3.312,-2.428 15.454,-1.325c13.025,1.325 15.675,1.104 16.778,-1.987c0.662,-1.987 5.519,-5.298 10.597,-7.727c4.857,-2.208 11.922,-7.065 15.454,-11.038c8.389,-8.831 16.337,-8.831 34.882,-0.221l13.908,6.623l0.662,-5.74c0.662,-4.636 -1.545,-8.168 -9.272,-16.116c-15.675,-15.895 -13.025,-26.272 7.506,-30.466Zm38.123,644.717c-2.852,-0.773 -5.318,0.597 -9.202,3.682c-3.974,3.312 -4.857,5.74 -3.753,10.155c1.987,7.727 -0.442,14.129 -5.078,14.129c-2.208,0 -6.182,2.428 -8.831,5.298c-2.87,2.87 -7.506,5.961 -10.597,6.844c-3.091,0.662 -13.025,8.389 -22.077,17.22c-8.831,8.61 -18.986,17.22 -22.298,18.986c-12.363,6.182 -17.882,14.129 -30.025,42.829c-5.74,13.688 -14.35,23.181 -16.116,17.662c-0.442,-1.104 -4.415,-7.727 -8.61,-14.792c-7.948,-12.584 -7.948,-12.584 -12.805,-8.61c-2.428,2.428 -7.285,5.298 -10.597,6.844c-8.389,3.532 -8.168,12.805 0.442,25.388c5.078,7.506 6.623,12.363 6.623,20.09c0,8.61 0.662,10.155 4.195,10.155c2.428,0 5.078,-1.104 5.74,-2.208c1.766,-2.87 39.518,-2.87 49.894,0c11.922,3.312 13.908,6.844 9.493,16.337c-3.312,6.623 -3.532,9.052 -1.104,16.778c1.766,6.402 3.753,8.831 6.844,8.831c3.753,0 13.467,4.195 26.934,11.259c2.208,1.104 5.74,1.987 7.948,1.987c0.567,0 1.294,0.189 2.122,0.534c-0.225,0.796 -0.473,1.471 -0.733,2.122c-4.836,-2.861 -5.37,3.998 -6.026,28.251c-1.104,30.687 -0.662,28.921 -8.831,28.258c-3.974,-0.221 -8.389,0.442 -9.935,1.325c-4.195,2.649 -10.597,16.778 -13.467,30.687c-2.428,10.597 -3.532,12.584 -6.402,11.48c-9.714,-3.974 -11.48,-3.753 -11.48,0.883c0,2.649 4.415,9.493 9.714,15.233c9.935,10.597 12.584,16.778 16.778,38.414c2.428,11.922 4.857,15.454 7.506,10.818c1.545,-2.208 11.48,-0.883 18.324,2.428c3.532,1.766 6.623,1.766 10.155,0.221c8.168,-3.753 13.908,1.104 22.298,18.324c3.974,8.61 10.818,19.428 14.792,23.843c6.402,7.506 7.285,9.935 7.506,20.973l0,12.363l12.142,0c15.233,0 28.479,7.948 33.115,19.648c2.208,5.961 1.325,7.065 -17.662,25.388c-10.818,10.597 -19.869,20.973 -19.869,22.739c0,1.766 1.987,5.961 4.415,9.052c3.312,3.974 3.974,7.285 3.091,12.363c-1.325,5.74 -0.662,6.844 2.87,6.844c2.87,0 5.078,2.428 7.065,7.727c2.428,6.844 3.312,7.506 9.052,6.402c8.831,-1.987 24.285,5.961 30.466,15.675c6.182,9.493 11.038,9.935 13.025,1.104c0.883,-4.636 3.532,-7.948 7.948,-10.376c6.182,-3.091 6.844,-3.091 9.714,0.662c1.766,2.428 2.428,6.623 1.766,10.155c-1.545,6.844 2.649,15.895 10.818,23.622c4.857,4.415 5.74,7.285 5.74,16.778c0,6.402 -1.325,15.454 -2.87,20.09c-1.766,4.857 -3.753,11.48 -4.636,15.012l-1.545,6.402l3.413,-0.515c-0.03,0.896 -0.066,1.67 -0.083,2.364c-2.641,0.589 -3.109,1.823 -3.109,4.554c0,3.312 4.857,9.714 13.246,17.662c7.948,7.727 13.908,15.454 15.012,19.869c1.545,6.623 1.104,7.727 -6.402,14.129c-7.727,6.402 -8.61,6.623 -23.181,5.078c-17.22,-1.766 -18.986,-0.662 -23.181,14.571c-4.636,17.22 -9.714,23.843 -24.285,32.232c-7.727,4.415 -17.22,11.038 -21.194,14.792c-3.974,3.974 -8.168,7.065 -9.493,7.065c-1.104,0 -4.195,1.987 -6.623,4.415c-3.753,3.753 -4.415,7.285 -4.415,22.96c0,17.882 -0.221,18.765 -6.402,23.843c-9.052,7.285 -15.675,21.415 -13.246,28.038c1.325,3.532 1.104,8.168 -0.442,13.246c-1.545,4.195 -3.532,13.908 -4.415,21.194c-1.104,7.285 -2.87,19.648 -3.974,27.596c-1.766,11.701 -1.325,15.454 1.545,20.973c1.987,3.532 4.195,12.142 5.078,18.765c1.987,14.792 8.389,33.778 15.454,44.595c2.87,4.195 6.844,10.818 8.831,14.571c2.87,4.857 5.74,6.844 12.363,7.948c9.272,1.766 7.065,-1.766 24.285,39.959c5.078,12.363 6.623,13.908 22.077,23.181c13.467,8.168 17.441,11.701 21.415,19.869c5.519,11.48 9.714,13.025 21.635,7.506l8.831,-3.974l5.298,6.402c8.389,10.597 10.818,13.025 17.662,16.999c3.532,2.208 8.168,5.078 10.155,6.623c3.091,2.208 5.961,2.208 14.35,-0.442c16.337,-4.857 26.051,-3.974 31.349,2.208c3.974,4.636 4.636,7.506 3.532,18.765c-0.662,7.285 -0.221,16.558 0.883,20.532c1.766,5.74 1.545,8.61 -1.104,12.584c-3.091,4.636 -3.091,6.844 -0.442,18.986l3.091,13.908l-18.545,18.986c-24.505,24.726 -25.609,26.492 -22.96,35.985c2.87,9.935 -5.078,29.142 -21.194,52.101c-10.597,15.233 -11.48,17.22 -11.48,29.362c0,9.755 0,12.078 2.929,12.632l0,2.773c-2.201,0.894 -2.776,3.713 -3.591,12.192c-1.104,13.025 3.312,43.933 7.727,52.985c2.87,5.74 9.714,6.402 15.895,1.766c2.428,-1.766 6.623,-3.312 9.493,-3.312c7.948,0 28.258,8.389 37.31,15.675c4.636,3.532 13.908,8.168 20.752,10.155c11.038,3.312 12.805,4.636 16.116,12.363c2.649,6.182 3.091,9.935 1.545,12.584c-1.766,3.312 -0.883,5.298 4.636,10.376c12.805,11.701 16.337,15.675 20.752,22.96c5.74,9.714 4.636,15.012 -3.532,16.778c-3.532,0.662 -6.402,1.545 -6.402,2.208c0,0.442 3.312,3.753 7.506,7.285c3.974,3.753 7.948,9.714 8.831,13.467c1.766,9.272 9.052,18.986 17.441,23.181c12.805,6.402 23.622,18.765 23.622,26.492c0,5.298 1.545,8.389 6.402,11.701c3.974,2.87 7.285,7.948 8.831,13.908c3.312,11.259 5.961,15.012 13.908,20.311c5.078,3.312 5.74,4.636 3.753,9.272c-6.402,17.22 1.104,29.583 18.545,29.583c13.025,0 32.232,3.974 38.414,7.948c6.844,4.195 7.065,4.195 10.818,-4.636c3.753,-9.272 3.974,-18.765 0.442,-26.272c-1.766,-4.415 -1.766,-7.727 0.221,-14.571c2.428,-8.389 3.091,-8.831 11.259,-8.831c4.636,0 9.272,0.883 9.935,2.208c1.987,3.091 12.363,2.649 18.765,-1.104c7.948,-4.636 16.116,-3.974 19.428,1.325c2.428,3.753 4.195,4.415 11.48,3.091c8.168,-1.325 8.831,-1.104 14.571,7.506c5.078,7.948 6.844,9.052 14.129,9.052l8.168,0l2.649,13.467c1.545,7.506 4.636,17.662 6.844,22.739c2.208,4.857 5.078,11.701 6.402,15.012c2.87,7.727 6.844,7.948 6.844,0.662c0,-3.091 1.766,-6.402 4.415,-7.727c3.091,-1.766 4.415,-4.636 4.415,-10.155c0,-4.857 1.325,-8.168 3.312,-8.831c1.766,-0.883 3.312,-3.091 3.312,-5.078c0,-1.987 1.104,-4.857 2.428,-6.182c1.766,-1.766 1.325,-2.87 -1.987,-3.753c-5.961,-1.987 -7.506,-12.142 -5.74,-36.648c1.325,-16.337 0.883,-20.532 -1.987,-23.843c-1.766,-1.987 -3.753,-5.74 -4.195,-8.168c-0.605,-3.385 -1.325,-10.597 -1.325,-10.597l-1.104,-11.922c-1.104,-10.155 -0.442,-12.584 3.753,-17.662c4.415,-5.078 7.285,-5.961 25.83,-7.506c46.582,-3.974 52.764,-4.857 55.413,-8.168c2.428,-2.649 1.987,-3.753 -2.208,-6.623c-5.519,-3.753 -6.623,-13.908 -1.766,-18.103c2.428,-1.766 2.87,-5.298 1.987,-13.246c-1.104,-9.272 -0.221,-12.363 5.74,-22.739c5.078,-9.052 9.272,-13.467 15.675,-16.337c4.857,-2.208 8.831,-4.857 8.831,-5.961c0,-0.883 -3.974,-5.74 -8.831,-10.376c-4.636,-4.636 -11.259,-12.805 -14.571,-17.882c-3.091,-5.298 -8.168,-12.142 -11.259,-15.233c-3.974,-4.415 -4.857,-7.285 -3.974,-11.48c1.987,-7.285 17.441,-25.168 23.622,-27.155c2.649,-0.883 9.714,-4.415 15.675,-8.168l10.818,-6.623l-3.182,-1.724c1.593,-0.601 3.292,-1.305 4.995,-2.14c6.618,0.966 11.511,-1.819 19.161,-9.162c9.493,-9.052 11.48,-18.324 5.298,-24.726c-6.623,-7.065 -5.74,-14.792 2.649,-22.96c6.402,-6.182 8.61,-7.065 19.648,-7.065c11.038,0 13.025,-0.662 17.22,-6.182c4.195,-5.298 12.142,-11.259 15.454,-11.48c0.662,0 3.091,3.091 5.519,7.065c3.753,6.402 4.195,6.623 5.74,2.649c0.883,-2.208 1.766,-7.948 1.766,-12.584c0.221,-7.727 0.662,-8.168 7.727,-8.168c3.974,0 10.376,1.545 13.688,3.312c8.61,4.415 12.584,4.195 17.662,-1.325c3.091,-3.532 6.182,-4.415 12.363,-3.753c4.636,0.442 8.389,0.662 8.389,0.442c0,-0.221 -1.987,-5.078 -4.415,-10.818c-3.091,-7.285 -4.415,-15.233 -4.415,-26.713c0,-10.491 -0.414,-15.393 -3.287,-16.249c0.68,-1.075 1.297,-2.162 1.73,-3.227c3.38,-0.596 10.171,-2.986 17.231,-5.913c18.103,-7.948 38.855,-10.818 41.946,-6.182c2.649,4.415 4.195,1.545 5.74,-10.818c1.325,-11.259 1.325,-11.259 -6.844,-15.012c-10.155,-4.857 -10.597,-11.701 -1.325,-22.298c3.753,-3.974 6.623,-9.493 6.623,-11.922c0,-2.428 3.753,-8.389 8.389,-13.688c4.636,-5.078 10.597,-12.584 13.467,-16.558c5.298,-7.727 8.61,-8.389 22.739,-4.636c9.272,2.649 9.714,2.428 17.662,-5.519c6.844,-6.844 9.272,-7.948 18.765,-7.948c8.168,0 11.259,0.883 13.467,4.415c4.195,6.844 10.155,5.298 14.571,-3.753c4.857,-10.155 7.065,-36.427 3.974,-47.465c-1.987,-7.506 -1.766,-8.389 5.298,-15.233c4.195,-3.974 7.506,-9.272 7.506,-11.48c0,-2.428 -3.532,-9.052 -7.727,-14.792c-5.74,-7.727 -7.727,-12.805 -7.727,-18.986c0,-4.857 -2.428,-13.688 -5.078,-19.648c-2.87,-6.182 -7.065,-16.558 -9.272,-23.181c-1.987,-6.623 -4.636,-13.025 -5.74,-14.129c-0.425,-0.532 -2.642,-1.063 -5.887,-1.521c-0.631,-1.444 -1.735,-3.401 -2.7,-4.962c1.378,-0.455 2.185,-0.9 2.185,-1.245c0,-2.87 -29.142,-30.025 -37.089,-34.661c-3.974,-2.208 -10.155,-9.052 -13.467,-15.233c-3.532,-5.961 -10.597,-15.895 -15.675,-21.635c-8.168,-9.272 -9.714,-12.363 -10.818,-24.285c-2.649,-24.505 -14.571,-38.635 -40.622,-49.231c-7.948,-3.312 -10.818,-5.74 -12.584,-11.038c-4.415,-13.025 -15.012,-27.155 -24.064,-31.791c-7.948,-3.974 -9.052,-5.519 -9.052,-11.922c0,-7.506 0.221,-7.506 13.908,-10.597c12.363,-2.649 13.688,-3.532 14.35,-9.052c0.662,-4.857 -2.208,-9.272 -14.792,-23.402c-18.103,-19.869 -19.869,-26.713 -9.052,-32.232c3.532,-1.766 11.259,-3.312 17.441,-3.312c12.363,0 17.882,-4.857 17.882,-15.675c0,-3.091 1.987,-8.389 4.415,-11.48c6.402,-7.948 5.519,-11.922 -3.312,-14.792c-6.844,-2.208 -7.727,-3.532 -7.727,-9.935c0,-5.519 1.104,-7.727 4.415,-8.831c5.519,-1.766 5.519,-2.428 -1.104,-17.441c-3.974,-9.052 -6.623,-12.363 -9.935,-12.363c-3.753,0 -4.415,-1.545 -4.415,-8.831c0,-9.714 -0.662,-10.155 -8.831,-5.519c-3.091,1.766 -8.831,3.091 -12.584,3.312c-5.961,0 -7.506,-1.104 -8.61,-5.519c-0.795,-3.065 -2.231,-4.846 -3.98,-5.252c-0.023,-1.353 -0.059,-2.526 -0.097,-3.5c1.808,-1.36 4.197,-3.94 6.285,-6.922c3.532,-5.298 10.376,-10.376 21.415,-15.895c16.116,-8.168 16.337,-8.168 17.441,-18.103c0.662,-5.519 3.312,-13.467 5.961,-17.882c5.74,-9.052 3.974,-13.467 -6.844,-17.441c-5.519,-1.987 -6.182,-3.091 -4.857,-9.272c0.662,-3.753 2.87,-8.61 4.857,-10.818c2.87,-3.091 2.87,-5.298 1.104,-12.363c-3.532,-12.584 -3.091,-17.22 2.87,-24.285l5.298,-6.402l-6.402,-9.935c-3.292,-4.788 -6.076,-7.751 -9.11,-9.438c0.377,-1.296 0.652,-2.688 0.885,-3.954c2.395,-1.554 8.566,-7.879 15.069,-15.529l13.688,-15.895l-7.948,-3.974c-6.402,-3.312 -7.948,-5.298 -7.948,-10.376c0,-5.078 1.766,-7.506 7.506,-11.259c4.195,-2.428 9.935,-8.168 12.584,-12.363l4.857,-7.948l16.337,1.104l16.558,0.883l5.961,9.052c5.298,8.61 6.402,9.272 15.895,9.272c8.61,0 10.376,0.883 12.584,5.519c1.545,3.091 2.649,7.727 2.649,9.935c0,3.532 1.545,4.415 6.623,4.415c7.285,0 7.727,-1.545 4.636,-12.805c-1.987,-6.623 -1.545,-7.506 5.519,-12.363c7.506,-5.078 8.389,-5.078 18.986,-2.208c8.389,2.208 13.025,5.078 18.103,11.259c16.337,20.09 18.103,20.09 30.466,2.87c7.727,-11.259 8.389,-13.025 6.182,-18.765c-1.325,-3.532 -5.74,-10.597 -9.714,-15.454c-12.584,-15.233 -21.194,-32.674 -21.194,-42.388c0,-11.259 -3.753,-14.35 -15.454,-13.688c-8.61,0.662 -9.493,0.221 -14.571,-7.948c-3.532,-5.961 -4.857,-10.818 -4.195,-14.571c1.104,-4.857 -0.883,-7.948 -13.688,-20.752c-11.922,-11.922 -17.22,-15.675 -26.492,-18.324l-11.701,-3.312l0,-11.48c0,-6.182 1.545,-14.571 3.532,-18.545c1.987,-3.974 3.091,-7.285 2.87,-7.727c-0.442,-0.221 -7.285,-2.208 -15.233,-4.415c-7.948,-2.208 -15.895,-4.415 -17.662,-5.078c-0.214,-0.047 -0.445,-0.069 -0.691,-0.068c-1.297,-1.188 -2.883,-2.596 -5.024,-4.371c0.848,-1.56 1.299,-3.043 1.299,-4.392c0,-10.155 -5.74,-19.869 -13.688,-22.518c-11.922,-4.195 -21.635,-22.077 -21.635,-40.842c0,-5.519 -1.766,-11.259 -4.415,-14.571c-2.428,-3.091 -4.415,-9.052 -4.415,-13.688c0,-14.129 -8.831,-18.545 -22.518,-11.038c-5.519,3.091 -10.376,3.974 -20.09,3.091c-12.142,-0.883 -12.805,-1.325 -16.999,-9.052c-6.402,-13.025 -9.052,-14.129 -25.83,-12.584c-18.765,1.766 -28.921,-2.428 -32.674,-13.908c-1.325,-4.195 -5.519,-10.155 -9.272,-13.246c-4.195,-3.753 -7.285,-8.831 -8.168,-14.129c-1.545,-7.948 -1.766,-8.168 -10.818,-8.168c-8.61,-0.221 -9.493,-0.662 -13.688,-9.272c-2.428,-5.078 -5.519,-9.714 -6.844,-9.935c-0.715,-0.228 -1.401,-0.254 -2.05,-0.099c-0.463,-1.042 -0.984,-1.816 -1.624,-2.603c6.562,-8.815 10.404,-29.264 6.764,-40.568c-1.325,-3.753 -4.195,-8.831 -6.623,-11.038c-5.961,-5.078 -15.233,-4.857 -22.298,0.662c-3.091,2.428 -8.831,4.415 -13.025,4.415c-4.143,0 -6.676,0.69 -8.511,2.485c-0.828,-0.258 -1.714,-0.476 -2.731,-0.666c1.429,-4.517 -4.466,-8.288 -17.236,-9.766c-15.233,-1.766 -19.648,-5.961 -19.648,-19.207c0,-4.415 -1.545,-11.701 -3.091,-15.895c-2.649,-6.182 -4.415,-7.727 -9.493,-7.727c-3.312,0 -8.831,2.208 -12.142,4.636c-3.312,2.428 -9.714,5.078 -14.35,5.74c-1.957,0.28 -4.19,0.874 -6.332,1.65c-2.604,-1.586 -4.611,-2.724 -6.182,-3.554c0.3,-1.475 0.276,-3.123 -0.07,-4.94c-0.883,-3.753 -4.415,-11.038 -7.948,-16.116c-8.389,-11.701 -12.805,-29.362 -9.272,-37.089c2.428,-5.078 2.208,-5.519 -3.753,-5.519c-5.078,0 -6.844,-1.545 -11.259,-11.259c-5.961,-12.363 -7.727,-14.35 -10.155,-10.597c-0.147,0.294 -0.511,0.674 -1.048,1.115c-0.375,-0.815 -0.781,-1.592 -1.216,-2.279c3.355,-2.952 3.136,-5.529 -1.048,-6.784c-6.623,-2.208 -5.74,-16.558 1.545,-23.402c9.493,-9.052 10.597,-12.363 5.519,-20.532c-2.649,-3.974 -4.636,-10.376 -4.636,-13.908c0,-7.948 -7.506,-15.454 -17.22,-17.441c-5.078,-1.104 -8.389,-3.753 -12.584,-11.038c-3.091,-5.078 -7.506,-10.155 -9.935,-10.818c-2.428,-0.883 -6.182,-3.753 -7.948,-6.844c-4.636,-6.844 -11.922,-6.844 -18.324,0c-4.857,5.298 -30.466,18.986 -35.323,18.986c-3.684,0 -6.796,3.144 -8.771,7.299c-1.342,-0.578 -2.626,-1.127 -3.785,-1.615c-0.02,-3.829 -0.449,-6.6 -1.131,-7.009c-1.104,-0.662 -1.987,-2.87 -1.987,-5.078c0,-1.987 -2.428,-7.285 -5.74,-11.48c-3.091,-4.195 -7.285,-11.48 -9.493,-16.337c-2.208,-4.857 -5.961,-10.597 -8.61,-12.805c-2.428,-2.428 -3.974,-5.519 -3.532,-6.844c0.662,-1.545 -1.325,-4.415 -4.415,-6.623c-7.065,-4.415 -8.168,-4.415 -9.493,0.662c-0.07,0.351 -0.219,0.748 -0.433,1.176c-1.547,-1.506 -2.934,-2.778 -3.996,-3.727c0.434,-1.215 1.975,-2.269 4.209,-2.748c6.623,-1.766 17.22,-20.09 17.22,-30.025c0,-7.065 6.844,-14.792 35.102,-40.18c3.753,-3.532 6.402,-7.285 5.74,-8.389c-0.883,-1.104 -7.285,-1.987 -14.571,-1.987c-11.48,0 -13.025,-0.442 -13.025,-4.415c0,-4.103 -1.103,-5.055 -4.506,-3.522c-0.055,-0.772 -0.137,-1.515 -0.225,-2.18c3.461,-1.937 3.521,-4.423 2.965,-9.09c-0.662,-4.857 -4.636,-13.025 -10.597,-20.973c-5.078,-7.065 -10.155,-14.792 -10.818,-17.22c-1.545,-4.857 -14.792,-7.727 -27.375,-5.519c-8.389,1.325 -9.052,1.104 -14.35,-7.065c-3.091,-4.636 -7.506,-14.129 -10.155,-20.973c-3.753,-10.376 -5.74,-12.805 -10.818,-13.908c-6.844,-1.545 -14.129,-0.221 -28.258,4.857c-8.389,3.091 -10.155,3.091 -19.207,-0.442c-7.065,-2.649 -12.805,-3.312 -20.532,-2.428c-5.74,0.883 -13.688,1.545 -17.662,1.545c-6.182,0 -37.752,-13.246 -77.269,-32.674c-11.922,-5.961 -15.233,-5.519 -18.324,2.649c-1.766,4.636 -2.649,4.857 -11.48,2.87c-6.402,-1.545 -10.597,-3.974 -11.922,-6.844c-1.325,-2.87 -6.623,-6.182 -14.792,-8.831c-8.389,-2.649 -14.35,-6.402 -17.441,-10.597l-4.636,-6.182l-24.947,1.325l-25.168,1.325l-3.532,-8.61c-1.987,-4.636 -6.623,-11.922 -10.376,-15.895c-9.052,-9.493 -24.064,-9.272 -27.155,0.221c-1.104,3.753 0.442,6.623 8.831,13.688c9.272,8.389 10.155,9.935 10.155,19.428c0,5.861 0.168,8.44 1.648,9.867c-0.466,1.083 -0.912,2.34 -1.344,3.647l-0.304,-0.048c-5.298,-0.883 -15.895,-4.415 -23.181,-7.727c-16.558,-7.948 -23.181,-7.948 -30.025,-0.662c-2.87,3.091 -8.168,7.285 -11.922,9.052c-3.532,1.766 -9.272,5.961 -12.584,8.831c-5.519,5.078 -7.065,5.519 -18.765,4.195c-11.48,-1.325 -13.025,-0.883 -15.675,3.312c-2.649,4.195 -2.208,5.519 4.415,12.805c4.636,4.857 9.052,13.025 11.48,20.532c3.532,12.142 3.532,13.467 0,24.726c-5.078,15.895 -3.532,18.986 8.61,18.986c7.285,0 11.259,1.325 15.454,5.298c5.519,5.078 6.402,8.168 9.272,30.908c1.987,15.012 12.363,25.609 24.726,25.609c5.961,0 10.155,1.325 12.805,4.195c3.532,4.195 3.532,5.519 0.221,24.726c-3.974,24.285 -2.87,27.596 14.35,42.167c6.182,5.298 16.116,16.999 22.298,26.051c6.182,9.052 14.35,20.09 18.324,24.285c5.519,5.961 7.727,11.48 10.597,25.388c4.636,22.518 4.857,55.192 0.442,65.789c-4.415,10.818 -4.195,15.012 1.104,16.337c2.428,0.662 4.415,2.428 4.415,4.195c0,1.03 2.065,2.849 5.155,4.908c0.021,1.184 0.003,2.345 0.011,3.728c-8.779,-3.525 -10.145,-0.474 -8.699,11.454c1.545,12.363 -9.272,37.752 -18.324,42.829c-4.415,2.649 -6.623,5.961 -7.727,12.142c-0.883,4.857 -5.961,16.558 -11.259,26.272l-9.493,17.662l3.68,0.039c-1.075,1.676 -2.482,3.725 -4.321,6.166c-3.973,1.869 -6.604,4.551 -10.398,9.469c-3.753,5.298 -7.065,10.597 -7.065,12.142c0,1.325 -1.987,5.961 -4.636,9.935c-4.415,7.506 -4.415,7.727 -0.662,24.064c2.87,11.922 5.078,16.778 7.948,17.882c2.428,0.662 10.376,-2.428 20.311,-7.727c18.103,-10.155 25.609,-11.48 25.609,-4.857c0,1.803 1.704,4.337 4.389,6.607l-1.589,3.179Z"
@@ -606,7 +616,7 @@ function ChorFindenContent() {
                           fillRule="nonzero"
                           stroke="currentColor"
                           strokeWidth={2}
-                          className="text-dark"
+                          className="text-dark dark:text-night-muted"
                         />
                       </g>
                       <path
@@ -993,7 +1003,7 @@ function ChorFindenContent() {
                         }
                         return (
                           <div
-                            className="pointer-events-none absolute z-50 rounded-lg bg-gray-900 px-3 py-2 text-sm text-white shadow-lg"
+                            className="border-ink dark:border-night-text bg-paper dark:bg-night text-ink dark:text-night-text pointer-events-none absolute z-50 border-2 px-3 py-2 text-sm"
                             style={{
                               left: `${pos.x}px`,
                               top: `${pos.y}px`,
@@ -1002,10 +1012,10 @@ function ChorFindenContent() {
                                 : "translate(0, -50%)",
                             }}
                           >
-                            <p className="font-semibold">
+                            <p className="semi-condensed font-semibold">
                               Bezirk {hoveredBezirk}
                             </p>
-                            <p className="text-xs text-gray-300">
+                            <p className="text-dark dark:text-night-muted text-xs">
                               {allBezirke.find(
                                 (b) => b.number === hoveredBezirk,
                               )?.name || ""}
@@ -1025,16 +1035,19 @@ function ChorFindenContent() {
                         );
                         return (
                           <div
-                            className={`absolute z-50 rounded-lg bg-gray-900 px-3 py-2 text-sm text-white shadow-lg ${
-                              isCoarsePointer ? "" : "pointer-events-none"
-                            }`}
+                            className={cn(
+                              "border-ink dark:border-night-text bg-paper dark:bg-night text-ink dark:text-night-text absolute z-50 border-2 px-3 py-2 text-sm",
+                              !isCoarsePointer && "pointer-events-none",
+                            )}
                             style={{
                               left: `${pos.x}px`,
                               top: `${pos.y}px`,
                               transform: "translate(-50%, -100%)",
                             }}
                           >
-                            <p className="font-semibold">{marker.name}</p>
+                            <p className="semi-condensed font-semibold">
+                              {marker.name}
+                            </p>
                             {/* Only needed on touch, where the marker itself
                                 is too small to reliably re-tap; on desktop
                                 the marker is already directly clickable. */}
@@ -1042,7 +1055,7 @@ function ChorFindenContent() {
                               <Link
                                 href={ensemblePath(marker)}
                                 onClick={(e) => e.stopPropagation()}
-                                className="text-primary-light mt-1 inline-block underline"
+                                className="link-ink mt-1 inline-block"
                               >
                                 Chorseite öffnen
                               </Link>
@@ -1051,181 +1064,73 @@ function ChorFindenContent() {
                         );
                       })()}
                   </div>
-                </div>
+                </Panel>
               </div>
+            </div>
 
-              {/* Right Column: Choir List */}
-              {viewMode === "list" && (
-                <div className="lg:col-span-2">
-                  {ensembles.isLoading && <LoadingSpinner text="Lade Chöre" />}
+            {/* Right Column: Choir List */}
+            {viewMode === "list" && (
+              <div className="mt-10 lg:col-span-8 lg:mt-0">
+                {ensembles.isLoading && <LoadingSpinner text="Lade Chöre" />}
 
-                  {!ensembles.isLoading && paginatedChoirs.length > 0 ? (
-                    <>
-                      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                        {paginatedChoirs.map((choir) => (
-                          <div
-                            key={choir.id}
-                            className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md transition-shadow hover:shadow-lg"
-                          >
-                            <div className="mb-4 flex items-start justify-between">
-                              <div className="flex-1">
-                                <Link
-                                  href={ensemblePath(choir)}
-                                  className="text-dark dark:text-dark-text hover:text-primary mb-2 block text-xl font-bold transition-colors"
-                                >
-                                  {choir.name}
-                                </Link>
-                                <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
-                                  <div className="flex items-center gap-1">
-                                    <MapPinIcon className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-                                    {choir.location?.city},{" "}
-                                    {choir.location?.zipCode}
-                                  </div>
-                                  <span className="text-gray-400">•</span>
-                                  {choir.bezirk && (
-                                    <span
-                                      className="rounded px-2 py-1 font-semibold"
-                                      style={{
-                                        backgroundColor: `${getDistrictColor(
-                                          choir.bezirk.number,
-                                        )}20`,
-                                        color: getDistrictColor(
-                                          choir.bezirk.number,
-                                        ),
-                                      }}
-                                    >
-                                      Bezirk {choir.bezirk.number}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
+                {!ensembles.isLoading && paginatedChoirs.length > 0 ? (
+                  <>
+                    <ul className="border-ink dark:border-night-text grid border-t-2 lg:grid-cols-2">
+                      {paginatedChoirs.map((choir, index) => (
+                        <li
+                          key={choir.id}
+                          className={cn(
+                            "border-rule dark:border-night-rule border-b",
+                            index % 2 === 0 ? "lg:pr-8" : "lg:border-l lg:pl-8",
+                          )}
+                        >
+                          <ChoirRow choir={choir} />
+                        </li>
+                      ))}
+                    </ul>
 
-                            <div className="mb-4 space-y-2">
-                              {((choir.rehearsalSchedules &&
-                                choir.rehearsalSchedules.length > 0) ||
-                                (choir.rehearsalDay &&
-                                  choir.rehearsalTime)) && (
-                                <div className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
-                                  <ClockIcon
-                                    className="mt-0.5 h-5 w-5 shrink-0 text-gray-400 dark:text-gray-500"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                                    />
-                                  </ClockIcon>
-                                  <span>
-                                    Proben:{" "}
-                                    {choir.rehearsalSchedules &&
-                                    choir.rehearsalSchedules.length > 0
-                                      ? choir.rehearsalSchedules
-                                          .map((s) => `${s.day} ${s.time}`)
-                                          .join(", ")
-                                      : choir.rehearsalDay &&
-                                          choir.rehearsalTime
-                                        ? `${choir.rehearsalDay} um ${choir.rehearsalTime} Uhr`
-                                        : ""}
-                                  </span>
-                                </div>
-                              )}
-                              {choir.location && (
-                                <div className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
-                                  <MapPinIcon className="mt-0.5 h-5 w-5 shrink-0 text-gray-400 dark:text-gray-500" />
-                                  <span>
-                                    {choir.location.street},{" "}
-                                    {choir.location.zipCode}{" "}
-                                    {choir.location.city}
-                                  </span>
-                                </div>
-                              )}
-                              {(choir.representativePhone ||
-                                choir.conductorPhone) && (
-                                <div className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
-                                  <PhoneIcon className="mt-0.5 h-5 w-5 shrink-0 text-gray-400 dark:text-gray-500" />
-                                  <span>
-                                    Telefon:{" "}
-                                    {choir.representativePhone ??
-                                      choir.conductorPhone}
-                                  </span>
-                                </div>
-                              )}
-                              {choir.contactWebsite && (
-                                <div className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
-                                  <GlobeIcon className="mt-0.5 h-5 w-5 shrink-0 text-gray-400 dark:text-gray-500" />
-                                  <Link
-                                    href={choir.contactWebsite}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-primary hover:text-primary-dark text-sm font-semibold"
-                                  >
-                                    Webseite
-                                  </Link>
-                                </div>
-                              )}
-                            </div>
-
-                            <Link
-                              href={`mailto:${
-                                choir.representative?.email ??
-                                choir.representativeEmail ??
-                                choir.conductorEmail ??
-                                ""
-                              }`}
-                              className="text-primary hover:text-primary-dark inline-flex items-center text-sm font-semibold"
-                            >
-                              <MailIcon className="mr-2 h-4 w-4" />
-                              Kontakt aufnehmen
-                            </Link>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Pagination */}
-                      {/* eslint-disable-next-line react-hooks/static-components */}
-                      <Pagination
-                        totalPages={totalPages}
-                        currentPage={currentPage}
-                        setCurrentPage={setCurrentPage}
+                    {/* Pagination */}
+                    {/* eslint-disable-next-line react-hooks/static-components */}
+                    <Pagination
+                      totalPages={totalPages}
+                      currentPage={currentPage}
+                      setCurrentPage={setCurrentPage}
+                    />
+                  </>
+                ) : (
+                  !ensembles.isLoading && (
+                    <div className="border-ink dark:border-night-text border-t-2 py-16 text-center">
+                      <SearchIcon
+                        aria-hidden
+                        className="text-dark dark:text-night-muted mx-auto mb-4 h-12 w-12"
                       />
-                    </>
-                  ) : (
-                    !ensembles.isLoading && (
-                      <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-12 text-center shadow-md">
-                        <SearchIcon className="mx-auto mb-4 h-16 w-16 text-gray-300 dark:text-gray-600" />
-                        <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
-                          Keine Chöre gefunden
-                        </h3>
-                        <p className="mb-6 text-gray-600 dark:text-gray-400">
-                          {hasActiveFilters
-                            ? "Probiere andere Suchkriterien oder kontaktiere uns für persönliche Beratung."
-                            : "Es konnten keine Chöre geladen werden."}
-                        </p>
+                      <h3 className="condensed text-ink dark:text-night-text text-[1.5rem] leading-tight font-bold">
+                        Keine Chöre gefunden
+                      </h3>
+                      <p className="text-dark dark:text-night-muted mx-auto mt-3 max-w-md">
+                        {hasActiveFilters
+                          ? "Probiere andere Suchkriterien oder kontaktiere uns für persönliche Beratung."
+                          : "Es konnten keine Chöre geladen werden."}
+                      </p>
+                      <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
                         {hasActiveFilters && (
                           <button
+                            type="button"
                             onClick={clearFilters}
-                            className="border-primary text-primary hover:bg-primary mr-2 mb-4 inline-flex items-center rounded-lg border-2 px-6 py-3 font-semibold transition-colors hover:text-white"
+                            className="link-ink inline-flex min-h-11 items-center"
                           >
                             Filter zurücksetzen
                           </button>
                         )}
-                        <Link
-                          href="/kontakt"
-                          className="bg-primary hover:bg-primary-dark inline-flex items-center rounded-lg px-6 py-3 font-semibold text-white transition-colors"
-                        >
+                        <ButtonLink href="/kontakt">
                           Kontakt aufnehmen
-                        </Link>
+                        </ButtonLink>
                       </div>
-                    )
-                  )}
-                </div>
-              )}
-            </div>
+                    </div>
+                  )
+                )}
+              </div>
+            )}
           </div>
         </div>
       </section>

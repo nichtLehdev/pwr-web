@@ -81,7 +81,7 @@ export default function SlugField({
 
       <div id={`${fieldId}-hint`} className="mt-1 space-y-1">
         {effective ? (
-          <p className="dark:text-dark-muted text-xs text-gray-500">
+          <p className="text-dark dark:text-night-muted text-xs">
             Adresse:{" "}
             <span className="font-mono break-all">
               {basePath}
@@ -95,7 +95,7 @@ export default function SlugField({
             {SLUG_PROBLEM_MESSAGES[problem]}
           </p>
         ) : (
-          <p className="dark:text-dark-muted text-xs text-gray-500">
+          <p className="text-dark dark:text-night-muted text-xs">
             {currentSlug
               ? "Leer lassen, um den bisherigen Slug zu behalten."
               : "Leer lassen, um ihn automatisch aus dem Titel zu erzeugen."}
@@ -103,7 +103,7 @@ export default function SlugField({
         )}
 
         {isRename ? (
-          <p className="text-xs text-amber-700 dark:text-amber-500">
+          <p className="text-primary-ink dark:text-primary text-xs">
             Achtung: Die bisherige Adresse{" "}
             <span className="font-mono break-all">
               {basePath}

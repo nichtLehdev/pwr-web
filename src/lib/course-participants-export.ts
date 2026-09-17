@@ -6,6 +6,15 @@ import {
 import { formatCustomFieldValueForDisplay } from "@/lib/course-custom-fields";
 import { invoicePaidAmount } from "@/lib/invoice-payment";
 import {
+  DOWN_PAYMENT_STATE_LABELS,
+  downPaymentOpenAmount,
+  downPaymentReceived,
+  downPaymentState,
+  type DownPaymentInput,
+  type DownPaymentModeValue,
+  type DownPaymentStatusValue,
+} from "@/lib/course-down-payment";
+import {
   participantPriceOptionLabel,
   resolveParticipantPriceOption,
 } from "@/lib/course-price-options";
@@ -63,10 +72,30 @@ type ExportRegistration = {
   createdAt: Date;
   notes: string | null;
   participants: ExportParticipant[];
+  downPaymentAmount?: number | null;
+  downPaymentStatus?: DownPaymentStatusValue | null;
+  downPaymentPaidAmount?: number | null;
 };
+
+/** Anzahlungsfelder einer Anmeldung in der Form, die die Zustandsregeln lesen. */
+function downPaymentInput(registration: {
+  registrationStatus: RegistrationStatus;
+  downPaymentAmount?: number | null;
+  downPaymentStatus?: DownPaymentStatusValue | null;
+  downPaymentPaidAmount?: number | null;
+}): DownPaymentInput {
+  return {
+    downPaymentAmount: registration.downPaymentAmount ?? null,
+    downPaymentStatus: registration.downPaymentStatus ?? null,
+    downPaymentPaidAmount: registration.downPaymentPaidAmount ?? null,
+    registrationStatus: registration.registrationStatus,
+  };
+}
 
 type ExportCourse = {
   title: string;
+  /** Mit Anzahlung kommen deren Spalten dazu. */
+  downPaymentMode?: DownPaymentModeValue;
   customFields?: Array<{ fieldName: string }>;
   priceOptions?: Array<{
     id: string;
@@ -93,8 +122,12 @@ export type CourseParticipantsExportOptions = {
   includeBirthDate?: boolean;
 };
 
+const courseHasDownPaymentColumns = (
+  course: Pick<ExportCourse, "downPaymentMode">,
+) => !!course.downPaymentMode && course.downPaymentMode !== "NONE";
+
 export function courseParticipantsColumns(
-  course: Pick<ExportCourse, "customFields">,
+  course: Pick<ExportCourse, "customFields" | "downPaymentMode">,
   options?: CourseParticipantsExportOptions,
 ): XlsxColumn[] {
   const customFieldColumns: XlsxColumn[] = (course.customFields ?? []).map(
@@ -129,6 +162,22 @@ export function courseParticipantsColumns(
     // Bewusst ohne Summe: eine Anmeldung mit drei Teilnehmenden steht in drei
     // Zeilen, ihr Gesamtpreis würde dreifach gezählt.
     { header: "Gesamtpreis Anmeldung", key: "gesamtpreis", format: "currency" },
+    // Ebenfalls ohne Summe, aus demselben Grund: je Anmeldung, nicht je Person.
+    ...(courseHasDownPaymentColumns(course)
+      ? [
+          {
+            header: "Anzahlung Anmeldung",
+            key: "anzahlung",
+            format: "currency" as const,
+          },
+          {
+            header: "Anzahlung eingegangen",
+            key: "anzahlung_eingegangen",
+            format: "currency" as const,
+          },
+          { header: "Anzahlung Status", key: "anzahlung_status" },
+        ]
+      : []),
     { header: "Anmeldedatum", key: "anmeldedatum", format: "date" },
     { header: "Anmerkungen", key: "anmerkungen", wrap: true },
   ];
@@ -138,6 +187,22 @@ function toDateOrNull(value: Date | string | null | undefined): Date | null {
   if (!value) return null;
   const date = value instanceof Date ? value : new Date(value);
   return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function downPaymentExportCells(registration: ExportRegistration): XlsxRow {
+  const input = downPaymentInput(registration);
+  if (!input.downPaymentAmount) {
+    return {
+      anzahlung: null,
+      anzahlung_eingegangen: null,
+      anzahlung_status: "",
+    };
+  }
+  return {
+    anzahlung: input.downPaymentAmount,
+    anzahlung_eingegangen: downPaymentReceived(input),
+    anzahlung_status: DOWN_PAYMENT_STATE_LABELS[downPaymentState(input)],
+  };
 }
 
 export function buildCourseParticipantsExportRows(
@@ -189,6 +254,9 @@ export function buildCourseParticipantsExportRows(
         anmelder_email: registration.registrantEmail,
         anmelder_telefon: registration.registrantPhone ?? "",
         gesamtpreis: registration.totalPrice,
+        ...(courseHasDownPaymentColumns(course)
+          ? downPaymentExportCells(registration)
+          : {}),
         anmeldedatum: toDateOrNull(registration.createdAt),
         anmerkungen: registration.notes ?? "",
       } satisfies XlsxRow;
@@ -208,6 +276,12 @@ export type CourseRegistrationStats = {
   pendingDiscountRegistrations: number;
   totalRevenueConfirmed: number;
   paidRevenue: number;
+  /** Eingegangene Anzahlungen bestätigter Anmeldungen. */
+  downPaymentsReceived: number;
+  /** Noch ausstehende Anzahlungen bestätigter Anmeldungen. */
+  downPaymentsOpen: number;
+  /** Stornierte Anmeldungen, deren eingegangene Anzahlung noch zu klären ist. */
+  refundPendingRegistrations: number;
 };
 
 /**
@@ -229,6 +303,9 @@ export function computeCourseRegistrationStats(
     totalPrice: number;
     participants: unknown[];
     invoices: ExportInvoice[];
+    downPaymentAmount?: number | null;
+    downPaymentStatus?: DownPaymentStatusValue | null;
+    downPaymentPaidAmount?: number | null;
   }>,
 ): CourseRegistrationStats {
   let confirmedParticipants = 0;
@@ -238,9 +315,16 @@ export function computeCourseRegistrationStats(
   let pendingDiscountRegistrations = 0;
   let totalRevenueConfirmed = 0;
   let paidRevenue = 0;
+  let downPaymentsReceived = 0;
+  let downPaymentsOpen = 0;
+  let refundPendingRegistrations = 0;
 
   for (const r of registrations) {
     const count = r.participants.length;
+    const downPayment = downPaymentInput(r);
+    if (downPaymentState(downPayment) === "REFUND_PENDING") {
+      refundPendingRegistrations += 1;
+    }
     if (r.registrationStatus === RegistrationStatus.CONFIRMED) {
       confirmedParticipants += count;
       activeRegistrations += 1;
@@ -251,6 +335,8 @@ export function computeCourseRegistrationStats(
         (sum, invoice) => sum + invoicePaidAmount(invoice),
         0,
       );
+      downPaymentsReceived += downPaymentReceived(downPayment);
+      downPaymentsOpen += downPaymentOpenAmount(downPayment);
     } else if (r.registrationStatus === RegistrationStatus.WAITLIST) {
       waitlistParticipants += count;
       activeRegistrations += 1;
@@ -271,5 +357,8 @@ export function computeCourseRegistrationStats(
     pendingDiscountRegistrations,
     totalRevenueConfirmed,
     paidRevenue,
+    downPaymentsReceived,
+    downPaymentsOpen,
+    refundPendingRegistrations,
   };
 }

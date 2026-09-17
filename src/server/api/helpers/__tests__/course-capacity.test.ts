@@ -2,6 +2,7 @@ import { describe, expect, it } from "@jest/globals";
 import {
   assertPriceTierCapacity,
   computeCourseCapacity,
+  findFullPriceTier,
 } from "../course-capacity";
 
 describe("computeCourseCapacity", () => {
@@ -150,5 +151,35 @@ describe("assertPriceTierCapacity", () => {
       { offen: 5 },
     );
     expect(seen).toHaveLength(0);
+  });
+
+  describe("findFullPriceTier", () => {
+    // Die Anmeldung entscheidet damit zwischen Warteliste und Ablehnung,
+    // statt über den Fehler von assertPriceTierCapacity zu stolpern.
+    it("returns the full tier instead of throwing", async () => {
+      const { db } = dbWith(6);
+      await expect(
+        findFullPriceTier(db, "course", priceOptions, { wasserburg: 1 }),
+      ).resolves.toMatchObject({ id: "wasserburg" });
+    });
+
+    it("returns null when every tier has room", async () => {
+      const { db } = dbWith(5);
+      await expect(
+        findFullPriceTier(db, "course", priceOptions, { wasserburg: 1 }),
+      ).resolves.toBeNull();
+    });
+
+    it("excludes the registration being edited from the count", async () => {
+      const { db, seen } = dbWith(0);
+      await findFullPriceTier(
+        db,
+        "course",
+        priceOptions,
+        { kinder: 2 },
+        "registration-1",
+      );
+      expect(JSON.stringify(seen[0])).toContain("registration-1");
+    });
   });
 });
