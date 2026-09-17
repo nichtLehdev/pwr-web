@@ -62,10 +62,14 @@ export function Split({
   return (
     <div className="lg:grid lg:grid-cols-12 lg:gap-10">
       <div
+        // Rechts als ein einziger `grid-column`-Wert statt `col-span-4` plus
+        // `col-start-9`: Die Kurzform `grid-column` aus `col-span` setzt auch
+        // den Start zurück. Ob der Kopf rechts landet, hinge sonst davon ab,
+        // in welcher Reihenfolge die beiden Klassen im Stylesheet stehen.
         className={cn(
           side === "left"
             ? "lg:col-span-4"
-            : "lg:col-span-4 lg:col-start-9 lg:row-start-1",
+            : "lg:col-[9/span_4] lg:row-start-1",
           stickyHead && "sticky-below-nav lg:sticky lg:self-start",
         )}
       >
@@ -75,7 +79,7 @@ export function Split({
         className={cn(
           side === "left"
             ? "lg:col-span-8"
-            : "lg:col-span-8 lg:col-start-1 lg:row-start-1",
+            : "lg:col-[1/span_8] lg:row-start-1",
           bodyClassName,
           "lg:mt-0",
         )}
