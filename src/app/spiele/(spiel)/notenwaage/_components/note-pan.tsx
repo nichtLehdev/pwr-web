@@ -21,6 +21,22 @@ type Props = {
   slotCount?: number;
 };
 
+/*
+ * Höhen wachsen mit dem Fenster, statt fest zu stehen: Bei 1000px Fensterhöhe
+ * war unter dem Inhalt fast ein Drittel der Zeile leer. `calc(… dvh - …px)`
+ * bildet die Fensterhöhe abzüglich der festen Zeilen (Kopf, Aufgabe, Dock) ab
+ * — eine reine dvh-Quote kann das nicht, weil der feste Anteil bei 650px fast
+ * die ganze Zeile frisst.
+ */
+const REIHE_HOEHE =
+  "min-h-[max(76px,min(calc(14dvh_-_8px),130px))] md:min-h-[max(76px,min(calc(13dvh_-_13px),150px))]";
+// Die Noten wachsen mit der Schale: Sonst lagen in einer 180px hohen Schale
+// weiterhin 36px kleine Zeichen, und die gewonnene Fläche blieb leer.
+const GLYPH_GROSS =
+  "h-[max(24px,min(calc(4.5dvh_-_10px),40px))] w-[max(24px,min(calc(4.5dvh_-_10px),40px))] md:h-[max(28px,min(calc(8dvh_-_30px),56px))] md:w-[max(28px,min(calc(8dvh_-_30px),56px))]";
+const GLYPH_KLEIN =
+  "h-[max(20px,min(calc(3.5dvh_-_8px),32px))] w-[max(20px,min(calc(3.5dvh_-_8px),32px))] md:h-[max(24px,min(calc(6dvh_-_24px),44px))] md:w-[max(24px,min(calc(6dvh_-_24px),44px))]";
+
 export function NotePan({
   notes,
   title,
@@ -30,24 +46,29 @@ export function NotePan({
   slotCount,
 }: Props) {
   const cellCount = slotCount ?? notes.length;
-  const glyphClass = cellCount >= 6 ? "h-5 w-5" : "h-6 w-6";
+  const glyphClass = cellCount >= 6 ? GLYPH_KLEIN : GLYPH_GROSS;
   const emptySlots =
     slotCount != null ? Math.max(0, slotCount - notes.length) : 0;
 
   return (
-    <div className="border-dark-border/50 dark:border-dark-border dark:bg-dark-surface/40 rounded-lg border bg-white/60 p-1 md:p-1.5">
-      <p className="text-dark dark:text-dark-text mb-0.5 text-center text-[10px] font-bold md:text-[11px]">
+    <div className="border-rule bg-rule/25 dark:border-night-rule dark:bg-night-raised border p-1 md:p-1.5">
+      <p className="text-ink dark:text-night-text mb-0.5 text-center text-[10px] font-bold md:text-[11px]">
         {title}
         {headerHint && (
-          <span className="text-dark dark:text-dark-text-muted font-semibold">
+          <span className="text-dark dark:text-night-muted font-semibold">
             {" "}
             · {headerHint}
           </span>
         )}
       </p>
-      <div className="flex min-h-[70px] flex-wrap items-center justify-center gap-0.5 md:min-h-[76px]">
+      <div
+        className={cn(
+          "flex flex-wrap items-center justify-center gap-0.5",
+          REIHE_HOEHE,
+        )}
+      >
         {notes.length === 0 && slotCount == null && (
-          <span className="text-dark dark:text-dark-text-muted text-xs font-semibold">
+          <span className="text-dark dark:text-night-muted text-xs font-semibold">
             leer
           </span>
         )}
@@ -59,26 +80,20 @@ export function NotePan({
               onClick={() => onRemoveAt?.(idx)}
               aria-label={`${NOTE_VALUES[entry.id].label} entfernen`}
               className={cn(
-                "hover:bg-dark-border/20 flex min-h-11 min-w-11 items-center justify-center rounded-lg p-0.5 active:scale-[0.95]",
+                "hover:bg-rule/60 dark:hover:bg-night-rule flex min-h-11 min-w-11 items-center justify-center p-0.5 motion-safe:active:scale-[0.95]",
                 GAME_FOCUS_RING,
               )}
             >
-              <NoteGlyph
-                id={entry.id}
-                className={cn(glyphClass, "md:h-8 md:w-8")}
-              />
+              <NoteGlyph id={entry.id} className={glyphClass} />
             </button>
           ) : (
             <span
               key={entry.uid}
               role="img"
               aria-label={NOTE_VALUES[entry.id].label}
-              className="flex min-h-11 min-w-11 items-center justify-center rounded-lg p-0.5"
+              className="flex min-h-11 min-w-11 items-center justify-center p-0.5"
             >
-              <NoteGlyph
-                id={entry.id}
-                className={cn(glyphClass, "md:h-8 md:w-8")}
-              />
+              <NoteGlyph id={entry.id} className={glyphClass} />
             </span>
           ),
         )}
@@ -86,7 +101,7 @@ export function NotePan({
           <span
             key={`empty-${i}`}
             aria-hidden
-            className="border-dark-border/60 dark:border-dark-border flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-dashed"
+            className="border-rule dark:border-night-rule flex min-h-11 min-w-11 items-center justify-center border border-dashed"
           />
         ))}
       </div>
