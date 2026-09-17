@@ -158,7 +158,7 @@ function SidebarLink({
     <Link
       href={href}
       aria-current={active ? "page" : undefined}
-      className={`semi-condensed flex items-center gap-3 px-3 py-2 text-sm font-semibold transition-colors ${
+      className={`semi-condensed flex min-h-11 items-center gap-3 px-3 py-2 text-sm font-semibold transition-colors ${
         active ? AKTIV : RUHEND
       }`}
     >
@@ -181,7 +181,7 @@ function PillLink({
     <Link
       href={href}
       aria-current={active ? "page" : undefined}
-      className={`semi-condensed shrink-0 px-3 py-1.5 text-sm font-semibold whitespace-nowrap transition-colors ${
+      className={`semi-condensed inline-flex min-h-11 shrink-0 items-center px-3 text-sm font-semibold whitespace-nowrap transition-colors ${
         active ? AKTIV : RUHEND
       }`}
     >

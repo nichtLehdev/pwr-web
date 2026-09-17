@@ -787,10 +787,14 @@ export default function EditEventPage() {
                       </div>
 
                       <div>
-                        <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
+                        <label
+                          htmlFor="event-category"
+                          className="text-ink dark:text-night-text mb-1 block text-sm font-medium"
+                        >
                           Kategorie *
                         </label>
                         <Select
+                          id="event-category"
                           value={category}
                           onChange={(e) =>
                             setCategory(e.target.value as EventCategory)

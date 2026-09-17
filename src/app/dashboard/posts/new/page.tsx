@@ -384,8 +384,11 @@ export default function NewPostPage() {
               </div>
 
               <div>
-                <Label required>Kategorie</Label>
+                <Label htmlFor="post-category" required>
+                  Kategorie
+                </Label>
                 <Select
+                  id="post-category"
                   value={category}
                   onChange={(e) => setCategory(e.target.value as PostCategory)}
                 >

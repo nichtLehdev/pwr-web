@@ -97,6 +97,7 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
       name,
       required,
       autoFocus,
+      "aria-label": ariaLabel,
       "aria-invalid": ariaInvalid,
       "aria-describedby": ariaDescribedBy,
       "aria-labelledby": ariaLabelledBy,
@@ -234,6 +235,23 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
       }
     };
 
+    // `role="combobox"` verbietet „Name aus Inhalt": Der sichtbare Text im
+    // Auslöser zählt nicht als Name. Ohne aria-label, aria-labelledby oder ein
+    // `id`, auf das ein <label for> zeigt, bleibt der Knopf namenlos — axe meldet
+    // das als `button-name`, WCAG 4.1.2 Stufe A.
+    //
+    // Der Platzhalter (die Option mit leerem Wert, „Alle Bezirke", „Bitte
+    // wählen") ist der einzige Text, der den Zweck benennt und im Gegensatz zu
+    // `displayText` nicht mit der Auswahl wechselt — ein Name, der sich beim
+    // Auswählen ändert, wäre für Sprachsteuerung unbrauchbar.
+    //
+    // Gibt der Aufrufer ein `id` mit, hat er die Kopplung über <label for>
+    // selbst in der Hand; ein aria-label würde dessen sichtbaren Text
+    // überschreiben und „sprich, was du siehst" brechen. Deshalb hier nichts.
+    const platzhalterLabel = options.find((o) => o.value === "")?.label;
+    const hatEigenenNamen = Boolean(ariaLabel ?? ariaLabelledBy ?? id);
+    const ariaLabelEffektiv = hatEigenenNamen ? ariaLabel : platzhalterLabel;
+
     const triggerClasses = cn(
       "border-ink bg-paper text-ink flex w-full min-w-0 items-center justify-between gap-2 border px-3 py-2 text-left transition-colors",
       fieldSize === "md" ? "h-11 text-base sm:px-4" : "text-sm",
@@ -265,6 +283,7 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
           aria-invalid={ariaInvalid}
           aria-describedby={ariaDescribedBy}
           aria-labelledby={ariaLabelledBy}
+          aria-label={ariaLabelEffektiv}
           disabled={disabled}
           autoFocus={autoFocus}
           className={triggerClasses}
