@@ -204,6 +204,18 @@
 }
 
 /*
+ * Suchfeld im Suchfenster: Beim Öffnen springt der Cursor hinein, der
+ * gemeinsame Fokusrahmen zeichnete also sofort einen schwarzen Kasten — im
+ * 2px-Rahmen des Fensters ein Kasten im Kasten. Stattdessen wird die Linie
+ * unter der Zeile zur Tinte, wie eine Schreiblinie im Heft; die Zeile behält
+ * dabei ihre Höhe, weil sie immer 2px trägt. Ungelayert wie die Regel oben,
+ * sonst gewinnt der allgemeine Rahmen.
+ */
+.programm .suchfeld:focus-visible {
+  outline: none;
+}
+
+/*
  * Textlink im Fließtext: Messing-Tinte (Nacht: Druckorange), immer
  * unterstrichen, damit er nicht nur an der Farbe erkennbar ist. Auf Orange
  * steht er in Tinte.
