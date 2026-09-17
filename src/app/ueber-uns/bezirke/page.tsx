@@ -272,7 +272,9 @@ function BezirkeMap({ bezirke }: { bezirke: Bezirk[] }) {
         </svg>
       </Panel>
       {/* Info-Spalte */}
-      <div className="w-full lg:sticky lg:top-24 lg:w-1/3">
+      {/* `sticky-below-nav` statt `lg:top-24` — siehe Ensemble-Detailseite:
+          96px fest gegen 120px tatsächliche Navigationshöhe. */}
+      <div className="sticky-below-nav w-full lg:sticky lg:w-1/3">
         <div className="border-ink dark:border-night-text border-t-2 pt-6">
           {currentBezirk ? (
             <div>

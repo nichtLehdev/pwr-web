@@ -33,8 +33,11 @@ export function PageTitleBar({ title }: { title: string }) {
         )}
         style={{ top: `${stickyTop}px` }}
       >
-        <div className="sheet py-3">
-          <p className="condensed text-ink dark:text-night-text truncate text-xl leading-none font-bold">
+        {/* Feste Höhe statt Polster um die Zeile: `PublicPage` rechnet mit
+            genau dieser Höhe (`--kolumnentitel-hoehe`), damit mitlaufende
+            Abschnittsköpfe unter dem Streifen stehen bleiben. */}
+        <div className="sheet flex h-11 items-center">
+          <p className="condensed text-ink dark:text-night-text min-w-0 truncate text-xl leading-none font-bold">
             {title}
           </p>
         </div>
