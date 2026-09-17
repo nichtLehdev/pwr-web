@@ -187,6 +187,7 @@ export default function NewCourseRegistrationPage() {
         currentUser={null}
         isWaitlist={spots?.isFull ?? false}
         availableSlots={spots?.availableSlots}
+        capacityByPriceOption={spots?.capacityByPriceOption}
         onClose={() => router.push(participantsUrl)}
         onSuccess={() => {
           void utils.courses.getRegistrations.invalidate({ courseId });

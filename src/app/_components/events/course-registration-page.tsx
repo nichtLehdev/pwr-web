@@ -233,6 +233,8 @@ export default function CourseRegistrationPage({
             onClose={onCloseForm}
             onSuccess={onSuccessForm}
             isWaitlist={isWaitlist}
+            availableSlots={spots.availableSlots}
+            capacityByPriceOption={spots.capacityByPriceOption}
             currentUser={userProfile ?? null}
           />
         )}

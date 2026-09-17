@@ -23,6 +23,7 @@ import { Step2Participants } from "./course-registration-form/step-2-participant
 import { Step3Summary } from "./course-registration-form/step-3-summary";
 import { validateStep as validateStepUtil } from "./course-registration-form/utils";
 import { registrationErrorMessage } from "@/lib/registration-error-message";
+import { registrationSeatShortage } from "@/lib/registration-seat-shortage";
 import {
   ScrollableModal,
   ScrollableModalCard,
@@ -38,6 +39,7 @@ export default function CourseRegistrationForm({
   currentUser,
   staffMode = false,
   availableSlots,
+  capacityByPriceOption,
 }: CourseRegistrationFormProps) {
   const toast = useToast();
   const registrationMutation = api.registrations.create.useMutation();
@@ -309,13 +311,21 @@ export default function CourseRegistrationForm({
 
   const canProceed = validateStep(currentStep);
 
+  // Why the entered participants won't all get a seat: too few free seats in
+  // the course or in one of the chosen price options.
+  const seatShortage = registrationSeatShortage({
+    participantPriceOptionIds: registrationData.participants.map(
+      (p) => p.priceOptionId,
+    ),
+    availableSlots,
+    priceOptions: course.priceOptions,
+    capacityByPriceOption,
+  });
+
   // Seats short for what has been entered — the point at which the staff
-  // mutation requires an explicit overbooking consent. Falls back to the
-  // course-is-full flag when the free-seat count was not passed in.
-  const staffSeatsShort =
-    availableSlots != null && Number.isFinite(availableSlots)
-      ? registrationData.participants.length > availableSlots
-      : isWaitlist;
+  // mutation requires an explicit overbooking consent. The course-is-full
+  // flag covers a free-seat count that was not passed in.
+  const staffSeatsShort = isWaitlist || seatShortage !== null;
 
   // Mirrors the server: "AUTO" only becomes a waiting-list entry when the
   // course actually offers one, otherwise it confirms.
@@ -325,6 +335,11 @@ export default function CourseRegistrationForm({
       : staffSeatsShort && course.allowWaitingList
         ? "WAITLIST"
         : "CONFIRMED";
+
+  // The whole registration goes onto the waiting list — it is never split.
+  const expectsWaitlist = staffMode
+    ? staffResolvedStatus === "WAITLIST"
+    : !!course.allowWaitingList && staffSeatsShort;
 
   // Same rule the staff mutation enforces server-side: confirming beyond the
   // capacity needs the acknowledgement.
@@ -402,11 +417,17 @@ export default function CourseRegistrationForm({
     };
 
     const handlers = {
-      onSuccess: () => {
+      // The status the server assigned, not the form's guess: seats may have
+      // been taken since the page loaded, and it used to report success
+      // although the whole registration had landed on the waiting list.
+      onSuccess: (registration: { registrationStatus: string }) => {
+        const waitlisted = registration.registrationStatus === "WAITLIST";
         toast.success(
           staffMode
-            ? "Die Anmeldung wurde erfasst."
-            : isWaitlist
+            ? waitlisted
+              ? "Die Anmeldung wurde auf der Warteliste erfasst."
+              : "Die Anmeldung wurde erfasst."
+            : waitlisted
               ? "Sie wurden auf die Warteliste gesetzt."
               : "Ihre Anmeldung war erfolgreich.",
         );
@@ -535,7 +556,8 @@ export default function CourseRegistrationForm({
             registrationData.registrantEmail.trim().toLowerCase() ===
               currentUser.email.toLowerCase()
           }
-          isWaitlist={isWaitlist}
+          isWaitlist={expectsWaitlist}
+          seatShortage={seatShortage}
           staff={
             staffMode
               ? {

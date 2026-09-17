@@ -58,8 +58,11 @@ import {
   assertPriceTierCapacity,
   computeCourseCapacity,
   countConfirmedParticipants,
+  findFullPriceTier,
+  priceTierFullMessage,
   runSerializable,
 } from "../helpers/course-capacity";
+import { resolveParticipantPriceOption } from "@/lib/course-price-options";
 import { logAudit } from "../helpers/audit";
 import {
   createNotification,
@@ -433,20 +436,30 @@ export const registrationsRouter = createTRPCRouter({
             status = RegistrationStatus.WAITLIST;
           }
 
-          // Per-price-tier limits are enforced here too (they previously were
-          // only checked on registration updates, not on creation).
+          // Auch die Preiskategorien haben ihre Grenzen. Eine ausgebuchte gilt
+          // wie ein voller Kurs: mit Warteliste kommt die Anmeldung darauf,
+          // ohne wird sie abgelehnt — sie scheiterte sonst trotz Warteliste.
           if (status === RegistrationStatus.CONFIRMED) {
             const additionsByOptionId: Record<string, number> = {};
             for (const participant of participantsWithPriceOptions) {
               additionsByOptionId[participant.priceOptionId] =
                 (additionsByOptionId[participant.priceOptionId] ?? 0) + 1;
             }
-            await assertPriceTierCapacity(
+            const fullOption = await findFullPriceTier(
               tx,
               input.courseId,
               course.priceOptions,
               additionsByOptionId,
             );
+            if (fullOption) {
+              if (!course.allowWaitingList) {
+                throw new TRPCError({
+                  code: "BAD_REQUEST",
+                  message: priceTierFullMessage(fullOption),
+                });
+              }
+              status = RegistrationStatus.WAITLIST;
+            }
           }
 
           const created = await tx.courseRegistration.create({
@@ -695,9 +708,23 @@ export const registrationsRouter = createTRPCRouter({
           const newParticipants = participantsWithPriceOptions.length;
           const fitsInCapacity = confirmedCount + newParticipants <= capacity;
 
+          const additionsByOptionId: Record<string, number> = {};
+          for (const participant of participantsWithPriceOptions) {
+            additionsByOptionId[participant.priceOptionId] =
+              (additionsByOptionId[participant.priceOptionId] ?? 0) + 1;
+          }
+          const fullOption = await findFullPriceTier(
+            tx,
+            input.courseId,
+            course.priceOptions,
+            additionsByOptionId,
+          );
+
+          // "Automatisch" behandelt eine ausgebuchte Preiskategorie wie einen
+          // vollen Kurs, genau wie die öffentliche Anmeldung.
           const status: RegistrationStatus =
             requestedStatus ??
-            (fitsInCapacity || !course.allowWaitingList
+            ((fitsInCapacity && !fullOption) || !course.allowWaitingList
               ? RegistrationStatus.CONFIRMED
               : RegistrationStatus.WAITLIST);
 
@@ -716,18 +743,15 @@ export const registrationsRouter = createTRPCRouter({
           // The overbooking acknowledgement covers per-price-option caps too:
           // staff who knowingly exceed the course capacity should not be
           // stopped by a tier limit right afterwards.
-          if (status === RegistrationStatus.CONFIRMED && !allowOverbooking) {
-            const additionsByOptionId: Record<string, number> = {};
-            for (const participant of participantsWithPriceOptions) {
-              additionsByOptionId[participant.priceOptionId] =
-                (additionsByOptionId[participant.priceOptionId] ?? 0) + 1;
-            }
-            await assertPriceTierCapacity(
-              tx,
-              input.courseId,
-              course.priceOptions,
-              additionsByOptionId,
-            );
+          if (
+            status === RegistrationStatus.CONFIRMED &&
+            fullOption &&
+            !allowOverbooking
+          ) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: priceTierFullMessage(fullOption),
+            });
           }
 
           const created = await tx.courseRegistration.create({
@@ -1580,26 +1604,49 @@ export const registrationsRouter = createTRPCRouter({
               ),
             };
 
+      // Plätze belegt nur eine bestätigte Anmeldung — und die muss beim
+      // Bearbeiten in den Kurs passen, ob er eine Warteliste hat oder nicht.
+      // Mit Warteliste wurde das bisher übersprungen: eine bestätigte
+      // Anmeldung konnte Teilnehmer hinzufügen und den Kurs überbuchen. Eine
+      // Anmeldung auf der Warteliste belegt nichts; ihre Plätze prüft erst das
+      // Nachrücken.
+      const holdsSeats =
+        registration.registrationStatus === RegistrationStatus.CONFIRMED;
+
+      // Geprüft wird nur, was die Änderung dazu belegt: in einem bewusst
+      // überbuchten Kurs soll sich trotzdem die Telefonnummer ändern oder ein
+      // Teilnehmer abmelden lassen.
+      const bookedByOptionId: Record<string, number> = {};
+      for (const participant of registration.participants) {
+        const optionId = resolveParticipantPriceOption(
+          participant,
+          course.priceOptions,
+        )?.id;
+        if (optionId) {
+          bookedByOptionId[optionId] = (bookedByOptionId[optionId] ?? 0) + 1;
+        }
+      }
+
       // Capacity checks and the delete-and-rewrite of participants run in one
       // SERIALIZABLE transaction: no overbooking through concurrent edits, and
       // no half-rewritten participant list if anything fails midway.
       const updatedRegistration = await runSerializable(ctx.db, async (tx) => {
-        const currentParticipantsExcludingThis =
-          await countConfirmedParticipants(tx, course.id, id);
+        if (
+          holdsSeats &&
+          participantsWithPriceOptions.length > registration.participants.length
+        ) {
+          const currentParticipantsExcludingThis =
+            await countConfirmedParticipants(tx, course.id, id);
+          const maxParticipants = computeCourseCapacity(course);
 
-        const newTotalParticipants =
-          currentParticipantsExcludingThis +
-          participantsWithPriceOptions.length;
-        const maxParticipants = computeCourseCapacity(course);
-
-        if (newTotalParticipants > maxParticipants) {
-          if (!course.allowWaitingList) {
+          if (
+            currentParticipantsExcludingThis +
+              participantsWithPriceOptions.length >
+            maxParticipants
+          ) {
             const availableSpots =
               maxParticipants - currentParticipantsExcludingThis;
-            if (
-              availableSpots > 0 &&
-              availableSpots < participantsWithPriceOptions.length
-            ) {
+            if (availableSpots > 0) {
               throw new TRPCError({
                 code: "BAD_REQUEST",
                 message: `Nur noch ${availableSpots} ${availableSpots === 1 ? "Platz" : "Plätze"} verfügbar, aber Sie versuchen ${participantsWithPriceOptions.length} ${participantsWithPriceOptions.length === 1 ? "Teilnehmer" : "Teilnehmer"} anzumelden. Bitte reduzieren Sie die Anzahl der Teilnehmer.`,
@@ -1607,25 +1654,34 @@ export const registrationsRouter = createTRPCRouter({
             }
             throw new TRPCError({
               code: "BAD_REQUEST",
-              message: "Cannot add more participants - course is full",
+              message:
+                "Der Kurs ist ausgebucht – es können keine Teilnehmer hinzugefügt werden.",
             });
           }
         }
 
-        const priceOptionCounts: Record<string, number> = {};
-        for (const participant of participantsWithPriceOptions) {
-          if (participant.priceOptionId) {
-            priceOptionCounts[participant.priceOptionId] =
-              (priceOptionCounts[participant.priceOptionId] ?? 0) + 1;
+        if (holdsSeats) {
+          const grownOptionCounts: Record<string, number> = {};
+          const priceOptionCounts: Record<string, number> = {};
+          for (const participant of participantsWithPriceOptions) {
+            if (participant.priceOptionId) {
+              priceOptionCounts[participant.priceOptionId] =
+                (priceOptionCounts[participant.priceOptionId] ?? 0) + 1;
+            }
           }
+          for (const [optionId, count] of Object.entries(priceOptionCounts)) {
+            if (count > (bookedByOptionId[optionId] ?? 0)) {
+              grownOptionCounts[optionId] = count;
+            }
+          }
+          await assertPriceTierCapacity(
+            tx,
+            course.id,
+            course.priceOptions,
+            grownOptionCounts,
+            id,
+          );
         }
-        await assertPriceTierCapacity(
-          tx,
-          course.id,
-          course.priceOptions,
-          priceOptionCounts,
-          id,
-        );
 
         const existingParticipantIds = participantsWithPriceOptions
           .filter((p) => p.id)
