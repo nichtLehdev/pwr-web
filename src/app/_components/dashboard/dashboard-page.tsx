@@ -114,7 +114,13 @@ export default function DashboardPage({
             </ol>
           </nav>
 
-          <div className="mt-1 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          {/* `sm:flex-wrap`: Ohne Umbruch muss der Titel das ganze Defizit
+              tragen, weil er `min-w-0` hat und die Knopfgruppe `shrink-0`.
+              Gemessen bei vier Aktionen und 1024px: Der Titel fiel auf 0px
+              Breite und 350px Höhe — er rendert dann buchstabenweise
+              untereinander. Mit Umbruch rutschen die Knöpfe in eine eigene
+              Zeile, statt die Überschrift zu zerquetschen. */}
+          <div className="mt-1 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
             <div className="min-w-0">
               {/* Lange deutsche Komposita („Berechtigungsverwaltung“) sind ein
                   einzelnes unteilbares Wort, breiter als ein 375px-Fenster —
@@ -129,7 +135,10 @@ export default function DashboardPage({
               )}
             </div>
             {actions && (
-              <div className="flex shrink-0 flex-wrap gap-2">{actions}</div>
+              // Ohne `shrink-0` darf die Gruppe schmaler werden — erst dadurch
+              // greift ihr eigenes `flex-wrap` und die Knöpfe brechen um,
+              // statt in einer starren Zeile stehenzubleiben.
+              <div className="flex flex-wrap gap-2">{actions}</div>
             )}
           </div>
         </div>
