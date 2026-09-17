@@ -264,6 +264,9 @@ export default function ViewRegistrationPage() {
   }
 
   const statusTag = STATUS_TAG[registration.registrationStatus];
+  /** Storniert heißt: Die Rabattfrage ist erledigt, egal wie sie stand. */
+  const storniert =
+    registration.registrationStatus === RegistrationStatus.CANCELLED;
 
   const priceRows: { label: ReactNode; value: ReactNode }[] = [];
   const hasDiscountBreakdown =
@@ -581,6 +584,7 @@ export default function ViewRegistrationPage() {
             </p>
             <ValueTable className="mt-4" rows={priceRows} />
             {hasDiscountBreakdown &&
+              !storniert &&
               registration.siblingDiscountStatus === "PENDING" && (
                 <Note tone="info" className="mt-4">
                   <p>
@@ -590,12 +594,14 @@ export default function ViewRegistrationPage() {
                 </Note>
               )}
             {hasDiscountBreakdown &&
+              !storniert &&
               registration.siblingDiscountStatus === "APPROVED" && (
                 <Note tone="info" className="mt-4">
                   <p>✓ Ihr Rabattantrag wurde genehmigt.</p>
                 </Note>
               )}
             {hasDiscountBreakdown &&
+              !storniert &&
               registration.siblingDiscountStatus === "REJECTED" && (
                 <Note tone="error" className="mt-4">
                   <p>
