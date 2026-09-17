@@ -18,16 +18,30 @@ import {
   createReferenceResolver,
   type UnresolvedReference,
 } from "@/server/utils/import-references";
+import {
+  readCourseContent,
+  readCourseCustomFields,
+  readCourseDownPayment,
+  readCourseGuestTeamMembers,
+  readCoursePriceOptions,
+} from "@/server/utils/course-import";
+import {
+  readEventContent,
+  readEventDownloadRefs,
+  readEventPriceOptions,
+} from "@/server/utils/event-import";
+import { readText } from "@/server/utils/import-values";
+import {
+  importCourseSlug,
+  importEventSlug,
+} from "@/server/api/helpers/content-slug";
+import { normalizeCourseNumber } from "@/lib/invoice-document";
 import { formatPhoneNumberOrNull } from "@/lib/phone-number";
 import {
   ContentStatus,
   PostCategory,
-  EventCategory,
-  EventEnsembleType,
   DownloadCategory,
   FileType,
-  CourseType,
-  TargetAudience,
   HistoryCategory,
 } from "~/generated/prisma/client";
 import { Prisma } from "~/generated/prisma/client";
@@ -271,7 +285,8 @@ export async function POST(
             ? mediaIdMap[coverImageId] || coverImageId
             : null;
 
-          const title = (eventData.title as string) || "unbenannt";
+          const content = readEventContent(eventData);
+          const title = content.title;
 
           // An id from another database means nothing here, so every
           // reference is resolved against this one first.
@@ -285,15 +300,32 @@ export async function POST(
             );
           }
 
+          // Ein Set, weil zwei Verweise über Pfad und Titel auf dieselbe Datei
+          // führen können — zweimal verknüpft verletzte das der Eindeutigkeit
+          // von Termin und Datei.
+          const downloadIds = new Set<string>();
+          for (const ref of readEventDownloadRefs(eventData.downloads)) {
+            const downloadId = await references.downloadId(
+              ref.downloadId,
+              ref.fileUrl,
+              ref.title,
+              title,
+            );
+            if (downloadId) downloadIds.add(downloadId);
+          }
+
+          const priceOptions = readEventPriceOptions(eventData.priceOptions);
+
           results.push(
             await db.event.create({
               data: {
-                title: eventData.title as string,
-                motto: (eventData.motto as string) || null,
-                description: (eventData.description as string) || null,
-                eventDate: new Date(eventData.eventDate as string),
-                cancelled: (eventData.cancelled as boolean) || false,
-                category: eventData.category as string as EventCategory,
+                ...content,
+                slug: await importEventSlug(
+                  db,
+                  title,
+                  content.eventDate,
+                  eventData.slug,
+                ),
                 bezirkId: await references.bezirkId(
                   eventData.bezirkId,
                   eventData.bezirk,
@@ -311,13 +343,18 @@ export async function POST(
                   eventData.auswahlChor,
                   title,
                 ),
-                performingEnsembleType: (eventData.ensembleType as string)
-                  ? (eventData.ensembleType as string as EventEnsembleType)
-                  : null,
                 coverImageId: newCoverImageId,
-                status:
-                  (eventData.status as string as ContentStatus) ||
-                  ContentStatus.DRAFT,
+                createdById: session.user.id,
+                ...(priceOptions.length > 0 && {
+                  priceOptions: { create: priceOptions },
+                }),
+                ...(downloadIds.size > 0 && {
+                  downloads: {
+                    create: [...downloadIds].map((downloadId) => ({
+                      downloadId,
+                    })),
+                  },
+                }),
               },
             }),
           );
@@ -661,7 +698,8 @@ export async function POST(
         const results = [];
 
         for (const courseData of courses) {
-          const title = (courseData.title as string) || "ohne Titel";
+          const content = readCourseContent(courseData);
+          const title = content.title;
 
           // An id from another database means nothing here.
           let locationId = await references.knownLocationId(
@@ -674,33 +712,77 @@ export async function POST(
             );
           }
 
+          const imageId = readText(courseData.imageId);
+          const newImageId = imageId ? mediaIdMap[imageId] || imageId : null;
+
+          // Die Kursnummer ist global eindeutig und bildet den Nummernkreis
+          // der Rechnungen (RE-<Kursnummer>-<lfd.>). Ist sie im Zielbestand
+          // schon vergeben, kommt der Kurs ohne Nummer an: Zwei Kurse teilten
+          // sich sonst eine Rechnungsfolge. Eine Ersatznummer wird bewusst
+          // nicht erfunden — die Nummer stammt aus der Buchhaltung, nicht aus
+          // diesem Vorgang.
+          const exportedNumber = normalizeCourseNumber(
+            readText(courseData.courseNumber),
+          );
+          const courseNumberTaken =
+            exportedNumber !== null &&
+            (await db.course.count({
+              where: { courseNumber: exportedNumber },
+            })) > 0;
+          const courseNumber = courseNumberTaken ? null : exportedNumber;
+          if (courseNumberTaken) {
+            references.note(title, "Kursnummer", exportedNumber);
+          }
+
+          const downPayment = readCourseDownPayment({
+            raw: courseData,
+            courseNumber,
+            isFree: content.isFree,
+            isExternal: Boolean(content.externalRegistrationUrl),
+            allowSiblingDiscount: content.allowSiblingDiscount,
+            priceOptions: readCoursePriceOptions(courseData.priceOptions),
+          });
+          if (downPayment.droppedReason) {
+            references.note(title, "Anzahlung", downPayment.droppedReason);
+          }
+
+          const customFields = readCourseCustomFields(courseData.customFields);
+          const guestTeamMembers = readCourseGuestTeamMembers(
+            courseData.guestTeamMembers,
+          );
+
           results.push(
             await db.course.create({
               data: {
-                title: courseData.title as string,
-                description: (courseData.description as string) || "",
-                courseType: courseData.courseType as string as CourseType,
-                targetAudience:
-                  (courseData.targetAudience as string as TargetAudience) ||
-                  null,
-                startDate: new Date(courseData.startDate as string),
-                endDate: courseData.endDate
-                  ? new Date(courseData.endDate as string)
-                  : new Date(courseData.startDate as string),
-                registrationDeadline: courseData.registrationDeadline
-                  ? new Date(courseData.registrationDeadline as string)
-                  : null,
-                maxParticipants: (courseData.maxParticipants as number) || null,
+                ...content,
+                slug: await importCourseSlug(
+                  db,
+                  title,
+                  content.startDate,
+                  courseData.slug,
+                ),
+                courseNumber,
+                downPaymentMode: downPayment.downPaymentMode,
+                downPaymentAmount: downPayment.downPaymentAmount,
+                downPaymentRefundPolicy: downPayment.downPaymentRefundPolicy,
+                downPaymentRefundText: downPayment.downPaymentRefundText,
+                imageId: newImageId,
                 bezirkId: await references.bezirkId(
                   courseData.bezirkId,
                   courseData.bezirk,
                   title,
                 ),
                 locationId,
-                status:
-                  (courseData.status as string as ContentStatus) ||
-                  ContentStatus.DRAFT,
                 createdById: session.user.id,
+                ...(downPayment.priceOptions.length > 0 && {
+                  priceOptions: { create: downPayment.priceOptions },
+                }),
+                ...(customFields.length > 0 && {
+                  customFields: { create: customFields },
+                }),
+                ...(guestTeamMembers.length > 0 && {
+                  guestTeamMembers: { create: guestTeamMembers },
+                }),
               },
             }),
           );

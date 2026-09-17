@@ -164,3 +164,60 @@ export async function updateCourseSlug(
       })) > 0,
   );
 }
+
+/**
+ * Slug für einen Eintrag aus einem Import.
+ *
+ * Anders als im Formular darf ein besetzter Slug hier nicht scheitern: Ein
+ * Import läuft über viele Einträge auf einmal, und ein einziger vergebener
+ * Slug würde den ganzen Vorgang abbrechen. Der ausgegebene Slug wird deshalb
+ * übernommen, solange er frei und gültig ist — dann führt eine geteilte
+ * Adresse nach dem Wiedereinspielen wieder auf denselben Eintrag. Ist er
+ * vergeben, entsteht ein neuer aus Titel und Jahr, wie beim Anlegen.
+ */
+async function importedSlug(
+  requested: unknown,
+  base: string,
+  fallback: string,
+  isTaken: IsTaken,
+): Promise<string> {
+  const candidate = typeof requested === "string" ? requested.trim() : "";
+  if (candidate && !slugProblem(candidate) && !(await isTaken(candidate))) {
+    return candidate;
+  }
+  return uniqueSlug(base, isTaken, fallback);
+}
+
+export async function importEventSlug(
+  db: Db,
+  title: string,
+  eventDate: Date,
+  requested: unknown,
+): Promise<string> {
+  const isTaken: IsTaken = async (candidate) =>
+    (await db.event.count({ where: { slug: candidate } })) > 0;
+
+  return importedSlug(
+    requested,
+    datedSlugBase(title, eventDate),
+    "termin",
+    isTaken,
+  );
+}
+
+export async function importCourseSlug(
+  db: Db,
+  title: string,
+  startDate: Date,
+  requested: unknown,
+): Promise<string> {
+  const isTaken: IsTaken = async (candidate) =>
+    (await db.course.count({ where: { slug: candidate } })) > 0;
+
+  return importedSlug(
+    requested,
+    datedSlugBase(title, startDate),
+    "kurs",
+    isTaken,
+  );
+}
