@@ -569,10 +569,14 @@ export default function NewEventPage() {
                     </div>
 
                     <div>
-                      <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
+                      <label
+                        htmlFor="event-category"
+                        className="text-ink dark:text-night-text mb-1 block text-sm font-medium"
+                      >
                         Kategorie *
                       </label>
                       <Select
+                        id="event-category"
                         value={category}
                         onChange={(e) =>
                           setCategory(e.target.value as EventCategory)
@@ -707,11 +711,15 @@ export default function NewEventPage() {
               <DashboardFormBlock title="Datum & Uhrzeit">
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div>
-                    <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
+                    <label
+                      htmlFor="event-date"
+                      className="text-ink dark:text-night-text mb-1 block text-sm font-medium"
+                    >
                       Datum *
                     </label>
                     <input
                       type="date"
+                      id="event-date"
                       value={eventDate}
                       onChange={(e) => setEventDate(e.target.value)}
                       className="border-ink dark:border-night-text dark:bg-night dark:text-night-text text-ink bg-paper block w-full border px-3 py-2"
@@ -719,11 +727,15 @@ export default function NewEventPage() {
                     />
                   </div>
                   <div>
-                    <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
+                    <label
+                      htmlFor="event-time"
+                      className="text-ink dark:text-night-text mb-1 block text-sm font-medium"
+                    >
                       Uhrzeit *
                     </label>
                     <input
                       type="time"
+                      id="event-time"
                       value={eventTime}
                       onChange={(e) => setEventTime(e.target.value)}
                       className="border-ink dark:border-night-text dark:bg-night dark:text-night-text text-ink bg-paper block w-full border px-3 py-2"

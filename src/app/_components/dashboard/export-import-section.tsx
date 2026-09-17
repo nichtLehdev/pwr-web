@@ -215,11 +215,15 @@ export default function ExportImportSection() {
               </Select>
             </div>
             <div>
-              <label className="text-dark dark:text-night-muted mb-2 block text-sm font-medium">
+              <label
+                htmlFor="import-file"
+                className="text-dark dark:text-night-muted mb-2 block text-sm font-medium"
+              >
                 ZIP- oder JSON-Datei
               </label>
               <input
                 type="file"
+                id="import-file"
                 accept=".zip,.json"
                 onChange={(e) => setImportFile(e.target.files?.[0] ?? null)}
                 className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper w-full border px-3 py-2 text-sm"
