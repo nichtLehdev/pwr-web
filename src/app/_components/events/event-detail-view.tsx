@@ -456,8 +456,13 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
             )}
           </div>
 
-          {/* Sidebar — pinned while the long main column scrolls */}
-          <div className="space-y-8 lg:sticky lg:top-24 lg:self-start">
+          {/* Randspalte läuft mit, während die lange Hauptspalte vorbeizieht.
+              `sticky-below-nav` statt `lg:top-24`: Die feste Zahl ergab 96px,
+              die Navigation endet aber bei 120px — hier nachgemessen −24px,
+              die Spalte lief also unter dem Streifen hindurch (1440px wie
+              1024px, Spielraum 657 bzw. 697). Die Klasse rechnet Banner- und
+              Navigationshöhe zur Laufzeit aus. Siehe Ensemble-Detailseite. */}
+          <div className="sticky-below-nav space-y-8 lg:sticky lg:self-start">
             {/* Mitmachangebot */}
             {event.openToParticipants && (
               <div className="border-rule dark:border-night-rule border-t pt-6">
