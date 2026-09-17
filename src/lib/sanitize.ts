@@ -1,4 +1,5 @@
 import DOMPurify from "isomorphic-dompurify";
+import { descriptionToHtml } from "@/lib/description-html";
 
 // Force safe rel on links: user-authored content may set target="_blank",
 // and without noopener the target page gets a handle on our window.
@@ -88,4 +89,25 @@ export function sanitizeHtml(dirty: string): string {
     // Format, das posts.ts erzeugt. Beide sind reine Textfelder, nie Ziele.
     ADD_URI_SAFE_ATTR: ["data-copyright", "data-creator"],
   });
+}
+
+/**
+ * Beschreibung eines Termins oder Kurses als anzeigefertiges HTML.
+ *
+ * Eine Stelle für beide Schritte, damit keine Ansicht das Filtern vergisst:
+ * Markdown zu HTML (`descriptionToHtml`), danach derselbe Filter wie bei den
+ * Beiträgen. Gespeichert wird wie dort Markdown; bereinigt wird beim Anzeigen,
+ * nicht beim Speichern — der Bestand und die Einfuhr liefen sonst am Filter
+ * vorbei, und DOMPurify auf Markdown angewandt zerstört ihn (aus „> Zitat"
+ * würde „&gt; Zitat", aus „a & b" „a &amp; b").
+ *
+ * `null` für leere Beschreibungen, damit die Ansichten den Abschnitt ohne
+ * eigene Prüfung weglassen können.
+ */
+export function renderDescriptionHtml(
+  markdown: string | null | undefined,
+): string | null {
+  if (!markdown?.trim()) return null;
+  const html = sanitizeHtml(descriptionToHtml(markdown));
+  return html.trim() ? html : null;
 }
