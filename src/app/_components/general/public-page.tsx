@@ -1,4 +1,4 @@
-import { type ReactNode } from "react";
+import { type CSSProperties, type ReactNode } from "react";
 import {
   PageHead,
   type Breadcrumb,
@@ -55,7 +55,19 @@ export default function PublicPage({
       : undefined;
 
   return (
-    <div className="programm font-programm bg-paper text-ink dark:bg-night dark:text-night-text flex min-h-screen flex-col">
+    <div
+      className="programm font-programm bg-paper text-ink dark:bg-night dark:text-night-text flex min-h-screen flex-col"
+      // Höhe des Kolumnentitels (h-11 plus Haarlinie). Alles Klebende
+      // (`.sticky-below-nav`) rechnet sie ein — sonst klebt es unter dem
+      // Streifen und die erste Zeile ist verdeckt.
+      style={
+        stickyTitle
+          ? ({
+              "--kolumnentitel-hoehe": "calc(2.75rem + 1px)",
+            } as CSSProperties)
+          : undefined
+      }
+    >
       <PageHead
         title={heading}
         meta={meta}

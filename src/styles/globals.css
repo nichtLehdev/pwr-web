@@ -347,20 +347,30 @@ body {
   }
 
   /*
-   * Mitlaufender Abschnittskopf im Heft (`Split` mit `stickyHead`).
+   * Klebeversatz für alles, was unter der Navigation stehenbleiben soll:
+   * mitlaufende Abschnittsköpfe (`Split` mit `stickyHead`), die Randspalte der
+   * Ensemble-Detailseite, die Infospalte der Bezirkskarte.
    *
    * Der Versatz kommt aus `--main-padding-top`, das MainContent auf <main> als
    * fertig ausgerechnetes calc aus Banner- und Navigationshöhe setzt und das
-   * sich nach unten vererbt. Eine feste Zahl wie `top-24` stimmt nicht mehr,
-   * sobald das Banner erscheint oder der Breakpoint die Navigationshöhe
-   * ändert — derselbe Fehler steckte zuvor im Kolumnentitel.
+   * sich nach unten vererbt. Eine feste Zahl wie `top-24` stimmt nicht: Sie
+   * ergibt 96px, während die Navigation mit Banner bei 120px endet — gemessen
+   * rutschten Ensemble-Randspalte und Bezirks-Infospalte dadurch immer 24px
+   * unter die Navigation. Derselbe Fehler steckte zuvor im Kolumnentitel.
+   *
+   * Dazu kommt `--kolumnentitel-hoehe`, das `PublicPage` setzt: Wenn etwas
+   * klebt, ist der große Titel längst aus dem Bild und der Kolumnentitel steht
+   * unter der Navigation. Ohne diesen Anteil klebte alles 21px unter dem
+   * Streifen, und die erste Zeile war angeschnitten.
    *
    * Als benannte Klasse aus demselben Grund wie oben: Kommas in Tailwinds
    * Arbitrary-Werten zerbrechen den Parser, `top` wird ungültig, und
    * `position: sticky` bliebe dann still wirkungslos.
    */
-  .split-sticky-head {
-    top: calc(var(--main-padding-top, 5rem) + 1.5rem);
+  .sticky-below-nav {
+    top: calc(
+      var(--main-padding-top, 5rem) + var(--kolumnentitel-hoehe, 0px) + 1.5rem
+    );
   }
 }
 

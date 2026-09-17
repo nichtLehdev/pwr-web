@@ -411,7 +411,10 @@ export default async function EnsembleDetailPage({ params }: PageProps) {
           </div>
 
           {/* Randspalte */}
-          <div className="space-y-8 lg:sticky lg:top-24 lg:self-start">
+          {/* `sticky-below-nav` statt `lg:top-24`: Die feste Zahl ergab 96px,
+              die Navigation endet mit Banner aber bei 120px — die Randspalte
+              rutschte dadurch 24px darunter. */}
+          <div className="sticky-below-nav space-y-8 lg:sticky lg:self-start">
             {hasConductorCard && (
               <div>
                 <Heading as="h3" size="list" rule>

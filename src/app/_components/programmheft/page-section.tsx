@@ -66,7 +66,7 @@ export function Split({
           side === "left"
             ? "lg:col-span-4"
             : "lg:col-span-4 lg:col-start-9 lg:row-start-1",
-          stickyHead && "split-sticky-head lg:sticky lg:self-start",
+          stickyHead && "sticky-below-nav lg:sticky lg:self-start",
         )}
       >
         {head}
