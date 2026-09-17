@@ -8,6 +8,7 @@ import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
 import { DashboardPage } from "@/app/_components/dashboard";
+import { Tag } from "@/app/_components/programmheft/tag";
 import { SocialIcon } from "@/app/_components/ui/social-icon";
 import { readSocialLinks } from "@/lib/social-links";
 import { EditIcon, GlobeIcon, MusicIcon } from "lucide-react";
@@ -55,8 +56,8 @@ export default function EnsembleDetailPage() {
 
   if (sessionLoading || profileLoading || ensembleLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
@@ -67,14 +68,14 @@ export default function EnsembleDetailPage() {
 
   if (!ensemble) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <h1 className="dark:text-dark-text text-xl font-semibold text-gray-900">
+          <h1 className="text-ink dark:text-night-text text-xl font-semibold">
             Ensemble nicht gefunden
           </h1>
           <Link
             href="/dashboard/ensembles"
-            className="text-primary mt-4 inline-block hover:underline"
+            className="link-ink mt-4 inline-block"
           >
             Zurück zur Übersicht
           </Link>
@@ -96,7 +97,7 @@ export default function EnsembleDetailPage() {
       actions={
         <Link
           href={`/dashboard/ensembles/${ensembleId}/edit`}
-          className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
+          className="on-orange bg-primary text-ink hover:bg-primary-dark inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm font-semibold transition-colors"
         >
           <EditIcon className="h-4 w-4" />
           Bearbeiten
@@ -107,7 +108,7 @@ export default function EnsembleDetailPage() {
       {/* Ensemble Image and Status Badges */}
       <div className="mb-6 flex items-center gap-4">
         {ensemble.image?.url ? (
-          <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg">
+          <div className="border-rule dark:border-night-rule relative h-20 w-20 shrink-0 overflow-hidden border">
             <Image
               src={ensemble.image.url}
               alt={ensemble.name}
@@ -116,23 +117,17 @@ export default function EnsembleDetailPage() {
             />
           </div>
         ) : (
-          <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-500">
+          <div className="bg-rule/25 text-dark dark:bg-night-raised dark:text-night-muted flex h-20 w-20 shrink-0 items-center justify-center">
             <MusicIcon className="h-10 w-10" />
           </div>
         )}
         <div className="flex flex-wrap items-center gap-2">
-          <span
-            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-              ensemble.isActive
-                ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
-                : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
-            }`}
-          >
+          <Tag tone={ensemble.isActive ? "ink" : "inverse"}>
             {ensemble.isActive ? "Aktiv" : "Inaktiv"}
-          </span>
+          </Tag>
           {ensemble.bezirk && (
             <span
-              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium text-white"
+              className="semi-condensed inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-semibold text-white"
               style={{
                 backgroundColor: `var(--color-district-${ensemble.bezirk.number})`,
               }}
@@ -141,20 +136,18 @@ export default function EnsembleDetailPage() {
             </span>
           )}
           {ensemble.internalId && (
-            <span className="dark:bg-dark-background-secondary dark:text-dark-muted inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
-              Chor-Nr {ensemble.internalId}
-            </span>
+            <Tag tone="inverse">Chor-Nr {ensemble.internalId}</Tag>
           )}
         </div>
       </div>
 
       {/* Description */}
       {ensemble.description && (
-        <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-3 text-lg font-semibold text-gray-900">
+        <div className="border-rule dark:border-night-rule mb-6 border p-6">
+          <h2 className="condensed text-ink dark:text-night-text mb-3 text-lg font-bold">
             Beschreibung
           </h2>
-          <p className="dark:text-dark-muted whitespace-pre-wrap text-gray-600">
+          <p className="text-dark dark:text-night-muted whitespace-pre-wrap">
             {ensemble.description}
           </p>
         </div>
@@ -163,17 +156,17 @@ export default function EnsembleDetailPage() {
       {/* Conductor & Representative */}
       <div className="mb-6 grid gap-6 sm:grid-cols-2">
         {/* Conductor */}
-        <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+        <div className="border-rule dark:border-night-rule border p-6">
+          <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
             Chorleitung
           </h2>
           {ensemble.conductorName ? (
             <div className="flex items-center gap-3">
-              <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500">
+              <div className="bg-rule/25 text-dark dark:bg-night-raised dark:text-night-muted flex h-12 w-12 shrink-0 items-center justify-center rounded-full">
                 <UserIcon className="h-6 w-6" />
               </div>
               <div>
-                <p className="dark:text-dark-text font-medium text-gray-900">
+                <p className="text-ink dark:text-night-text font-medium">
                   {ensemble.conductorName}
                 </p>
               </div>
@@ -190,37 +183,37 @@ export default function EnsembleDetailPage() {
                   />
                 </div>
               ) : (
-                <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500">
+                <div className="bg-rule/25 text-dark dark:bg-night-raised dark:text-night-muted flex h-12 w-12 shrink-0 items-center justify-center rounded-full">
                   <UserIcon className="h-6 w-6" />
                 </div>
               )}
               <div>
-                <p className="dark:text-dark-text font-medium text-gray-900">
+                <p className="text-ink dark:text-night-text font-medium">
                   {ensemble.conductor.displayName}
                 </p>
                 {ensemble.conductor.bio && (
-                  <p className="dark:text-dark-muted mt-1 line-clamp-2 text-sm text-gray-500">
+                  <p className="text-dark dark:text-night-muted mt-1 line-clamp-2 text-sm">
                     {ensemble.conductor.bio}
                   </p>
                 )}
               </div>
             </div>
           ) : (
-            <p className="dark:text-dark-muted text-gray-500 italic">
+            <p className="text-dark dark:text-night-muted italic">
               Keine Chorleitung zugewiesen
             </p>
           )}
           {(ensemble.conductorEmail || ensemble.conductorPhone) && (
-            <dl className="dark:border-dark-border mt-4 space-y-1 border-t border-gray-100 pt-3 text-sm">
+            <dl className="border-rule dark:border-night-rule mt-4 space-y-1 border-t pt-3 text-sm">
               {ensemble.conductorEmail && (
                 <div className="flex items-center gap-2">
-                  <dt className="dark:text-dark-muted w-16 text-gray-500">
+                  <dt className="text-dark dark:text-night-muted w-16">
                     E-Mail
                   </dt>
                   <dd>
                     <a
                       href={`mailto:${ensemble.conductorEmail}`}
-                      className="text-primary hover:underline"
+                      className="link-ink"
                     >
                       {ensemble.conductorEmail}
                     </a>
@@ -229,13 +222,13 @@ export default function EnsembleDetailPage() {
               )}
               {ensemble.conductorPhone && (
                 <div className="flex items-center gap-2">
-                  <dt className="dark:text-dark-muted w-16 text-gray-500">
+                  <dt className="text-dark dark:text-night-muted w-16">
                     Telefon
                   </dt>
                   <dd>
                     <a
                       href={`tel:${ensemble.conductorPhone}`}
-                      className="text-primary hover:underline"
+                      className="link-ink"
                     >
                       {ensemble.conductorPhone}
                     </a>
@@ -247,17 +240,17 @@ export default function EnsembleDetailPage() {
         </div>
 
         {/* Representative */}
-        <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+        <div className="border-rule dark:border-night-rule border p-6">
+          <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
             Ansprechpartner
           </h2>
           {ensemble.representativeName ? (
             <div className="flex items-center gap-3">
-              <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500">
+              <div className="bg-rule/25 text-dark dark:bg-night-raised dark:text-night-muted flex h-12 w-12 shrink-0 items-center justify-center rounded-full">
                 <UserIcon className="h-6 w-6" />
               </div>
               <div>
-                <p className="dark:text-dark-text font-medium text-gray-900">
+                <p className="text-ink dark:text-night-text font-medium">
                   {ensemble.representativeName}
                 </p>
               </div>
@@ -276,32 +269,32 @@ export default function EnsembleDetailPage() {
                   />
                 </div>
               ) : (
-                <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500">
+                <div className="bg-rule/25 text-dark dark:bg-night-raised dark:text-night-muted flex h-12 w-12 shrink-0 items-center justify-center rounded-full">
                   <UserIcon className="h-6 w-6" />
                 </div>
               )}
               <div>
-                <p className="dark:text-dark-text font-medium text-gray-900">
+                <p className="text-ink dark:text-night-text font-medium">
                   {ensemble.representative.displayName}
                 </p>
               </div>
             </div>
           ) : (
-            <p className="dark:text-dark-muted text-gray-500 italic">
+            <p className="text-dark dark:text-night-muted italic">
               Kein Ansprechpartner zugewiesen
             </p>
           )}
           {(ensemble.representativeEmail || ensemble.representativePhone) && (
-            <dl className="dark:border-dark-border mt-4 space-y-1 border-t border-gray-100 pt-3 text-sm">
+            <dl className="border-rule dark:border-night-rule mt-4 space-y-1 border-t pt-3 text-sm">
               {ensemble.representativeEmail && (
                 <div className="flex items-center gap-2">
-                  <dt className="dark:text-dark-muted w-16 text-gray-500">
+                  <dt className="text-dark dark:text-night-muted w-16">
                     E-Mail
                   </dt>
                   <dd>
                     <a
                       href={`mailto:${ensemble.representativeEmail}`}
-                      className="text-primary hover:underline"
+                      className="link-ink"
                     >
                       {ensemble.representativeEmail}
                     </a>
@@ -310,13 +303,13 @@ export default function EnsembleDetailPage() {
               )}
               {ensemble.representativePhone && (
                 <div className="flex items-center gap-2">
-                  <dt className="dark:text-dark-muted w-16 text-gray-500">
+                  <dt className="text-dark dark:text-night-muted w-16">
                     Telefon
                   </dt>
                   <dd>
                     <a
                       href={`tel:${ensemble.representativePhone}`}
-                      className="text-primary hover:underline"
+                      className="link-ink"
                     >
                       {ensemble.representativePhone}
                     </a>
@@ -329,14 +322,14 @@ export default function EnsembleDetailPage() {
       </div>
 
       {/* Rehearsal & Location */}
-      <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-        <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+      <div className="border-rule dark:border-night-rule mb-6 border p-6">
+        <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
           Probendetails
         </h2>
         <dl className="grid gap-4 sm:grid-cols-2">
           {/* Rehearsal Schedules */}
           <div className="sm:col-span-2">
-            <dt className="dark:text-dark-muted mb-2 text-sm text-gray-500">
+            <dt className="text-dark dark:text-night-muted mb-2 text-sm">
               Probenzeiten
             </dt>
             <dd className="space-y-2">
@@ -345,10 +338,10 @@ export default function EnsembleDetailPage() {
                 ensemble.rehearsalSchedules.map((schedule, index) => (
                   <div
                     key={index}
-                    className="dark:border-dark-border flex items-center gap-3 rounded-lg border border-gray-200 p-3"
+                    className="border-rule dark:border-night-rule flex items-center gap-3 border p-3"
                   >
                     <div className="flex-1">
-                      <p className="dark:text-dark-text font-medium text-gray-900">
+                      <p className="text-ink dark:text-night-text font-medium">
                         <span>{schedule.day}</span>
                         {schedule.time && (
                           <>
@@ -361,30 +354,30 @@ export default function EnsembleDetailPage() {
                   </div>
                 ))
               ) : ensemble.rehearsalDay || ensemble.rehearsalTime ? (
-                <div className="dark:border-dark-border flex items-center gap-3 rounded-lg border border-gray-200 p-3">
+                <div className="border-rule dark:border-night-rule flex items-center gap-3 border p-3">
                   <div className="flex-1">
                     {ensemble.rehearsalDay && (
-                      <p className="dark:text-dark-text font-medium text-gray-900">
+                      <p className="text-ink dark:text-night-text font-medium">
                         <span>Tag:</span> {ensemble.rehearsalDay}
                       </p>
                     )}
                     {ensemble.rehearsalTime && (
-                      <p className="dark:text-dark-text mt-1 font-medium text-gray-900">
+                      <p className="text-ink dark:text-night-text mt-1 font-medium">
                         <span>Uhrzeit:</span> {ensemble.rehearsalTime}
                       </p>
                     )}
                   </div>
                 </div>
               ) : (
-                <p className="dark:text-dark-muted text-gray-500 italic">–</p>
+                <p className="text-dark dark:text-night-muted italic">–</p>
               )}
             </dd>
           </div>
           <div className="sm:col-span-2">
-            <dt className="dark:text-dark-muted text-sm text-gray-500">
+            <dt className="text-dark dark:text-night-muted text-sm">
               Probenort
             </dt>
-            <dd className="dark:text-dark-text font-medium text-gray-900">
+            <dd className="text-ink dark:text-night-text font-medium">
               {ensemble.location ? (
                 <span>
                   {ensemble.location.name}
@@ -401,8 +394,8 @@ export default function EnsembleDetailPage() {
 
       {/* Website & Social Media */}
       {(ensemble.contactWebsite || socialLinks.length > 0) && (
-        <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+        <div className="border-rule dark:border-night-rule mb-6 border p-6">
+          <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
             Website & Social Media
           </h2>
           <div className="space-y-2">
@@ -411,7 +404,7 @@ export default function EnsembleDetailPage() {
                 href={ensemble.contactWebsite}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-primary flex items-center gap-2 hover:underline"
+                className="link-ink flex items-center gap-2"
               >
                 <GlobeIcon className="h-4 w-4 shrink-0" />
                 <span className="break-all">{ensemble.contactWebsite}</span>
@@ -423,7 +416,7 @@ export default function EnsembleDetailPage() {
                 href={social.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-primary flex items-center gap-2 hover:underline"
+                className="link-ink flex items-center gap-2"
               >
                 <SocialIcon type={social.type} className="h-4 w-4 shrink-0" />
                 <span className="break-all">{social.label ?? social.url}</span>
@@ -435,18 +428,18 @@ export default function EnsembleDetailPage() {
 
       {/* Upcoming Events */}
       {ensemble.events && ensemble.events.length > 0 && (
-        <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+        <div className="border-rule dark:border-night-rule mb-6 border p-6">
+          <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
             Kommende Termine
           </h2>
           <div className="space-y-3">
             {ensemble.events.slice(0, 5).map((event) => (
               <div
                 key={event.id}
-                className="dark:border-dark-border flex items-center gap-3 rounded-lg border border-gray-100 p-3"
+                className="border-rule dark:border-night-rule flex items-center gap-3 border p-3"
               >
                 {event.coverImage?.url ? (
-                  <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded">
+                  <div className="relative h-12 w-12 shrink-0 overflow-hidden">
                     <Image
                       src={event.coverImage.url}
                       alt={event.title}
@@ -455,7 +448,7 @@ export default function EnsembleDetailPage() {
                     />
                   </div>
                 ) : (
-                  <div className="text-primary shrink-0 text-center">
+                  <div className="text-primary-ink dark:text-primary shrink-0 text-center">
                     <div className="text-sm font-medium">
                       {new Date(event.eventDate).toLocaleDateString("de-DE", {
                         day: "2-digit",
@@ -465,11 +458,11 @@ export default function EnsembleDetailPage() {
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className="dark:text-dark-text truncate font-medium text-gray-900">
+                  <p className="text-ink dark:text-night-text truncate font-medium">
                     {event.title}
                   </p>
                   {event.location && (
-                    <p className="dark:text-dark-muted truncate text-sm text-gray-500">
+                    <p className="text-dark dark:text-night-muted truncate text-sm">
                       {event.location.name}, {event.location.city}
                     </p>
                   )}
@@ -481,16 +474,16 @@ export default function EnsembleDetailPage() {
       )}
 
       {/* Metadata */}
-      <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-        <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+      <div className="border-rule dark:border-night-rule border p-6">
+        <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
           Details
         </h2>
         <dl className="grid gap-4 sm:grid-cols-2">
           <div>
-            <dt className="dark:text-dark-muted text-sm text-gray-500">
+            <dt className="text-dark dark:text-night-muted text-sm">
               Erstellt am
             </dt>
-            <dd className="dark:text-dark-text font-medium text-gray-900">
+            <dd className="text-ink dark:text-night-text font-medium">
               {new Date(ensemble.createdAt).toLocaleDateString("de-DE", {
                 day: "2-digit",
                 month: "long",
@@ -499,10 +492,10 @@ export default function EnsembleDetailPage() {
             </dd>
           </div>
           <div>
-            <dt className="dark:text-dark-muted text-sm text-gray-500">
+            <dt className="text-dark dark:text-night-muted text-sm">
               Zuletzt aktualisiert
             </dt>
-            <dd className="dark:text-dark-text font-medium text-gray-900">
+            <dd className="text-ink dark:text-night-text font-medium">
               {new Date(ensemble.updatedAt).toLocaleDateString("de-DE", {
                 day: "2-digit",
                 month: "long",
@@ -517,7 +510,7 @@ export default function EnsembleDetailPage() {
       <div className="mt-6 flex flex-wrap gap-3">
         <Link
           href="/dashboard/ensembles"
-          className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+          className="border-ink dark:border-night-text text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised inline-flex min-h-11 items-center gap-2 border px-4 py-2 transition-colors"
         >
           <ArrowLeftIcon className="h-4 w-4" />
           Zurück zur Übersicht

@@ -10,6 +10,7 @@ import type { PermissionKey } from "@/lib/permissions";
 import Link from "next/link";
 import Image from "next/image";
 import { DashboardPage } from "@/app/_components/dashboard";
+import { Tag } from "@/app/_components/programmheft/tag";
 import {
   DataTable,
   createDataTableColumnHelper,
@@ -124,7 +125,7 @@ export default function DashboardEnsemblesPage() {
             return (
               <div className="flex items-center gap-3">
                 {ensemble.image?.url ? (
-                  <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded">
+                  <div className="border-rule dark:border-night-rule relative h-10 w-10 shrink-0 overflow-hidden border">
                     <Image
                       src={ensemble.image.url}
                       alt={ensemble.name}
@@ -133,19 +134,19 @@ export default function DashboardEnsemblesPage() {
                     />
                   </div>
                 ) : (
-                  <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-10 w-10 shrink-0 items-center justify-center rounded bg-gray-100 text-gray-500">
+                  <div className="bg-rule/25 text-dark dark:bg-night-raised dark:text-night-muted flex h-10 w-10 shrink-0 items-center justify-center">
                     <MusicIcon className="h-5 w-5" />
                   </div>
                 )}
                 <div className="min-w-0">
                   <Link
                     href={`/dashboard/ensembles/${ensemble.id}`}
-                    className="hover:text-primary dark:text-dark-text font-medium text-gray-900"
+                    className="hover:text-primary-ink dark:hover:text-primary text-ink dark:text-night-text font-medium"
                   >
                     {ensemble.name}
                   </Link>
                   {ensemble.location && (
-                    <p className="dark:text-dark-muted text-sm text-gray-500">
+                    <p className="text-dark dark:text-night-muted text-sm">
                       {ensemble.location.city}
                     </p>
                   )}
@@ -161,7 +162,7 @@ export default function DashboardEnsemblesPage() {
           cell: ({ row }) =>
             row.original.bezirk ? (
               <span
-                className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium text-white"
+                className="semi-condensed inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-semibold text-white"
                 style={{
                   backgroundColor: `var(--color-district-${row.original.bezirk.number})`,
                 }}
@@ -169,7 +170,7 @@ export default function DashboardEnsemblesPage() {
                 {row.original.bezirk.shortName}
               </span>
             ) : (
-              <span className="dark:text-dark-muted text-sm text-gray-400 italic">
+              <span className="text-dark dark:text-night-muted text-sm italic">
                 Kein Bezirk
               </span>
             ),
@@ -179,7 +180,7 @@ export default function DashboardEnsemblesPage() {
           header: "Leitung",
           cell: ({ getValue }) =>
             getValue() || (
-              <span className="dark:text-dark-muted text-sm text-gray-400 italic">
+              <span className="text-dark dark:text-night-muted text-sm italic">
                 Keine Leitung
               </span>
             ),
@@ -195,7 +196,7 @@ export default function DashboardEnsemblesPage() {
                   {ensemble.rehearsalSchedules.map((schedule, index) => (
                     <div
                       key={index}
-                      className="dark:text-dark-muted text-sm text-gray-600"
+                      className="text-dark dark:text-night-muted text-sm"
                     >
                       {schedule.day}
                       {schedule.time && `, ${schedule.time}`}
@@ -206,11 +207,11 @@ export default function DashboardEnsemblesPage() {
             }
             const fallback = rehearsalSummary(ensemble);
             return fallback ? (
-              <span className="dark:text-dark-muted text-sm text-gray-600">
+              <span className="text-dark dark:text-night-muted text-sm">
                 {fallback}
               </span>
             ) : (
-              <span className="dark:text-dark-muted text-sm text-gray-400 italic">
+              <span className="text-dark dark:text-night-muted text-sm italic">
                 –
               </span>
             );
@@ -223,15 +224,9 @@ export default function DashboardEnsemblesPage() {
             header: "Status",
             meta: { filterVariant: "set" },
             cell: ({ row }) => (
-              <span
-                className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                  row.original.isActive
-                    ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
-                    : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
-                }`}
-              >
+              <Tag tone={row.original.isActive ? "ink" : "inverse"}>
                 {row.original.isActive ? "Aktiv" : "Inaktiv"}
-              </span>
+              </Tag>
             ),
           },
         ),
@@ -243,14 +238,14 @@ export default function DashboardEnsemblesPage() {
             <div className="flex items-center justify-end gap-2">
               <Link
                 href={`/dashboard/ensembles/${row.original.id}`}
-                className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
+                className="text-dark hover:bg-rule/25 hover:text-ink dark:text-night-muted dark:hover:bg-night-raised dark:hover:text-night-text p-2 transition-colors"
                 title="Details anzeigen"
               >
                 <EyeIcon className="h-4 w-4" />
               </Link>
               <Link
                 href={`/dashboard/ensembles/${row.original.id}/edit`}
-                className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
+                className="text-dark hover:bg-rule/25 hover:text-ink dark:text-night-muted dark:hover:bg-night-raised dark:hover:text-night-text p-2 transition-colors"
                 title="Bearbeiten"
               >
                 <EditIcon className="h-4 w-4" />
@@ -261,7 +256,7 @@ export default function DashboardEnsemblesPage() {
                     handleDelete(row.original.id, row.original.name)
                   }
                   disabled={deletingId === row.original.id}
-                  className="rounded p-1.5 text-red-500 transition-colors hover:bg-red-50 hover:text-red-700 disabled:opacity-50 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                  className="p-2 text-red-600 transition-colors hover:bg-red-50 hover:text-red-700 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-900/20"
                   title="Löschen"
                 >
                   {deletingId === row.original.id ? (
@@ -281,8 +276,8 @@ export default function DashboardEnsemblesPage() {
 
   if (isPending || profileLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
@@ -302,7 +297,7 @@ export default function DashboardEnsemblesPage() {
       actions={
         <Link
           href="/dashboard/ensembles/new"
-          className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
+          className="bg-ink text-paper hover:bg-dark dark:bg-night-text dark:text-night dark:hover:bg-night-muted semi-condensed inline-flex min-h-11 items-center gap-2 px-4 py-2.5 font-semibold transition-colors"
         >
           <PlusIcon className="h-5 w-5" />
           Neues Ensemble
@@ -319,16 +314,16 @@ export default function DashboardEnsemblesPage() {
         initialSorting={[{ id: "name", desc: false }]}
         emptyState={
           <>
-            <MusicIcon className="dark:text-dark-muted mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="dark:text-dark-text mt-4 mb-2 text-lg font-semibold text-gray-900">
+            <MusicIcon className="text-dark dark:text-night-muted mx-auto h-12 w-12" />
+            <h3 className="condensed text-ink dark:text-night-text mt-4 mb-2 text-lg font-bold">
               Keine Ensembles gefunden
             </h3>
-            <p className="dark:text-dark-muted mb-6 text-gray-600">
+            <p className="text-dark dark:text-night-muted mb-6">
               Erstelle das erste Ensemble, um es hier anzuzeigen.
             </p>
             <Link
               href="/dashboard/ensembles/new"
-              className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
+              className="bg-ink text-paper hover:bg-dark dark:bg-night-text dark:text-night dark:hover:bg-night-muted semi-condensed inline-flex min-h-11 items-center gap-2 px-4 py-2.5 font-semibold transition-colors"
             >
               <PlusIcon className="h-5 w-5" />
               Ensemble erstellen

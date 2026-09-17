@@ -23,8 +23,6 @@ import {
   CardHeader,
   CardTitle,
   CardContent,
-  Alert,
-  AlertDescription,
 } from "@/app/_components/ui";
 
 export default function NewLocationPage() {
@@ -108,8 +106,8 @@ export default function NewLocationPage() {
 
   if (sessionLoading || profileLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
@@ -131,9 +129,9 @@ export default function NewLocationPage() {
     >
       {/* Error */}
       {error && (
-        <Alert variant="error" className="mb-6">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
+        <div className="mb-6 border-l-4 border-red-600 bg-red-50 p-4 text-red-700 dark:border-red-400 dark:bg-red-900/20 dark:text-red-400">
+          {error}
+        </div>
       )}
 
       {/* Form */}
@@ -170,7 +168,7 @@ export default function NewLocationPage() {
                     autoComplete="organization"
                     placeholder="z.B. Gemeindehaus Köln-Deutz"
                   />
-                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                  <p className="text-dark dark:text-night-muted mt-1 text-xs">
                     Optional: Name des Standorts
                   </p>
                 </div>
@@ -238,7 +236,7 @@ export default function NewLocationPage() {
                     maxLength={500}
                     placeholder="z.B. Eingang über den Hinterhof"
                   />
-                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                  <p className="text-dark dark:text-night-muted mt-1 text-xs">
                     Optional: Weitere Hinweise zum Standort
                   </p>
                 </div>
@@ -263,7 +261,7 @@ export default function NewLocationPage() {
                     onChange={(e) => setLatitude(e.target.value)}
                     placeholder="z.B. 50.9375"
                   />
-                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                  <p className="text-dark dark:text-night-muted mt-1 text-xs">
                     Optional: Für die Anzeige auf einer Karte
                   </p>
                 </div>
@@ -278,7 +276,7 @@ export default function NewLocationPage() {
                     onChange={(e) => setLongitude(e.target.value)}
                     placeholder="z.B. 6.9603"
                   />
-                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                  <p className="text-dark dark:text-night-muted mt-1 text-xs">
                     Optional: Für die Anzeige auf einer Karte
                   </p>
                 </div>
@@ -297,7 +295,7 @@ export default function NewLocationPage() {
             </Button>
             <Link
               href="/dashboard/locations"
-              className="dark:border-dark-border dark:text-dark-text inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-2.5 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night semi-condensed inline-flex min-h-11 items-center justify-center gap-2 border-2 px-4 py-2.5 font-semibold transition-colors"
             >
               Abbrechen
             </Link>

@@ -9,6 +9,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import Link from "next/link";
 import Image from "next/image";
 import { DashboardPage } from "@/app/_components/dashboard";
+import { Tag } from "@/app/_components/programmheft/tag";
 import {
   ArrowLeftIcon,
   BookIcon,
@@ -59,8 +60,8 @@ export default function DashboardBlaeserheftDetailPage() {
 
   if (isPending || profileLoading || heftLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
@@ -71,16 +72,13 @@ export default function DashboardBlaeserheftDetailPage() {
 
   if (!heft) {
     return (
-      <main className="dark:bg-dark-background min-h-screen bg-gray-50">
+      <main className="bg-paper dark:bg-night min-h-screen">
         <div className="container mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-          <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-12 text-center shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-xl font-semibold text-gray-900">
+          <div className="border-rule dark:border-night-rule border p-12 text-center">
+            <h2 className="condensed text-ink dark:text-night-text mb-4 text-xl font-bold">
               Bläserheft nicht gefunden
             </h2>
-            <Link
-              href="/dashboard/blaeserhefte"
-              className="text-primary hover:text-primary/80"
-            >
+            <Link href="/dashboard/blaeserhefte" className="link-ink">
               Zurück zur Übersicht
             </Link>
           </div>
@@ -114,7 +112,7 @@ export default function DashboardBlaeserheftDetailPage() {
       actions={
         <Link
           href={`/dashboard/blaeserhefte/${id}/edit`}
-          className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
+          className="on-orange bg-primary text-ink hover:bg-primary-dark inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm font-semibold transition-colors"
         >
           <PencilIcon className="h-4 w-4" />
           Bearbeiten
@@ -125,7 +123,7 @@ export default function DashboardBlaeserheftDetailPage() {
       {/* Cover Image and Year Badge */}
       <div className="mb-6 flex items-start gap-4">
         {heft.image?.url ? (
-          <div className="relative h-24 w-20 shrink-0 overflow-hidden rounded-lg shadow-md">
+          <div className="border-rule dark:border-night-rule relative h-24 w-20 shrink-0 overflow-hidden border">
             <Image
               src={heft.image.url}
               alt={heft.title}
@@ -134,21 +132,21 @@ export default function DashboardBlaeserheftDetailPage() {
             />
           </div>
         ) : (
-          <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-24 w-20 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-500 shadow-md">
+          <div className="border-rule dark:border-night-rule bg-rule/25 text-dark dark:bg-night-raised dark:text-night-muted flex h-24 w-20 shrink-0 items-center justify-center border">
             <BookIcon className="h-10 w-10" />
           </div>
         )}
-        <span className="dark:bg-dark-background-secondary dark:text-dark-text mt-2 inline-flex rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-800">
+        <Tag tone="inverse" className="mt-2">
           {heft.year}
-        </span>
+        </Tag>
       </div>
 
       {/* Description */}
-      <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-        <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+      <div className="border-rule dark:border-night-rule mb-6 border p-6">
+        <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
           Beschreibung
         </h2>
-        <p className="dark:text-dark-muted whitespace-pre-wrap text-gray-700">
+        <p className="text-dark dark:text-night-muted whitespace-pre-wrap">
           {heft.description}
         </p>
       </div>
@@ -156,34 +154,34 @@ export default function DashboardBlaeserheftDetailPage() {
       {/* Prices and Availability */}
       <div className="mb-6 grid gap-6 md:grid-cols-2">
         {/* Prices */}
-        <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+        <div className="border-rule dark:border-night-rule border p-6">
+          <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
             Preise
           </h2>
           <dl className="space-y-3">
             <div className="flex items-center justify-between">
-              <dt className="dark:text-dark-muted text-gray-600">Bläserheft</dt>
-              <dd className="dark:text-dark-text font-medium text-gray-900">
+              <dt className="text-dark dark:text-night-muted">Bläserheft</dt>
+              <dd className="text-ink dark:text-night-text font-medium">
                 {heft.priceBlaeserheft ? `${heft.priceBlaeserheft} €` : "—"}
               </dd>
             </div>
             <div className="flex items-center justify-between">
-              <dt className="dark:text-dark-muted text-gray-600">Beiheft</dt>
-              <dd className="dark:text-dark-text font-medium text-gray-900">
+              <dt className="text-dark dark:text-night-muted">Beiheft</dt>
+              <dd className="text-ink dark:text-night-text font-medium">
                 {heft.priceBeiheft ? `${heft.priceBeiheft} €` : "—"}
               </dd>
             </div>
             <div className="flex items-center justify-between">
-              <dt className="dark:text-dark-muted text-gray-600">
+              <dt className="text-dark dark:text-night-muted">
                 Trompetenstimmen
               </dt>
-              <dd className="dark:text-dark-text font-medium text-gray-900">
+              <dd className="text-ink dark:text-night-text font-medium">
                 {heft.priceTrompeten ? `${heft.priceTrompeten} €` : "—"}
               </dd>
             </div>
             <div className="flex items-center justify-between">
-              <dt className="dark:text-dark-muted text-gray-600">CD</dt>
-              <dd className="dark:text-dark-text font-medium text-gray-900">
+              <dt className="text-dark dark:text-night-muted">CD</dt>
+              <dd className="text-ink dark:text-night-text font-medium">
                 {heft.priceCd ? `${heft.priceCd} €` : "—"}
               </dd>
             </div>
@@ -191,74 +189,74 @@ export default function DashboardBlaeserheftDetailPage() {
         </div>
 
         {/* Availability */}
-        <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+        <div className="border-rule dark:border-night-rule border p-6">
+          <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
             Verfügbarkeit
           </h2>
           <dl className="space-y-3">
             <div className="flex items-center justify-between">
-              <dt className="dark:text-dark-muted text-gray-600">Bläserheft</dt>
+              <dt className="text-dark dark:text-night-muted">Bläserheft</dt>
               <dd>
                 {heft.availableBlaeserheft ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                  <Tag tone="ink">
                     <CheckIcon className="h-3 w-3" />
                     Verfügbar
-                  </span>
+                  </Tag>
                 ) : (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/30 dark:text-red-300">
+                  <Tag tone="cancelled">
                     <XIcon className="h-3 w-3" />
                     Vergriffen
-                  </span>
+                  </Tag>
                 )}
               </dd>
             </div>
             <div className="flex items-center justify-between">
-              <dt className="dark:text-dark-muted text-gray-600">Beiheft</dt>
+              <dt className="text-dark dark:text-night-muted">Beiheft</dt>
               <dd>
                 {heft.availableBeiheft ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                  <Tag tone="ink">
                     <CheckIcon className="h-3 w-3" />
                     Verfügbar
-                  </span>
+                  </Tag>
                 ) : (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/30 dark:text-red-300">
+                  <Tag tone="cancelled">
                     <XIcon className="h-3 w-3" fill="currentColor" />
                     Vergriffen
-                  </span>
+                  </Tag>
                 )}
               </dd>
             </div>
             <div className="flex items-center justify-between">
-              <dt className="dark:text-dark-muted text-gray-600">
+              <dt className="text-dark dark:text-night-muted">
                 Trompetenstimmen
               </dt>
               <dd>
                 {heft.availableTrompeten ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                  <Tag tone="ink">
                     <CheckIcon className="h-3 w-3" />
                     Verfügbar
-                  </span>
+                  </Tag>
                 ) : (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/30 dark:text-red-300">
+                  <Tag tone="cancelled">
                     <XIcon className="h-3 w-3" />
                     Vergriffen
-                  </span>
+                  </Tag>
                 )}
               </dd>
             </div>
             <div className="flex items-center justify-between">
-              <dt className="dark:text-dark-muted text-gray-600">CD</dt>
+              <dt className="text-dark dark:text-night-muted">CD</dt>
               <dd>
                 {heft.availableCd ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                  <Tag tone="ink">
                     <CheckIcon className="h-3 w-3" />
                     Verfügbar
-                  </span>
+                  </Tag>
                 ) : (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/30 dark:text-red-300">
+                  <Tag tone="cancelled">
                     <XIcon className="h-3 w-3" />
                     Vergriffen
-                  </span>
+                  </Tag>
                 )}
               </dd>
             </div>
@@ -270,14 +268,14 @@ export default function DashboardBlaeserheftDetailPage() {
       <div className="mb-6 grid gap-6 md:grid-cols-2">
         {/* Chapters */}
         {chapters.length > 0 && (
-          <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+          <div className="border-rule dark:border-night-rule border p-6">
+            <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
               Kapitel
             </h2>
-            <ul className="dark:text-dark-muted space-y-2 text-gray-700">
+            <ul className="text-dark dark:text-night-muted space-y-2">
               {chapters.map((chapter, index) => (
                 <li key={index} className="flex items-start gap-2">
-                  <span className="dark:bg-dark-background-secondary shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium">
+                  <span className="bg-rule/25 dark:bg-night-raised shrink-0 px-1.5 py-0.5 text-xs font-medium">
                     {index + 1}
                   </span>
                   <span>{String(chapter)}</span>
@@ -289,11 +287,11 @@ export default function DashboardBlaeserheftDetailPage() {
 
         {/* Highlights */}
         {highlights.length > 0 && (
-          <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+          <div className="border-rule dark:border-night-rule border p-6">
+            <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
               Highlights
             </h2>
-            <ul className="dark:text-dark-muted space-y-2 text-gray-700">
+            <ul className="text-dark dark:text-night-muted space-y-2">
               {highlights.map((highlight, index) => (
                 <li key={index} className="flex items-start gap-2">
                   <CheckIcon className="h-3 w-3" />
@@ -307,8 +305,8 @@ export default function DashboardBlaeserheftDetailPage() {
 
       {/* Audio Sample */}
       {heft.audioSample && (
-        <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+        <div className="border-rule dark:border-night-rule mb-6 border p-6">
+          <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
             Hörprobe
           </h2>
           <audio controls className="w-full">
@@ -322,7 +320,7 @@ export default function DashboardBlaeserheftDetailPage() {
       <div className="flex flex-wrap gap-3">
         <Link
           href="/dashboard/blaeserhefte"
-          className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+          className="border-ink dark:border-night-text text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised inline-flex min-h-11 items-center gap-2 border px-4 py-2 transition-colors"
         >
           <ArrowLeftIcon className="h-4 w-4" />
           Zurück zur Übersicht

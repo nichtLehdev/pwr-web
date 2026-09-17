@@ -1,5 +1,5 @@
 "use client";
-import { Select } from "@/app/_components/ui";
+import { Input, Label, Select } from "@/app/_components/ui";
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -119,8 +119,8 @@ export default function NewPosaunenwartPage() {
 
   if (sessionLoading || profileLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
@@ -141,27 +141,24 @@ export default function NewPosaunenwartPage() {
       maxWidth="7xl"
     >
       {error && (
-        <div className="mb-6 rounded-lg bg-red-50 p-4 text-red-700 dark:bg-red-900/20 dark:text-red-400">
+        <div className="mb-6 border-l-4 border-red-600 bg-red-50 p-4 text-red-700 dark:border-red-400 dark:bg-red-900/20 dark:text-red-400">
           {error}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Role */}
-        <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+        <section className="border-rule dark:border-night-rule dark:bg-night-raised bg-paper border p-6">
+          <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
             Rolle
           </h2>
           <div>
-            <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-              Art
-            </label>
+            <Label>Art</Label>
             <Select
               value={roleType}
               onChange={(e) =>
                 setRoleType(e.target.value as PosaunenwartRoleType)
               }
-              className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
             >
               {ROLE_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -171,33 +168,27 @@ export default function NewPosaunenwartPage() {
             </Select>
           </div>
           <div className="mt-4">
-            <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-              Bezeichnung
-            </label>
-            <input
+            <Label>Bezeichnung</Label>
+            <Input
               type="text"
               value={roleLabel}
               onChange={(e) => setRoleLabel(e.target.value)}
               placeholder="z.B. Landesposaunenwart"
               maxLength={100}
-              className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
             />
-            <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+            <p className="text-dark dark:text-night-muted mt-1 text-xs">
               Erscheint als Badge auf der öffentlichen Seite. Leer lassen für
               die Standardbezeichnung der gewählten Art.
             </p>
           </div>
           <div className="mt-4">
-            <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-              Reihenfolge
-            </label>
-            <input
+            <Label>Reihenfolge</Label>
+            <Input
               type="number"
               value={sortOrder}
               onChange={(e) => setSortOrder(parseInt(e.target.value, 10) || 0)}
-              className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
             />
-            <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+            <p className="text-dark dark:text-night-muted mt-1 text-xs">
               Tipp: Die Reihenfolge lässt sich auch direkt in der Liste per
               Pfeiltasten ändern.
             </p>
@@ -229,14 +220,14 @@ export default function NewPosaunenwartPage() {
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
           <Link
             href="/dashboard/posaunenwarte"
-            className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-6 py-2.5 text-center font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night semi-condensed inline-flex min-h-11 items-center justify-center border-2 px-6 py-2.5 text-center font-semibold transition-colors"
           >
             Abbrechen
           </Link>
           <button
             type="submit"
             disabled={isSubmitting || createMutation.isPending}
-            className="bg-primary hover:bg-primary/90 rounded-lg px-6 py-2.5 font-medium text-white transition-colors disabled:opacity-50"
+            className="bg-ink text-paper hover:bg-dark dark:bg-night-text dark:text-night dark:hover:bg-night-muted semi-condensed inline-flex min-h-11 items-center justify-center px-6 py-2.5 font-semibold transition-colors disabled:opacity-50"
           >
             {isSubmitting || createMutation.isPending
               ? "Wird erstellt..."
