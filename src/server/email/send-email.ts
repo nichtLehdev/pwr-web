@@ -8,6 +8,9 @@ const log = createLogger("Email");
 export interface EmailAttachment {
   filename: string;
   content: Buffer;
+  /** Content-ID, damit das HTML die Datei inline per `cid:` einbinden kann. */
+  cid?: string;
+  contentType?: string;
 }
 
 export interface EmailOptions {
@@ -46,6 +49,8 @@ export async function sendEmail(options: EmailOptions) {
       attachments: options.attachments.map((a) => ({
         filename: a.filename,
         content: a.content,
+        ...(a.cid && { cid: a.cid }),
+        ...(a.contentType && { contentType: a.contentType }),
       })),
     }),
   };

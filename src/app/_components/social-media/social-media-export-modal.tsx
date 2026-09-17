@@ -1,5 +1,6 @@
 "use client";
-import { Select } from "@/app/_components/ui";
+import { Button, Checkbox, Label, Select } from "@/app/_components/ui";
+import { cn } from "@/lib/utils";
 
 import { useState, useRef } from "react";
 import { api } from "@/trpc/react";
@@ -28,6 +29,16 @@ const CANVAS_SIZE = 1080;
 /** Size of the on-screen preview box. */
 const PREVIEW_SIZE = 540;
 const PREVIEW_SCALE = PREVIEW_SIZE / CANVAS_SIZE;
+
+/** Sidebar-Eintrag: aktiv wie im Dashboard eine Druckfläche in Orange mit Tinte. */
+function sidebarItemClass(active: boolean) {
+  return cn(
+    "border-rule dark:border-night-rule w-full border-b px-4 py-3 text-left transition-colors",
+    active
+      ? "bg-primary text-ink"
+      : "text-ink dark:text-night-text hover:bg-rule/60 dark:hover:bg-night-rule",
+  );
+}
 
 export default function SocialMediaExportModal({
   isOpen,
@@ -359,21 +370,22 @@ export default function SocialMediaExportModal({
     <ScrollableModal>
       <ScrollableModalCard
         maxW="6xl"
-        className="dark:border-dark-border relative max-h-[90vh] overflow-hidden border border-gray-200"
+        className="relative max-h-[90vh] overflow-hidden"
       >
         {/* Header */}
-        <div className="dark:border-dark-border dark:bg-dark-background-secondary flex items-center justify-between border-b border-gray-200 bg-gray-50 px-6 py-4">
+        <div className="border-rule dark:border-night-rule bg-rule/25 dark:bg-night-raised flex items-center justify-between border-b px-6 py-4">
           <div>
-            <h2 className="dark:text-dark-text text-2xl font-bold text-gray-900">
+            <h2 className="condensed text-ink dark:text-night-text text-2xl font-bold">
               Instagram Posts generieren
             </h2>
-            <p className="dark:text-dark-text-secondary mt-1 text-sm text-gray-600">
+            <p className="text-dark dark:text-night-muted mt-1 text-sm">
               Erstelle Social Media Posts für deine Termine
             </p>
           </div>
           <button
             onClick={onClose}
-            className="dark:hover:bg-dark-border rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-600"
+            aria-label="Schließen"
+            className="text-dark hover:bg-rule/60 hover:text-ink dark:text-night-muted dark:hover:bg-night-rule dark:hover:text-night-text p-2 transition-colors"
             disabled={isGenerating}
           >
             <XIcon className="h-6 w-6" />
@@ -381,16 +393,13 @@ export default function SocialMediaExportModal({
         </div>
 
         {/* Month/Year Selector */}
-        <div className="dark:border-dark-border dark:bg-dark-background-secondary border-b border-gray-200 bg-gray-50 px-6 py-4">
-          <div className="flex flex-wrap items-center gap-4">
+        <div className="border-rule dark:border-night-rule bg-rule/25 dark:bg-night-raised border-b px-6 py-4">
+          <div className="flex flex-wrap items-end gap-4">
             <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Monat
-              </label>
+              <Label>Monat</Label>
               <Select
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                className="dark:bg-dark-surface dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-3 py-2"
                 disabled={isGenerating}
               >
                 {monthNames.map((month, index) => (
@@ -401,13 +410,10 @@ export default function SocialMediaExportModal({
               </Select>
             </div>
             <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Jahr
-              </label>
+              <Label>Jahr</Label>
               <Select
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(Number(e.target.value))}
-                className="dark:bg-dark-surface dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-3 py-2"
                 disabled={isGenerating}
               >
                 {years.map((year) => (
@@ -418,34 +424,32 @@ export default function SocialMediaExportModal({
               </Select>
             </div>
             <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Gruppierung
-              </label>
-              <label className="dark:border-dark-border dark:bg-dark-surface flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2">
-                <input
-                  type="checkbox"
+              <Label>Gruppierung</Label>
+              <label className="border-rule dark:border-night-rule bg-paper dark:bg-night flex min-h-11 items-center gap-2 border px-3 py-2">
+                <Checkbox
                   checked={groupByDistrict}
                   onChange={(e) => setGroupByDistrict(e.target.checked)}
-                  className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
                   disabled={isGenerating}
                 />
-                <span className="dark:text-dark-text text-sm">Nach Bezirk</span>
+                <span className="text-ink dark:text-night-text text-sm">
+                  Nach Bezirk
+                </span>
               </label>
             </div>
             <div className="w-full">
-              <label className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700">
-                Kategorien filtern
-              </label>
+              <Label>Kategorien filtern</Label>
               <div className="flex flex-wrap items-center gap-2">
-                <button
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={toggleAllCategories}
-                  className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text rounded-lg border border-gray-300 px-3 py-1.5 text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
                   disabled={isGenerating}
                 >
                   {selectedCategories.length === categoryOptions.length
                     ? "Keine"
                     : "Alle"}
-                </button>
+                </Button>
                 {categoryOptions.map((category) => {
                   const isSelected = selectedCategories.includes(
                     category.value,
@@ -453,12 +457,15 @@ export default function SocialMediaExportModal({
                   return (
                     <button
                       key={category.value}
+                      type="button"
                       onClick={() => toggleCategory(category.value)}
-                      className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                      aria-pressed={isSelected}
+                      className={cn(
+                        "semi-condensed px-3 py-1.5 text-sm font-semibold transition-colors",
                         isSelected
-                          ? "bg-primary text-white"
-                          : "dark:border-dark-border dark:bg-dark-surface dark:text-dark-text border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      }`}
+                          ? "bg-primary text-ink"
+                          : "border-rule dark:border-night-rule text-ink dark:text-night-text hover:bg-rule/60 dark:hover:bg-night-rule bg-paper dark:bg-night border",
+                      )}
                       disabled={isGenerating}
                     >
                       {category.label}
@@ -468,25 +475,18 @@ export default function SocialMediaExportModal({
               </div>
             </div>
             <div className="ml-auto flex gap-2">
-              <button
-                onClick={handleDownloadAll}
+              <Button
+                type="button"
+                onClick={() => void handleDownloadAll()}
                 disabled={
                   isGenerating || !filteredEvents || filteredEvents.length === 0
                 }
-                className="bg-primary hover:bg-primary-dark flex items-center gap-2 rounded-lg px-4 py-2 text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                isLoading={isGenerating}
+                className="gap-2"
               >
-                {isGenerating ? (
-                  <>
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    Generiere...
-                  </>
-                ) : (
-                  <>
-                    <DownloadIcon className="h-5 w-5" />
-                    Alle als ZIP
-                  </>
-                )}
-              </button>
+                <DownloadIcon className="h-5 w-5" />
+                Alle als ZIP
+              </Button>
             </div>
           </div>
         </div>
@@ -494,14 +494,10 @@ export default function SocialMediaExportModal({
         {/* Content */}
         <div className="flex h-[calc(90vh-200px)] overflow-hidden">
           {/* Sidebar */}
-          <div className="dark:border-dark-border dark:bg-dark-background-secondary w-64 shrink-0 overflow-y-auto border-r border-gray-200 bg-gray-50">
+          <div className="border-rule dark:border-night-rule bg-rule/25 dark:bg-night-raised w-64 shrink-0 overflow-y-auto border-r">
             <button
               onClick={() => setActiveTab("summary")}
-              className={`dark:border-dark-border w-full border-b border-gray-200 px-4 py-3 text-left transition-colors ${
-                activeTab === "summary"
-                  ? "bg-primary text-white"
-                  : "dark:text-dark-text dark:hover:bg-dark-border text-gray-700 hover:bg-gray-200"
-              }`}
+              className={sidebarItemClass(activeTab === "summary")}
             >
               <div className="font-semibold">Zusammenfassung</div>
               <div className="text-sm opacity-80">
@@ -510,13 +506,13 @@ export default function SocialMediaExportModal({
             </button>
 
             {isLoading && (
-              <div className="dark:text-dark-text-secondary px-4 py-8 text-center text-sm text-gray-500">
+              <div className="text-dark dark:text-night-muted px-4 py-8 text-center text-sm">
                 Lädt Termine...
               </div>
             )}
 
             {!isLoading && filteredEvents && filteredEvents.length === 0 && (
-              <div className="dark:text-dark-text-secondary px-4 py-8 text-center text-sm text-gray-500">
+              <div className="text-dark dark:text-night-muted px-4 py-8 text-center text-sm">
                 {selectedCategories.length > 0
                   ? "Keine Termine mit den gewählten Kategorien"
                   : "Keine Termine in diesem Monat"}
@@ -530,7 +526,7 @@ export default function SocialMediaExportModal({
               Object.entries(groupedEvents).map(
                 ([districtName, districtEvents]) => (
                   <div key={districtName}>
-                    <div className="dark:bg-dark-border bg-gray-100 px-4 py-2 text-xs font-bold text-gray-600 uppercase dark:text-gray-400">
+                    <div className="bg-rule/25 dark:bg-night-raised text-dark dark:text-night-muted semi-condensed px-4 py-2 text-xs font-semibold tracking-wide uppercase">
                       {districtName} ({districtEvents.length})
                     </div>
                     {districtEvents.map((event) => {
@@ -541,11 +537,9 @@ export default function SocialMediaExportModal({
                         <button
                           key={event.id}
                           onClick={() => setActiveTab(globalIndex)}
-                          className={`dark:border-dark-border w-full border-b border-gray-200 px-4 py-3 text-left transition-colors ${
-                            activeTab === globalIndex
-                              ? "bg-primary text-white"
-                              : "dark:text-dark-text dark:hover:bg-dark-border text-gray-700 hover:bg-gray-200"
-                          }`}
+                          className={sidebarItemClass(
+                            activeTab === globalIndex,
+                          )}
                         >
                           <div className="truncate font-semibold">
                             {event.title}
@@ -569,11 +563,7 @@ export default function SocialMediaExportModal({
                 <button
                   key={event.id}
                   onClick={() => setActiveTab(index)}
-                  className={`dark:border-dark-border w-full border-b border-gray-200 px-4 py-3 text-left transition-colors ${
-                    activeTab === index
-                      ? "bg-primary text-white"
-                      : "dark:text-dark-text dark:hover:bg-dark-border text-gray-700 hover:bg-gray-200"
-                  }`}
+                  className={sidebarItemClass(activeTab === index)}
                 >
                   <div className="truncate font-semibold">{event.title}</div>
                   <div className="text-sm opacity-80">
@@ -589,19 +579,24 @@ export default function SocialMediaExportModal({
               <div className="flex flex-col items-center gap-4">
                 {summaryPageCount > 1 && (
                   <div className="flex items-center gap-4">
-                    <button
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
                       onClick={() =>
                         setActiveSummaryPage((p) => Math.max(0, p - 1))
                       }
                       disabled={activeSummaryPage === 0 || isGenerating}
-                      className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 font-medium transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-gray-700"
                     >
                       ← Vorherige
-                    </button>
-                    <span className="dark:text-dark-text text-sm font-medium text-gray-700">
+                    </Button>
+                    <span className="text-ink dark:text-night-text text-sm font-medium">
                       Seite {activeSummaryPage + 1} von {summaryPageCount}
                     </span>
-                    <button
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
                       onClick={() =>
                         setActiveSummaryPage((p) =>
                           Math.min(summaryPageCount - 1, p + 1),
@@ -611,10 +606,9 @@ export default function SocialMediaExportModal({
                         activeSummaryPage === summaryPageCount - 1 ||
                         isGenerating
                       }
-                      className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 font-medium transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-gray-700"
                     >
                       Nächste →
-                    </button>
+                    </Button>
                   </div>
                 )}
                 {Array.from({ length: summaryPageCount }).map(
@@ -632,7 +626,7 @@ export default function SocialMediaExportModal({
                     return (
                       <div
                         key={pageIndex}
-                        className="overflow-hidden shadow-lg"
+                        className="overflow-hidden"
                         style={{
                           width: `${PREVIEW_SIZE}px`,
                           height: `${PREVIEW_SIZE}px`,
@@ -677,16 +671,18 @@ export default function SocialMediaExportModal({
                     );
                   },
                 )}
-                <button
-                  onClick={handleDownloadSummary}
+                <Button
+                  type="button"
+                  onClick={() => void handleDownloadSummary()}
                   disabled={isGenerating}
-                  className="bg-primary hover:bg-primary-dark flex items-center gap-2 rounded-lg px-6 py-3 text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                  isLoading={isGenerating}
+                  className="gap-2"
                 >
                   <DownloadIcon className="h-5 w-5" />
                   {summaryPageCount > 1
                     ? `Seite ${activeSummaryPage + 1} herunterladen`
                     : "Zusammenfassung herunterladen"}
-                </button>
+                </Button>
               </div>
             )}
 
@@ -696,7 +692,7 @@ export default function SocialMediaExportModal({
                   (filteredEvents[activeTab]!.coverImage?.url ||
                     filteredEvents[activeTab]!.ensemble?.image?.url ||
                     filteredEvents[activeTab]!.auswahlChor?.image?.url) && (
-                    <div className="dark:text-dark-text-secondary flex items-center gap-2 text-sm text-gray-600">
+                    <div className="text-dark dark:text-night-muted flex items-center gap-2 text-sm">
                       <ArrowUpRightIcon className="h-5 w-5" />
                       Bild ziehen, um Position anzupassen
                     </div>
@@ -711,7 +707,7 @@ export default function SocialMediaExportModal({
                   {filteredEvents.map((event, index) => (
                     <div
                       key={event.id}
-                      className="overflow-hidden shadow-lg"
+                      className="overflow-hidden"
                       style={{
                         width: `${PREVIEW_SIZE}px`,
                         height: `${PREVIEW_SIZE}px`,
@@ -777,19 +773,21 @@ export default function SocialMediaExportModal({
                   ))}
                 </div>
                 {filteredEvents[activeTab] && (
-                  <button
+                  <Button
+                    type="button"
                     onClick={() =>
-                      handleDownloadEvent(
+                      void handleDownloadEvent(
                         filteredEvents[activeTab]!.id,
                         filteredEvents[activeTab]!.title,
                       )
                     }
                     disabled={isGenerating}
-                    className="bg-primary hover:bg-primary-dark flex items-center gap-2 rounded-lg px-6 py-3 text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                    isLoading={isGenerating}
+                    className="gap-2"
                   >
                     <DownloadIcon className="h-5 w-5" />
                     Event herunterladen
-                  </button>
+                  </Button>
                 )}
               </div>
             )}

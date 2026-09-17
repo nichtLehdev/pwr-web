@@ -1,6 +1,8 @@
 import { Button, Section, Text } from "@react-email/components";
+import { ersatzLink, grundtext, knopf } from "./email-layout";
+import { textLink } from "./email-text";
 
-interface ManageRegistrationCtaProps {
+export interface ManageRegistrationCtaProps {
   /**
    * Magic link to the registration. Signed and expiring, it stands in for a
    * login so people who registered without an account can still change or
@@ -13,6 +15,9 @@ interface ManageRegistrationCtaProps {
  * Shared call-to-action block for the mails a registrant receives about their
  * own anmeldung. Renders nothing when no link was supplied — e-mail sending is
  * best-effort and must never depend on it.
+ *
+ * Baustein ohne eigene Hülle: läuft innerhalb der EmailLayout der
+ * übergeordneten Vorlage mit.
  */
 export function ManageRegistrationCta({
   manageUrl,
@@ -21,51 +26,41 @@ export function ManageRegistrationCta({
 
   return (
     <>
-      <Section style={buttonContainer}>
-        <Button style={button} href={manageUrl}>
+      <Section style={knopfFeld}>
+        <Button style={knopf} href={manageUrl}>
           Anmeldung ansehen &amp; bearbeiten
         </Button>
       </Section>
 
-      <Text style={paragraph}>
+      <Text style={grundtext}>
         Über diesen Link kannst du deine Anmeldung ändern oder stornieren — ganz
         ohne Benutzerkonto. Bitte gib ihn nicht weiter. Falls der Button nicht
         funktioniert, kopiere diese Adresse in deinen Browser:
       </Text>
-      <Text style={linkText}>{manageUrl}</Text>
+      <Text style={ersatzLink}>{manageUrl}</Text>
     </>
   );
 }
 
-const buttonContainer = {
+const knopfFeld = {
   textAlign: "center" as const,
-  margin: "32px 0",
+  margin: "28px 0",
 };
 
-const button = {
-  backgroundColor: "#faa619",
-  borderRadius: "8px",
-  color: "#ffffff",
-  fontSize: "16px",
-  fontWeight: "bold",
-  textDecoration: "none",
-  textAlign: "center" as const,
-  display: "inline-block",
-  padding: "14px 32px",
-  boxShadow: "0 2px 4px rgba(250, 166, 25, 0.3)",
-};
+/**
+ * Nur-Text-Fassung — Zeilen zum Einbinden in die Mail der übergeordneten
+ * Vorlage. Ohne Button entfällt der Hinweis auf den Button; der Link steht
+ * direkt da.
+ */
+export function manageRegistrationCtaText({
+  manageUrl,
+}: ManageRegistrationCtaProps): string[] {
+  if (!manageUrl) return [];
 
-const paragraph = {
-  fontSize: "14px",
-  lineHeight: "22px",
-  color: "#58595b",
-  marginBottom: "8px",
-};
-
-const linkText = {
-  fontSize: "12px",
-  lineHeight: "20px",
-  color: "#faa619",
-  wordBreak: "break-all" as const,
-  marginBottom: "16px",
-};
+  return [
+    "",
+    textLink("Anmeldung ansehen & bearbeiten:", manageUrl),
+    "",
+    "Über diesen Link kannst du deine Anmeldung ändern oder stornieren — ganz ohne Benutzerkonto. Bitte gib ihn nicht weiter.",
+  ];
+}

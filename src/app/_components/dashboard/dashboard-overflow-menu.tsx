@@ -63,10 +63,10 @@ export function DashboardOverflowMenu({
 
   const itemClass = (destructive?: boolean) =>
     cn(
-      "flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors disabled:opacity-50",
+      "flex min-h-11 w-full items-center gap-3 px-4 text-left text-sm transition-colors disabled:opacity-50",
       destructive
-        ? "text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
-        : "dark:text-dark-text dark:hover:bg-dark-background-secondary text-gray-700 hover:bg-gray-50",
+        ? "text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+        : "text-ink dark:text-night-text hover:bg-rule/30 dark:hover:bg-night-raised",
     );
 
   return (
@@ -77,14 +77,14 @@ export function DashboardOverflowMenu({
         aria-label={label}
         aria-expanded={open}
         aria-haspopup="menu"
-        className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background-secondary inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-700 transition-colors hover:bg-gray-50"
+        className="border-rule dark:border-night-rule text-ink dark:text-night-text bg-paper dark:bg-night hover:bg-rule/30 dark:hover:bg-night-raised inline-flex h-11 w-11 shrink-0 items-center justify-center border transition-colors"
       >
         <MoreHorizontalIcon className="h-5 w-5" />
       </button>
       {open && (
         <div
           role="menu"
-          className="dark:border-dark-border dark:bg-dark-surface absolute right-0 z-20 mt-2 w-60 overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
+          className="border-rule dark:border-night-rule bg-paper dark:bg-night absolute right-0 z-20 mt-2 w-60 border py-1"
         >
           {items.map((item) => {
             const Icon = item.icon;
@@ -94,7 +94,7 @@ export function DashboardOverflowMenu({
                   <Icon
                     className={cn(
                       "h-4 w-4 shrink-0",
-                      !item.destructive && "text-gray-400",
+                      !item.destructive && "text-dark dark:text-night-muted",
                     )}
                   />
                 )}

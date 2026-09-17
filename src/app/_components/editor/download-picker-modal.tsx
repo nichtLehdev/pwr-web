@@ -1,5 +1,6 @@
 "use client";
-import { Select } from "@/app/_components/ui";
+import { Button, Input, Label, Select, Textarea } from "@/app/_components/ui";
+import { cn } from "@/lib/utils";
 
 import { useState, useRef, useCallback } from "react";
 import { api } from "@/trpc/react";
@@ -12,6 +13,16 @@ import {
   ScrollableModalBody,
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
+import {
+  DOWNLOAD_FILE_TYPE_ICONS,
+  DOWNLOAD_FILE_TYPE_LABELS,
+  DOWNLOAD_UPLOAD_ACCEPT,
+  DOWNLOAD_UPLOAD_FORMATS_LABEL,
+  DOWNLOAD_UPLOAD_MAX_BYTES,
+  DOWNLOAD_UPLOAD_MAX_LABEL,
+  downloadFileTypeForExtension,
+  downloadFormatCode,
+} from "@/lib/download-file-types";
 
 const categoryLabels: Record<DownloadCategory, string> = {
   BLECHBLATT: "Rheinisches Blechblatt",
@@ -21,21 +32,15 @@ const categoryLabels: Record<DownloadCategory, string> = {
   SONSTIGES: "Sonstiges",
 };
 
-const fileTypeLabels: Record<FileType, string> = {
-  PDF: "PDF",
-  DOCX: "Word",
-  XLSX: "Excel",
-  ZIP: "ZIP",
-  MP3: "Audio",
-};
-
-const fileTypeIcons: Record<FileType, string> = {
-  PDF: "📄",
-  DOCX: "📝",
-  XLSX: "📊",
-  ZIP: "📦",
-  MP3: "🎵",
-};
+/** Register-Reihe wie im Medien-Picker: Unterstreichung in Tinte statt Orange. */
+function tabClass(active: boolean) {
+  return cn(
+    "semi-condensed border-b-2 px-6 py-3 text-sm font-semibold transition-colors",
+    active
+      ? "border-ink text-ink dark:border-night-text dark:text-night-text"
+      : "text-dark hover:text-ink dark:text-night-muted dark:hover:text-night-text border-transparent",
+  );
+}
 
 interface DownloadPickerModalProps {
   isOpen: boolean;
@@ -123,8 +128,10 @@ export default function DownloadPickerModal({
 
   const processFile = useCallback(
     async (file: File) => {
-      if (file.size > 50 * 1024 * 1024) {
-        setUploadError("Die Datei ist zu groß. Maximal 50MB erlaubt.");
+      if (file.size > DOWNLOAD_UPLOAD_MAX_BYTES) {
+        setUploadError(
+          `Die Datei ist zu groß. Maximal ${DOWNLOAD_UPLOAD_MAX_LABEL} erlaubt.`,
+        );
         return;
       }
 
@@ -156,13 +163,9 @@ export default function DownloadPickerModal({
         setUploadedFileUrl(data.url);
         setUploadedFileSize(data.size);
 
-        const ext = data.extension.toLowerCase();
-        if (ext === "pdf") setNewFileType("PDF");
-        else if (["doc", "docx"].includes(ext)) setNewFileType("DOCX");
-        else if (["xls", "xlsx"].includes(ext)) setNewFileType("XLSX");
-        else if (ext === "zip") setNewFileType("ZIP");
-        else if (["mp3", "wav", "ogg"].includes(ext)) setNewFileType("MP3");
-        else setNewFileType("PDF");
+        setNewFileType(
+          downloadFileTypeForExtension(data.extension) ?? FileType.PDF,
+        );
 
         if (!newTitle) {
           setNewTitle(file.name.replace(/\.[^/.]+$/, ""));
@@ -232,10 +235,13 @@ export default function DownloadPickerModal({
 
   const handleInsert = () => {
     if (selectedDownload) {
+      // Der Editor schreibt den Typ sichtbar in den Linktext („… (PDF)“):
+      // Dort gehört das Format hin, nicht der Enum-Wert — sonst stünde bei
+      // einem Flyer „(IMAGE)“ im Beitrag.
       onSelect(
         selectedDownload.title,
         selectedDownload.fileUrl,
-        selectedDownload.fileType,
+        downloadFormatCode(selectedDownload),
         selectedDownload.id,
       );
       onClose();
@@ -252,19 +258,17 @@ export default function DownloadPickerModal({
 
   return (
     <ScrollableModal zIndex="z-100">
-      <ScrollableModalCard
-        maxW="4xl"
-        className="dark:bg-dark-surface overflow-hidden rounded-xl shadow-2xl"
-      >
-        <ScrollableModalHeader className="dark:border-dark-border border-b border-gray-200 pb-4">
+      <ScrollableModalCard maxW="4xl" className="overflow-hidden">
+        <ScrollableModalHeader className="border-rule dark:border-night-rule border-b pb-4">
           <div className="flex items-center justify-between">
-            <h2 className="dark:text-dark-text text-xl font-semibold text-gray-900">
+            <h2 className="text-ink dark:text-night-text text-xl font-semibold">
               Download einfügen
             </h2>
             <button
               type="button"
               onClick={onClose}
-              className="dark:hover:bg-dark-background-secondary rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-400"
+              aria-label="Schließen"
+              className="text-dark hover:bg-rule/60 hover:text-ink dark:text-night-muted dark:hover:bg-night-rule dark:hover:text-night-text p-2 transition-colors"
             >
               <X className="h-5 w-5" />
             </button>
@@ -272,26 +276,18 @@ export default function DownloadPickerModal({
         </ScrollableModalHeader>
 
         {/* Tabs */}
-        <div className="dark:border-dark-border flex border-b border-gray-200">
+        <div className="border-rule dark:border-night-rule flex border-b">
           <button
             type="button"
             onClick={() => setActiveTab("library")}
-            className={`px-6 py-3 font-medium transition-colors ${
-              activeTab === "library"
-                ? "border-primary text-primary border-b-2"
-                : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
-            }`}
+            className={tabClass(activeTab === "library")}
           >
             Vorhandene Downloads
           </button>
           <button
             type="button"
             onClick={() => setActiveTab("create")}
-            className={`px-6 py-3 font-medium transition-colors ${
-              activeTab === "create"
-                ? "border-primary text-primary border-b-2"
-                : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
-            }`}
+            className={tabClass(activeTab === "create")}
           >
             Neuen Download erstellen
           </button>
@@ -301,20 +297,22 @@ export default function DownloadPickerModal({
           {activeTab === "library" ? (
             <div>
               {/* Filters */}
-              <div className="mb-4 flex gap-3">
-                <input
+              <div className="mb-4 flex flex-wrap gap-3">
+                <Input
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Downloads durchsuchen..."
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text flex-1 rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
+                  placeholder="Downloads durchsuchen…"
+                  aria-label="Downloads durchsuchen"
+                  className="min-w-[200px] flex-1"
                 />
                 <Select
                   value={categoryFilter}
                   onChange={(e) =>
                     setCategoryFilter(e.target.value as DownloadCategory | "")
                   }
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
+                  aria-label="Nach Kategorie filtern"
+                  className="sm:w-56"
                 >
                   <option value="">Alle Kategorien</option>
                   {Object.entries(categoryLabels).map(([value, label]) => (
@@ -328,12 +326,12 @@ export default function DownloadPickerModal({
               {/* Downloads List */}
               {isLoading ? (
                 <div className="flex items-center justify-center py-12">
-                  <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+                  <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
                 </div>
               ) : downloadsData?.downloads.length === 0 ? (
                 <div className="py-12 text-center">
-                  <X className="mx-auto h-12 w-12 text-gray-400" />
-                  <p className="mt-4 text-gray-500 dark:text-gray-400">
+                  <X className="text-dark dark:text-night-muted mx-auto h-12 w-12" />
+                  <p className="text-dark dark:text-night-muted mt-4">
                     Keine Downloads gefunden
                   </p>
                 </div>
@@ -352,26 +350,29 @@ export default function DownloadPickerModal({
                           description: download.description,
                         })
                       }
-                      className={`flex w-full items-center gap-4 rounded-lg border-2 p-4 text-left transition-all ${
+                      className={cn(
+                        "bg-rule/25 dark:bg-night-raised flex w-full items-center gap-4 border-2 p-4 text-left transition-colors",
                         selectedDownload?.id === download.id
-                          ? "border-primary bg-primary/5"
-                          : "dark:bg-dark-background-secondary dark:hover:border-dark-border border-transparent bg-gray-50 hover:border-gray-200"
-                      }`}
+                          ? "border-ink dark:border-night-text"
+                          : "hover:border-ink dark:hover:border-night-text border-transparent",
+                      )}
                     >
                       <span className="text-2xl">
-                        {fileTypeIcons[download.fileType]}
+                        {DOWNLOAD_FILE_TYPE_ICONS[download.fileType]}
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className="dark:text-dark-text truncate font-medium text-gray-900">
+                        <p className="text-ink dark:text-night-text truncate font-medium">
                           {download.title}
                         </p>
                         {download.description && (
-                          <p className="truncate text-sm text-gray-500 dark:text-gray-400">
+                          <p className="text-dark dark:text-night-muted truncate text-sm">
                             {download.description}
                           </p>
                         )}
-                        <div className="mt-1 flex items-center gap-2 text-xs text-gray-400">
-                          <span>{fileTypeLabels[download.fileType]}</span>
+                        <div className="text-dark dark:text-night-muted mt-1 flex items-center gap-2 text-xs">
+                          <span>
+                            {DOWNLOAD_FILE_TYPE_LABELS[download.fileType]}
+                          </span>
                           <span>•</span>
                           <span>{categoryLabels[download.category]}</span>
                           {download.fileSize && (
@@ -383,8 +384,8 @@ export default function DownloadPickerModal({
                         </div>
                       </div>
                       {selectedDownload?.id === download.id && (
-                        <div className="bg-primary rounded-full p-1">
-                          <CheckIcon className="h-4 w-4 text-white" />
+                        <div className="bg-ink dark:bg-night-text p-1">
+                          <CheckIcon className="text-paper dark:text-night h-4 w-4" />
                         </div>
                       )}
                     </button>
@@ -396,21 +397,19 @@ export default function DownloadPickerModal({
             <div className="space-y-6">
               {/* File Upload */}
               <div>
-                <label className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700">
-                  Datei hochladen *
-                </label>
+                <Label required>Datei hochladen</Label>
                 {uploadedFileUrl ? (
-                  <div className="dark:border-dark-border dark:bg-dark-background-secondary flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
+                  <div className="border-rule dark:border-night-rule bg-rule/25 dark:bg-night-raised flex items-center gap-3 border p-4">
                     <span className="text-2xl">
-                      {fileTypeIcons[newFileType]}
+                      {DOWNLOAD_FILE_TYPE_ICONS[newFileType]}
                     </span>
                     <div className="flex-1">
-                      <p className="dark:text-dark-text font-medium text-gray-900">
+                      <p className="text-ink dark:text-night-text font-medium">
                         Datei hochgeladen
                       </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                      <p className="text-dark dark:text-night-muted text-sm">
                         {formatFileSize(uploadedFileSize)} •{" "}
-                        {fileTypeLabels[newFileType]}
+                        {DOWNLOAD_FILE_TYPE_LABELS[newFileType]}
                       </p>
                     </div>
                     <button
@@ -419,7 +418,8 @@ export default function DownloadPickerModal({
                         setUploadedFileUrl("");
                         setUploadedFileSize(0);
                       }}
-                      className="text-red-600 hover:text-red-700"
+                      aria-label="Datei entfernen"
+                      className="text-red-700 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
                     >
                       <X className="h-5 w-5" />
                     </button>
@@ -432,36 +432,38 @@ export default function DownloadPickerModal({
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
-                    className={`cursor-pointer rounded-xl border-2 border-dashed p-8 text-center transition-colors ${
+                    className={cn(
+                      "cursor-pointer border-2 border-dashed p-8 text-center transition-colors",
                       isDragging
-                        ? "border-primary bg-primary/5 dark:bg-primary/10"
+                        ? "border-ink bg-rule/25 dark:border-night-text dark:bg-night-raised"
                         : isUploading
-                          ? "dark:border-dark-border cursor-not-allowed border-gray-300 opacity-50"
-                          : "dark:border-dark-border hover:border-primary dark:hover:bg-dark-background-secondary border-gray-300 hover:bg-gray-50"
-                    }`}
+                          ? "border-rule dark:border-night-rule cursor-not-allowed opacity-50"
+                          : "border-rule dark:border-night-rule hover:border-ink dark:hover:border-night-text",
+                    )}
                   >
                     {isUploading ? (
                       <div>
-                        <div className="border-t-primary mx-auto mb-2 h-8 w-8 animate-spin rounded-full border-4 border-gray-300" />
-                        <p className="text-gray-600 dark:text-gray-400">
+                        <div className="border-rule dark:border-night-rule border-t-ink dark:border-t-night-text mx-auto mb-2 h-8 w-8 animate-spin rounded-full border-4" />
+                        <p className="text-dark dark:text-night-muted">
                           Wird hochgeladen...
                         </p>
                       </div>
                     ) : isDragging ? (
                       <>
-                        <ArrowUpIcon className="text-primary mx-auto h-10 w-10" />
-                        <p className="text-primary mt-2 font-medium">
+                        <ArrowUpIcon className="text-ink dark:text-night-text mx-auto h-10 w-10" />
+                        <p className="text-ink dark:text-night-text mt-2 font-medium">
                           Datei hier ablegen
                         </p>
                       </>
                     ) : (
                       <>
-                        <ArrowUpIcon className="mx-auto h-10 w-10 text-gray-400" />
-                        <p className="dark:text-dark-text mt-2 font-medium text-gray-700">
+                        <ArrowUpIcon className="text-dark dark:text-night-muted mx-auto h-10 w-10" />
+                        <p className="text-ink dark:text-night-text mt-2 font-medium">
                           Datei hierher ziehen oder klicken
                         </p>
-                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                          PDF, Word, Excel, ZIP, Audio und mehr bis zu 50MB
+                        <p className="text-dark dark:text-night-muted mt-1 text-sm">
+                          {DOWNLOAD_UPLOAD_FORMATS_LABEL}, bis{" "}
+                          {DOWNLOAD_UPLOAD_MAX_LABEL}
                         </p>
                       </>
                     )}
@@ -470,6 +472,7 @@ export default function DownloadPickerModal({
                 <input
                   ref={fileInputRef}
                   type="file"
+                  accept={DOWNLOAD_UPLOAD_ACCEPT}
                   onChange={handleFileSelect}
                   className="hidden"
                 />
@@ -477,44 +480,42 @@ export default function DownloadPickerModal({
 
               {/* Title */}
               <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Titel *
-                </label>
-                <input
+                <Label htmlFor="downloadPickerTitle" required>
+                  Titel
+                </Label>
+                <Input
+                  id="downloadPickerTitle"
                   type="text"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                   placeholder="z.B. Anmeldeformular Landesposaunentag 2025"
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
                 />
               </div>
 
               {/* Description */}
               <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                <Label htmlFor="downloadPickerDescription">
                   Beschreibung (optional)
-                </label>
-                <textarea
+                </Label>
+                <Textarea
+                  id="downloadPickerDescription"
                   value={newDescription}
                   onChange={(e) => setNewDescription(e.target.value)}
                   rows={2}
                   placeholder="Kurze Beschreibung des Downloads..."
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
                 />
               </div>
 
               {/* Category and File Type */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    Kategorie
-                  </label>
+                  <Label htmlFor="downloadPickerCategory">Kategorie</Label>
                   <Select
+                    id="downloadPickerCategory"
                     value={newCategory}
                     onChange={(e) =>
                       setNewCategory(e.target.value as DownloadCategory)
                     }
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
                   >
                     {Object.entries(categoryLabels).map(([value, label]) => (
                       <option key={value} value={value}>
@@ -524,32 +525,32 @@ export default function DownloadPickerModal({
                   </Select>
                 </div>
                 <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    Dateityp
-                  </label>
+                  <Label htmlFor="downloadPickerFileType">Dateityp</Label>
                   <Select
+                    id="downloadPickerFileType"
                     value={newFileType}
                     onChange={(e) => setNewFileType(e.target.value as FileType)}
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
                   >
-                    {Object.entries(fileTypeLabels).map(([value, label]) => (
-                      <option key={value} value={value}>
-                        {label}
-                      </option>
-                    ))}
+                    {Object.entries(DOWNLOAD_FILE_TYPE_LABELS).map(
+                      ([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ),
+                    )}
                   </Select>
                 </div>
               </div>
 
               {/* Error Message */}
               {uploadError && (
-                <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
+                <div className="border border-red-700 p-3 text-sm text-red-700 dark:border-red-400 dark:text-red-400">
                   {uploadError}
                 </div>
               )}
 
               {/* Create Button */}
-              <button
+              <Button
                 type="button"
                 onClick={handleCreateDownload}
                 disabled={
@@ -557,39 +558,33 @@ export default function DownloadPickerModal({
                   !uploadedFileUrl ||
                   createDownloadMutation.isPending
                 }
-                className="bg-primary hover:bg-primary/90 w-full rounded-lg px-4 py-3 font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                isLoading={createDownloadMutation.isPending}
+                className="w-full"
               >
-                {createDownloadMutation.isPending
-                  ? "Wird erstellt..."
-                  : "Download erstellen"}
-              </button>
+                Download erstellen
+              </Button>
             </div>
           )}
         </ScrollableModalBody>
 
         <ScrollableModalFooter className="flex items-center justify-between">
-          <div className="text-sm text-gray-500 dark:text-gray-400">
+          <div className="text-dark dark:text-night-muted text-sm">
             {selectedDownload && activeTab === "library" && (
               <span>Ausgewählt: {selectedDownload.title}</span>
             )}
           </div>
           <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-background-secondary rounded-lg border border-gray-300 px-4 py-2 font-medium text-gray-700 transition-colors hover:bg-gray-100"
-            >
+            <Button type="button" variant="outline" onClick={onClose}>
               Abbrechen
-            </button>
+            </Button>
             {activeTab === "library" && (
-              <button
+              <Button
                 type="button"
                 onClick={handleInsert}
                 disabled={!selectedDownload}
-                className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Download einfügen
-              </button>
+              </Button>
             )}
           </div>
         </ScrollableModalFooter>

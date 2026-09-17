@@ -53,9 +53,11 @@ export function PasswordStrengthMeter({
             key={segment}
             className={cn(
               "h-1.5 flex-1 rounded-full transition-colors",
+              // Die Skala rot → bernstein → limette → grün bleibt: Sie IST die
+              // Aussage der Anzeige. Nur die leere Spur war altes Grau.
               segment <= filled
                 ? BAR_COLORS[score]
-                : "bg-gray-200 dark:bg-gray-700",
+                : "bg-rule dark:bg-night-rule",
             )}
           />
         ))}
@@ -66,7 +68,7 @@ export function PasswordStrengthMeter({
       >
         Passwortstärke: {label}
         {hint && (
-          <span className="font-normal text-gray-500 dark:text-gray-400">
+          <span className="text-dark dark:text-night-muted font-normal">
             {" "}
             — {hint}
           </span>

@@ -6,6 +6,11 @@ import {
   collectMediaFromEntities,
 } from "@/server/utils/export-import";
 import type { Media } from "~/generated/prisma/client";
+import {
+  buildExportFilename,
+  findMissingIds,
+  parseExportSelection,
+} from "@/lib/export-selection";
 
 import { createLogger } from "@/server/utils/logger";
 
@@ -36,7 +41,31 @@ export async function GET(
     }
 
     const { type } = await params;
-    const date = new Date().toISOString().split("T")[0];
+    const date = new Date().toISOString().slice(0, 10);
+
+    // Optional: nur einzelne Einträge (`?ids=a,b`). Ohne Parameter bleibt es
+    // beim ganzen Bestand, genau wie vor der Auswahl.
+    const selection = parseExportSelection(
+      type,
+      request.nextUrl.searchParams.getAll("ids"),
+    );
+    if (!selection.ok) {
+      return NextResponse.json({ error: selection.error }, { status: 400 });
+    }
+    const selectedIds = selection.ids;
+    // `{}` filtert nichts — so bleibt die Abfrage des Gesamtexports unverändert.
+    const idFilter = selectedIds ? { id: { in: selectedIds } } : {};
+
+    /** 404 statt eines ZIP, dem still ein Teil der Auswahl fehlt. */
+    const missingSelection = (found: ReadonlyArray<{ id: string }>) => {
+      if (!selectedIds) return null;
+      const missingIds = findMissingIds(selectedIds, found);
+      if (missingIds.length === 0) return null;
+      return NextResponse.json(
+        { error: "Einträge nicht gefunden", missingIds },
+        { status: 404 },
+      );
+    };
 
     let jsonData: Record<string, unknown>;
     let mediaFiles: Array<{
@@ -51,6 +80,7 @@ export async function GET(
     switch (type) {
       case "posts": {
         const posts = await db.post.findMany({
+          where: idFilter,
           include: {
             coverImage: true,
             bezirk: true,
@@ -72,6 +102,9 @@ export async function GET(
           orderBy: { createdAt: "desc" },
         });
 
+        const missingPosts = missingSelection(posts);
+        if (missingPosts) return missingPosts;
+
         jsonData = {
           posts: posts.map((post) => ({
             ...post,
@@ -85,12 +118,13 @@ export async function GET(
         };
 
         mediaFiles = posts;
-        filename = `posts-export-${date}.zip`;
+        filename = buildExportFilename(type, date, selectedIds ? posts : null);
         break;
       }
 
       case "events": {
         const events = await db.event.findMany({
+          where: idFilter,
           include: {
             coverImage: true,
             location: true,
@@ -123,6 +157,9 @@ export async function GET(
           orderBy: { eventDate: "desc" },
         });
 
+        const missingEvents = missingSelection(events);
+        if (missingEvents) return missingEvents;
+
         jsonData = {
           events: events.map((event) => ({
             ...event,
@@ -137,7 +174,7 @@ export async function GET(
         };
 
         mediaFiles = events;
-        filename = `events-export-${date}.zip`;
+        filename = buildExportFilename(type, date, selectedIds ? events : null);
         break;
       }
 
@@ -351,7 +388,11 @@ export async function GET(
       }
 
       case "courses": {
+        // Bewusst ohne Anmeldungen, Teilnehmende und Rechnungen: Das sind
+        // personenbezogene Daten, und ein Kurs soll sich weitergeben lassen,
+        // ohne sie mitzunehmen.
         const courses = await db.course.findMany({
+          where: idFilter,
           include: {
             location: true,
             bezirk: true,
@@ -373,6 +414,9 @@ export async function GET(
           orderBy: { startDate: "desc" },
         });
 
+        const missingCourses = missingSelection(courses);
+        if (missingCourses) return missingCourses;
+
         jsonData = {
           courses: courses.map((course) => ({
             ...course,
@@ -386,11 +430,16 @@ export async function GET(
         };
 
         const zipBuffer = await createExportZip(jsonData, [], "courses.json");
+        filename = buildExportFilename(
+          type,
+          date,
+          selectedIds ? courses : null,
+        );
 
         return new NextResponse(zipBuffer as unknown as BodyInit, {
           headers: {
             "Content-Type": "application/zip",
-            "Content-Disposition": `attachment; filename="courses-export-${date}.zip"`,
+            "Content-Disposition": `attachment; filename="${filename}"`,
           },
         });
       }

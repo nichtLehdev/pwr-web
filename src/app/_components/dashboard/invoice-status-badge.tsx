@@ -1,4 +1,5 @@
 import { InvoiceStatus } from "~/generated/prisma/enums";
+import { Tag, type TagTone } from "@/app/_components/programmheft/tag";
 
 export const INVOICE_STATUS_LABELS: Record<InvoiceStatus, string> = {
   DRAFT: "Entwurf",
@@ -6,19 +7,17 @@ export const INVOICE_STATUS_LABELS: Record<InvoiceStatus, string> = {
   CANCELLED: "Storniert",
 };
 
-const badgeClasses: Record<InvoiceStatus, string> = {
-  DRAFT: "bg-gray-100 text-gray-700 dark:bg-gray-700/40 dark:text-gray-200",
-  PUBLISHED:
-    "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
-  CANCELLED: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
+// Der Ton trägt die Dringlichkeit: Ein Entwurf verlangt nichts und bleibt
+// umrandet, eine ausgestellte Rechnung ist verbindlich und steht gefüllt, eine
+// Stornierung ist ein negativer Abschluss. Vorher lag der Entwurf auf
+// `inverse` — im Hellmodus nicht von `ink` zu unterscheiden, beide Zustände
+// sahen also gleich aus.
+const TONE: Record<InvoiceStatus, TagTone> = {
+  DRAFT: "muted",
+  PUBLISHED: "ink",
+  CANCELLED: "cancelled",
 };
 
 export function InvoiceStatusBadge({ status }: { status: InvoiceStatus }) {
-  return (
-    <span
-      className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${badgeClasses[status]}`}
-    >
-      {INVOICE_STATUS_LABELS[status]}
-    </span>
-  );
+  return <Tag tone={TONE[status]}>{INVOICE_STATUS_LABELS[status]}</Tag>;
 }

@@ -45,7 +45,7 @@ export function PriceOptionAgeLimits({
   option,
   onChange,
   inputClassName,
-  labelClassName = "mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400",
+  labelClassName = "text-dark dark:text-night-muted mb-1 block text-xs font-medium",
   disabled = false,
 }: PriceOptionAgeLimitsProps) {
   const problem = validatePriceOptionAgeRange(option);
@@ -78,11 +78,11 @@ export function PriceOptionAgeLimits({
       {problem ? (
         <p className="mt-1 text-xs text-red-600 dark:text-red-400">{problem}</p>
       ) : summary ? (
-        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+        <p className="text-dark dark:text-night-muted mt-1 text-xs">
           Wählbar für {summary} — gerechnet auf den ersten Kurstag.
         </p>
       ) : (
-        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+        <p className="text-dark dark:text-night-muted mt-1 text-xs">
           Ohne Grenzen steht die Kategorie jedem Alter offen.
         </p>
       )}

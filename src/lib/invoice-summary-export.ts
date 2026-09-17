@@ -1,21 +1,35 @@
 import type { XlsxColumn, XlsxRow } from "@/server/utils/xlsx";
 import {
+  DOWN_PAYMENT_LINE_DESCRIPTION,
   lineItemTotal,
   SIBLING_DISCOUNT_LINE_DESCRIPTION,
   type InvoiceLineItem,
 } from "@/lib/invoice-document";
+import {
+  DOWN_PAYMENT_STATE_LABELS,
+  downPaymentState,
+  type DownPaymentStatusValue,
+} from "@/lib/course-down-payment";
+
+/** Summe der (negativen) Zeilen mit dieser Bezeichnung, als positiver Betrag. */
+function creditLinesAmount(lineItems: unknown, description: string): number {
+  const items = Array.isArray(lineItems) ? lineItems : [];
+  const creditTotal = items
+    .filter(
+      (raw) => (raw as Partial<InvoiceLineItem>).description === description,
+    )
+    .reduce((sum, raw) => sum + lineItemTotal(raw as InvoiceLineItem), 0);
+  return -creditTotal;
+}
 
 /** Summe der Geschwisterkindrabatt-Zeilen einer Rechnung, als positiver Betrag. */
 export function siblingDiscountAmount(lineItems: unknown): number {
-  const items = Array.isArray(lineItems) ? lineItems : [];
-  const discountTotal = items
-    .filter(
-      (raw) =>
-        (raw as Partial<InvoiceLineItem>).description ===
-        SIBLING_DISCOUNT_LINE_DESCRIPTION,
-    )
-    .reduce((sum, raw) => sum + lineItemTotal(raw as InvoiceLineItem), 0);
-  return -discountTotal;
+  return creditLinesAmount(lineItems, SIBLING_DISCOUNT_LINE_DESCRIPTION);
+}
+
+/** Auf der Rechnung abgezogene Anzahlung, als positiver Betrag. */
+export function downPaymentCreditAmount(lineItems: unknown): number {
+  return creditLinesAmount(lineItems, DOWN_PAYMENT_LINE_DESCRIPTION);
 }
 
 export const invoiceSummaryColumns: XlsxColumn[] = [
@@ -38,6 +52,21 @@ export const invoiceSummaryColumns: XlsxColumn[] = [
   },
 ];
 
+/**
+ * Nur bei Kursen mit Anzahlung: was die Rechnung schon abzieht, und wo die
+ * Anzahlung der Anmeldung gerade steht. Stehen dort "Bezahlt" und ein leerer
+ * Abzug nebeneinander, wurde die Rechnung vor dem Zahlungseingang erstellt.
+ */
+export const invoiceSummaryDownPaymentColumns: XlsxColumn[] = [
+  {
+    header: "Anzahlung (abgezogen)",
+    key: "downPaymentCredit",
+    format: "currency",
+    total: true,
+  },
+  { header: "Anzahlung Status", key: "downPaymentStatus" },
+];
+
 type SummaryInvoice = {
   invoiceNumber: string | null;
   totalAmount: number;
@@ -50,6 +79,10 @@ type SummaryInvoice = {
     registrantLastName: string;
     registrantEmail: string;
     participants: Array<{ firstName: string; lastName: string }>;
+    registrationStatus?: "CONFIRMED" | "WAITLIST" | "CANCELLED";
+    downPaymentAmount?: number | null;
+    downPaymentStatus?: DownPaymentStatusValue | null;
+    downPaymentPaidAmount?: number | null;
   } | null;
 };
 
@@ -80,6 +113,18 @@ export function buildInvoiceSummaryRows(
       invoiceNumber: invoice.invoiceNumber ?? "",
       totalAmount: invoice.totalAmount,
       siblingDiscountAmount: siblingDiscountAmount(invoice.lineItems),
+      downPaymentCredit: downPaymentCreditAmount(invoice.lineItems),
+      downPaymentStatus: registration?.downPaymentAmount
+        ? DOWN_PAYMENT_STATE_LABELS[
+            downPaymentState({
+              downPaymentAmount: registration.downPaymentAmount,
+              downPaymentStatus: registration.downPaymentStatus ?? null,
+              downPaymentPaidAmount: registration.downPaymentPaidAmount ?? null,
+              registrationStatus:
+                registration.registrationStatus ?? "CONFIRMED",
+            })
+          ]
+        : "",
     };
   });
 }

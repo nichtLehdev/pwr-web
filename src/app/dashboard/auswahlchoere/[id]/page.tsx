@@ -9,6 +9,7 @@ import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 import { DashboardPage } from "@/app/_components/dashboard";
+import { Tag } from "@/app/_components/programmheft/tag";
 import { Music, Edit, UserIcon, ArrowLeftIcon } from "lucide-react";
 
 export default function AuswahlchorDetailPage() {
@@ -64,8 +65,8 @@ export default function AuswahlchorDetailPage() {
 
   if (sessionLoading || profileLoading || auswahlchorLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
@@ -76,14 +77,14 @@ export default function AuswahlchorDetailPage() {
 
   if (!auswahlchor) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <h1 className="dark:text-dark-text text-xl font-semibold text-gray-900">
+          <h1 className="text-ink dark:text-night-text text-xl font-semibold">
             Auswahlchor nicht gefunden
           </h1>
           <Link
             href="/dashboard/auswahlchoere"
-            className="text-primary mt-4 inline-block hover:underline"
+            className="link-ink mt-4 inline-block"
           >
             Zurück zur Übersicht
           </Link>
@@ -104,7 +105,7 @@ export default function AuswahlchorDetailPage() {
       actions={
         <Link
           href={`/dashboard/auswahlchoere/${auswahlchorId}/edit`}
-          className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
+          className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-night-text dark:text-night dark:hover:bg-primary dark:hover:text-ink inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm font-semibold transition-colors"
         >
           <Edit className="h-4 w-4" />
           Bearbeiten
@@ -115,7 +116,7 @@ export default function AuswahlchorDetailPage() {
       {/* Auswahlchor Image and Status Badge */}
       <div className="mb-6 flex items-center gap-4">
         {auswahlchor.image?.url ? (
-          <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg">
+          <div className="border-rule dark:border-night-rule relative h-20 w-20 shrink-0 overflow-hidden border">
             <Image
               src={auswahlchor.image.url}
               alt={auswahlchor.name}
@@ -125,7 +126,9 @@ export default function AuswahlchorDetailPage() {
           </div>
         ) : (
           <div
-            className={`flex h-20 w-20 shrink-0 items-center justify-center rounded-lg text-white`}
+            // Tinte statt Weiss: Die Standardfarbe ist Druckorange, auf dem
+            // weisse Schrift nur 1,99:1 erreicht.
+            className="text-ink flex h-20 w-20 shrink-0 items-center justify-center"
             style={{
               backgroundColor: auswahlchor.colorHex || "#faa619",
             }}
@@ -134,18 +137,12 @@ export default function AuswahlchorDetailPage() {
           </div>
         )}
         <div className="flex flex-wrap items-center gap-2">
-          <span
-            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-              auswahlchor.showApplication
-                ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
-                : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
-            }`}
-          >
+          <Tag tone={auswahlchor.showApplication ? "ink" : "inverse"}>
             {auswahlchor.showApplication
               ? "Bewerbung aktiv"
               : "Bewerbung inaktiv"}
-          </span>
-          <p className="dark:text-dark-muted text-sm text-gray-500">
+          </Tag>
+          <p className="text-dark dark:text-night-muted text-sm">
             Slug: {auswahlchor.slug}
           </p>
         </div>
@@ -153,11 +150,11 @@ export default function AuswahlchorDetailPage() {
 
       {/* Description */}
       {auswahlchor.description && (
-        <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-3 text-lg font-semibold text-gray-900">
+        <div className="border-rule dark:border-night-rule mb-6 border p-6">
+          <h2 className="condensed text-ink dark:text-night-text mb-3 text-lg font-bold">
             Beschreibung
           </h2>
-          <p className="dark:text-dark-muted whitespace-pre-wrap text-gray-600">
+          <p className="text-dark dark:text-night-muted whitespace-pre-wrap">
             {auswahlchor.description}
           </p>
         </div>
@@ -166,24 +163,24 @@ export default function AuswahlchorDetailPage() {
       {/* Details Grid */}
       <div className="mb-6 grid gap-6 sm:grid-cols-2">
         {/* Founded & Members */}
-        <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+        <div className="border-rule dark:border-night-rule border p-6">
+          <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
             Informationen
           </h2>
           <dl className="space-y-3">
             <div>
-              <dt className="dark:text-dark-muted text-sm text-gray-500">
+              <dt className="text-dark dark:text-night-muted text-sm">
                 Gegründet
               </dt>
-              <dd className="dark:text-dark-text font-medium text-gray-900">
+              <dd className="text-ink dark:text-night-text font-medium">
                 {auswahlchor.founded}
               </dd>
             </div>
             <div>
-              <dt className="dark:text-dark-muted text-sm text-gray-500">
+              <dt className="text-dark dark:text-night-muted text-sm">
                 Mitglieder
               </dt>
-              <dd className="dark:text-dark-text font-medium text-gray-900">
+              <dd className="text-ink dark:text-night-text font-medium">
                 {auswahlchor.members}
               </dd>
             </div>
@@ -191,8 +188,8 @@ export default function AuswahlchorDetailPage() {
         </div>
 
         {/* Conductor */}
-        <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+        <div className="border-rule dark:border-night-rule border p-6">
+          <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
             Chorleitung
           </h2>
           {auswahlchor.conductor ? (
@@ -207,24 +204,24 @@ export default function AuswahlchorDetailPage() {
                   />
                 </div>
               ) : (
-                <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500">
+                <div className="bg-rule/25 text-dark dark:bg-night-raised dark:text-night-muted flex h-12 w-12 shrink-0 items-center justify-center rounded-full">
                   <UserIcon className="h-6 w-6" />
                 </div>
               )}
               <div>
-                <p className="dark:text-dark-text font-medium text-gray-900">
+                <p className="text-ink dark:text-night-text font-medium">
                   {auswahlchor.conductor.displayName ||
                     auswahlchor.conductor.email}
                 </p>
                 {auswahlchor.conductor.bio && (
-                  <p className="dark:text-dark-muted mt-1 line-clamp-2 text-sm text-gray-500">
+                  <p className="text-dark dark:text-night-muted mt-1 line-clamp-2 text-sm">
                     {auswahlchor.conductor.bio}
                   </p>
                 )}
               </div>
             </div>
           ) : (
-            <p className="dark:text-dark-muted text-gray-500 italic">
+            <p className="text-dark dark:text-night-muted italic">
               Keine Chorleitung zugewiesen
             </p>
           )}
@@ -232,30 +229,30 @@ export default function AuswahlchorDetailPage() {
       </div>
 
       {/* Styling */}
-      <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-        <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+      <div className="border-rule dark:border-night-rule mb-6 border p-6">
+        <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
           Styling
         </h2>
         <dl className="grid gap-4 sm:grid-cols-2">
           <div>
-            <dt className="dark:text-dark-muted text-sm text-gray-500">
+            <dt className="text-dark dark:text-night-muted text-sm">
               Tailwind-Farbe
             </dt>
-            <dd className="dark:text-dark-text font-medium text-gray-900">
+            <dd className="text-ink dark:text-night-text font-medium">
               {auswahlchor.color || "–"}
             </dd>
           </div>
           <div>
-            <dt className="dark:text-dark-muted text-sm text-gray-500">
+            <dt className="text-dark dark:text-night-muted text-sm">
               Hex-Farbe
             </dt>
             <dd className="flex items-center gap-2">
-              <span className="dark:text-dark-text font-medium text-gray-900">
+              <span className="text-ink dark:text-night-text font-medium">
                 {auswahlchor.colorHex || "–"}
               </span>
               {auswahlchor.colorHex && (
                 <div
-                  className="h-6 w-6 rounded border border-gray-300"
+                  className="border-rule dark:border-night-rule h-6 w-6 shrink-0 border"
                   style={{ backgroundColor: auswahlchor.colorHex }}
                 />
               )}
@@ -266,18 +263,18 @@ export default function AuswahlchorDetailPage() {
 
       {/* Upcoming Events */}
       {auswahlchor.events && auswahlchor.events.length > 0 && (
-        <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+        <div className="border-rule dark:border-night-rule mb-6 border p-6">
+          <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
             Kommende Termine
           </h2>
           <div className="space-y-3">
             {auswahlchor.events.slice(0, 5).map((event) => (
               <div
                 key={event.id}
-                className="dark:border-dark-border flex items-center gap-3 rounded-lg border border-gray-100 p-3"
+                className="border-rule dark:border-night-rule flex items-center gap-3 border p-3"
               >
                 {event.coverImage?.url ? (
-                  <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded">
+                  <div className="relative h-12 w-12 shrink-0 overflow-hidden">
                     <Image
                       src={event.coverImage.url}
                       alt={event.title}
@@ -286,7 +283,7 @@ export default function AuswahlchorDetailPage() {
                     />
                   </div>
                 ) : (
-                  <div className="text-primary shrink-0 text-center">
+                  <div className="text-primary-ink dark:text-primary shrink-0 text-center">
                     <div className="text-sm font-medium">
                       {new Date(event.eventDate).toLocaleDateString("de-DE", {
                         day: "2-digit",
@@ -296,11 +293,11 @@ export default function AuswahlchorDetailPage() {
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className="dark:text-dark-text truncate font-medium text-gray-900">
+                  <p className="text-ink dark:text-night-text truncate font-medium">
                     {event.title}
                   </p>
                   {event.location && (
-                    <p className="dark:text-dark-muted truncate text-sm text-gray-500">
+                    <p className="text-dark dark:text-night-muted truncate text-sm">
                       {event.location.name}, {event.location.city}
                     </p>
                   )}
@@ -312,16 +309,16 @@ export default function AuswahlchorDetailPage() {
       )}
 
       {/* Metadata */}
-      <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-        <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+      <div className="border-rule dark:border-night-rule border p-6">
+        <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
           Details
         </h2>
         <dl className="grid gap-4 sm:grid-cols-2">
           <div>
-            <dt className="dark:text-dark-muted text-sm text-gray-500">
+            <dt className="text-dark dark:text-night-muted text-sm">
               Erstellt am
             </dt>
-            <dd className="dark:text-dark-text font-medium text-gray-900">
+            <dd className="text-ink dark:text-night-text font-medium">
               {new Date(auswahlchor.createdAt).toLocaleDateString("de-DE", {
                 day: "2-digit",
                 month: "long",
@@ -330,10 +327,10 @@ export default function AuswahlchorDetailPage() {
             </dd>
           </div>
           <div>
-            <dt className="dark:text-dark-muted text-sm text-gray-500">
+            <dt className="text-dark dark:text-night-muted text-sm">
               Zuletzt aktualisiert
             </dt>
-            <dd className="dark:text-dark-text font-medium text-gray-900">
+            <dd className="text-ink dark:text-night-text font-medium">
               {new Date(auswahlchor.updatedAt).toLocaleDateString("de-DE", {
                 day: "2-digit",
                 month: "long",
@@ -348,7 +345,7 @@ export default function AuswahlchorDetailPage() {
       <div className="mt-6 flex flex-wrap gap-3">
         <Link
           href="/dashboard/auswahlchoere"
-          className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+          className="border-ink dark:border-night-text text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised inline-flex min-h-11 items-center gap-2 border px-4 py-2 transition-colors"
         >
           <ArrowLeftIcon className="h-4 w-4" />
           Zurück zur Übersicht

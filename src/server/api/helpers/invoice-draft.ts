@@ -6,17 +6,24 @@
  * add a line without rewriting the registration behind a participant's back.
  */
 import {
+  DOWN_PAYMENT_LINE_DESCRIPTION,
+  formatDate,
   invoiceTotal,
   SIBLING_DISCOUNT_LINE_DESCRIPTION,
   type InvoiceLineItem,
   type InvoiceRecipient,
 } from "@/lib/invoice-document";
+import { downPaymentCredit } from "@/lib/course-down-payment";
 import {
   participantPriceOptionLabel,
   resolveParticipantPriceOption,
 } from "@/lib/course-price-options";
 import { computeSiblingDiscounts } from "@/lib/sibling-discount";
-import { SiblingDiscountStatus } from "~/generated/prisma/enums";
+import {
+  SiblingDiscountStatus,
+  type DownPaymentStatus,
+  type RegistrationStatus,
+} from "~/generated/prisma/enums";
 
 export interface RegistrationForDraft {
   registrantFirstName: string;
@@ -35,6 +42,15 @@ export interface RegistrationForDraft {
   billingEmail: string | null;
   siblingDiscountApplied: boolean;
   siblingDiscountStatus: SiblingDiscountStatus;
+  /**
+   * Anzahlung. Abgezogen wird nur, was als eingegangen verbucht ist — eine
+   * offene Anzahlung ist Teil des Rechnungsbetrags.
+   */
+  downPaymentAmount?: number | null;
+  downPaymentStatus?: DownPaymentStatus | null;
+  downPaymentPaidAmount?: number | null;
+  downPaymentPaidAt?: Date | null;
+  registrationStatus?: RegistrationStatus;
   participants: {
     firstName: string;
     lastName: string;
@@ -100,7 +116,7 @@ const participantName = (participant: {
 /**
  * One line per price category — the category is the position, the participants
  * booked into it are the sub-line — plus one negative line per distinct sibling
- * discount.
+ * discount, and one negative line for a down payment already received.
  *
  * Grouping this way is how an invoice normally reads ("2 × Vollzahler"), and it
  * keeps a course with a dozen participants down to a handful of lines. Uses the
@@ -210,6 +226,23 @@ export function lineItemsFromRegistration(
         unitPrice: -line.discount,
       });
     }
+  }
+
+  const alreadyPaid = downPaymentCredit({
+    downPaymentAmount: registration.downPaymentAmount ?? null,
+    downPaymentStatus: registration.downPaymentStatus ?? null,
+    downPaymentPaidAmount: registration.downPaymentPaidAmount ?? null,
+    registrationStatus: registration.registrationStatus ?? "CONFIRMED",
+  });
+  if (alreadyPaid > 0) {
+    items.push({
+      description: DOWN_PAYMENT_LINE_DESCRIPTION,
+      detail: registration.downPaymentPaidAt
+        ? `eingegangen am ${formatDate(registration.downPaymentPaidAt)}`
+        : null,
+      quantity: 1,
+      unitPrice: -alreadyPaid,
+    });
   }
 
   return items;

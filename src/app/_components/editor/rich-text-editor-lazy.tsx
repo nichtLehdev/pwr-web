@@ -10,7 +10,7 @@ import dynamic from "next/dynamic";
 const RichTextEditor = dynamic(() => import("./rich-text-editor"), {
   ssr: false,
   loading: () => (
-    <div className="dark:border-dark-border flex min-h-[300px] items-center justify-center rounded-lg border border-gray-300 text-sm text-gray-500">
+    <div className="border-rule dark:border-night-rule text-dark dark:text-night-muted flex min-h-[300px] items-center justify-center border text-sm">
       Editor wird geladen…
     </div>
   ),

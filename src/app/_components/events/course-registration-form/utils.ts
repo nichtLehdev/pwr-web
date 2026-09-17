@@ -12,6 +12,7 @@ import {
   courseRequiresPaymentMethodChoice,
 } from "@/lib/course-payment-methods";
 import type { CoursePaymentMethod } from "~/generated/prisma/client";
+import { registrationDownPayment } from "@/lib/course-down-payment";
 
 /**
  * Maps the form's participants onto the shared discount rule. The preview the
@@ -69,6 +70,17 @@ export function calculateTotalPrice(
   );
 }
 
+/**
+ * Anzahlung, die der Server für diese Teilnehmer speichern wird — `null`, wenn
+ * keine fällig ist. Dieselbe Funktion wie auf dem Server.
+ */
+export function calculateDownPayment(
+  registrationData: RegistrationData,
+  course: CourseWithRelations,
+): number | null {
+  return registrationDownPayment(course, registrationData.participants);
+}
+
 export function getParticipantDisplayName(
   firstName: string,
   lastName: string,
@@ -101,6 +113,11 @@ export function validateStep(
    * optional there instead of forcing invented values.
    */
   staffMode = false,
+  /**
+   * Hinweise zur Anzahlung bestätigt. Nur bei der öffentlichen Anmeldung und
+   * nur, wenn überhaupt eine Anzahlung fällig wird.
+   */
+  downPaymentAcknowledged = false,
 ): boolean {
   switch (step) {
     case 1:
@@ -213,6 +230,13 @@ export function validateStep(
         const pm = registrationData.paymentMethod as
           CoursePaymentMethod | undefined;
         if (pm !== "CASH" && pm !== "INVOICE") return false;
+      }
+      if (
+        !staffMode &&
+        !downPaymentAcknowledged &&
+        calculateDownPayment(registrationData, course) !== null
+      ) {
+        return false;
       }
       return termsAccepted === true;
     }
