@@ -139,6 +139,12 @@ function BildAnsicht({
 
   const angezeigt = vorschau ?? groesse;
 
+  const AUSRICHTUNG_TEXT: Record<BildAusrichtung, string> = {
+    links: "Links",
+    mittig: "Mittig",
+    rechts: "Rechts",
+  };
+
   const griff = (seite: "links" | "rechts") => (
     <span
       role="presentation"
@@ -179,9 +185,40 @@ function BildAnsicht({
         <>
           {griff("links")}
           {griff("rechts")}
-          <span className="bg-ink text-paper dark:bg-night-text dark:text-night absolute top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 text-xs font-semibold">
-            {GROESSEN_BESCHRIFTUNG[angezeigt]}
-          </span>
+          <div
+            role="group"
+            aria-label="Bild: Größe und Ausrichtung"
+            className="absolute top-2 left-1/2 flex -translate-x-1/2 items-stretch gap-px"
+          >
+            <span className="bg-ink text-paper dark:bg-night-text dark:text-night inline-flex min-h-11 items-center px-3 text-xs font-semibold">
+              {GROESSEN_BESCHRIFTUNG[angezeigt]}
+            </span>
+            {/* Die Ausrichtung gab es bisher nur im Datenmodell und im
+                Stylesheet, aber unerreichbar: Die Ziehgriffe ändern allein die
+                Größe. Ohne Bedienung war der Textumfluss eine Fähigkeit, die
+                niemand auslösen konnte. */}
+            {BILD_AUSRICHTUNGEN.map((wahl) => (
+              <button
+                key={wahl}
+                type="button"
+                // Ohne preventDefault nimmt der Klick dem Editor den Fokus,
+                // ProseMirror hebt die Knotenauswahl auf, und die Leiste
+                // verschwindet, bevor onClick greift.
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => updateAttributes({ ausrichtung: wahl })}
+                aria-pressed={ausrichtung === wahl}
+                title={`Bild ${AUSRICHTUNG_TEXT[wahl].toLowerCase()} ausrichten`}
+                className={cn(
+                  "inline-flex min-h-11 items-center px-3 text-xs font-semibold transition-colors",
+                  ausrichtung === wahl
+                    ? "on-orange bg-primary text-ink"
+                    : "bg-ink text-paper dark:bg-night-text dark:text-night",
+                )}
+              >
+                {AUSRICHTUNG_TEXT[wahl]}
+              </button>
+            ))}
+          </div>
         </>
       ) : null}
     </NodeViewWrapper>
