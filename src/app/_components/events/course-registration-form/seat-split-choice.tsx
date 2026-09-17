@@ -11,7 +11,35 @@ import {
   type SeatAvailability,
   type SeatSelectionProblem,
 } from "@/lib/registration-split";
+import { Note } from "@/app/_components/programmheft/note";
+import { Tag } from "@/app/_components/programmheft/tag";
 import { seatShortageCause, type ShortageCourse } from "./seat-shortage-notice";
+
+/** Wie das Kontrollkästchen in `programmheft/field`: eckig, angehakt Tinte. */
+const CHECKBOX_CLASS =
+  "border-ink checked:bg-ink dark:border-night-text dark:checked:bg-night-text bg-paper dark:bg-night mt-0.5 h-5 w-5 shrink-0 cursor-[inherit] appearance-none border-2";
+
+/**
+ * Selbst gezeichnet wie das Kontrollkästchen: der native Knopf erscheint in
+ * Safari im Nachtdruck als volle weiße Scheibe und sieht dann gewählt aus.
+ * Rund bleibt er, damit er als Einzelwahl erkennbar ist; der Punkt ist der
+ * Hintergrund innerhalb des Polsters.
+ */
+const RADIO_CLASS =
+  "border-ink checked:bg-ink dark:border-night-text dark:checked:bg-night-text mt-0.5 h-5 w-5 shrink-0 cursor-pointer appearance-none rounded-full border-2 bg-clip-content p-[3px]";
+
+/**
+ * Auswahlkarte: Haarlinie, gewählt ein 2px-Tintenrahmen. Das Polster gleicht
+ * den dickeren Rahmen aus, damit beim Wählen nichts springt.
+ */
+function choiceCard(checked: boolean): string {
+  return cn(
+    "flex min-h-11 cursor-pointer items-start gap-3",
+    checked
+      ? "border-ink dark:border-night-text border-2 p-[15px]"
+      : "border-rule dark:border-night-rule hover:border-ink dark:hover:border-night-text border p-4",
+  );
+}
 
 /** Was die Auswahl von einem Teilnehmer braucht — im Formular wie gespeichert. */
 export type SplitChoiceParticipant = {
@@ -86,52 +114,60 @@ export function SeatSplitChoice({
           ? "Die Plätze reichen nicht für alle – mindestens ein Teilnehmer kommt auf die Warteliste."
           : seatShortageCause(course, problem, { waiting });
 
-  const radioCard =
-    "dark:bg-dark-background flex cursor-pointer items-start gap-3 rounded-lg border border-orange-200 bg-white p-3 dark:border-orange-800";
-
   return (
-    <div className="rounded-lg border border-orange-200 bg-orange-50 p-4 dark:border-orange-800 dark:bg-orange-900/20">
-      <p className="text-sm text-orange-800 dark:text-orange-300">
-        <strong>Nicht genug freie Plätze:</strong>{" "}
-        {seatShortageCause(course, shortage, { waiting })}
-      </p>
+    <div className="space-y-6">
+      {waiting ? (
+        // Im Nachrück-Angebot steht die Frist schon auf der orangen Fläche
+        // darüber; eine zweite direkt darunter würde sie übertönen.
+        <p className="text-ink dark:text-night-text">
+          <strong>Nicht genug freie Plätze:</strong>{" "}
+          {seatShortageCause(course, shortage, { waiting })}
+        </p>
+      ) : (
+        <Note tone="important">
+          <p>
+            <strong>Nicht genug freie Plätze:</strong>{" "}
+            {seatShortageCause(course, shortage, { waiting })}
+          </p>
+        </Note>
+      )}
 
       {showModeChoice && (
-        <fieldset className="mt-3 space-y-2">
+        <fieldset className="space-y-3">
           <legend className="sr-only">
             Wie soll mit der Anmeldung verfahren werden?
           </legend>
-          <label className={radioCard}>
+          <label className={choiceCard(!splitting)}>
             <input
               type="radio"
               name="seat-split-mode"
               checked={!splitting}
               onChange={() => onSplittingChange(false)}
-              className="text-primary focus:ring-primary mt-0.5 h-4 w-4"
+              className={RADIO_CLASS}
             />
-            <span className="text-sm">
-              <span className="text-dark dark:text-dark-text block font-semibold">
+            <span>
+              <span className="text-ink dark:text-night-text block font-semibold">
                 Ganze Anmeldung auf die Warteliste
               </span>
-              <span className="block text-gray-600 dark:text-gray-400">
+              <span className="text-dark dark:text-night-muted mt-1 block text-sm">
                 Alle {participants.length} Teilnehmer warten gemeinsam und
                 werden bestätigt, sobald genug Plätze frei sind.
               </span>
             </span>
           </label>
-          <label className={radioCard}>
+          <label className={choiceCard(splitting)}>
             <input
               type="radio"
               name="seat-split-mode"
               checked={splitting}
               onChange={() => onSplittingChange(true)}
-              className="text-primary focus:ring-primary mt-0.5 h-4 w-4"
+              className={RADIO_CLASS}
             />
-            <span className="text-sm">
-              <span className="text-dark dark:text-dark-text block font-semibold">
+            <span>
+              <span className="text-ink dark:text-night-text block font-semibold">
                 Freie Plätze jetzt nutzen
               </span>
-              <span className="block text-gray-600 dark:text-gray-400">
+              <span className="text-dark dark:text-night-muted mt-1 block text-sm">
                 Die ausgewählten Teilnehmer sind sofort bestätigt, die übrigen
                 kommen als eigene Anmeldung auf die Warteliste.
               </span>
@@ -141,11 +177,11 @@ export function SeatSplitChoice({
       )}
 
       {splitting && (
-        <div className="mt-4">
-          <p className="text-dark dark:text-dark-text text-sm font-semibold">
+        <fieldset>
+          <legend className="text-ink dark:text-night-text text-sm font-semibold">
             Wer bekommt die freien Plätze?
-          </p>
-          <ul className="mt-2 space-y-1">
+          </legend>
+          <ul className="border-rule dark:border-night-rule mt-2 border-t">
             {participants.map((participant, index) => {
               const checked = selected.has(index);
               const disabled = !checked && wouldOverfill(index);
@@ -153,10 +189,13 @@ export function SeatSplitChoice({
                 (po) => po.id === participant.priceOptionId,
               );
               return (
-                <li key={index}>
+                <li
+                  key={index}
+                  className="border-rule dark:border-night-rule border-b"
+                >
                   <label
                     className={cn(
-                      "flex items-start gap-3 rounded-md px-2 py-1.5",
+                      "flex min-h-11 items-start gap-3 py-3",
                       disabled
                         ? "cursor-not-allowed opacity-60"
                         : "cursor-pointer",
@@ -167,21 +206,28 @@ export function SeatSplitChoice({
                       checked={checked}
                       disabled={disabled}
                       onChange={() => toggle(index)}
-                      className="text-primary focus:ring-primary mt-0.5 h-4 w-4"
+                      className={CHECKBOX_CLASS}
                     />
-                    <span className="text-sm">
-                      <span className="text-dark dark:text-dark-text font-medium">
-                        {participant.firstName} {participant.lastName}
-                      </span>
-                      {option && (
-                        <span className="text-gray-600 dark:text-gray-400">
-                          {" · "}
-                          {priceOptionDisplayLabel(option, course.priceOptions)}
+                    {/* Kategorie in eigener Zeile wie in der Teilnehmerliste
+                        darüber — auf dem Handy bricht sonst der Trennpunkt um. */}
+                    <span className="flex min-w-0 flex-1 flex-wrap items-start justify-between gap-x-4 gap-y-2">
+                      <span className="min-w-0">
+                        <span className="text-ink dark:text-night-text block font-semibold">
+                          {participant.firstName} {participant.lastName}
                         </span>
-                      )}
-                      <span className="block text-xs text-gray-600 dark:text-gray-400">
-                        {checked ? "Bestätigt" : "Warteliste"}
+                        {option && (
+                          <span className="text-dark dark:text-night-muted block text-sm">
+                            {priceOptionDisplayLabel(
+                              option,
+                              course.priceOptions,
+                            )}
+                          </span>
+                        )}
                       </span>
+                      {/* Dieselben Töne wie der Status auf der Anmeldungsseite. */}
+                      <Tag tone={checked ? "inverse" : "orange"}>
+                        {checked ? "Bestätigt" : "Warteliste"}
+                      </Tag>
                     </span>
                   </label>
                 </li>
@@ -192,19 +238,19 @@ export function SeatSplitChoice({
           {problemText && (
             <p
               role="alert"
-              className="mt-2 text-sm text-red-700 dark:text-red-400"
+              className="mt-3 text-sm font-semibold text-red-700 dark:text-red-400"
             >
               {problemText}
             </p>
           )}
 
           {splitsSiblingGroup(participants, selectedIndexes) && (
-            <p className="mt-2 text-sm text-orange-800 dark:text-orange-300">
+            <p className="text-primary-ink dark:text-primary mt-3 text-sm font-semibold">
               Geschwister werden dabei getrennt. Ein beantragter
               Geschwisterkindrabatt bleibt für beide Teile erhalten.
             </p>
           )}
-        </div>
+        </fieldset>
       )}
     </div>
   );
