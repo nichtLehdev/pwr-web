@@ -188,6 +188,17 @@ async function importedSlug(
   return uniqueSlug(base, isTaken, fallback);
 }
 
+export async function importPostSlug(
+  db: Db,
+  title: string,
+  requested: unknown,
+): Promise<string> {
+  const isTaken: IsTaken = async (candidate) =>
+    (await db.post.count({ where: { slug: candidate } })) > 0;
+
+  return importedSlug(requested, slugify(title), "beitrag", isTaken);
+}
+
 export async function importEventSlug(
   db: Db,
   title: string,
