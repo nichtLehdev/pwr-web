@@ -141,9 +141,11 @@ export default function Programm({
                 href="/termine?anmeldung=offen&view=list"
                 className="link-ink"
               >
+                {/* „Angebote“ statt „Lehrgänge“: Unter den Kursen stecken
+                    auch Workshops, Freizeiten und ein Komponistenporträt. */}
                 {weitereOffene === 1
-                  ? "Ein weiterer Lehrgang nimmt Anmeldungen an"
-                  : `${weitereOffene} weitere Lehrgänge nehmen Anmeldungen an`}
+                  ? "Ein weiteres Angebot nimmt Anmeldungen an"
+                  : `${weitereOffene} weitere Angebote nehmen Anmeldungen an`}
               </Link>
             </p>
           ) : null}
