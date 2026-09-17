@@ -168,7 +168,7 @@ export default function NewsletterPage() {
             )}
           </div>
 
-          <aside className="border-rule dark:border-night-rule mt-10 border-t pt-6 lg:col-span-4 lg:col-start-9 lg:mt-0">
+          <aside className="border-rule dark:border-night-rule mt-10 border-t pt-6 lg:col-[9/span_4] lg:mt-0">
             <p className="text-dark dark:text-night-muted text-sm leading-relaxed">
               Du kannst dich jederzeit wieder abmelden. Der Newsletter enthält
               keine Werbung und wird nur bei wichtigen Neuigkeiten versendet.
