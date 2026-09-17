@@ -20,10 +20,34 @@
  * selbst (9,4:1) und darf dort stehen bleiben.
  */
 
+/*
+ * Das Lesemaß sitzt jetzt hier statt an der Hülle in post-detail-view. Nur so
+ * kann ein Bild breiter werden als der Text: Der Container hält das Maß, und
+ * die Breitenklassen weiter unten treten über negative Ränder heraus.
+ *
+ * Bewusst kein Raster mit benannten Spalten: TipTap fügt Bilder als
+ * Blockknoten direkt unter der Wurzel ein. Sie wären damit Rasterelemente —
+ * und auf Rasterelementen wird `float` ignoriert, der Textumfluss also
+ * unmöglich. Im Blockfluss funktioniert beides.
+ */
 .article-content {
-  max-width: 100%;
+  max-width: 65ch;
+  margin-inline: auto;
   color: var(--color-ink);
   line-height: 1.75;
+
+  /* Ausbruchsbreiten. `randlos` meint den Satzspiegel, nicht 100vw: Ein
+     100vw breites Element in einem zentrierten Container erzeugt bei
+     sichtbarer Scrollleiste waagerechten Überlauf. */
+  --bild-breit: min(58rem, 100vw - 5rem);
+  --bild-randlos: min(100rem, 100vw - 5rem);
+}
+
+/* Floats freigeben, sonst rutscht der Zurück-Link neben ein Bild. */
+.article-content::after {
+  content: "";
+  display: block;
+  clear: both;
 }
 
 :root.dark .article-content {
@@ -179,6 +203,152 @@
   margin: 2rem auto !important;
   display: block !important;
   cursor: pointer !important;
+}
+
+/*
+ * Bildvokabular: Breite × Ausrichtung, ausgedrückt als Klassen.
+ *
+ * Klassen statt `style`, weil der Filter Inline-CSS verwirft (siehe
+ * lib/sanitize.ts) — `class`, `width` und `height` überleben, alles andere
+ * nicht. Ein festes Vokabular passt ohnehin besser zum Heft als freies
+ * Skalieren: vier Breiten, drei Ausrichtungen, keine krummen Zwischenwerte.
+ *
+ * Alle Regeln tragen `!important`, weil die Grundregel darüber es auch tut.
+ * Bei gleicher Wichtigkeit entscheidet die Spezifität, und `img.bild-halb`
+ * sticht `img`.
+ */
+.article-content img.bild-schmal {
+  width: 45% !important;
+}
+
+.article-content img.bild-halb {
+  width: 60% !important;
+}
+
+/*
+ * Ausbruch nur dort, wo der Artikel die Hauptspalte der Seite IST.
+ *
+ * Die Ausbruchsbreiten rechnen mit `100vw`, und das Browserfenster ist in der
+ * Editorfläche genauso breit wie auf der öffentlichen Seite. Ohne diese Sperre
+ * wurde ein `randlos`-Bild im 596px schmalen Editor 1360px breit — gemessen.
+ * Die Schreibfläche ist aber nicht die Seite. Ohne `--seite` bleibt es beim
+ * Lesemaß.
+ */
+.article-content img.bild-breit,
+.article-content img.bild-randlos {
+  width: 100% !important;
+}
+
+/* Tritt über das Lesemaß hinaus, bleibt aber mittig. */
+.article-content--seite img.bild-breit {
+  width: var(--bild-breit) !important;
+  max-width: none !important;
+  margin-left: 50% !important;
+  transform: translateX(-50%) !important;
+}
+
+.article-content--seite img.bild-randlos {
+  width: var(--bild-randlos) !important;
+  max-width: none !important;
+  margin-left: 50% !important;
+  transform: translateX(-50%) !important;
+}
+
+/* Umfluss. Nur sinnvoll mit schmal oder halb — breit und randlos füllen die
+   Zeile ohnehin, deshalb setzen sie den Float unten wieder zurück. */
+.article-content img.bild-links {
+  float: left !important;
+  margin: 0.4rem 2rem 1.25rem 0 !important;
+}
+
+.article-content img.bild-rechts {
+  float: right !important;
+  margin: 0.4rem 0 1.25rem 2rem !important;
+}
+
+.article-content img.bild-breit.bild-links,
+.article-content img.bild-breit.bild-rechts,
+.article-content img.bild-randlos.bild-links,
+.article-content img.bild-randlos.bild-rechts {
+  float: none !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+.article-content--seite img.bild-breit.bild-links,
+.article-content--seite img.bild-breit.bild-rechts,
+.article-content--seite img.bild-randlos.bild-links,
+.article-content--seite img.bild-randlos.bild-rechts {
+  margin-left: 50% !important;
+  margin-right: 0 !important;
+}
+
+/*
+ * Mit Bildnachweis liegt das Bild in einer <figure> (posts.ts hängt sie
+ * serverseitig an). Die Breitenklasse sitzt aber am <img>, deshalb hebt
+ * `:has()` sie auf die Figur — sonst verlöre ein Bild seine Breite, sobald
+ * jemand Urheberangaben pflegt.
+ */
+.article-content figure:has(> img.bild-schmal) {
+  width: 45% !important;
+}
+
+.article-content figure:has(> img.bild-halb) {
+  width: 60% !important;
+}
+
+.article-content figure:has(> img.bild-breit),
+.article-content figure:has(> img.bild-randlos) {
+  width: 100% !important;
+}
+
+.article-content--seite figure:has(> img.bild-breit) {
+  width: var(--bild-breit) !important;
+  max-width: none !important;
+  margin-left: 50% !important;
+  transform: translateX(-50%) !important;
+}
+
+.article-content--seite figure:has(> img.bild-randlos) {
+  width: var(--bild-randlos) !important;
+  max-width: none !important;
+  margin-left: 50% !important;
+  transform: translateX(-50%) !important;
+}
+
+.article-content figure:has(> img.bild-links) {
+  float: left !important;
+  margin: 0.4rem 2rem 1.25rem 0 !important;
+}
+
+.article-content figure:has(> img.bild-rechts) {
+  float: right !important;
+  margin: 0.4rem 0 1.25rem 2rem !important;
+}
+
+/* In der Figur füllt das Bild seine Figur — die Breite steckt oben. */
+.article-content figure img[class*="bild-"] {
+  width: 100% !important;
+  margin-left: 0 !important;
+  transform: none !important;
+  float: none !important;
+}
+
+/*
+ * Schmale Fenster: Ein umflossenes Bild neben 30 Zeichen Text ist unlesbar,
+ * und ein Ausbruch hat hier keinen Platz. Unterhalb von 48rem steht jedes
+ * Bild allein und über die volle Breite.
+ */
+@media (max-width: 48rem) {
+  .article-content img[class*="bild-"],
+  .article-content figure:has(> img[class*="bild-"]) {
+    width: 100% !important;
+    max-width: 100% !important;
+    float: none !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    transform: none !important;
+  }
 }
 
 /* Bild mit Bildnachweis */
