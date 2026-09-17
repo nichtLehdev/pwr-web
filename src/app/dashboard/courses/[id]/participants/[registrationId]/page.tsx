@@ -52,6 +52,7 @@ import {
   DownPaymentBadge,
   DownPaymentPanel,
 } from "@/app/_components/dashboard/down-payment-panel";
+import { Tag, type TagTone } from "@/app/_components/programmheft/tag";
 
 const registrationStatusLabels: Record<RegistrationStatus, string> = {
   CONFIRMED: "Bestätigt",
@@ -59,12 +60,10 @@ const registrationStatusLabels: Record<RegistrationStatus, string> = {
   CANCELLED: "Storniert",
 };
 
-const registrationStatusColors: Record<RegistrationStatus, string> = {
-  CONFIRMED:
-    "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  WAITLIST:
-    "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-  CANCELLED: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+const registrationStatusTones: Record<RegistrationStatus, TagTone> = {
+  CONFIRMED: "inverse",
+  WAITLIST: "orange",
+  CANCELLED: "cancelled",
 };
 
 const siblingDiscountStatusLabels: Record<SiblingDiscountStatus, string> = {
@@ -74,13 +73,11 @@ const siblingDiscountStatusLabels: Record<SiblingDiscountStatus, string> = {
   REJECTED: "Rabatt abgelehnt",
 };
 
-const siblingDiscountStatusColors: Record<SiblingDiscountStatus, string> = {
-  NONE: "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300",
-  PENDING:
-    "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-  APPROVED:
-    "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  REJECTED: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+const siblingDiscountStatusTones: Record<SiblingDiscountStatus, TagTone> = {
+  NONE: "inverse",
+  PENDING: "orange",
+  APPROVED: "inverse",
+  REJECTED: "ink",
 };
 
 function formatDate(date: Date | string): string {
@@ -332,10 +329,10 @@ export default function RegistrationDetailPage() {
 
   if (sessionLoading || registrationLoading) {
     return (
-      <main className="dark:bg-dark-background min-h-screen bg-gray-50">
+      <main className="programm font-programm dark:bg-night dark:text-night-text bg-paper text-ink min-h-screen">
         <div className="container mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
           <div className="flex items-center justify-center py-12">
-            <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+            <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
           </div>
         </div>
       </main>
@@ -344,18 +341,18 @@ export default function RegistrationDetailPage() {
 
   if (!registration || !course) {
     return (
-      <main className="dark:bg-dark-background min-h-screen bg-gray-50">
+      <main className="programm font-programm dark:bg-night dark:text-night-text bg-paper text-ink min-h-screen">
         <div className="container mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
           <div className="py-12 text-center">
-            <h1 className="dark:text-dark-text text-xl font-semibold text-gray-900">
+            <h1 className="dark:text-night-text text-ink text-xl font-semibold">
               Anmeldung nicht gefunden
             </h1>
-            <p className="dark:text-dark-muted mt-2 text-gray-600">
+            <p className="dark:text-night-muted text-dark mt-2">
               Die angeforderte Anmeldung konnte nicht gefunden werden.
             </p>
             <Link
               href={`/dashboard/courses/${courseId}/participants`}
-              className="text-primary mt-4 inline-block hover:underline"
+              className="link-ink mt-4 inline-block"
             >
               Zurück zur Teilnehmerliste
             </Link>
@@ -369,49 +366,62 @@ export default function RegistrationDetailPage() {
   const canCancel = management?.canCancel ?? false;
 
   return (
-    <main className="dark:bg-dark-background min-h-screen bg-gray-50">
+    <main className="programm font-programm dark:bg-night dark:text-night-text bg-paper text-ink min-h-screen">
       <div className="container mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
-        <nav className="mb-4 text-sm">
-          <ol className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <nav aria-label="Brotkrumen" className="mb-4">
+          <ol className="semi-condensed text-dark dark:text-night-muted -ml-1 flex flex-wrap items-center text-sm font-semibold">
             <li>
               <Link
                 href="/dashboard"
-                className="dark:text-dark-muted dark:hover:text-primary hover:text-primary text-gray-500"
+                className="hover:text-ink dark:hover:text-night-text inline-flex min-h-9 items-center px-1 underline-offset-4 hover:underline"
               >
                 Dashboard
               </Link>
             </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
+            <li aria-hidden className="px-0.5">
+              /
+            </li>
             <li>
               <Link
                 href="/dashboard/courses"
-                className="dark:text-dark-muted dark:hover:text-primary hover:text-primary text-gray-500"
+                className="hover:text-ink dark:hover:text-night-text inline-flex min-h-9 items-center px-1 underline-offset-4 hover:underline"
               >
                 Kurse
               </Link>
             </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
+            <li aria-hidden className="px-0.5">
+              /
+            </li>
             <li>
               <Link
                 href={`/dashboard/courses/${courseId}`}
-                className="dark:text-dark-muted dark:hover:text-primary hover:text-primary text-gray-500"
+                className="hover:text-ink dark:hover:text-night-text inline-flex min-h-9 max-w-[150px] items-center truncate px-1 underline-offset-4 hover:underline"
               >
                 {course.title}
               </Link>
             </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
+            <li aria-hidden className="px-0.5">
+              /
+            </li>
             <li>
               <Link
                 href={`/dashboard/courses/${courseId}/participants`}
-                className="dark:text-dark-muted dark:hover:text-primary hover:text-primary text-gray-500"
+                className="hover:text-ink dark:hover:text-night-text inline-flex min-h-9 items-center px-1 underline-offset-4 hover:underline"
               >
                 Teilnehmer
               </Link>
             </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li className="dark:text-dark-text text-gray-900">
-              Anmeldung Details
+            <li aria-hidden className="px-0.5">
+              /
+            </li>
+            <li>
+              <span
+                aria-current="page"
+                className="text-ink dark:text-night-text inline-flex min-h-9 items-center px-1"
+              >
+                Anmeldung Details
+              </span>
             </li>
           </ol>
         </nav>
@@ -419,10 +429,10 @@ export default function RegistrationDetailPage() {
         {/* Header */}
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="dark:text-dark-text text-3xl font-bold text-gray-900">
+            <h1 className="condensed dark:text-night-text text-ink text-2xl leading-tight font-bold sm:text-[1.75rem]">
               Anmeldung Details
             </h1>
-            <p className="dark:text-dark-muted mt-2 text-gray-600">
+            <p className="dark:text-night-muted text-dark mt-1 text-sm">
               {registration.registrantFirstName}{" "}
               {registration.registrantLastName}
               {" • "}
@@ -441,7 +451,7 @@ export default function RegistrationDetailPage() {
                         .value as (typeof RegistrationStatus)[keyof typeof RegistrationStatus],
                     )
                   }
-                  className="dark:bg-dark-background-secondary dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium focus:ring-1 focus:outline-none"
+                  className="dark:bg-night dark:border-night-text dark:text-night-text border-ink bg-paper border px-3 py-2 text-sm font-medium"
                 >
                   <option value={RegistrationStatus.CONFIRMED}>
                     {registrationStatusLabels[RegistrationStatus.CONFIRMED]}
@@ -463,7 +473,7 @@ export default function RegistrationDetailPage() {
                     })
                   }
                   disabled={updateStatusMutation.isPending}
-                  className="bg-primary hover:bg-primary-dark rounded-lg px-3 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50"
+                  className="on-orange bg-primary text-ink hover:bg-primary-dark min-h-11 px-3 py-2 text-sm font-medium transition-colors disabled:opacity-50"
                 >
                   {updateStatusMutation.isPending ? "Speichert…" : "Speichern"}
                 </button>
@@ -474,23 +484,25 @@ export default function RegistrationDetailPage() {
                     setStatusDraft(null);
                   }}
                   disabled={updateStatusMutation.isPending}
-                  className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background-secondary rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium transition-colors hover:bg-gray-50 disabled:opacity-50"
+                  className="border-rule dark:border-night-rule text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised min-h-11 border px-3 py-2 text-sm font-medium transition-colors disabled:opacity-50"
                 >
                   Abbrechen
                 </button>
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <span
-                  className={`rounded-full px-3 py-1 text-xs font-medium ${registrationStatusColors[registration.registrationStatus]}`}
+                <Tag
+                  tone={
+                    registrationStatusTones[registration.registrationStatus]
+                  }
                 >
                   {registrationStatusLabels[registration.registrationStatus]}
-                </span>
+                </Tag>
                 {canEdit && (
                   <button
                     type="button"
                     onClick={() => setEditingStatus(true)}
-                    className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background-secondary hidden items-center gap-1 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 sm:inline-flex"
+                    className="border-rule dark:border-night-rule text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised hidden min-h-9 items-center gap-1 border px-2.5 py-1.5 text-sm font-medium transition-colors sm:inline-flex"
                     aria-label="Anmeldestatus bearbeiten"
                   >
                     <PencilIcon className="h-3.5 w-3.5" />
@@ -509,7 +521,7 @@ export default function RegistrationDetailPage() {
                         })
                       }
                       disabled={updateStatusMutation.isPending}
-                      className="hidden items-center gap-1 rounded-lg bg-green-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50 sm:inline-flex"
+                      className="hidden min-h-9 items-center gap-1 bg-green-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50 sm:inline-flex"
                     >
                       <CheckCircle className="h-3.5 w-3.5" />
                       {updateStatusMutation.isPending
@@ -537,14 +549,14 @@ export default function RegistrationDetailPage() {
               <div className="flex w-full items-center gap-2 sm:contents">
                 <Link
                   href={`/dashboard/courses/${courseId}/participants`}
-                  className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background-secondary hidden rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 sm:inline-block"
+                  className="border-rule dark:border-night-rule text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised hidden min-h-11 border px-4 py-2 text-sm font-semibold transition-colors sm:inline-block"
                 >
                   Zurück zur Liste
                 </Link>
                 {canEdit && (
                   <Link
                     href={`/registrations/${registrationId}/edit?returnTo=${encodeURIComponent(`/dashboard/courses/${courseId}/participants/${registrationId}`)}`}
-                    className="bg-primary hover:bg-primary-dark inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors"
+                    className="on-orange bg-primary text-ink hover:bg-primary-dark inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm font-semibold transition-colors"
                   >
                     <PencilIcon className="h-4 w-4" />
                     Bearbeiten
@@ -554,7 +566,7 @@ export default function RegistrationDetailPage() {
                   <button
                     type="button"
                     onClick={() => setCancelModalOpen(true)}
-                    className="hidden items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50 sm:inline-flex dark:border-red-700 dark:bg-transparent dark:text-red-400 dark:hover:bg-red-900/20"
+                    className="hidden min-h-11 items-center gap-2 border border-red-300 px-4 py-2 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50 sm:inline-flex dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
                   >
                     <CircleXIcon className="h-4 w-4" />
                     Stornieren
@@ -613,31 +625,31 @@ export default function RegistrationDetailPage() {
         </div>
 
         {/* Registrant Info */}
-        <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg border border-gray-200 bg-white shadow-sm">
-          <div className="border-b border-gray-200 p-6 dark:border-gray-700">
-            <h2 className="text-dark dark:text-dark-text flex items-center gap-2 text-lg font-semibold">
-              <UserIcon className="text-primary h-5 w-5" />
+        <div className="dark:border-night-rule border-rule mb-6 border">
+          <div className="dark:border-night-rule border-rule border-b p-6">
+            <h2 className="text-dark dark:text-night-text flex items-center gap-2 text-lg font-semibold">
+              <UserIcon className="text-primary-ink dark:text-primary h-5 w-5" />
               Anmelder
             </h2>
           </div>
           <div className="p-6">
             <div className="grid gap-4 md:grid-cols-2">
               <div>
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <p className="dark:text-night-text text-ink text-sm font-medium">
                   Name
                 </p>
-                <p className="text-dark dark:text-dark-text mt-1">
+                <p className="text-dark dark:text-night-text mt-1">
                   {registration.registrantFirstName}{" "}
                   {registration.registrantLastName}
                 </p>
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <p className="dark:text-night-text text-ink text-sm font-medium">
                   E-Mail
                 </p>
                 <a
                   href={`mailto:${registration.registrantEmail}`}
-                  className="text-primary mt-1 inline-flex items-center gap-1 hover:underline"
+                  className="link-ink mt-1 inline-flex items-center gap-1"
                 >
                   <MailIcon className="h-4 w-4" />
                   {registration.registrantEmail}
@@ -645,12 +657,12 @@ export default function RegistrationDetailPage() {
               </div>
               {registration.registrantPhone && (
                 <div>
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <p className="dark:text-night-text text-ink text-sm font-medium">
                     Telefon
                   </p>
                   <a
                     href={`tel:${registration.registrantPhone}`}
-                    className="text-primary mt-1 inline-flex items-center gap-1 hover:underline"
+                    className="link-ink mt-1 inline-flex items-center gap-1"
                   >
                     <PhoneIcon className="h-4 w-4" />
                     {registration.registrantPhone}
@@ -659,10 +671,10 @@ export default function RegistrationDetailPage() {
               )}
               {registration.registrantStreet && (
                 <div>
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <p className="dark:text-night-text text-ink text-sm font-medium">
                     Adresse
                   </p>
-                  <p className="text-dark dark:text-dark-text mt-1">
+                  <p className="text-dark dark:text-night-text mt-1">
                     {registration.registrantStreet}
                     {registration.registrantZipCode &&
                       `, ${registration.registrantZipCode}`}
@@ -676,10 +688,10 @@ export default function RegistrationDetailPage() {
         </div>
 
         {/* Price Summary */}
-        <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg border border-gray-200 bg-white shadow-sm">
-          <div className="border-b border-gray-200 p-6 dark:border-gray-700">
-            <h2 className="text-dark dark:text-dark-text flex items-center gap-2 text-lg font-semibold">
-              <WalletIcon className="text-primary h-5 w-5" />
+        <div className="dark:border-night-rule border-rule mb-6 border">
+          <div className="dark:border-night-rule border-rule border-b p-6">
+            <h2 className="text-dark dark:text-night-text flex items-center gap-2 text-lg font-semibold">
+              <WalletIcon className="text-primary-ink dark:text-primary h-5 w-5" />
               Preisübersicht
             </h2>
           </div>
@@ -688,10 +700,10 @@ export default function RegistrationDetailPage() {
               {hasDiscountLines && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">
+                    <span className="text-dark dark:text-night-muted">
                       Zwischensumme:
                     </span>
-                    <span className="text-gray-900 line-through dark:text-gray-100">
+                    <span className="text-ink dark:text-night-text line-through">
                       {(registration.originalTotalPrice ?? 0).toFixed(2)} €
                     </span>
                   </div>
@@ -703,27 +715,31 @@ export default function RegistrationDetailPage() {
                       -{(registration.siblingDiscountAmount ?? 0).toFixed(2)} €
                     </span>
                   </div>
-                  <div className="flex items-center justify-between border-t border-gray-200 pt-2 dark:border-gray-700">
-                    <span className="text-dark dark:text-dark-text font-semibold">
+                  <div className="dark:border-night-rule border-rule flex items-center justify-between border-t pt-2">
+                    <span className="text-dark dark:text-night-text font-semibold">
                       Gesamtbetrag:
                     </span>
-                    <span className="text-primary text-xl font-bold">
+                    <span className="text-primary-ink dark:text-primary text-xl font-bold">
                       {registration.totalPrice.toFixed(2)} €
                     </span>
                   </div>
                   <div className="mt-4 flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <span className="dark:text-night-text text-ink text-sm font-medium">
                       Rabattstatus:
                     </span>
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs font-medium ${siblingDiscountStatusColors[registration.siblingDiscountStatus]}`}
+                    <Tag
+                      tone={
+                        siblingDiscountStatusTones[
+                          registration.siblingDiscountStatus
+                        ]
+                      }
                     >
                       {
                         siblingDiscountStatusLabels[
                           registration.siblingDiscountStatus
                         ]
                       }
-                    </span>
+                    </Tag>
                   </div>
                   {canRemoveDiscount && (
                     <div className="mt-4">
@@ -734,12 +750,12 @@ export default function RegistrationDetailPage() {
                           })
                         }
                         disabled={removeDiscountMutation.isPending}
-                        className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50 dark:hover:bg-gray-700"
+                        className="border-rule dark:border-night-rule text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised inline-flex min-h-11 items-center gap-2 border px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
                       >
                         <XCircle className="h-4 w-4" />
                         Rabatt entfernen
                       </button>
-                      <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                      <p className="text-dark dark:text-night-muted mt-2 text-xs">
                         Der Anmelder wird über den vollen Preis informiert.
                       </p>
                     </div>
@@ -753,7 +769,7 @@ export default function RegistrationDetailPage() {
                           })
                         }
                         disabled={approveDiscountMutation.isPending}
-                        className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+                        className="inline-flex min-h-11 items-center gap-2 bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
                       >
                         <CheckCircle className="h-4 w-4" />
                         Rabatt genehmigen
@@ -765,7 +781,7 @@ export default function RegistrationDetailPage() {
                           })
                         }
                         disabled={rejectDiscountMutation.isPending}
-                        className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+                        className="inline-flex min-h-11 items-center gap-2 bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
                       >
                         <XCircle className="h-4 w-4" />
                         Rabatt ablehnen
@@ -776,17 +792,17 @@ export default function RegistrationDetailPage() {
               )}
               {!hasDiscountLines && (
                 <div className="flex items-center justify-between">
-                  <span className="text-dark dark:text-dark-text font-semibold">
+                  <span className="text-dark dark:text-night-text font-semibold">
                     Gesamtbetrag:
                   </span>
-                  <span className="text-primary text-xl font-bold">
+                  <span className="text-primary-ink dark:text-primary text-xl font-bold">
                     {registration.totalPrice.toFixed(2)} €
                   </span>
                 </div>
               )}
               {canApplyDiscount && (
-                <div className="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
-                  <p className="mb-3 text-sm text-gray-700 dark:text-gray-300">
+                <div className="border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
+                  <p className="dark:text-night-text text-ink mb-3 text-sm">
                     Die Teilnehmer bilden eine Geschwistergruppe. Der
                     Geschwisterkindrabatt (20% auf jedes weitere Geschwister)
                     kann nachträglich gewährt werden.
@@ -798,7 +814,7 @@ export default function RegistrationDetailPage() {
                       })
                     }
                     disabled={applyDiscountMutation.isPending}
-                    className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+                    className="inline-flex min-h-11 items-center gap-2 bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
                   >
                     <CheckCircle className="h-4 w-4" />
                     Geschwisterkindrabatt gewähren
@@ -806,20 +822,20 @@ export default function RegistrationDetailPage() {
                 </div>
               )}
               {course?.isFree === false && (
-                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 pt-4 dark:border-gray-700">
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <div className="dark:border-night-rule border-rule flex flex-wrap items-center justify-between gap-3 border-t pt-4">
+                  <span className="dark:text-night-text text-ink text-sm font-medium">
                     Zahlungsweise:
                   </span>
-                  <span className="text-sm text-gray-900 dark:text-gray-100">
+                  <span className="text-ink dark:text-night-text text-sm">
                     {registration.paymentMethod
                       ? COURSE_PAYMENT_METHOD_LABELS[registration.paymentMethod]
                       : "–"}
                   </span>
                 </div>
               )}
-              <div className="space-y-3 border-t border-gray-200 pt-4 dark:border-gray-700">
+              <div className="dark:border-night-rule border-rule space-y-3 border-t pt-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <span className="dark:text-night-text text-ink text-sm font-medium">
                     Zahlungsstatus:
                   </span>
                   <RegistrationPaymentBadge
@@ -832,7 +848,7 @@ export default function RegistrationDetailPage() {
                     darum steht hier eine Zeile je ausgestellter Rechnung statt
                     eines einzelnen Status am Datensatz. */}
                 {publishedInvoices.length === 0 ? (
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <p className="text-dark dark:text-night-muted text-sm">
                     Für diese Anmeldung wurde noch keine Rechnung ausgestellt.
                   </p>
                 ) : (
@@ -840,15 +856,15 @@ export default function RegistrationDetailPage() {
                     {publishedInvoices.map((invoice) => (
                       <li
                         key={invoice.id}
-                        className="dark:border-dark-border dark:bg-dark-background-secondary flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2"
+                        className="dark:border-night-rule dark:bg-night-raised border-rule bg-rule/25 flex flex-wrap items-center justify-between gap-3 border px-3 py-2"
                       >
                         <div className="min-w-0">
-                          <span className="dark:text-dark-text text-sm font-medium text-gray-900">
+                          <span className="dark:text-night-text text-ink text-sm font-medium">
                             {invoice.invoiceNumber ?? "Ohne Nummer"} ·{" "}
                             {formatEuro(invoice.totalAmount)}
                           </span>
                           {invoice.paidAt && (
-                            <span className="block text-xs text-gray-500 dark:text-gray-400">
+                            <span className="text-dark dark:text-night-muted block text-xs">
                               Verbucht am{" "}
                               {new Date(invoice.paidAt).toLocaleDateString(
                                 "de-DE",
@@ -868,7 +884,7 @@ export default function RegistrationDetailPage() {
                                   markUnpaidMutation.mutate({ id: invoice.id })
                                 }
                                 disabled={markUnpaidMutation.isPending}
-                                className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background-secondary rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+                                className="border-rule dark:border-night-rule text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised min-h-9 border px-2.5 py-1.5 text-sm font-medium transition-colors disabled:opacity-50"
                               >
                                 Zahlung zurücknehmen
                               </button>
@@ -884,7 +900,7 @@ export default function RegistrationDetailPage() {
                                     })
                                   }
                                   title="Teilzahlung, abweichende Wertstellung oder Notiz erfassen"
-                                  className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background-secondary rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                                  className="border-rule dark:border-night-rule text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised min-h-9 border px-2.5 py-1.5 text-sm font-medium transition-colors"
                                 >
                                   Abweichend…
                                 </button>
@@ -894,7 +910,7 @@ export default function RegistrationDetailPage() {
                                     markPaidMutation.mutate({ id: invoice.id })
                                   }
                                   disabled={markPaidMutation.isPending}
-                                  className="bg-primary hover:bg-primary-dark rounded-lg px-3 py-1.5 text-sm font-medium text-white transition-colors disabled:opacity-50"
+                                  className="on-orange bg-primary text-ink hover:bg-primary-dark min-h-9 px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-50"
                                 >
                                   {markPaidMutation.isPending
                                     ? "Speichert…"
@@ -909,11 +925,11 @@ export default function RegistrationDetailPage() {
                 )}
               </div>
               {registration.invoiceGenerated && registration.invoiceId && (
-                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 pt-4 dark:border-gray-700">
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <div className="dark:border-night-rule border-rule flex flex-wrap items-center justify-between gap-3 border-t pt-4">
+                  <span className="dark:text-night-text text-ink text-sm font-medium">
                     Rechnungsnummer:
                   </span>
-                  <span className="text-dark dark:text-dark-text font-mono text-sm">
+                  <span className="text-dark dark:text-night-text font-mono text-sm">
                     {registration.invoiceId}
                   </span>
                 </div>
@@ -921,11 +937,11 @@ export default function RegistrationDetailPage() {
               {registration.invoiceGenerated &&
                 registration.invoiceDate &&
                 registration.invoiceId && (
-                  <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 pt-2 dark:border-gray-700">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <div className="dark:border-night-rule border-rule flex flex-wrap items-center justify-between gap-3 border-t pt-2">
+                    <span className="dark:text-night-text text-ink text-sm font-medium">
                       Rechnungsdatum:
                     </span>
-                    <span className="text-dark dark:text-dark-text text-sm">
+                    <span className="text-dark dark:text-night-text text-sm">
                       {new Date(registration.invoiceDate).toLocaleDateString(
                         "de-DE",
                         {
@@ -949,9 +965,9 @@ export default function RegistrationDetailPage() {
         />
 
         {/* Participants */}
-        <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
-          <h2 className="text-dark dark:text-dark-text mb-4 flex items-center gap-2 text-lg font-semibold">
-            <UsersIcon className="text-primary h-5 w-5" />
+        <div className="dark:border-night-rule border-rule border p-4 sm:p-6">
+          <h2 className="text-dark dark:text-night-text mb-4 flex items-center gap-2 text-lg font-semibold">
+            <UsersIcon className="text-primary-ink dark:text-primary h-5 w-5" />
             Teilnehmer ({registration.participants.length})
           </h2>
 
@@ -1019,10 +1035,10 @@ export default function RegistrationDetailPage() {
                   <dl className="grid gap-3 text-sm sm:grid-cols-2">
                     {details.map((detail) => (
                       <div key={detail.label}>
-                        <dt className="font-medium text-gray-700 dark:text-gray-300">
+                        <dt className="dark:text-night-text text-ink font-medium">
                           {detail.label}
                         </dt>
-                        <dd className="text-gray-600 dark:text-gray-400">
+                        <dd className="text-dark dark:text-night-muted">
                           {detail.value}
                         </dd>
                       </div>
@@ -1039,23 +1055,23 @@ export default function RegistrationDetailPage() {
           <ScrollableModal>
             <ScrollableModalCard maxW="md">
               <ScrollableModalBody>
-                <h3 className="text-dark dark:text-dark-text mb-4 text-lg font-bold">
+                <h3 className="text-dark dark:text-night-text mb-4 text-lg font-bold">
                   Anmeldung stornieren?
                 </h3>
-                <p className="mb-6 text-gray-600 dark:text-gray-400">
+                <p className="text-dark dark:text-night-muted mb-6">
                   Diese Anmeldung wird storniert. Der/die Anmelder:in erhält
                   eine Bestätigung per E-Mail. Diese Aktion kann nicht
                   rückgängig gemacht werden.
                 </p>
                 {registration.downPaymentStatus === "PAID" && (
-                  <p className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
+                  <p className="mb-6 border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
                     Die Anzahlung ist bereits eingegangen. Ob sie erstattet oder
                     einbehalten wird, bitte mit der Kasse klären und
                     anschließend unter „Anzahlung“ vermerken.
                   </p>
                 )}
                 {cancelError && (
-                  <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20">
+                  <div className="mb-4 border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20">
                     <p className="text-sm text-red-800 dark:text-red-300">
                       {cancelError}
                     </p>
@@ -1070,7 +1086,7 @@ export default function RegistrationDetailPage() {
                       setCancelModalOpen(false);
                       setCancelError("");
                     }}
-                    className="dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+                    className="border-rule dark:border-night-rule dark:bg-night-raised dark:text-night-text text-ink hover:bg-rule/25 bg-paper min-h-11 flex-1 border px-4 py-2 font-semibold transition-colors"
                   >
                     Zurück
                   </button>
@@ -1080,7 +1096,7 @@ export default function RegistrationDetailPage() {
                       cancelMutation.mutate({ id: registrationId })
                     }
                     disabled={cancelMutation.isPending}
-                    className="flex-1 rounded-lg bg-red-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+                    className="min-h-11 flex-1 bg-red-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-50"
                   >
                     {cancelMutation.isPending
                       ? "Wird storniert..."

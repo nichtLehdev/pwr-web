@@ -47,6 +47,7 @@ import {
   participantPriceOptionLabel,
   resolveParticipantPriceOption,
 } from "@/lib/course-price-options";
+import { Tag, type TagTone } from "@/app/_components/programmheft/tag";
 
 type CourseRegistrationRow =
   RouterOutputs["courses"]["getRegistrations"]["registrations"][number];
@@ -65,12 +66,10 @@ const registrationStatusLabels: Record<RegistrationStatus, string> = {
   CANCELLED: "Storniert",
 };
 
-const registrationStatusColors: Record<RegistrationStatus, string> = {
-  CONFIRMED:
-    "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  WAITLIST:
-    "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-  CANCELLED: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+const registrationStatusTones: Record<RegistrationStatus, TagTone> = {
+  CONFIRMED: "inverse",
+  WAITLIST: "orange",
+  CANCELLED: "cancelled",
 };
 
 /**
@@ -87,13 +86,11 @@ const siblingDiscountStatusLabels: Record<SiblingDiscountStatus, string> = {
   REJECTED: "Rabatt abgelehnt",
 };
 
-const siblingDiscountStatusColors: Record<SiblingDiscountStatus, string> = {
-  NONE: "",
-  PENDING:
-    "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
-  APPROVED:
-    "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  REJECTED: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+const siblingDiscountStatusTones: Record<SiblingDiscountStatus, TagTone> = {
+  NONE: "inverse",
+  PENDING: "orange",
+  APPROVED: "inverse",
+  REJECTED: "ink",
 };
 
 // Dashboard access is now controlled by permissions
@@ -388,7 +385,7 @@ export default function CourseParticipantsPage() {
           cell: ({ row }) => (
             <Link
               href={`/dashboard/courses/${courseId}/participants/${row.original.registration.id}`}
-              className="hover:text-primary dark:text-dark-text text-gray-900 transition-colors"
+              className="hover:text-primary-ink dark:hover:text-primary dark:text-night-text text-ink transition-colors"
               title="Zur Anmeldung"
             >
               {row.original.participant.firstName}{" "}
@@ -461,12 +458,20 @@ export default function CourseParticipantsPage() {
           id: "status",
           header: "Status",
           meta: { filterVariant: "set" },
-          cell: ({ row, getValue }) => (
-            <span
-              className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${registrationStatusColors[row.original.registration.registrationStatus]}`}
+          cell: ({ row }) => (
+            <Tag
+              tone={
+                registrationStatusTones[
+                  row.original.registration.registrationStatus
+                ]
+              }
             >
-              {getValue()}
-            </span>
+              {
+                registrationStatusLabels[
+                  row.original.registration.registrationStatus
+                ]
+              }
+            </Tag>
           ),
         },
       ),
@@ -480,7 +485,7 @@ export default function CourseParticipantsPage() {
           cell: ({ row }) => (
             <Link
               href={`/dashboard/courses/${courseId}/participants/${row.original.registration.id}`}
-              className="hover:text-primary transition-colors"
+              className="hover:text-primary-ink dark:hover:text-primary transition-colors"
             >
               {row.original.registration.registrantFirstName}{" "}
               {row.original.registration.registrantLastName}
@@ -530,22 +535,22 @@ export default function CourseParticipantsPage() {
 
   if (sessionLoading || profileLoading || permissionsLoading || courseLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="dark:bg-night bg-paper flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
 
   if (!session || !profile || !course) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="dark:bg-night bg-paper flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <h1 className="dark:text-dark-text text-xl font-semibold text-gray-900">
+          <h1 className="dark:text-night-text text-ink text-xl font-semibold">
             Kurs nicht gefunden
           </h1>
           <Link
             href="/dashboard/courses"
-            className="text-primary mt-4 inline-block hover:underline"
+            className="link-ink mt-4 inline-block"
           >
             Zurück zur Übersicht
           </Link>
@@ -570,17 +575,17 @@ export default function CourseParticipantsPage() {
 
   if (!canViewParticipants) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="dark:bg-night bg-paper flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <h1 className="dark:text-dark-text text-xl font-semibold text-gray-900">
+          <h1 className="dark:text-night-text text-ink text-xl font-semibold">
             Keine Berechtigung
           </h1>
-          <p className="dark:text-dark-muted mt-2 text-gray-600">
+          <p className="dark:text-night-muted text-dark mt-2">
             Du hast keine Berechtigung, die Teilnehmer dieses Kurses zu sehen.
           </p>
           <Link
             href="/dashboard/courses"
-            className="text-primary mt-4 inline-block hover:underline"
+            className="link-ink mt-4 inline-block"
           >
             Zurück zur Übersicht
           </Link>
@@ -780,49 +785,62 @@ export default function CourseParticipantsPage() {
   };
 
   return (
-    <main className="dark:bg-dark-background min-h-screen bg-gray-50">
+    <main className="programm font-programm dark:bg-night dark:text-night-text bg-paper text-ink min-h-screen">
       <div className="container mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
-        <nav className="mb-4 text-sm">
-          <ol className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <nav aria-label="Brotkrumen" className="mb-4">
+          <ol className="semi-condensed text-dark dark:text-night-muted -ml-1 flex flex-wrap items-center text-sm font-semibold">
             <li>
               <Link
                 href="/dashboard"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
+                className="hover:text-ink dark:hover:text-night-text inline-flex min-h-9 items-center px-1 underline-offset-4 hover:underline"
               >
                 Dashboard
               </Link>
             </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
+            <li aria-hidden className="px-0.5">
+              /
+            </li>
             <li>
               <Link
                 href="/dashboard/courses"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
+                className="hover:text-ink dark:hover:text-night-text inline-flex min-h-9 items-center px-1 underline-offset-4 hover:underline"
               >
                 Kurse
               </Link>
             </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
+            <li aria-hidden className="px-0.5">
+              /
+            </li>
             <li>
               <Link
                 href={`/dashboard/courses/${courseId}`}
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary max-w-[150px] truncate text-gray-500"
+                className="hover:text-ink dark:hover:text-night-text inline-flex min-h-9 max-w-[150px] items-center truncate px-1 underline-offset-4 hover:underline"
               >
                 {course.title}
               </Link>
             </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li className="dark:text-dark-text text-gray-900">Teilnehmer</li>
+            <li aria-hidden className="px-0.5">
+              /
+            </li>
+            <li>
+              <span
+                aria-current="page"
+                className="text-ink dark:text-night-text inline-flex min-h-9 items-center px-1"
+              >
+                Teilnehmer
+              </span>
+            </li>
           </ol>
         </nav>
 
         {/* Header */}
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="dark:text-dark-text text-2xl font-bold text-gray-900 sm:text-3xl">
+            <h1 className="condensed dark:text-night-text text-ink text-2xl leading-tight font-bold sm:text-[1.75rem]">
               Teilnehmer
             </h1>
-            <p className="dark:text-dark-muted mt-1 truncate text-gray-600">
+            <p className="dark:text-night-muted text-dark mt-1 truncate text-sm">
               {course.title}
             </p>
           </div>
@@ -832,7 +850,7 @@ export default function CourseParticipantsPage() {
             {canManageRegistrations && (
               <Link
                 href={`/dashboard/courses/${courseId}/participants/new`}
-                className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700"
+                className="inline-flex min-h-11 items-center gap-2 bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700"
               >
                 <PlusIcon className="h-4 w-4" />
                 Anmeldung hinzufügen
@@ -842,7 +860,7 @@ export default function CourseParticipantsPage() {
             {canMailRegistrants && (
               <Link
                 href={`/dashboard/courses/${courseId}/mail`}
-                className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors"
+                className="on-orange bg-primary text-ink hover:bg-primary/90 inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm font-medium transition-colors"
               >
                 <MailIcon className="h-4 w-4" />
                 Anschreiben
@@ -853,7 +871,7 @@ export default function CourseParticipantsPage() {
               <button
                 onClick={() => setShowExportMenu(!showExportMenu)}
                 disabled={filteredRegistrations.length === 0}
-                className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-gray-700"
+                className="border-rule dark:border-night-rule text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised inline-flex min-h-11 items-center gap-2 border px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <DownloadIcon
                   className="h-4 w-4"
@@ -864,10 +882,10 @@ export default function CourseParticipantsPage() {
                 Exportieren
               </button>
               {showExportMenu && (
-                <div className="dark:border-dark-border dark:bg-dark-surface absolute right-0 z-10 mt-2 w-48 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
+                <div className="border-ink bg-paper dark:border-night-text dark:bg-night-raised absolute right-0 z-10 mt-2 w-48 border-2 py-1">
                   <button
                     onClick={() => handleExport("csv")}
-                    className="dark:text-dark-text dark:hover:bg-dark-background-secondary flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                    className="text-ink hover:bg-rule/60 dark:text-night-text dark:hover:bg-night-rule flex w-full items-center gap-3 px-4 py-2 text-left text-sm"
                   >
                     <DownloadIcon className="h-4 w-4 text-green-600" />
                     CSV (.csv)
@@ -875,14 +893,14 @@ export default function CourseParticipantsPage() {
                   <button
                     onClick={() => handleExport("excel")}
                     disabled={exportingXlsx}
-                    className="dark:text-dark-text dark:hover:bg-dark-background-secondary flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="text-ink hover:bg-rule/60 dark:text-night-text dark:hover:bg-night-rule flex w-full items-center gap-3 px-4 py-2 text-left text-sm disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <DownloadIcon className="h-4 w-4 text-green-700" />
                     {exportingXlsx ? "Wird erstellt …" : "Excel (.xlsx)"}
                   </button>
                   <button
                     onClick={() => handleExport("json")}
-                    className="dark:text-dark-text dark:hover:bg-dark-background-secondary flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                    className="text-ink hover:bg-rule/60 dark:text-night-text dark:hover:bg-night-rule flex w-full items-center gap-3 px-4 py-2 text-left text-sm"
                   >
                     <DownloadIcon className="h-4 w-4 text-yellow-600" />
                     JSON (.json)
@@ -891,7 +909,7 @@ export default function CourseParticipantsPage() {
                     invoiceAccess?.canManage &&
                     hasPendingDiscounts && (
                       <>
-                        <div className="dark:border-dark-border my-1 border-t border-gray-200"></div>
+                        <div className="border-rule dark:border-night-rule my-1 border-t"></div>
                         <div className="px-4 py-2 text-xs text-yellow-600 dark:text-yellow-400">
                           ⚠️ Es gibt noch ausstehende Geschwisterkindrabatte
                         </div>
@@ -904,7 +922,7 @@ export default function CourseParticipantsPage() {
                 links to the course, so this only cost a second row of buttons. */}
             <Link
               href={`/dashboard/courses/${courseId}`}
-              className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text hidden items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 sm:inline-flex dark:hover:bg-gray-700"
+              className="border-rule dark:border-night-rule text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised hidden min-h-11 items-center gap-2 border px-4 py-2 text-sm font-medium transition-colors sm:inline-flex"
             >
               <ArrowLeftIcon className="h-4 w-4" />
               Zurück zum Kurs
@@ -914,62 +932,62 @@ export default function CourseParticipantsPage() {
 
         {/* Stats */}
         <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="bg-rule/25 dark:bg-night-raised p-4">
             <div className="text-2xl font-bold text-green-600 dark:text-green-400">
               {confirmedCount}
             </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
+            <div className="text-dark dark:text-night-muted text-sm">
               Bestätigt
             </div>
           </div>
-          <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="bg-rule/25 dark:bg-night-raised p-4">
             <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
               {waitlistCount}
             </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
+            <div className="text-dark dark:text-night-muted text-sm">
               Warteliste
             </div>
           </div>
-          <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="bg-rule/25 dark:bg-night-raised p-4">
             <div className="text-2xl font-bold text-red-600 dark:text-red-400">
               {cancelledCount}
             </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
+            <div className="text-dark dark:text-night-muted text-sm">
               Storniert
             </div>
           </div>
-          <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="bg-rule/25 dark:bg-night-raised p-4">
             <div className="text-2xl font-bold text-green-600 dark:text-green-400">
               {paidRevenue.toFixed(2)} €
             </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
+            <div className="text-dark dark:text-night-muted text-sm">
               Bezahlt
             </div>
           </div>
-          <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="bg-rule/25 dark:bg-night-raised p-4">
             <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
               {openInvoiceAmount.toFixed(2)} €
             </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
+            <div className="text-dark dark:text-night-muted text-sm">
               Offene Rechnungen
             </div>
           </div>
         </div>
 
         {/* View Mode Toggle & Filters */}
-        <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-          <div className="dark:border-dark-border mb-4 flex flex-wrap items-center justify-between gap-4 border-b border-gray-200 pb-4">
+        <div className="border-rule dark:border-night-rule mb-6 border p-4">
+          <div className="dark:border-night-rule border-rule mb-4 flex flex-wrap items-center justify-between gap-4 border-b pb-4">
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-              <span className="dark:text-dark-text text-sm font-medium text-gray-700">
+              <span className="dark:text-night-text text-ink text-sm font-medium">
                 Ansicht:
               </span>
-              <div className="dark:bg-dark-background-secondary inline-flex rounded-lg bg-gray-100 p-1">
+              <div className="border-rule dark:border-night-rule inline-flex border">
                 <button
                   onClick={() => setViewMode("participants")}
-                  className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                  className={`min-h-11 px-4 py-2 text-sm font-medium transition-colors ${
                     viewMode === "participants"
-                      ? "dark:bg-dark-surface dark:text-dark-text bg-white text-gray-900 shadow-sm"
-                      : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                      ? "on-orange bg-primary text-ink"
+                      : "text-dark hover:bg-rule/25 dark:text-night-muted dark:hover:bg-night-raised hover:text-ink dark:hover:text-night-text"
                   }`}
                 >
                   <span className="flex items-center gap-2">
@@ -979,10 +997,10 @@ export default function CourseParticipantsPage() {
                 </button>
                 <button
                   onClick={() => setViewMode("registrations")}
-                  className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                  className={`min-h-11 px-4 py-2 text-sm font-medium transition-colors ${
                     viewMode === "registrations"
-                      ? "dark:bg-dark-surface dark:text-dark-text bg-white text-gray-900 shadow-sm"
-                      : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                      ? "on-orange bg-primary text-ink"
+                      : "text-dark hover:bg-rule/25 dark:text-night-muted dark:hover:bg-night-raised hover:text-ink dark:hover:text-night-text"
                   }`}
                 >
                   <span className="flex items-center gap-2">
@@ -999,9 +1017,9 @@ export default function CourseParticipantsPage() {
                   type="checkbox"
                   checked={showCustomFields}
                   onChange={(e) => setShowCustomFields(e.target.checked)}
-                  className="text-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary h-4 w-4 rounded border-gray-300"
+                  className="text-primary border-rule dark:border-night-text dark:bg-night-raised h-4 w-4"
                 />
-                <span className="dark:text-dark-text text-sm text-gray-700">
+                <span className="dark:text-night-text text-ink text-sm">
                   Zusatzfelder anzeigen
                 </span>
               </label>
@@ -1011,20 +1029,20 @@ export default function CourseParticipantsPage() {
             {/* Search */}
             <div className="flex-1">
               <div className="relative">
-                <SearchIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <SearchIcon className="text-dark dark:text-night-muted absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Suche nach Name, E-Mail, Ort, Instrument, Rechnungsnummer…"
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white py-2 pr-4 pl-10 text-sm text-gray-900 focus:ring-1 focus:outline-none"
+                  className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper text-ink w-full border py-2 pr-4 pl-10 text-sm"
                 />
               </div>
             </div>
 
             {/* Status Filter */}
             <div className="flex items-center gap-2">
-              <label className="dark:text-dark-text text-sm font-medium text-gray-700">
+              <label className="dark:text-night-text text-ink text-sm font-medium">
                 Status:
               </label>
               <Select
@@ -1034,7 +1052,7 @@ export default function CourseParticipantsPage() {
                     e.target.value as RegistrationStatus | "ALL" | "ACTIVE",
                   )
                 }
-                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:ring-1 focus:outline-none"
+                className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper text-ink border px-3 py-2 text-sm"
               >
                 <option value="ACTIVE">Aktiv (ohne Stornierte)</option>
                 <option value="ALL">Alle</option>
@@ -1046,7 +1064,7 @@ export default function CourseParticipantsPage() {
 
             {/* Payment Filter */}
             <div className="flex items-center gap-2">
-              <label className="dark:text-dark-text text-sm font-medium text-gray-700">
+              <label className="dark:text-night-text text-ink text-sm font-medium">
                 Zahlung:
               </label>
               <Select
@@ -1054,7 +1072,7 @@ export default function CourseParticipantsPage() {
                 onChange={(e) =>
                   setPaymentFilter(e.target.value as PaymentFilter)
                 }
-                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:ring-1 focus:outline-none"
+                className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper text-ink border px-3 py-2 text-sm"
               >
                 <option value="ALL">Alle</option>
                 <option value="OPEN">Offen</option>
@@ -1074,18 +1092,18 @@ export default function CourseParticipantsPage() {
         </div>
 
         {/* Content based on view mode */}
-        <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white shadow-sm">
+        <div className="border-rule dark:border-night-rule border">
           {registrationsLoading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+              <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
             </div>
           ) : filteredRegistrations.length === 0 ? (
             <div className="py-12 text-center">
-              <SearchIcon className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="dark:text-dark-text mt-4 text-lg font-medium text-gray-900">
+              <SearchIcon className="text-dark dark:text-night-muted mx-auto h-12 w-12" />
+              <h3 className="dark:text-night-text text-ink mt-4 text-lg font-medium">
                 Keine Anmeldungen gefunden
               </h3>
-              <p className="mt-2 text-gray-500 dark:text-gray-400">
+              <p className="text-dark dark:text-night-muted mt-2">
                 {searchQuery ||
                 statusFilter !== "ALL" ||
                 paymentFilter !== "ALL"
@@ -1112,13 +1130,13 @@ export default function CourseParticipantsPage() {
             /* Registrations List View */
             <div>
               {/* Selection toolbar */}
-              <div className="dark:border-dark-border dark:bg-dark-background-secondary flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 bg-gray-50 px-4 py-3 sm:px-6">
-                <label className="dark:text-dark-text flex cursor-pointer items-center gap-2 text-sm font-medium text-gray-700">
+              <div className="dark:border-night-rule dark:bg-night-raised bg-rule/25 flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3 sm:px-6">
+                <label className="dark:text-night-text text-ink flex min-h-11 cursor-pointer items-center gap-2 text-sm font-medium">
                   <input
                     type="checkbox"
                     checked={allFilteredSelected}
                     onChange={toggleSelectAll}
-                    className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                    className="text-primary border-rule dark:border-night-text h-4 w-4"
                   />
                   {selectedIds.size > 0
                     ? `${selectedIds.size} ausgewählt`
@@ -1130,7 +1148,7 @@ export default function CourseParticipantsPage() {
                       type="button"
                       onClick={() => void runBulkAction("paid")}
                       disabled={bulkAction !== null || selectedUnpaid === 0}
-                      className="bg-primary hover:bg-primary-dark rounded-lg px-3 py-1.5 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                      className="on-orange bg-primary text-ink hover:bg-primary/90 min-h-11 px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {bulkAction === "paid"
                         ? "Wird gespeichert..."
@@ -1140,7 +1158,7 @@ export default function CourseParticipantsPage() {
                       type="button"
                       onClick={() => void runBulkAction("confirm")}
                       disabled={bulkAction !== null || selectedWaitlisted === 0}
-                      className="rounded-lg bg-green-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="min-h-11 bg-green-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {bulkAction === "confirm"
                         ? "Wird bestätigt..."
@@ -1149,7 +1167,7 @@ export default function CourseParticipantsPage() {
                     {canMailRegistrants && (
                       <Link
                         href={`/dashboard/courses/${courseId}/mail?registrationIds=${[...selectedIds].join(",")}`}
-                        className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+                        className="border-rule dark:border-night-rule text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised bg-paper inline-flex min-h-11 items-center gap-1.5 border px-3 py-1.5 text-sm font-medium transition-colors"
                       >
                         <MailIcon className="h-4 w-4" />
                         Auswahl anschreiben ({selectedIds.size})
@@ -1159,14 +1177,14 @@ export default function CourseParticipantsPage() {
                       type="button"
                       onClick={() => setSelectedIds(new Set())}
                       disabled={bulkAction !== null}
-                      className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+                      className="border-rule dark:border-night-rule text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised bg-paper min-h-11 border px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-50"
                     >
                       Auswahl aufheben
                     </button>
                   </div>
                 )}
               </div>
-              <div className="dark:divide-dark-border divide-y divide-gray-200">
+              <div className="dark:divide-night-rule divide-rule divide-y">
                 {filteredRegistrations.map((registration) => (
                   <div key={registration.id} className="p-4 sm:p-6">
                     {/* Registration Header */}
@@ -1177,27 +1195,27 @@ export default function CourseParticipantsPage() {
                           checked={selectedIds.has(registration.id)}
                           onChange={() => toggleSelected(registration.id)}
                           aria-label={`${registration.registrantFirstName} ${registration.registrantLastName} auswählen`}
-                          className="text-primary focus:ring-primary mt-1.5 h-4 w-4 rounded border-gray-300"
+                          className="text-primary border-rule dark:border-night-text mt-1.5 h-4 w-4"
                         />
                         <div>
                           <Link
                             href={`/dashboard/courses/${courseId}/participants/${registration.id}`}
-                            className="dark:text-dark-text hover:text-primary text-lg font-medium text-gray-900 transition-colors"
+                            className="dark:text-night-text hover:text-primary-ink dark:hover:text-primary text-ink text-lg font-medium transition-colors"
                           >
                             {registration.registrantFirstName}{" "}
                             {registration.registrantLastName}
                           </Link>
-                          <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500 dark:text-gray-400">
+                          <div className="text-dark dark:text-night-muted mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
                             <a
                               href={`mailto:${registration.registrantEmail}`}
-                              className="hover:text-primary"
+                              className="hover:text-primary-ink dark:hover:text-primary"
                             >
                               {registration.registrantEmail}
                             </a>
                             {registration.registrantPhone && (
                               <a
                                 href={`tel:${registration.registrantPhone}`}
-                                className="hover:text-primary"
+                                className="hover:text-primary-ink dark:hover:text-primary"
                               >
                                 {registration.registrantPhone}
                               </a>
@@ -1213,7 +1231,7 @@ export default function CourseParticipantsPage() {
                       <div className="flex flex-wrap items-center gap-2">
                         <Link
                           href={`/dashboard/courses/${courseId}/participants/${registration.id}`}
-                          className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+                          className="border-rule dark:border-night-rule text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised inline-flex min-h-9 items-center gap-1.5 border px-2.5 py-1 text-xs font-medium transition-colors"
                         >
                           Details
                         </Link>
@@ -1224,21 +1242,25 @@ export default function CourseParticipantsPage() {
                               href={`/registrations/${registration.id}/edit?returnTo=${encodeURIComponent(
                                 `/dashboard/courses/${courseId}/participants`,
                               )}`}
-                              className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+                              className="border-rule dark:border-night-rule text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised inline-flex min-h-9 items-center gap-1.5 border px-2.5 py-1 text-xs font-medium transition-colors"
                             >
                               <PencilIcon className="h-3.5 w-3.5" />
                               Bearbeiten
                             </Link>
                           )}
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-medium ${registrationStatusColors[registration.registrationStatus]}`}
+                        <Tag
+                          tone={
+                            registrationStatusTones[
+                              registration.registrationStatus
+                            ]
+                          }
                         >
                           {
                             registrationStatusLabels[
                               registration.registrationStatus
                             ]
                           }
-                        </span>
+                        </Tag>
                         <RegistrationPaymentBadge
                           invoices={registration.invoices}
                           className="px-3 py-1"
@@ -1250,38 +1272,42 @@ export default function CourseParticipantsPage() {
                         {registration.siblingDiscountStatus &&
                           registration.siblingDiscountStatus !==
                             SiblingDiscountStatus.NONE && (
-                            <span
-                              className={`rounded-full px-3 py-1 text-xs font-medium ${siblingDiscountStatusColors[registration.siblingDiscountStatus]}`}
+                            <Tag
+                              tone={
+                                siblingDiscountStatusTones[
+                                  registration.siblingDiscountStatus
+                                ]
+                              }
                             >
                               {
                                 siblingDiscountStatusLabels[
                                   registration.siblingDiscountStatus
                                 ]
                               }
-                            </span>
+                            </Tag>
                           )}
                       </div>
                     </div>
 
                     {/* Participants Table */}
                     {registration.participants.length > 0 && (
-                      <div className="dark:border-dark-border overflow-x-auto rounded-lg border border-gray-200">
-                        <table className="dark:divide-dark-border w-full divide-y divide-gray-200">
-                          <thead className="dark:bg-dark-background-secondary bg-gray-50">
+                      <div className="dark:border-night-rule border-rule overflow-x-auto border">
+                        <table className="dark:divide-night-rule divide-rule w-full divide-y">
+                          <thead className="dark:bg-night-raised bg-rule/25">
                             <tr>
-                              <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                              <th className="text-dark dark:text-night-muted px-4 py-3 text-left text-xs font-medium tracking-wider uppercase">
                                 Name
                               </th>
-                              <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                              <th className="text-dark dark:text-night-muted px-4 py-3 text-left text-xs font-medium tracking-wider uppercase">
                                 Geburtsjahr
                               </th>
-                              <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                              <th className="text-dark dark:text-night-muted px-4 py-3 text-left text-xs font-medium tracking-wider uppercase">
                                 Ort
                               </th>
-                              <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                              <th className="text-dark dark:text-night-muted px-4 py-3 text-left text-xs font-medium tracking-wider uppercase">
                                 Instrument
                               </th>
-                              <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                              <th className="text-dark dark:text-night-muted px-4 py-3 text-left text-xs font-medium tracking-wider uppercase">
                                 Preiskategorie
                               </th>
                               {/* Custom Fields Headers */}
@@ -1289,29 +1315,29 @@ export default function CourseParticipantsPage() {
                                 course.customFields?.map((field) => (
                                   <th
                                     key={field.id}
-                                    className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                    className="text-dark dark:text-night-muted px-4 py-3 text-left text-xs font-medium tracking-wider uppercase"
                                   >
                                     {field.fieldName}
                                   </th>
                                 ))}
                             </tr>
                           </thead>
-                          <tbody className="dark:divide-dark-border dark:bg-dark-surface divide-y divide-gray-200 bg-white">
+                          <tbody className="dark:divide-night-rule divide-rule divide-y">
                             {registration.participants.map((participant) => (
                               <tr key={participant.id}>
-                                <td className="dark:text-dark-text px-4 py-3 text-sm font-medium whitespace-nowrap text-gray-900">
+                                <td className="dark:text-night-text text-ink px-4 py-3 text-sm font-medium whitespace-nowrap">
                                   {participant.firstName} {participant.lastName}
                                 </td>
-                                <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
+                                <td className="text-dark dark:text-night-muted px-4 py-3 text-sm whitespace-nowrap">
                                   {formatBirthYear(participant.birthDate)}
                                 </td>
-                                <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
+                                <td className="text-dark dark:text-night-muted px-4 py-3 text-sm whitespace-nowrap">
                                   {participant.city || "–"}
                                 </td>
-                                <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
+                                <td className="text-dark dark:text-night-muted px-4 py-3 text-sm whitespace-nowrap">
                                   {participant.instrument || "–"}
                                 </td>
-                                <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
+                                <td className="text-dark dark:text-night-muted px-4 py-3 text-sm whitespace-nowrap">
                                   {participantPriceOptionLabel(
                                     participant,
                                     course.priceOptions,
@@ -1322,7 +1348,7 @@ export default function CourseParticipantsPage() {
                                   course.customFields?.map((field) => (
                                     <td
                                       key={field.id}
-                                      className="px-4 py-3 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400"
+                                      className="text-dark dark:text-night-muted px-4 py-3 text-sm whitespace-nowrap"
                                     >
                                       {getCustomFieldValue(
                                         participant,
@@ -1339,7 +1365,7 @@ export default function CourseParticipantsPage() {
 
                     {/* Registration Footer */}
                     <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-sm">
-                      <span className="text-gray-500 dark:text-gray-400">
+                      <span className="text-dark dark:text-night-muted">
                         Angemeldet am{" "}
                         {new Date(registration.createdAt).toLocaleDateString(
                           "de-DE",
@@ -1354,14 +1380,14 @@ export default function CourseParticipantsPage() {
                       </span>
                       <div className="flex flex-wrap items-center gap-3">
                         {registration.invoiceId && (
-                          <span className="text-gray-600 dark:text-gray-400">
+                          <span className="text-dark dark:text-night-muted">
                             Rechnungsnr.:{" "}
                             <span className="font-mono">
                               {registration.invoiceId}
                             </span>
                           </span>
                         )}
-                        <span className="dark:text-dark-text font-semibold text-gray-900">
+                        <span className="dark:text-night-text text-ink font-semibold">
                           Gesamt: {registration.totalPrice.toFixed(2)} €
                         </span>
                       </div>
@@ -1369,8 +1395,8 @@ export default function CourseParticipantsPage() {
 
                     {/* Notes */}
                     {registration.notes && (
-                      <div className="dark:bg-dark-background-secondary mt-3 rounded-lg bg-gray-50 p-3">
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <div className="dark:bg-night-raised bg-rule/25 mt-3 p-3">
+                        <p className="text-dark dark:text-night-muted text-sm">
                           <span className="font-medium">Anmerkungen:</span>{" "}
                           {registration.notes}
                         </p>
@@ -1385,7 +1411,7 @@ export default function CourseParticipantsPage() {
 
         {/* Results count */}
         {filteredRegistrations.length > 0 && (
-          <div className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
+          <div className="text-dark dark:text-night-muted mt-4 text-center text-sm">
             {filteredRegistrations.length} von{" "}
             {registrationsData?.registrations.length ?? 0} Anmeldungen
             {" • "}
