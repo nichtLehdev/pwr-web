@@ -5,6 +5,7 @@ import {
   ScrollableModalCard,
   ScrollableModalBody,
 } from "@/app/_components/ui/scrollable-modal";
+import { Heading } from "@/app/_components/programmheft/section-head";
 
 export interface CourseExistingRegistrationOptionsProps {
   onEditExisting: () => void;
@@ -21,12 +22,15 @@ export function CourseExistingRegistrationOptions({
 }: CourseExistingRegistrationOptionsProps) {
   return (
     <ScrollableModal onBackdropClick={onCancel}>
-      <ScrollableModalCard maxW="md">
+      <ScrollableModalCard
+        maxW="md"
+        className="border-ink dark:border-night-text rounded-none! border-2 shadow-none!"
+      >
         <ScrollableModalBody>
-          <h2 className="text-dark dark:text-dark-text mb-4 text-xl font-bold">
+          <Heading as="h2" size="list">
             Bestehende Anmeldung gefunden
-          </h2>
-          <p className="mb-6 text-gray-700 dark:text-gray-300">
+          </Heading>
+          <p className="text-ink dark:text-night-text mt-4">
             Sie haben bereits eine aktive Anmeldung für diesen Kurs mit{" "}
             <strong>
               {participantCount}{" "}
@@ -35,25 +39,25 @@ export function CourseExistingRegistrationOptions({
             . Möchten Sie Ihre bestehende Anmeldung bearbeiten oder eine
             zusätzliche Anmeldung erstellen?
           </p>
-          <div className="space-y-3">
+          <div className="mt-6 space-y-3">
             <button
               type="button"
               onClick={onEditExisting}
-              className="bg-primary hover:bg-primary-dark w-full rounded-lg px-6 py-3 font-semibold text-white transition-colors"
+              className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-primary dark:text-ink dark:hover:bg-paper semi-condensed inline-flex min-h-12 w-full items-center justify-center px-6 text-lg font-semibold transition-colors"
             >
               Bestehende Anmeldung bearbeiten
             </button>
             <button
               type="button"
               onClick={onCreateAdditional}
-              className="dark:border-dark-border dark:hover:bg-dark-surface w-full rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-300"
+              className="border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night semi-condensed inline-flex min-h-12 w-full items-center justify-center border-2 px-6 text-lg font-semibold transition-colors"
             >
               Zusätzliche Anmeldung erstellen
             </button>
             <button
               type="button"
               onClick={onCancel}
-              className="w-full rounded-lg px-6 py-3 font-semibold text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              className="text-dark hover:text-ink dark:text-night-muted dark:hover:text-night-text semi-condensed inline-flex min-h-12 w-full items-center justify-center px-6 text-base font-semibold transition-colors"
             >
               Abbrechen
             </button>

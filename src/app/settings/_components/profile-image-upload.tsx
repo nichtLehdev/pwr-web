@@ -4,6 +4,11 @@ import { useState, useRef } from "react";
 import Image from "next/image";
 import { api } from "@/trpc/react";
 import { User, Image as ImageIcon, Trash2 } from "lucide-react";
+import { Note } from "@/app/_components/programmheft/note";
+
+/** Schaltflächen-Stimme des Programmhefts, wie auf der übrigen Settings-Seite. */
+const BTN_OUTLINE =
+  "border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night semi-condensed inline-flex min-h-12 items-center justify-center gap-2 border-2 px-6 text-base font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60";
 
 interface ProfileImageUploadProps {
   currentImage?: {
@@ -110,7 +115,7 @@ export default function ProfileImageUpload({
     <div className="space-y-4">
       <div className="flex flex-col items-start gap-4 sm:flex-row sm:gap-6">
         {/* Image Preview */}
-        <div className="relative h-32 w-32 shrink-0 overflow-hidden rounded-full border-4 border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-800">
+        <div className="bg-rule dark:bg-night-rule relative h-32 w-32 shrink-0 overflow-hidden rounded-full">
           {preview ? (
             <Image
               src={preview}
@@ -121,12 +126,15 @@ export default function ProfileImageUpload({
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center">
-              <User className="text-primary h-16 w-16" />
+              <User
+                className="text-dark dark:text-night-muted h-16 w-16"
+                aria-hidden
+              />
             </div>
           )}
           {uploading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-white border-t-transparent"></div>
+            <div className="bg-ink/60 absolute inset-0 flex items-center justify-center">
+              <div className="border-paper h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />
             </div>
           )}
         </div>
@@ -148,9 +156,9 @@ export default function ProfileImageUpload({
                 type="button"
                 onClick={handleClick}
                 disabled={uploading}
-                className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text dark:hover:bg-dark-background inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:ring-2 focus:outline-none disabled:opacity-50 sm:w-auto"
+                className={`${BTN_OUTLINE} w-full sm:w-auto`}
               >
-                <ImageIcon className="h-5 w-5" />
+                <ImageIcon className="h-5 w-5" aria-hidden />
                 {preview ? "Bild ändern" : "Bild hochladen"}
               </button>
 
@@ -159,25 +167,23 @@ export default function ProfileImageUpload({
                   type="button"
                   onClick={handleRemove}
                   disabled={uploading}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50 focus:ring-2 focus:ring-red-500 focus:outline-none disabled:opacity-50 sm:w-auto dark:border-red-900 dark:bg-red-950/30 dark:text-red-500 dark:hover:bg-red-900/50"
+                  className={`${BTN_OUTLINE} w-full sm:w-auto`}
                 >
-                  <Trash2 className="h-5 w-5" />
+                  <Trash2 className="h-5 w-5" aria-hidden />
                   Entfernen
                 </button>
               )}
             </div>
 
-            <div className="text-xs text-gray-500 dark:text-gray-400">
+            <div className="text-dark dark:text-night-muted text-xs">
               <p>Empfohlen: Quadratisches Bild, mindestens 400x400 Pixel</p>
               <p>Erlaubte Formate: JPEG, PNG, WebP (max. 5MB)</p>
             </div>
 
             {error && (
-              <div className="rounded-md border border-red-300 bg-red-50 p-3 dark:border-red-900 dark:bg-red-950/30">
-                <p className="text-sm text-red-800 dark:text-red-400">
-                  {error}
-                </p>
-              </div>
+              <Note tone="error">
+                <p>{error}</p>
+              </Note>
             )}
           </div>
         </div>

@@ -24,7 +24,13 @@ import {
   ScrollableModalBody,
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
-import { formatDate, formatEuro } from "@/lib/invoice-document";
+import {
+  DOWN_PAYMENT_LINE_DESCRIPTION,
+  formatDate,
+  formatEuro,
+} from "@/lib/invoice-document";
+import { downPaymentCredit } from "@/lib/course-down-payment";
+import { DownPaymentBadge } from "@/app/_components/dashboard/down-payment-panel";
 import { downloadResponseAsFile } from "@/lib/download-file";
 import { InvoiceStatus } from "~/generated/prisma/enums";
 import {
@@ -53,6 +59,23 @@ function invoiceRecipient(invoice: CourseInvoice): string {
     ]
       .filter(Boolean)
       .join(" · ") || "—"
+  );
+}
+
+/**
+ * Anzahlung als eingegangen verbucht, auf der Rechnung aber nicht abgezogen —
+ * etwa weil der Entwurf vor dem Zahlungseingang angelegt wurde.
+ */
+function lacksDownPaymentCredit(invoice: CourseInvoice): boolean {
+  if (invoice.status === InvoiceStatus.CANCELLED || !invoice.registration) {
+    return false;
+  }
+  if (downPaymentCredit(invoice.registration) <= 0) return false;
+  const items = Array.isArray(invoice.lineItems) ? invoice.lineItems : [];
+  return !items.some(
+    (item) =>
+      (item as { description?: unknown } | null)?.description ===
+      DOWN_PAYMENT_LINE_DESCRIPTION,
   );
 }
 
@@ -212,17 +235,17 @@ export default function CourseInvoicesPage() {
               <>
                 <Link
                   href={`/dashboard/courses/${courseId}/invoices/${row.original.id}`}
-                  className="dark:text-dark-text font-medium text-gray-900 hover:underline"
+                  className="dark:text-night-text text-ink font-medium hover:underline"
                 >
                   {row.original.invoiceNumber ?? "Entwurf"}
                 </Link>
                 {row.original.replaces?.invoiceNumber && (
-                  <span className="dark:text-dark-muted block text-xs text-gray-500">
+                  <span className="dark:text-night-muted text-dark block text-xs">
                     ersetzt {row.original.replaces.invoiceNumber}
                   </span>
                 )}
                 {row.original.replacedBy?.invoiceNumber && (
-                  <span className="dark:text-dark-muted block text-xs text-gray-500">
+                  <span className="dark:text-night-muted text-dark block text-xs">
                     ersetzt durch {row.original.replacedBy.invoiceNumber}
                   </span>
                 )}
@@ -237,7 +260,7 @@ export default function CourseInvoicesPage() {
             <>
               <span className="block">{invoiceRecipient(row.original)}</span>
               {row.original.recipientEmail && (
-                <span className="dark:text-dark-muted block text-xs text-gray-500">
+                <span className="dark:text-night-muted text-dark block text-xs">
                   {row.original.recipientEmail}
                 </span>
               )}
@@ -253,7 +276,7 @@ export default function CourseInvoicesPage() {
             id: "participants",
             header: "Teilnehmer:innen",
             cell: ({ getValue }) => (
-              <span className="dark:text-dark-muted text-gray-600">
+              <span className="dark:text-night-muted text-dark">
                 {getValue() || "—"}
               </span>
             ),
@@ -278,7 +301,16 @@ export default function CourseInvoicesPage() {
             filterVariant: "number",
             cellClassName: "font-semibold whitespace-nowrap",
           },
-          cell: ({ getValue }) => formatEuro(getValue()),
+          cell: ({ row, getValue }) => (
+            <>
+              {formatEuro(getValue())}
+              {lacksDownPaymentCredit(row.original) && (
+                <span className="text-primary-ink dark:text-primary mt-0.5 block text-xs font-medium whitespace-nowrap">
+                  Anzahlung nicht abgezogen
+                </span>
+              )}
+            </>
+          ),
         }),
         invoiceColumn.accessor(
           (invoice) => INVOICE_STATUS_LABELS[invoice.status],
@@ -356,8 +388,8 @@ export default function CourseInvoicesPage() {
 
   if (sessionLoading || accessLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="dark:bg-night bg-paper flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
@@ -365,15 +397,15 @@ export default function CourseInvoicesPage() {
   if (!canManage) {
     return (
       <DashboardPage title="Rechnungen" description="Keine Berechtigung">
-        <div className="dark:bg-dark-surface rounded-lg bg-white p-8 text-center shadow">
-          <p className="dark:text-dark-muted text-gray-600">
+        <div className="border-rule dark:border-night-rule border p-8 text-center">
+          <p className="dark:text-night-muted text-dark">
             Du hast keine Berechtigung, für diesen Kurs Rechnungen zu erstellen.
             Das dürfen Kurs-Organisator:innen sowie Landesposaunenwarte und
             Administratoren.
           </p>
           <Link
             href={`/dashboard/courses/${courseId}`}
-            className="text-primary mt-4 inline-block hover:underline"
+            className="link-ink mt-4 inline-block"
           >
             Zurück zum Kurs
           </Link>
@@ -405,7 +437,7 @@ export default function CourseInvoicesPage() {
               course, so this only cost a second row of buttons. */}
           <Link
             href={`/dashboard/courses/${courseId}`}
-            className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text hidden items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 sm:inline-flex dark:hover:bg-gray-700"
+            className="border-rule dark:border-night-rule text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised hidden min-h-11 items-center gap-2 border px-4 py-2 text-sm font-medium sm:inline-flex"
           >
             <ArrowLeftIcon className="h-4 w-4" />
             Zurück zum Kurs
@@ -414,7 +446,7 @@ export default function CourseInvoicesPage() {
             type="button"
             onClick={handleExportXlsx}
             disabled={exportableInvoices.length === 0 || exporting}
-            className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-gray-700"
+            className="border-rule dark:border-night-rule text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised inline-flex min-h-11 items-center gap-2 border px-4 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
           >
             <DownloadIcon className="h-4 w-4" />
             {exporting ? "Wird erstellt …" : "Excel exportieren"}
@@ -429,7 +461,7 @@ export default function CourseInvoicesPage() {
                   ? undefined
                   : "Für diesen Kurs ist die Rechnungsstellung nicht freigeschaltet."
               }
-              className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-gray-700"
+              className="border-rule dark:border-night-rule text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised inline-flex min-h-11 items-center gap-2 border px-4 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
             >
               <SendIcon className="h-4 w-4" />
               Alle Entwürfe ausstellen ({summary.drafts})
@@ -444,7 +476,7 @@ export default function CourseInvoicesPage() {
                 ? undefined
                 : "Für diesen Kurs ist die Rechnungsstellung nicht freigeschaltet."
             }
-            className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+            className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-night-text dark:text-night dark:hover:bg-primary dark:hover:text-ink inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
           >
             <PlusIcon className="h-4 w-4" />
             Rechnung erstellen
@@ -453,11 +485,13 @@ export default function CourseInvoicesPage() {
       }
     >
       {!access?.invoicingEnabled && (
-        <div className="mb-6 rounded-lg border-2 border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-900/50 dark:bg-yellow-900/20">
-          <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+        // Hinweis statt Alarm: Tinte auf Papier an einer Haarlinie statt
+        // Kasten in Signalfarbe.
+        <div className="border-ink dark:border-night-text mb-6 border-l-2 py-2 pl-4">
+          <p className="text-ink dark:text-night-text text-sm font-medium">
             Rechnungsstellung ist für diesen Kurs nicht freigeschaltet
           </p>
-          <p className="mt-1 text-xs text-yellow-700 dark:text-yellow-300">
+          <p className="text-dark dark:text-night-muted mt-1 text-xs">
             Ein Landes-/Regionalposaunenwart oder Administrator kann sie in den
             Kurseinstellungen aktivieren. Bestehende Rechnungen bleiben
             sichtbar.
@@ -475,12 +509,12 @@ export default function CourseInvoicesPage() {
         ].map((tile) => (
           <div
             key={tile.label}
-            className="dark:bg-dark-surface rounded-lg bg-white p-4 shadow"
+            className="border-rule dark:border-night-rule border p-4"
           >
-            <p className="dark:text-dark-muted text-xs text-gray-500">
+            <p className="dark:text-night-muted text-dark text-xs">
               {tile.label}
             </p>
-            <p className="dark:text-dark-text mt-1 text-2xl font-semibold text-gray-900">
+            <p className="dark:text-night-text text-ink mt-1 text-2xl font-semibold">
               {tile.value}
             </p>
           </div>
@@ -489,13 +523,13 @@ export default function CourseInvoicesPage() {
 
       {/* Registration picker */}
       {showPicker && (
-        <div className="dark:bg-dark-surface mb-6 rounded-lg bg-white p-6 shadow">
+        <div className="border-rule dark:border-night-rule mb-6 border p-6">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
+              <h2 className="dark:text-night-text text-ink text-lg font-semibold">
                 Anmeldungen auswählen
               </h2>
-              <p className="dark:text-dark-muted text-sm text-gray-500">
+              <p className="dark:text-night-muted text-dark text-sm">
                 Für jede Auswahl wird ein Entwurf aus den Teilnehmerdaten
                 vorbefüllt. Danach kannst du ihn frei bearbeiten.
               </p>
@@ -506,7 +540,7 @@ export default function CourseInvoicesPage() {
                 onClick={() =>
                   setSelected(new Set(selectableRegistrations.map((r) => r.id)))
                 }
-                className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700"
+                className="border-rule dark:border-night-rule text-ink dark:text-night-text min-h-9 border px-3 py-1.5 text-sm"
               >
                 Alle auswählen
               </button>
@@ -519,7 +553,7 @@ export default function CourseInvoicesPage() {
                     registrationIds: [...selected],
                   })
                 }
-                className="bg-primary hover:bg-primary/90 rounded-lg px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+                className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-night-text dark:text-night dark:hover:bg-primary dark:hover:text-ink min-h-9 px-3 py-1.5 text-sm font-medium disabled:opacity-50"
               >
                 {createDraftsBulk.isPending
                   ? "Erstelle…"
@@ -529,13 +563,13 @@ export default function CourseInvoicesPage() {
           </div>
 
           {registrations === undefined ? (
-            <p className="dark:text-dark-muted text-sm text-gray-500">Lade…</p>
+            <p className="dark:text-night-muted text-dark text-sm">Lade…</p>
           ) : registrations.length === 0 ? (
-            <p className="dark:text-dark-muted text-sm text-gray-500">
+            <p className="dark:text-night-muted text-dark text-sm">
               Für diesen Kurs gibt es noch keine Anmeldungen.
             </p>
           ) : (
-            <ul className="dark:divide-dark-border divide-y divide-gray-200">
+            <ul className="dark:divide-night-rule divide-rule divide-y">
               {registrations.map((registration) => {
                 const existing = registration.invoices[0];
                 return (
@@ -548,22 +582,26 @@ export default function CourseInvoicesPage() {
                       checked={selected.has(registration.id)}
                       disabled={registration.hasOpenInvoice}
                       onChange={() => toggle(registration.id)}
-                      className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300 disabled:opacity-40"
+                      className="text-primary border-rule dark:border-night-text h-4 w-4 disabled:opacity-40"
                     />
                     <div className="min-w-0 flex-1">
-                      <p className="dark:text-dark-text truncate text-sm font-medium text-gray-900">
+                      <p className="dark:text-night-text text-ink truncate text-sm font-medium">
                         {registration.registrantFirstName}{" "}
                         {registration.registrantLastName}
                       </p>
-                      <p className="dark:text-dark-muted truncate text-xs text-gray-500">
+                      <p className="dark:text-night-muted text-dark truncate text-xs">
                         {registration.participants.length} Teilnehmer:in
                         {registration.participants.length === 1
                           ? ""
                           : "nen"} · {formatEuro(registration.totalPrice)}
                       </p>
+                      <DownPaymentBadge
+                        registration={registration}
+                        className="mt-1"
+                      />
                     </div>
                     {existing ? (
-                      <span className="dark:text-dark-muted text-xs text-gray-500">
+                      <span className="dark:text-night-muted text-dark text-xs">
                         {existing.status === InvoiceStatus.DRAFT
                           ? "Entwurf vorhanden"
                           : `Rechnung ${existing.invoiceNumber ?? ""}`}
@@ -578,7 +616,7 @@ export default function CourseInvoicesPage() {
                             registrationId: registration.id,
                           })
                         }
-                        className="text-primary text-sm font-medium hover:underline disabled:opacity-50"
+                        className="text-primary-ink dark:text-primary text-sm font-medium hover:underline disabled:opacity-50"
                       >
                         Einzeln erstellen
                       </button>
@@ -605,11 +643,11 @@ export default function CourseInvoicesPage() {
         }
         emptyState={
           <>
-            <ReceiptTextIcon className="mx-auto h-10 w-10 text-gray-300" />
-            <p className="dark:text-dark-text mt-3 font-medium text-gray-900">
+            <ReceiptTextIcon className="text-dark dark:text-night-muted mx-auto h-10 w-10" />
+            <p className="dark:text-night-text text-ink mt-3 font-medium">
               Noch keine Rechnungen
             </p>
-            <p className="dark:text-dark-muted mt-1 text-sm text-gray-500">
+            <p className="dark:text-night-muted text-dark mt-1 text-sm">
               Erstelle den ersten Entwurf aus einer Anmeldung.
             </p>
           </>
@@ -617,10 +655,10 @@ export default function CourseInvoicesPage() {
       />
 
       {summary.published.length > 0 && (
-        <div className="dark:bg-dark-surface mt-6 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-white p-4 shadow">
+        <div className="border-rule dark:border-night-rule mt-6 flex flex-wrap items-center justify-between gap-3 border p-4">
           <div className="flex items-center gap-2">
-            <FileTextIcon className="text-primary h-5 w-5" />
-            <p className="dark:text-dark-text text-sm text-gray-700">
+            <FileTextIcon className="text-primary-ink dark:text-primary h-5 w-5" />
+            <p className="dark:text-night-text text-ink text-sm">
               {summary.published.length} ausgestellte Rechnung
               {summary.published.length === 1 ? "" : "en"} können den
               Anmelder:innen per Mail zugeschickt werden.
@@ -628,7 +666,7 @@ export default function CourseInvoicesPage() {
           </div>
           <Link
             href={`/dashboard/courses/${courseId}/mail`}
-            className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700"
+            className="border-rule dark:border-night-rule text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised inline-flex min-h-9 items-center gap-2 border px-3 py-1.5 text-sm font-medium"
           >
             <MailIcon className="h-4 w-4" />
             Nachricht schreiben
@@ -640,10 +678,10 @@ export default function CourseInvoicesPage() {
         <ScrollableModal>
           <ScrollableModalCard maxW="md">
             <ScrollableModalBody>
-              <h2 className="dark:text-dark-text text-xl font-semibold text-gray-900">
+              <h2 className="dark:text-night-text text-ink text-xl font-semibold">
                 Alle Entwürfe ausstellen
               </h2>
-              <p className="dark:text-dark-muted mt-2 text-sm text-gray-600">
+              <p className="dark:text-night-muted text-dark mt-2 text-sm">
                 {summary.drafts === 1
                   ? "1 Entwurf wird"
                   : `${summary.drafts} Entwürfe werden`}{" "}
@@ -655,7 +693,7 @@ export default function CourseInvoicesPage() {
 
               <div className="mt-4 sm:w-60">
                 <label
-                  className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700"
+                  className="dark:text-night-text text-ink mb-1 block text-sm font-medium"
                   htmlFor="bulkDueDate"
                 >
                   Gemeinsames Zahlungsziel (optional)
@@ -665,19 +703,19 @@ export default function CourseInvoicesPage() {
                   type="date"
                   value={bulkDueDate}
                   onChange={(e) => setBulkDueDate(e.target.value)}
-                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-1 focus:outline-none"
+                  className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper w-full border px-3 py-2 text-sm"
                 />
-                <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                <p className="dark:text-night-muted text-dark mt-1 text-xs">
                   Leer lassen, damit jede Rechnung ihr eigenes Zahlungsziel
                   behält.
                 </p>
               </div>
 
-              <div className="dark:border-dark-border mt-4 rounded-lg border border-gray-200 p-4">
-                <p className="dark:text-dark-text text-sm font-medium text-gray-700">
+              <div className="dark:border-night-rule border-rule mt-4 border p-4">
+                <p className="dark:text-night-text text-ink text-sm font-medium">
                   Unterschrift (optional)
                 </p>
-                <p className="dark:text-dark-muted mt-0.5 text-xs text-gray-500">
+                <p className="dark:text-night-muted text-dark mt-0.5 text-xs">
                   Wird identisch in jedes PDF dieser Ausstellung eingebettet und
                   nicht gespeichert.
                 </p>
@@ -686,20 +724,20 @@ export default function CourseInvoicesPage() {
                     <button
                       type="button"
                       onClick={() => setBulkSignatureMode("upload")}
-                      className="dark:border-dark-border dark:hover:bg-dark-background-secondary flex flex-1 flex-col items-center gap-1.5 rounded-md border-2 border-dashed border-gray-300 px-4 py-3 transition-colors hover:border-blue-400 hover:bg-blue-50"
+                      className="dark:border-night-rule dark:hover:bg-night-raised border-rule flex flex-1 flex-col items-center gap-1.5 border-2 border-dashed px-4 py-3 transition-colors hover:border-blue-400 hover:bg-blue-50"
                     >
-                      <UploadIcon className="h-5 w-5 text-gray-400" />
-                      <span className="dark:text-dark-text text-sm text-gray-600">
+                      <UploadIcon className="text-dark dark:text-night-muted h-5 w-5" />
+                      <span className="dark:text-night-text text-dark text-sm">
                         Hochladen
                       </span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setBulkSignatureMode("draw")}
-                      className="dark:border-dark-border dark:hover:bg-dark-background-secondary flex flex-1 flex-col items-center gap-1.5 rounded-md border-2 border-dashed border-gray-300 px-4 py-3 transition-colors hover:border-blue-400 hover:bg-blue-50"
+                      className="dark:border-night-rule dark:hover:bg-night-raised border-rule flex flex-1 flex-col items-center gap-1.5 border-2 border-dashed px-4 py-3 transition-colors hover:border-blue-400 hover:bg-blue-50"
                     >
-                      <PencilIcon className="h-5 w-5 text-gray-400" />
-                      <span className="dark:text-dark-text text-sm text-gray-600">
+                      <PencilIcon className="text-dark dark:text-night-muted h-5 w-5" />
+                      <span className="dark:text-night-text text-dark text-sm">
                         Zeichnen
                       </span>
                     </button>
@@ -708,21 +746,21 @@ export default function CourseInvoicesPage() {
 
                 {bulkSignatureMode === "upload" &&
                   (bulkSignatureBase64 ? (
-                    <div className="dark:border-dark-border dark:bg-dark-background-secondary mt-2 flex items-center gap-3 rounded-md border border-gray-300 bg-gray-50 p-2">
+                    <div className="dark:border-night-rule dark:bg-night-raised border-rule bg-rule/25 mt-2 flex items-center gap-3 border p-2">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={bulkSignatureBase64}
                         alt="Vorschau der Unterschrift"
                         className="h-10 max-w-[120px] object-contain"
                       />
-                      <span className="dark:text-dark-text flex-1 truncate text-sm text-gray-600">
+                      <span className="dark:text-night-text text-dark flex-1 truncate text-sm">
                         {bulkSignatureFileName}
                       </span>
                       <button
                         type="button"
                         onClick={resetBulkSignature}
                         aria-label="Unterschrift entfernen"
-                        className="rounded p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        className="p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
                       >
                         <XIcon className="h-4 w-4" />
                       </button>
@@ -732,20 +770,20 @@ export default function CourseInvoicesPage() {
                       <button
                         type="button"
                         onClick={() => bulkSignatureInputRef.current?.click()}
-                        className="dark:border-dark-border flex w-full flex-col items-center gap-1 rounded-md border-2 border-dashed border-gray-300 px-4 py-5 transition-colors hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/10"
+                        className="dark:border-night-rule border-rule flex w-full flex-col items-center gap-1 border-2 border-dashed px-4 py-5 transition-colors hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/10"
                       >
-                        <UploadIcon className="h-6 w-6 text-gray-400" />
-                        <span className="dark:text-dark-text text-sm text-gray-600">
+                        <UploadIcon className="text-dark dark:text-night-muted h-6 w-6" />
+                        <span className="dark:text-night-text text-dark text-sm">
                           Bild auswählen
                         </span>
-                        <span className="text-xs text-gray-400">
+                        <span className="text-dark dark:text-night-muted text-xs">
                           PNG oder JPG, max. 2 MB
                         </span>
                       </button>
                       <button
                         type="button"
                         onClick={resetBulkSignature}
-                        className="dark:text-dark-muted mt-2 text-sm text-gray-500 hover:text-gray-700"
+                        className="dark:text-night-muted text-dark hover:text-ink dark:hover:text-night-text mt-2 text-sm"
                       >
                         ← Ohne Unterschrift
                       </button>
@@ -760,7 +798,7 @@ export default function CourseInvoicesPage() {
                     <button
                       type="button"
                       onClick={resetBulkSignature}
-                      className="dark:text-dark-muted mt-2 text-sm text-gray-500 hover:text-gray-700"
+                      className="dark:text-night-muted text-dark hover:text-ink dark:hover:text-night-text mt-2 text-sm"
                     >
                       ← Ohne Unterschrift
                     </button>
@@ -775,21 +813,21 @@ export default function CourseInvoicesPage() {
                   className="hidden"
                 />
 
-                <div className="dark:border-dark-border mt-3 border-t border-gray-200 pt-3">
+                <div className="dark:border-night-rule border-rule mt-3 border-t pt-3">
                   <label
-                    className="dark:text-dark-text block text-sm font-medium text-gray-700"
+                    className="dark:text-night-text text-ink block text-sm font-medium"
                     htmlFor="bulkSignatureName"
                   >
                     Name des Unterzeichners (optional)
                   </label>
                   <input
                     id="bulkSignatureName"
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:ring-1 focus:outline-none"
+                    className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper text-ink mt-1 w-full border px-3 py-2 text-sm"
                     placeholder="Ihr Team vom Posaunenwerk Rheinland"
                     value={bulkSignatureName}
                     onChange={(e) => setBulkSignatureName(e.target.value)}
                   />
-                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                  <p className="dark:text-night-muted text-dark mt-1 text-xs">
                     Steht auf jedem PDF dieser Ausstellung unter der
                     Unterschrift. Leer lassen, damit jede Rechnung ihren eigenen
                     Unterzeichner-Namen behält.
@@ -802,24 +840,24 @@ export default function CourseInvoicesPage() {
                   type="checkbox"
                   checked={notifyRegistrants}
                   onChange={(e) => setNotifyRegistrants(e.target.checked)}
-                  className="text-primary focus:ring-primary mt-0.5 h-4 w-4 rounded border-gray-300"
+                  className="text-primary border-rule dark:border-night-text mt-0.5 h-4 w-4"
                 />
-                <span className="dark:text-dark-text text-sm text-gray-700">
+                <span className="dark:text-night-text text-ink text-sm">
                   Anmelder:innen benachrichtigen
-                  <span className="dark:text-dark-muted block text-xs text-gray-500">
+                  <span className="dark:text-night-muted text-dark block text-xs">
                     Erzeugt je eine Mitteilung im Konto; die Rechnung erscheint
                     unter „Meine Anmeldungen“ zum Download.
                   </span>
                 </span>
               </label>
-              <label className="dark:border-dark-border mt-4 flex cursor-pointer items-start gap-3 rounded-lg border border-gray-200 p-3">
+              <label className="dark:border-night-rule border-rule mt-4 flex cursor-pointer items-start gap-3 border p-3">
                 <input
                   type="checkbox"
                   checked={reviewedConfirmed}
                   onChange={(e) => setReviewedConfirmed(e.target.checked)}
-                  className="text-primary focus:ring-primary mt-0.5 h-4 w-4 rounded border-gray-300"
+                  className="text-primary border-rule dark:border-night-text mt-0.5 h-4 w-4"
                 />
-                <span className="dark:text-dark-text text-sm font-medium text-gray-700">
+                <span className="dark:text-night-text text-ink text-sm font-medium">
                   Ich habe alle Entwürfe geprüft und es gibt keine Fehler in den
                   Rechnungen.
                 </span>
@@ -834,7 +872,7 @@ export default function CourseInvoicesPage() {
                     resetFinalizeForm();
                   }}
                   disabled={publishAllDrafts.isPending}
-                  className="dark:border-dark-border dark:text-dark-text flex-1 rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 disabled:opacity-50"
+                  className="border-rule dark:border-night-rule text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised min-h-11 flex-1 border px-4 py-2 text-sm font-medium disabled:opacity-50"
                 >
                   Abbrechen
                 </button>
@@ -852,7 +890,7 @@ export default function CourseInvoicesPage() {
                     })
                   }
                   disabled={!reviewedConfirmed || publishAllDrafts.isPending}
-                  className="bg-primary hover:bg-primary/90 flex-1 rounded-md px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                  className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-night-text dark:text-night dark:hover:bg-primary dark:hover:text-ink min-h-11 flex-1 px-4 py-2 text-sm font-medium disabled:opacity-50"
                 >
                   {publishAllDrafts.isPending
                     ? "Stelle aus…"

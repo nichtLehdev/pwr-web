@@ -44,6 +44,15 @@ type SectionRow = RouterOutputs["stats"]["getStats"]["bySection"][number];
 const pathColumn = createDataTableColumnHelper<PathRow>();
 const sectionColumn = createDataTableColumnHelper<SectionRow>();
 
+/** Zeitraum-Register über der Pfadtabelle — Unterstrich statt Kasten, wie bei „Meine Anmeldungen“. */
+function periodButtonClass(active: boolean): string {
+  return `semi-condensed inline-flex min-h-11 shrink-0 items-center gap-2 border-b-[3px] px-3 text-sm font-semibold whitespace-nowrap transition-colors ${
+    active
+      ? "border-primary text-ink dark:text-night-text"
+      : "border-transparent text-dark hover:border-ink hover:text-ink dark:text-night-muted dark:hover:border-night-text dark:hover:text-night-text"
+  }`;
+}
+
 export default function StatsPage() {
   const { data: session, isPending } = useSession();
   const { resolvedTheme } = useTheme();
@@ -83,7 +92,7 @@ export default function StatsPage() {
                 }
               }}
               title="Strg+Klick (bzw. Cmd+Klick) zum Öffnen der Seite"
-              className="hover:text-primary dark:hover:text-primary inline-flex items-center gap-1.5 hover:underline"
+              className="hover:text-primary-ink dark:hover:text-primary inline-flex items-center gap-1.5 hover:underline"
             >
               {row.original.path || "/"}
               <ExternalLink
@@ -151,8 +160,8 @@ export default function StatsPage() {
 
   if (isPending || canViewLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
@@ -173,81 +182,81 @@ export default function StatsPage() {
     >
       {statsLoading || siteStatsLoading ? (
         <div className="flex justify-center py-12">
-          <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+          <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
         </div>
       ) : stats ? (
-        <div className="space-y-8">
+        <div className="space-y-6">
           {siteStats && (
-            <div className="dark:bg-dark-surface dark:border-dark-border overflow-hidden rounded-xl border border-gray-200 bg-white">
-              <div className="dark:border-dark-border border-b border-gray-200 px-4 py-3 sm:px-6">
-                <h2 className="dark:text-dark-text font-semibold text-gray-900">
-                  Übersicht: Inhalte & Nutzung
+            <div className="border-rule dark:border-night-rule border">
+              <div className="border-rule dark:border-night-rule border-b px-4 py-3 sm:px-6">
+                <h2 className="text-ink dark:text-night-text font-semibold">
+                  Übersicht: Inhalte &amp; Nutzung
                 </h2>
               </div>
               <div className="grid grid-cols-2 gap-4 p-4 sm:grid-cols-3 sm:px-6 sm:py-5 lg:grid-cols-4">
                 <StatCard
-                  icon={<CalendarDays className="h-5 w-5" />}
+                  icon={<CalendarDays className="h-5 w-5" aria-hidden />}
                   label="Termine (veröffentlicht)"
                   value={siteStats.eventsCount}
                 />
                 <StatCard
-                  icon={<GraduationCap className="h-5 w-5" />}
+                  icon={<GraduationCap className="h-5 w-5" aria-hidden />}
                   label="Kurse (veröffentlicht)"
                   value={siteStats.coursesCount}
                 />
                 <StatCard
-                  icon={<Newspaper className="h-5 w-5" />}
+                  icon={<Newspaper className="h-5 w-5" aria-hidden />}
                   label="Beiträge (veröffentlicht)"
                   value={siteStats.postsCount}
                 />
                 <StatCard
-                  icon={<UserPlus className="h-5 w-5" />}
+                  icon={<UserPlus className="h-5 w-5" aria-hidden />}
                   label="Kursanmeldungen (gesamt)"
                   value={siteStats.registrationsCount}
                 />
                 <StatCard
-                  icon={<Mail className="h-5 w-5" />}
+                  icon={<Mail className="h-5 w-5" aria-hidden />}
                   label="Newsletter-Abonnenten"
                   value={siteStats.newsletterActiveCount}
                 />
                 <StatCard
-                  icon={<Users className="h-5 w-5" />}
+                  icon={<Users className="h-5 w-5" aria-hidden />}
                   label="Benutzer"
                   value={siteStats.usersCount}
                 />
                 <StatCard
-                  icon={<Music className="h-5 w-5" />}
+                  icon={<Music className="h-5 w-5" aria-hidden />}
                   label="Ensembles (aktiv)"
                   value={siteStats.ensemblesCount}
                 />
                 <StatCard
-                  icon={<MapPin className="h-5 w-5" />}
+                  icon={<MapPin className="h-5 w-5" aria-hidden />}
                   label="Veranstaltungsorte"
                   value={siteStats.locationsCount}
                 />
               </div>
-              <div className="dark:border-dark-border border-t border-gray-200 px-4 pb-4 sm:px-6 sm:pb-5">
-                <h3 className="dark:text-dark-muted mt-4 mb-3 text-xs font-semibold tracking-wider text-gray-500 uppercase">
+              <div className="border-rule dark:border-night-rule border-t px-4 pb-4 sm:px-6 sm:pb-5">
+                <h3 className="text-dark dark:text-night-muted mt-4 mb-3 text-xs font-semibold tracking-wider uppercase">
                   Neu in den letzten 30 Tagen
                 </h3>
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                   <StatCard
-                    icon={<CalendarDays className="h-5 w-5" />}
+                    icon={<CalendarDays className="h-5 w-5" aria-hidden />}
                     label="Termine erstellt"
                     value={siteStats.eventsCreatedLast30Days}
                   />
                   <StatCard
-                    icon={<GraduationCap className="h-5 w-5" />}
+                    icon={<GraduationCap className="h-5 w-5" aria-hidden />}
                     label="Kurse erstellt"
                     value={siteStats.coursesCreatedLast30Days}
                   />
                   <StatCard
-                    icon={<Users className="h-5 w-5" />}
+                    icon={<Users className="h-5 w-5" aria-hidden />}
                     label="Nutzer registriert"
                     value={siteStats.usersRegisteredLast30Days}
                   />
                   <StatCard
-                    icon={<UserPlus className="h-5 w-5" />}
+                    icon={<UserPlus className="h-5 w-5" aria-hidden />}
                     label="Kursanmeldungen"
                     value={siteStats.registrationsLast30Days}
                   />
@@ -256,46 +265,47 @@ export default function StatsPage() {
             </div>
           )}
 
-          <div className="dark:bg-dark-surface dark:border-dark-border overflow-hidden rounded-xl border border-gray-200 bg-white">
-            <div className="dark:border-dark-border border-b border-gray-200 px-4 py-3 sm:px-6">
+          <div className="border-rule dark:border-night-rule border">
+            <div className="border-rule dark:border-night-rule border-b px-4 py-3 sm:px-6">
               <div className="flex items-center gap-2">
-                <BarChart3 className="text-primary h-5 w-5" />
-                <h2 className="dark:text-dark-text font-semibold text-gray-900">
+                <BarChart3
+                  className="text-ink dark:text-night-text h-5 w-5"
+                  aria-hidden
+                />
+                <h2 className="text-ink dark:text-night-text font-semibold">
                   Seitenaufrufe
                 </h2>
               </div>
             </div>
             <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-3 sm:px-6 sm:py-5">
-              <div className="dark:bg-dark-background dark:border-dark-border rounded-lg border border-gray-100 bg-gray-50 p-4">
-                <p className="dark:text-dark-muted text-sm text-gray-500">
-                  Heute
-                </p>
-                <p className="dark:text-dark-text mt-1 text-2xl font-bold text-gray-900 tabular-nums">
+              <div className="bg-rule/25 dark:bg-night-raised p-4">
+                <p className="text-dark dark:text-night-muted text-sm">Heute</p>
+                <p className="text-ink dark:text-night-text mt-1 text-2xl font-bold tabular-nums">
                   {stats.viewsToday.toLocaleString("de-DE")}
                 </p>
               </div>
-              <div className="dark:bg-dark-background dark:border-dark-border rounded-lg border border-gray-100 bg-gray-50 p-4">
-                <p className="dark:text-dark-muted text-sm text-gray-500">
+              <div className="bg-rule/25 dark:bg-night-raised p-4">
+                <p className="text-dark dark:text-night-muted text-sm">
                   Letzte 7 Tage
                 </p>
-                <p className="dark:text-dark-text mt-1 text-2xl font-bold text-gray-900 tabular-nums">
+                <p className="text-ink dark:text-night-text mt-1 text-2xl font-bold tabular-nums">
                   {stats.viewsLast7Days.toLocaleString("de-DE")}
                 </p>
               </div>
-              <div className="dark:bg-dark-background dark:border-dark-border rounded-lg border border-gray-100 bg-gray-50 p-4">
-                <p className="dark:text-dark-muted text-sm text-gray-500">
+              <div className="bg-rule/25 dark:bg-night-raised p-4">
+                <p className="text-dark dark:text-night-muted text-sm">
                   Letzte 30 Tage
                 </p>
-                <p className="dark:text-dark-text mt-1 text-2xl font-bold text-gray-900 tabular-nums">
+                <p className="text-ink dark:text-night-text mt-1 text-2xl font-bold tabular-nums">
                   {stats.viewsLast30Days.toLocaleString("de-DE")}
                 </p>
               </div>
             </div>
             {stats.viewsWithUser > 0 && (
-              <div className="dark:border-dark-border border-t border-gray-200 px-4 py-3 sm:px-6">
-                <p className="dark:text-dark-muted text-sm text-gray-500">
+              <div className="border-rule dark:border-night-rule border-t px-4 py-3 sm:px-6">
+                <p className="text-dark dark:text-night-muted text-sm">
                   davon mit Konto zugeordnet (gesamt):{" "}
-                  <span className="dark:text-dark-text font-medium text-gray-700">
+                  <span className="text-ink dark:text-night-text font-medium">
                     {stats.viewsWithUser.toLocaleString("de-DE")}
                   </span>
                 </p>
@@ -304,32 +314,36 @@ export default function StatsPage() {
           </div>
 
           {stats.byPath.length > 0 && (
-            <div className="dark:bg-dark-surface dark:border-dark-border overflow-hidden rounded-xl border border-gray-200 bg-white">
-              <div className="dark:border-dark-border border-b border-gray-200 px-4 py-3 sm:px-6">
+            <div className="border-rule dark:border-night-rule border">
+              <div className="border-rule dark:border-night-rule border-b px-4 py-3 sm:px-6">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <div className="flex items-center gap-2">
-                      <FileText className="text-primary h-5 w-5" />
-                      <h2 className="dark:text-dark-text font-semibold text-gray-900">
+                      <FileText
+                        className="text-ink dark:text-night-text h-5 w-5"
+                        aria-hidden
+                      />
+                      <h2 className="text-ink dark:text-night-text font-semibold">
                         Aufrufe nach Seite
                       </h2>
                     </div>
-                    <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                    <p className="text-dark dark:text-night-muted mt-1 text-xs">
                       Strg+Klick bzw. Cmd+Klick auf einen Pfad öffnet die Seite
                     </p>
                   </div>
-                  <div className="dark:border-dark-border flex rounded-lg border border-gray-200 p-0.5">
+                  <div
+                    role="group"
+                    aria-label="Zeitraum"
+                    className="flex gap-3"
+                  >
                     <button
                       type="button"
                       onClick={() => {
                         setPathPeriod("today");
                         setShowAllPaths(false);
                       }}
-                      className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
-                        pathPeriod === "today"
-                          ? "bg-primary text-white"
-                          : "dark:text-dark-muted dark:hover:bg-dark-background text-gray-600 hover:bg-gray-100"
-                      }`}
+                      aria-pressed={pathPeriod === "today"}
+                      className={periodButtonClass(pathPeriod === "today")}
                     >
                       Heute
                     </button>
@@ -339,11 +353,8 @@ export default function StatsPage() {
                         setPathPeriod("last30Days");
                         setShowAllPaths(false);
                       }}
-                      className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
-                        pathPeriod === "last30Days"
-                          ? "bg-primary text-white"
-                          : "dark:text-dark-muted dark:hover:bg-dark-background text-gray-600 hover:bg-gray-100"
-                      }`}
+                      aria-pressed={pathPeriod === "last30Days"}
+                      className={periodButtonClass(pathPeriod === "last30Days")}
                     >
                       30 Tage
                     </button>
@@ -353,11 +364,8 @@ export default function StatsPage() {
                         setPathPeriod("overall");
                         setShowAllPaths(false);
                       }}
-                      className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
-                        pathPeriod === "overall"
-                          ? "bg-primary text-white"
-                          : "dark:text-dark-muted dark:hover:bg-dark-background text-gray-600 hover:bg-gray-100"
-                      }`}
+                      aria-pressed={pathPeriod === "overall"}
+                      className={periodButtonClass(pathPeriod === "overall")}
                     >
                       Gesamt
                     </button>
@@ -374,11 +382,11 @@ export default function StatsPage() {
                 className="[&_table]:min-w-full"
               />
               {stats.byPath.length > 5 && (
-                <div className="dark:border-dark-border border-t border-gray-200 px-4 py-2 sm:px-6">
+                <div className="border-rule dark:border-night-rule border-t px-4 py-2 sm:px-6">
                   <button
                     type="button"
                     onClick={() => setShowAllPaths((v) => !v)}
-                    className="dark:text-primary text-primary text-sm font-medium hover:underline"
+                    className="link-ink text-sm"
                   >
                     {showAllPaths
                       ? "Weniger anzeigen"
@@ -390,11 +398,14 @@ export default function StatsPage() {
           )}
 
           {stats.bySection.length > 0 && (
-            <div className="dark:bg-dark-surface dark:border-dark-border overflow-hidden rounded-xl border border-gray-200 bg-white">
-              <div className="dark:border-dark-border border-b border-gray-200 px-4 py-3 sm:px-6">
+            <div className="border-rule dark:border-night-rule border">
+              <div className="border-rule dark:border-night-rule border-b px-4 py-3 sm:px-6">
                 <div className="flex items-center gap-2">
-                  <Layout className="text-primary h-5 w-5" />
-                  <h2 className="dark:text-dark-text font-semibold text-gray-900">
+                  <Layout
+                    className="text-ink dark:text-night-text h-5 w-5"
+                    aria-hidden
+                  />
+                  <h2 className="text-ink dark:text-night-text font-semibold">
                     Aufrufe nach Bereich
                   </h2>
                 </div>
@@ -412,11 +423,14 @@ export default function StatsPage() {
           )}
 
           {stats.recentDays.length > 0 && (
-            <div className="dark:bg-dark-surface dark:border-dark-border overflow-hidden rounded-xl border border-gray-200 bg-white">
-              <div className="dark:border-dark-border border-b border-gray-200 px-4 py-3 sm:px-6">
+            <div className="border-rule dark:border-night-rule border">
+              <div className="border-rule dark:border-night-rule border-b px-4 py-3 sm:px-6">
                 <div className="flex items-center gap-2">
-                  <Calendar className="text-primary h-5 w-5" />
-                  <h2 className="dark:text-dark-text font-semibold text-gray-900">
+                  <Calendar
+                    className="text-ink dark:text-night-text h-5 w-5"
+                    aria-hidden
+                  />
+                  <h2 className="text-ink dark:text-night-text font-semibold">
                     Aufrufe pro Tag (letzte 30 Tage)
                   </h2>
                 </div>
@@ -437,7 +451,7 @@ export default function StatsPage() {
             stats.bySection.length === 0 &&
             stats.recentDays.length === 0 &&
             stats.totalViews === 0 && (
-              <p className="dark:text-dark-muted text-center text-gray-500">
+              <p className="text-dark dark:text-night-muted text-center">
                 Noch keine Aufrufe erfasst.
               </p>
             )}
@@ -468,7 +482,7 @@ function PathCountWithPopup({
       <span
         className={
           hasDetails
-            ? "cursor-help border-b border-dotted border-gray-400 dark:border-gray-500"
+            ? "border-dark dark:border-night-muted cursor-help border-b border-dotted"
             : ""
         }
       >
@@ -477,16 +491,16 @@ function PathCountWithPopup({
       {hasDetails && visitorDetails && (
         <span
           role="tooltip"
-          className="dark:bg-dark-surface dark:border-dark-border pointer-events-none absolute right-0 bottom-full z-50 mb-1 hidden w-56 rounded-lg border border-gray-200 bg-white py-2 pr-3 pl-3 text-left shadow-lg group-hover:block"
+          className="border-ink dark:border-night-text bg-paper dark:bg-night-raised pointer-events-none absolute right-0 bottom-full z-50 mb-1 hidden w-56 border-2 py-2 pr-3 pl-3 text-left group-hover:block"
         >
-          <p className="dark:text-dark-muted mb-2 text-xs font-medium tracking-wider text-gray-500 uppercase">
+          <p className="text-dark dark:text-night-muted mb-2 text-xs font-medium tracking-wider uppercase">
             Mit Konto zugeordnet
           </p>
           <ul className="space-y-1">
             {visitorDetails.topVisitors.map((v, i) => (
               <li
                 key={i}
-                className="dark:text-dark-text flex justify-between text-sm text-gray-900"
+                className="text-ink dark:text-night-text flex justify-between text-sm"
               >
                 <span className="truncate pr-2" title={v.userDisplayName}>
                   {v.userDisplayName}
@@ -498,7 +512,7 @@ function PathCountWithPopup({
             ))}
           </ul>
           {visitorDetails.otherViews > 0 && (
-            <p className="dark:text-dark-muted dark:border-dark-border mt-2 border-t border-gray-100 pt-2 text-sm text-gray-500">
+            <p className="text-dark dark:text-night-muted border-rule dark:border-night-rule mt-2 border-t pt-2 text-sm">
               {visitorDetails.otherViews.toLocaleString("de-DE")} Aufrufe von{" "}
               {visitorDetails.otherUsers}{" "}
               {visitorDetails.otherUsers === 1
@@ -522,12 +536,14 @@ function StatCard({
   value: number;
 }) {
   return (
-    <div className="dark:bg-dark-background dark:border-dark-border flex flex-col gap-1 rounded-lg border border-gray-100 bg-gray-50 p-3">
-      <span className="text-primary flex items-center gap-2">{icon}</span>
-      <p className="dark:text-dark-text text-xl font-semibold text-gray-900 tabular-nums">
+    <div className="bg-rule/25 dark:bg-night-raised flex flex-col gap-1 p-3">
+      <span className="text-dark dark:text-night-muted flex items-center gap-2">
+        {icon}
+      </span>
+      <p className="text-ink dark:text-night-text text-xl font-semibold tabular-nums">
         {value.toLocaleString("de-DE")}
       </p>
-      <p className="dark:text-dark-muted text-xs text-gray-500">{label}</p>
+      <p className="text-dark dark:text-night-muted text-xs">{label}</p>
     </div>
   );
 }

@@ -35,12 +35,18 @@ export interface ParticipantFields {
  * filling in the public form.
  */
 export interface StaffRegistrationOptions {
-  /** "AUTO" leaves the choice to the server: confirmed while seats are free. */
-  registrationStatus: "AUTO" | "CONFIRMED" | "WAITLIST";
+  /**
+   * "AUTO" leaves the choice to the server: confirmed while seats are free.
+   * "SPLIT" confirms the participants chosen for the free seats and puts the
+   * rest on the waiting list as a linked registration.
+   */
+  registrationStatus: "AUTO" | "CONFIRMED" | "WAITLIST" | "SPLIT";
   /** Fee already collected — e.g. cash handed over on the spot. */
   sendConfirmationEmail: boolean;
   /** Required to confirm a registration beyond the course capacity. */
   allowOverbooking: boolean;
+  /** Down payment already received (e.g. paper form with transfer slip). */
+  downPaymentAlreadyPaid: boolean;
 }
 
 export interface CourseRegistrationFormProps {
@@ -56,11 +62,13 @@ export interface CourseRegistrationFormProps {
    */
   staffMode?: boolean;
   /**
-   * Free seats left in the course, used in staff mode to ask for an
-   * overbooking consent as soon as the entered participants no longer fit —
-   * not only when the course is already completely full.
+   * Free seats left in the course. Step 3 warns as soon as the entered
+   * participants no longer fit — not only when the course is already
+   * completely full — and staff mode asks for an overbooking consent then.
    */
   availableSlots?: number;
+  /** Free seats per price option (by id), as `getAvailableSlots` reports them. */
+  capacityByPriceOption?: Record<string, number> | null;
 }
 
 export type Step = 1 | 2 | 3;

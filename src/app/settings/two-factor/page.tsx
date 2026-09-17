@@ -16,6 +16,28 @@ import {
   Download,
   Copy,
 } from "lucide-react";
+import PublicPage from "@/app/_components/general/public-page";
+import { PageSection } from "@/app/_components/programmheft/page-section";
+import { Heading } from "@/app/_components/programmheft/section-head";
+import { Note } from "@/app/_components/programmheft/note";
+import {
+  FieldLabel,
+  Checkbox,
+  fieldControlClasses,
+} from "@/app/_components/programmheft/field";
+import { cn } from "@/lib/utils";
+
+/**
+ * Schaltflächen-Stimmen des Programmhefts, lokal wiederholt wie auf den
+ * übrigen öffentlichen Formularseiten (z. B. /settings).
+ */
+const BTN_PRIMARY =
+  "bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-primary dark:text-ink dark:hover:bg-paper semi-condensed inline-flex min-h-12 items-center justify-center gap-2 px-6 text-base font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60";
+const BTN_OUTLINE =
+  "border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night semi-condensed inline-flex min-h-12 items-center justify-center gap-2 border-2 px-6 text-base font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60";
+/** Kleinere Outline-Schaltfläche für Nebenhandlungen, 40px hoch wie `headMeta.action`. */
+const BTN_OUTLINE_SM =
+  "border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night semi-condensed inline-flex min-h-10 items-center gap-2 border-2 px-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60";
 
 export default function TwoFactorPage() {
   const router = useRouter();
@@ -129,8 +151,8 @@ Bewahre diese Datei sicher auf und teile sie niemals mit anderen!`;
 
   if (sessionLoading || profileLoading) {
     return (
-      <div className="bg-background-secondary dark:bg-dark-background-secondary flex min-h-[calc(100vh-4rem)] items-center justify-center">
-        <div className="text-dark dark:text-dark-text">Lädt...</div>
+      <div className="bg-paper dark:bg-night text-ink dark:text-night-text flex min-h-[calc(100vh-4rem)] items-center justify-center">
+        <p className="semi-condensed text-lg font-semibold">Lädt...</p>
       </div>
     );
   }
@@ -141,77 +163,76 @@ Bewahre diese Datei sicher auf und teile sie niemals mit anderen!`;
   }
 
   return (
-    <div className="bg-background-secondary dark:bg-dark-background-secondary min-h-[calc(100vh-4rem)] px-4 py-8">
-      <div className="mx-auto max-w-2xl">
-        {/* Header */}
-        <div className="mb-8">
-          <Link
-            href="/settings"
-            className="text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary mb-4 inline-flex items-center gap-2 text-sm font-medium"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Zurück zu Einstellungen
-          </Link>
-          <h1 className="text-dark dark:text-dark-text text-3xl font-bold">
-            Zwei-Faktor-Authentifizierung (2FA)
-          </h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Füge eine zusätzliche Sicherheitsebene zu deinem Konto hinzu
-          </p>
-        </div>
+    <PublicPage
+      title="Zwei-Faktor-Authentifizierung (2FA)"
+      breadcrumbs={[
+        { label: "Start", href: "/" },
+        { label: "Einstellungen", href: "/settings" },
+        { label: "2FA" },
+      ]}
+      heroSize="compact"
+      description={
+        <p>Füge eine zusätzliche Sicherheitsebene zu deinem Konto hinzu</p>
+      }
+    >
+      <PageSection flush="top">
+        <Link
+          href="/settings"
+          className="semi-condensed text-primary-ink dark:text-primary inline-flex min-h-11 items-center gap-2 text-sm font-semibold underline-offset-4 hover:underline"
+        >
+          <ArrowLeft className="h-4 w-4" aria-hidden />
+          Zurück zu Einstellungen
+        </Link>
 
-        {/* Main Content */}
-        <div className="dark:bg-dark-surface rounded-lg bg-white p-6 shadow-lg md:p-8">
+        <div className="mt-8 max-w-2xl">
           {twoFactorEnabled ? (
-            <div className="space-y-6">
-              <div className="rounded-md border-l-4 border-green-500 bg-green-50 p-4 dark:border-green-400 dark:bg-green-900/20">
-                <div className="flex items-start gap-3">
-                  <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-green-600 dark:text-green-400" />
-                  <div>
-                    <p className="text-sm font-semibold text-green-800 dark:text-green-300">
+            <div className="space-y-10">
+              <Note tone="info">
+                <p className="flex items-start gap-3">
+                  <CheckCircle
+                    className="mt-0.5 h-5 w-5 shrink-0"
+                    aria-hidden
+                  />
+                  <span>
+                    <span className="block font-semibold">
                       2FA ist aktiviert
-                    </p>
-                    <p className="mt-1 text-sm text-green-700 dark:text-green-400">
+                    </span>
+                    <span className="mt-1 block text-sm">
                       Dein Konto ist zusätzlich geschützt. Du wirst bei jeder
                       Anmeldung nach einem Code aus deiner Authenticator-App
                       gefragt.
-                    </p>
-                  </div>
-                </div>
-              </div>
+                    </span>
+                  </span>
+                </p>
+              </Note>
 
               <div>
-                <h2 className="text-dark dark:text-dark-text mb-4 text-lg font-semibold">
+                <Heading as="h2" size="list" rule>
                   2FA deaktivieren
-                </h2>
-                <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+                </Heading>
+                <p className="text-dark dark:text-night-muted mt-4 text-sm">
                   Wenn du 2FA deaktivierst, wird dein Konto weniger sicher sein.
                   Du wirst nur noch dein Passwort benötigen, um dich anzumelden.
                 </p>
 
-                <div>
-                  <label
-                    htmlFor="disable2FAPassword"
-                    className="text-dark dark:text-dark-text mb-1 block text-sm font-medium"
-                  >
+                <div className="mt-4">
+                  <FieldLabel htmlFor="disable2FAPassword">
                     Passwort zum Deaktivieren
-                  </label>
+                  </FieldLabel>
                   <input
                     id="disable2FAPassword"
                     name="disable2FAPassword"
                     type="password"
                     value={disablePassword}
                     onChange={(e) => setDisablePassword(e.target.value)}
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
+                    className={fieldControlClasses}
                   />
                 </div>
 
                 {disableError && (
-                  <div className="mt-3 rounded-md border-l-4 border-red-500 bg-red-50 p-3 dark:border-red-400 dark:bg-red-900/20">
-                    <p className="text-sm text-red-800 dark:text-red-300">
-                      {disableError}
-                    </p>
-                  </div>
+                  <Note tone="error" className="mt-3">
+                    <p>{disableError}</p>
+                  </Note>
                 )}
 
                 <button
@@ -254,49 +275,45 @@ Bewahre diese Datei sicher auf und teile sie niemals mit anderen!`;
                     }
                   }}
                   disabled={isDisabling2FA}
-                  className="mt-4 rounded-lg bg-red-600 px-4 py-2 font-semibold text-white shadow-lg transition-colors hover:bg-red-700 disabled:opacity-50 dark:bg-red-700 dark:hover:bg-red-800"
+                  className={cn(BTN_OUTLINE, "mt-4")}
                 >
                   {isDisabling2FA ? "Wird deaktiviert..." : "2FA deaktivieren"}
                 </button>
               </div>
 
-              <div className="dark:border-dark-border border-t border-gray-200 pt-6">
-                <h2 className="text-dark dark:text-dark-text mb-4 text-lg font-semibold">
+              <div className="border-rule dark:border-night-rule border-t pt-8">
+                <Heading as="h2" size="list" rule>
                   Backup-Codes
-                </h2>
-                <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+                </Heading>
+                <p className="text-dark dark:text-night-muted mt-4 text-sm">
                   Backup-Codes können verwendet werden, um auf dein Konto
                   zuzugreifen, falls du dein Authenticator-Gerät verlierst.
                   Jeder Code kann nur einmal verwendet werden.
                 </p>
 
-                <div>
-                  <label
-                    htmlFor="generateBackupCodesPassword"
-                    className="text-dark dark:text-dark-text mb-1 block text-sm font-medium"
-                  >
+                <div className="mt-4">
+                  <FieldLabel htmlFor="generateBackupCodesPassword">
                     Passwort zum Generieren neuer Backup-Codes
-                  </label>
+                  </FieldLabel>
                   <input
                     id="generateBackupCodesPassword"
                     name="generateBackupCodesPassword"
                     type="password"
                     value={backupPassword}
                     onChange={(e) => setBackupPassword(e.target.value)}
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
+                    className={fieldControlClasses}
                   />
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    <strong>Warnung:</strong> Wenn du neue Backup-Codes
-                    generierst, werden die alten Codes ungültig.
+                  <p className="text-dark dark:text-night-muted mt-2 text-xs">
+                    <strong className="font-semibold">Warnung:</strong> Wenn du
+                    neue Backup-Codes generierst, werden die alten Codes
+                    ungültig.
                   </p>
                 </div>
 
                 {backupError && (
-                  <div className="mt-3 rounded-md border-l-4 border-red-500 bg-red-50 p-3 dark:border-red-400 dark:bg-red-900/20">
-                    <p className="text-sm text-red-800 dark:text-red-300">
-                      {backupError}
-                    </p>
-                  </div>
+                  <Note tone="error" className="mt-3">
+                    <p>{backupError}</p>
+                  </Note>
                 )}
 
                 <button
@@ -340,7 +357,7 @@ Bewahre diese Datei sicher auf und teile sie niemals mit anderen!`;
                     }
                   }}
                   disabled={isGeneratingCodes}
-                  className="bg-primary hover:bg-primary-dark dark:bg-primary-light dark:hover:bg-primary mt-4 rounded-lg px-4 py-2 font-semibold text-white shadow-lg transition-colors disabled:opacity-50"
+                  className={cn(BTN_PRIMARY, "mt-4")}
                 >
                   {isGeneratingCodes
                     ? "Wird generiert..."
@@ -348,99 +365,96 @@ Bewahre diese Datei sicher auf und teile sie niemals mit anderen!`;
                 </button>
 
                 {showBackupCodes && backupCodes.length > 0 && (
-                  <div className="mt-6 rounded-md border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20">
-                    <div className="mb-3 flex items-start gap-2">
-                      <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
-                      <div className="flex-1">
-                        <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
-                          Wichtig: Speichere diese Backup-Codes sicher!
-                        </p>
-                        <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
-                          Diese Codes können verwendet werden, um auf dein Konto
-                          zuzugreifen, falls du dein Authenticator-Gerät
-                          verlierst. Jeder Code kann nur einmal verwendet
-                          werden.
-                        </p>
-                      </div>
-                    </div>
-                    <div className="mb-3 flex justify-end">
+                  <Note
+                    tone="info"
+                    title={
+                      <span className="flex items-center gap-2">
+                        <AlertTriangle
+                          className="h-5 w-5 shrink-0"
+                          aria-hidden
+                        />
+                        Wichtig: Speichere diese Backup-Codes sicher!
+                      </span>
+                    }
+                    titleAs="p"
+                    className="mt-6"
+                  >
+                    <p>
+                      Diese Codes können verwendet werden, um auf dein Konto
+                      zuzugreifen, falls du dein Authenticator-Gerät verlierst.
+                      Jeder Code kann nur einmal verwendet werden.
+                    </p>
+                    <div className="mt-3 flex justify-end">
                       <button
                         type="button"
                         onClick={downloadBackupCodes}
-                        className="text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-sm font-medium transition-colors hover:bg-amber-100 dark:border-amber-700 dark:bg-gray-800 dark:hover:bg-gray-700"
+                        className={BTN_OUTLINE_SM}
                       >
-                        <Download className="h-4 w-4" />
+                        <Download className="h-4 w-4" aria-hidden />
                         Codes herunterladen
                       </button>
                     </div>
-                    <div className="grid grid-cols-2 gap-2 font-mono text-sm">
+                    <div className="mt-3 grid grid-cols-2 gap-2 font-mono text-sm">
                       {backupCodes.map((code, index) => (
                         <div
                           key={index}
-                          className="rounded bg-white px-2 py-1 text-center dark:bg-gray-800"
+                          className="border-ink dark:border-night-text border px-2 py-1 text-center"
                         >
                           {code}
                         </div>
                       ))}
                     </div>
-                  </div>
+                  </Note>
                 )}
               </div>
             </div>
           ) : (
-            <div className="space-y-6">
-              <div className="rounded-md border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
-                <div className="flex items-start gap-3">
-                  <Shield className="mt-0.5 h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400" />
-                  <div>
-                    <p className="text-sm font-semibold text-blue-800 dark:text-blue-300">
-                      Was ist 2FA?
-                    </p>
-                    <p className="mt-1 text-sm text-blue-700 dark:text-blue-400">
+            <div className="space-y-10">
+              <Note tone="info">
+                <p className="flex items-start gap-3">
+                  <Shield className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
+                  <span>
+                    <span className="block font-semibold">Was ist 2FA?</span>
+                    <span className="mt-1 block text-sm">
                       Zwei-Faktor-Authentifizierung fügt eine zusätzliche
                       Sicherheitsebene zu deinem Konto hinzu. Du benötigst einen
                       Authenticator-App (z.B. Google Authenticator, Authy,
                       Microsoft Authenticator) auf deinem Smartphone.
-                    </p>
-                  </div>
-                </div>
-              </div>
+                    </span>
+                  </span>
+                </p>
+              </Note>
 
               {!twoFactorQRCode ? (
                 <div>
-                  <h2 className="text-dark dark:text-dark-text mb-4 text-lg font-semibold">
+                  <Heading as="h2" size="list" rule>
                     2FA aktivieren
-                  </h2>
-                  <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+                  </Heading>
+                  <p className="text-dark dark:text-night-muted mt-4 text-sm">
                     Gib dein aktuelles Passwort ein, um die Einrichtung zu
                     starten. Du erhältst dann einen QR-Code, den du mit deiner
                     Authenticator-App scannen kannst. 2FA ist erst aktiv,
                     nachdem du die Einrichtung mit einem Code bestätigt hast.
                   </p>
 
-                  <div>
-                    <label
-                      htmlFor="enable2FAPassword"
-                      className="text-dark dark:text-dark-text mb-1 block text-sm font-medium"
-                    >
+                  <div className="mt-4">
+                    <FieldLabel htmlFor="enable2FAPassword">
                       Passwort
-                    </label>
+                    </FieldLabel>
                     <input
                       id="enable2FAPassword"
                       name="enable2FAPassword"
                       type="password"
                       value={enablePassword}
                       onChange={(e) => setEnablePassword(e.target.value)}
-                      className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
+                      className={fieldControlClasses}
                     />
                   </div>
 
                   {enableError && (
-                    <div className="mt-3 rounded-md border-l-4 border-red-500 bg-red-50 p-3 dark:border-red-400 dark:bg-red-900/20">
-                      <p className="text-sm text-red-800 dark:text-red-300">
-                        {enableError}
-                      </p>
-                    </div>
+                    <Note tone="error" className="mt-3">
+                      <p>{enableError}</p>
+                    </Note>
                   )}
 
                   <button
@@ -491,7 +505,7 @@ Bewahre diese Datei sicher auf und teile sie niemals mit anderen!`;
                       }
                     }}
                     disabled={isEnabling2FA}
-                    className="bg-primary hover:bg-primary-dark dark:bg-primary-light dark:hover:bg-primary mt-4 rounded-lg px-4 py-2 font-semibold text-white shadow-lg transition-colors disabled:opacity-50"
+                    className={cn(BTN_PRIMARY, "mt-4")}
                   >
                     {isEnabling2FA
                       ? "Wird vorbereitet..."
@@ -499,141 +513,138 @@ Bewahre diese Datei sicher auf und teile sie niemals mit anderen!`;
                   </button>
                 </div>
               ) : (
-                <div className="space-y-6">
+                <div className="space-y-10">
                   <div>
-                    <h2 className="text-dark dark:text-dark-text mb-4 text-lg font-semibold">
+                    <Heading as="h2" size="list" rule>
                       QR-Code scannen
-                    </h2>
-                    <div className="rounded-md border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
-                      <p className="mb-3 text-sm text-blue-800 dark:text-blue-300">
-                        <strong>Schritt 1:</strong> Scanne diesen QR-Code mit
-                        deiner Authenticator-App (z.B. Google Authenticator,
-                        Authy, Microsoft Authenticator)
+                    </Heading>
+                    <Note tone="info" className="mt-4">
+                      <p>
+                        <strong className="font-semibold">Schritt 1:</strong>{" "}
+                        Scanne diesen QR-Code mit deiner Authenticator-App (z.B.
+                        Google Authenticator, Authy, Microsoft Authenticator)
                       </p>
-                      <div className="flex justify-center">
+                      <div className="mt-4 flex justify-center">
                         {qrDataUrl ? (
                           /* eslint-disable-next-line @next/next/no-img-element */
                           <img
                             src={qrDataUrl}
                             alt="2FA QR Code"
-                            className="rounded border-2 border-gray-300"
+                            className="border-ink dark:border-night-text border-2"
                           />
                         ) : qrError ? (
-                          <div className="rounded-md border-l-4 border-amber-500 bg-amber-50 p-3 dark:border-amber-400 dark:bg-amber-900/20">
-                            <p className="text-sm text-amber-800 dark:text-amber-300">
-                              Der QR-Code konnte nicht erstellt werden. Bitte
-                              gib den Code unten manuell in deine
-                              Authenticator-App ein.
-                            </p>
-                          </div>
+                          <p className="text-sm">
+                            Der QR-Code konnte nicht erstellt werden. Bitte gib
+                            den Code unten manuell in deine Authenticator-App
+                            ein.
+                          </p>
                         ) : (
-                          <div className="flex h-[200px] w-[200px] items-center justify-center rounded border-2 border-gray-300">
-                            <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+                          <div className="border-ink dark:border-night-text flex h-[200px] w-[200px] items-center justify-center border-2">
+                            <p className="semi-condensed text-sm font-semibold">
+                              Lädt...
+                            </p>
                           </div>
                         )}
                       </div>
-                      <div className="mt-3">
-                        <p className="text-xs text-blue-700 dark:text-blue-400">
+                      <div className="mt-4">
+                        <p className="text-sm">
                           Oder gib diesen Code manuell ein:
                         </p>
-                        <div className="mt-1 flex items-center gap-2">
-                          <code className="rounded bg-white px-2 py-1 font-mono text-xs break-all dark:bg-gray-800">
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <code className="border-ink dark:border-night-text border px-2 py-1 font-mono text-xs break-all">
                             {totpSecret}
                           </code>
                           <button
                             type="button"
                             onClick={copySecretToClipboard}
                             title="Code kopieren"
-                            className="text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary inline-flex shrink-0 items-center gap-1 rounded-lg border border-blue-300 bg-white px-2 py-1 text-xs font-medium transition-colors hover:bg-blue-100 dark:border-blue-700 dark:bg-gray-800 dark:hover:bg-gray-700"
+                            className={BTN_OUTLINE_SM}
                           >
-                            <Copy className="h-3.5 w-3.5" />
+                            <Copy className="h-3.5 w-3.5" aria-hidden />
                             Kopieren
                           </button>
                         </div>
                       </div>
-                    </div>
+                    </Note>
                   </div>
 
                   {showBackupCodes && backupCodes.length > 0 && (
                     <div>
-                      <h2 className="text-dark dark:text-dark-text mb-4 text-lg font-semibold">
+                      <Heading as="h2" size="list" rule>
                         Backup-Codes speichern
-                      </h2>
-                      <div className="rounded-md border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20">
-                        <div className="mb-3 flex items-start gap-2">
-                          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
-                          <div className="flex-1">
-                            <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
-                              <strong>Schritt 2:</strong> Speichere diese
-                              Backup-Codes sicher!
-                            </p>
-                            <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
-                              Diese Codes können verwendet werden, um auf dein
-                              Konto zuzugreifen, falls du dein
-                              Authenticator-Gerät verlierst. Jeder Code kann nur
-                              einmal verwendet werden. Sie werden dir nur einmal
-                              angezeigt.
-                            </p>
-                          </div>
-                        </div>
-                        <div className="mb-3 flex justify-end">
+                      </Heading>
+                      <Note
+                        tone="info"
+                        title={
+                          <span className="flex items-center gap-2">
+                            <AlertTriangle
+                              className="h-5 w-5 shrink-0"
+                              aria-hidden
+                            />
+                            Schritt 2: Speichere diese Backup-Codes sicher!
+                          </span>
+                        }
+                        titleAs="p"
+                        className="mt-4"
+                      >
+                        <p>
+                          Diese Codes können verwendet werden, um auf dein Konto
+                          zuzugreifen, falls du dein Authenticator-Gerät
+                          verlierst. Jeder Code kann nur einmal verwendet
+                          werden. Sie werden dir nur einmal angezeigt.
+                        </p>
+                        <div className="mt-3 flex justify-end">
                           <button
                             type="button"
                             onClick={downloadBackupCodes}
-                            className="text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-sm font-medium transition-colors hover:bg-amber-100 dark:border-amber-700 dark:bg-gray-800 dark:hover:bg-gray-700"
+                            className={BTN_OUTLINE_SM}
                           >
-                            <Download className="h-4 w-4" />
+                            <Download className="h-4 w-4" aria-hidden />
                             Codes herunterladen
                           </button>
                         </div>
-                        <div className="grid grid-cols-2 gap-2 font-mono text-sm">
+                        <div className="mt-3 grid grid-cols-2 gap-2 font-mono text-sm">
                           {backupCodes.map((code, index) => (
                             <div
                               key={index}
-                              className="rounded bg-white px-2 py-1 text-center dark:bg-gray-800"
+                              className="border-ink dark:border-night-text border px-2 py-1 text-center"
                             >
                               {code}
                             </div>
                           ))}
                         </div>
-                        <div className="mt-4 flex items-start gap-3 border-t border-amber-200 pt-3 dark:border-amber-800">
-                          <input
+                        <div className="border-ink dark:border-night-text mt-4 border-t pt-3">
+                          <Checkbox
                             id="backupCodesAcknowledged"
-                            type="checkbox"
                             checked={backupCodesAcknowledged}
                             onChange={(e) =>
                               setBackupCodesAcknowledged(e.target.checked)
                             }
-                            className="focus:ring-primary text-primary mt-0.5 h-4 w-4 rounded border-gray-300 focus:ring-2"
-                          />
-                          <label
-                            htmlFor="backupCodesAcknowledged"
-                            className="cursor-pointer text-sm font-medium text-amber-800 dark:text-amber-300"
                           >
                             Ich habe meine Backup-Codes gespeichert
-                          </label>
+                          </Checkbox>
                         </div>
-                      </div>
+                      </Note>
                     </div>
                   )}
 
                   <div>
-                    <h2 className="text-dark dark:text-dark-text mb-4 text-lg font-semibold">
+                    <Heading as="h2" size="list" rule>
                       Code verifizieren
-                    </h2>
-                    <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-                      <strong>Schritt 3:</strong> Gib den 6-stelligen Code aus
-                      deiner Authenticator-App ein, um die Einrichtung
-                      abzuschließen. Erst danach ist 2FA aktiv.
+                    </Heading>
+                    <p className="text-dark dark:text-night-muted mt-4 text-sm">
+                      <strong className="text-ink dark:text-night-text font-semibold">
+                        Schritt 3:
+                      </strong>{" "}
+                      Gib den 6-stelligen Code aus deiner Authenticator-App ein,
+                      um die Einrichtung abzuschließen. Erst danach ist 2FA
+                      aktiv.
                     </p>
 
-                    <div>
-                      <label
-                        htmlFor="verify2FACode"
-                        className="text-dark dark:text-dark-text mb-1 block text-sm font-medium"
-                      >
+                    <div className="mt-4">
+                      <FieldLabel htmlFor="verify2FACode">
                         Verifizierungscode
-                      </label>
+                      </FieldLabel>
                       <input
                         id="verify2FACode"
                         name="verify2FACode"
@@ -648,17 +659,18 @@ Bewahre diese Datei sicher auf und teile sie niemals mit anderen!`;
                           )
                         }
                         placeholder="123456"
-                        className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-center font-mono text-lg shadow-sm focus:ring-1 focus:outline-none"
+                        className={cn(
+                          fieldControlClasses,
+                          "text-center font-mono text-lg",
+                        )}
                         autoFocus
                       />
                     </div>
 
                     {verifyError && (
-                      <div className="mt-3 rounded-md border-l-4 border-red-500 bg-red-50 p-3 dark:border-red-400 dark:bg-red-900/20">
-                        <p className="text-sm text-red-800 dark:text-red-300">
-                          {verifyError}
-                        </p>
-                      </div>
+                      <Note tone="error" className="mt-3">
+                        <p>{verifyError}</p>
+                      </Note>
                     )}
 
                     <button
@@ -710,7 +722,7 @@ Bewahre diese Datei sicher auf und teile sie niemals mit anderen!`;
                           backupCodes.length > 0 &&
                           !backupCodesAcknowledged)
                       }
-                      className="bg-primary hover:bg-primary-dark dark:bg-primary-light dark:hover:bg-primary mt-4 w-full rounded-lg px-4 py-2 font-semibold text-white shadow-lg transition-colors disabled:opacity-50"
+                      className={cn(BTN_PRIMARY, "mt-4 w-full")}
                     >
                       {isVerifying2FA
                         ? "Wird verifiziert..."
@@ -719,7 +731,7 @@ Bewahre diese Datei sicher auf und teile sie niemals mit anderen!`;
                     {showBackupCodes &&
                       backupCodes.length > 0 &&
                       !backupCodesAcknowledged && (
-                        <p className="mt-2 text-center text-xs text-gray-500 dark:text-gray-400">
+                        <p className="text-dark dark:text-night-muted mt-2 text-center text-xs">
                           Bitte bestätige zuerst, dass du deine Backup-Codes
                           gespeichert hast.
                         </p>
@@ -730,7 +742,7 @@ Bewahre diese Datei sicher auf und teile sie niemals mit anderen!`;
             </div>
           )}
         </div>
-      </div>
-    </div>
+      </PageSection>
+    </PublicPage>
   );
 }

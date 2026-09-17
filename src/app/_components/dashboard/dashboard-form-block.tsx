@@ -15,11 +15,11 @@ export function DashboardFormBlock({
   return (
     <div className={cn("space-y-4", className)}>
       <div className="border-primary/35 dark:border-primary/45 border-l-2 py-0.5 pl-4">
-        <h3 className="text-dark dark:text-dark-text text-base font-semibold">
+        <h3 className="text-ink dark:text-night-text text-base font-semibold">
           {title}
         </h3>
         {description ? (
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-dark dark:text-night-muted mt-1 text-sm">
             {description}
           </p>
         ) : null}

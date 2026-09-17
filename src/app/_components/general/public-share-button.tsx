@@ -21,12 +21,16 @@ type PublicShareButtonProps = {
   label?: string;
 };
 
+/** Schaltfläche im Dialog: eckig, Haarlinie, füllt sich beim Zeigen mit Tinte. */
+const DIALOG_BUTTON =
+  "semi-condensed border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-rule dark:text-night-text dark:hover:bg-night-text dark:hover:text-night inline-flex min-h-11 items-center justify-center gap-2 border-2 px-3 text-base font-semibold transition-colors";
+
 function fileNameSlugForQrDownload(raw: string): string {
   const trimmed = raw.trim().slice(0, 72);
   const slug =
     trimmed
       .normalize("NFKD")
-      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[̀-ͯ]/g, "")
       .replace(/[^\w\s-]+/g, "")
       .replace(/\s+/g, "-")
       .replace(/-+/g, "-") || "teilen";
@@ -39,7 +43,8 @@ const QR_MARGIN = 2;
 const BASE_QR_OPTS = {
   width: QR_SIZE,
   margin: QR_MARGIN,
-  color: { dark: "#111827", light: "#ffffff" },
+  // Tinte auf Papier, wie alles andere im Heft.
+  color: { dark: "#1c1d1f", light: "#ffffff" },
   errorCorrectionLevel: "H" as const,
 };
 
@@ -55,17 +60,10 @@ function centerLogoOnQrCanvas(
   const box = Math.round(cw * 0.29);
   const bx = (cw - box) / 2;
   const by = (ch - box) / 2;
-  const radius = Math.round(box * 0.14);
 
   ctx.save();
   ctx.fillStyle = "#ffffff";
-  ctx.beginPath();
-  if (typeof ctx.roundRect === "function") {
-    ctx.roundRect(bx, by, box, box, radius);
-  } else {
-    ctx.rect(bx, by, box, box);
-  }
-  ctx.fill();
+  ctx.fillRect(bx, by, box, box);
   ctx.restore();
 
   const nw = logo.naturalWidth || logo.width;
@@ -217,55 +215,58 @@ export default function PublicShareButton({
         className={className}
         aria-label={`${label}: ${title}`}
       >
-        <Share2Icon className="h-5 w-5" />
+        <Share2Icon className="h-5 w-5" aria-hidden />
         <span className="hidden sm:inline">{label}</span>
       </button>
 
       {shareOpen && typeof document !== "undefined"
         ? createPortal(
-            <div className="fixed inset-0 isolate z-[9999] flex items-center justify-center bg-black/55 p-4">
-              <div className="dark:bg-dark-surface dark:border-dark-border relative z-[10000] w-full max-w-md rounded-xl border border-gray-200 bg-white p-5 shadow-xl">
-                <div className="mb-4 flex items-start justify-between gap-3">
+            <div className="programm font-programm bg-ink/55 fixed inset-0 isolate z-[9999] flex items-center justify-center p-4">
+              <div
+                role="dialog"
+                aria-modal="true"
+                aria-label="Link teilen"
+                className="border-ink bg-paper dark:border-night-rule dark:bg-night-raised relative z-[10000] w-full max-w-md border-2 p-5"
+              >
+                <div className="border-rule dark:border-night-rule mb-5 flex items-start justify-between gap-3 border-b pb-4">
                   <div>
-                    <p className="dark:text-dark-text text-base font-semibold text-gray-900">
+                    <p className="condensed text-ink dark:text-night-text text-[1.5rem] leading-none font-bold">
                       Link teilen
                     </p>
-                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    <p className="text-dark dark:text-night-muted mt-2 text-sm">
                       Link kopieren oder QR-Code scannen.
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={closeShareModal}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+                    className="text-ink hover:bg-ink hover:text-paper dark:text-night-text dark:hover:bg-night-text dark:hover:text-night -mt-1 -mr-1 inline-flex h-11 w-11 shrink-0 items-center justify-center transition-colors"
                     aria-label="Schließen"
                   >
-                    <XIcon className="h-4 w-4" />
+                    <XIcon className="h-5 w-5" aria-hidden />
                   </button>
                 </div>
 
-                <div className="dark:border-dark-border mb-4 overflow-hidden rounded-lg border border-gray-200">
-                  <div className="bg-gray-50 px-3 py-2 text-xs text-gray-600 dark:bg-gray-900/40 dark:text-gray-300">
-                    {shareUrl}
-                  </div>
-                </div>
+                <p className="border-rule dark:border-night-rule text-dark dark:text-night-muted mb-5 border px-3 py-2 text-xs break-all">
+                  {shareUrl}
+                </p>
 
-                <div className="relative mb-4 flex flex-wrap gap-2">
+                <div className="relative mb-5 flex flex-wrap gap-2">
                   <div
                     ref={moreOptsRef}
                     className="relative min-w-0 shrink-0 grow basis-[min(100%,16rem)]"
                   >
                     {hasNativeShare ? (
-                      <div className="dark:border-dark-border flex overflow-hidden rounded-lg border border-gray-200">
+                      <div className="flex">
                         <button
                           type="button"
                           onClick={() => void onCopy()}
-                          className="inline-flex min-w-0 flex-1 items-center justify-center gap-2 border-0 bg-transparent px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800/80"
+                          className={`${DIALOG_BUTTON} min-w-0 flex-1 border-r-0`}
                         >
                           {copied ? (
-                            <CheckIcon className="h-4 w-4" />
+                            <CheckIcon className="h-4 w-4" aria-hidden />
                           ) : (
-                            <CopyIcon className="h-4 w-4" />
+                            <CopyIcon className="h-4 w-4" aria-hidden />
                           )}
                           <span className="truncate">
                             {copied ? "Kopiert" : "Link kopieren"}
@@ -276,11 +277,12 @@ export default function PublicShareButton({
                           aria-expanded={moreOptionsOpen}
                           aria-haspopup="menu"
                           onClick={() => setMoreOptionsOpen((o) => !o)}
-                          className="dark:border-dark-border inline-flex shrink-0 items-center border-0 border-l border-gray-200 bg-transparent px-2 py-2 text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800/80"
+                          className={`${DIALOG_BUTTON} shrink-0 px-2`}
                           aria-label="Weitere Optionen zum Teilen"
                         >
                           <ChevronDownIcon
                             className={`h-4 w-4 transition-transform ${moreOptionsOpen ? "rotate-180" : ""}`}
+                            aria-hidden
                           />
                         </button>
                       </div>
@@ -288,12 +290,12 @@ export default function PublicShareButton({
                       <button
                         type="button"
                         onClick={() => void onCopy()}
-                        className="dark:border-dark-border inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800/80"
+                        className={`${DIALOG_BUTTON} w-full`}
                       >
                         {copied ? (
-                          <CheckIcon className="h-4 w-4" />
+                          <CheckIcon className="h-4 w-4" aria-hidden />
                         ) : (
-                          <CopyIcon className="h-4 w-4" />
+                          <CopyIcon className="h-4 w-4" aria-hidden />
                         )}
                         {copied ? "Kopiert" : "Link kopieren"}
                       </button>
@@ -301,13 +303,13 @@ export default function PublicShareButton({
                     {moreOptionsOpen && hasNativeShare ? (
                       <div
                         role="menu"
-                        className="dark:border-dark-border dark:bg-dark-surface absolute top-full left-0 z-30 mt-1 w-full min-w-[12rem] overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
+                        className="border-ink bg-paper dark:border-night-rule dark:bg-night-raised absolute top-full left-0 z-30 mt-1 w-full min-w-[12rem] border-2"
                       >
                         <button
                           type="button"
                           role="menuitem"
                           onClick={() => void onNativeDeviceShare()}
-                          className="flex w-full items-center px-4 py-2 text-left text-sm text-gray-800 hover:bg-gray-50 dark:text-gray-100 dark:hover:bg-gray-800"
+                          className="text-ink hover:bg-primary dark:text-night-text dark:hover:bg-primary dark:hover:text-ink flex w-full items-center px-4 py-3 text-left text-base font-medium transition-colors"
                         >
                           Über Gerät teilen&nbsp;…
                         </button>
@@ -321,14 +323,14 @@ export default function PublicShareButton({
                       setQrDataUrl("");
                       setQrGeneration((g) => g + 1);
                     }}
-                    className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                    className={DIALOG_BUTTON}
                   >
-                    <QrCodeIcon className="h-4 w-4" />
+                    <QrCodeIcon className="h-4 w-4" aria-hidden />
                     QR neu laden
                   </button>
                 </div>
 
-                <div className="dark:border-dark-border rounded-lg border border-gray-200 p-3 dark:bg-gray-900/40">
+                <div className="border-rule dark:border-night-rule border p-3">
                   <div className="flex justify-center">
                     {qrDataUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -338,8 +340,8 @@ export default function PublicShareButton({
                         className="h-56 w-56 dark:invert"
                       />
                     ) : (
-                      <div className="flex h-56 w-56 items-center justify-center text-sm text-gray-500 dark:text-gray-400">
-                        QR-Code wird erstellt...
+                      <div className="text-dark dark:text-night-muted flex h-56 w-56 items-center justify-center text-sm">
+                        QR-Code wird erstellt …
                       </div>
                     )}
                   </div>
@@ -348,7 +350,7 @@ export default function PublicShareButton({
                       <button
                         type="button"
                         onClick={downloadQrPng}
-                        className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+                        className={DIALOG_BUTTON}
                       >
                         <DownloadIcon className="h-4 w-4" aria-hidden />
                         QR-Code laden (PNG)
