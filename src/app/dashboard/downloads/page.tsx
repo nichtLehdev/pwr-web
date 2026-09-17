@@ -462,7 +462,7 @@ export default function DashboardDownloadsPage() {
                       })
                     }
                     disabled={reviewMutation.isPending}
-                    className="p-1 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
+                    className="text-primary-ink hover:bg-primary/10 dark:text-primary dark:hover:bg-primary/10 p-1"
                     title="Freigeben"
                   >
                     <CheckIcon className="h-5 w-5" />
@@ -560,7 +560,7 @@ export default function DashboardDownloadsPage() {
                       isDragging
                         ? "border-primary bg-primary/5 dark:bg-primary/10"
                         : uploadedFileUrl
-                          ? "border-green-400 bg-green-50 dark:border-green-600 dark:bg-green-900/20"
+                          ? "border-ink dark:border-night-text bg-rule/25 dark:bg-night-raised"
                           : "border-ink dark:border-night-text hover:bg-rule/25 dark:hover:bg-night-raised"
                     }`}
                   >
@@ -580,8 +580,8 @@ export default function DashboardDownloadsPage() {
                       </div>
                     ) : uploadedFileUrl ? (
                       <div className="flex flex-col items-center gap-2">
-                        <CheckIcon className="h-10 w-10 text-green-500" />
-                        <p className="text-sm font-medium text-green-600 dark:text-green-400">
+                        <CheckIcon className="dark:text-night-text text-ink h-10 w-10" />
+                        <p className="dark:text-night-text text-ink text-sm font-medium">
                           Datei hochgeladen
                         </p>
                         <p className="text-dark dark:text-night-muted text-xs">

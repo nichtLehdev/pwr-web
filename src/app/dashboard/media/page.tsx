@@ -364,9 +364,7 @@ export default function DashboardMediaPage() {
                 {row.original.alt}
               </span>
             ) : (
-              <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
-                fehlt
-              </span>
+              <Tag tone="muted">fehlt</Tag>
             ),
         }),
         column.accessor(
@@ -382,9 +380,7 @@ export default function DashboardMediaPage() {
                   {getValue()}
                 </span>
               ) : (
-                <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
-                  fehlt
-                </span>
+                <Tag tone="muted">fehlt</Tag>
               ),
           },
         ),
@@ -862,7 +858,7 @@ function StatCard({
       <p
         className={`text-2xl font-bold ${
           tone === "warning"
-            ? "text-amber-600 dark:text-amber-400"
+            ? "text-primary-ink dark:text-primary"
             : "text-ink dark:text-night-text"
         }`}
       >
@@ -902,7 +898,7 @@ function IconAction({
     neutral:
       "text-dark hover:bg-rule/60 hover:text-ink dark:text-night-muted dark:hover:bg-night-rule dark:hover:text-night-text",
     success:
-      "text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/30",
+      "text-primary-ink hover:bg-primary/10 dark:text-primary dark:hover:bg-primary/10",
     danger:
       "text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30",
   } as const;

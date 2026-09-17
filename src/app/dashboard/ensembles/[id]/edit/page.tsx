@@ -668,12 +668,12 @@ export default function EditEnsemblePage() {
 
                   {/* Selected conductor indicator */}
                   {!useCustomConductor && conductorId && (
-                    <p className="mt-2 text-sm text-green-700 dark:text-green-400">
+                    <p className="text-dark dark:text-night-muted mt-2 text-sm">
                       ✓ Chorleitung verknüpft
                     </p>
                   )}
                   {useCustomConductor && conductorName && (
-                    <p className="mt-2 text-sm text-green-700 dark:text-green-400">
+                    <p className="text-dark dark:text-night-muted mt-2 text-sm">
                       ✓ Benutzerdefinierte Chorleitung
                     </p>
                   )}
@@ -817,12 +817,12 @@ export default function EditEnsemblePage() {
 
                   {/* Selected representative indicator */}
                   {!useCustomRepresentative && representativeId && (
-                    <p className="mt-2 text-sm text-green-700 dark:text-green-400">
+                    <p className="text-dark dark:text-night-muted mt-2 text-sm">
                       ✓ Ansprechpartner verknüpft
                     </p>
                   )}
                   {useCustomRepresentative && representativeName && (
-                    <p className="mt-2 text-sm text-green-700 dark:text-green-400">
+                    <p className="text-dark dark:text-night-muted mt-2 text-sm">
                       ✓ Benutzerdefinierter Ansprechpartner
                     </p>
                   )}
@@ -1066,7 +1066,7 @@ export default function EditEnsemblePage() {
 
                   {/* Selected location indicator */}
                   {locationId && (
-                    <p className="mt-2 text-sm text-green-700 dark:text-green-400">
+                    <p className="text-dark dark:text-night-muted mt-2 text-sm">
                       ✓ Probenort ausgewählt
                     </p>
                   )}

@@ -471,7 +471,7 @@ export default function DashboardPosaunenwarteEditPage() {
                   type="button"
                   onClick={() => void handleAddBezirk(bezirk.id)}
                   disabled={saving}
-                  className="border-rule dark:border-night-rule bg-paper dark:bg-night flex items-center gap-3 border p-3 text-left transition-colors hover:border-green-300 hover:bg-green-50 disabled:opacity-50 dark:hover:border-green-600 dark:hover:bg-green-900/20"
+                  className="border-rule dark:border-night-rule bg-paper dark:bg-night hover:border-primary hover:bg-primary/5 dark:hover:bg-primary/10 flex items-center gap-3 border p-3 text-left transition-colors disabled:opacity-50"
                 >
                   <div className="bg-rule/25 dark:bg-night-raised flex h-10 w-10 items-center justify-center">
                     <span className="text-ink dark:text-night-text font-semibold">
@@ -488,7 +488,7 @@ export default function DashboardPosaunenwarteEditPage() {
                       </p>
                     )}
                   </div>
-                  <PlusIcon className="h-5 w-5 text-green-600 dark:text-green-500" />
+                  <PlusIcon className="text-primary-ink dark:text-primary h-5 w-5" />
                 </button>
               ))}
             </div>

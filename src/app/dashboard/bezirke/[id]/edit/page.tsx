@@ -380,7 +380,7 @@ function PersonCard({
             type="button"
             onClick={() => onMove(-1)}
             disabled={index === 0}
-            className="text-dark hover:bg-rule/25 dark:hover:bg-night-rule p-2 transition-colors disabled:opacity-30"
+            className="text-dark dark:text-night-muted hover:bg-rule/25 dark:hover:bg-night-rule p-2 transition-colors disabled:opacity-30"
             title="Nach oben"
           >
             <ChevronUp className="h-4 w-4" />
@@ -389,7 +389,7 @@ function PersonCard({
             type="button"
             onClick={() => onMove(1)}
             disabled={index === total - 1}
-            className="text-dark hover:bg-rule/25 dark:hover:bg-night-rule p-2 transition-colors disabled:opacity-30"
+            className="text-dark dark:text-night-muted hover:bg-rule/25 dark:hover:bg-night-rule p-2 transition-colors disabled:opacity-30"
             title="Nach unten"
           >
             <ChevronDown className="h-4 w-4" />

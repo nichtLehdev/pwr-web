@@ -245,7 +245,7 @@ export function CourseDownPaymentSettings({
                 </span>
               </>
             ) : (
-              <span className="text-amber-600 dark:text-amber-400">
+              <span className="text-primary-ink dark:text-primary">
                 Für eine Anzahlung braucht der Kurs eine Kursnummer — sie steht
                 im Verwendungszweck.
               </span>

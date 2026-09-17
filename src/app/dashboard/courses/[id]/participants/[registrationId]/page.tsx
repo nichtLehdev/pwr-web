@@ -521,7 +521,7 @@ export default function RegistrationDetailPage() {
                         })
                       }
                       disabled={updateStatusMutation.isPending}
-                      className="hidden min-h-9 items-center gap-1 bg-green-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50 sm:inline-flex"
+                      className="bg-primary text-ink hover:bg-primary-dark hidden min-h-9 items-center gap-1 px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-50 sm:inline-flex"
                     >
                       <CheckCircle className="h-3.5 w-3.5" />
                       {updateStatusMutation.isPending
@@ -708,10 +708,10 @@ export default function RegistrationDetailPage() {
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-green-600 dark:text-green-400">
+                    <span className="text-dark dark:text-night-muted">
                       Geschwisterkindrabatt (20% pro weiteres Kind):
                     </span>
-                    <span className="font-semibold text-green-600 dark:text-green-400">
+                    <span className="text-ink dark:text-night-text font-semibold">
                       -{(registration.siblingDiscountAmount ?? 0).toFixed(2)} €
                     </span>
                   </div>
@@ -769,7 +769,7 @@ export default function RegistrationDetailPage() {
                           })
                         }
                         disabled={approveDiscountMutation.isPending}
-                        className="inline-flex min-h-11 items-center gap-2 bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+                        className="bg-primary text-ink hover:bg-primary-dark inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
                       >
                         <CheckCircle className="h-4 w-4" />
                         Rabatt genehmigen
@@ -801,7 +801,9 @@ export default function RegistrationDetailPage() {
                 </div>
               )}
               {canApplyDiscount && (
-                <div className="border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
+                // Hinweis statt Erfolgsmeldung: Der Rabatt ist hier noch nicht
+                // gewaehrt — es steht nur da, dass er gewaehrt werden koennte.
+                <div className="border-ink dark:border-night-text border-l-2 py-2 pl-4">
                   <p className="dark:text-night-text text-ink mb-3 text-sm">
                     Die Teilnehmer bilden eine Geschwistergruppe. Der
                     Geschwisterkindrabatt (20% auf jedes weitere Geschwister)
@@ -814,7 +816,7 @@ export default function RegistrationDetailPage() {
                       })
                     }
                     disabled={applyDiscountMutation.isPending}
-                    className="inline-flex min-h-11 items-center gap-2 bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+                    className="bg-primary text-ink hover:bg-primary-dark inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
                   >
                     <CheckCircle className="h-4 w-4" />
                     Geschwisterkindrabatt gewähren
@@ -1061,7 +1063,7 @@ export default function RegistrationDetailPage() {
                   rückgängig gemacht werden.
                 </p>
                 {registration.downPaymentStatus === "PAID" && (
-                  <p className="mb-6 border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
+                  <p className="border-ink dark:border-night-text text-dark dark:text-night-muted mb-6 border-l-2 py-1 pl-4 text-sm">
                     Die Anzahlung ist bereits eingegangen. Ob sie erstattet oder
                     einbehalten wird, bitte mit der Kasse klären und
                     anschließend unter „Anzahlung“ vermerken.

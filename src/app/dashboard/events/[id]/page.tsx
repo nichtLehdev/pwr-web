@@ -347,7 +347,7 @@ export default function EventDetailPage() {
 
         {/* Review Section (for reviewers with pending events) */}
         {canReview && (
-          <section className="mb-8 border-2 border-yellow-300 bg-yellow-50 p-6 dark:border-yellow-600 dark:bg-yellow-900/20">
+          <section className="border-rule dark:border-night-rule mb-8 border-2 p-6">
             <h2 className="text-ink dark:text-night-text mb-4 text-lg font-semibold">
               Prüfung
             </h2>
@@ -369,7 +369,7 @@ export default function EventDetailPage() {
                 <button
                   onClick={handleApprove}
                   disabled={approveMutation.isPending}
-                  className="inline-flex min-h-11 items-center gap-2 bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+                  className="hover:bg-primary-dark bg-primary text-ink inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
                 >
                   <CheckIcon className="h-4 w-4" />
                   {approveMutation.isPending

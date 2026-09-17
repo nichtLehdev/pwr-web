@@ -850,7 +850,7 @@ export default function CourseParticipantsPage() {
             {canManageRegistrations && (
               <Link
                 href={`/dashboard/courses/${courseId}/participants/new`}
-                className="inline-flex min-h-11 items-center gap-2 bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700"
+                className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-night-text dark:text-night dark:hover:bg-primary dark:hover:text-ink inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm font-medium transition-colors"
               >
                 <PlusIcon className="h-4 w-4" />
                 Anmeldung hinzufügen
@@ -887,7 +887,7 @@ export default function CourseParticipantsPage() {
                     onClick={() => handleExport("csv")}
                     className="text-ink hover:bg-rule/60 dark:text-night-text dark:hover:bg-night-rule flex w-full items-center gap-3 px-4 py-2 text-left text-sm"
                   >
-                    <DownloadIcon className="h-4 w-4 text-green-600" />
+                    <DownloadIcon className="h-4 w-4" />
                     CSV (.csv)
                   </button>
                   <button
@@ -895,14 +895,14 @@ export default function CourseParticipantsPage() {
                     disabled={exportingXlsx}
                     className="text-ink hover:bg-rule/60 dark:text-night-text dark:hover:bg-night-rule flex w-full items-center gap-3 px-4 py-2 text-left text-sm disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    <DownloadIcon className="h-4 w-4 text-green-700" />
+                    <DownloadIcon className="h-4 w-4" />
                     {exportingXlsx ? "Wird erstellt …" : "Excel (.xlsx)"}
                   </button>
                   <button
                     onClick={() => handleExport("json")}
                     className="text-ink hover:bg-rule/60 dark:text-night-text dark:hover:bg-night-rule flex w-full items-center gap-3 px-4 py-2 text-left text-sm"
                   >
-                    <DownloadIcon className="h-4 w-4 text-yellow-600" />
+                    <DownloadIcon className="h-4 w-4" />
                     JSON (.json)
                   </button>
                   {canCreateInvoices &&
@@ -910,7 +910,7 @@ export default function CourseParticipantsPage() {
                     hasPendingDiscounts && (
                       <>
                         <div className="border-rule dark:border-night-rule my-1 border-t"></div>
-                        <div className="px-4 py-2 text-xs text-yellow-600 dark:text-yellow-400">
+                        <div className="text-primary-ink dark:text-primary px-4 py-2 text-xs">
                           ⚠️ Es gibt noch ausstehende Geschwisterkindrabatte
                         </div>
                       </>
@@ -933,7 +933,7 @@ export default function CourseParticipantsPage() {
         {/* Stats */}
         <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <div className="bg-rule/25 dark:bg-night-raised p-4">
-            <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+            <div className="dark:text-night-text text-ink text-2xl font-bold">
               {confirmedCount}
             </div>
             <div className="text-dark dark:text-night-muted text-sm">
@@ -941,7 +941,7 @@ export default function CourseParticipantsPage() {
             </div>
           </div>
           <div className="bg-rule/25 dark:bg-night-raised p-4">
-            <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+            <div className="dark:text-night-text text-ink text-2xl font-bold">
               {waitlistCount}
             </div>
             <div className="text-dark dark:text-night-muted text-sm">
@@ -957,7 +957,7 @@ export default function CourseParticipantsPage() {
             </div>
           </div>
           <div className="bg-rule/25 dark:bg-night-raised p-4">
-            <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+            <div className="dark:text-night-text text-ink text-2xl font-bold">
               {paidRevenue.toFixed(2)} €
             </div>
             <div className="text-dark dark:text-night-muted text-sm">
@@ -965,7 +965,7 @@ export default function CourseParticipantsPage() {
             </div>
           </div>
           <div className="bg-rule/25 dark:bg-night-raised p-4">
-            <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+            <div className="dark:text-night-text text-ink text-2xl font-bold">
               {openInvoiceAmount.toFixed(2)} €
             </div>
             <div className="text-dark dark:text-night-muted text-sm">
@@ -1158,7 +1158,7 @@ export default function CourseParticipantsPage() {
                       type="button"
                       onClick={() => void runBulkAction("confirm")}
                       disabled={bulkAction !== null || selectedWaitlisted === 0}
-                      className="min-h-11 bg-green-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-night-text dark:text-night dark:hover:bg-primary dark:hover:text-ink min-h-11 px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {bulkAction === "confirm"
                         ? "Wird bestätigt..."

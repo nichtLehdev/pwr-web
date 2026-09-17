@@ -235,8 +235,12 @@ export default function ExportImportSection() {
               </div>
             )}
             {importSuccess && (
-              <div className="border border-green-200 bg-green-50 p-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-400">
-                {importSuccess}
+              // Hinweis statt Alarm: Tinte auf Papier an einer Haarlinie
+              // statt grünem Kasten — die Meldung erklärt, sie warnt nicht.
+              <div className="border-ink dark:border-night-text border-l-2 py-1 pl-4">
+                <p className="text-dark dark:text-night-muted text-sm">
+                  {importSuccess}
+                </p>
               </div>
             )}
             <button

@@ -385,7 +385,9 @@ export default function AdminRegistrationsPage() {
       }
     >
       {discountOnly && discountFilter.length === 0 && (
-        <div className="mb-6 border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800 dark:border-yellow-900/50 dark:bg-yellow-900/20 dark:text-yellow-200">
+        // Hinweis statt Alarm: Tinte auf Papier an einer Haarlinie statt
+        // gelbem Kasten.
+        <div className="border-ink dark:border-night-text text-dark dark:text-night-muted mb-6 border-l-2 py-1 pl-4 text-sm">
           Wähle im Spaltenfilter „Rabatt“ einen Status aus — deine Berechtigung
           gilt nur für Anmeldungen mit Geschwisterkindrabatt.
         </div>

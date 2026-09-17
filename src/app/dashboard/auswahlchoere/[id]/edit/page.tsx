@@ -561,7 +561,7 @@ export default function EditAuswahlchorPage() {
 
                     {/* Selected conductor indicator */}
                     {conductorId && (
-                      <p className="mt-2 text-sm text-green-700 dark:text-green-400">
+                      <p className="text-dark dark:text-night-muted mt-2 text-sm">
                         ✓ Chorleitung verknüpft
                       </p>
                     )}

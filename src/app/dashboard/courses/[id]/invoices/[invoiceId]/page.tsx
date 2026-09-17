@@ -678,8 +678,10 @@ export default function InvoiceEditorPage() {
           </div>
 
           {missingDownPaymentCredit && (
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-900/20">
-              <p className="text-sm text-amber-800 dark:text-amber-300">
+            // Hinweis statt Alarm: Tinte auf Papier an einer Haarlinie statt
+            // bernsteinfarbenem Kasten.
+            <div className="border-ink dark:border-night-text mb-4 flex flex-wrap items-center justify-between gap-3 border-l-2 py-2 pl-4">
+              <p className="text-dark dark:text-night-muted text-sm">
                 Für diese Anmeldung ist eine Anzahlung von{" "}
                 {formatEuro(receivedDownPayment)} eingegangen, die hier noch
                 nicht abgezogen wird.

@@ -229,13 +229,13 @@ export default function InvoiceArchivePage() {
                 {formatEuro(invoice.totalAmount)}
                 {invoice.status === InvoiceStatus.PUBLISHED &&
                   (invoice.paidAt ? (
-                    <span className="block text-xs font-normal text-green-600 dark:text-green-400">
+                    <span className="text-dark dark:text-night-muted block text-xs font-normal">
                       {invoiceOpenAmount(invoice) > 0
                         ? `${formatEuro(invoiceOpenAmount(invoice))} offen`
                         : "bezahlt"}
                     </span>
                   ) : (
-                    <span className="block text-xs font-normal text-amber-600 dark:text-amber-400">
+                    <span className="text-dark dark:text-night-muted block text-xs font-normal">
                       offen
                     </span>
                   ))}
@@ -348,8 +348,8 @@ export default function InvoiceArchivePage() {
           <p
             className={`mt-1 text-2xl font-semibold ${
               (data?.openTotal ?? 0) > 0
-                ? "text-amber-600 dark:text-amber-400"
-                : "text-green-600 dark:text-green-400"
+                ? "text-primary-ink dark:text-primary"
+                : "text-ink dark:text-night-text"
             }`}
           >
             {formatEuro(data?.openTotal ?? 0)}

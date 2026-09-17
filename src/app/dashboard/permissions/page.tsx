@@ -252,7 +252,7 @@ function RolesTab() {
                     onClick={handleSave}
                     aria-label="Speichern"
                     title="Speichern"
-                    className="text-green-700 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300"
+                    className="text-primary-ink dark:text-primary hover:underline"
                   >
                     <Save className="h-4 w-4" />
                   </button>
@@ -1056,7 +1056,7 @@ function UsersTab() {
                         key={perm.key}
                         className={`px-3 py-2 text-sm ${
                           perm.granted
-                            ? "bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-300"
+                            ? "bg-rule/25 dark:bg-night-raised text-ink dark:text-night-text"
                             : "bg-red-50 text-red-800 dark:bg-red-900/20 dark:text-red-300"
                         }`}
                       >
@@ -1074,7 +1074,7 @@ function UsersTab() {
                               key={i}
                               className={`inline-block px-1.5 py-0.5 text-xs ${
                                 perm.granted
-                                  ? "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400"
+                                  ? "bg-rule dark:bg-night-rule text-ink dark:text-night-text"
                                   : "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400"
                               }`}
                             >

@@ -543,8 +543,10 @@ export default function NewPostPage() {
                   </p>
                 </div>
               ) : hasNoDistrict ? (
-                <div className="bg-yellow-50 p-4 dark:bg-yellow-900/20">
-                  <p className="text-sm text-yellow-800 dark:text-yellow-300">
+                // Hinweis statt Alarm: Tinte auf Papier an einer Haarlinie
+                // statt gelbem Kasten.
+                <div className="border-ink dark:border-night-text border-l-2 py-1 pl-4">
+                  <p className="text-dark dark:text-night-muted text-sm">
                     <strong>Hinweis:</strong> Du bist keinem Bezirk zugeordnet.
                     Der Beitrag wird ohne Bezirkszuordnung erstellt.
                   </p>

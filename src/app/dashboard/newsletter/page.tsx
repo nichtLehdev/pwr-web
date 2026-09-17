@@ -85,7 +85,7 @@ export default function DashboardNewsletterPage() {
             <p className="text-dark dark:text-night-muted text-sm">
               Aktive Abonnenten
             </p>
-            <p className="mt-2 text-3xl font-bold text-green-600 dark:text-green-400">
+            <p className="dark:text-night-text text-ink mt-2 text-3xl font-bold">
               {statistics.active}
             </p>
           </div>

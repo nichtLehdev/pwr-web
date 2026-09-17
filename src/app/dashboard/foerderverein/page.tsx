@@ -241,7 +241,7 @@ export default function DashboardFoerdervereinPage() {
           meta: { filterVariant: "set" },
           cell: ({ row }) =>
             row.original.user ? (
-              <span className="inline-flex items-center gap-1 text-sm text-green-700 dark:text-green-400">
+              <span className="dark:text-night-text text-ink inline-flex items-center gap-1 text-sm">
                 <CheckIcon className="h-4 w-4" />
                 Verknüpft
               </span>
