@@ -359,6 +359,19 @@ export default function MyRegistrationsPage() {
                         {discountTag ? (
                           <Tag tone={discountTag.tone}>{discountTag.label}</Tag>
                         ) : null}
+                        {/* Umrandet: nur der Stand. Was „aufgeteilt“ heißt,
+                            erklärt die Detailseite mit Verweis auf den
+                            anderen Teil. */}
+                        {registration.registrationGroupId ? (
+                          <Tag tone="muted">Aufgeteilt</Tag>
+                        ) : null}
+                        {registration.registrationStatus ===
+                          RegistrationStatus.WAITLIST &&
+                        registration.promotionOfferExpiresAt &&
+                        new Date(registration.promotionOfferExpiresAt) >
+                          new Date() ? (
+                          <Tag tone="orange">Nachrücken möglich</Tag>
+                        ) : null}
                       </div>
 
                       <div className={cn(META_LINE, "mt-3")}>

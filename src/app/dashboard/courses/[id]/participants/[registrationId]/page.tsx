@@ -490,7 +490,7 @@ export default function RegistrationDetailPage() {
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Tag
                   tone={
                     registrationStatusTones[registration.registrationStatus]
@@ -498,6 +498,30 @@ export default function RegistrationDetailPage() {
                 >
                   {registrationStatusLabels[registration.registrationStatus]}
                 </Tag>
+                {registration.groupParts.map((part) => (
+                  <Link
+                    key={part.id}
+                    href={`/dashboard/courses/${courseId}/participants/${part.id}`}
+                    className="border-rule dark:border-night-rule text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised semi-condensed inline-flex min-h-6 items-center border px-2 text-sm leading-none font-semibold whitespace-nowrap underline-offset-2 hover:underline"
+                  >
+                    Weiterer Teil:{" "}
+                    {registrationStatusLabels[part.registrationStatus]} (
+                    {part.participants.length})
+                  </Link>
+                ))}
+                {registration.promotionOffer && (
+                  <Tag tone="orange">
+                    Nachrück-Angebot bis{" "}
+                    {new Date(
+                      registration.promotionOffer.expiresAt,
+                    ).toLocaleString("de-DE", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </Tag>
+                )}
                 {canEdit && (
                   <button
                     type="button"

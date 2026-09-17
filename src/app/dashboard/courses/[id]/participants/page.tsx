@@ -1261,6 +1261,9 @@ export default function CourseParticipantsPage() {
                             ]
                           }
                         </Tag>
+                        {registration.registrationGroupId && (
+                          <Tag tone="muted">Aufgeteilt</Tag>
+                        )}
                         <RegistrationPaymentBadge
                           invoices={registration.invoices}
                           className="px-3 py-1"
