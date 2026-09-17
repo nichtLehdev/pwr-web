@@ -10,8 +10,7 @@ import { WayList, WayRow } from "@/app/_components/programmheft/way-list";
 import { ValueTable } from "@/app/_components/programmheft/value-table";
 import { Heading } from "@/app/_components/programmheft/section-head";
 import { eventCategoryLabel } from "@/lib/termine-labels";
-import Image from "next/image";
-import MediaCredit from "@/app/_components/general/media-credit";
+import { MitwirkendeBild, TerminBeschreibung } from "./termin-bild";
 import PublicShareButton from "@/app/_components/general/public-share-button";
 import { cn } from "@/lib/utils";
 import { sanitizeHtml } from "@/lib/sanitize";
@@ -192,28 +191,6 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-3">
           {/* Main Content */}
           <div className="space-y-10 lg:col-span-2">
-            {/* Cover Image */}
-            {event.coverImage && (
-              <div className="relative aspect-video w-full">
-                <Image
-                  src={event.coverImage.url}
-                  alt={event.coverImage.alt || event.title}
-                  fill
-                  className="object-cover"
-                />
-                {(event.coverImage.copyright || event.coverImage.creator) && (
-                  <div className="absolute right-2 bottom-2 flex justify-end">
-                    <MediaCredit
-                      copyright={event.coverImage.copyright}
-                      creator={event.coverImage.creator}
-                      showCreatorIcon
-                      className="text-right text-white/90 drop-shadow-sm"
-                    />
-                  </div>
-                )}
-              </div>
-            )}
-
             {/* Cancelled Warning */}
             {event.cancelled && (
               <Note
@@ -226,6 +203,15 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
                 </p>
               </Note>
             )}
+
+            {/* Beschreibung mit Titelbild zuerst: Datum und Ort stehen schon
+                im Seitenkopf, die Abschnitte darunter sind zum Nachschlagen
+                (Kalender, Navigation). Aufbau siehe `TerminBeschreibung`. */}
+            <TerminBeschreibung
+              image={event.coverImage}
+              fallbackAlt={event.title}
+              html={event.description ? sanitizeHtml(event.description) : null}
+            />
 
             {/* Date & Time */}
             <div>
@@ -299,21 +285,6 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
               </div>
             )}
 
-            {/* Description */}
-            {event.description && (
-              <div>
-                <Heading as="h2" size="list" rule>
-                  Beschreibung
-                </Heading>
-                <div
-                  className="prose dark:prose-invert text-ink dark:text-night-text mt-4 max-w-none"
-                  dangerouslySetInnerHTML={{
-                    __html: sanitizeHtml(event.description),
-                  }}
-                />
-              </div>
-            )}
-
             {/* Performing Ensemble */}
             {event.performingEnsembleType && (
               <div>
@@ -323,7 +294,7 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
                 <div className="mt-4">
                   {event.performingEnsembleType === "AUSWAHLCHOR" &&
                     event.auswahlChor && (
-                      <div className="flex flex-col gap-4 md:flex-row md:items-center">
+                      <div className="flex flex-col gap-4 md:flex-row md:items-start md:gap-8">
                         <div>
                           <p className="text-ink dark:text-night-text mb-1 font-semibold">
                             {event.auswahlChor.name}
@@ -340,39 +311,16 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
                           )}
                         </div>
                         {event.auswahlChor.image && (
-                          <div className="group relative ml-auto w-full shrink-0 md:w-80 md:min-w-[320px]">
-                            <div className="relative aspect-4/3 w-full">
-                              <Image
-                                src={event.auswahlChor.image.url}
-                                alt={
-                                  event.auswahlChor.image.alt ||
-                                  event.auswahlChor.name
-                                }
-                                fill
-                                className="object-cover"
-                              />
-                              {(event.auswahlChor.image.copyright ||
-                                event.auswahlChor.image.creator) && (
-                                <div className="absolute right-2 bottom-2 flex justify-end opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                                  <MediaCredit
-                                    copyright={
-                                      event.auswahlChor.image.copyright
-                                    }
-                                    creator={event.auswahlChor.image.creator}
-                                    variant="light"
-                                    showCreatorIcon
-                                    className="text-right"
-                                  />
-                                </div>
-                              )}
-                            </div>
-                          </div>
+                          <MitwirkendeBild
+                            image={event.auswahlChor.image}
+                            fallbackAlt={event.auswahlChor.name}
+                          />
                         )}
                       </div>
                     )}
                   {event.performingEnsembleType === "ENSEMBLE" &&
                     event.ensemble && (
-                      <div className="flex flex-col gap-4 md:flex-row md:items-center">
+                      <div className="flex flex-col gap-4 md:flex-row md:items-start md:gap-8">
                         <div>
                           <p className="text-ink dark:text-night-text mb-1 font-semibold">
                             {event.ensemble.name}
@@ -392,31 +340,10 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
                           )}
                         </div>
                         {event.ensemble.image && (
-                          <div className="group relative ml-auto w-full shrink-0 md:w-80 md:min-w-[320px]">
-                            <div className="relative aspect-4/3 w-full">
-                              <Image
-                                src={event.ensemble.image.url}
-                                alt={
-                                  event.ensemble.image.alt ||
-                                  event.ensemble.name
-                                }
-                                fill
-                                className="object-cover"
-                              />
-                              {(event.ensemble.image.copyright ||
-                                event.ensemble.image.creator) && (
-                                <div className="absolute right-2 bottom-2 flex justify-end opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                                  <MediaCredit
-                                    copyright={event.ensemble.image.copyright}
-                                    creator={event.ensemble.image.creator}
-                                    variant="light"
-                                    showCreatorIcon
-                                    className="text-right"
-                                  />
-                                </div>
-                              )}
-                            </div>
-                          </div>
+                          <MitwirkendeBild
+                            image={event.ensemble.image}
+                            fallbackAlt={event.ensemble.name}
+                          />
                         )}
                       </div>
                     )}
