@@ -12,9 +12,10 @@ const StaffDisplayInner = dynamic(
   {
     ssr: false,
     loading: () => (
-      // Höhe = endgültige Staff-Höhe (min-h 200/240), sonst Layout-Sprung (CLS).
-      <div className="dark:border-dark-border dark:bg-dark-surface flex min-h-[200px] items-center justify-center rounded-lg border border-gray-200 bg-gray-50 md:min-h-[240px]">
-        <p className="text-dark dark:text-dark-text-secondary text-sm">
+      // Höhe = endgültige Staff-Höhe (dieselbe clamp-Formel wie im Spiel),
+      // sonst Layout-Sprung (CLS).
+      <div className="border-rule bg-rule/25 dark:border-night-rule dark:bg-night-raised flex h-[clamp(9.5rem,40dvh,28rem)] items-center justify-center border">
+        <p className="text-dark dark:text-night-muted text-sm">
           Notenzeile wird geladen…
         </p>
       </div>
