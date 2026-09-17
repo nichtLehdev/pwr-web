@@ -41,13 +41,16 @@ function timingBiasLine(medianSignedDeltaMs: number | null): string | null {
     : "Du warst meist etwas zu spät.";
 }
 
-/** Δ-Farbe an der echten Toleranz: grün ≤ ½ Toleranz, gelb ≤ Toleranz, sonst rot. */
+/**
+ * Δ-Farbe an der echten Toleranz. Kein Grün: getroffen ist Tinte, knapp
+ * daneben die Messing-Tinte (nachts das Druckorange), daneben Rot.
+ */
 function deltaColorClass(deltaMs: number | null, toleranceMs: number): string {
-  if (deltaMs === null) return "text-red-600 dark:text-red-400";
+  if (deltaMs === null) return "text-red-700 dark:text-red-400";
   const abs = Math.abs(deltaMs);
-  if (abs <= toleranceMs * 0.5) return "text-emerald-600 dark:text-emerald-400";
-  if (abs <= toleranceMs) return "text-amber-700 dark:text-amber-300";
-  return "text-red-600 dark:text-red-400";
+  if (abs <= toleranceMs * 0.5) return "text-ink dark:text-night-text";
+  if (abs <= toleranceMs) return "text-primary-ink dark:text-primary";
+  return "text-red-700 dark:text-red-400";
 }
 
 export function ResultView({
@@ -61,62 +64,76 @@ export function ResultView({
   const biasLine = timingBiasLine(result.medianSignedDeltaMs);
 
   return (
-    <div className="dark:border-dark-border/80 space-y-5 border-t border-gray-200/90 pt-5 md:space-y-6 md:pt-6">
-      <div className="text-center">
-        <CheerIcon
-          className="text-primary mx-auto h-12 w-12 stroke-[1.35] md:h-20 md:w-20 md:stroke-[1.3]"
-          aria-hidden
-        />
-        <p className="text-dark dark:text-dark-text mt-3 text-lg font-bold md:text-xl">
-          {cheer.line}
+    <div className="border-rule dark:border-night-rule flex flex-col gap-[clamp(0.75rem,2.2svh,1.5rem)] border-t pt-[clamp(0.75rem,2.2svh,1.5rem)]">
+      {/* Zahl und Zuspruch nebeneinander: auf breiten Fenstern spart das die
+          Höhe, die vorher als vierte gestapelte Zeile verloren ging. */}
+      <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-stretch sm:gap-6">
+        <p className="on-orange bg-primary text-ink flex min-w-[8rem] flex-col items-center justify-center px-5 py-2.5">
+          <span className="sr-only">Trefferquote {result.percent} Prozent</span>
+          <span
+            aria-hidden
+            className="condensed text-[clamp(2.25rem,6.5svh,4rem)] leading-none font-extrabold tabular-nums"
+          >
+            {result.percent}%
+          </span>
+          <span
+            aria-hidden
+            className="semi-condensed mt-1.5 text-xs font-bold tracking-[0.06em] uppercase"
+          >
+            Treffer
+          </span>
         </p>
-        <p
-          className="text-primary dark:text-primary-light mt-2 text-5xl font-bold tabular-nums md:text-6xl"
-          aria-label={`Trefferquote ${result.percent} Prozent`}
-        >
-          {result.percent}%
-        </p>
-        <p className="text-dark dark:text-dark-text-secondary mt-3 text-sm font-medium">
-          {result.missingCount > 0 && (
-            <span className="mr-3">Verpasst: {result.missingCount}</span>
-          )}
-          {result.extraCount > 0 && (
-            <span className="mr-3">Extra-Tipps: {result.extraCount}</span>
-          )}
-          {result.missingCount === 0 && result.extraCount === 0 && (
-            <span>Alle Schläge getroffen</span>
-          )}
-        </p>
-        {result.medianAbsDeltaMs !== null && (
-          <p className="text-dark dark:text-dark-text-muted mt-2 text-xs">
-            Typische Abweichung: {Math.round(result.medianAbsDeltaMs)} ms
+
+        <div className="flex min-w-0 flex-1 flex-col justify-center text-center sm:text-left">
+          <p className="condensed text-ink dark:text-night-text flex items-center justify-center gap-2.5 text-[clamp(1.25rem,3svh,1.875rem)] leading-tight font-bold sm:justify-start">
+            <CheerIcon
+              className="h-6 w-6 shrink-0 stroke-[1.4] md:h-8 md:w-8"
+              aria-hidden
+            />
+            {cheer.line}
           </p>
-        )}
-        {biasLine && (
-          <p className="text-dark dark:text-dark-text-secondary mt-1 text-xs">
-            {biasLine}
+          <p className="text-dark dark:text-night-muted mt-2 flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm sm:justify-start">
+            {result.missingCount > 0 && (
+              <span>Verpasst: {result.missingCount}</span>
+            )}
+            {result.extraCount > 0 && (
+              <span>Extra-Tipps: {result.extraCount}</span>
+            )}
+            {result.missingCount === 0 && result.extraCount === 0 && (
+              <span>Alle Schläge getroffen</span>
+            )}
+            {result.medianAbsDeltaMs !== null && (
+              <span>
+                Typische Abweichung: {Math.round(result.medianAbsDeltaMs)} ms
+              </span>
+            )}
           </p>
-        )}
+          {biasLine && (
+            <p className="text-dark dark:text-night-muted mt-1 text-sm">
+              {biasLine}
+            </p>
+          )}
+        </div>
       </div>
 
-      <details className="group dark:border-dark-border dark:bg-dark-background/40 rounded-lg border border-gray-200/80 bg-white/50">
+      <details className="group border-rule dark:border-night-rule border">
         <summary
           className={cn(
-            "text-dark dark:text-dark-text cursor-pointer list-none rounded-lg px-4 py-3 text-center text-sm font-bold marker:hidden [&::-webkit-details-marker]:hidden",
+            "semi-condensed text-ink dark:text-night-text flex min-h-11 cursor-pointer list-none items-center justify-center px-4 text-sm font-bold marker:hidden [&::-webkit-details-marker]:hidden",
             GAME_FOCUS_RING,
           )}
         >
           <span className="group-open:hidden">Alle Schläge anzeigen</span>
           <span className="hidden group-open:inline">Details ausblenden</span>
         </summary>
-        <p className="text-dark dark:text-dark-text-muted dark:border-dark-border border-t border-gray-100 px-4 pb-2 text-xs">
+        <p className="text-dark dark:text-night-muted border-rule dark:border-night-rule border-t px-4 pt-2 pb-1 text-xs">
           „Verpasst“ = kein Tipp für diesen Schlag. „Extra“ = Tipp ohne
           passenden Schlag.
         </p>
-        <div className="overflow-x-auto px-2 pb-3">
+        <div className="overflow-x-auto px-3 pb-3">
           <table className="w-full min-w-[280px] text-left text-sm">
             <thead>
-              <tr className="border-dark-border text-dark dark:text-dark-text-secondary dark:border-dark-border border-b text-xs uppercase">
+              <tr className="semi-condensed border-rule text-dark dark:border-night-rule dark:text-night-muted border-b text-xs font-bold tracking-[0.06em] uppercase">
                 <th className="py-2 pr-2">Nr.</th>
                 <th className="py-2 pr-2">Soll</th>
                 <th className="py-2 pr-2">Ist</th>
@@ -127,19 +144,22 @@ export function ResultView({
               {result.beats.map((b, i) => (
                 <tr
                   key={i}
-                  className="border-dark-border/50 dark:border-dark-border/50 border-b"
+                  className="border-rule/60 dark:border-night-rule/60 border-b"
                 >
-                  <td className="text-dark dark:text-dark-text py-1.5 pr-2">
+                  <td className="text-dark dark:text-night-muted py-1.5 pr-2 tabular-nums">
                     {i + 1}
                   </td>
-                  <td className="text-dark dark:text-dark-text py-1.5 pr-2 tabular-nums">
+                  <td className="text-ink dark:text-night-text py-1.5 pr-2 tabular-nums">
                     {Math.round(b.expectedMs)}
                   </td>
-                  <td className="text-dark dark:text-dark-text py-1.5 pr-2 tabular-nums">
+                  <td className="text-ink dark:text-night-text py-1.5 pr-2 tabular-nums">
                     {b.tappedMs !== null ? Math.round(b.tappedMs) : "—"}
                   </td>
                   <td
-                    className={deltaColorClass(b.deltaMs, result.toleranceMs)}
+                    className={cn(
+                      "py-1.5 font-bold tabular-nums",
+                      deltaColorClass(b.deltaMs, result.toleranceMs),
+                    )}
                   >
                     {b.deltaMs !== null
                       ? `${b.deltaMs > 0 ? "+" : ""}${Math.round(b.deltaMs)}`
@@ -152,7 +172,7 @@ export function ResultView({
         </div>
       </details>
 
-      <div className="flex flex-col gap-3 sm:flex-row">
+      <div className="flex flex-col gap-2 sm:flex-row">
         <Button
           type="button"
           variant="outline"

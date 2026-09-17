@@ -31,26 +31,61 @@ export interface RhythmDisplayProps {
   /** Wo Takte wechseln (Index der ersten Note des neuen Takts); für Taktstriche. */
   barStartEventIndices?: number[];
   /**
-   * Optional (Ergebnis-Phase): Urteil je Event-Index — färbt Notenköpfe
-   * grün/gelb/rot. Pausen bleiben `undefined`; ohne Prop ändert sich nichts.
+   * Optional (Ergebnis-Phase): Urteil je Event-Index — färbt Notenköpfe.
+   * Pausen bleiben `undefined`; ohne Prop ändert sich nichts.
    */
   eventVerdicts?: (OnsetVerdict | undefined)[];
+  /**
+   * `play` (Vorgabe): die Notenzeile ist der einzige Inhalt und nimmt sich den
+   * Platz. `review`: sie teilt ihn sich mit der Auswertung und bleibt kleiner.
+   */
+  variant?: "play" | "review";
 }
+
+/**
+ * Höhe des Notenkastens. Das Spielmaß nutzt auch der Ladeplatzhalter in
+ * `rhythm-display-loader.tsx` — bitte zusammen ändern.
+ *
+ * `svh` statt `dvh`: die kleine Ansichtshöhe springt nicht, wenn die Adresszeile
+ * auf dem Handy ein- und ausfährt — sonst würde das Notenbild mitten im Spiel
+ * neu gezeichnet.
+ */
+export const NOTATION_BOX_PLAY =
+  "h-[clamp(10rem,26svh,15rem)] md:h-[clamp(12rem,32svh,20rem)]";
+export const NOTATION_BOX_REVIEW =
+  "h-[clamp(8rem,17svh,10rem)] md:h-[clamp(9rem,20svh,13rem)]";
+
+/** Logische Zeichenfläche. Die viewBox zieht sie danach auf die Tinte zusammen. */
+const LOGICAL_HEIGHT = 300;
+const STAVE_Y = 60;
+/** Obergrenze, damit bei sehr wenig Tinte (eine Ganze) nichts plakatgroß wird. */
+const MAX_SCALE = 2.0;
+/**
+ * Tintenhöhe einer Zeile bei Maßstab 1, im Browser gemessen: rund 200–220px
+ * (Hals und Fähnchen über der Linie, Pausen darunter). Zu klein angesetzt,
+ * rechnet sich das Bild zu groß und muss über die Höhe eingepasst werden —
+ * dann steht die Zeile schmaler als die Satzbreite.
+ */
+const INK_HEIGHT = 210;
 
 function timeSigString(ts: TimeSignature): string {
   return `${ts.numerator}/${ts.denominator}`;
 }
 
-/** Urteil → Notenfarbe (getrennt für Hell/Dunkel wegen Kontrast). */
+/**
+ * Urteil → Notenfarbe. Kein Grün: getroffen ist schlicht Tinte, knapp daneben
+ * trägt die Messing-Tinte des Hefts (im Nachtdruck das Druckorange selbst),
+ * daneben bleibt Rot — die einzige Signalfarbe, die das Heft kennt.
+ */
 function verdictColor(verdict: OnsetVerdict, dark: boolean): string {
   switch (verdict) {
     case "good":
-      return dark ? "#34d399" : "#059669";
+      return dark ? "#ecebe8" : "#1c1d1f";
     case "ok":
-      return dark ? "#fbbf24" : "#b45309";
+      return dark ? "#faa619" : "#a55800";
     case "off":
     case "missed":
-      return dark ? "#f87171" : "#dc2626";
+      return dark ? "#f87171" : "#b91c1c";
   }
 }
 
@@ -77,6 +112,7 @@ export function RhythmDisplay({
   bars,
   barStartEventIndices = [],
   eventVerdicts,
+  variant = "play",
 }: RhythmDisplayProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { resolvedTheme } = useTheme();
@@ -88,12 +124,25 @@ export function RhythmDisplay({
 
     await ensureVexFlowFonts();
 
-    const containerW = Math.max(280, el.clientWidth);
-    /** Schmalere Notenlinie + kleinere Abstände, damit lange Level auf dem Handy passen. */
-    const compact = containerW < 640;
-    /** Genug Höhe: Pausen-Fähnchen/-Hälse ragen oft unter die Linie; zu wenig → „fehlende“ Pausen. */
-    const height = compact ? (containerW < 400 ? 220 : 232) : 280;
+    const boxW = Math.max(240, el.clientWidth);
+    const boxH = Math.max(120, el.clientHeight);
     const colors = notationColors(dark);
+
+    /**
+     * Die logische Breite steuert allein die Notendichte — wie groß das Bild
+     * am Ende steht, entscheidet der Platz. Schmal gezeichnet und groß
+     * skaliert heißt: auf einem hohen Fenster werden die Noten größer.
+     *
+     * Eine Notenzeile ist breit und flach; sie kann einen hohen Kasten nie
+     * ausfüllen, ohne über die Breite hinauszuwachsen. Sie wächst deshalb nur
+     * bis zu einem geschmackvollen Maß mit — der Rest bleibt Luft um sie
+     * herum, wie im gedruckten Notenbeispiel.
+     */
+    const targetScale = Math.min(1.8, boxH / INK_HEIGHT);
+    const minLogicalW = Math.max(300, 60 + events.length * 22);
+    const logicalW = Math.max(minLogicalW, Math.round(boxW / targetScale));
+    /** Enge Metriken erst, wenn die Zeile logisch wirklich schmal wird. */
+    const compact = logicalW < 560;
 
     const compactMetrics = compact
       ? {
@@ -107,7 +156,6 @@ export function RhythmDisplay({
 
     withCompactMetrics(compactMetrics, () => {
       const marginX = compact ? 6 : 12;
-      const staveY = compact ? 30 : 36;
       const tsStr = timeSigString(timeSignature);
       const beamGroups = Beam.getDefaultBeamGroups(tsStr);
 
@@ -149,9 +197,7 @@ export function RhythmDisplay({
       };
 
       const built = buildStemmables();
-      /** Feste Notenlinien-Breite = verfügbare Breite — kein Verbreitern, kein horizontales Scrollen. */
-      const baseInner = containerW - marginX * 2;
-      const staveWidth = Math.max(120, baseInner);
+      const staveWidth = Math.max(120, logicalW - marginX * 2);
 
       const formatterOpts = {
         maxIterations: compact ? 22 : 28,
@@ -163,12 +209,11 @@ export function RhythmDisplay({
 
       el.innerHTML = "";
 
-      const svgWidth = staveWidth + marginX * 2;
       const renderer = new Renderer(el, RendererBackends.SVG);
-      renderer.resize(svgWidth, height);
+      renderer.resize(logicalW, LOGICAL_HEIGHT);
       const ctx = renderer.getContext();
 
-      const stave = new Stave(marginX, staveY, staveWidth)
+      const stave = new Stave(marginX, STAVE_Y, staveWidth)
         .addClef("treble")
         .addTimeSignature(tsStr);
 
@@ -202,12 +247,6 @@ export function RhythmDisplay({
         b.setContext(ctx).draw();
       });
 
-      const svg = el.querySelector("svg");
-      if (svg) {
-        svg.setAttribute("overflow", "visible");
-        (svg as SVGSVGElement).style.overflow = "visible";
-      }
-
       /** Taktstriche zwischen mehreren Takten (eine lange Voice = sonst kein Strich). */
       const stroke = colors.barline;
       if (stave && ctx) {
@@ -228,8 +267,63 @@ export function RhythmDisplay({
           ctx.restore();
         }
       }
+
+      /**
+       * Erst zeichnen, dann die viewBox auf die tatsächliche Tinte ziehen: die
+       * feste Zeichenfläche ließ unter jeder Notenzeile 74px Papier leer
+       * (gemessen: 200px Tinte in 280px Kasten). Jetzt füllt das Bild den
+       * Kasten, ohne je breiter als er zu werden.
+       */
+      const svg = el.querySelector("svg");
+      if (svg instanceof SVGSVGElement) {
+        let vbX = 0;
+        let vbY = 0;
+        let vbW = logicalW;
+        let vbH = LOGICAL_HEIGHT;
+        try {
+          const bb = svg.getBBox();
+          if (bb.width > 0 && bb.height > 0) {
+            const padX = 4;
+            const padY = 8;
+            vbX = bb.x - padX;
+            vbY = bb.y - padY;
+            vbW = bb.width + padX * 2;
+            vbH = bb.height + padY * 2;
+          }
+        } catch {
+          /* Ohne getBBox bleibt die volle Zeichenfläche stehen. */
+        }
+
+        /** Nur aufziehen, nie beschneiden: der Deckel vergrößert die viewBox. */
+        const fit = Math.min(boxW / vbW, boxH / vbH);
+        if (fit > MAX_SCALE) {
+          const cx = vbX + vbW / 2;
+          const cy = vbY + vbH / 2;
+          vbW = boxW / MAX_SCALE;
+          vbH = boxH / MAX_SCALE;
+          vbX = cx - vbW / 2;
+          vbY = cy - vbH / 2;
+        }
+
+        svg.setAttribute("viewBox", `${vbX} ${vbY} ${vbW} ${vbH}`);
+        svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+        svg.setAttribute("width", "100%");
+        svg.setAttribute("height", "100%");
+        svg.style.width = "100%";
+        svg.style.height = "100%";
+        svg.style.display = "block";
+      }
     });
-  }, [barStartEventIndices, bars, dark, events, eventVerdicts, timeSignature]);
+  }, [
+    barStartEventIndices,
+    bars,
+    dark,
+    events,
+    eventVerdicts,
+    timeSignature,
+    // `variant` steht bewusst nicht in der Liste: `draw` liest die Kastenhöhe
+    // aus dem DOM, und den Wechsel meldet der ResizeObserver unten.
+  ]);
 
   useEffect(() => {
     void draw();
@@ -238,16 +332,23 @@ export function RhythmDisplay({
   useEffect(() => {
     const el = containerRef.current;
     if (!el || typeof ResizeObserver === "undefined") return;
-    /** Entprellt + nur bei Breitenänderung — mobile URL-Bar ändert nur die Höhe. */
+    /**
+     * Entprellt und mit Schwelle: die Höhe zählt jetzt mit (der Kasten wächst
+     * mit dem Fenster), aber erst ab 8px — winzige Sprünge sollen nicht neu
+     * zeichnen.
+     */
     let lastWidth = el.clientWidth;
+    let lastHeight = el.clientHeight;
     let timer: number | null = null;
     const ro = new ResizeObserver(() => {
       const width = el.clientWidth;
-      if (width === lastWidth) return;
+      const height = el.clientHeight;
+      if (width === lastWidth && Math.abs(height - lastHeight) < 8) return;
       if (timer !== null) window.clearTimeout(timer);
       timer = window.setTimeout(() => {
         timer = null;
         lastWidth = el.clientWidth;
+        lastHeight = el.clientHeight;
         void draw();
       }, 100);
     });
@@ -259,16 +360,17 @@ export function RhythmDisplay({
   }, [draw]);
 
   return (
+    // Kein Rahmen: im Heft steht eine Notenzeile auf dem Papier, nicht in
+    // einem Kasten — und ein Kasten um eine flache Zeile stünde auf hohen
+    // Fenstern zur Hälfte leer. Das SVG passt sich über seine viewBox ein,
+    // deshalb gibt es kein horizontales Scrollen.
     <div
-      className="border-dark-border/40 dark:border-dark-border dark:bg-dark-surface w-full overflow-y-visible rounded-lg border bg-white p-2 pb-4 md:p-3"
+      ref={containerRef}
       role="img"
       aria-label={`Rhythmus-Notation: ${events.length} Symbole im ${timeSignature.numerator}/${timeSignature.denominator}-Takt`}
-    >
-      {/* Feste SVG-Breite = Container; kein horizontales Scrollen (VexFlow packt in die Notenlinien). */}
-      <div
-        ref={containerRef}
-        className="min-h-[220px] w-full max-w-full overflow-x-hidden sm:min-h-[232px] md:min-h-[280px]"
-      />
-    </div>
+      className={`w-full max-w-full overflow-hidden ${
+        variant === "review" ? NOTATION_BOX_REVIEW : NOTATION_BOX_PLAY
+      }`}
+    />
   );
 }
