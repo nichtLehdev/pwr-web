@@ -38,7 +38,7 @@ export default function DashboardCoursesPage() {
 
   if (isPending || profileLoading || permissionsLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="dark:bg-night bg-paper flex min-h-screen items-center justify-center">
         <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
@@ -59,7 +59,7 @@ export default function DashboardCoursesPage() {
       actions={
         <Link
           href="/dashboard/courses/new"
-          className="bg-primary hover:bg-primary-dark inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors"
+          className="on-orange bg-primary text-ink hover:bg-primary-dark inline-flex min-h-11 items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-colors"
         >
           <Plus className="h-4 w-4" />
           Neuer Kurs
