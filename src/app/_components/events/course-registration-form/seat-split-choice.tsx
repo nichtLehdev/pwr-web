@@ -11,12 +11,19 @@ import {
   type SeatAvailability,
   type SeatSelectionProblem,
 } from "@/lib/registration-split";
-import { seatShortageCause } from "./seat-shortage-notice";
-import type { CourseWithRelations, ParticipantDraft } from "./types";
+import { seatShortageCause, type ShortageCourse } from "./seat-shortage-notice";
+
+/** Was die Auswahl von einem Teilnehmer braucht — im Formular wie gespeichert. */
+export type SplitChoiceParticipant = {
+  firstName: string;
+  lastName: string;
+  priceOptionId?: string | null;
+  siblingGroupId?: string | null;
+};
 
 interface SeatSplitChoiceProps {
-  course: CourseWithRelations;
-  participants: ParticipantDraft[];
+  course: ShortageCourse;
+  participants: SplitChoiceParticipant[];
   shortage: SeatShortage;
   availability: SeatAvailability;
   /**
@@ -24,6 +31,8 @@ interface SeatSplitChoiceProps {
    * Aufteilen. Das Kursteam wählt das über den Status der Anmeldung.
    */
   showModeChoice: boolean;
+  /** Die Anmeldung steht schon auf der Warteliste (Nachrück-Angebot). */
+  waiting?: boolean;
   splitting: boolean;
   onSplittingChange: (splitting: boolean) => void;
   selectedIndexes: number[];
@@ -42,6 +51,7 @@ export function SeatSplitChoice({
   shortage,
   availability,
   showModeChoice,
+  waiting = false,
   splitting,
   onSplittingChange,
   selectedIndexes,
@@ -74,7 +84,7 @@ export function SeatSplitChoice({
         ? "Bitte wählen Sie mindestens einen Teilnehmer für die freien Plätze."
         : problem.kind === "all"
           ? "Die Plätze reichen nicht für alle – mindestens ein Teilnehmer kommt auf die Warteliste."
-          : seatShortageCause(course, problem);
+          : seatShortageCause(course, problem, { waiting });
 
   const radioCard =
     "dark:bg-dark-background flex cursor-pointer items-start gap-3 rounded-lg border border-orange-200 bg-white p-3 dark:border-orange-800";
@@ -83,7 +93,7 @@ export function SeatSplitChoice({
     <div className="rounded-lg border border-orange-200 bg-orange-50 p-4 dark:border-orange-800 dark:bg-orange-900/20">
       <p className="text-sm text-orange-800 dark:text-orange-300">
         <strong>Nicht genug freie Plätze:</strong>{" "}
-        {seatShortageCause(course, shortage)}
+        {seatShortageCause(course, shortage, { waiting })}
       </p>
 
       {showModeChoice && (

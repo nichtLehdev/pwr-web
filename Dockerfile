@@ -103,8 +103,10 @@ COPY --from=builder --chown=nextjs:nodejs /app/src/lib/bezirke.ts ./src/lib/
 COPY --from=builder --chown=nextjs:nodejs /app/src/lib/slug.ts ./src/lib/
 COPY --from=builder --chown=nextjs:nodejs /app/src/lib/phone-number.ts ./src/lib/
 
-# Trigger script for the mStudio cron job (mittwald), see the script header
+# Trigger scripts for the mStudio cron jobs (mittwald), see the script headers
 COPY --chown=nextjs:nodejs scripts/trigger-registration-closed.mjs ./scripts/
+COPY --chown=nextjs:nodejs scripts/trigger-newsletter-cleanup.mjs ./scripts/
+COPY --chown=nextjs:nodejs scripts/trigger-waitlist-offers.mjs ./scripts/
 
 # Switch to non-root user
 USER nextjs
