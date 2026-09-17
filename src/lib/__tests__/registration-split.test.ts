@@ -149,6 +149,21 @@ describe("sibling discount across parts", () => {
     });
   });
 
+  it("counts siblings in other parts of the group", () => {
+    // Clara wartet in einer älteren Aufteilung; Ben rückt nun aus einer
+    // zweiten Aufteilung nach — sein Rabatt hängt an ihr.
+    expect(
+      partPricing([younger, other], [0], {
+        withSiblingDiscount: true,
+        otherParticipants: [older],
+      }),
+    ).toEqual({
+      originalTotalPrice: 100,
+      siblingDiscountAmount: 20,
+      totalPrice: 80,
+    });
+  });
+
   it("drops the discount when it was not applied for", () => {
     expect(
       partPricing([older, younger], [1], { withSiblingDiscount: false }),

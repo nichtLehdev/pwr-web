@@ -8,15 +8,34 @@ function seats(count: number): string {
   return count === 1 ? "ist nur noch 1 Platz" : `sind nur noch ${count} Plätze`;
 }
 
-/** Ein Satz dazu, woran es fehlt: am Kurs oder an einer Preiskategorie. */
+/** Was die Hinweise vom Kurs brauchen — im Formular wie an einer Anmeldung. */
+export type ShortageCourse = {
+  priceOptions: ReadonlyArray<{
+    id: string;
+    label: string;
+    description: string | null;
+  }>;
+};
+
+/**
+ * Ein Satz dazu, woran es fehlt: am Kurs oder an einer Preiskategorie.
+ * `waiting`: für eine Anmeldung, die schon auf der Warteliste steht — nicht
+ * für eine, die gerade ausgefüllt wird.
+ */
 export function seatShortageCause(
-  course: CourseWithRelations,
+  course: ShortageCourse,
   shortage: SeatShortage,
+  { waiting = false }: { waiting?: boolean } = {},
 ): string {
+  const tail = (inOption: boolean) =>
+    waiting
+      ? ` – nicht genug für alle ${shortage.requested} Teilnehmer${inOption ? " dieser Kategorie" : ""}.`
+      : `, Sie melden ${shortage.requested} Teilnehmer${inOption ? " darin" : ""} an.`;
+
   if (shortage.kind === "course") {
     return shortage.free === 0
       ? "Der Kurs ist bereits ausgebucht."
-      : `Im Kurs ${seats(shortage.free)} frei, Sie melden ${shortage.requested} Teilnehmer an.`;
+      : `Im Kurs ${seats(shortage.free)} frei${tail(false)}`;
   }
 
   const option = course.priceOptions.find(

@@ -482,6 +482,11 @@ function buildCourseMailFrom(senderName: string): string | undefined {
 export { sendEmail } from "./send-email";
 export { sendCourseRegistrationSplitEmail } from "./registration-split-email";
 export {
+  sendWaitlistPromotionOfferEmail,
+  sendWaitlistPromotionOfferExpiredEmail,
+  sendWaitlistPromotionOfferExpiringTeamEmail,
+} from "./waitlist-offer-emails";
+export {
   transporter,
   verifyEmailConnection,
   isEmailConfigured,

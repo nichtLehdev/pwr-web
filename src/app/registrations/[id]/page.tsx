@@ -34,6 +34,7 @@ import LocationNavigationLink from "@/app/_components/general/location-navigatio
 import { participantPriceOptionLabel } from "@/lib/course-price-options";
 import { registrantMayCancelDownPayment } from "@/lib/course-down-payment";
 import { RegistrationDownPaymentCard } from "@/app/_components/events/registration-down-payment-card";
+import { PromotionOfferCard } from "@/app/_components/events/promotion-offer-card";
 
 export default function ViewRegistrationPage() {
   const params = useParams();
@@ -304,6 +305,22 @@ export default function ViewRegistrationPage() {
             </div>
           </div>
         </div>
+
+        {registration.promotionOffer && (
+          <PromotionOfferCard
+            registrationId={registration.id}
+            accessToken={accessToken ?? undefined}
+            course={registration.course}
+            participants={registration.participants}
+            offer={registration.promotionOffer}
+            onChanged={() => {
+              void utils.registrations.getById.invalidate({
+                id: registrationId,
+              });
+              void utils.registrations.getMyRegistrations.invalidate();
+            }}
+          />
+        )}
 
         {registration.groupParts.length > 0 && (
           <div className="mb-6 rounded-lg border border-orange-200 bg-orange-50 p-4 dark:border-orange-800 dark:bg-orange-900/20">

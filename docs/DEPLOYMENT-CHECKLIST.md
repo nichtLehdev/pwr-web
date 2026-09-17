@@ -145,15 +145,21 @@ Reihenfolge beim ersten Deploy auf eine leere Datenbank:
 
 Die geplanten Jobs laufen auf mittwald **nicht** im Stack, sondern als
 mStudio-Cronjobs. Sie müssen dort einmalig angelegt sein — ohne sie werden
-keine Anmeldeschluss-Mails verschickt und unbestätigte Newsletter-Anmeldungen
-nie gelöscht (was die Datenschutzerklärung mit 30 Tagen zusagt).
+keine Anmeldeschluss-Mails verschickt, unbestätigte Newsletter-Anmeldungen
+nie gelöscht (was die Datenschutzerklärung mit 30 Tagen zusagt) und
+abgelaufene Nachrück-Angebote nie geschlossen: die Warteliste bliebe dann
+beim ersten unbeantworteten Angebot stehen.
 
 - [ ] `registration-closed` — ruft `POST /api/cron/registration-closed` auf
       (Vorschlag: alle 6 Stunden), Skript `scripts/trigger-registration-closed.mjs`
 - [ ] `newsletter-cleanup` — ruft `POST /api/cron/newsletter-cleanup` auf
       (Vorschlag: täglich), Skript `scripts/trigger-newsletter-cleanup.mjs`
+- [ ] `waitlist-offers` — ruft `POST /api/cron/waitlist-offers` auf
+      (Vorschlag: stündlich), Skript `scripts/trigger-waitlist-offers.mjs`;
+      schließt abgelaufene Nachrück-Angebote und erinnert das Kursteam zwei
+      Tage vor Ablauf
 
-Beide brauchen `Authorization: Bearer $CRON_SECRET` — ohne den Header
+Alle brauchen `Authorization: Bearer $CRON_SECRET` — ohne den Header
 antworten die Routen mit 401. Einmal von Hand testen:
 
 ```bash

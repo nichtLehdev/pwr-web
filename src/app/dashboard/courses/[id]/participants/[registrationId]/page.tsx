@@ -498,6 +498,22 @@ export default function RegistrationDetailPage() {
                     {part.participants.length})
                   </Link>
                 ))}
+                {registration.promotionOffer && (
+                  <span
+                    className="bg-primary rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap text-white"
+                    title="Die Anmeldenden wählen, wer nachrückt. Bis dahin hält die Warteliste an."
+                  >
+                    Nachrück-Angebot bis{" "}
+                    {new Date(
+                      registration.promotionOffer.expiresAt,
+                    ).toLocaleString("de-DE", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                )}
                 {canEdit && (
                   <button
                     type="button"
