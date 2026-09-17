@@ -16,7 +16,10 @@ import {
 } from "~/generated/prisma/enums";
 import {
   DashboardFormSectionLayout,
+  DashboardOverflowMenu,
   DashboardPage,
+  EntryExportButton,
+  useEntryExport,
 } from "@/app/_components/dashboard";
 import { Tag, type TagTone } from "@/app/_components/programmheft/tag";
 import { ArrowLeftIcon, CheckIcon, Edit, Trash2, XIcon } from "lucide-react";
@@ -119,6 +122,8 @@ export default function EventDetailPage() {
       toast.error("Fehler bei der Ablehnung: " + error.message);
     },
   });
+
+  const entryExport = useEntryExport("events", eventId);
 
   const deleteMutation = api.events.delete.useMutation({
     onSuccess: () => {
@@ -263,7 +268,10 @@ export default function EventDetailPage() {
           { label: event.title },
         ]}
         actions={
-          <div className="flex flex-wrap gap-2">
+          // `w-full sm:w-auto`: Nur über die volle Breite kann `ml-auto` das
+          // „…“-Menü auf dem Telefon an den rechten Rand schieben — sein Panel
+          // ist rechts verankert.
+          <div className="flex w-full flex-wrap gap-2 sm:w-auto">
             {canEdit && (
               <Link
                 href={`/dashboard/events/${eventId}/edit`}
@@ -273,6 +281,9 @@ export default function EventDetailPage() {
                 Bearbeiten
               </Link>
             )}
+            {entryExport.canExport && (
+              <EntryExportButton exporter={entryExport} />
+            )}
             {canDelete && (
               <button
                 onClick={() => setShowDeleteModal(true)}
@@ -281,6 +292,15 @@ export default function EventDetailPage() {
                 <Trash2 className="h-4 w-4" />
                 Löschen
               </button>
+            )}
+            {/* Auf dem Telefon steht der Export im „…“-Menü (siehe
+                EntryExportButton); ab sm als Knopf vor „Löschen“, damit die
+                zerstörerische Aktion am Ende der Reihe bleibt. */}
+            {entryExport.canExport && (
+              <DashboardOverflowMenu
+                className="ml-auto sm:hidden"
+                items={[entryExport.menuItem]}
+              />
             )}
           </div>
         }
