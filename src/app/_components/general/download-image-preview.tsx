@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { Download, ImageOff } from "lucide-react";
 import type { FileType } from "~/generated/prisma/enums";
+import ZoomableImage from "@/app/_components/general/zoomable-image";
 import { formatFileSize } from "@/app/_components/media/media-shared";
 import { cn } from "@/lib/utils";
 import {
@@ -78,9 +79,9 @@ const FRAME =
  * Vorschaubild im festen Rahmen, ganz gezeigt (`object-contain`) — ein
  * beschnittener Flyer verliert genau das, was man sehen will.
  *
- * Lightbox (#310): Bis sie da ist, öffnet das Bild sich in voller Größe in
- * einem neuen Tab. Zum Einhängen ersetzt sie nur den Link unten; Rahmen,
- * Größe und Fallback bleiben.
+ * Ein Klick öffnet es in der Lightbox — wie jedes andere Bild der Seite.
+ * Keine Lupe im Eckfeld: Der Rahmen ist 96px schmal, und rechts daneben steht
+ * ohnehin „Herunterladen“, das Bild ist also erkennbar zweifach nutzbar.
  *
  * Schlägt das Laden fehl (etwa ein noch nicht freigegebener Download, den
  * Besucher nicht sehen dürfen), steht ein ruhiger Platzhalter statt eines
@@ -101,13 +102,13 @@ function PreviewThumbnail({ src, title }: { src: string; title: string }) {
   }
 
   return (
-    <a
-      href={src}
-      target="_blank"
-      rel="noopener noreferrer"
+    <ZoomableImage
+      src={src}
+      alt={title}
+      hint={false}
       className={cn(
         FRAME,
-        "hover:border-ink dark:hover:border-night-text block transition-colors",
+        "hover:border-ink dark:hover:border-night-text transition-colors",
       )}
     >
       <Image
@@ -118,9 +119,6 @@ function PreviewThumbnail({ src, title }: { src: string; title: string }) {
         className="object-contain"
         onError={() => setFailed(true)}
       />
-      <span className="sr-only">
-        {title} in voller Größe ansehen (öffnet in neuem Tab)
-      </span>
-    </a>
+    </ZoomableImage>
   );
 }
