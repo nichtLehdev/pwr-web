@@ -755,17 +755,13 @@ export default function RichTextEditor({
         },
       }),
       TableRow,
-      TableCell.configure({
-        HTMLAttributes: {
-          class: "border border-gray-300 dark:border-gray-600 p-2",
-        },
-      }),
-      TableHeader.configure({
-        HTMLAttributes: {
-          class:
-            "border border-gray-300 dark:border-gray-600 p-2 bg-gray-100 dark:bg-gray-800 font-semibold",
-        },
-      }),
+      // Ohne eigene Klassen: Tabellenlinien und Kopfzeile bestimmt
+      // article-content.css — in der Schreibflaeche und im veroeffentlichten
+      // Beitrag gleichermassen, weil beide dieselbe Datei nutzen. Die
+      // Grautoene hier waren sichtbar wirkungslos (das Stylesheet ueberstimmt
+      // sie), schrieben sich aber als tote Klassen in jeden neuen Beitrag.
+      TableCell,
+      TableHeader,
     ],
     content: initialHtml,
     immediatelyRender: false,
@@ -853,7 +849,7 @@ export default function RichTextEditor({
           onOpenDownloadPicker={() => setShowDownloadPicker(true)}
         />
         <div
-          className="text-gray-900 dark:text-gray-100"
+          className="text-ink dark:text-night-text"
           onContextMenu={handleContextMenu}
         >
           <EditorContent editor={editor} />
