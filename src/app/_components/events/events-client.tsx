@@ -24,7 +24,6 @@ import {
 } from "@/app/_components/programmheft/programme-data";
 import { ProgrammeList } from "@/app/_components/programmheft/programme";
 import { isRegistrationOpen } from "@/app/_components/programmheft/programme-data";
-import { COURSE_TYPE_MAP, EVENT_CATEGORY_MAP } from "@/lib/termine-labels";
 import { useStickyTop } from "@/lib/use-sticky-top";
 import { useTitelVorbei } from "@/lib/use-titel-vorbei";
 import CalendarView from "./calendar/calendar-view";
@@ -199,9 +198,6 @@ export default function EventsClient({
   const [selectedDistrict, setSelectedDistrict] = useState<string>(
     params.get("district") || "all",
   );
-  const [selectedCategory, setSelectedCategory] = useState<string>(
-    params.get("category") || "all",
-  );
   /**
    * `?anmeldung=offen` — die Startseite zeigt nur einen Lehrgang mit offener
    * Anmeldung und verweist für die übrigen hierher.
@@ -242,7 +238,9 @@ export default function EventsClient({
         if (filterType === "courses" && item.type !== "course") return false;
 
         // Termine nehmen keine Anmeldungen entgegen; der Filter lässt also
-        // nur Lehrgänge übrig, deren Anmeldung gerade läuft.
+        // nur Angebote übrig, deren Anmeldung gerade läuft. „Angebote“, weil
+        // darunter neben Lehrgängen auch Workshops, Freizeiten und
+        // Komponistenporträts stehen.
         if (
           nurOffeneAnmeldung &&
           (item.type !== "course" || !isRegistrationOpen(item, now))
@@ -262,23 +260,10 @@ export default function EventsClient({
           }
         }
 
-        if (selectedCategory !== "all") {
-          if (item.type === "event") {
-            const enumValue = EVENT_CATEGORY_MAP[selectedCategory];
-            if (enumValue && item.category !== enumValue) return false;
-          } else {
-            const courseTypeEnum = COURSE_TYPE_MAP[selectedCategory];
-
-            if (courseTypeEnum && item.courseType !== courseTypeEnum) {
-              return false;
-            }
-          }
-        }
-
         return true;
       });
     },
-    [filterType, selectedDistrict, selectedCategory, nurOffeneAnmeldung, now],
+    [filterType, selectedDistrict, nurOffeneAnmeldung, now],
   );
 
   const futureItems = useMemo(() => {
@@ -402,26 +387,12 @@ export default function EventsClient({
       .map((b) => `Bezirk ${b.number} (${b.name})`),
   ];
 
-  const eventCategories = ["Konzert", "Gottesdienst", "Probe", "Andere"];
-  const courseCategories = [
-    "Lehrgang",
-    "Freizeit",
-    "Workshop",
-    "Komponistenportrait",
-    "Veranstaltung",
-    "Andere",
-  ];
-
   const hasActiveFilters =
-    filterType !== "all" ||
-    selectedDistrict !== "all" ||
-    selectedCategory !== "all" ||
-    nurOffeneAnmeldung;
+    filterType !== "all" || selectedDistrict !== "all" || nurOffeneAnmeldung;
 
   const resetFilters = () => {
     setFilterType("all");
     setSelectedDistrict("all");
-    setSelectedCategory("all");
     setNurOffeneAnmeldung(false);
   };
 
@@ -582,62 +553,31 @@ export default function EventsClient({
                     className="border-ink checked:bg-ink dark:border-night-text dark:checked:bg-night-text bg-paper dark:bg-night h-5 w-5 shrink-0 cursor-pointer appearance-none border-2"
                   />
                   <span className="semi-condensed text-ink dark:text-night-text text-sm font-semibold">
-                    Nur Lehrgänge mit offener Anmeldung
+                    Nur Angebote mit offener Anmeldung
                   </span>
                 </label>
 
-                {/* District & Category */}
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <div>
-                    <label className="semi-condensed text-dark dark:text-night-muted mb-2 block text-sm font-semibold">
-                      Bezirk
-                    </label>
-                    <Select
-                      value={selectedDistrict}
-                      onChange={(e) => setSelectedDistrict(e.target.value)}
-                      className={selectFieldClass}
-                    >
-                      <option value="all">Alle Termine</option>
-                      {districtSelectOptions.slice(1).map((district) => (
-                        <option key={district} value={district}>
-                          {district}
-                        </option>
-                      ))}
-                    </Select>
-                  </div>
-
-                  <div>
-                    <label className="semi-condensed text-dark dark:text-night-muted mb-2 block text-sm font-semibold">
-                      Kategorie
-                    </label>
-                    <Select
-                      value={selectedCategory}
-                      onChange={(e) => setSelectedCategory(e.target.value)}
-                      className={selectFieldClass}
-                    >
-                      <option value="all">Alle</option>
-                      {filterType !== "courses" && (
-                        <optgroup label="Events">
-                          {eventCategories.map((cat) => (
-                            <option key={cat} value={cat}>
-                              {cat}
-                            </option>
-                          ))}
-                        </optgroup>
-                      )}
-                      {filterType !== "events" && (
-                        <>
-                          <optgroup label="Lehrgänge">
-                            {courseCategories.map((cat) => (
-                              <option key={cat} value={cat}>
-                                {cat}
-                              </option>
-                            ))}
-                          </optgroup>
-                        </>
-                      )}
-                    </Select>
-                  </div>
+                {/* Bezirk */}
+                <div>
+                  <label
+                    htmlFor="termine-bezirk"
+                    className="semi-condensed text-dark dark:text-night-muted mb-2 block text-sm font-semibold"
+                  >
+                    Bezirk
+                  </label>
+                  <Select
+                    id="termine-bezirk"
+                    value={selectedDistrict}
+                    onChange={(e) => setSelectedDistrict(e.target.value)}
+                    className={selectFieldClass}
+                  >
+                    <option value="all">Alle Termine</option>
+                    {districtSelectOptions.slice(1).map((district) => (
+                      <option key={district} value={district}>
+                        {district}
+                      </option>
+                    ))}
+                  </Select>
                 </div>
 
                 {/* Darstellung */}
