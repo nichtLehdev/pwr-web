@@ -62,13 +62,13 @@ export function OfflineReadyCard() {
 
   return (
     <p
-      className="text-dark dark:text-dark-text-muted mb-6 flex items-center justify-center gap-2 text-sm"
+      className="text-dark dark:text-night-muted mb-8 flex items-center gap-2 text-sm"
       role="status"
     >
       {state === "warming" ? (
         <>
           <CloudDownload
-            className="h-4 w-4 shrink-0 animate-pulse"
+            className="h-4 w-4 shrink-0 motion-safe:animate-pulse"
             aria-hidden
           />
           Spiele werden für die Offline-Nutzung vorbereitet …
@@ -76,7 +76,7 @@ export function OfflineReadyCard() {
       ) : (
         <>
           <CheckCircle2
-            className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400"
+            className="text-ink dark:text-night-text h-4 w-4 shrink-0"
             aria-hidden
           />
           Spiele sind offline verfügbar.

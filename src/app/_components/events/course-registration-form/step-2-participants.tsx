@@ -16,6 +16,10 @@ import {
   priceOptionIdForAge,
   priceOptionAgeReferenceDate,
 } from "@/lib/course-price-option-age";
+import { formatEuro } from "@/lib/invoice-document";
+import { Checkbox } from "@/app/_components/programmheft/field";
+import { Heading } from "@/app/_components/programmheft/section-head";
+import { Note } from "@/app/_components/programmheft/note";
 
 /** The two places the add buttons appear: above the list and after it. */
 type LibraryAnchor = "top" | "bottom";
@@ -337,9 +341,9 @@ export function Step2Participants({
   const ADD_BUTTON_GROUP =
     "grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center";
   const ADD_BUTTON_BASE =
-    "inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-lg px-3 text-xs font-semibold transition-colors sm:w-auto sm:gap-2 sm:px-4 sm:text-sm";
+    "semi-condensed inline-flex h-10 w-full items-center justify-center gap-1.5 px-3 text-xs font-semibold transition-colors sm:w-auto sm:gap-2 sm:px-4 sm:text-sm";
   const ADD_BUTTON_SECONDARY =
-    "text-dark dark:text-dark-text dark:border-dark-border dark:hover:bg-dark-background border border-gray-300 bg-white hover:bg-gray-50";
+    "border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night border-2";
 
   /**
    * Rendered above and below the list, so adding a tenth person does not mean
@@ -381,10 +385,10 @@ export function Step2Participants({
         onClick={addParticipant}
         className={cn(
           ADD_BUTTON_BASE,
-          "bg-primary hover:bg-primary-dark col-span-2 text-white",
+          "bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-primary dark:text-ink dark:hover:bg-paper col-span-2",
         )}
       >
-        <Plus className="h-4 w-4 shrink-0" />
+        <Plus className="h-4 w-4 shrink-0" aria-hidden />
         Hinzufügen
       </button>
     </>
@@ -397,13 +401,13 @@ export function Step2Participants({
           and the list — a box and a heading around what is really one button. */}
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="text-dark dark:text-dark-text text-lg font-bold sm:text-xl">
+          <Heading as="h3" size="list" className="text-lg sm:text-[1.375rem]">
             Teilnehmer
             {hasParticipants
               ? ` (${registrationData.participants.length})`
               : ""}
-          </h3>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+          </Heading>
+          <p className="text-dark dark:text-night-muted mt-1 text-sm">
             {hasParticipants
               ? "Zum Bearbeiten auf eine Person tippen."
               : "Fügen Sie alle Personen hinzu, die Sie für diesen Lehrgang anmelden möchten."}
@@ -420,12 +424,15 @@ export function Step2Participants({
 
       <div className="flex-1">
         {!hasParticipants ? (
-          <div className="dark:border-dark-border dark:bg-dark-background-secondary bg-background-secondary rounded-lg border border-dashed border-gray-300 px-4 py-8 text-center sm:py-9">
-            <Users className="text-primary/60 dark:text-primary/40 mx-auto mb-2 h-9 w-9" />
-            <p className="text-dark dark:text-dark-text text-sm font-medium">
+          <div className="border-rule dark:border-night-rule border border-dashed px-4 py-8 text-center sm:py-9">
+            <Users
+              className="text-dark dark:text-night-muted mx-auto mb-2 h-9 w-9"
+              aria-hidden
+            />
+            <p className="text-ink dark:text-night-text text-sm font-medium">
               Noch keine Teilnehmer
             </p>
-            <p className="mx-auto mt-1 mb-5 max-w-sm text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-dark dark:text-night-muted mx-auto mt-1 mb-5 max-w-sm text-xs">
               {currentUser
                 ? "Übernehmen Sie Daten aus Ihrer Bibliothek, tragen Sie sich selbst ein oder legen Sie eine neue Person an."
                 : "Legen Sie eine neue Teilnehmerperson an."}
@@ -461,7 +468,7 @@ export function Step2Participants({
               <div
                 className={cn(
                   ADD_BUTTON_GROUP,
-                  "dark:border-dark-border rounded-lg border border-dashed border-gray-300 p-3 sm:justify-center",
+                  "border-rule dark:border-night-rule border border-dashed p-3 sm:justify-center",
                 )}
               >
                 {renderActionButtons("bottom")}
@@ -475,47 +482,41 @@ export function Step2Participants({
       {course.allowSiblingDiscount &&
         registrationData.participants.length > 1 &&
         hasSiblingGroups && (
-          <div className="mt-6 rounded-lg border-2 border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
-            <label className="flex cursor-pointer items-start gap-3">
-              <input
-                type="checkbox"
-                checked={registrationData.siblingDiscountApplied}
-                onChange={(e) =>
-                  setRegistrationData({
-                    ...registrationData,
-                    siblingDiscountApplied: e.target.checked,
-                  })
-                }
-                className="mt-1 h-5 w-5 rounded border-gray-300 text-green-600 focus:ring-2 focus:ring-green-500"
-              />
-              <div className="flex-1">
-                <div className="font-semibold text-gray-900 dark:text-gray-100">
-                  Geschwisterkindrabatt beantragen
-                </div>
-                <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
-                  Sie erhalten 20% Rabatt auf die Teilnahmegebühr jedes weiteren
-                  Geschwisterkindes ab dem zweiten Kind. Der Rabatt muss noch
-                  bestätigt werden.
-                </p>
-                {registrationData.siblingDiscountApplied &&
-                  calculateDiscountAmount(registrationData, course) > 0 && (
-                    <div className="mt-2 text-sm font-semibold text-green-700 dark:text-green-400">
-                      Ersparnis:{" "}
-                      {calculateDiscountAmount(
-                        registrationData,
-                        course,
-                      ).toFixed(2)}{" "}
-                      €
-                    </div>
-                  )}
-                {siblingDiscountError && (
-                  <div className="mt-2 text-sm text-red-600 dark:text-red-400">
-                    {siblingDiscountError}
-                  </div>
+          <Note tone="important" className="mt-6">
+            <Checkbox
+              id="sibling-discount-applied"
+              checked={!!registrationData.siblingDiscountApplied}
+              onChange={(e) =>
+                setRegistrationData({
+                  ...registrationData,
+                  siblingDiscountApplied: e.target.checked,
+                })
+              }
+            >
+              <span className="font-semibold">
+                Geschwisterkindrabatt beantragen
+              </span>
+              <span className="mt-1 block text-sm">
+                Sie erhalten 20% Rabatt auf die Teilnahmegebühr jedes weiteren
+                Geschwisterkindes ab dem zweiten Kind. Der Rabatt muss noch
+                bestätigt werden.
+              </span>
+              {registrationData.siblingDiscountApplied &&
+                calculateDiscountAmount(registrationData, course) > 0 && (
+                  <span className="mt-2 block text-sm font-semibold">
+                    Ersparnis:{" "}
+                    {formatEuro(
+                      calculateDiscountAmount(registrationData, course),
+                    )}
+                  </span>
                 )}
-              </div>
-            </label>
-          </div>
+              {siblingDiscountError && (
+                <span className="mt-2 block text-sm">
+                  {siblingDiscountError}
+                </span>
+              )}
+            </Checkbox>
+          </Note>
         )}
 
       {editingIndex !== null && editingParticipant ? (

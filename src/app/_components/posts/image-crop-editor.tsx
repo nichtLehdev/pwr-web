@@ -177,15 +177,15 @@ export default function ImageCropEditor({
 
   return (
     <ScrollableModal className="bg-black/80">
-      <ScrollableModalCard maxW="4xl" className="dark:bg-dark-surface">
-        <ScrollableModalHeader className="dark:border-dark-border border-b border-gray-200 pb-4">
+      <ScrollableModalCard maxW="4xl">
+        <ScrollableModalHeader className="border-rule dark:border-night-rule border-b pb-4">
           <div className="flex items-center justify-between">
-            <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
+            <h2 className="text-ink dark:text-night-text text-lg font-semibold">
               Bild zuschneiden
             </h2>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              className="text-dark hover:bg-rule/60 hover:text-ink dark:text-night-muted dark:hover:bg-night-rule dark:hover:text-night-text p-2 transition-colors"
               aria-label="Schließen"
             >
               <svg
@@ -206,7 +206,7 @@ export default function ImageCropEditor({
         </ScrollableModalHeader>
 
         <ScrollableModalBody className="p-0">
-          <div className="dark:border-dark-border border-b border-gray-200 bg-blue-50 p-4 dark:bg-blue-900/20">
+          <div className="border-rule dark:border-night-rule border-b bg-blue-50 p-4 dark:bg-blue-900/20">
             <p className="text-sm text-blue-800 dark:text-blue-300">
               Ziehe den Rahmen, um den gewünschten Ausschnitt zu wählen. Mit
               Speichern wird das Bild durch den zugeschnittenen Bereich ersetzt.
@@ -214,7 +214,7 @@ export default function ImageCropEditor({
           </div>
 
           <div className="p-6">
-            <div className="dark:border-dark-border relative max-h-[70vh] overflow-hidden rounded-lg border-2 border-gray-300 bg-gray-100 dark:bg-gray-800">
+            <div className="border-rule dark:border-night-rule bg-rule/25 dark:bg-night-raised relative max-h-[70vh] overflow-hidden border-2">
               <ReactCrop
                 crop={crop}
                 onChange={(c) => setCrop(c)}
@@ -239,16 +239,17 @@ export default function ImageCropEditor({
             </div>
 
             {/* Desktop preview: how crop looks as Avatar, Cover, Card */}
-            <div className="dark:border-dark-border mt-6 hidden border-t border-gray-200 pt-6 md:block">
-              <p className="dark:text-dark-text mb-3 text-sm font-medium text-gray-700">
+            <div className="border-rule dark:border-night-rule mt-6 hidden border-t pt-6 md:block">
+              <p className="text-ink dark:text-night-text mb-3 text-sm font-medium">
                 Vorschau (Desktop)
               </p>
               <div className="grid grid-cols-3 gap-6">
                 <div className="flex flex-col items-center gap-2">
-                  <p className="dark:text-dark-muted text-xs font-medium tracking-wider text-gray-500 uppercase">
+                  <p className="text-dark dark:text-night-muted text-xs font-medium tracking-wider uppercase">
                     Profilbild
                   </p>
-                  <div className="dark:bg-dark-background-secondary dark:ring-dark-border flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-gray-100 ring-1 ring-gray-200">
+                  {/* Rund: Ausnahme fuer Personenfotos. */}
+                  <div className="bg-rule/25 dark:bg-night-raised ring-rule dark:ring-night-rule flex h-24 w-24 items-center justify-center overflow-hidden rounded-full ring-1">
                     {previews.avatar ? (
                       /* eslint-disable-next-line @next/next/no-img-element -- preview uses in-memory object/data URLs */
                       <img
@@ -257,17 +258,17 @@ export default function ImageCropEditor({
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      <span className="dark:text-dark-muted text-xs text-gray-400">
+                      <span className="text-dark dark:text-night-muted text-xs">
                         …
                       </span>
                     )}
                   </div>
                 </div>
                 <div className="flex flex-col items-center gap-2">
-                  <p className="dark:text-dark-muted text-xs font-medium tracking-wider text-gray-500 uppercase">
+                  <p className="text-dark dark:text-night-muted text-xs font-medium tracking-wider uppercase">
                     Cover
                   </p>
-                  <div className="dark:bg-dark-background-secondary dark:ring-dark-border flex h-[4.5rem] w-40 items-center justify-center overflow-hidden rounded-lg bg-gray-100 ring-1 ring-gray-200">
+                  <div className="bg-rule/25 dark:bg-night-raised ring-rule dark:ring-night-rule flex h-[4.5rem] w-40 items-center justify-center overflow-hidden ring-1">
                     {previews.cover ? (
                       /* eslint-disable-next-line @next/next/no-img-element -- preview uses in-memory object/data URLs */
                       <img
@@ -276,17 +277,17 @@ export default function ImageCropEditor({
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      <span className="dark:text-dark-muted text-xs text-gray-400">
+                      <span className="text-dark dark:text-night-muted text-xs">
                         …
                       </span>
                     )}
                   </div>
                 </div>
                 <div className="flex flex-col items-center gap-2">
-                  <p className="dark:text-dark-muted text-xs font-medium tracking-wider text-gray-500 uppercase">
+                  <p className="text-dark dark:text-night-muted text-xs font-medium tracking-wider uppercase">
                     Kartenvorschau
                   </p>
-                  <div className="dark:bg-dark-background-secondary dark:ring-dark-border flex h-20 w-28 items-center justify-center overflow-hidden rounded-lg bg-gray-100 ring-1 ring-gray-200">
+                  <div className="bg-rule/25 dark:bg-night-raised ring-rule dark:ring-night-rule flex h-20 w-28 items-center justify-center overflow-hidden ring-1">
                     {previews.card ? (
                       /* eslint-disable-next-line @next/next/no-img-element -- preview uses in-memory object/data URLs */
                       <img
@@ -295,7 +296,7 @@ export default function ImageCropEditor({
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      <span className="dark:text-dark-muted text-xs text-gray-400">
+                      <span className="text-dark dark:text-night-muted text-xs">
                         …
                       </span>
                     )}
@@ -305,7 +306,7 @@ export default function ImageCropEditor({
             </div>
 
             {error && (
-              <p className="mt-3 text-sm text-red-600 dark:text-red-400">
+              <p className="mt-3 text-sm text-red-700 dark:text-red-400">
                 {error}
               </p>
             )}

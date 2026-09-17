@@ -25,18 +25,21 @@ export function getDistrictColor(districtNumber?: number): string {
   );
 }
 
-export function getDistrictColorLight(districtNumber?: number): string {
-  const color = getDistrictColor(districtNumber);
-  return color + "20";
-}
-
-export function getDistrictTextColor(districtNumber?: number): string {
-  const color = getDistrictColor(districtNumber);
-
-  const hex = color.replace("#", "");
-  const r = parseInt(hex.substr(0, 2), 16);
-  const g = parseInt(hex.substr(2, 2), 16);
-  const b = parseInt(hex.substr(4, 2), 16);
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.5 ? "#000000" : "#FFFFFF";
-}
+/*
+ * Hier stand `getDistrictTextColor`: eine Funktion, die die Schriftfarbe auf
+ * einer Bezirksfarbe wählen sollte. Sie ist am 17.09.2026 entfernt worden,
+ * zusammen mit ihrem einzigen Aufrufer `_components/posts/post-card.tsx`.
+ *
+ * Der Grund als Warnung für den Fall, dass jemand so etwas neu bauen will:
+ * Sie rechnete mit wahrnehmungsbasierter Helligkeit statt WCAG-Relativluminanz
+ * — und selbst richtig gerechnet gibt es keine tragfähige Wahl, weil Schwarz
+ * und Weiß zusammen die dreizehn Bezirksfarben nicht abdecken. Nachgemessen:
+ * Weiß fällt auf ALLEN dreizehn durch (1,81:1 bis 4,47:1), Tinte bei Kleintext
+ * auf vier (Bezirk 3, 5, 9, 12).
+ *
+ * Richtig ist die Markierungsregel: Die Bezirksfarbe steht als Quadrat NEBEN
+ * der Schrift, die Schrift selbst auf Papier. Siehe
+ * `_components/programmheft/bezirk-label.tsx`. Einzige Ausnahme ist Großtext
+ * ab 24px fett (Schwelle 3:1) — so hält es die Bezirkskachel auf der
+ * Detailseite.
+ */

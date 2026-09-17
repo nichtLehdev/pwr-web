@@ -3,6 +3,7 @@ import { createTRPCRouter, rateLimitedPublicProcedure } from "../trpc";
 import { ContentStatus } from "~/generated/prisma/client";
 import { GAMES } from "@/app/spiele/_lib/games";
 import { coursePath, eventPath, postPath } from "@/lib/slug";
+import { markdownToSingleLine } from "@/lib/markdown-to-plain-text";
 
 export type SearchResultType =
   | "post"
@@ -308,6 +309,30 @@ const staticPages = [
       "gemeinschaft",
       "beteiligung",
       "mitbläser",
+    ],
+  },
+  {
+    id: "page-mitgliedschaft",
+    title: "Mitgliedschaft & Versicherung",
+    description:
+      "Mitgliedschaft für Posaunenchöre, Mitgliedsbeiträge, Ehrungen und die Instrumentenversicherung",
+    url: "/mitmachen/mitgliedschaft",
+    keywords: [
+      "mitgliedschaft",
+      "mitglied werden",
+      "mitgliedsbeitrag",
+      "beitrag",
+      "beiträge",
+      "satzung",
+      "aufnahmeantrag",
+      "chor anmelden",
+      "ehrungen",
+      "ehrenordnung",
+      "versicherung",
+      "instrumentenversicherung",
+      "rahmenvertrag",
+      "schadensfall",
+      "schaden melden",
     ],
   },
   {
@@ -858,7 +883,9 @@ export const searchRouter = createTRPCRouter({
           id: event.id,
           type: "event",
           title: event.title,
-          description: event.description,
+          // Treffer sind einzeilige Anrisse: Markdown-Zeichen aus der
+          // Beschreibung hätten hier nichts dargestellt, nur gestört.
+          description: markdownToSingleLine(event.description ?? "") || null,
           url: eventPath(event),
           imageUrl: event.coverImage?.url ?? null,
           date: event.eventDate,
@@ -884,7 +911,7 @@ export const searchRouter = createTRPCRouter({
           id: course.id,
           type: "course",
           title: course.title,
-          description: course.description,
+          description: markdownToSingleLine(course.description) || null,
           url: coursePath(course),
           imageUrl: null,
           date: course.startDate,

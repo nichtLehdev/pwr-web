@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getBaseUrl } from "@/server/utils/get-base-url";
-import { markdownToPlainText } from "@/lib/markdown-to-plain-text";
+import { markdownToSingleLine } from "@/lib/markdown-to-plain-text";
 
 export const SITE_NAME = "Posaunenwerk Rheinland";
 export const SITE_DESCRIPTION =
@@ -17,8 +17,9 @@ export function siteUrl(path = "/"): string {
 /**
  * Plain-text summary for `<meta description>` / `og:description`.
  *
- * Post and course bodies are markdown, but the TipTap editor can leave inline
- * HTML behind, so tags are stripped first. Truncation lands on a word boundary
+ * Beiträge und Beschreibungen sind Markdown; `markdownToSingleLine` räumt die
+ * Auszeichnung ab, löst Maskierungen auf und faltet die Umbrüche zusammen —
+ * ein Meta-Feld hat nur eine Zeile. Truncation lands on a word boundary
  * because search engines cut mid-word descriptions with an ellipsis anyway.
  */
 export function plainTextExcerpt(
@@ -27,9 +28,7 @@ export function plainTextExcerpt(
 ): string | undefined {
   if (!source) return undefined;
 
-  const text = markdownToPlainText(source.replace(/<[^>]*>/g, " "))
-    .replace(/\s+/g, " ")
-    .trim();
+  const text = markdownToSingleLine(source);
 
   if (!text) return undefined;
   if (text.length <= maxLength) return text;

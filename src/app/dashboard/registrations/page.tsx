@@ -17,7 +17,13 @@ import {
   SiblingDiscountStatus,
 } from "~/generated/prisma/enums";
 import { RegistrationPaymentBadge } from "@/app/_components/dashboard/invoice-payment-badge";
+import { DownPaymentBadge } from "@/app/_components/dashboard/down-payment-panel";
+import {
+  DOWN_PAYMENT_STATE_LABELS,
+  downPaymentState,
+} from "@/lib/course-down-payment";
 import { registrationPaymentState } from "@/lib/invoice-payment";
+import { Tag, type TagTone } from "@/app/_components/programmheft/tag";
 import type {
   ColumnFiltersState,
   PaginationState,
@@ -34,12 +40,13 @@ const REGISTRATION_STATUS_LABELS: Record<RegistrationStatus, string> = {
   CANCELLED: "Storniert",
 };
 
-const REGISTRATION_STATUS_BADGES: Record<RegistrationStatus, string> = {
-  CONFIRMED:
-    "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300",
-  WAITLIST:
-    "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300",
-  CANCELLED: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300",
+// Wie bei anderen Zustandsspalten ein Ton pro Status: Bestätigt ist der
+// starke Ton, Warteliste der Aufmerksamkeitston (wie sonst „Nur Warteliste"),
+// Storniert nutzt den eigens dafür reservierten `cancelled`-Ton.
+const REGISTRATION_STATUS_TONE: Record<RegistrationStatus, TagTone> = {
+  CONFIRMED: "ink",
+  WAITLIST: "orange",
+  CANCELLED: "cancelled",
 };
 
 const DISCOUNT_OPTIONS = [
@@ -182,12 +189,12 @@ export default function AdminRegistrationsPage() {
               <>
                 <Link
                   href={`/dashboard/courses/${row.original.course.id}/participants/${row.original.id}`}
-                  className="text-primary font-medium hover:underline"
+                  className="text-primary-ink dark:text-primary font-medium hover:underline"
                 >
                   {row.original.registrantFirstName}{" "}
                   {row.original.registrantLastName}
                 </Link>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-dark dark:text-night-muted text-xs">
                   {row.original.registrantEmail}
                 </p>
               </>
@@ -209,11 +216,11 @@ export default function AdminRegistrationsPage() {
             <>
               <Link
                 href={`/dashboard/courses/${row.original.course.id}/participants`}
-                className="dark:text-dark-text text-gray-900 hover:underline"
+                className="text-ink dark:text-night-text hover:underline"
               >
                 {row.original.course.title}
               </Link>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-dark dark:text-night-muted text-xs">
                 {formatDate(row.original.course.startDate)}
               </p>
             </>
@@ -240,11 +247,11 @@ export default function AdminRegistrationsPage() {
             ),
           },
           cell: ({ row }) => (
-            <span
-              className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${REGISTRATION_STATUS_BADGES[row.original.registrationStatus]}`}
+            <Tag
+              tone={REGISTRATION_STATUS_TONE[row.original.registrationStatus]}
             >
               {REGISTRATION_STATUS_LABELS[row.original.registrationStatus]}
-            </span>
+            </Tag>
           ),
         }),
         column.accessor(
@@ -262,6 +269,22 @@ export default function AdminRegistrationsPage() {
             ),
           },
         ),
+        column.accessor(
+          (registration) =>
+            DOWN_PAYMENT_STATE_LABELS[downPaymentState(registration)],
+          {
+            id: "downPayment",
+            header: "Anzahlung",
+            enableSorting: false,
+            enableColumnFilter: false,
+            cell: ({ row }) => (
+              <DownPaymentBadge
+                registration={row.original}
+                withPrefix={false}
+              />
+            ),
+          },
+        ),
         column.accessor((registration) => registration.totalPrice, {
           id: "totalPrice",
           header: "Betrag",
@@ -272,7 +295,7 @@ export default function AdminRegistrationsPage() {
               {formatPrice(row.original.totalPrice)}
               {row.original.siblingDiscountStatus ===
                 SiblingDiscountStatus.PENDING && (
-                <span className="mt-0.5 block text-xs font-medium whitespace-nowrap text-orange-600 dark:text-orange-400">
+                <span className="text-primary-ink dark:text-primary mt-0.5 block text-xs font-medium whitespace-nowrap">
                   Rabatt prüfen
                   {row.original.siblingDiscountAmount
                     ? ` (${formatPrice(row.original.siblingDiscountAmount)})`
@@ -320,7 +343,7 @@ export default function AdminRegistrationsPage() {
             discountOnly ? (
               <Link
                 href={`/dashboard/courses/${row.original.course.id}/participants/${row.original.id}`}
-                className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="border-rule dark:border-night-rule text-ink dark:text-night-text bg-paper dark:bg-night hover:bg-rule/30 dark:hover:bg-night-raised inline-flex items-center gap-1.5 border px-2.5 py-1 text-xs font-medium transition-colors"
               >
                 <SearchIcon className="h-3.5 w-3.5" />
                 Rabatt prüfen
@@ -331,7 +354,7 @@ export default function AdminRegistrationsPage() {
                 href={`/registrations/${row.original.id}/edit?returnTo=${encodeURIComponent(
                   "/dashboard/registrations",
                 )}`}
-                className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="border-rule dark:border-night-rule text-ink dark:text-night-text bg-paper dark:bg-night hover:bg-rule/30 dark:hover:bg-night-raised inline-flex items-center gap-1.5 border px-2.5 py-1 text-xs font-medium transition-colors"
               >
                 <PencilIcon className="h-3.5 w-3.5" />
                 Bearbeiten
@@ -345,7 +368,7 @@ export default function AdminRegistrationsPage() {
   if (!permissionsLoading && !canView) {
     return (
       <DashboardPage title="Anmeldungen">
-        <p className="text-gray-600 dark:text-gray-400">
+        <p className="text-dark dark:text-night-muted">
           Du hast keine Berechtigung, diese Seite zu sehen.
         </p>
       </DashboardPage>
@@ -362,7 +385,9 @@ export default function AdminRegistrationsPage() {
       }
     >
       {discountOnly && discountFilter.length === 0 && (
-        <div className="mb-6 rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800 dark:border-yellow-900/50 dark:bg-yellow-900/20 dark:text-yellow-200">
+        // Hinweis statt Alarm: Tinte auf Papier an einer Haarlinie statt
+        // gelbem Kasten.
+        <div className="border-ink dark:border-night-text text-dark dark:text-night-muted mb-6 border-l-2 py-1 pl-4 text-sm">
           Wähle im Spaltenfilter „Rabatt“ einen Status aus — deine Berechtigung
           gilt nur für Anmeldungen mit Geschwisterkindrabatt.
         </div>
@@ -377,7 +402,7 @@ export default function AdminRegistrationsPage() {
         searchPlaceholder="Name, E-Mail, Teilnehmer oder Rechnungsnummer…"
         pageSizeOptions={[25, 50, 100, 250]}
         emptyState={
-          <span className="flex flex-col items-center gap-2 text-gray-500 dark:text-gray-400">
+          <span className="text-dark dark:text-night-muted flex flex-col items-center gap-2">
             <UsersIcon className="h-8 w-8" />
             Keine Anmeldungen gefunden.
           </span>

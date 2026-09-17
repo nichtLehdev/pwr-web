@@ -3,6 +3,8 @@
 import { useEffect, useState, useMemo } from "react";
 import { X, Rss, Calendar, Copy, Check } from "lucide-react";
 import { api } from "@/trpc/react";
+import { Button, Checkbox, Input, Label } from "@/app/_components/ui";
+import { cn } from "@/lib/utils";
 import {
   ScrollableModal,
   ScrollableModalCard,
@@ -15,6 +17,16 @@ interface FeedConfigModalProps {
   isOpen: boolean;
   onClose: () => void;
   feedType: "rss" | "ical";
+}
+
+/** Segmentierte Auswahl: aktiv als Druckfläche in Orange mit Tinte. */
+function segmentClass(active: boolean) {
+  return cn(
+    "px-4 py-2 text-sm font-semibold transition-colors",
+    active
+      ? "bg-primary text-ink"
+      : "border-rule dark:border-night-rule text-ink dark:text-night-text hover:bg-rule/60 dark:hover:bg-night-rule border bg-paper dark:bg-night",
+  );
 }
 
 export default function FeedConfigModal({
@@ -120,11 +132,8 @@ export default function FeedConfigModal({
 
   return (
     <ScrollableModal zIndex="z-100" onBackdropClick={onClose}>
-      <ScrollableModalCard
-        maxW="2xl"
-        className="bg-background dark:bg-dark-surface overflow-hidden"
-      >
-        <ScrollableModalHeader className="dark:border-dark-border border-b border-gray-200 pb-4">
+      <ScrollableModalCard maxW="2xl" className="overflow-hidden">
+        <ScrollableModalHeader className="border-rule dark:border-night-rule border-b pb-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {feedType === "rss" ? (
@@ -132,13 +141,13 @@ export default function FeedConfigModal({
               ) : (
                 <Calendar className="h-6 w-6 text-blue-500" />
               )}
-              <h2 className="text-dark dark:text-dark-text text-xl font-bold">
+              <h2 className="text-ink dark:text-night-text text-xl font-bold">
                 {feedType === "rss" ? "RSS Feed" : "iCal Feed"} konfigurieren
               </h2>
             </div>
             <button
               onClick={onClose}
-              className="dark:hover:bg-dark-background rounded-full p-1 text-gray-500 transition-colors hover:bg-gray-200 dark:bg-transparent dark:text-gray-400"
+              className="text-dark hover:bg-rule/60 hover:text-ink dark:text-night-muted dark:hover:bg-night-rule dark:hover:text-night-text p-2 transition-colors"
               aria-label="Schließen"
             >
               <X className="h-6 w-6" />
@@ -150,37 +159,23 @@ export default function FeedConfigModal({
           {/* iCal Type Selection */}
           {feedType === "ical" && (
             <div>
-              <label className="text-dark dark:text-dark-text mb-3 block text-sm font-semibold">
-                Typ auswählen
-              </label>
+              <Label>Typ auswählen</Label>
               <div className="grid grid-cols-3 gap-2">
                 <button
                   onClick={() => setIcalType("events")}
-                  className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
-                    icalType === "events"
-                      ? "bg-primary text-white"
-                      : "text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-border bg-gray-100 hover:bg-gray-200"
-                  }`}
+                  className={segmentClass(icalType === "events")}
                 >
                   Veranstaltungen
                 </button>
                 <button
                   onClick={() => setIcalType("courses")}
-                  className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
-                    icalType === "courses"
-                      ? "bg-primary text-white"
-                      : "text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-border bg-gray-100 hover:bg-gray-200"
-                  }`}
+                  className={segmentClass(icalType === "courses")}
                 >
                   Lehrgänge
                 </button>
                 <button
                   onClick={() => setIcalType("both")}
-                  className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
-                    icalType === "both"
-                      ? "bg-primary text-white"
-                      : "text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-border bg-gray-100 hover:bg-gray-200"
-                  }`}
+                  className={segmentClass(icalType === "both")}
                 >
                   Beide
                 </button>
@@ -191,12 +186,10 @@ export default function FeedConfigModal({
           {/* District Selection */}
           <div>
             <div className="mb-3 flex items-center justify-between">
-              <label className="text-dark dark:text-dark-text block text-sm font-semibold">
-                Bezirke filtern (optional)
-              </label>
+              <Label>Bezirke filtern (optional)</Label>
               <button
                 onClick={handleSelectAll}
-                className="text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary text-xs font-semibold transition-colors"
+                className="text-primary-ink dark:text-primary text-xs font-semibold underline-offset-4 transition-colors hover:underline"
               >
                 {selectedBezirke.length === bezirke.length &&
                 !bezirksuebergreifend
@@ -204,20 +197,18 @@ export default function FeedConfigModal({
                   : "Alle auswählen"}
               </button>
             </div>
-            <div className="dark:border-dark-border max-h-64 space-y-2 overflow-y-auto rounded-lg border border-gray-200 p-3">
+            <div className="border-rule dark:border-night-rule max-h-64 space-y-2 overflow-y-auto border p-3">
               {bezirke.length === 0 ? (
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <p className="text-dark dark:text-night-muted text-sm">
                   Lade Bezirke...
                 </p>
               ) : (
                 <>
                   {/* Bezirksübergreifend Option - First in list */}
-                  <label className="text-dark dark:text-dark-text dark:hover:bg-dark-background-secondary flex cursor-pointer items-center gap-3 rounded p-2 transition-colors hover:bg-gray-50">
-                    <input
-                      type="checkbox"
+                  <label className="text-ink hover:bg-rule/60 dark:text-night-text dark:hover:bg-night-rule flex cursor-pointer items-center gap-3 p-2 transition-colors">
+                    <Checkbox
                       checked={bezirksuebergreifend}
                       onChange={handleBezirksuebergreifendToggle}
-                      className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
                     />
                     <span className="text-sm font-medium">
                       Bezirksübergreifend
@@ -230,13 +221,11 @@ export default function FeedConfigModal({
                     .map((bezirk) => (
                       <label
                         key={bezirk.id}
-                        className="text-dark dark:text-dark-text dark:hover:bg-dark-background-secondary flex cursor-pointer items-center gap-3 rounded p-2 transition-colors hover:bg-gray-50"
+                        className="text-ink hover:bg-rule/60 dark:text-night-text dark:hover:bg-night-rule flex cursor-pointer items-center gap-3 p-2 transition-colors"
                       >
-                        <input
-                          type="checkbox"
+                        <Checkbox
                           checked={selectedBezirke.includes(bezirk.id)}
                           onChange={() => handleBezirkToggle(bezirk.id)}
-                          className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
                         />
                         <span className="text-sm">
                           Bezirk {bezirk.number} - {bezirk.shortName}
@@ -246,7 +235,7 @@ export default function FeedConfigModal({
                 </>
               )}
             </div>
-            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-dark dark:text-night-muted mt-2 text-xs">
               {selectedBezirke.length === 0 && !bezirksuebergreifend
                 ? "Keine Filterung: Alle Bezirke werden angezeigt"
                 : `${bezirksuebergreifend ? "Bezirksübergreifend" : ""}${bezirksuebergreifend && selectedBezirke.length > 0 ? " + " : ""}${selectedBezirke.length > 0 ? `${selectedBezirke.length} Bezirk${selectedBezirke.length === 1 ? "" : "e"}` : ""} ausgewählt`}
@@ -255,20 +244,20 @@ export default function FeedConfigModal({
 
           {/* Feed URL */}
           <div>
-            <label className="text-dark dark:text-dark-text mb-2 block text-sm font-semibold">
-              Feed-URL
-            </label>
+            <Label>Feed-URL</Label>
             <div className="flex gap-2">
-              <input
+              <Input
                 type="text"
                 value={feedUrl}
                 readOnly
-                className="text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:border-dark-border focus:border-primary focus:ring-primary/20 flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-2 focus:outline-none"
+                aria-label="Feed-URL"
+                className="flex-1 text-sm"
               />
-              <button
-                onClick={handleCopy}
-                className="bg-primary hover:bg-primary-dark dark:bg-primary-light dark:hover:bg-primary-dark flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors"
+              <Button
+                type="button"
+                onClick={() => void handleCopy()}
                 aria-label="URL kopieren"
+                className="gap-2"
               >
                 {copied ? (
                   <>
@@ -281,9 +270,9 @@ export default function FeedConfigModal({
                     Kopieren
                   </>
                 )}
-              </button>
+              </Button>
             </div>
-            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-dark dark:text-night-muted mt-2 text-xs">
               {feedType === "rss"
                 ? "Diese URL können Sie in Ihren RSS-Reader einfügen."
                 : "Diese URL können Sie in Ihren Kalender importieren (Google Calendar, Outlook, Apple Calendar, etc.)."}
@@ -293,18 +282,15 @@ export default function FeedConfigModal({
 
         <ScrollableModalFooter>
           <div className="flex items-center justify-end gap-3">
-            <button
-              onClick={onClose}
-              className="text-dark dark:text-dark-text dark:hover:bg-dark-background-secondary dark:bg-dark-background rounded-lg bg-gray-100 px-4 py-2 text-sm font-semibold transition-colors hover:bg-gray-200"
-            >
+            <Button type="button" variant="outline" onClick={onClose}>
               Schließen
-            </button>
+            </Button>
             {feedType === "rss" && (
               <a
                 href={feedUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-primary hover:bg-primary-dark dark:bg-primary-light dark:hover:bg-primary-dark flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors"
+                className="semi-condensed bg-ink text-paper hover:bg-dark dark:bg-night-text dark:text-night dark:hover:bg-night-muted inline-flex h-10 items-center justify-center gap-2 px-4 text-sm font-semibold transition-colors"
               >
                 <Rss className="h-4 w-4" />
                 Feed öffnen

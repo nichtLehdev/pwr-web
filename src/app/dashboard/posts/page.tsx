@@ -42,8 +42,8 @@ export default function DashboardPostsPage() {
 
   if (isPending || profileLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="dark:bg-night bg-paper flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
@@ -63,7 +63,7 @@ export default function DashboardPostsPage() {
       actions={
         <Link
           href="/dashboard/posts/new"
-          className="bg-primary hover:bg-primary-dark inline-flex h-9 items-center gap-2 rounded-lg px-3.5 text-sm font-medium text-white shadow-sm transition-colors"
+          className="bg-primary hover:bg-primary-dark text-ink inline-flex min-h-11 items-center gap-2 px-3.5 text-sm font-semibold transition-colors"
         >
           <Plus className="h-4 w-4" />
           Neuer Beitrag

@@ -44,7 +44,7 @@ const emptyDraft = (): LocationDraft => ({
 });
 
 const inputClass =
-  "focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-surface dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-1 focus:outline-none";
+  "border-ink dark:border-night-text dark:bg-night dark:text-night-text block w-full border bg-paper px-3 py-2 text-sm";
 
 export function NewLocationForm({
   onCreated,
@@ -124,8 +124,8 @@ export function NewLocationForm({
   };
 
   return (
-    <div className="dark:border-dark-border dark:bg-dark-background-secondary rounded-lg border border-gray-200 bg-gray-50 p-4">
-      <h3 className="dark:text-dark-text mb-3 font-medium text-gray-900">
+    <div className="border-rule dark:border-night-rule dark:bg-night-raised bg-rule/25 border p-4">
+      <h3 className="text-ink dark:text-night-text mb-3 font-medium">
         {title}
       </h3>
 
@@ -134,7 +134,7 @@ export function NewLocationForm({
         label={null}
         hint={null}
         className="mb-3"
-        inputClassName="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-surface dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white py-2 pr-9 pl-9 text-sm focus:ring-1 focus:outline-none"
+        inputClassName="border-ink dark:border-night-text dark:bg-night dark:text-night-text block w-full border bg-paper py-2 pr-9 pl-9 text-sm"
       />
 
       <div className="grid gap-3 sm:grid-cols-2">
@@ -217,14 +217,14 @@ export function NewLocationForm({
           type="button"
           onClick={handleSubmit}
           disabled={createMutation.isPending}
-          className="bg-primary hover:bg-primary/90 rounded-lg px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+          className="bg-primary hover:bg-primary/90 text-ink min-h-11 px-3 py-1.5 text-sm font-medium disabled:opacity-50"
         >
           {createMutation.isPending ? "Speichern..." : "Speichern"}
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"
+          className="border-ink dark:border-night-text dark:text-night-text text-ink hover:bg-rule/30 dark:hover:bg-night-raised min-h-11 border px-3 py-1.5 text-sm font-medium"
         >
           Abbrechen
         </button>

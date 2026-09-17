@@ -61,8 +61,13 @@ interface ParticipantEditorProps {
   };
 }
 
+/**
+ * `!`-Wichtigkeit, weil dieselbe Klasse auch als `labelClassName` an
+ * `ParticipantCustomFields` geht, das sie an das gerundete `ui/Label` reicht
+ * — `cn` dort mergt nur und entfernt die eingebauten Klassen nicht.
+ */
 const LABEL_CLASS =
-  "mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300";
+  "text-ink! dark:text-night-text! mb-1! block! text-sm! font-semibold!";
 
 /**
  * Every field of a single participant, in one column on phones and two from
@@ -106,7 +111,7 @@ export function ParticipantEditor({
         <p
           ref={alertRef}
           role="alert"
-          className="rounded-lg border-l-4 border-red-500 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-400 dark:bg-red-900/20 dark:text-red-300"
+          className="border-2 border-red-700 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-400 dark:bg-red-900/20 dark:text-red-300"
         >
           {validationError}
         </p>
@@ -123,7 +128,6 @@ export function ParticipantEditor({
             required
             className={fieldClass({
               error: flagged("firstName"),
-              className: "dark:bg-dark-background bg-white",
             })}
           />
         </div>
@@ -138,7 +142,6 @@ export function ParticipantEditor({
             required
             className={fieldClass({
               error: flagged("lastName"),
-              className: "dark:bg-dark-background bg-white",
             })}
           />
         </div>
@@ -169,7 +172,6 @@ export function ParticipantEditor({
             required
             className={fieldClass({
               error: birthDateInvalid,
-              className: "dark:bg-dark-background bg-white",
             })}
           />
         </div>
@@ -184,7 +186,6 @@ export function ParticipantEditor({
             required
             className={fieldClass({
               error: flagged("city"),
-              className: "dark:bg-dark-background bg-white",
             })}
             placeholder="Düsseldorf"
           />
@@ -197,9 +198,7 @@ export function ParticipantEditor({
             value={participant.instrument ?? ""}
             onChange={(e) => onChange("instrument", e.target.value)}
             maxLength={100}
-            className={fieldClass({
-              className: "dark:bg-dark-background bg-white",
-            })}
+            className={fieldClass({})}
             placeholder="Instrument"
           />
         </div>
@@ -241,8 +240,8 @@ export function ParticipantEditor({
       </div>
 
       {siblings && siblings.candidates.length > 0 ? (
-        <div className="dark:border-dark-border space-y-2 border-t border-gray-100 pt-5">
-          <label className="text-dark dark:text-dark-text block text-sm font-semibold">
+        <div className="border-rule dark:border-night-rule space-y-2 border-t pt-5">
+          <label className="text-ink dark:text-night-text block text-sm font-semibold">
             Geschwister verknüpfen
           </label>
           <div className="flex flex-wrap items-center gap-2">
@@ -251,16 +250,16 @@ export function ParticipantEditor({
                 key={candidate.key}
                 type="button"
                 onClick={() => siblings.onToggle(candidate.key)}
-                className={`inline-flex min-h-11 items-center gap-2 rounded-lg border px-3 text-sm transition-colors ${
+                className={`inline-flex min-h-11 items-center gap-2 border-2 px-3 text-sm transition-colors ${
                   candidate.linked
-                    ? "border-green-500 bg-green-50 text-green-700 dark:border-green-600 dark:bg-green-900/30 dark:text-green-400"
-                    : "dark:border-dark-border dark:bg-dark-background dark:hover:bg-dark-background-secondary border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:text-gray-300"
+                    ? "border-ink bg-ink text-paper dark:border-night-text dark:bg-night-text dark:text-night"
+                    : "border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night"
                 }`}
               >
                 {candidate.linked ? (
-                  <Link2Off className="h-4 w-4 shrink-0" />
+                  <Link2Off className="h-4 w-4 shrink-0" aria-hidden />
                 ) : (
-                  <LinkIcon className="h-4 w-4 shrink-0" />
+                  <LinkIcon className="h-4 w-4 shrink-0" aria-hidden />
                 )}
                 <span>
                   {candidate.label}
@@ -270,7 +269,7 @@ export function ParticipantEditor({
             ))}
           </div>
           {siblings.groupMembers.length > 0 ? (
-            <p className="text-xs text-green-700 dark:text-green-400">
+            <p className="text-dark dark:text-night-muted text-xs">
               Geschwistergruppe: {siblings.groupMembers.join(", ")}
             </p>
           ) : null}

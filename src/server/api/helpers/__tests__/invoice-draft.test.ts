@@ -493,6 +493,46 @@ describe("lineItemsFromRegistration", () => {
     );
     expect(items).toHaveLength(1);
   });
+
+  it("deducts a down payment that was received", () => {
+    const items = lineItemsFromRegistration(
+      registration({
+        downPaymentAmount: 50,
+        downPaymentStatus: "PAID",
+        downPaymentPaidAmount: null,
+        downPaymentPaidAt: new Date(2026, 5, 3),
+      }),
+      course,
+    );
+    expect(items[items.length - 1]).toEqual({
+      description: "Anzahlung (bereits gezahlt)",
+      detail: "eingegangen am 3.6.2026",
+      quantity: 1,
+      unitPrice: -50,
+    });
+  });
+
+  it("deducts only the amount actually received", () => {
+    const items = lineItemsFromRegistration(
+      registration({
+        downPaymentAmount: 50,
+        downPaymentStatus: "PAID",
+        downPaymentPaidAmount: 30,
+      }),
+      course,
+    );
+    expect(items[items.length - 1]?.unitPrice).toBe(-30);
+  });
+
+  it("leaves an open or refunded down payment in the invoice total", () => {
+    for (const downPaymentStatus of ["OPEN", "REFUNDED"] as const) {
+      const items = lineItemsFromRegistration(
+        registration({ downPaymentAmount: 50, downPaymentStatus }),
+        course,
+      );
+      expect(items).toHaveLength(1);
+    }
+  });
 });
 
 describe("buildInvoiceDraft", () => {

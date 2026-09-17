@@ -26,6 +26,7 @@ import {
   Label,
   Textarea,
   Select,
+  Checkbox,
   Card,
   CardHeader,
   CardTitle,
@@ -284,8 +285,8 @@ export default function NewEnsemblePage() {
 
   if (sessionLoading || profileLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
@@ -307,7 +308,7 @@ export default function NewEnsemblePage() {
     >
       {/* Error */}
       {error && (
-        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
+        <div className="mb-6 border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
           <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
         </div>
       )}
@@ -352,7 +353,7 @@ export default function NewEnsemblePage() {
                     maxLength={50}
                     placeholder="z.B. 13-01"
                   />
-                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                  <p className="text-dark dark:text-night-muted mt-1 text-xs">
                     Eindeutige Chor-Nummer aus dem Posaunenwerk-Register (z.B.
                     13-01). Optional.
                   </p>
@@ -397,7 +398,7 @@ export default function NewEnsemblePage() {
             <CardContent>
               {imageUrl ? (
                 <div className="flex items-start gap-4">
-                  <div className="relative h-24 w-24 overflow-hidden rounded-lg">
+                  <div className="border-rule dark:border-night-rule relative h-24 w-24 overflow-hidden border">
                     <Image
                       src={imageUrl}
                       alt="Ensemble Bild"
@@ -406,30 +407,33 @@ export default function NewEnsemblePage() {
                     />
                   </div>
                   <div className="flex flex-col gap-2">
-                    <button
+                    <Button
                       type="button"
                       onClick={() => setShowMediaPicker(true)}
-                      className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-3 py-1.5 text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                      variant="outline"
+                      size="sm"
                     >
                       Ändern
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
                       onClick={() => {
                         setImageUrl("");
                         setImageId("");
                       }}
-                      className="rounded-lg border border-red-300 px-3 py-1.5 text-sm text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                      variant="outline"
+                      size="sm"
+                      className="border-red-300 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
                     >
                       Entfernen
-                    </button>
+                    </Button>
                   </div>
                 </div>
               ) : (
                 <button
                   type="button"
                   onClick={() => setShowMediaPicker(true)}
-                  className="dark:border-dark-border dark:text-dark-text flex h-24 w-full items-center justify-center rounded-lg border-2 border-dashed border-gray-300 text-gray-500 transition-colors hover:border-gray-400 hover:text-gray-600"
+                  className="border-ink dark:border-night-text hover:border-primary-ink dark:hover:bg-night-raised text-dark dark:text-night-muted hover:bg-rule/25 flex h-24 w-full items-center justify-center border-2 border-dashed transition-colors"
                 >
                   <div className="text-center">
                     <PlusIcon className="h-8 w-8" />
@@ -444,348 +448,324 @@ export default function NewEnsemblePage() {
           <Card>
             <CardContent>
               <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
+                <Checkbox
                   id="isActive"
                   checked={isActive}
                   onChange={(e) => setIsActive(e.target.checked)}
-                  className="text-primary h-4 w-4 rounded border-gray-300 focus:ring-blue-500"
                 />
-                <label
-                  htmlFor="isActive"
-                  className="dark:text-dark-text text-sm font-medium text-gray-700"
-                >
+                <Label htmlFor="isActive" className="mb-0">
                   Aktiv
-                </label>
+                </Label>
               </div>
             </CardContent>
           </Card>
 
           {/* People */}
-          <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
-              Personen
-            </h2>
-
-            {/* Conductor */}
-            <div className="relative" data-dropdown>
-              <div className="mb-2 flex items-center justify-between">
-                <label className="dark:text-dark-text block text-sm font-medium text-gray-700">
-                  Chorleitung
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="useCustomConductor"
-                    checked={useCustomConductor}
-                    onChange={(e) => {
-                      setUseCustomConductor(e.target.checked);
-                      if (e.target.checked) {
-                        setConductorId(null);
-                        setConductorSearch("");
-                      } else {
-                        setConductorName("");
-                      }
-                    }}
-                    className="text-primary h-4 w-4 rounded border-gray-300 focus:ring-blue-500"
-                  />
-                  <label
-                    htmlFor="useCustomConductor"
-                    className="dark:text-dark-text text-xs text-gray-600"
-                  >
-                    Benutzerdefiniert
-                  </label>
-                </div>
-              </div>
-              {useCustomConductor ? (
-                <input
-                  type="text"
-                  value={conductorName}
-                  onChange={(e) => setConductorName(e.target.value)}
-                  placeholder="z.B. Max Mustermann"
-                  maxLength={200}
-                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                />
-              ) : (
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={conductorSearch}
-                    onChange={(e) => {
-                      setConductorSearch(e.target.value);
-                      setShowConductorDropdown(true);
-                      if (!e.target.value) setConductorId(null);
-                    }}
-                    onFocus={() => setShowConductorDropdown(true)}
-                    placeholder="Name oder E-Mail eingeben..."
-                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 pr-10 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                  />
-                  {conductorId && (
-                    <button
-                      type="button"
-                      onClick={handleClearConductor}
-                      className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+          <Card>
+            <CardHeader>
+              <CardTitle>Personen</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Conductor */}
+              <div className="relative" data-dropdown>
+                <div className="mb-2 flex items-center justify-between">
+                  <Label className="mb-0">Chorleitung</Label>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="useCustomConductor"
+                      checked={useCustomConductor}
+                      onChange={(e) => {
+                        setUseCustomConductor(e.target.checked);
+                        if (e.target.checked) {
+                          setConductorId(null);
+                          setConductorSearch("");
+                        } else {
+                          setConductorName("");
+                        }
+                      }}
+                    />
+                    <label
+                      htmlFor="useCustomConductor"
+                      className="text-dark dark:text-night-muted text-xs"
                     >
-                      <XIcon className="h-4 w-4" />
-                    </button>
-                  )}
+                      Benutzerdefiniert
+                    </label>
+                  </div>
                 </div>
-              )}
-
-              {/* Conductor Dropdown */}
-              {!useCustomConductor && showConductorDropdown && (
-                <div className="dark:border-dark-border dark:bg-dark-surface absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
-                  <div
-                    className="overflow-y-auto"
-                    style={{ maxHeight: "240px" }}
-                  >
-                    {filteredConductorUsers &&
-                    filteredConductorUsers.length > 0 ? (
-                      filteredConductorUsers.map((user) => (
-                        <button
-                          key={user.id}
-                          type="button"
-                          onClick={() => handleConductorSelect(user)}
-                          className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
-                        >
-                          <span className="dark:text-dark-text font-medium text-gray-900">
-                            {user.displayName || user.email}
-                          </span>
-                          {user.displayName && (
-                            <span className="text-gray-500 dark:text-gray-400">
-                              {" "}
-                              – {user.email}
-                            </span>
-                          )}
-                        </button>
-                      ))
-                    ) : (
-                      <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                        {conductorSearch
-                          ? "Keine Benutzer gefunden"
-                          : "Tippe, um Benutzer zu suchen"}
-                      </div>
+                {useCustomConductor ? (
+                  <Input
+                    type="text"
+                    value={conductorName}
+                    onChange={(e) => setConductorName(e.target.value)}
+                    placeholder="z.B. Max Mustermann"
+                    maxLength={200}
+                  />
+                ) : (
+                  <div className="relative">
+                    <Input
+                      type="text"
+                      value={conductorSearch}
+                      onChange={(e) => {
+                        setConductorSearch(e.target.value);
+                        setShowConductorDropdown(true);
+                        if (!e.target.value) setConductorId(null);
+                      }}
+                      onFocus={() => setShowConductorDropdown(true)}
+                      placeholder="Name oder E-Mail eingeben..."
+                      className="pr-10"
+                    />
+                    {conductorId && (
+                      <button
+                        type="button"
+                        onClick={handleClearConductor}
+                        className="text-dark hover:text-ink dark:text-night-muted dark:hover:text-night-text absolute top-1/2 right-3 -translate-y-1/2"
+                      >
+                        <XIcon className="h-4 w-4" />
+                      </button>
                     )}
                   </div>
-                  {conductorId && (
-                    <button
-                      type="button"
-                      onClick={handleClearConductor}
-                      className="dark:border-dark-border block w-full border-t border-gray-200 px-4 py-2 text-left text-sm font-medium text-red-600 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700"
+                )}
+
+                {/* Conductor Dropdown */}
+                {!useCustomConductor && showConductorDropdown && (
+                  <div className="border-ink dark:border-night-text dark:bg-night-raised bg-paper absolute z-10 mt-1 w-full overflow-hidden border">
+                    <div
+                      className="overflow-y-auto"
+                      style={{ maxHeight: "240px" }}
                     >
-                      Verknüpfung entfernen
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {/* Selected conductor indicator */}
-              {!useCustomConductor && conductorId && (
-                <p className="mt-2 text-sm text-green-600 dark:text-green-400">
-                  ✓ Chorleitung verknüpft
-                </p>
-              )}
-              {useCustomConductor && conductorName && (
-                <p className="mt-2 text-sm text-green-600 dark:text-green-400">
-                  ✓ Benutzerdefinierte Chorleitung
-                </p>
-              )}
-
-              {/* Conductor contact (optional, useful for non-user conductors) */}
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <div>
-                  <label className="dark:text-dark-text mb-1 block text-xs font-medium text-gray-700">
-                    E-Mail (Chorleitung)
-                  </label>
-                  <input
-                    type="email"
-                    value={conductorEmail}
-                    onChange={(e) => setConductorEmail(e.target.value)}
-                    maxLength={255}
-                    placeholder="leitung@example.de"
-                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="dark:text-dark-text mb-1 block text-xs font-medium text-gray-700">
-                    Telefon (Chorleitung)
-                  </label>
-                  <input
-                    type="tel"
-                    value={conductorPhone}
-                    onChange={(e) => setConductorPhone(e.target.value)}
-                    maxLength={50}
-                    pattern="[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*"
-                    placeholder="+49 123 456789"
-                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Representative */}
-            <div className="relative" data-dropdown>
-              <div className="mb-2 flex items-center justify-between">
-                <label className="dark:text-dark-text block text-sm font-medium text-gray-700">
-                  Ansprechpartner
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="useCustomRepresentative"
-                    checked={useCustomRepresentative}
-                    onChange={(e) => {
-                      setUseCustomRepresentative(e.target.checked);
-                      if (e.target.checked) {
-                        setRepresentativeId(null);
-                        setRepresentativeSearch("");
-                      } else {
-                        setRepresentativeName("");
-                      }
-                    }}
-                    className="text-primary h-4 w-4 rounded border-gray-300 focus:ring-blue-500"
-                  />
-                  <label
-                    htmlFor="useCustomRepresentative"
-                    className="dark:text-dark-text text-xs text-gray-600"
-                  >
-                    Benutzerdefiniert
-                  </label>
-                </div>
-              </div>
-              {useCustomRepresentative ? (
-                <input
-                  type="text"
-                  value={representativeName}
-                  onChange={(e) => setRepresentativeName(e.target.value)}
-                  placeholder="z.B. Max Mustermann"
-                  maxLength={200}
-                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                />
-              ) : (
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={representativeSearch}
-                    onChange={(e) => {
-                      setRepresentativeSearch(e.target.value);
-                      setShowRepresentativeDropdown(true);
-                      if (!e.target.value) setRepresentativeId(null);
-                    }}
-                    onFocus={() => setShowRepresentativeDropdown(true)}
-                    placeholder="Name oder E-Mail eingeben..."
-                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 pr-10 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                  />
-                  {representativeId && (
-                    <button
-                      type="button"
-                      onClick={handleClearRepresentative}
-                      className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                    >
-                      <XIcon className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {/* Representative Dropdown */}
-              {!useCustomRepresentative && showRepresentativeDropdown && (
-                <div className="dark:border-dark-border dark:bg-dark-surface absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
-                  <div
-                    className="overflow-y-auto"
-                    style={{ maxHeight: "240px" }}
-                  >
-                    {filteredRepresentativeUsers &&
-                    filteredRepresentativeUsers.length > 0 ? (
-                      filteredRepresentativeUsers.map((user) => (
-                        <button
-                          key={user.id}
-                          type="button"
-                          onClick={() => handleRepresentativeSelect(user)}
-                          className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
-                        >
-                          <span className="dark:text-dark-text font-medium text-gray-900">
-                            {user.displayName || user.email}
-                          </span>
-                          {user.displayName && (
-                            <span className="text-gray-500 dark:text-gray-400">
-                              {" "}
-                              – {user.email}
+                      {filteredConductorUsers &&
+                      filteredConductorUsers.length > 0 ? (
+                        filteredConductorUsers.map((user) => (
+                          <button
+                            key={user.id}
+                            type="button"
+                            onClick={() => handleConductorSelect(user)}
+                            className="hover:bg-rule/25 dark:hover:bg-night-rule block w-full px-4 py-2 text-left text-sm transition-colors"
+                          >
+                            <span className="text-ink dark:text-night-text font-medium">
+                              {user.displayName || user.email}
                             </span>
-                          )}
-                        </button>
-                      ))
-                    ) : (
-                      <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                        {representativeSearch
-                          ? "Keine Benutzer gefunden"
-                          : "Tippe, um Benutzer zu suchen"}
-                      </div>
+                            {user.displayName && (
+                              <span className="text-dark dark:text-night-muted">
+                                {" "}
+                                – {user.email}
+                              </span>
+                            )}
+                          </button>
+                        ))
+                      ) : (
+                        <div className="text-dark dark:text-night-muted px-4 py-3 text-sm">
+                          {conductorSearch
+                            ? "Keine Benutzer gefunden"
+                            : "Tippe, um Benutzer zu suchen"}
+                        </div>
+                      )}
+                    </div>
+                    {conductorId && (
+                      <button
+                        type="button"
+                        onClick={handleClearConductor}
+                        className="border-rule dark:border-night-rule hover:bg-rule/25 dark:hover:bg-night-rule block w-full border-t px-4 py-2 text-left text-sm font-medium text-red-600 transition-colors dark:text-red-400"
+                      >
+                        Verknüpfung entfernen
+                      </button>
                     )}
                   </div>
-                  {representativeId && (
-                    <button
-                      type="button"
-                      onClick={handleClearRepresentative}
-                      className="dark:border-dark-border block w-full border-t border-gray-200 px-4 py-2 text-left text-sm font-medium text-red-600 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700"
-                    >
-                      Verknüpfung entfernen
-                    </button>
-                  )}
-                </div>
-              )}
+                )}
 
-              {/* Selected representative indicator */}
-              {!useCustomRepresentative && representativeId && (
-                <p className="mt-2 text-sm text-green-600 dark:text-green-400">
-                  ✓ Ansprechpartner verknüpft
-                </p>
-              )}
-              {useCustomRepresentative && representativeName && (
-                <p className="mt-2 text-sm text-green-600 dark:text-green-400">
-                  ✓ Benutzerdefinierter Ansprechpartner
-                </p>
-              )}
+                {/* Selected conductor indicator */}
+                {!useCustomConductor && conductorId && (
+                  <p className="text-dark dark:text-night-muted mt-2 text-sm">
+                    ✓ Chorleitung verknüpft
+                  </p>
+                )}
+                {useCustomConductor && conductorName && (
+                  <p className="text-dark dark:text-night-muted mt-2 text-sm">
+                    ✓ Benutzerdefinierte Chorleitung
+                  </p>
+                )}
 
-              {/* Representative contact (optional, useful for non-user representatives) */}
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <div>
-                  <label className="dark:text-dark-text mb-1 block text-xs font-medium text-gray-700">
-                    E-Mail (Ansprechpartner)
-                  </label>
-                  <input
-                    type="email"
-                    value={representativeEmail}
-                    onChange={(e) => setRepresentativeEmail(e.target.value)}
-                    maxLength={255}
-                    placeholder="ap@example.de"
-                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="dark:text-dark-text mb-1 block text-xs font-medium text-gray-700">
-                    Telefon (Ansprechpartner)
-                  </label>
-                  <input
-                    type="tel"
-                    value={representativePhone}
-                    onChange={(e) => setRepresentativePhone(e.target.value)}
-                    maxLength={50}
-                    pattern="[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*"
-                    placeholder="+49 123 456789"
-                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                  />
+                {/* Conductor contact (optional, useful for non-user conductors) */}
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <Label>E-Mail (Chorleitung)</Label>
+                    <Input
+                      type="email"
+                      value={conductorEmail}
+                      onChange={(e) => setConductorEmail(e.target.value)}
+                      maxLength={255}
+                      placeholder="leitung@example.de"
+                      className="text-sm"
+                    />
+                  </div>
+                  <div>
+                    <Label>Telefon (Chorleitung)</Label>
+                    <Input
+                      type="tel"
+                      value={conductorPhone}
+                      onChange={(e) => setConductorPhone(e.target.value)}
+                      maxLength={50}
+                      pattern="[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*"
+                      placeholder="+49 123 456789"
+                      className="text-sm"
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
+
+              {/* Representative */}
+              <div className="relative" data-dropdown>
+                <div className="mb-2 flex items-center justify-between">
+                  <Label className="mb-0">Ansprechpartner</Label>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="useCustomRepresentative"
+                      checked={useCustomRepresentative}
+                      onChange={(e) => {
+                        setUseCustomRepresentative(e.target.checked);
+                        if (e.target.checked) {
+                          setRepresentativeId(null);
+                          setRepresentativeSearch("");
+                        } else {
+                          setRepresentativeName("");
+                        }
+                      }}
+                    />
+                    <label
+                      htmlFor="useCustomRepresentative"
+                      className="text-dark dark:text-night-muted text-xs"
+                    >
+                      Benutzerdefiniert
+                    </label>
+                  </div>
+                </div>
+                {useCustomRepresentative ? (
+                  <Input
+                    type="text"
+                    value={representativeName}
+                    onChange={(e) => setRepresentativeName(e.target.value)}
+                    placeholder="z.B. Max Mustermann"
+                    maxLength={200}
+                  />
+                ) : (
+                  <div className="relative">
+                    <Input
+                      type="text"
+                      value={representativeSearch}
+                      onChange={(e) => {
+                        setRepresentativeSearch(e.target.value);
+                        setShowRepresentativeDropdown(true);
+                        if (!e.target.value) setRepresentativeId(null);
+                      }}
+                      onFocus={() => setShowRepresentativeDropdown(true)}
+                      placeholder="Name oder E-Mail eingeben..."
+                      className="pr-10"
+                    />
+                    {representativeId && (
+                      <button
+                        type="button"
+                        onClick={handleClearRepresentative}
+                        className="text-dark hover:text-ink dark:text-night-muted dark:hover:text-night-text absolute top-1/2 right-3 -translate-y-1/2"
+                      >
+                        <XIcon className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* Representative Dropdown */}
+                {!useCustomRepresentative && showRepresentativeDropdown && (
+                  <div className="border-ink dark:border-night-text dark:bg-night-raised bg-paper absolute z-10 mt-1 w-full overflow-hidden border">
+                    <div
+                      className="overflow-y-auto"
+                      style={{ maxHeight: "240px" }}
+                    >
+                      {filteredRepresentativeUsers &&
+                      filteredRepresentativeUsers.length > 0 ? (
+                        filteredRepresentativeUsers.map((user) => (
+                          <button
+                            key={user.id}
+                            type="button"
+                            onClick={() => handleRepresentativeSelect(user)}
+                            className="hover:bg-rule/25 dark:hover:bg-night-rule block w-full px-4 py-2 text-left text-sm transition-colors"
+                          >
+                            <span className="text-ink dark:text-night-text font-medium">
+                              {user.displayName || user.email}
+                            </span>
+                            {user.displayName && (
+                              <span className="text-dark dark:text-night-muted">
+                                {" "}
+                                – {user.email}
+                              </span>
+                            )}
+                          </button>
+                        ))
+                      ) : (
+                        <div className="text-dark dark:text-night-muted px-4 py-3 text-sm">
+                          {representativeSearch
+                            ? "Keine Benutzer gefunden"
+                            : "Tippe, um Benutzer zu suchen"}
+                        </div>
+                      )}
+                    </div>
+                    {representativeId && (
+                      <button
+                        type="button"
+                        onClick={handleClearRepresentative}
+                        className="border-rule dark:border-night-rule hover:bg-rule/25 dark:hover:bg-night-rule block w-full border-t px-4 py-2 text-left text-sm font-medium text-red-600 transition-colors dark:text-red-400"
+                      >
+                        Verknüpfung entfernen
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* Selected representative indicator */}
+                {!useCustomRepresentative && representativeId && (
+                  <p className="text-dark dark:text-night-muted mt-2 text-sm">
+                    ✓ Ansprechpartner verknüpft
+                  </p>
+                )}
+                {useCustomRepresentative && representativeName && (
+                  <p className="text-dark dark:text-night-muted mt-2 text-sm">
+                    ✓ Benutzerdefinierter Ansprechpartner
+                  </p>
+                )}
+
+                {/* Representative contact (optional, useful for non-user representatives) */}
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <Label>E-Mail (Ansprechpartner)</Label>
+                    <Input
+                      type="email"
+                      value={representativeEmail}
+                      onChange={(e) => setRepresentativeEmail(e.target.value)}
+                      maxLength={255}
+                      placeholder="ap@example.de"
+                      className="text-sm"
+                    />
+                  </div>
+                  <div>
+                    <Label>Telefon (Ansprechpartner)</Label>
+                    <Input
+                      type="tel"
+                      value={representativePhone}
+                      onChange={(e) => setRepresentativePhone(e.target.value)}
+                      maxLength={50}
+                      pattern="[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*"
+                      placeholder="+49 123 456789"
+                      className="text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Rehearsal */}
-          <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="flex items-center justify-between">
-              <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
-                Probenzeiten
-              </h2>
+          <Card>
+            <CardHeader className="flex-row items-center justify-between space-y-0">
+              <CardTitle>Probenzeiten</CardTitle>
               <button
                 type="button"
                 onClick={() =>
@@ -794,249 +774,230 @@ export default function NewEnsemblePage() {
                     { selectedDays: [], time: "" },
                   ])
                 }
-                className="text-primary hover:text-primary-dark text-sm font-medium"
+                className="link-ink text-sm"
               >
                 + Hinzufügen
               </button>
-            </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {rehearsalSchedules.length === 0 ? (
+                <p className="text-dark dark:text-night-muted text-sm">
+                  Keine Probenzeiten hinzugefügt. Klicken Sie auf
+                  &quot;Hinzufügen&quot; um eine Probenzeit hinzuzufügen.
+                </p>
+              ) : (
+                <div className="space-y-6">
+                  {rehearsalSchedules.map((schedule, index) => (
+                    <div
+                      key={index}
+                      className="border-rule dark:border-night-rule border p-4"
+                    >
+                      <div className="mb-4 flex items-center justify-between">
+                        <h3 className="text-ink dark:text-night-text text-sm font-semibold">
+                          Probenzeit {index + 1}
+                        </h3>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRehearsalSchedules(
+                              rehearsalSchedules.filter((_, i) => i !== index),
+                            );
+                          }}
+                          className="text-sm font-medium text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                        >
+                          Entfernen
+                        </button>
+                      </div>
 
-            {rehearsalSchedules.length === 0 ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Keine Probenzeiten hinzugefügt. Klicken Sie auf
-                &quot;Hinzufügen&quot; um eine Probenzeit hinzuzufügen.
-              </p>
-            ) : (
-              <div className="space-y-6">
-                {rehearsalSchedules.map((schedule, index) => (
-                  <div
-                    key={index}
-                    className="dark:border-dark-border rounded-lg border border-gray-200 p-4"
-                  >
-                    <div className="mb-4 flex items-center justify-between">
-                      <h3 className="dark:text-dark-text text-sm font-semibold text-gray-700">
-                        Probenzeit {index + 1}
-                      </h3>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setRehearsalSchedules(
-                            rehearsalSchedules.filter((_, i) => i !== index),
-                          );
-                        }}
-                        className="text-sm font-medium text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
-                      >
-                        Entfernen
-                      </button>
-                    </div>
+                      <div className="mb-4">
+                        <Label>Wochentage</Label>
+                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+                          {DAYS_OF_WEEK.map((day) => (
+                            <label
+                              key={day}
+                              className="border-rule dark:border-night-rule text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised flex items-center gap-2 border px-3 py-2 text-sm transition-colors"
+                            >
+                              <Checkbox
+                                checked={schedule.selectedDays.includes(day)}
+                                onChange={(e) => {
+                                  const updated = [...rehearsalSchedules];
+                                  if (e.target.checked) {
+                                    updated[index]!.selectedDays = [
+                                      ...schedule.selectedDays,
+                                      day,
+                                    ];
+                                  } else {
+                                    updated[index]!.selectedDays =
+                                      schedule.selectedDays.filter(
+                                        (d) => d !== day,
+                                      );
+                                  }
+                                  setRehearsalSchedules(updated);
+                                }}
+                              />
+                              <span>{day}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
 
-                    <div className="mb-4">
-                      <label className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700">
-                        Wochentage
-                      </label>
-                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-                        {DAYS_OF_WEEK.map((day) => (
-                          <label
-                            key={day}
-                            className="dark:text-dark-text flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm transition-colors hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={schedule.selectedDays.includes(day)}
-                              onChange={(e) => {
-                                const updated = [...rehearsalSchedules];
-                                if (e.target.checked) {
-                                  updated[index]!.selectedDays = [
-                                    ...schedule.selectedDays,
-                                    day,
-                                  ];
-                                } else {
-                                  updated[index]!.selectedDays =
-                                    schedule.selectedDays.filter(
-                                      (d) => d !== day,
-                                    );
-                                }
-                                setRehearsalSchedules(updated);
-                              }}
-                              className="text-primary h-4 w-4 rounded border-gray-300 focus:ring-blue-500"
-                            />
-                            <span>{day}</span>
-                          </label>
-                        ))}
+                      <div>
+                        <Label>Probenzeit</Label>
+                        <Input
+                          type="text"
+                          value={schedule.time}
+                          onChange={(e) => {
+                            const updated = [...rehearsalSchedules];
+                            updated[index]!.time = e.target.value;
+                            setRehearsalSchedules(updated);
+                          }}
+                          placeholder="z.B. 8:00-12:00 oder 19:30-21:00"
+                        />
                       </div>
                     </div>
-
-                    <div>
-                      <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                        Probenzeit
-                      </label>
-                      <input
-                        type="text"
-                        value={schedule.time}
-                        onChange={(e) => {
-                          const updated = [...rehearsalSchedules];
-                          updated[index]!.time = e.target.value;
-                          setRehearsalSchedules(updated);
-                        }}
-                        className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                        placeholder="z.B. 8:00-12:00 oder 19:30-21:00"
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Legacy fields (for backward compatibility) */}
-            <div className="dark:border-dark-border border-t border-gray-200 pt-4">
-              <p className="dark:text-dark-text mb-2 text-sm font-medium text-gray-700">
-                Legacy (veraltet - nur für Migration)
-              </p>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    Probentag (alt)
-                  </label>
-                  <input
-                    type="text"
-                    value={rehearsalDay}
-                    onChange={(e) => setRehearsalDay(e.target.value)}
-                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                    placeholder="z.B. Mittwoch"
-                  />
-                </div>
-                <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    Probenzeit (alt)
-                  </label>
-                  <input
-                    type="text"
-                    value={rehearsalTime}
-                    onChange={(e) => setRehearsalTime(e.target.value)}
-                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                    placeholder="z.B. 19:30 - 21:00 Uhr"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Location */}
-            <div className="relative" data-dropdown>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Probenort
-              </label>
-              <input
-                type="text"
-                value={locationSearch}
-                onChange={(e) => {
-                  setLocationSearch(e.target.value);
-                  setShowLocationDropdown(true);
-                  if (!e.target.value) setLocationId("");
-                }}
-                onFocus={() => setShowLocationDropdown(true)}
-                placeholder="Suche nach einem Ort..."
-                className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-              />
-
-              {/* Location Dropdown */}
-              {showLocationDropdown && locationsData && (
-                <div className="dark:border-dark-border dark:bg-dark-surface absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
-                  <div
-                    className="overflow-y-auto"
-                    style={{ maxHeight: "240px" }}
-                  >
-                    {locationsData.locations.length > 0 ? (
-                      <>
-                        {locationsData.locations.map((location) => (
-                          <button
-                            key={location.id}
-                            type="button"
-                            onClick={() => handleLocationSelect(location)}
-                            className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
-                          >
-                            <span className="dark:text-dark-text font-medium text-gray-900">
-                              {location.name || location.city}
-                            </span>
-                            {location.name && (
-                              <span className="text-gray-500 dark:text-gray-400">
-                                {" "}
-                                – {location.city}
-                              </span>
-                            )}
-                            {location.street && (
-                              <span className="block text-xs text-gray-400 dark:text-gray-500">
-                                {location.street}
-                              </span>
-                            )}
-                          </button>
-                        ))}
-                      </>
-                    ) : (
-                      <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                        Keine Orte gefunden
-                      </div>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowLocationDropdown(false);
-                      setShowNewLocationForm(true);
-                    }}
-                    className="text-primary dark:border-dark-border block w-full border-t border-gray-200 px-4 py-2 text-left text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-700"
-                  >
-                    + Neuen Ort erstellen
-                  </button>
+                  ))}
                 </div>
               )}
-            </div>
 
-            {showNewLocationForm && (
-              <NewLocationForm
-                onCreated={(location) => {
-                  setLocationId(location.id);
-                  setLocationSearch(
-                    `${location.name ? location.name + ", " : ""}${location.city}`,
-                  );
-                  setShowNewLocationForm(false);
-                }}
-                onCancel={() => setShowNewLocationForm(false)}
-                onError={setError}
-                successMessage="Veranstaltungsort erstellt"
-              />
-            )}
-          </div>
+              {/* Legacy fields (for backward compatibility) */}
+              <div className="border-rule dark:border-night-rule border-t pt-4">
+                <p className="text-ink dark:text-night-text mb-2 text-sm font-medium">
+                  Legacy (veraltet - nur für Migration)
+                </p>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <Label>Probentag (alt)</Label>
+                    <Input
+                      type="text"
+                      value={rehearsalDay}
+                      onChange={(e) => setRehearsalDay(e.target.value)}
+                      placeholder="z.B. Mittwoch"
+                    />
+                  </div>
+                  <div>
+                    <Label>Probenzeit (alt)</Label>
+                    <Input
+                      type="text"
+                      value={rehearsalTime}
+                      onChange={(e) => setRehearsalTime(e.target.value)}
+                      placeholder="z.B. 19:30 - 21:00 Uhr"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Location */}
+              <div className="relative" data-dropdown>
+                <Label>Probenort</Label>
+                <Input
+                  type="text"
+                  value={locationSearch}
+                  onChange={(e) => {
+                    setLocationSearch(e.target.value);
+                    setShowLocationDropdown(true);
+                    if (!e.target.value) setLocationId("");
+                  }}
+                  onFocus={() => setShowLocationDropdown(true)}
+                  placeholder="Suche nach einem Ort..."
+                />
+
+                {/* Location Dropdown */}
+                {showLocationDropdown && locationsData && (
+                  <div className="border-ink dark:border-night-text dark:bg-night-raised bg-paper absolute z-10 mt-1 w-full overflow-hidden border">
+                    <div
+                      className="overflow-y-auto"
+                      style={{ maxHeight: "240px" }}
+                    >
+                      {locationsData.locations.length > 0 ? (
+                        <>
+                          {locationsData.locations.map((location) => (
+                            <button
+                              key={location.id}
+                              type="button"
+                              onClick={() => handleLocationSelect(location)}
+                              className="hover:bg-rule/25 dark:hover:bg-night-rule block w-full px-4 py-2 text-left text-sm transition-colors"
+                            >
+                              <span className="text-ink dark:text-night-text font-medium">
+                                {location.name || location.city}
+                              </span>
+                              {location.name && (
+                                <span className="text-dark dark:text-night-muted">
+                                  {" "}
+                                  – {location.city}
+                                </span>
+                              )}
+                              {location.street && (
+                                <span className="text-dark dark:text-night-muted block text-xs">
+                                  {location.street}
+                                </span>
+                              )}
+                            </button>
+                          ))}
+                        </>
+                      ) : (
+                        <div className="text-dark dark:text-night-muted px-4 py-3 text-sm">
+                          Keine Orte gefunden
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowLocationDropdown(false);
+                        setShowNewLocationForm(true);
+                      }}
+                      className="link-ink border-rule dark:border-night-rule hover:bg-rule/25 dark:hover:bg-night-rule block w-full border-t px-4 py-2 text-left text-sm transition-colors"
+                    >
+                      + Neuen Ort erstellen
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {showNewLocationForm && (
+                <NewLocationForm
+                  onCreated={(location) => {
+                    setLocationId(location.id);
+                    setLocationSearch(
+                      `${location.name ? location.name + ", " : ""}${location.city}`,
+                    );
+                    setShowNewLocationForm(false);
+                  }}
+                  onCancel={() => setShowNewLocationForm(false)}
+                  onError={setError}
+                  successMessage="Veranstaltungsort erstellt"
+                />
+              )}
+            </CardContent>
+          </Card>
 
           {/* Website & Social Media (ensemble-level) */}
-          <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
-              Website & Social Media
-            </h2>
+          <Card>
+            <CardHeader>
+              <CardTitle>Website & Social Media</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <Label>Website des Chores</Label>
+                <Input
+                  type="url"
+                  value={contactWebsite}
+                  onChange={(e) => setContactWebsite(e.target.value)}
+                  maxLength={500}
+                  placeholder="https://www.example.de"
+                />
+                <p className="text-dark dark:text-night-muted mt-1 text-xs">
+                  E-Mail und Telefon werden pro Person (Chorleitung /
+                  Ansprechpartner) gepflegt.
+                </p>
+              </div>
 
-            <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Website des Chores
-              </label>
-              <input
-                type="url"
-                value={contactWebsite}
-                onChange={(e) => setContactWebsite(e.target.value)}
-                maxLength={500}
-                className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                placeholder="https://www.example.de"
-              />
-              <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                E-Mail und Telefon werden pro Person (Chorleitung /
-                Ansprechpartner) gepflegt.
-              </p>
-            </div>
-
-            <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Social Media
-              </label>
-              <SocialLinksEditor value={socials} onChange={setSocials} />
-            </div>
-          </div>
+              <div>
+                <Label>Social Media</Label>
+                <SocialLinksEditor value={socials} onChange={setSocials} />
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Actions */}
@@ -1051,7 +1012,7 @@ export default function NewEnsemblePage() {
           </Button>
           <Link
             href="/dashboard/ensembles"
-            className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="border-ink dark:border-night-text text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised inline-flex min-h-11 items-center gap-2 border px-4 py-2 transition-colors"
           >
             Abbrechen
           </Link>
