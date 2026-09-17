@@ -31,6 +31,11 @@ import {
 } from "lucide-react";
 
 import LocationNavigationLink from "@/app/_components/general/location-navigation-link";
+import { DownloadImagePreview } from "@/app/_components/general/download-image-preview";
+import {
+  downloadFormatCode,
+  isPreviewableImageDownload,
+} from "@/lib/download-file-types";
 
 type EventWithRelations = RouterOutputs["events"]["getById"];
 
@@ -441,16 +446,30 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
                 <Heading as="h2" size="list" rule>
                   Downloads
                 </Heading>
+                {/* Bilder (Flyer) zuerst und mit Vorschau: Sie sind das, was
+                    man am Termin sucht, und ein Dateiname sagt über einen
+                    Flyer nichts. Die übrigen Dateien folgen als Wegzeilen. */}
                 <WayList className="mt-4" rule={false}>
-                  {event.downloads.map((ed) => (
-                    <WayRow
-                      key={ed.download.id}
-                      href={ed.download.fileUrl}
-                      kind="download"
-                      title={ed.download.title}
-                      description={ed.download.description || undefined}
-                    />
-                  ))}
+                  {event.downloads
+                    .filter((ed) => isPreviewableImageDownload(ed.download))
+                    .map((ed) => (
+                      <DownloadImagePreview
+                        key={ed.download.id}
+                        download={ed.download}
+                      />
+                    ))}
+                  {event.downloads
+                    .filter((ed) => !isPreviewableImageDownload(ed.download))
+                    .map((ed) => (
+                      <WayRow
+                        key={ed.download.id}
+                        href={ed.download.fileUrl}
+                        kind="download"
+                        fileType={downloadFormatCode(ed.download)}
+                        title={ed.download.title}
+                        description={ed.download.description || undefined}
+                      />
+                    ))}
                 </WayList>
               </div>
             )}

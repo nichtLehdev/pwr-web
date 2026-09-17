@@ -12,6 +12,7 @@ import { ContentStatus, PostCategory } from "~/generated/prisma/enums";
 import "@/styles/article-content.css";
 import { useToast } from "@/app/_components/ui/toast";
 import { sanitizeHtml } from "@/lib/sanitize";
+import { DOWNLOAD_FILE_TYPE_ICONS } from "@/lib/download-file-types";
 import {
   Edit,
   Trash2,
@@ -383,17 +384,7 @@ export default function PostDetailPage() {
                     >
                       <div className="flex items-center gap-3">
                         <span className="text-lg">
-                          {download.fileType === "PDF"
-                            ? "📄"
-                            : download.fileType === "DOCX"
-                              ? "📝"
-                              : download.fileType === "XLSX"
-                                ? "📊"
-                                : download.fileType === "ZIP"
-                                  ? "📦"
-                                  : download.fileType === "MP3"
-                                    ? "🎵"
-                                    : "📁"}
+                          {DOWNLOAD_FILE_TYPE_ICONS[download.fileType]}
                         </span>
                         <div>
                           <p className="text-ink dark:text-night-text text-sm font-medium">
