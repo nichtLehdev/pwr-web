@@ -343,6 +343,14 @@ export default function MyRegistrationsPage() {
                           {getDiscountStatusBadge(
                             registration.siblingDiscountStatus,
                           )}
+                          {registration.registrationGroupId && (
+                            <span
+                              className="rounded-full bg-orange-100 px-3 py-1 text-sm font-semibold text-orange-800 dark:bg-orange-900/30 dark:text-orange-300"
+                              title="Nicht alle Teilnehmer bekamen einen Platz – die übrigen stehen in einer eigenen Anmeldung."
+                            >
+                              Aufgeteilt
+                            </span>
+                          )}
                         </div>
 
                         <div className="mb-4 space-y-2 text-sm text-gray-600 dark:text-gray-400">

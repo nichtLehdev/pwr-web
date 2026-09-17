@@ -25,6 +25,12 @@ import { validateStep as validateStepUtil } from "./course-registration-form/uti
 import { registrationErrorMessage } from "@/lib/registration-error-message";
 import { registrationSeatShortage } from "@/lib/registration-seat-shortage";
 import {
+  defaultSeatSelection,
+  SEAT_SELECTION_OUTDATED_MESSAGE,
+  seatSelectionProblem,
+} from "@/lib/registration-split";
+import { useRouter } from "next/navigation";
+import {
   ScrollableModal,
   ScrollableModalCard,
   ScrollableModalBody,
@@ -74,6 +80,14 @@ export default function CourseRegistrationForm({
   const [downPaymentAcknowledged, setDownPaymentAcknowledged] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+  const router = useRouter();
+  const utils = api.useUtils();
+  /** Who gets the free seats, for the participant list it was chosen on. */
+  const [seatSplit, setSeatSplit] = useState<{
+    participants: RegistrationData["participants"];
+    splitting: boolean;
+    indexes: number[];
+  } | null>(null);
   const [staffOptions, setStaffOptions] = useState<StaffRegistrationOptions>({
     registrationStatus: "AUTO",
     sendConfirmationEmail: true,
@@ -311,15 +325,20 @@ export default function CourseRegistrationForm({
 
   const canProceed = validateStep(currentStep);
 
-  // Why the entered participants won't all get a seat: too few free seats in
-  // the course or in one of the chosen price options.
-  const seatShortage = registrationSeatShortage({
-    participantPriceOptionIds: registrationData.participants.map(
-      (p) => p.priceOptionId,
-    ),
+  const participantPriceOptionIds = registrationData.participants.map(
+    (p) => p.priceOptionId,
+  );
+  const seatAvailability = {
     availableSlots,
     priceOptions: course.priceOptions,
     capacityByPriceOption,
+  };
+
+  // Why the entered participants won't all get a seat: too few free seats in
+  // the course or in one of the chosen price options.
+  const seatShortage = registrationSeatShortage({
+    participantPriceOptionIds,
+    ...seatAvailability,
   });
 
   // Seats short for what has been entered — the point at which the staff
@@ -327,19 +346,64 @@ export default function CourseRegistrationForm({
   // flag covers a free-seat count that was not passed in.
   const staffSeatsShort = isWaitlist || seatShortage !== null;
 
+  // Splitting needs a waiting list for the rest and at least one participant
+  // who fits right now.
+  const defaultSelection = defaultSeatSelection(
+    participantPriceOptionIds,
+    seatAvailability,
+  );
+  const canSplit =
+    !!course.allowWaitingList &&
+    seatShortage !== null &&
+    registrationData.participants.length > 1 &&
+    defaultSelection.length > 0;
+
+  // A selection belongs to the participant list it was made for — changing
+  // the list in step 2 starts over from the default.
+  const currentSplit =
+    seatSplit?.participants === registrationData.participants
+      ? seatSplit
+      : null;
+  const staffStatus =
+    staffOptions.registrationStatus === "SPLIT" && !canSplit
+      ? "AUTO"
+      : staffOptions.registrationStatus;
+  const splitting =
+    canSplit &&
+    (staffMode ? staffStatus === "SPLIT" : (currentSplit?.splitting ?? false));
+  const selectedIndexes = currentSplit?.indexes ?? defaultSelection;
+  const seatSelectionIssue = splitting
+    ? seatSelectionProblem(
+        participantPriceOptionIds,
+        selectedIndexes,
+        seatAvailability,
+      )
+    : null;
+  const updateSeatSplit = (change: {
+    splitting?: boolean;
+    indexes?: number[];
+  }) =>
+    setSeatSplit({
+      participants: registrationData.participants,
+      splitting: change.splitting ?? currentSplit?.splitting ?? false,
+      indexes: change.indexes ?? selectedIndexes,
+    });
+
   // Mirrors the server: "AUTO" only becomes a waiting-list entry when the
   // course actually offers one, otherwise it confirms.
   const staffResolvedStatus =
-    staffOptions.registrationStatus !== "AUTO"
-      ? staffOptions.registrationStatus
+    staffStatus !== "AUTO"
+      ? staffStatus
       : staffSeatsShort && course.allowWaitingList
         ? "WAITLIST"
         : "CONFIRMED";
 
-  // The whole registration goes onto the waiting list — it is never split.
-  const expectsWaitlist = staffMode
-    ? staffResolvedStatus === "WAITLIST"
-    : !!course.allowWaitingList && staffSeatsShort;
+  // Unless split, the whole registration goes onto the waiting list.
+  const expectsWaitlist = splitting
+    ? false
+    : staffMode
+      ? staffResolvedStatus === "WAITLIST"
+      : !!course.allowWaitingList && staffSeatsShort;
 
   // Same rule the staff mutation enforces server-side: confirming beyond the
   // capacity needs the acknowledgement.
@@ -420,16 +484,27 @@ export default function CourseRegistrationForm({
       // The status the server assigned, not the form's guess: seats may have
       // been taken since the page loaded, and it used to report success
       // although the whole registration had landed on the waiting list.
-      onSuccess: (registration: { registrationStatus: string }) => {
+      onSuccess: (registration: {
+        registrationStatus: string;
+        participants: unknown[];
+        waitlistPart: { participantCount: number } | null;
+      }) => {
         const waitlisted = registration.registrationStatus === "WAITLIST";
+        const split = registration.waitlistPart
+          ? `${registration.participants.length} Teilnehmer bestätigt, ${registration.waitlistPart.participantCount} auf der Warteliste`
+          : null;
         toast.success(
           staffMode
-            ? waitlisted
-              ? "Die Anmeldung wurde auf der Warteliste erfasst."
-              : "Die Anmeldung wurde erfasst."
-            : waitlisted
-              ? "Sie wurden auf die Warteliste gesetzt."
-              : "Ihre Anmeldung war erfolgreich.",
+            ? split
+              ? `Die Anmeldung wurde aufgeteilt erfasst: ${split}.`
+              : waitlisted
+                ? "Die Anmeldung wurde auf der Warteliste erfasst."
+                : "Die Anmeldung wurde erfasst."
+            : split
+              ? `Ihre Anmeldung wurde aufgeteilt: ${split}.`
+              : waitlisted
+                ? "Sie wurden auf die Warteliste gesetzt."
+                : "Ihre Anmeldung war erfolgreich.",
         );
         onSuccess();
       },
@@ -443,16 +518,28 @@ export default function CourseRegistrationForm({
         setSubmitError(message);
         toast.error(message);
         console.error("Registration error:", error);
+        // Seats behind the chosen split were taken meanwhile: reload the free
+        // seats so the selection can be adjusted right here.
+        if (error.message === SEAT_SELECTION_OUTDATED_MESSAGE) {
+          router.refresh();
+          void utils.courses.getAvailableSlots.invalidate({ id: course.id });
+        }
       },
     };
+
+    const splitPayload = splitting
+      ? { confirmedParticipantIndexes: selectedIndexes }
+      : {};
 
     if (staffMode) {
       staffRegistrationMutation.mutate(
         {
           ...payload,
-          ...(staffOptions.registrationStatus !== "AUTO" && {
-            registrationStatus: staffOptions.registrationStatus,
-          }),
+          ...splitPayload,
+          ...(staffStatus !== "AUTO" &&
+            staffStatus !== "SPLIT" && {
+              registrationStatus: staffStatus,
+            }),
           allowOverbooking: staffOptions.allowOverbooking,
           sendConfirmationEmail: staffOptions.sendConfirmationEmail,
           downPaymentAlreadyPaid: staffOptions.downPaymentAlreadyPaid,
@@ -558,6 +645,15 @@ export default function CourseRegistrationForm({
           }
           isWaitlist={expectsWaitlist}
           seatShortage={seatShortage}
+          seatSplit={{
+            availability: seatAvailability,
+            canSplit,
+            splitting,
+            setSplitting: (next) => updateSeatSplit({ splitting: next }),
+            selectedIndexes,
+            setSelectedIndexes: (indexes) => updateSeatSplit({ indexes }),
+            problem: seatSelectionIssue,
+          }}
           staff={
             staffMode
               ? {
@@ -619,7 +715,12 @@ export default function CourseRegistrationForm({
         <button
           type="button"
           onClick={handleSubmit}
-          disabled={submitMutation.isPending || !canProceed || blockedByFull}
+          disabled={
+            submitMutation.isPending ||
+            !canProceed ||
+            blockedByFull ||
+            seatSelectionIssue !== null
+          }
           className="order-3 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50 sm:px-5"
         >
           {submitMutation.isPending

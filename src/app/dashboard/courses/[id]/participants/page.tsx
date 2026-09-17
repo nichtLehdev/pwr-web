@@ -1239,6 +1239,14 @@ export default function CourseParticipantsPage() {
                             ]
                           }
                         </span>
+                        {registration.registrationGroupId && (
+                          <span
+                            className="rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-800 dark:bg-orange-900/30 dark:text-orange-300"
+                            title="Teil einer aufgeteilten Anmeldung – die übrigen Teilnehmer stehen in einer eigenen Anmeldung."
+                          >
+                            Aufgeteilt
+                          </span>
+                        )}
                         <RegistrationPaymentBadge
                           invoices={registration.invoices}
                           className="px-3 py-1"
