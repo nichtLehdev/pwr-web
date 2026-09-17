@@ -35,8 +35,12 @@ export interface ParticipantFields {
  * filling in the public form.
  */
 export interface StaffRegistrationOptions {
-  /** "AUTO" leaves the choice to the server: confirmed while seats are free. */
-  registrationStatus: "AUTO" | "CONFIRMED" | "WAITLIST";
+  /**
+   * "AUTO" leaves the choice to the server: confirmed while seats are free.
+   * "SPLIT" confirms the participants chosen for the free seats and puts the
+   * rest on the waiting list as a linked registration.
+   */
+  registrationStatus: "AUTO" | "CONFIRMED" | "WAITLIST" | "SPLIT";
   /** Fee already collected — e.g. cash handed over on the spot. */
   sendConfirmationEmail: boolean;
   /** Required to confirm a registration beyond the course capacity. */

@@ -11,7 +11,13 @@ import type {
 import { StaffOptions } from "./staff-options";
 import { DownPaymentSummary } from "./down-payment-summary";
 import { SeatShortageNotice } from "./seat-shortage-notice";
+import { SeatSplitChoice } from "./seat-split-choice";
 import type { SeatShortage } from "@/lib/registration-seat-shortage";
+import {
+  planRegistrationParts,
+  type SeatAvailability,
+  type SeatSelectionProblem,
+} from "@/lib/registration-split";
 import {
   calculateTotalPrice,
   calculateOriginalPrice,
@@ -40,6 +46,17 @@ interface Step3SummaryProps {
   isWaitlist: boolean;
   /** Too few free seats for the participants entered, if so. */
   seatShortage: SeatShortage | null;
+  /** Who gets the free seats when the registration is split. */
+  seatSplit: {
+    availability: SeatAvailability;
+    /** Seats are short, some participants fit, and a waiting list exists. */
+    canSplit: boolean;
+    splitting: boolean;
+    setSplitting: (splitting: boolean) => void;
+    selectedIndexes: number[];
+    setSelectedIndexes: (indexes: number[]) => void;
+    problem: SeatSelectionProblem | null;
+  };
   /** Set when the course team records the registration itself. */
   staff?: {
     options: StaffRegistrationOptions;
@@ -47,7 +64,7 @@ interface Step3SummaryProps {
     /** Not enough free seats for the participants entered here. */
     seatsShort: boolean;
     /** What the selected status actually becomes on the server. */
-    resolvedStatus: "CONFIRMED" | "WAITLIST";
+    resolvedStatus: "CONFIRMED" | "WAITLIST" | "SPLIT";
   };
 }
 
@@ -62,9 +79,60 @@ export function Step3Summary({
   listedInMyRegistrations,
   isWaitlist,
   seatShortage,
+  seatSplit,
   staff,
 }: Step3SummaryProps) {
   const downPaymentAmount = calculateDownPayment(registrationData, course);
+
+  // Aufgeteilt gilt der Anzahlungsblock den bestätigten Teilnehmern; die
+  // wartenden zahlen erst nach ihrer Platzbestätigung.
+  const splitPlan =
+    seatSplit.splitting && !seatSplit.problem
+      ? planRegistrationParts(
+          registrationData.participants,
+          (participant) =>
+            course.priceOptions.find(
+              (po) => po.id === participant.priceOptionId,
+            )?.price ?? 0,
+          {
+            status: "WAITLIST",
+            confirmedIndexes: seatSplit.selectedIndexes,
+            withSiblingDiscount:
+              !!registrationData.siblingDiscountApplied &&
+              !!course.allowSiblingDiscount,
+          },
+        )
+      : null;
+  const partDownPayment = (
+    participants: typeof registrationData.participants,
+  ) => calculateDownPayment({ ...registrationData, participants }, course);
+  const confirmedDownPayment = splitPlan
+    ? partDownPayment(splitPlan.primary.participants)
+    : null;
+  const waitlistDownPayment = splitPlan?.waitlist
+    ? partDownPayment(splitPlan.waitlist.participants)
+    : null;
+  const downPaymentView = !splitPlan
+    ? {
+        amount: downPaymentAmount ?? 0,
+        totalPrice: calculateTotalPrice(registrationData, course),
+        isWaitlist: staff ? staff.resolvedStatus === "WAITLIST" : isWaitlist,
+        waitlistAmount: null,
+      }
+    : confirmedDownPayment !== null
+      ? {
+          amount: confirmedDownPayment,
+          totalPrice: splitPlan.primary.totalPrice,
+          isWaitlist: false,
+          waitlistAmount: waitlistDownPayment,
+        }
+      : {
+          // Nur wartende Teilnehmer tragen eine Anzahlung.
+          amount: waitlistDownPayment ?? 0,
+          totalPrice: splitPlan.waitlist?.totalPrice ?? 0,
+          isWaitlist: true,
+          waitlistAmount: null,
+        };
 
   return (
     <div className="space-y-6">
@@ -183,6 +251,31 @@ export function Step3Summary({
           })}
         </div>
       </div>
+
+      {/* Seats: before prices and down payment, which follow the choice. */}
+      {seatShortage &&
+        (seatSplit.canSplit && (!staff || seatSplit.splitting) ? (
+          <SeatSplitChoice
+            course={course}
+            participants={registrationData.participants}
+            shortage={seatShortage}
+            availability={seatSplit.availability}
+            showModeChoice={!staff}
+            splitting={seatSplit.splitting}
+            onSplittingChange={seatSplit.setSplitting}
+            selectedIndexes={seatSplit.selectedIndexes}
+            onSelectedIndexesChange={seatSplit.setSelectedIndexes}
+            problem={seatSplit.problem}
+          />
+        ) : (
+          !staff && (
+            <SeatShortageNotice
+              course={course}
+              shortage={seatShortage}
+              participantCount={registrationData.participants.length}
+            />
+          )
+        ))}
 
       {registrationNeedsPaymentMethod(course) && (
         <div className="dark:border-dark-border rounded-lg border border-gray-200 bg-gray-50 p-6 dark:border-gray-700 dark:bg-gray-800/50">
@@ -319,9 +412,10 @@ export function Step3Summary({
         <DownPaymentSummary
           course={course}
           registrationData={registrationData}
-          amount={downPaymentAmount}
-          totalPrice={calculateTotalPrice(registrationData, course)}
-          isWaitlist={staff ? staff.resolvedStatus === "WAITLIST" : isWaitlist}
+          amount={downPaymentView.amount}
+          totalPrice={downPaymentView.totalPrice}
+          isWaitlist={downPaymentView.isWaitlist}
+          waitlistAmount={downPaymentView.waitlistAmount}
           acknowledgement={
             staff
               ? undefined
@@ -344,7 +438,11 @@ export function Step3Summary({
             setOptions={staff.setOptions}
             seatsShort={staff.seatsShort}
             resolvedStatus={staff.resolvedStatus}
-            downPaymentAmount={downPaymentAmount}
+            canSplit={seatSplit.canSplit}
+            // Aufgeteilt verbucht „bereits eingegangen“ nur beim bestätigten Teil.
+            downPaymentAmount={
+              splitPlan ? confirmedDownPayment : downPaymentAmount
+            }
           />
           <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
             <label className="flex cursor-pointer items-start gap-3">
@@ -399,14 +497,6 @@ export function Step3Summary({
             </span>
           </label>
         </div>
-      )}
-
-      {!staff && seatShortage && (
-        <SeatShortageNotice
-          course={course}
-          shortage={seatShortage}
-          participantCount={registrationData.participants.length}
-        />
       )}
     </div>
   );

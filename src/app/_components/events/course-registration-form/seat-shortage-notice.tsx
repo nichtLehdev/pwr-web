@@ -8,10 +8,32 @@ function seats(count: number): string {
   return count === 1 ? "ist nur noch 1 Platz" : `sind nur noch ${count} Plätze`;
 }
 
+/** Ein Satz dazu, woran es fehlt: am Kurs oder an einer Preiskategorie. */
+export function seatShortageCause(
+  course: CourseWithRelations,
+  shortage: SeatShortage,
+): string {
+  if (shortage.kind === "course") {
+    return shortage.free === 0
+      ? "Der Kurs ist bereits ausgebucht."
+      : `Im Kurs ${seats(shortage.free)} frei, Sie melden ${shortage.requested} Teilnehmer an.`;
+  }
+
+  const option = course.priceOptions.find(
+    (po) => po.id === shortage.priceOptionId,
+  );
+  const label = option
+    ? `„${priceOptionDisplayLabel(option, course.priceOptions)}“`
+    : "";
+  return shortage.free === 0
+    ? `Die Preiskategorie ${label} ist bereits ausgebucht.`
+    : `In der Preiskategorie ${label} ${seats(shortage.free)} frei, Sie melden ${shortage.requested} Teilnehmer darin an.`;
+}
+
 /**
  * Hinweis im letzten Schritt, wenn die Plätze für die eingetragenen
- * Teilnehmer nicht reichen: mit Warteliste landet die **ganze** Anmeldung
- * dort, ohne wird sie abgelehnt. Aufgeteilt wird eine Anmeldung nicht.
+ * Teilnehmer nicht reichen und sich die Anmeldung nicht aufteilen lässt: mit
+ * Warteliste landet die ganze Anmeldung dort, ohne wird sie abgelehnt.
  */
 export function SeatShortageNotice({
   course,
@@ -22,22 +44,7 @@ export function SeatShortageNotice({
   shortage: SeatShortage;
   participantCount: number;
 }) {
-  const option =
-    shortage.kind === "priceOption"
-      ? course.priceOptions.find((po) => po.id === shortage.priceOptionId)
-      : undefined;
-  const optionLabel = option
-    ? `„${priceOptionDisplayLabel(option, course.priceOptions)}“`
-    : "";
-
-  const cause =
-    shortage.kind === "course"
-      ? shortage.free === 0
-        ? "Der Kurs ist bereits ausgebucht."
-        : `Im Kurs ${seats(shortage.free)} frei, Sie melden ${shortage.requested} Teilnehmer an.`
-      : shortage.free === 0
-        ? `Die Preiskategorie ${optionLabel} ist bereits ausgebucht.`
-        : `In der Preiskategorie ${optionLabel} ${seats(shortage.free)} frei, Sie melden ${shortage.requested} Teilnehmer darin an.`;
+  const cause = seatShortageCause(course, shortage);
 
   if (!course.allowWaitingList) {
     return (
@@ -55,18 +62,13 @@ export function SeatShortageNotice({
     );
   }
 
-  const partlyFree = shortage.free > 0;
-
   return (
     <div className="rounded-lg border border-orange-200 bg-orange-50 p-4 dark:border-orange-800 dark:bg-orange-900/20">
       <p className="text-sm text-orange-800 dark:text-orange-300">
         <strong>Hinweis:</strong> {cause}{" "}
         {participantCount > 1
-          ? `Ihre Anmeldung wird nicht aufgeteilt: alle ${participantCount} Teilnehmer kommen auf die Warteliste und werden gemeinsam bestätigt, sobald genug Plätze frei sind.`
+          ? `Alle ${participantCount} Teilnehmer kommen auf die Warteliste und werden gemeinsam bestätigt, sobald genug Plätze frei sind.`
           : "Sie werden auf die Warteliste gesetzt und bei einem freigewordenen Platz benachrichtigt."}
-        {partlyFree && participantCount > 1
-          ? ` Sollen die freien Plätze sofort genutzt werden, melden Sie hier nur so viele Teilnehmer an und die übrigen in einer zweiten Anmeldung.`
-          : ""}
       </p>
     </div>
   );
