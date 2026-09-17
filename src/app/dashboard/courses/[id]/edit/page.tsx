@@ -2120,7 +2120,7 @@ export default function EditCoursePage() {
                               courseTeamPickUsers &&
                               courseTeamPickUsers.length > 0 && (
                                 <ul
-                                  className="dark:border-night-rule dark:bg-dark-surface absolute z-20 mt-1 max-h-48 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg"
+                                  className="border-rule dark:border-night-rule bg-paper dark:bg-night-raised absolute z-20 mt-1 max-h-48 w-full overflow-auto border"
                                   role="listbox"
                                 >
                                   {courseTeamPickUsers.map((u) => {
@@ -2141,7 +2141,7 @@ export default function EditCoursePage() {
                                           type="button"
                                           disabled={teamMutationBusy}
                                           role="option"
-                                          className="dark:hover:bg-dark-background-secondary dark:text-night-text w-full px-3 py-2 text-left text-sm text-gray-800 hover:bg-gray-100 disabled:opacity-50"
+                                          className="text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-rule w-full px-3 py-2 text-left text-sm disabled:opacity-50"
                                           onClick={() => {
                                             setCollaboratorsMutation.mutate({
                                               courseId,

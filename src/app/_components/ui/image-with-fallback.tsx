@@ -9,23 +9,19 @@ import Image, { type ImageProps } from "next/image";
  */
 export function LogoPlaceholder({ className = "" }: { className?: string }) {
   return (
+    // Tinte statt Graustufen, und in beiden Modi dunkler Grund — genau wie der
+    // bereits umgestellte CoverFallback der Beitragsansicht. Vorher kehrte sich
+    // das Feld um (hell auf dunkel, dunkel auf hell), weshalb es zwei Logos
+    // brauchte; auf durchgehend dunklem Grund genügt das helle.
     <div
-      className={`relative flex h-full w-full items-center justify-center bg-gray-800 px-4 dark:bg-gray-100 ${className}`}
+      className={`bg-ink dark:bg-night-raised relative flex h-full w-full items-center justify-center px-4 ${className}`}
     >
       <Image
         src="/images/logo-horizontal-dark.svg"
         alt="Posaunenwerk Rheinland"
         width={200}
         height={56}
-        className="h-auto w-auto max-w-[80%] dark:hidden"
-        unoptimized
-      />
-      <Image
-        src="/images/logo-horizontal.svg"
-        alt="Posaunenwerk Rheinland"
-        width={200}
-        height={56}
-        className="hidden h-auto w-auto max-w-[80%] dark:block"
+        className="h-auto w-auto max-w-[80%]"
         unoptimized
       />
     </div>
