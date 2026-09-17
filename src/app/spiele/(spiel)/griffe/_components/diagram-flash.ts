@@ -2,13 +2,17 @@ import type { StaffFlash } from "../../noten-lesen/_components/staff-display";
 
 export type DiagramFlash = StaffFlash;
 
+/**
+ * Rückmeldung am Diagrammrahmen. Richtig ist Tinte — das Heft führt kein
+ * Grün. Falsch bleibt Rot, die einzige Signalfarbe, die bleibt.
+ */
 export function diagramShellClass(flash: DiagramFlash): string {
   switch (flash) {
     case "correct":
-      return "border-emerald-500/80 bg-emerald-500/15 dark:bg-emerald-500/10";
+      return "border-ink bg-rule/25 dark:border-night-text dark:bg-night-raised";
     case "wrong":
-      return "border-rose-500/75 bg-rose-500/12 dark:bg-rose-500/10";
+      return "border-red-600 bg-red-50 dark:border-red-400 dark:bg-red-900/20";
     default:
-      return "border-dark-border/50 bg-white/40 dark:border-dark-border dark:bg-dark-surface/50";
+      return "border-rule bg-paper dark:border-night-rule dark:bg-night";
   }
 }
