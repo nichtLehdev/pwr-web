@@ -1018,17 +1018,14 @@ export default function RegistrationDetailPage() {
                   siblingGroupSize={siblingGroup.length || 1}
                   extraBadges={
                     isInGroup && course.allowSiblingDiscount ? (
-                      <span
-                        className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                          isEligibleForDiscount
-                            ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                            : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
-                        }`}
-                      >
+                      // Gefüllt heißt: Das musst du sehen. Berechtigt ist die
+                      // Aussage, die zählt; „nicht berechtigt" ist nur der
+                      // Stand und bekommt deshalb kein Gewicht.
+                      <Tag tone={isEligibleForDiscount ? "inverse" : "muted"}>
                         {isEligibleForDiscount
                           ? "Rabatt berechtigt"
                           : "Rabatt nicht berechtigt"}
-                      </span>
+                      </Tag>
                     ) : null
                   }
                 >

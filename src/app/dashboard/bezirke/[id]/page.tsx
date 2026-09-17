@@ -113,7 +113,13 @@ export default function BezirkDetailPage() {
       {/* District Badge */}
       <div className="mb-6 flex items-center gap-4">
         <span
-          className="flex h-16 w-16 items-center justify-center text-2xl font-bold text-white"
+          // Weiss traegt auf keiner der dreizehn Bezirksfarben (1,81:1 bis
+          // 4,47:1). Tinte reicht bei Kleintext ebenfalls nicht ueberall
+          // (schlechtester Wert 3,78:1) — deshalb steht die Farbe sonst als
+          // Markierung neben der Schrift. Hier nicht: 24px fett ist
+          // WCAG-Grosstext mit Schwelle 3:1, und dort traegt Tinte auf allen
+          // dreizehn. Die Kachel darf ihre Flaeche behalten.
+          className="text-ink flex h-16 w-16 items-center justify-center text-2xl font-bold"
           style={{
             backgroundColor: `var(--color-district-${bezirk.number})`,
           }}

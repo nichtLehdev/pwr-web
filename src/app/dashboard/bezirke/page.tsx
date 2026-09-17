@@ -95,13 +95,20 @@ export default function DashboardBezirkePage() {
           enableColumnFilter: false,
           meta: { alwaysVisible: true, label: "Nummer" },
           cell: ({ row }) => (
-            <span
-              className="flex h-8 w-8 items-center justify-center text-sm font-bold text-white"
-              style={{
-                backgroundColor: `var(--color-district-${row.original.number})`,
-              }}
-            >
-              {row.original.number}
+            // Quadrat neben Tinte statt Schrift auf der Bezirksfarbe: Alle
+            // dreizehn Farben sind zu hell für weisse Schrift (1,81:1 bis
+            // 4,47:1). Dasselbe Muster wie BezirkLabel und die Terminliste.
+            <span className="inline-flex items-center gap-1.5">
+              <span
+                className="h-2.5 w-2.5 shrink-0"
+                style={{
+                  backgroundColor: `var(--color-district-${row.original.number})`,
+                }}
+                aria-hidden
+              />
+              <span className="text-ink dark:text-night-text text-sm font-bold tabular-nums">
+                {row.original.number}
+              </span>
             </span>
           ),
         }),

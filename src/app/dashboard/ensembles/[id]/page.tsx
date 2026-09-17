@@ -126,13 +126,17 @@ export default function EnsembleDetailPage() {
             {ensemble.isActive ? "Aktiv" : "Inaktiv"}
           </Tag>
           {ensemble.bezirk && (
-            <span
-              className="semi-condensed inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-semibold text-white"
-              style={{
-                backgroundColor: `var(--color-district-${ensemble.bezirk.number})`,
-              }}
-            >
-              {ensemble.bezirk.name}
+            <span className="semi-condensed inline-flex items-center gap-1.5 text-xs font-semibold">
+              <span
+                className="h-2.5 w-2.5 shrink-0"
+                style={{
+                  backgroundColor: `var(--color-district-${ensemble.bezirk.number})`,
+                }}
+                aria-hidden
+              />
+              <span className="text-ink dark:text-night-text">
+                {ensemble.bezirk.name}
+              </span>
             </span>
           )}
           {ensemble.internalId && (
