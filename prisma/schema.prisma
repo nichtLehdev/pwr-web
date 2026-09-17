@@ -453,6 +453,7 @@ enum FileType {
   XLSX
   ZIP
   MP3
+  IMAGE // JPG, PNG oder WebP – z. B. Flyer an Terminen
 }
 
 enum ContentStatus {

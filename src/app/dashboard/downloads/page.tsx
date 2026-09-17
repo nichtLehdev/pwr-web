@@ -28,6 +28,15 @@ import {
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
 import { Tag, type TagTone } from "@/app/_components/programmheft/tag";
+import {
+  DOWNLOAD_FILE_TYPE_ICONS,
+  DOWNLOAD_FILE_TYPE_LABELS,
+  DOWNLOAD_UPLOAD_ACCEPT,
+  DOWNLOAD_UPLOAD_FORMATS_LABEL,
+  DOWNLOAD_UPLOAD_MAX_BYTES,
+  DOWNLOAD_UPLOAD_MAX_LABEL,
+  downloadFileTypeForExtension,
+} from "@/lib/download-file-types";
 
 // Dashboard access is now controlled by permissions
 
@@ -70,22 +79,6 @@ const categoryLabels: Record<DownloadCategory, string> = {
   UEBUNGEN: "Übungen",
   FORMULARE: "Formulare",
   SONSTIGES: "Sonstiges",
-};
-
-const fileTypeLabels: Record<FileType, string> = {
-  PDF: "PDF",
-  DOCX: "Word",
-  XLSX: "Excel",
-  ZIP: "ZIP",
-  MP3: "Audio",
-};
-
-const fileTypeIcons: Record<FileType, string> = {
-  PDF: "📄",
-  DOCX: "📝",
-  XLSX: "📊",
-  ZIP: "📦",
-  MP3: "🎵",
 };
 
 function formatFileSize(bytes: number | null): string {
@@ -266,8 +259,10 @@ export default function DashboardDownloadsPage() {
     const file = e instanceof File ? e : e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 50 * 1024 * 1024) {
-      setUploadError("Die Datei ist zu groß. Maximal 50MB erlaubt.");
+    if (file.size > DOWNLOAD_UPLOAD_MAX_BYTES) {
+      setUploadError(
+        `Die Datei ist zu groß. Maximal ${DOWNLOAD_UPLOAD_MAX_LABEL} erlaubt.`,
+      );
       return;
     }
 
@@ -298,12 +293,11 @@ export default function DashboardDownloadsPage() {
       setUploadedFileUrl(data.url);
       setUploadedFileSize(data.size);
 
-      const ext = data.extension.toLowerCase();
-      if (ext === "pdf") setNewFileType("PDF");
-      else if (["doc", "docx"].includes(ext)) setNewFileType("DOCX");
-      else if (["xls", "xlsx"].includes(ext)) setNewFileType("XLSX");
-      else if (ext === "zip") setNewFileType("ZIP");
-      else if (["mp3", "wav", "ogg"].includes(ext)) setNewFileType("MP3");
+      // Dieselbe Endungstabelle wie im Download-Picker. Vorher blieb bei einer
+      // Endung ohne eigenen Zweig der Typ der vorigen Datei stehen.
+      setNewFileType(
+        downloadFileTypeForExtension(data.extension) ?? FileType.PDF,
+      );
 
       if (!newTitle) {
         const baseName = file.name.replace(/\.[^/.]+$/, "");
@@ -378,14 +372,14 @@ export default function DashboardDownloadsPage() {
             return (
               <div className="flex items-center gap-3">
                 <span className="text-2xl">
-                  {fileTypeIcons[download.fileType]}
+                  {DOWNLOAD_FILE_TYPE_ICONS[download.fileType]}
                 </span>
                 <div className="min-w-0">
                   <p className="text-ink dark:text-night-text font-medium">
                     {download.title}
                   </p>
                   <p className="text-dark dark:text-night-muted text-sm">
-                    {fileTypeLabels[download.fileType]}
+                    {DOWNLOAD_FILE_TYPE_LABELS[download.fileType]}
                     {download.fileSize &&
                       ` • ${formatFileSize(download.fileSize)}`}
                   </p>
@@ -399,11 +393,14 @@ export default function DashboardDownloadsPage() {
           header: "Kategorie",
           meta: { filterVariant: "set" },
         }),
-        column.accessor((download) => fileTypeLabels[download.fileType], {
-          id: "fileType",
-          header: "Typ",
-          meta: { filterVariant: "set" },
-        }),
+        column.accessor(
+          (download) => DOWNLOAD_FILE_TYPE_LABELS[download.fileType],
+          {
+            id: "fileType",
+            header: "Typ",
+            meta: { filterVariant: "set" },
+          },
+        ),
         column.accessor((download) => download.fileSize ?? 0, {
           id: "fileSize",
           header: "Größe",
@@ -568,7 +565,7 @@ export default function DashboardDownloadsPage() {
                       ref={fileInputRef}
                       type="file"
                       onChange={handleFileUpload}
-                      accept=".pdf,.doc,.docx,.xls,.xlsx,.zip,.mp3,.wav,.ogg"
+                      accept={DOWNLOAD_UPLOAD_ACCEPT}
                       className="hidden"
                     />
                     {isUploading ? (
@@ -602,7 +599,8 @@ export default function DashboardDownloadsPage() {
                           oder klicken zum Auswählen
                         </p>
                         <p className="text-dark dark:text-night-muted mt-1 text-xs">
-                          PDF, Word, Excel, ZIP, Audio (max. 50MB)
+                          {DOWNLOAD_UPLOAD_FORMATS_LABEL} (max.{" "}
+                          {DOWNLOAD_UPLOAD_MAX_LABEL})
                         </p>
                       </div>
                     )}
