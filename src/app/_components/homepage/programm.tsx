@@ -134,7 +134,13 @@ export default function Programm({
           <ProgrammeList entries={offene} now={now} titleAs="h4" />
           {weitereOffene > 0 ? (
             <p className="border-rule dark:border-night-rule text-dark dark:text-night-muted border-b px-1 py-3 text-[0.9375rem]">
-              <Link href="/termine?anmeldung=offen" className="link-ink">
+              {/* `view=list`: Der Verweis zeigt eine gefilterte Auswahl —
+                  im Kalender einer gespeicherten Vorliebe wären die Treffer
+                  über Monate verstreut und der Zweck des Links dahin. */}
+              <Link
+                href="/termine?anmeldung=offen&view=list"
+                className="link-ink"
+              >
                 {weitereOffene === 1
                   ? "Ein weiterer Lehrgang nimmt Anmeldungen an"
                   : `${weitereOffene} weitere Lehrgänge nehmen Anmeldungen an`}
