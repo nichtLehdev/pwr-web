@@ -195,27 +195,6 @@ export default function PostDetailView({
       description={heroDescription}
     >
       <PageSection flush="top">
-        <div className="bg-ink dark:bg-night-raised relative aspect-[3/2] w-full overflow-hidden">
-          {post.coverImage?.url ? (
-            <Image
-              src={post.coverImage.url}
-              alt={post.coverImage.alt || post.title}
-              fill
-              priority
-              sizes="(min-width: 64rem) 65vw, 100vw"
-              className="object-cover"
-              style={{ objectPosition: position }}
-            />
-          ) : (
-            <CoverFallback />
-          )}
-        </div>
-        <MediaCredit
-          copyright={post.coverImage?.copyright}
-          creator={post.coverImage?.creator}
-          className="mt-2"
-        />
-
         {/* Das Lesemaß ist von hier auf die einzelnen Geschwister gewandert:
             Solange es an der Hülle hing, konnte kein Bild breiter werden als
             der Text. Der Artikelkörper führt sein Maß jetzt selbst (siehe
@@ -272,16 +251,58 @@ export default function PostDetailView({
           ) : null}
 
           {/* Main Content */}
-          {/* `--seite`: Nur hier ist der Artikel die Hauptspalte, nur hier
-              dürfen breite Bilder über das Lesemaß hinaustreten. Editorfläche
-              und Dashboard-Vorschau teilen dieses Stylesheet, sind aber
-              schmale Rahmen — dort bliebe ein Ausbruch ein Fremdkörper. */}
-          <div
-            className="article-content article-content--seite"
-            dangerouslySetInnerHTML={{
-              __html: sanitizeHtml(post.contentHtml),
-            }}
-          />
+          {/* Titelbild und Text teilen sich eine Spalte, damit der Text das
+              Bild umfließt — so macht es das Blechblatt: Überschrift, dann
+              sofort Text, das Aufmacherbild daneben. Vorher stand das Bild als
+              885px hoher Block über allem; am Desktop mussten 483px gescrollt
+              werden, bevor ein einziges Wort zu sehen war (gemessen bei
+              1440×900). Das `after:clear-both` ist nötig, weil der Float hier
+              ein Geschwister des Artikelkörpers ist — dessen eigenes `clear`
+              greift dafür nicht. */}
+          <div className="mx-auto max-w-[65ch] after:clear-both after:block after:content-['']">
+            {/* Auf dem Handy steht das Bild nicht daneben, sondern darüber —
+                dort kostet 3:2 zu viel Höhe: Bei „Wichtige Impulse…" lag der
+                erste Absatz dadurch 20px unter der Kante (gemessen 390×844),
+                also derselbe Fehler wie zuvor am Desktop, nur klein. Flacher
+                geschnitten bleibt das Bild da und der Text sichtbar. */}
+            <figure className="mb-5 w-full sm:float-right sm:mb-2 sm:ml-8 sm:w-3/5">
+              <div className="bg-ink dark:bg-night-raised relative aspect-[2/1] w-full overflow-hidden sm:aspect-[3/2]">
+                {post.coverImage?.url ? (
+                  <Image
+                    src={post.coverImage.url}
+                    alt={post.coverImage.alt || post.title}
+                    fill
+                    priority
+                    sizes="(min-width: 40rem) 23rem, 100vw"
+                    className="object-cover"
+                    style={{ objectPosition: position }}
+                  />
+                ) : (
+                  <CoverFallback />
+                )}
+              </div>
+              <figcaption>
+                <MediaCredit
+                  copyright={post.coverImage?.copyright}
+                  creator={post.coverImage?.creator}
+                  className="mt-2"
+                />
+              </figcaption>
+            </figure>
+
+            {/* `--seite`: Nur hier ist der Artikel die Hauptspalte, nur hier
+                dürfen breite Bilder über das Lesemaß hinaustreten. Editorfläche
+                und Dashboard-Vorschau teilen dieses Stylesheet, sind aber
+                schmale Rahmen — dort bliebe ein Ausbruch ein Fremdkörper.
+                `--in-spalte`: Das Maß führt hier die Hülle, sonst rutschte der
+                Körper unter dem Float weg. */}
+            <div
+              className="article-content article-content--seite article-content--in-spalte"
+              dangerouslySetInnerHTML={{
+                __html: sanitizeHtml(post.contentHtml),
+              }}
+            />
+          </div>
 
           {/* Share & Back */}
           <div className="border-rule dark:border-night-rule mx-auto max-w-[65ch] border-t pt-8">

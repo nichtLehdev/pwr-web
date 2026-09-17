@@ -29,7 +29,7 @@ export default function MediaCredit({
   const variantClasses =
     variant === "light"
       ? "text-white/90 text-shadow-sm"
-      : "text-dark-muted text-gray-500 dark:text-gray-400";
+      : "text-dark dark:text-night-muted";
 
   return (
     <p

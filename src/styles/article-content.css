@@ -50,6 +50,22 @@
   clear: both;
 }
 
+/*
+ * Wenn eine Hülle das Lesemaß führt, gibt der Artikelkörper es ab.
+ *
+ * Nötig für das Titelbild: Ein Float umfließt nur Text im selben Blockfluss.
+ * Das Bild ist ein React-Element, der Artikelkörper ein Fremd-HTML-Container —
+ * das Bild muss also als Geschwister davorstehen. Behielte der Artikelkörper
+ * dann sein eigenes zentriertes Maß, rutschte er unter dem Float weg.
+ *
+ * Editorfläche und Dashboard-Vorschau haben keine solche Hülle und behalten
+ * ihr Maß deshalb unverändert.
+ */
+.article-content.article-content--in-spalte {
+  max-width: none;
+  margin-inline: 0;
+}
+
 :root.dark .article-content {
   color: var(--color-night-text);
 }
