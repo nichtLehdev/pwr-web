@@ -2,7 +2,21 @@
 
 import { useState, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import Link from "next/link";
+import PublicPage from "../../_components/general/public-page";
+import { PageSection } from "../../_components/programmheft/page-section";
+import { Note } from "../../_components/programmheft/note";
+import { ArrowLink } from "../../_components/programmheft/section-head";
+
+const FIELD =
+  "border-ink dark:border-night-text text-ink dark:text-night-text bg-paper dark:bg-night w-full border-2 px-4 py-3 text-base";
+const FIELD_LABEL =
+  "semi-condensed text-ink dark:text-night-text mb-2 block text-sm font-semibold";
+
+const BREADCRUMBS = [
+  { label: "Start", href: "/" },
+  { label: "Newsletter", href: "/newsletter" },
+  { label: "Abmelden" },
+];
 
 function UnsubscribeContent() {
   const searchParams = useSearchParams();
@@ -58,34 +72,29 @@ function UnsubscribeContent() {
   };
 
   return (
-    <main className="dark:bg-dark-background min-h-screen bg-gray-50">
-      <div className="container mx-auto max-w-2xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-8 shadow-lg dark:border-gray-700">
-          <h1 className="dark:text-dark-text mb-4 text-3xl font-bold text-gray-900">
-            Newsletter abmelden
-          </h1>
-          <p className="dark:text-dark-muted mb-8 text-gray-600">
-            Wir bedauern, dass du dich abmelden möchtest. Du kannst dich
-            jederzeit wieder anmelden.
-          </p>
-
+    <PublicPage
+      title="Newsletter abmelden"
+      breadcrumbs={BREADCRUMBS}
+      description={
+        <p>
+          Wir bedauern, dass du dich abmelden möchtest. Du kannst dich jederzeit
+          wieder anmelden.
+        </p>
+      }
+    >
+      <PageSection>
+        <div className="max-w-[38rem]">
           {status === "success" ? (
-            <div className="rounded-lg bg-green-50 p-4 dark:bg-green-900/20">
-              <p className="text-green-800 dark:text-green-400">{message}</p>
-              <Link
-                href="/newsletter"
-                className="text-primary mt-4 inline-block hover:underline"
-              >
-                Wieder anmelden →
-              </Link>
-            </div>
+            <Note tone="info">
+              <p>{message}</p>
+              <ArrowLink href="/newsletter" className="mt-4 -ml-1">
+                Wieder anmelden
+              </ArrowLink>
+            </Note>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label
-                  htmlFor="email"
-                  className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
-                >
+                <label htmlFor="email" className={FIELD_LABEL}>
                   E-Mail-Adresse
                 </label>
                 <input
@@ -94,37 +103,35 @@ function UnsubscribeContent() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary/20 w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:outline-none"
+                  className={FIELD}
                   placeholder="deine@email.de"
                 />
               </div>
 
               {status === "error" && message && (
-                <div className="rounded-lg bg-red-50 p-4 dark:bg-red-900/20">
-                  <p className="text-red-800 dark:text-red-400">{message}</p>
-                </div>
+                <Note tone="error">
+                  <p>{message}</p>
+                </Note>
               )}
 
               <button
                 type="submit"
                 disabled={status === "loading"}
-                className="w-full rounded-lg bg-red-600 px-6 py-3 font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="semi-condensed hover:text-paper dark:hover:text-night inline-flex min-h-12 w-full items-center justify-center border-2 border-red-700 px-6 text-lg font-semibold text-red-700 transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-400 dark:text-red-400 dark:hover:bg-red-400"
               >
-                {status === "loading" ? "Wird abgemeldet..." : "Abmelden"}
+                {status === "loading" ? "Wird abgemeldet…" : "Abmelden"}
               </button>
             </form>
           )}
 
-          <div className="mt-8 border-t border-gray-200 pt-6 dark:border-gray-700">
-            <p className="dark:text-dark-muted text-sm text-gray-600">
-              <Link href="/newsletter" className="text-primary hover:underline">
-                Zurück zur Anmeldung
-              </Link>
-            </p>
+          <div className="border-rule dark:border-night-rule mt-10 border-t pt-6">
+            <ArrowLink href="/newsletter" className="-ml-1">
+              Zurück zur Anmeldung
+            </ArrowLink>
           </div>
         </div>
-      </div>
-    </main>
+      </PageSection>
+    </PublicPage>
   );
 }
 
@@ -132,18 +139,18 @@ export default function UnsubscribePage() {
   return (
     <Suspense
       fallback={
-        <main className="dark:bg-dark-background min-h-screen bg-gray-50">
-          <div className="container mx-auto max-w-2xl px-4 py-16 sm:px-6 lg:px-8">
-            <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-8 shadow-lg dark:border-gray-700">
-              <h1 className="dark:text-dark-text mb-4 text-3xl font-bold text-gray-900">
-                Newsletter abmelden
-              </h1>
-              <div className="flex items-center justify-center py-12">
-                <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
-              </div>
+        <PublicPage title="Newsletter abmelden" breadcrumbs={BREADCRUMBS}>
+          <PageSection>
+            <div
+              aria-busy="true"
+              aria-label="Lädt"
+              className="max-w-[38rem] space-y-3"
+            >
+              <span className="bg-rule dark:bg-night-rule block h-5 w-3/4" />
+              <span className="bg-rule dark:bg-night-rule block h-12 w-full" />
             </div>
-          </div>
-        </main>
+          </PageSection>
+        </PublicPage>
       }
     >
       <UnsubscribeContent />

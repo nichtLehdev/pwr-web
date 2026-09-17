@@ -41,7 +41,12 @@ export function MainContent({ children }: MainContentProps) {
 
   return (
     <main
-      className="transition-[padding-top] duration-200"
+      id="inhalt"
+      // Sprungziel des Sprunglinks in AppChrome. Ohne tabIndex nimmt ein
+      // <main> keinen Fokus an — der Sprung scrollte dann zwar, ließe den
+      // Tabulator aber weiter oben in der Navigation stehen.
+      tabIndex={-1}
+      className="transition-[padding-top] duration-200 focus:outline-none"
       style={{
         paddingTop,
         // Für Vollbild-Layouts (z. B. Rhythmus-Spiel): nutzbare Höhe unter Nav/Banner

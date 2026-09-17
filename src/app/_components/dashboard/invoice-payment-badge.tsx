@@ -5,12 +5,20 @@ import {
   type InvoicePaymentInput,
   type InvoicePaymentState,
 } from "@/lib/invoice-payment";
+import { Tag, type TagTone } from "@/app/_components/programmheft/tag";
 
-const badgeClasses: Record<InvoicePaymentState, string> = {
-  NOT_APPLICABLE: "",
-  OPEN: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
-  PARTIAL: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
-  PAID: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
+// Die Füllung gehört dem, was noch etwas von dir will: OPEN ist die lauteste
+// Forderung (Orange), PARTIAL steht noch offen und bleibt gefüllt (Tinte),
+// PAID ist erledigt und tritt als umrandetes Etikett zurück.
+//
+// Vorher war es umgekehrt — der stärkste Ton lag auf „Bezahlt", während
+// „Teilweise" leiser stand und im Hellmodus ohnehin identisch aussah. Eine
+// Rechnungsliste soll auf einen Blick zeigen, wo Geld fehlt, nicht wo keines
+// mehr fehlt.
+const TONE: Record<Exclude<InvoicePaymentState, "NOT_APPLICABLE">, TagTone> = {
+  OPEN: "orange",
+  PARTIAL: "ink",
+  PAID: "muted",
 };
 
 /**
@@ -29,11 +37,9 @@ export function InvoicePaymentBadge({
   if (state === "NOT_APPLICABLE") return null;
 
   return (
-    <span
-      className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${badgeClasses[state]} ${className}`}
-    >
+    <Tag tone={TONE[state]} className={className}>
       {invoicePaymentStateLabels[state]}
-    </span>
+    </Tag>
   );
 }
 
@@ -52,16 +58,13 @@ export function RegistrationPaymentBadge({
   const state = registrationPaymentState(invoices);
 
   return (
-    <span
-      className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-        state === "NOT_APPLICABLE"
-          ? "bg-gray-100 text-gray-600 dark:bg-gray-700/40 dark:text-gray-300"
-          : badgeClasses[state]
-      } ${className}`}
+    <Tag
+      tone={state === "NOT_APPLICABLE" ? "muted" : TONE[state]}
+      className={className}
     >
       {state === "NOT_APPLICABLE"
         ? "Keine Rechnung"
         : invoicePaymentStateLabels[state]}
-    </span>
+    </Tag>
   );
 }

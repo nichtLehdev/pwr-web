@@ -10,6 +10,7 @@ import { CourseCollaboratorRole } from "~/generated/prisma/enums";
 import { isRegistrationDeadlinePassed } from "@/lib/registration-deadline";
 import { isExternalCourse } from "@/lib/course-external";
 import CourseRegistrationForm from "@/app/_components/events/course-registration-form";
+import { DashboardPage } from "@/app/_components/dashboard";
 
 /**
  * Dashboard-only registration entry. The public form refuses sign-ups once
@@ -40,22 +41,22 @@ export default function NewCourseRegistrationPage() {
 
   if (sessionLoading || permissionsLoading || courseLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
 
   if (!session || !course) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <h1 className="dark:text-dark-text text-xl font-semibold text-gray-900">
+          <h1 className="condensed text-ink dark:text-night-text text-xl font-bold">
             Kurs nicht gefunden
           </h1>
           <Link
             href="/dashboard/courses"
-            className="text-primary mt-4 inline-block hover:underline"
+            className="text-primary-ink dark:text-primary mt-4 inline-block font-semibold underline-offset-4 hover:underline"
           >
             Zurück zur Übersicht
           </Link>
@@ -77,17 +78,17 @@ export default function NewCourseRegistrationPage() {
 
   if (!canAddRegistrations) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <h1 className="dark:text-dark-text text-xl font-semibold text-gray-900">
+          <h1 className="condensed text-ink dark:text-night-text text-xl font-bold">
             Keine Berechtigung
           </h1>
-          <p className="dark:text-dark-muted mt-2 text-gray-600">
+          <p className="text-dark dark:text-night-muted mt-2">
             Du hast keine Berechtigung, Anmeldungen für diesen Kurs zu erfassen.
           </p>
           <Link
             href={participantsUrl}
-            className="text-primary mt-4 inline-block hover:underline"
+            className="text-primary-ink dark:text-primary mt-4 inline-block font-semibold underline-offset-4 hover:underline"
           >
             Zurück zur Teilnehmerverwaltung
           </Link>
@@ -98,18 +99,18 @@ export default function NewCourseRegistrationPage() {
 
   if (isExternalCourse(course)) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50 px-4">
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center px-4">
         <div className="text-center">
-          <h1 className="dark:text-dark-text text-xl font-semibold text-gray-900">
+          <h1 className="condensed text-ink dark:text-night-text text-xl font-bold">
             Externe Anmeldung
           </h1>
-          <p className="dark:text-dark-muted mt-2 max-w-md text-gray-600">
+          <p className="text-dark dark:text-night-muted mt-2 max-w-md">
             Dieser Kurs wird über einen externen Anbieter angemeldet.
             Anmeldungen können deshalb nicht hier erfasst werden.
           </p>
           <Link
             href={`/dashboard/courses/${courseId}`}
-            className="text-primary mt-4 inline-block hover:underline"
+            className="text-primary-ink dark:text-primary mt-4 inline-block font-semibold underline-offset-4 hover:underline"
           >
             Zurück zum Kurs
           </Link>
@@ -123,63 +124,34 @@ export default function NewCourseRegistrationPage() {
   );
 
   return (
-    <main className="dark:bg-dark-background min-h-screen bg-gray-50">
-      <div className="container mx-auto max-w-3xl px-4 pt-8 sm:px-6 lg:px-8">
-        <nav className="mb-4 text-sm">
-          <ol className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <li>
-              <Link
-                href="/dashboard"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Dashboard
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li>
-              <Link
-                href="/dashboard/courses"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Kurse
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li>
-              <Link
-                href={`/dashboard/courses/${courseId}`}
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary max-w-[150px] truncate text-gray-500"
-              >
-                {course.title}
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li>
-              <Link
-                href={participantsUrl}
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Teilnehmer
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li className="dark:text-dark-text text-gray-900">
-              Neue Anmeldung
-            </li>
-          </ol>
-        </nav>
-
-        {(deadlinePassed || !course.registrationOpen) && (
-          <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
-            <p className="text-sm text-blue-800 dark:text-blue-300">
-              {deadlinePassed
-                ? "Der Anmeldeschluss dieses Kurses ist vorbei."
-                : "Die Anmeldung für diesen Kurs ist geschlossen."}{" "}
-              Als Team kannst du hier trotzdem eine Anmeldung nachtragen.
-            </p>
-          </div>
-        )}
-      </div>
+    // Die geteilte Hülle statt eines handgebauten Rahmens: Sie liefert
+    // Brotkrumen, Titel und Satzspiegel, die hier zuvor als fünfzig Zeilen
+    // eigenes JSX standen. Jede Geschwisterseite nutzt sie bereits.
+    <DashboardPage
+      title="Neue Anmeldung"
+      description={course.title}
+      maxWidth="4xl"
+      breadcrumbs={[
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Kurse", href: "/dashboard/courses" },
+        { label: course.title, href: `/dashboard/courses/${courseId}` },
+        { label: "Teilnehmer", href: participantsUrl },
+        { label: "Neue Anmeldung" },
+      ]}
+    >
+      {(deadlinePassed || !course.registrationOpen) && (
+        // Eckig auf Haarlinie statt blauem Kasten: Der Hinweis erklärt eine
+        // Ausnahme, er warnt nicht — eine eigene Signalfarbe braucht er
+        // dafür nicht.
+        <div className="border-ink dark:border-night-text mb-6 border-l-2 py-1 pl-4">
+          <p className="text-dark dark:text-night-muted text-sm">
+            {deadlinePassed
+              ? "Der Anmeldeschluss dieses Kurses ist vorbei."
+              : "Die Anmeldung für diesen Kurs ist geschlossen."}{" "}
+            Als Team kannst du hier trotzdem eine Anmeldung nachtragen.
+          </p>
+        </div>
+      )}
 
       <CourseRegistrationForm
         staffMode
@@ -187,6 +159,7 @@ export default function NewCourseRegistrationPage() {
         currentUser={null}
         isWaitlist={spots?.isFull ?? false}
         availableSlots={spots?.availableSlots}
+        capacityByPriceOption={spots?.capacityByPriceOption}
         onClose={() => router.push(participantsUrl)}
         onSuccess={() => {
           void utils.courses.getRegistrations.invalidate({ courseId });
@@ -194,6 +167,6 @@ export default function NewCourseRegistrationPage() {
           router.push(participantsUrl);
         }}
       />
-    </main>
+    </DashboardPage>
   );
 }

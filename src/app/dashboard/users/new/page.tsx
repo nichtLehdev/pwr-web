@@ -292,8 +292,8 @@ export default function NewUserPage() {
 
   if (sessionLoading || profileLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
@@ -314,12 +314,12 @@ export default function NewUserPage() {
       maxWidth="7xl"
     >
       {/* Info Box */}
-      <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
+      <div className="border-primary-ink dark:border-primary bg-rule/25 dark:bg-night-raised mb-6 border-l-4 p-4">
         <div className="flex items-start gap-3">
-          <Info className="mt-0.5 h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400" />
-          <div className="text-sm text-blue-700 dark:text-blue-300">
-            <p className="font-medium">Hinweis zur Anmeldung</p>
-            <p className="mt-1">
+          <Info className="text-primary-ink dark:text-primary mt-0.5 h-5 w-5 shrink-0" />
+          <div className="text-ink dark:text-night-text text-sm">
+            <p className="font-semibold">Hinweis zur Anmeldung</p>
+            <p className="text-dark dark:text-night-muted mt-1">
               Der neue Benutzer kann sich nach der Erstellung über die
               &quot;Passwort vergessen&quot;-Funktion auf der Login-Seite ein
               Passwort setzen. Alternativ kann eine Magic-Link-Anmeldung per
@@ -331,7 +331,7 @@ export default function NewUserPage() {
 
       {/* Error Message */}
       {error && (
-        <div className="mb-6 rounded-lg bg-red-50 p-4 text-red-700 dark:bg-red-900/20 dark:text-red-400">
+        <div className="mb-6 border-l-4 border-red-600 bg-red-50 p-4 text-red-700 dark:border-red-400 dark:bg-red-900/20 dark:text-red-400">
           {error}
         </div>
       )}
@@ -391,8 +391,8 @@ export default function NewUserPage() {
                       emailStatus.available === false
                         ? "text-red-600 dark:text-red-400"
                         : emailStatus.available === true
-                          ? "text-green-600 dark:text-green-400"
-                          : "text-gray-500 dark:text-gray-400"
+                          ? "text-dark dark:text-night-muted"
+                          : "text-dark dark:text-night-muted"
                     }`}
                   >
                     {emailStatus.checking && (
@@ -427,8 +427,8 @@ export default function NewUserPage() {
                       usernameStatus.available === false
                         ? "text-red-600 dark:text-red-400"
                         : usernameStatus.available === true
-                          ? "text-green-600 dark:text-green-400"
-                          : "text-gray-500 dark:text-gray-400"
+                          ? "text-dark dark:text-night-muted"
+                          : "text-dark dark:text-night-muted"
                     }`}
                   >
                     {usernameStatus.checking && (
@@ -437,7 +437,7 @@ export default function NewUserPage() {
                     {usernameStatus.message}
                   </p>
                 ) : (
-                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                  <p className="text-dark dark:text-night-muted mt-1 text-xs">
                     Wird automatisch aus Vor- und Nachname generiert. Kann
                     manuell angepasst werden.
                   </p>
@@ -520,7 +520,7 @@ export default function NewUserPage() {
             <CardTitle>Bezirkszugehörigkeit</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-dark dark:text-night-muted mb-4 text-sm">
               Zu welchem Bezirk gehört diese Person, und in welchem Amt? Beides
               erscheint auf den öffentlichen Seiten. Für wen sie Inhalte anlegen
               darf, wird nach dem Anlegen im Benutzer-Editor festgelegt.
@@ -559,7 +559,7 @@ export default function NewUserPage() {
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
           <Link
             href="/dashboard/users"
-            className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-6 py-2.5 text-center font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night semi-condensed inline-flex min-h-11 items-center justify-center border-2 px-6 py-2.5 text-center font-semibold transition-colors"
           >
             Abbrechen
           </Link>

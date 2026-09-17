@@ -2,7 +2,14 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, RefreshCw, TriangleAlert } from "lucide-react";
+import { ArrowLeft, RefreshCw } from "lucide-react";
+import { Button } from "@/app/_components/ui/button";
+import PublicPage from "@/app/_components/general/public-page";
+import { PageSection } from "@/app/_components/programmheft/page-section";
+
+/** Für den „Zur Startseite"-Link, damit er wie der Button danebensteht. */
+const OUTLINE_LINK =
+  "semi-condensed border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night inline-flex h-12 items-center justify-center border-2 bg-transparent px-6 text-lg font-semibold transition-colors";
 
 /**
  * Fängt Render-Fehler unterhalb von `app/` ab; das Root-Layout bleibt stehen.
@@ -20,60 +27,44 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="bg-background dark:bg-dark-background min-h-[70vh] py-12 md:py-16 lg:py-20">
-      <div className="container">
-        <div className="mx-auto max-w-2xl text-center">
-          <div className="mb-8">
-            <div className="bg-primary/10 dark:bg-primary/20 mx-auto inline-flex h-24 w-24 items-center justify-center rounded-full">
-              <TriangleAlert className="text-primary h-12 w-12" />
-            </div>
-          </div>
-
-          <h1 className="text-dark dark:text-dark-text mb-6 text-2xl font-bold md:text-3xl lg:text-4xl">
-            Da ist etwas schiefgelaufen
-          </h1>
-
-          <p className="text-dark-light dark:text-dark-text-secondary mb-8 text-lg">
+    <PublicPage
+      title="Da ist etwas schiefgelaufen"
+      heroSize="compact"
+      breadcrumbs={[{ label: "Start", href: "/" }, { label: "Fehler" }]}
+    >
+      <PageSection flush="top" className="text-center">
+        <div className="mx-auto max-w-xl">
+          <p className="text-ink dark:text-night-text text-lg leading-relaxed">
             Diese Seite konnte nicht geladen werden. Meist hilft es schon, es
             noch einmal zu versuchen.
           </p>
 
-          <div className="flex flex-col justify-center gap-4 sm:flex-row">
-            <button
-              type="button"
-              onClick={reset}
-              className="bg-primary hover:bg-primary-dark inline-flex items-center justify-center rounded-lg px-6 py-3 font-semibold text-white shadow-lg transition-colors"
-            >
-              <RefreshCw className="mr-2 h-5 w-5" />
+          <div className="mt-8 flex flex-col justify-center gap-4 sm:flex-row">
+            <Button type="button" onClick={reset} size="lg">
+              <RefreshCw className="mr-2 h-5 w-5" aria-hidden />
               Erneut versuchen
-            </button>
-            <Link
-              href="/"
-              className="text-dark dark:text-dark-text dark:border-dark-border dark:hover:bg-dark-surface inline-flex items-center justify-center rounded-lg border-2 border-gray-300 bg-transparent px-6 py-3 font-semibold transition-colors hover:bg-gray-50"
-            >
-              <ArrowLeft className="mr-2 h-5 w-5" />
+            </Button>
+            <Link href="/" className={OUTLINE_LINK}>
+              <ArrowLeft className="mr-2 h-5 w-5" aria-hidden />
               Zur Startseite
             </Link>
           </div>
 
-          <div className="dark:border-dark-border mt-12 border-t border-gray-200 pt-8">
-            <p className="text-dark-light dark:text-dark-text-secondary mb-4 text-sm">
+          <div className="border-rule dark:border-night-rule mt-12 border-t pt-8">
+            <p className="text-dark dark:text-night-muted mb-4 text-sm">
               Bleibt der Fehler bestehen, melden Sie sich gerne bei uns:
             </p>
-            <Link
-              href="/kontakt"
-              className="text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary text-sm font-medium transition-colors"
-            >
+            <Link href="/kontakt" className="link-ink text-sm">
               Zum Kontaktformular
             </Link>
             {error.digest && (
-              <p className="text-dark-light dark:text-dark-text-secondary mt-4 font-mono text-xs">
+              <p className="text-dark dark:text-night-muted mt-4 font-mono text-xs">
                 Fehlerkennung: {error.digest}
               </p>
             )}
           </div>
         </div>
-      </div>
-    </div>
+      </PageSection>
+    </PublicPage>
   );
 }

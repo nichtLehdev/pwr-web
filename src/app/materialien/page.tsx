@@ -1,22 +1,18 @@
 "use client";
-import { Select } from "@/app/_components/ui";
 
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import Link from "next/link";
-import { capitalizeFirstLetter, getFileIcon } from "@/lib/utils";
+import { ChevronDown, Search, X } from "lucide-react";
+import { capitalizeFirstLetter } from "@/lib/utils";
 import { api } from "@/trpc/react";
 import PublicPage from "../_components/general/public-page";
-import ParticipationCard from "../_components/general/participation-card";
-import { DownloadCategory } from "~/generated/prisma/enums";
+import { ClosingCall } from "../_components/programmheft/closing-call";
+import { PageSection, Split } from "../_components/programmheft/page-section";
+import { Heading, SectionHead } from "../_components/programmheft/section-head";
+import { WayList, WayRow } from "../_components/programmheft/way-list";
 import LoadingSpinner from "../_components/general/loading-spinner";
-import {
-  ArrowRightIcon,
-  DownloadIcon,
-  FileIcon,
-  Search,
-  X,
-} from "lucide-react";
+import { DownloadCategory } from "~/generated/prisma/enums";
+import { DownloadRow } from "./_components/download-row";
 
 function MaterialienContent() {
   const searchParams = useSearchParams();
@@ -67,11 +63,15 @@ function MaterialienContent() {
       ]
     : (filteredDownloads ?? []);
 
+  const resetFilters = () => {
+    setSelectedCategory("all");
+    setSearchQuery("");
+  };
+
   return (
     <PublicPage
       title="Materialien"
       heroTitle="Materialien & Downloads"
-      color="district-4"
       breadcrumbs={[{ label: "Start", href: "/" }, { label: "Materialien" }]}
       description={
         <p>
@@ -81,293 +81,193 @@ function MaterialienContent() {
         </p>
       }
     >
-      {/* Unterseiten-Navigation */}
-      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
-        <div className="container">
-          <div className="mx-auto max-w-5xl">
-            <h2 className="text-dark dark:text-dark-text mb-8 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
-              Unsere Material-Bereiche
-            </h2>
+      <PageSection labelledBy="bereiche-heading">
+        <Split
+          head={
+            <Heading id="bereiche-heading">Unsere Material-Bereiche</Heading>
+          }
+          bodyClassName="mt-8"
+        >
+          <WayList labelledBy="bereiche-heading" columns={2}>
+            <WayRow
+              href="/materialien/blechblatt"
+              title="Rheinisches Blechblatt"
+              description="Unser Magazin mit Artikeln, Terminen und Neuigkeiten aus der Posaunenchorarbeit"
+            />
+            <WayRow
+              href="/materialien/literatur"
+              title="Literatur & CDs"
+              description="Notenmaterial, Choräle und Aufnahmen für Ihren Posaunenchor"
+            />
+          </WayList>
+        </Split>
+      </PageSection>
 
-            <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2">
-              <ParticipationCard
-                title="Rheinisches Blechblatt"
-                description="Unser Magazin mit Artikeln, Terminen und Neuigkeiten aus der Posaunenchorarbeit"
-                icon="document"
-                href="/materialien/blechblatt"
-                color="primary"
-              />
-              <ParticipationCard
-                title="Literatur & CDs"
-                description="Notenmaterial, Choräle und Aufnahmen für Ihren Posaunenchor"
-                icon="music"
-                href="/materialien/literatur"
-                color="district-2"
-              />
+      <PageSection labelledBy="downloads-heading">
+        <Split
+          stickyHead
+          head={
+            <SectionHead
+              id="downloads-heading"
+              title="Downloads"
+              intro="Alle verfügbaren Materialien zum Download"
+            />
+          }
+          bodyClassName="mt-8"
+        >
+          <div className="grid gap-6 sm:grid-cols-2">
+            <div>
+              <label
+                htmlFor="search"
+                className="semi-condensed text-ink dark:text-night-text text-sm font-semibold"
+              >
+                Suche
+              </label>
+              <div className="border-ink dark:border-night-text dark:bg-night bg-paper mt-2 flex h-12 items-center gap-2 border-2 px-4">
+                <Search
+                  aria-hidden
+                  className="text-dark dark:text-night-muted h-5 w-5 shrink-0"
+                />
+                <input
+                  type="text"
+                  id="search"
+                  placeholder="Titel, Beschreibung oder Tags durchsuchen…"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="text-ink dark:text-night-text placeholder:text-dark dark:placeholder:text-night-muted w-full bg-transparent text-base outline-none"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="category"
+                className="semi-condensed text-ink dark:text-night-text text-sm font-semibold"
+              >
+                Kategorie
+              </label>
+              <div className="relative mt-2">
+                <select
+                  id="category"
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="border-ink dark:border-night-text text-ink dark:bg-night dark:text-night-text bg-paper h-12 w-full appearance-none border-2 px-4 pr-10 text-base outline-none"
+                >
+                  <option value="all">Alle Kategorien</option>
+                  {Object.entries(DownloadCategory).map(([key, category]) => (
+                    <option key={key} value={key}>
+                      {capitalizeFirstLetter(category)}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  aria-hidden
+                  className="text-dark dark:text-night-muted pointer-events-none absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2"
+                />
+              </div>
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* Downloads-Bereich */}
-      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
-        <div className="container">
-          <div className="mx-auto max-w-6xl">
-            <h2 className="text-dark dark:text-dark-text mb-4 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
-              Downloads
-            </h2>
-            <p className="mb-8 text-center text-lg text-gray-600 dark:text-gray-400">
-              Alle verfügbaren Materialien zum Download
-            </p>
-
-            {/* Filter & Suche */}
-            <div className="dark:bg-dark-surface dark:shadow-dark-border mb-8 rounded-lg bg-white p-6 shadow-md">
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                {/* Suche */}
-                <div>
-                  <label
-                    htmlFor="search"
-                    className="text-dark dark:text-dark-text mb-2 block text-sm font-semibold"
-                  >
-                    Suche
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      id="search"
-                      placeholder="Titel, Beschreibung oder Tags durchsuchen..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="focus:ring-district-4 dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white py-2 pr-4 pl-10 outline-none placeholder:text-gray-400 focus:border-transparent focus:ring-2 dark:placeholder:text-gray-500"
-                    />
-                    <Search className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400" />
-                  </div>
-                </div>
-
-                {/* Kategorie-Filter */}
-                <div>
-                  <label
-                    htmlFor="category"
-                    className="text-dark dark:text-dark-text mb-2 block text-sm font-semibold"
-                  >
-                    Kategorie
-                  </label>
-                  <Select
-                    id="category"
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="focus:ring-district-4 dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 outline-none focus:border-transparent focus:ring-2"
-                  >
-                    <option value="all">Alle Kategorien</option>
-                    {Object.entries(DownloadCategory).map(([key, category]) => (
-                      <option key={key} value={key}>
-                        {capitalizeFirstLetter(category)}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
-              </div>
-
-              {/* Active Filters */}
-              {(selectedCategory !== "all" || searchQuery) && (
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {selectedCategory !== "all" && (
-                    <span className="bg-district-4/10 text-district-4 inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm">
-                      {capitalizeFirstLetter(
-                        DownloadCategory[
-                          selectedCategory as keyof typeof DownloadCategory
-                        ],
-                      )}
-                      <button
-                        onClick={() => setSelectedCategory("all")}
-                        className="hover:text-district-4"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    </span>
-                  )}
-                  {searchQuery && (
-                    <span className="dark:bg-dark-background-secondary inline-flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700 dark:text-gray-300">
-                      Suche: &quot;{searchQuery}&quot;
-                      <button
-                        onClick={() => setSearchQuery("")}
-                        className="hover:text-gray-900"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    </span>
+          {selectedCategory !== "all" || searchQuery ? (
+            <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+              {selectedCategory !== "all" ? (
+                <span className="text-dark dark:text-night-muted inline-flex items-center gap-1.5">
+                  Kategorie:{" "}
+                  {capitalizeFirstLetter(
+                    DownloadCategory[
+                      selectedCategory as keyof typeof DownloadCategory
+                    ],
                   )}
                   <button
-                    onClick={() => {
-                      setSelectedCategory("all");
-                      setSearchQuery("");
-                    }}
-                    className="text-sm text-gray-600 underline hover:text-gray-900"
+                    type="button"
+                    onClick={() => setSelectedCategory("all")}
+                    className="link-ink inline-flex min-h-11 items-center"
                   >
-                    Alle Filter zurücksetzen
+                    <X className="h-4 w-4" aria-hidden />
+                    <span className="sr-only">Kategorie-Filter entfernen</span>
+                  </button>
+                </span>
+              ) : null}
+              {searchQuery ? (
+                <span className="text-dark dark:text-night-muted inline-flex items-center gap-1.5">
+                  Suche: &quot;{searchQuery}&quot;
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery("")}
+                    className="link-ink inline-flex min-h-11 items-center"
+                  >
+                    <X className="h-4 w-4" aria-hidden />
+                    <span className="sr-only">Suche zurücksetzen</span>
+                  </button>
+                </span>
+              ) : null}
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="link-ink inline-flex min-h-11 items-center"
+              >
+                Alle Filter zurücksetzen
+              </button>
+            </div>
+          ) : null}
+
+          {!filteredDownloads ? (
+            <LoadingSpinner text="Downloads werden geladen..." />
+          ) : (
+            <>
+              <p className="text-dark dark:text-night-muted mt-8 text-sm">
+                {filteredDownloads.length}{" "}
+                {filteredDownloads.length === 1 ? "Datei" : "Dateien"} gefunden
+              </p>
+
+              {visibleDownloads.length > 0 ? (
+                <ul className="border-ink dark:border-night-text mt-4 border-t-2">
+                  {visibleDownloads.map((download) => (
+                    <DownloadRow key={download.id} download={download} />
+                  ))}
+                </ul>
+              ) : (
+                <div className="border-ink dark:border-night-text mt-4 border-t-2 py-12 text-center">
+                  <p className="condensed text-ink dark:text-night-text text-[1.5rem] font-bold">
+                    Keine Downloads gefunden
+                  </p>
+                  <p className="text-dark dark:text-night-muted mx-auto mt-3 max-w-md">
+                    Versuchen Sie es mit anderen Suchbegriffen oder Filtern.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={resetFilters}
+                    className="link-ink mt-4 inline-flex min-h-11 items-center"
+                  >
+                    Filter zurücksetzen
                   </button>
                 </div>
               )}
-            </div>
 
-            {!filteredDownloads && (
-              <LoadingSpinner text="Downloads werden geladen..." />
-            )}
-
-            {filteredDownloads && (
-              <>
-                {/* Ergebnisse */}
-                <div className="mb-6">
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {filteredDownloads.length}{" "}
-                    {filteredDownloads.length === 1 ? "Datei" : "Dateien"}{" "}
-                    gefunden
-                  </p>
+              {blechblattArchive.length > 0 ? (
+                <div className="mt-10 text-center">
+                  <button
+                    type="button"
+                    onClick={() => setShowBlechblattArchive((v) => !v)}
+                    className="border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night semi-condensed inline-flex min-h-12 items-center gap-2 border-2 px-6 text-lg font-semibold transition-colors"
+                  >
+                    {showBlechblattArchive
+                      ? "Blechblatt-Archiv ausblenden"
+                      : `Blechblatt-Archiv anzeigen (${blechblattArchive.length} Ausgaben)`}
+                  </button>
                 </div>
+              ) : null}
+            </>
+          )}
+        </Split>
+      </PageSection>
 
-                {/* Downloads Grid */}
-                {visibleDownloads.length > 0 ? (
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    {visibleDownloads.map((download) => (
-                      <div
-                        key={download.id}
-                        className="dark:border-dark-border dark:bg-dark-surface dark:shadow-dark-border rounded-lg border border-gray-100 bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
-                      >
-                        <div className="flex items-start gap-4">
-                          {/* File Icon */}
-                          <div className="bg-district-4/10 flex h-12 w-12 shrink-0 items-center justify-center rounded-lg text-2xl">
-                            {getFileIcon(download.fileType)}
-                          </div>
-
-                          {/* Content */}
-                          <div className="min-w-0 flex-1">
-                            <h3 className="text-dark dark:text-dark-text mb-1 line-clamp-2 font-bold">
-                              {download.title}
-                            </h3>
-                            {download.description && (
-                              <p className="mb-2 line-clamp-2 text-sm text-gray-600 dark:text-gray-400">
-                                {download.description}
-                              </p>
-                            )}
-
-                            {/* Meta */}
-                            <div className="mb-3 flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
-                              <span className="inline-flex items-center gap-1">
-                                <FileIcon className="h-4 w-4" />
-                                {download.fileType.toUpperCase()}
-                              </span>
-                              {download.fileSize && (
-                                <>
-                                  {download.fileSize < 1024 ? (
-                                    <span>{download.fileSize} B</span>
-                                  ) : null}
-
-                                  {download.fileSize >= 1024 &&
-                                  download.fileSize < 1048576 ? (
-                                    <span>
-                                      {(download.fileSize / 1024).toFixed(1)} KB
-                                    </span>
-                                  ) : null}
-                                  {download.fileSize >= 1048576 ? (
-                                    <span>
-                                      {(download.fileSize / 1048576).toFixed(1)}{" "}
-                                      MB
-                                    </span>
-                                  ) : null}
-                                </>
-                              )}
-                              <span>
-                                {download.createdAt.toLocaleDateString("de-DE")}
-                              </span>
-                            </div>
-
-                            {/* Tags */}
-                            {download.tags && download.tags.length > 0 && (
-                              <div className="mb-3 flex flex-wrap gap-1">
-                                {download.tags.map((tag, idx) => (
-                                  <span
-                                    key={idx}
-                                    className="dark:bg-dark-background-secondary rounded bg-gray-100 px-2 py-1 text-xs text-gray-600 dark:text-gray-400"
-                                  >
-                                    {tag}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-
-                            {/* Download Button */}
-                            <Link
-                              href={download.fileUrl}
-                              download
-                              className="bg-district-4 hover:bg-district-4/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors"
-                            >
-                              <DownloadIcon className="h-4 w-4" />
-                              Download
-                            </Link>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="py-12 text-center">
-                    <FileIcon className="mx-auto mb-4 h-16 w-16 text-gray-400 dark:text-gray-500" />
-                    <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
-                      Keine Downloads gefunden
-                    </h3>
-                    <p className="mb-4 text-gray-600 dark:text-gray-400">
-                      Versuchen Sie es mit anderen Suchbegriffen oder Filtern.
-                    </p>
-                    <button
-                      onClick={() => {
-                        setSelectedCategory("all");
-                        setSearchQuery("");
-                      }}
-                      className="text-district-4 font-semibold hover:underline"
-                    >
-                      Filter zurücksetzen
-                    </button>
-                  </div>
-                )}
-                {blechblattArchive.length > 0 && (
-                  <div className="mt-6 text-center">
-                    <button
-                      onClick={() => setShowBlechblattArchive((v) => !v)}
-                      className="text-primary dark:border-dark-border inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold hover:underline"
-                    >
-                      {showBlechblattArchive
-                        ? "Blechblatt-Archiv ausblenden"
-                        : `Blechblatt-Archiv anzeigen (${blechblattArchive.length} Ausgaben)`}
-                    </button>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="bg-district-4 py-12 text-white md:py-16">
-        <div className="container">
-          <div className="mx-auto max-w-3xl text-center">
-            <h2 className="mb-4 text-2xl font-bold md:text-3xl">
-              Material nicht gefunden?
-            </h2>
-            <p className="mb-8 text-lg opacity-95">
-              Kontaktieren Sie uns, wenn Sie bestimmte Materialien benötigen
-              oder eigene Beiträge für andere zur Verfügung stellen möchten.
-            </p>
-            <Link
-              href="/kontakt"
-              className="text-district-4 inline-flex items-center rounded-lg bg-white px-8 py-4 font-bold shadow-lg transition-colors hover:bg-gray-100"
-            >
-              Kontakt aufnehmen
-              <ArrowRightIcon className="h-5 w-5" />
-            </Link>
-          </div>
-        </div>
-      </section>
+      <ClosingCall
+        id="material-cta-heading"
+        title="Material nicht gefunden?"
+        text="Kontaktieren Sie uns, wenn Sie bestimmte Materialien benötigen oder eigene Beiträge für andere zur Verfügung stellen möchten."
+        actions={[{ href: "/kontakt", label: "Kontakt aufnehmen" }]}
+      />
     </PublicPage>
   );
 }

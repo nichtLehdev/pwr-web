@@ -1,25 +1,16 @@
 import Link from "next/link";
 import Image from "next/image";
-import { SocialIcon } from "@/app/_components/ui/social-icon";
+import { User } from "lucide-react";
 import { ContactForm } from "@/app/_components/forms/contact-form";
 import { api } from "@/trpc/server";
 import { env } from "@/env";
 import PublicPage from "../_components/general/public-page";
-import {
-  Building2,
-  MapPin,
-  Phone,
-  Mail,
-  Clock,
-  User,
-  Monitor,
-  Check,
-  ArrowRight,
-  Music,
-  Users,
-  Map,
-} from "lucide-react";
+import { ClosingCall } from "../_components/programmheft/closing-call";
+import { PageSection, Split } from "../_components/programmheft/page-section";
+import { Heading, SectionHead } from "../_components/programmheft/section-head";
+import { WayList, WayRow } from "../_components/programmheft/way-list";
 import { buildPageMetadata } from "@/lib/seo";
+import ZoomableImage from "@/app/_components/general/zoomable-image";
 
 export const metadata = buildPageMetadata({
   title: "Kontakt",
@@ -27,6 +18,129 @@ export const metadata = buildPageMetadata({
     "Kontakt zum Posaunenwerk der Evangelischen Kirche im Rheinland — Geschäftsstelle in Vallendar, Ansprechpartner und Kontaktformular.",
   path: "/kontakt",
 });
+
+/** Fließtext der Seite: Tinte, ruhige Zeilenlänge. */
+const PROSE =
+  "text-ink dark:text-night-text max-w-[65ch] space-y-4 text-lg leading-relaxed";
+
+/** Kleiner Kopf innerhalb eines Abschnitts, z. B. „Erreichbarkeit“. */
+const LABEL_HEAD =
+  "semi-condensed text-ink dark:text-night-text text-lg font-semibold";
+
+const WEITERE_ANSPRECHPARTNER = [
+  {
+    href: "/ueber-uns/posaunenwarte",
+    title: "Posaunenwarte",
+    description:
+      "Für musikalische und inhaltliche Fragen zur Posaunenchorarbeit",
+  },
+  {
+    href: "/ueber-uns/vorstand",
+    title: "Vorstand",
+    description: "Für strategische und organisatorische Angelegenheiten",
+  },
+  {
+    href: "/ueber-uns/bezirke",
+    title: "Bezirksobleute",
+    description: "Für regionale Anliegen und lokale Posaunenchöre",
+  },
+];
+
+const HILFE_BEI = [
+  "Login-Problemen",
+  "Veranstaltungen einstellen",
+  "Technischen Fragen",
+];
+
+type OrgTeamMember = Awaited<
+  ReturnType<typeof api.organization.getTeamByContactType>
+>[number];
+
+/**
+ * Team-Mitglied als Registerzeile: rundes Foto (einzige Rundung im Heft, wo
+ * eines vorliegt), Name, Amt, E-Mail als Textlink, Zuständigkeiten und
+ * Social-Links als kleiner Fließtext darunter.
+ */
+function TeamMemberRow({ member }: { member: OrgTeamMember }) {
+  const responsibilities =
+    member.responsibilities &&
+    Array.isArray(member.responsibilities) &&
+    member.responsibilities.length > 0
+      ? (member.responsibilities as string[]).join(" • ")
+      : null;
+  const socials =
+    member.socials && Array.isArray(member.socials) && member.socials.length > 0
+      ? (member.socials as { type: string; url: string; label?: string }[])
+      : null;
+
+  return (
+    <li className="border-rule dark:border-night-rule flex items-start gap-4 border-b py-4">
+      {member.person.image ? (
+        // Vergrößerbar ohne Lupe, wie in `PersonRow`: bei 56px verdeckte sie
+        // das Gesicht.
+        <ZoomableImage
+          src={member.person.image.url}
+          alt={member.person.image.alt || member.person.name || "Profilbild"}
+          copyright={member.person.image.copyright}
+          creator={member.person.image.creator}
+          hint={false}
+          className="bg-rule dark:bg-night-rule h-14 w-14 shrink-0 overflow-hidden rounded-full"
+        >
+          <Image
+            src={member.person.image.url}
+            alt={member.person.image.alt || member.person.name || "Profilbild"}
+            fill
+            sizes="56px"
+            className="object-cover"
+          />
+        </ZoomableImage>
+      ) : (
+        // Gleiche Form wie das Foto daneben: Ein eckiger Kasten neben einem
+        // runden Bild sind zwei Bildsprachen in derselben Zeile.
+        <div className="bg-ink text-paper dark:bg-night-raised dark:text-night-muted flex h-14 w-14 shrink-0 items-center justify-center rounded-full">
+          <User className="h-6 w-6" aria-hidden />
+        </div>
+      )}
+      <div className="min-w-0">
+        <p className="condensed text-ink dark:text-night-text text-[1.375rem] leading-tight font-bold">
+          {member.person.name}
+        </p>
+        <p className="text-dark dark:text-night-muted mt-0.5 text-[0.9375rem]">
+          {member.role}
+        </p>
+        {member.person.email ? (
+          <a
+            href={`mailto:${member.person.email}`}
+            className="link-ink mt-1 inline-flex min-h-11 items-center text-sm"
+          >
+            {member.person.email}
+          </a>
+        ) : null}
+        {responsibilities ? (
+          <p className="text-dark dark:text-night-muted mt-1 text-sm">
+            {responsibilities}
+          </p>
+        ) : null}
+        {socials ? (
+          <p className="mt-1 flex flex-wrap gap-x-3">
+            {socials.map((social, idx) => (
+              <a
+                key={idx}
+                href={social.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="link-ink text-sm"
+              >
+                {social.label || social.type}
+                <span className="sr-only"> (öffnet eine externe Website)</span>
+              </a>
+            ))}
+          </p>
+        ) : null}
+      </div>
+    </li>
+  );
+}
 
 export default async function KontaktPage() {
   const geschaeftsstelle = await api.organization.getTeamByContactType({
@@ -39,7 +153,6 @@ export default async function KontaktPage() {
   return (
     <PublicPage
       title="Kontakt"
-      color="primary"
       breadcrumbs={[{ label: "Start", href: "/" }, { label: "Kontakt" }]}
       description={
         <p>
@@ -48,491 +161,206 @@ export default async function KontaktPage() {
         </p>
       }
     >
-      {/* Kontaktmöglichkeiten */}
-      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
-        <div className="container">
-          <div className="mx-auto max-w-5xl">
-            <h2 className="text-dark dark:text-dark-text mb-8 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
-              So erreichen Sie uns
-            </h2>
-
-            <div className="mb-12 grid grid-cols-1 gap-8 lg:grid-cols-2">
-              {/* Geschäftsstelle */}
-              <div className="border-primary dark:bg-dark-surface dark:border-dark-border rounded-lg border-t-4 bg-white p-6 shadow-lg dark:border dark:shadow-none">
-                <div className="mb-4 flex items-start gap-4">
-                  <div className="bg-primary flex h-12 w-12 shrink-0 items-center justify-center rounded-full">
-                    <Building2 className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
-                      Geschäftsstelle
-                    </h3>
-                    <p className="mb-3 text-sm text-gray-500 dark:text-gray-400">
-                      Für allgemeine Anfragen und Verwaltung
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mb-6 space-y-3">
-                  <div className="flex items-start gap-3">
-                    <MapPin className="text-primary mt-0.5 h-5 w-5 shrink-0" />
-                    <div>
-                      <p className="text-gray-700 dark:text-gray-300">
-                        Posaunenwerk der Evangelischen Kirche im Rheinland e.V.
-                        <br />
-                        Rudolf-Harbig-Str. 20
-                        <br />
-                        56179 Vallendar
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <Phone className="text-primary h-5 w-5 shrink-0" />
-                    <a
-                      href={`tel:02613000011`}
-                      className="hover:text-primary text-gray-700 transition-colors dark:text-gray-300"
-                    >
+      <PageSection labelledBy="erreichen-heading">
+        <Split
+          head={<Heading id="erreichen-heading">So erreichen Sie uns</Heading>}
+          bodyClassName="mt-8"
+        >
+          {/* Gegenüberliegende Spalten wie im aufgeschlagenen Heft: Beide
+              teilen sich dieselben drei Zeilen (Einstieg, Hinweis, Team), so
+              dass die Abschnitte auf einer Linie stehen. Ohne das rutschten
+              die beiden „Unser Team" auf verschiedene Höhen und die
+              Trennlinie lief mitten hindurch. */}
+          <div className="grid sm:grid-cols-2 sm:grid-rows-[auto_auto_auto]">
+            <div className="border-rule dark:border-night-rule grid content-start gap-y-10 border-b pb-12 sm:row-span-3 sm:grid-rows-subgrid sm:border-b-0 sm:pr-10 sm:pb-0 lg:pr-16">
+              <div>
+                <Heading as="h3" size="list" rule>
+                  Geschäftsstelle
+                </Heading>
+                <div className={`${PROSE} mt-5`}>
+                  <p>Für allgemeine Anfragen und Verwaltung</p>
+                  <p>
+                    Posaunenwerk der Evangelischen Kirche im Rheinland e.V.
+                    <br />
+                    Rudolf-Harbig-Str. 20
+                    <br />
+                    56179 Vallendar
+                  </p>
+                  <p>
+                    <a href="tel:02613000011" className="link-ink">
                       0261 300 00 11
                     </a>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <Mail className="text-primary h-5 w-5 shrink-0" />
+                    <br />
                     <a
-                      href={`mailto:info@posaunenwerk-rheinland.de`}
-                      className="hover:text-primary text-gray-700 transition-colors dark:text-gray-300"
+                      href="mailto:info@posaunenwerk-rheinland.de"
+                      className="link-ink"
                     >
                       info@posaunenwerk-rheinland.de
                     </a>
-                  </div>
-
-                  <div className="dark:border-dark-border border-t border-gray-200 pt-4">
-                    <h4 className="text-dark dark:text-dark-text mb-2 flex items-center gap-2 font-semibold">
-                      <Clock className="text-primary h-5 w-5" />
-                      Erreichbarkeit
-                    </h4>
-                    <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                      <p className="leading-relaxed">
-                        Die Geschäftsstelle und das Telefon sind nicht jeden Tag
-                        besetzt. Bitte senden Sie uns eine E-Mail oder
-                        hinterlassen Sie bei einem Anruf gerne Ihre Nachricht
-                        auf dem Anrufbeantworter. Sie erhalten dann so schnell
-                        wie möglich eine Rückmeldung.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Team-Mitglieder */}
-                <div className="dark:border-dark-border border-t border-gray-200 pt-6">
-                  <h4 className="text-dark dark:text-dark-text mb-4 font-semibold">
-                    Unser Team
-                  </h4>
-                  <div className="space-y-4">
-                    {geschaeftsstelle.map((member, index) => (
-                      <div
-                        key={index}
-                        className="dark:hover:bg-dark-background-secondary flex items-start gap-3 rounded-lg p-3 transition-colors hover:bg-gray-50"
-                      >
-                        <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full bg-gray-200">
-                          {member.person.image ? (
-                            <Image
-                              src={member.person.image.url}
-                              alt={
-                                member.person.image.alt ||
-                                member.person.name ||
-                                "Profilbild"
-                              }
-                              fill
-                              className="object-cover"
-                            />
-                          ) : (
-                            <div className="bg-primary/10 flex h-full w-full items-center justify-center">
-                              <User className="text-primary h-6 w-6" />
-                            </div>
-                          )}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-dark dark:text-dark-text font-semibold">
-                            {member.person.name}
-                          </p>
-                          <p className="mb-1 text-sm text-gray-600 dark:text-gray-400">
-                            {member.role}
-                          </p>
-                          {member.person.email && (
-                            <a
-                              href={`mailto:${member.person.email}`}
-                              className="text-primary text-xs hover:underline"
-                            >
-                              {member.person.email}
-                            </a>
-                          )}
-                          {member.responsibilities &&
-                            Array.isArray(member.responsibilities) &&
-                            member.responsibilities.length > 0 && (
-                              <div className="mt-2">
-                                <p className="text-xs text-gray-500 dark:text-gray-400">
-                                  {member.responsibilities.join(" • ")}
-                                </p>
-                              </div>
-                            )}
-                          {member.socials &&
-                            Array.isArray(member.socials) &&
-                            member.socials.length > 0 && (
-                              <div className="mt-2 flex gap-2">
-                                {member.socials.map(
-                                  (
-                                    social: {
-                                      type: string;
-                                      url: string;
-                                      label?: string;
-                                    },
-                                    idx: number,
-                                  ) => (
-                                    <a
-                                      key={idx}
-                                      href={social.url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="hover:text-primary flex h-6 w-6 items-center justify-center text-gray-500 transition-colors dark:text-gray-400"
-                                      title={social.label || social.type}
-                                    >
-                                      <SocialIcon
-                                        type={social.type}
-                                        className="h-4 w-4"
-                                      />
-                                    </a>
-                                  ),
-                                )}
-                              </div>
-                            )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  </p>
                 </div>
               </div>
 
-              {/* Internet-Team */}
-              <div className="border-district-3 dark:bg-dark-surface dark:border-dark-border rounded-lg border-t-4 bg-white p-6 shadow-lg dark:border dark:shadow-none">
-                <div className="mb-4 flex items-start gap-4">
-                  <div className="bg-district-3 flex h-12 w-12 shrink-0 items-center justify-center rounded-full">
-                    <Monitor className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
-                      Internet-Team
-                    </h3>
-                    <p className="mb-3 text-sm text-gray-500 dark:text-gray-400">
-                      Für Website-Fragen und technischen Support
-                    </p>
-                  </div>
-                </div>
+              <div>
+                <h4 className={LABEL_HEAD}>Erreichbarkeit</h4>
+                <p className="text-ink dark:text-night-text mt-3 max-w-[65ch] text-lg leading-relaxed">
+                  Die Geschäftsstelle und das Telefon sind nicht jeden Tag
+                  besetzt. Bitte senden Sie uns eine E-Mail oder hinterlassen
+                  Sie bei einem Anruf gerne Ihre Nachricht auf dem
+                  Anrufbeantworter. Sie erhalten dann so schnell wie möglich
+                  eine Rückmeldung.
+                </p>
+              </div>
 
-                <div className="mb-6 space-y-4">
-                  <p className="text-gray-600 dark:text-gray-400">
+              <div>
+                {geschaeftsstelle.length > 0 ? (
+                  <>
+                    <h4 className={LABEL_HEAD}>Unser Team</h4>
+                    <ul className="border-ink dark:border-night-text mt-3 border-t-2">
+                      {geschaeftsstelle.map((member, index) => (
+                        <TeamMemberRow key={index} member={member} />
+                      ))}
+                    </ul>
+                  </>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="border-rule dark:border-night-rule grid content-start gap-y-10 sm:row-span-3 sm:grid-rows-subgrid sm:border-l sm:pl-10 lg:pl-16">
+              <div>
+                <Heading as="h3" size="list" rule>
+                  Internet-Team
+                </Heading>
+                <div className={`${PROSE} mt-5`}>
+                  <p>Für Website-Fragen und technischen Support</p>
+                  <p>
                     Haben Sie Fragen zur Website, technische Probleme oder
                     Anregungen für neue Features? Unser Internet-Team hilft
                     Ihnen gerne weiter.
                   </p>
-
-                  <div className="flex items-center gap-3">
-                    <Mail className="text-district-3 h-5 w-5 shrink-0" />
+                  <p>
                     <a
-                      href={`mailto:webmaster@posaunenwerk-rheinland.de`}
-                      className="hover:text-district-3 text-gray-700 transition-colors dark:text-gray-300"
+                      href="mailto:webmaster@posaunenwerk-rheinland.de"
+                      className="link-ink"
                     >
                       webmaster@posaunenwerk-rheinland.de
                     </a>
-                  </div>
-
-                  <div className="bg-district-3/5 dark:bg-district-3/10 rounded-lg p-4">
-                    <h4 className="text-dark dark:text-dark-text mb-2 font-semibold">
-                      Wir helfen bei:
-                    </h4>
-                    <ul className="space-y-1 text-sm text-gray-700 dark:text-gray-300">
-                      <li className="flex items-start gap-2">
-                        <Check className="text-district-3 mt-0.5 h-4 w-4 shrink-0" />
-                        Login-Problemen
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <Check className="text-district-3 mt-0.5 h-4 w-4 shrink-0" />
-                        Veranstaltungen einstellen
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <Check className="text-district-3 mt-0.5 h-4 w-4 shrink-0" />
-                        Technischen Fragen
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <Check className="text-district-3 mt-0.5 h-4 w-4 shrink-0" />
-                        Feedback und Verbesserungsvorschlägen
-                        {/* Feedback page only exists where the GitHub
-                            integration is configured (beta) */}
-                        {env.GITHUB_TOKEN && env.GITHUB_REPO && (
-                          <Link
-                            href="/feedback"
-                            className="bg-district-3/10 text-district-3 hover:bg-district-3/20 ml-2 inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-semibold transition-colors"
-                          >
-                            Feedback geben
-                            <ArrowRight className="h-4 w-4" />
-                          </Link>
-                        )}
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-
-                {/* Team-Mitglieder */}
-                <div className="dark:border-dark-border border-t border-gray-200 pt-6">
-                  <h4 className="text-dark dark:text-dark-text mb-4 font-semibold">
-                    Unser Team
-                  </h4>
-                  <div className="space-y-4">
-                    {internetTeam.map((member, index) => (
-                      <div
-                        key={index}
-                        className="dark:hover:bg-dark-background-secondary flex items-start gap-3 rounded-lg p-3 transition-colors hover:bg-gray-50"
-                      >
-                        <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full bg-gray-200">
-                          {member.person.image ? (
-                            <Image
-                              src={member.person.image.url}
-                              alt={
-                                member.person.image.alt ||
-                                member.person.name ||
-                                "Profilbild"
-                              }
-                              fill
-                              className="object-cover"
-                            />
-                          ) : (
-                            <div className="bg-district-3/10 flex h-full w-full items-center justify-center">
-                              <User className="text-district-3 h-6 w-6" />
-                            </div>
-                          )}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-dark dark:text-dark-text font-semibold">
-                            {member.person.name}
-                          </p>
-                          <p className="mb-1 text-sm text-gray-600 dark:text-gray-400">
-                            {member.role}
-                          </p>
-                          {member.person.email && (
-                            <a
-                              href={`mailto:${member.person.email}`}
-                              className="text-district-3 text-xs hover:underline"
-                            >
-                              {member.person.email}
-                            </a>
-                          )}
-                          {member.responsibilities &&
-                            Array.isArray(member.responsibilities) &&
-                            member.responsibilities.length > 0 && (
-                              <div className="mt-2">
-                                <p className="text-xs text-gray-500 dark:text-gray-400">
-                                  {member.responsibilities.join(" • ")}
-                                </p>
-                              </div>
-                            )}
-                          {member.socials &&
-                            Array.isArray(member.socials) &&
-                            member.socials.length > 0 && (
-                              <div className="mt-2 flex gap-2">
-                                {member.socials.map(
-                                  (
-                                    social: {
-                                      type: string;
-                                      url: string;
-                                      label?: string;
-                                    },
-                                    idx: number,
-                                  ) => (
-                                    <a
-                                      key={idx}
-                                      href={social.url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="hover:text-district-3 flex h-6 w-6 items-center justify-center text-gray-500 transition-colors dark:text-gray-400"
-                                      title={social.label || social.type}
-                                    >
-                                      <SocialIcon
-                                        type={social.type}
-                                        className="h-4 w-4"
-                                      />
-                                    </a>
-                                  ),
-                                )}
-                              </div>
-                            )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  </p>
                 </div>
               </div>
-            </div>
 
-            {/* Kontaktformular */}
-            <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg bg-white p-6 shadow-lg md:p-8 dark:border dark:shadow-none">
-              <h3 className="text-dark dark:text-dark-text mb-2 text-2xl font-bold">
-                Allgemeine Anfrage
-              </h3>
-              <p className="mb-6 text-gray-600 dark:text-gray-400">
-                Nutzen Sie unser Kontaktformular für allgemeine Anfragen. Wir
-                melden uns zeitnah bei Ihnen.
-              </p>
+              <div>
+                <h4 className={LABEL_HEAD}>Wir helfen bei:</h4>
+                <ul className="border-ink dark:border-night-text mt-3 border-t-2">
+                  {HILFE_BEI.map((item) => (
+                    <li
+                      key={item}
+                      className="border-rule dark:border-night-rule text-ink dark:text-night-text flex gap-3 border-b px-1 py-3 text-lg leading-snug"
+                    >
+                      <span
+                        aria-hidden
+                        className="bg-ink dark:bg-night-text mt-2 h-2 w-2 shrink-0"
+                      />
+                      {item}
+                    </li>
+                  ))}
+                  {/* Ohne flex-wrap: Sonst rutscht der Text in die nächste Zeile
+                    und das Aufzählungsquadrat bleibt allein zurück. */}
+                  <li className="border-rule dark:border-night-rule text-ink dark:text-night-text flex gap-3 border-b px-1 py-3 text-lg leading-snug">
+                    <span
+                      aria-hidden
+                      className="bg-ink dark:bg-night-text mt-2 h-2 w-2 shrink-0"
+                    />
+                    <span>
+                      Feedback und Verbesserungsvorschlägen
+                      {/* Feedback page only exists where the GitHub
+                      integration is configured (beta) */}
+                      {env.GITHUB_TOKEN && env.GITHUB_REPO && (
+                        <Link
+                          href="/feedback"
+                          className="link-ink ml-2 text-base"
+                        >
+                          Feedback geben
+                        </Link>
+                      )}
+                    </span>
+                  </li>
+                </ul>
+              </div>
 
-              <ContactForm />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Weitere Ansprechpartner */}
-      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
-        <div className="container">
-          <div className="mx-auto max-w-5xl">
-            <h2 className="text-dark dark:text-dark-text mb-4 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
-              Weitere Ansprechpartner
-            </h2>
-            <p className="mb-8 text-center text-lg text-gray-600 dark:text-gray-400">
-              Je nach Anliegen können Sie sich auch direkt an die zuständigen
-              Personen wenden.
-            </p>
-
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-              <Link
-                href="/ueber-uns/posaunenwarte"
-                className="group dark:bg-dark-surface dark:border-dark-border rounded-lg bg-white p-6 shadow-md transition-all hover:shadow-lg dark:border dark:shadow-none"
-              >
-                <div className="bg-primary mb-4 flex h-12 w-12 items-center justify-center rounded-full transition-transform group-hover:scale-110">
-                  <Music className="h-6 w-6 text-white" />
-                </div>
-                <h3 className="text-dark dark:text-dark-text group-hover:text-primary mb-2 text-lg font-bold transition-colors">
-                  Posaunenwarte
-                </h3>
-                <p className="mb-3 text-sm text-gray-600 dark:text-gray-400">
-                  Für musikalische und inhaltliche Fragen zur Posaunenchorarbeit
-                </p>
-                <span className="text-primary text-sm font-semibold group-hover:underline">
-                  Kontakte ansehen →
-                </span>
-              </Link>
-
-              <Link
-                href="/ueber-uns/vorstand"
-                className="group dark:bg-dark-surface dark:border-dark-border rounded-lg bg-white p-6 shadow-md transition-all hover:shadow-lg dark:border dark:shadow-none"
-              >
-                <div className="bg-primary mb-4 flex h-12 w-12 items-center justify-center rounded-full transition-transform group-hover:scale-110">
-                  <Users className="h-6 w-6 text-white" />
-                </div>
-                <h3 className="text-dark dark:text-dark-text group-hover:text-primary mb-2 text-lg font-bold transition-colors">
-                  Vorstand
-                </h3>
-                <p className="mb-3 text-sm text-gray-600 dark:text-gray-400">
-                  Für strategische und organisatorische Angelegenheiten
-                </p>
-                <span className="text-primary text-sm font-semibold group-hover:underline">
-                  Kontakte ansehen →
-                </span>
-              </Link>
-
-              <Link
-                href="/ueber-uns/bezirke"
-                className="group dark:bg-dark-surface dark:border-dark-border rounded-lg bg-white p-6 shadow-md transition-all hover:shadow-lg dark:border dark:shadow-none"
-              >
-                <div className="bg-primary mb-4 flex h-12 w-12 items-center justify-center rounded-full transition-transform group-hover:scale-110">
-                  <Map className="h-6 w-6 text-white" />
-                </div>
-                <h3 className="text-dark dark:text-dark-text group-hover:text-primary mb-2 text-lg font-bold transition-colors">
-                  Bezirksobleute
-                </h3>
-                <p className="mb-3 text-sm text-gray-600 dark:text-gray-400">
-                  Für regionale Anliegen und lokale Posaunenchöre
-                </p>
-                <span className="text-primary text-sm font-semibold group-hover:underline">
-                  Kontakte ansehen →
-                </span>
-              </Link>
+              <div>
+                {internetTeam.length > 0 ? (
+                  <>
+                    <h4 className={LABEL_HEAD}>Unser Team</h4>
+                    <ul className="border-ink dark:border-night-text mt-3 border-t-2">
+                      {internetTeam.map((member, index) => (
+                        <TeamMemberRow key={index} member={member} />
+                      ))}
+                    </ul>
+                  </>
+                ) : null}
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </Split>
+      </PageSection>
 
-      {/* Social Media & Newsletter */}
-      <section className="bg-primary py-12 text-white md:py-16">
-        <div className="container">
-          <div className="mx-auto max-w-4xl text-center">
-            <h2 className="mb-4 text-2xl font-bold md:text-3xl">
-              Bleiben Sie auf dem Laufenden
-            </h2>
-            <p className="mb-8 text-lg opacity-95">
-              Folgen Sie uns auf Social Media oder abonnieren Sie unseren
-              Newsletter für aktuelle Informationen.
-            </p>
+      <PageSection labelledBy="formular-heading" rule>
+        <Split
+          head={
+            <SectionHead
+              id="formular-heading"
+              title="Allgemeine Anfrage"
+              intro="Nutzen Sie unser Kontaktformular für allgemeine Anfragen. Wir melden uns zeitnah bei Ihnen."
+            />
+          }
+          bodyClassName="mt-8"
+        >
+          <ContactForm />
+        </Split>
+      </PageSection>
 
-            <div className="mb-8 flex flex-wrap justify-center gap-4">
-              <a
-                href="https://facebook.com/posaunenwerkrheinland"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center rounded-lg bg-white/10 px-6 py-3 transition-colors hover:bg-white/20"
-              >
-                <svg
-                  className="mr-2 h-5 w-5"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                </svg>
-                Facebook
-              </a>
+      <PageSection labelledBy="ansprechpartner-heading" rule>
+        <Split
+          head={
+            <SectionHead
+              id="ansprechpartner-heading"
+              title="Weitere Ansprechpartner"
+              intro="Je nach Anliegen können Sie sich auch direkt an die zuständigen Personen wenden."
+            />
+          }
+          bodyClassName="mt-8"
+        >
+          <WayList labelledBy="ansprechpartner-heading">
+            {WEITERE_ANSPRECHPARTNER.map((weg) => (
+              <WayRow
+                key={weg.href}
+                href={weg.href}
+                title={weg.title}
+                description={weg.description}
+              />
+            ))}
+          </WayList>
+        </Split>
+      </PageSection>
 
-              <a
-                href="https://www.instagram.com/posaunenwerk_rheinland/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center rounded-lg bg-white/10 px-6 py-3 transition-colors hover:bg-white/20"
-              >
-                <svg
-                  className="mr-2 h-5 w-5"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-                </svg>
-                Instagram
-              </a>
-
-              <a
-                href="https://www.youtube.com/@PWRheinland"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center rounded-lg bg-white/10 px-6 py-3 transition-colors hover:bg-white/20"
-              >
-                <svg
-                  className="mr-2 h-5 w-5"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-                </svg>
-                YouTube
-              </a>
-            </div>
-
-            <Link
-              href="/newsletter"
-              className="text-primary inline-flex items-center rounded-lg bg-white px-8 py-4 font-bold shadow-lg transition-colors hover:bg-gray-100"
-            >
-              <Mail className="mr-2 h-6 w-6" />
-              Newsletter abonnieren
-            </Link>
-          </div>
-        </div>
-      </section>
+      <ClosingCall
+        id="bleiben-heading"
+        title="Bleiben Sie auf dem Laufenden"
+        text="Folgen Sie uns auf Social Media oder abonnieren Sie unseren Newsletter für aktuelle Informationen."
+        actions={[
+          { href: "/newsletter", label: "Newsletter abonnieren" },
+          {
+            href: "https://facebook.com/posaunenwerkrheinland",
+            label: "Facebook",
+          },
+          {
+            href: "https://www.instagram.com/posaunenwerk_rheinland/",
+            label: "Instagram",
+          },
+          { href: "https://www.youtube.com/@PWRheinland", label: "YouTube" },
+        ]}
+      />
     </PublicPage>
   );
 }

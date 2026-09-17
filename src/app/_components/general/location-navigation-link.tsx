@@ -24,10 +24,15 @@ export default function LocationNavigationLink({
   const href = locationMapsUrl(location);
   if (!href) return null;
 
+  // Beide Varianten trugen einen Kontrastfehler: der Knopf weiß auf Orange
+  // (1,99:1), der Inline-Link Orange als Textfarbe auf hellem Grund. Die
+  // Hauptaktion ist jetzt tintengefüllt — Orange bleibt die Fläche zum
+  // Markieren, nicht die Farbe des Handelns —, der Link trägt Messing-Tinte
+  // (5,26:1) und darf nachts wieder Orange sein.
   const variantStyles =
     variant === "button"
-      ? "bg-primary hover:bg-primary-dark mt-4 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-white transition-colors"
-      : "text-primary hover:text-primary-dark inline-flex items-center gap-1 text-sm font-semibold transition-colors";
+      ? "semi-condensed bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-night-text dark:text-night dark:hover:bg-primary dark:hover:text-ink mt-4 inline-flex min-h-11 items-center gap-2 px-4 py-2 font-semibold transition-colors"
+      : "text-primary-ink dark:text-primary inline-flex items-center gap-1 text-sm font-semibold underline-offset-4 transition-colors hover:underline";
 
   return (
     <a

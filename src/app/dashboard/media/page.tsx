@@ -46,10 +46,10 @@ import {
   formatFileSize,
   getMimeTypeIcon,
   getMimeTypeLabel,
-  statusColors,
   statusLabels,
   type MediaItem,
 } from "@/app/_components/media/media-shared";
+import { Tag, type TagTone } from "@/app/_components/programmheft/tag";
 
 const column = createDataTableColumnHelper<MediaItem>();
 
@@ -76,6 +76,26 @@ const QUICK_FILTERS: { value: QuickFilter; label: string }[] = [
   { value: "missingAlt", label: "Ohne Alt-Text" },
   { value: "missingCopyright", label: "Ohne Urheberangabe" },
 ];
+
+/**
+ * Spiegelt die Zuordnung aus `content-status.tsx` — derselbe Status muss
+ * überall gleich aussehen. `Tag` hat inzwischen einen fünften, umrandeten
+ * Ton (`muted`) für genau diesen Fall: Entwurf und Archiviert sind reine
+ * Ablagezustände ohne Handlungsbedarf und standen bisher gefüllt, also so
+ * laut wie „Veröffentlicht".
+ *
+ * Gefüllt heißt „das musst du sehen", umrandet „das ist nur der Stand".
+ *
+ * Dass diese Tabelle hier überhaupt doppelt steht, bleibt ein offener Punkt —
+ * richtig wäre `ContentStatusBadge` aus `content-status.tsx`.
+ */
+const STATUS_TONE: Record<ContentStatus, TagTone> = {
+  DRAFT: "muted",
+  PENDING: "orange",
+  APPROVED: "ink",
+  REJECTED: "cancelled",
+  ARCHIVED: "muted",
+};
 
 export default function DashboardMediaPage() {
   const { data: session, isPending } = useSession();
@@ -289,7 +309,7 @@ export default function DashboardMediaPage() {
           id: "preview",
           header: "",
           cell: ({ row }) => (
-            <div className="relative h-10 w-10 overflow-hidden rounded bg-gray-100 dark:bg-gray-800">
+            <div className="bg-rule/25 dark:bg-night-raised relative h-10 w-10 overflow-hidden">
               {row.original.mimeType.startsWith("image/") ? (
                 <ImageWithFallback
                   src={row.original.url}
@@ -316,7 +336,7 @@ export default function DashboardMediaPage() {
             <button
               type="button"
               onClick={() => setPreviewId(row.original.id)}
-              className="hover:text-primary max-w-[22ch] truncate text-left font-medium"
+              className="hover:text-primary-ink dark:hover:text-primary max-w-[22ch] truncate text-left font-medium"
               title={row.original.name}
             >
               {row.original.name}
@@ -328,11 +348,9 @@ export default function DashboardMediaPage() {
           header: "Status",
           enableColumnFilter: false,
           cell: ({ row }) => (
-            <span
-              className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[row.original.status]}`}
-            >
+            <Tag tone={STATUS_TONE[row.original.status]}>
               {statusLabels[row.original.status]}
-            </span>
+            </Tag>
           ),
         }),
         column.accessor((item) => item.alt, {
@@ -346,9 +364,7 @@ export default function DashboardMediaPage() {
                 {row.original.alt}
               </span>
             ) : (
-              <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
-                fehlt
-              </span>
+              <Tag tone="muted">fehlt</Tag>
             ),
         }),
         column.accessor(
@@ -364,9 +380,7 @@ export default function DashboardMediaPage() {
                   {getValue()}
                 </span>
               ) : (
-                <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
-                  fehlt
-                </span>
+                <Tag tone="muted">fehlt</Tag>
               ),
           },
         ),
@@ -451,8 +465,8 @@ export default function DashboardMediaPage() {
 
   if (isPending || profileLoading || permissionsLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
@@ -508,7 +522,7 @@ export default function DashboardMediaPage() {
         {/* Filterleiste. Die Auswahlfelder tragen eine feste Breite: als reine
             `w-full`-Elemente in einer Flex-Zeile drängten sie das Suchfeld auf
             34 Pixel zusammen. */}
-        <div className="dark:bg-dark-surface dark:border-dark-border mb-4 space-y-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+        <div className="border-rule dark:border-night-rule mb-4 space-y-3 border p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <input
               type="text"
@@ -518,7 +532,7 @@ export default function DashboardMediaPage() {
                 setSearch(event.target.value);
                 resetPage();
               }}
-              className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary min-w-0 flex-1 rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
+              className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper min-w-0 flex-1 border px-4 py-2"
             />
             <div className="flex shrink-0 flex-wrap items-center gap-3">
               <div className="w-40">
@@ -580,20 +594,29 @@ export default function DashboardMediaPage() {
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-1.5">
+          {/* Register statt Kästen: dieselbe Eins-aus-N-Wahl wie der
+              Statusfilter der öffentlichen Anmeldungsseite, mit derselben
+              Optik — Unterstrich statt gefüllter Pille. aria-pressed bleibt,
+              denn hier wird gefiltert, nicht navigiert. */}
+          <div
+            role="group"
+            aria-label="Schnellfilter"
+            className="border-rule dark:border-night-rule flex flex-wrap gap-1 border-b"
+          >
             {QUICK_FILTERS.map((filter) => (
               <button
                 key={filter.value}
                 type="button"
+                aria-pressed={quickFilter === filter.value}
                 onClick={() => {
                   setQuickFilter(filter.value);
                   if (filter.value !== "all") setStatusFilter("");
                   resetPage();
                 }}
-                className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                className={`semi-condensed -mb-px border-b-2 px-2.5 py-1.5 text-xs font-semibold transition-colors ${
                   quickFilter === filter.value
-                    ? "bg-primary text-white"
-                    : "dark:border-dark-border dark:text-dark-muted border border-gray-300 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+                    ? "border-primary text-ink dark:text-night-text"
+                    : "text-dark hover:border-ink hover:text-ink dark:text-night-muted dark:hover:border-night-text dark:hover:text-night-text border-transparent"
                 }`}
               >
                 {filter.label}
@@ -605,8 +628,8 @@ export default function DashboardMediaPage() {
         {/* Sammelaktionen. Erscheint nur mit Auswahl, damit die Leiste sonst
             keinen Platz kostet. */}
         {selectedIds.size > 0 && (
-          <div className="dark:bg-dark-surface dark:border-dark-border mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
-            <span className="dark:text-dark-text text-sm font-medium text-gray-900">
+          <div className="border-rule dark:border-night-rule mb-4 flex flex-wrap items-center gap-3 border p-3">
+            <span className="text-ink dark:text-night-text text-sm font-medium">
               {selectedIds.size} ausgewählt
             </span>
             <Button
@@ -667,7 +690,7 @@ export default function DashboardMediaPage() {
             searchable={false}
             pageSizeOptions={[24, 48, 96]}
             emptyState={
-              <span className="flex flex-col items-center gap-2 text-gray-500 dark:text-gray-400">
+              <span className="text-dark dark:text-night-muted flex flex-col items-center gap-2">
                 <ImageIcon className="h-8 w-8" />
                 Keine Medien gefunden.
               </span>
@@ -683,19 +706,19 @@ export default function DashboardMediaPage() {
           />
         ) : isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+            <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
           </div>
         ) : mediaList.length === 0 ? (
-          <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg border border-gray-200 bg-white p-12 text-center shadow-sm">
-            <ImageIcon className="mx-auto h-12 w-12 text-gray-400" />
-            <p className="dark:text-dark-muted mt-4 text-gray-500">
+          <div className="border-rule dark:border-night-rule border p-12 text-center">
+            <ImageIcon className="text-dark dark:text-night-muted mx-auto h-12 w-12" />
+            <p className="text-dark dark:text-night-muted mt-4">
               Keine Medien gefunden
             </p>
           </div>
         ) : (
           <>
             <div className="mb-3 flex items-center gap-3">
-              <label className="dark:text-dark-muted flex cursor-pointer items-center gap-2 text-sm text-gray-600">
+              <label className="text-dark dark:text-night-muted flex cursor-pointer items-center gap-2 text-sm">
                 <Checkbox
                   checked={allOnPageSelected}
                   onChange={toggleSelectPage}
@@ -726,7 +749,7 @@ export default function DashboardMediaPage() {
 
             {data && data.pages > 1 && (
               <div className="mt-6 flex items-center justify-between">
-                <p className="dark:text-dark-muted text-sm text-gray-600">
+                <p className="text-dark dark:text-night-muted text-sm">
                   Seite {pagination.pageIndex + 1} von {data.pages} (
                   {data.total} Medien)
                 </p>
@@ -831,12 +854,12 @@ function StatCard({
 }) {
   const content = (
     <>
-      <p className="dark:text-dark-muted text-sm text-gray-500">{label}</p>
+      <p className="text-dark dark:text-night-muted text-sm">{label}</p>
       <p
         className={`text-2xl font-bold ${
           tone === "warning"
-            ? "text-amber-600 dark:text-amber-400"
-            : "dark:text-dark-text text-gray-900"
+            ? "text-primary-ink dark:text-primary"
+            : "text-ink dark:text-night-text"
         }`}
       >
         {value}
@@ -845,13 +868,13 @@ function StatCard({
   );
 
   const className =
-    "dark:bg-dark-surface dark:border-dark-border rounded-lg border border-gray-200 bg-white p-4 text-left shadow-sm";
+    "border-rule dark:border-night-rule bg-paper dark:bg-night border p-4 text-left";
 
   return onClick ? (
     <button
       type="button"
       onClick={onClick}
-      className={`${className} hover:border-primary transition-colors`}
+      className={`${className} hover:border-primary min-h-11 transition-colors`}
     >
       {content}
     </button>
@@ -873,9 +896,9 @@ function IconAction({
 }) {
   const tones = {
     neutral:
-      "text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-700",
+      "text-dark hover:bg-rule/60 hover:text-ink dark:text-night-muted dark:hover:bg-night-rule dark:hover:text-night-text",
     success:
-      "text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/30",
+      "text-primary-ink hover:bg-primary/10 dark:text-primary dark:hover:bg-primary/10",
     danger:
       "text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30",
   } as const;
@@ -886,7 +909,7 @@ function IconAction({
       title={label}
       aria-label={label}
       onClick={onClick}
-      className={`rounded-md p-1.5 transition-colors ${tones[tone]}`}
+      className={`p-1.5 transition-colors ${tones[tone]}`}
     >
       <Icon className="h-4 w-4" />
     </button>
@@ -906,10 +929,10 @@ function BulkDeleteDialog({
 }) {
   return (
     <ScrollableModalShell onClose={isDeleting ? undefined : onClose}>
-      <h3 className="dark:text-dark-text mb-3 text-lg font-semibold text-gray-900">
+      <h3 className="text-ink dark:text-night-text mb-3 text-lg font-semibold">
         {count} Medien löschen
       </h3>
-      <p className="dark:text-dark-muted mb-4 text-sm text-gray-600">
+      <p className="text-dark dark:text-night-muted mb-4 text-sm">
         Die Dateien werden auch von der Festplatte entfernt. Einträge, die
         unmittelbar an einem Bild hängen — Bläserhefte und Folien des
         Startseiten-Karussells — verschwinden mit. Diese Aktion kann nicht
@@ -951,7 +974,7 @@ function ScrollableModalShell({
       onClick={onClose}
     >
       <div
-        className="dark:bg-dark-surface w-full max-w-md rounded-lg bg-white p-6 shadow-xl"
+        className="border-ink bg-paper dark:border-night-text dark:bg-night-raised w-full max-w-md border-2 p-6"
         onClick={(event) => event.stopPropagation()}
       >
         {children}

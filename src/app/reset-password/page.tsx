@@ -4,14 +4,28 @@ import { useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useToast } from "@/app/_components/ui/toast";
-import { CheckCircle, Lock, ArrowLeft } from "lucide-react";
-import {
-  Button,
-  Input,
-  Label,
-  Alert,
-  AlertDescription,
-} from "@/app/_components/ui";
+import { ArrowLeft } from "lucide-react";
+import { Button, Input, Label } from "@/app/_components/ui";
+import PublicPage from "@/app/_components/general/public-page";
+import { PageSection } from "@/app/_components/programmheft/page-section";
+import { Note } from "@/app/_components/programmheft/note";
+
+/** Primäraktion als Link statt Knopf (Weiterleitung, kein Submit). */
+const PRIMARY_LINK =
+  "semi-condensed bg-ink text-paper hover:bg-dark dark:bg-night-text dark:text-night dark:hover:bg-night-muted inline-flex min-h-12 w-full items-center justify-center px-6 text-lg font-semibold transition-colors";
+
+/** Platzhalter, während der Formularabschnitt (Token aus der URL) lädt. */
+function FormSkeleton() {
+  return (
+    <div className="flex justify-center py-12">
+      <div
+        className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-2 border-t-transparent"
+        aria-hidden
+      />
+      <span className="sr-only">Lädt…</span>
+    </div>
+  );
+}
 
 function ResetPasswordContent() {
   const searchParams = useSearchParams();
@@ -27,38 +41,22 @@ function ResetPasswordContent() {
 
   if (!token) {
     return (
-      <div className="bg-background-secondary dark:bg-dark-background-secondary flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-8">
-        <div className="w-full max-w-md">
-          <div className="dark:bg-dark-surface rounded-lg bg-white p-6 shadow-lg md:p-8">
-            <div className="mb-6 text-center">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20">
-                <Lock className="h-8 w-8 text-red-600 dark:text-red-400" />
-              </div>
-              <h1 className="text-dark dark:text-dark-text mb-2 text-3xl font-bold">
-                Ungültiger Link
-              </h1>
-              <p className="text-gray-600 dark:text-gray-400">
-                Der Passwort-Reset-Link ist ungültig oder unvollständig. Bitte
-                fordere einen neuen Link an.
-              </p>
-            </div>
+      <div className="mx-auto max-w-md">
+        <Note tone="error" title="Ungültiger Link">
+          <p>
+            Der Passwort-Reset-Link ist ungültig oder unvollständig. Bitte
+            fordere einen neuen Link an.
+          </p>
+        </Note>
 
-            <div className="space-y-4">
-              <Link
-                href="/forgot-password"
-                className="bg-primary hover:bg-primary-dark dark:bg-primary-light dark:hover:bg-primary block w-full rounded-lg px-4 py-2.5 text-center font-semibold text-white shadow-lg transition-colors"
-              >
-                Neuen Link anfordern
-              </Link>
+        <div className="mt-8 space-y-4">
+          <Link href="/forgot-password" className={PRIMARY_LINK}>
+            Neuen Link anfordern
+          </Link>
 
-              <Link
-                href="/login"
-                className="text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary block text-center text-sm font-medium"
-              >
-                Zurück zur Anmeldung
-              </Link>
-            </div>
-          </div>
+          <Link href="/login" className="link-ink block text-center text-sm">
+            Zurück zur Anmeldung
+          </Link>
         </div>
       </div>
     );
@@ -114,119 +112,100 @@ function ResetPasswordContent() {
 
   if (isSuccess) {
     return (
-      <div className="bg-background-secondary dark:bg-dark-background-secondary flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-8">
-        <div className="w-full max-w-md">
-          <div className="dark:bg-dark-surface rounded-lg bg-white p-6 shadow-lg md:p-8">
-            <div className="mb-6 text-center">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20">
-                <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
-              </div>
-              <h1 className="text-dark dark:text-dark-text mb-2 text-3xl font-bold">
-                Passwort zurückgesetzt!
-              </h1>
-              <p className="text-gray-600 dark:text-gray-400">
-                Dein Passwort wurde erfolgreich zurückgesetzt. Du wirst
-                automatisch zur Anmeldeseite weitergeleitet.
-              </p>
-            </div>
+      <div className="mx-auto max-w-md">
+        <Note tone="info" title="Passwort zurückgesetzt!">
+          <p>
+            Dein Passwort wurde erfolgreich zurückgesetzt. Du wirst automatisch
+            zur Anmeldeseite weitergeleitet.
+          </p>
+        </Note>
 
-            <Link
-              href="/login"
-              className="bg-primary hover:bg-primary-dark dark:bg-primary-light dark:hover:bg-primary block w-full rounded-lg px-4 py-2.5 text-center font-semibold text-white shadow-lg transition-colors"
-            >
-              Zur Anmeldung
-            </Link>
-          </div>
-        </div>
+        <Link href="/login" className={`${PRIMARY_LINK} mt-8`}>
+          Zur Anmeldung
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className="bg-background-secondary dark:bg-dark-background-secondary flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-8">
-      <div className="w-full max-w-md">
-        <div className="mb-6 text-center">
-          <h1 className="text-dark dark:text-dark-text mb-2 text-3xl font-bold">
-            Neues Passwort setzen
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Gib dein neues Passwort ein. Es muss mindestens 8 Zeichen lang sein.
-          </p>
+    <div className="mx-auto max-w-md">
+      <p className="text-ink dark:text-night-text mb-8 text-lg leading-relaxed">
+        Gib dein neues Passwort ein. Es muss mindestens 8 Zeichen lang sein.
+      </p>
+
+      {error && (
+        <Note tone="error" className="mb-6">
+          <p>{error}</p>
+        </Note>
+      )}
+
+      <form className="space-y-6" onSubmit={handleSubmit}>
+        <div>
+          <Label htmlFor="password">Neues Passwort</Label>
+          <Input
+            id="password"
+            name="password"
+            type="password"
+            autoComplete="new-password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Mindestens 8 Zeichen"
+            minLength={8}
+          />
         </div>
 
-        <div className="dark:bg-dark-surface rounded-lg bg-white p-6 shadow-lg md:p-8">
-          {error && (
-            <Alert variant="error" className="mb-4">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <div>
-              <Label htmlFor="password">Neues Passwort</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Mindestens 8 Zeichen"
-                minLength={8}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="confirmPassword">Passwort bestätigen</Label>
-              <Input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                autoComplete="new-password"
-                required
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Passwort wiederholen"
-                minLength={8}
-              />
-            </div>
-
-            <Button
-              type="submit"
-              disabled={isLoading}
-              isLoading={isLoading}
-              className="w-full"
-            >
-              Passwort zurücksetzen
-            </Button>
-          </form>
-
-          <div className="mt-6 text-center">
-            <Link
-              href="/login"
-              className="text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary inline-flex items-center gap-2 text-sm font-medium"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Zurück zur Anmeldung
-            </Link>
-          </div>
+        <div>
+          <Label htmlFor="confirmPassword">Passwort bestätigen</Label>
+          <Input
+            id="confirmPassword"
+            name="confirmPassword"
+            type="password"
+            autoComplete="new-password"
+            required
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder="Passwort wiederholen"
+            minLength={8}
+          />
         </div>
-      </div>
+
+        <Button
+          type="submit"
+          disabled={isLoading}
+          isLoading={isLoading}
+          className="w-full"
+        >
+          Passwort zurücksetzen
+        </Button>
+      </form>
+
+      <Link
+        href="/login"
+        className="link-ink mt-8 inline-flex items-center gap-2 text-sm"
+      >
+        <ArrowLeft className="h-4 w-4" aria-hidden />
+        Zurück zur Anmeldung
+      </Link>
     </div>
   );
 }
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
-          <div className="border-primary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />
-        </div>
-      }
+    <PublicPage
+      title="Passwort zurücksetzen"
+      heroSize="compact"
+      breadcrumbs={[
+        { label: "Start", href: "/" },
+        { label: "Passwort zurücksetzen" },
+      ]}
     >
-      <ResetPasswordContent />
-    </Suspense>
+      <PageSection flush="top">
+        <Suspense fallback={<FormSkeleton />}>
+          <ResetPasswordContent />
+        </Suspense>
+      </PageSection>
+    </PublicPage>
   );
 }
