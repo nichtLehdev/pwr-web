@@ -1200,7 +1200,15 @@ export default function CourseDetailPage() {
               </h2>
               <p className="text-dark dark:text-night-muted mb-4">
                 Bist du sicher, dass du diesen Kurs löschen möchtest? Diese
-                Aktion kann nicht rückgängig gemacht werden.
+                Aktion kann nicht rückgängig gemacht werden. Anmeldungen,
+                Preiskategorien und eigene Felder des Kurses gehen mit.
+              </p>
+              {/* Vorher wusste man das erst aus der Fehlermeldung nach dem
+                  Klick. Die Regel gehört vor die Entscheidung. */}
+              <p className="text-dark dark:text-night-muted mb-4 text-sm">
+                Ausgestellte Rechnungen bleiben erhalten: Gibt es welche, lässt
+                sich der Kurs nicht löschen — die Belege sind
+                aufbewahrungspflichtig. Reine Entwürfe stehen dem nicht im Weg.
               </p>
             </ScrollableModalBody>
             <ScrollableModalFooter>
