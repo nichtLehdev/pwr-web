@@ -216,10 +216,14 @@ export default function PostDetailView({
           className="mt-2"
         />
 
-        <div className="mt-12 max-w-[65ch] space-y-8">
+        {/* Das Lesemaß ist von hier auf die einzelnen Geschwister gewandert:
+            Solange es an der Hülle hing, konnte kein Bild breiter werden als
+            der Text. Der Artikelkörper führt sein Maß jetzt selbst (siehe
+            article-content.css) und darf dafür die volle Satzbreite nutzen. */}
+        <div className="mt-12 space-y-8">
           {/* Author Info */}
           {post.author || post.authorName || post.createdBy ? (
-            <div className="border-rule dark:border-night-rule flex items-center gap-4 border-b pb-8">
+            <div className="border-rule dark:border-night-rule mx-auto flex max-w-[65ch] items-center gap-4 border-b pb-8">
               {displayImage?.url ? (
                 <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full">
                   <Image
@@ -255,21 +259,32 @@ export default function PostDetailView({
 
           {/* Excerpt */}
           {post.excerpt ? (
-            <p className="semi-condensed text-ink dark:text-night-text text-xl leading-relaxed font-medium">
-              {post.excerpt}
-            </p>
+            // Der Maßrahmen steht außen, in Grundschriftgröße: `ch` bemisst
+            // sich an der eigenen Schriftgröße, und der Anriss läuft in
+            // `text-xl`. Direkt am Absatz wären 65ch rund 649px statt der
+            // 596px des Artikelkörpers — gemessen, er stand 27px zu weit
+            // links. Außen erbt der Rahmen 1rem und flucht damit.
+            <div className="mx-auto max-w-[65ch]">
+              <p className="semi-condensed text-ink dark:text-night-text text-xl leading-relaxed font-medium">
+                {post.excerpt}
+              </p>
+            </div>
           ) : null}
 
           {/* Main Content */}
+          {/* `--seite`: Nur hier ist der Artikel die Hauptspalte, nur hier
+              dürfen breite Bilder über das Lesemaß hinaustreten. Editorfläche
+              und Dashboard-Vorschau teilen dieses Stylesheet, sind aber
+              schmale Rahmen — dort bliebe ein Ausbruch ein Fremdkörper. */}
           <div
-            className="article-content"
+            className="article-content article-content--seite"
             dangerouslySetInnerHTML={{
               __html: sanitizeHtml(post.contentHtml),
             }}
           />
 
           {/* Share & Back */}
-          <div className="border-rule dark:border-night-rule border-t pt-8">
+          <div className="border-rule dark:border-night-rule mx-auto max-w-[65ch] border-t pt-8">
             <Link
               href="/aktuelles"
               className="semi-condensed text-primary-ink dark:text-primary inline-flex min-h-11 items-center gap-2 text-base font-semibold underline-offset-4 hover:underline"
