@@ -88,7 +88,7 @@ const GESCHICHTE = [
 ];
 
 const FAKTEN = [
-  { title: "~200", text: "Posaunenenchöre" },
+  { title: "~200", text: "Posaunenchöre" },
   { title: "~2.000", text: "Aktive Bläserinnen & Bläser" },
   { title: "13", text: "Bezirke" },
   { title: "1949", text: "Gründungsjahr" },

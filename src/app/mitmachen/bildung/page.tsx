@@ -214,10 +214,9 @@ export default function BildungPage() {
         >
           <p className="max-w-[60ch] text-xl leading-relaxed">
             Der Förderverein unterstützt die Bildungsarbeit des Posaunenwerks!
-            Geschwisterkinder erhalten eine Ermäßigung von 25 € pro weiterem
-            Kind bei der Anmeldung für Lehrgänge. Zusätzlich trägt der
-            Förderverein weitere Kosten, um die Teilnehmerbeiträge für alle zu
-            reduzieren.
+            Geschwisterkinder erhalten ab dem zweiten Kind 20 % Ermäßigung auf
+            die Lehrgangskosten. Zusätzlich trägt der Förderverein weitere
+            Kosten, um die Teilnehmerbeiträge für alle zu reduzieren.
           </p>
           <WayList className="mt-8">
             <WayRow
