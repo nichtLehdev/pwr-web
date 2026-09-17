@@ -4,6 +4,7 @@ import MediaCredit from "@/app/_components/general/media-credit";
 import ZoomableImage from "@/app/_components/general/zoomable-image";
 import { Heading } from "@/app/_components/programmheft/section-head";
 import { cn } from "@/lib/utils";
+import "@/styles/beschreibung.css";
 
 type TerminMedia = Pick<Media, "url" | "alt" | "copyright" | "creator">;
 
@@ -33,7 +34,10 @@ export function TerminBeschreibung({
   image: TerminMedia | null | undefined;
   /** Alternativtext, wenn das Bild keinen eigenen hat (Titel des Termins). */
   fallbackAlt: string;
-  /** Bereits gefilterte Beschreibung (`sanitizeHtml`), sonst `null`. */
+  /**
+   * Beschreibung, fertig für die Anzeige: Markdown zu HTML und gefiltert,
+   * also `renderDescriptionHtml` — sonst `null`.
+   */
   html: string | null;
 }) {
   if (!html && !image) return null;
@@ -84,8 +88,11 @@ export function TerminBeschreibung({
           </figure>
         ) : null}
         {html ? (
+          /* `beschreibung` statt `prose`: Das Typography-Plugin ist nicht
+             geladen, die prose-Klassen wirkten also nie — Absätze standen
+             ohne Abstand aneinander. Siehe styles/beschreibung.css. */
           <div
-            className="prose dark:prose-invert text-ink dark:text-night-text max-w-none"
+            className="beschreibung"
             dangerouslySetInnerHTML={{ __html: html }}
           />
         ) : null}

@@ -1,4 +1,5 @@
 import { getDistrictColor } from "@/lib/district-color";
+import { markdownToSingleLine } from "@/lib/markdown-to-plain-text";
 import type { JSX } from "react";
 import { type RouterOutputs } from "@/trpc/react";
 import {
@@ -75,9 +76,10 @@ export default function InstagramEventTemplate({
     weekday: "long",
   });
 
-  const descriptionText = event.description
-    ? event.description.replace(/[<>]/g, "").trim()
-    : "";
+  // Die Vorlage setzt reinen Text in eine Grafik. Vorher entfernte sie nur
+  // spitze Klammern — aus `<u>Wort</u>` wurde damit „uWort/u", und
+  // Markdown-Zeichen standen unverändert im Bild.
+  const descriptionText = markdownToSingleLine(event.description ?? "");
 
   const performer =
     event.ensemble?.name ||

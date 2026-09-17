@@ -26,6 +26,7 @@ import {
   notifySubmittedForReview,
 } from "../helpers/review-notifications";
 import { PERMISSIONS } from "@/lib/permissions";
+import { MAX_DESCRIPTION_LENGTH } from "@/lib/description";
 import { getCourseCapacitySummary } from "@/lib/course-available-slots";
 import { validatePriceOptionDistinctness } from "@/lib/course-price-options";
 import {
@@ -771,7 +772,8 @@ export const coursesRouter = createTRPCRouter({
           /** Empty means "derive it from the title"; see createCourseSlug. */
           slug: z.string().max(MAX_SLUG_LENGTH).optional(),
           motto: z.string().max(500).optional(),
-          description: z.string().min(1).max(10000),
+          // Markdown, siehe MAX_DESCRIPTION_LENGTH.
+          description: z.string().min(1).max(MAX_DESCRIPTION_LENGTH),
           imageId: z.string().optional(),
           startDate: z.date(),
           endDate: z.date(),
@@ -1094,7 +1096,7 @@ export const coursesRouter = createTRPCRouter({
           /** Only sent when the author deliberately renamed it; empty = leave as is. */
           slug: z.string().max(MAX_SLUG_LENGTH).optional(),
           motto: z.string().max(500).optional(),
-          description: z.string().max(10000).optional(),
+          description: z.string().max(MAX_DESCRIPTION_LENGTH).optional(),
           imageId: z.string().optional().nullable(),
           startDate: z.date().optional(),
           endDate: z.date().optional(),

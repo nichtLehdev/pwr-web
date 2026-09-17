@@ -13,7 +13,8 @@ import { eventCategoryLabel } from "@/lib/termine-labels";
 import { MitwirkendeBild, TerminBeschreibung } from "./termin-bild";
 import PublicShareButton from "@/app/_components/general/public-share-button";
 import { cn } from "@/lib/utils";
-import { sanitizeHtml } from "@/lib/sanitize";
+import { renderDescriptionHtml } from "@/lib/sanitize";
+import { markdownToSingleLine } from "@/lib/markdown-to-plain-text";
 import type { RouterOutputs } from "@/trpc/react";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
@@ -148,9 +149,11 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
         )}
         <PublicShareButton
           title={event.title}
+          /* Geteilt wird Klartext: Die Beschreibung ist Markdown, und in einer
+             Kurznachricht stünden sonst Sternchen und Klammern. */
           text={
             event.motto ||
-            event.description ||
+            markdownToSingleLine(event.description ?? "") ||
             `${event.title} am ${eventDate.toLocaleDateString("de-DE")}`
           }
           className={headMeta.action}
@@ -210,7 +213,7 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
             <TerminBeschreibung
               image={event.coverImage}
               fallbackAlt={event.title}
-              html={event.description ? sanitizeHtml(event.description) : null}
+              html={renderDescriptionHtml(event.description)}
             />
 
             {/* Date & Time */}
