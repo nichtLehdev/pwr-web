@@ -205,10 +205,6 @@ export function StaffDisplay({
         stave.addKeySignature(staffAccidentalLayout.keySpec);
       }
 
-      if (dark) {
-        stave.setStyle({ fillStyle: colors.stave, strokeStyle: colors.stave });
-      }
-
       /* Immer Kopfposition ohne eingebettetes #/b und Vorzeichen direkt am
        * Notenkopf setzen. So ist das Vorzeichen am Zielton immer eindeutig
        * sichtbar (auch bei Tonartdarstellung am System). */
@@ -241,6 +237,18 @@ export function StaffDisplay({
       formatter.formatToStave([voice], stave, { context: ctx, stave });
 
       styleNoteAndAccidentals(note, colors.note);
+
+      /* Die Farbe muss an den Kontext, nicht an den Stave: `stave.setStyle()`
+       * allein erreicht weder die Notenlinien noch den Schlüssel noch die
+       * Taktstriche — die sind eigene StaveModifier mit eigenem Stil und
+       * fielen auf den Kontext-Standard zurück, also reines Schwarz. Im
+       * Nachtdruck stand dadurch ein schwarzer Violinschlüssel auf #141517
+       * (rund 1,05:1), ausgerechnet in einem Notenlesespiel.
+       *
+       * Bedingungslos, nicht nur nachts: Hell ist der Kontext-Standard
+       * ebenfalls reines Schwarz statt der Tinte #1c1d1f. */
+      ctx.setFillStyle(colors.stave);
+      ctx.setStrokeStyle(colors.stave);
 
       stave.draw();
       voice.draw(ctx, stave);
