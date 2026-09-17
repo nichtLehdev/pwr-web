@@ -31,7 +31,10 @@ import {
   CourseInvoicesButton,
   DashboardFormMediaSplit,
   DashboardFormSectionLayout,
+  DashboardOverflowMenu,
   DashboardPage,
+  EntryExportButton,
+  useEntryExport,
 } from "@/app/_components/dashboard";
 import {
   ScrollableModal,
@@ -177,6 +180,10 @@ export default function CourseDetailPage() {
       toast.error("Fehler bei der Ablehnung: " + error.message);
     },
   });
+
+  // Nur der Kurs selbst — Anmeldungen, Teilnehmende und Rechnungen bleiben
+  // als personenbezogene Daten draußen (siehe Export-Route).
+  const entryExport = useEntryExport("courses", courseId);
 
   const deleteMutation = api.courses.delete.useMutation({
     onSuccess: () => {
@@ -466,7 +473,10 @@ export default function CourseDetailPage() {
         { label: course.title },
       ]}
       actions={
-        <div className="flex flex-wrap gap-2">
+        // `w-full sm:w-auto`: Nur über die volle Breite kann `ml-auto` das
+        // „…“-Menü auf dem Telefon an den rechten Rand schieben — sein Panel
+        // ist rechts verankert.
+        <div className="flex w-full flex-wrap gap-2 sm:w-auto">
           <CourseInvoicesButton courseId={courseId} />
           {canEdit && (
             <Link
@@ -477,6 +487,9 @@ export default function CourseDetailPage() {
               Bearbeiten
             </Link>
           )}
+          {entryExport.canExport && (
+            <EntryExportButton exporter={entryExport} />
+          )}
           {canDelete && (
             <button
               onClick={() => setShowDeleteModal(true)}
@@ -485,6 +498,15 @@ export default function CourseDetailPage() {
               <Trash2 className="h-4 w-4" />
               Löschen
             </button>
+          )}
+          {/* Auf dem Telefon steht der Export im „…“-Menü (siehe
+              EntryExportButton); ab sm als Knopf vor „Löschen“, damit die
+              zerstörerische Aktion am Ende der Reihe bleibt. */}
+          {entryExport.canExport && (
+            <DashboardOverflowMenu
+              className="ml-auto sm:hidden"
+              items={[entryExport.menuItem]}
+            />
           )}
         </div>
       }
