@@ -29,6 +29,8 @@ import {
   ScrollableModalBody,
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
+import { renderDescriptionHtml } from "@/lib/sanitize";
+import "@/styles/beschreibung.css";
 
 const categoryLabels: Record<EventCategory, string> = {
   KONZERT: "Konzert",
@@ -192,6 +194,7 @@ export default function EventDetailPage() {
     hour: "2-digit",
     minute: "2-digit",
   });
+  const beschreibungHtml = renderDescriptionHtml(event.description);
   const districtLabel = event.bezirk
     ? `Bezirk ${event.bezirk.number} - ${event.bezirk.shortName}`
     : event.districtName || "Übergreifend";
@@ -204,7 +207,7 @@ export default function EventDetailPage() {
       ? [{ href: "#event-detail-downloads", label: "Downloads" }]
       : []),
     { href: "#event-detail-info", label: "Details" },
-    ...(event.description
+    ...(beschreibungHtml
       ? [{ href: "#event-detail-description", label: "Beschreibung" }]
       : []),
     ...(event.location
@@ -542,8 +545,11 @@ export default function EventDetailPage() {
               </dl>
             </section>
 
-            {/* Description */}
-            {event.description && (
+            {/* Beschreibung wie auf der öffentlichen Seite gesetzt: dieselbe
+                Markdown-Quelle, dieselbe Filterung, dasselbe Stylesheet. Vorher
+                stand hier der Rohtext, Auszeichnung wäre also als Markdown
+                sichtbar geworden. */}
+            {beschreibungHtml && (
               <section
                 id="event-detail-description"
                 className="dashboard-form-scroll-anchor border-rule dark:border-night-rule border-t pt-10"
@@ -551,9 +557,10 @@ export default function EventDetailPage() {
                 <h2 className="text-ink dark:text-night-text mb-4 text-lg font-semibold">
                   Beschreibung
                 </h2>
-                <p className="text-ink dark:text-night-muted whitespace-pre-wrap">
-                  {event.description}
-                </p>
+                <div
+                  className="beschreibung"
+                  dangerouslySetInnerHTML={{ __html: beschreibungHtml }}
+                />
               </section>
             )}
 

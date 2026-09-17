@@ -6,7 +6,8 @@ import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
 import type { PermissionKey } from "@/lib/permissions";
 import type { RouterOutputs } from "@/trpc/react";
-import { sanitizeHtml } from "@/lib/sanitize";
+import { renderDescriptionHtml } from "@/lib/sanitize";
+import { markdownToSingleLine } from "@/lib/markdown-to-plain-text";
 import { isRegistrationDeadlinePassed } from "@/lib/registration-deadline";
 import { calendarDaysInclusive } from "@/lib/format-date-range";
 import { formatAvailableSlots } from "@/lib/format-available-slots";
@@ -209,7 +210,12 @@ export default function CourseDetailView({
         )}
         <PublicShareButton
           title={course.title}
-          text={course.motto || course.description || course.title}
+          /* Klartext, siehe event-detail-view. */
+          text={
+            course.motto ||
+            markdownToSingleLine(course.description) ||
+            course.title
+          }
           className={headMeta.action}
         />
       </div>
@@ -314,9 +320,7 @@ export default function CourseDetailView({
             <TerminBeschreibung
               image={course.image}
               fallbackAlt={course.title}
-              html={
-                course.description ? sanitizeHtml(course.description) : null
-              }
+              html={renderDescriptionHtml(course.description)}
             />
 
             {/* Date & Time */}
