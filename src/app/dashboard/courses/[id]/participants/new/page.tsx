@@ -124,77 +124,34 @@ export default function NewCourseRegistrationPage() {
   );
 
   return (
-    <main className="programm font-programm bg-paper text-ink dark:bg-night dark:text-night-text min-h-screen">
-      <div className="container mx-auto max-w-3xl px-4 pt-8 sm:px-6 lg:px-8">
-        <nav className="mb-4 text-sm">
-          <ol className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <li>
-              <Link
-                href="/dashboard"
-                className="semi-condensed text-dark hover:text-ink dark:text-night-muted dark:hover:text-night-text font-semibold underline-offset-4 hover:underline"
-              >
-                Dashboard
-              </Link>
-            </li>
-            <li aria-hidden className="text-dark dark:text-night-muted">
-              /
-            </li>
-            <li>
-              <Link
-                href="/dashboard/courses"
-                className="semi-condensed text-dark hover:text-ink dark:text-night-muted dark:hover:text-night-text font-semibold underline-offset-4 hover:underline"
-              >
-                Kurse
-              </Link>
-            </li>
-            <li aria-hidden className="text-dark dark:text-night-muted">
-              /
-            </li>
-            <li>
-              <Link
-                href={`/dashboard/courses/${courseId}`}
-                className="semi-condensed text-dark hover:text-ink dark:text-night-muted dark:hover:text-night-text max-w-[150px] truncate font-semibold underline-offset-4 hover:underline"
-              >
-                {course.title}
-              </Link>
-            </li>
-            <li aria-hidden className="text-dark dark:text-night-muted">
-              /
-            </li>
-            <li>
-              <Link
-                href={participantsUrl}
-                className="semi-condensed text-dark hover:text-ink dark:text-night-muted dark:hover:text-night-text font-semibold underline-offset-4 hover:underline"
-              >
-                Teilnehmer
-              </Link>
-            </li>
-            <li aria-hidden className="text-dark dark:text-night-muted">
-              /
-            </li>
-            <li
-              aria-current="page"
-              className="semi-condensed text-ink dark:text-night-text font-semibold"
-            >
-              Neue Anmeldung
-            </li>
-          </ol>
-        </nav>
-
-        {(deadlinePassed || !course.registrationOpen) && (
-          // Eckig auf Haarlinie statt blauem Kasten: Der Hinweis erklärt eine
-          // Ausnahme, er warnt nicht — eine eigene Signalfarbe braucht er
-          // dafür nicht.
-          <div className="border-ink dark:border-night-text mb-4 border-l-2 py-1 pl-4">
-            <p className="text-dark dark:text-night-muted text-sm">
-              {deadlinePassed
-                ? "Der Anmeldeschluss dieses Kurses ist vorbei."
-                : "Die Anmeldung für diesen Kurs ist geschlossen."}{" "}
-              Als Team kannst du hier trotzdem eine Anmeldung nachtragen.
-            </p>
-          </div>
-        )}
-      </div>
+    // Die geteilte Hülle statt eines handgebauten Rahmens: Sie liefert
+    // Brotkrumen, Titel und Satzspiegel, die hier zuvor als fünfzig Zeilen
+    // eigenes JSX standen. Jede Geschwisterseite nutzt sie bereits.
+    <DashboardPage
+      title="Neue Anmeldung"
+      description={course.title}
+      maxWidth="4xl"
+      breadcrumbs={[
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Kurse", href: "/dashboard/courses" },
+        { label: course.title, href: `/dashboard/courses/${courseId}` },
+        { label: "Teilnehmer", href: participantsUrl },
+        { label: "Neue Anmeldung" },
+      ]}
+    >
+      {(deadlinePassed || !course.registrationOpen) && (
+        // Eckig auf Haarlinie statt blauem Kasten: Der Hinweis erklärt eine
+        // Ausnahme, er warnt nicht — eine eigene Signalfarbe braucht er
+        // dafür nicht.
+        <div className="border-ink dark:border-night-text mb-6 border-l-2 py-1 pl-4">
+          <p className="text-dark dark:text-night-muted text-sm">
+            {deadlinePassed
+              ? "Der Anmeldeschluss dieses Kurses ist vorbei."
+              : "Die Anmeldung für diesen Kurs ist geschlossen."}{" "}
+            Als Team kannst du hier trotzdem eine Anmeldung nachtragen.
+          </p>
+        </div>
+      )}
 
       <CourseRegistrationForm
         staffMode
@@ -209,6 +166,6 @@ export default function NewCourseRegistrationPage() {
           router.push(participantsUrl);
         }}
       />
-    </main>
+    </DashboardPage>
   );
 }
