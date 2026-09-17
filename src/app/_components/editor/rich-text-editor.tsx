@@ -729,11 +729,14 @@ export default function RichTextEditor({
           levels: [2, 3, 4],
         },
       }),
+      // Ohne eigene Klasse: Links gestaltet article-content.css — Brauntinte
+      // auf Papier, Druckorange im Nachtdruck, dauerhaft unterstrichen.
+      // Nachgemessen an einem Link ohne Klasse: 5,26:1 hell, 9,16:1 dunkel.
+      // Die alte Inline-Klasse war nicht nur wirkungslos, sie schrieb
+      // ausgerechnet `text-primary` in jeden gespeicherten Beitrag — Orange als
+      // Schriftfarbe auf Papier sind 1,99:1.
       Link.configure({
         openOnClick: false,
-        HTMLAttributes: {
-          class: "text-primary underline",
-        },
       }),
       // Statt des schlichten Image: Breite und Ausrichtung als Klassen, mit
       // einrastenden Ziehgriffen. Die alte Klasse `max-w-full rounded-lg`
@@ -748,11 +751,11 @@ export default function RichTextEditor({
         types: ["heading", "paragraph"],
         defaultAlignment: "left",
       }),
+      // Breite, Linienmodell und Abstand der Tabelle stehen ebenfalls im
+      // Stylesheet — die Klasse hier war doppelt gemoppelt. `resizable`
+      // bleibt: Das ist Verhalten, keine Gestaltung.
       Table.configure({
         resizable: true,
-        HTMLAttributes: {
-          class: "border-collapse w-full my-4",
-        },
       }),
       TableRow,
       // Ohne eigene Klassen: Tabellenlinien und Kopfzeile bestimmt
