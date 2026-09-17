@@ -10,6 +10,7 @@ import { PageSection, Split } from "../_components/programmheft/page-section";
 import { Heading, SectionHead } from "../_components/programmheft/section-head";
 import { WayList, WayRow } from "../_components/programmheft/way-list";
 import { buildPageMetadata } from "@/lib/seo";
+import ZoomableImage from "@/app/_components/general/zoomable-image";
 
 export const metadata = buildPageMetadata({
   title: "Kontakt",
@@ -75,7 +76,16 @@ function TeamMemberRow({ member }: { member: OrgTeamMember }) {
   return (
     <li className="border-rule dark:border-night-rule flex items-start gap-4 border-b py-4">
       {member.person.image ? (
-        <div className="bg-rule dark:bg-night-rule relative h-14 w-14 shrink-0 overflow-hidden rounded-full">
+        // Vergrößerbar ohne Lupe, wie in `PersonRow`: bei 56px verdeckte sie
+        // das Gesicht.
+        <ZoomableImage
+          src={member.person.image.url}
+          alt={member.person.image.alt || member.person.name || "Profilbild"}
+          copyright={member.person.image.copyright}
+          creator={member.person.image.creator}
+          hint={false}
+          className="bg-rule dark:bg-night-rule h-14 w-14 shrink-0 overflow-hidden rounded-full"
+        >
           <Image
             src={member.person.image.url}
             alt={member.person.image.alt || member.person.name || "Profilbild"}
@@ -83,7 +93,7 @@ function TeamMemberRow({ member }: { member: OrgTeamMember }) {
             sizes="56px"
             className="object-cover"
           />
-        </div>
+        </ZoomableImage>
       ) : (
         // Gleiche Form wie das Foto daneben: Ein eckiger Kasten neben einem
         // runden Bild sind zwei Bildsprachen in derselben Zeile.

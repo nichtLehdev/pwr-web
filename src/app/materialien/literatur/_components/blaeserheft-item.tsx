@@ -2,6 +2,7 @@ import Image from "next/image";
 import { Tag } from "@/app/_components/programmheft/tag";
 import { ValueTable } from "@/app/_components/programmheft/value-table";
 import { cn } from "@/lib/utils";
+import ZoomableImage from "@/app/_components/general/zoomable-image";
 import type { RouterOutputs } from "@/trpc/react";
 
 export type BlaeserheftData =
@@ -75,9 +76,13 @@ export function BlaeserheftItem({
       {/* Die Cover liegen alle im Querformat 3:2 vor. Das Feld übernimmt genau
           dieses Verhältnis, damit nichts beschnitten wird; `self-start`
           verhindert, dass die Flex-Zeile die Spalte auf Texthöhe streckt. */}
-      <div
+      <ZoomableImage
+        src={heft.image.url}
+        alt={heft.image.alt || heft.title || "Bläserheft Cover"}
+        copyright={heft.image.copyright}
+        creator={heft.image.creator}
         className={cn(
-          "bg-ink dark:bg-night-raised relative aspect-[3/2] w-full overflow-hidden",
+          "bg-ink dark:bg-night-raised aspect-[3/2] w-full overflow-hidden",
           reverse && "lg:col-start-2 lg:row-start-1",
         )}
       >
@@ -88,7 +93,7 @@ export function BlaeserheftItem({
           sizes="(min-width: 1024px) 20rem, 100vw"
           className="object-cover"
         />
-      </div>
+      </ZoomableImage>
 
       <div className="min-w-0 flex-1">
         <h3 className="condensed text-ink dark:text-night-text text-[1.75rem] leading-[1.05] font-bold text-balance">
