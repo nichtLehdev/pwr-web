@@ -12,6 +12,7 @@ import {
   Split,
 } from "@/app/_components/programmheft/page-section";
 import { buildPageMetadata } from "@/lib/seo";
+import { cn } from "@/lib/utils";
 
 export const metadata = buildPageMetadata({
   title: "Auswahlchöre",
@@ -95,9 +96,20 @@ export default async function AuswahlchoerePage() {
                 </div>
               </>
             }
-            bodyClassName="mt-8 space-y-10"
+            // Text, Termine und Hinweis teilen sich ein Satzmaß. `text-lg` am
+            // Block, damit `65ch` in der Schriftgröße des Fließtexts rechnet;
+            // Termine und Hinweis setzen ihre Größen selbst.
+            //
+            // Steht der Kopf mit dem Bild rechts, rückt der Block an ihn
+            // heran. Sonst endet er bei 65 Zeichen linksbündig mitten in der
+            // Spalte: gemessen 242px Leere bis zur Bildkante, während es bei
+            // linksstehendem Kopf die 40px Rasterabstand sind.
+            bodyClassName={cn(
+              "mt-8 max-w-[65ch] space-y-10 text-lg",
+              index % 2 !== 0 && "lg:ml-auto",
+            )}
           >
-            <p className="text-ink dark:text-night-text max-w-[65ch] text-lg leading-relaxed">
+            <p className="text-ink dark:text-night-text leading-relaxed">
               {ensemble.description}
             </p>
 
