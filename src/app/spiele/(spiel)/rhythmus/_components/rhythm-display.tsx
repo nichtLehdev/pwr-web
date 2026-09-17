@@ -217,10 +217,6 @@ export function RhythmDisplay({
         .addClef("treble")
         .addTimeSignature(tsStr);
 
-      if (dark) {
-        stave.setStyle({ fillStyle: colors.stave, strokeStyle: colors.stave });
-      }
-
       const voice = new Voice({
         numBeats: timeSignature.numerator * bars,
         beatValue: timeSignature.denominator,
@@ -235,6 +231,20 @@ export function RhythmDisplay({
       new Formatter(formatterOpts)
         .joinVoices([voice])
         .formatToStave([voice], stave, { context: ctx, stave });
+
+      /* Die Farbe muss an den Kontext, nicht an den Stave: `stave.setStyle()`
+       * allein erreicht weder die Notenlinien noch Schlüssel und Taktart —
+       * das sind eigene StaveModifier mit eigenem Stil und fielen auf den
+       * Kontext-Standard zurück, also reines Schwarz auf Nachtgrund. Balken
+       * und Triolen weiter unten hängen am selben Standard und werden damit
+       * ebenfalls mitgefärbt; `note` und `stave` liefern denselben Wert, es
+       * verschiebt sich also nichts. Die nachgezeichneten Taktstriche setzen
+       * ihre eigene Farbe in save()/restore() und bleiben unberührt.
+       *
+       * Bedingungslos, nicht nur nachts: Hell ist der Kontext-Standard
+       * ebenfalls reines Schwarz statt der Tinte #1c1d1f. */
+      ctx.setFillStyle(colors.stave);
+      ctx.setStrokeStyle(colors.stave);
 
       stave.draw();
       voice.draw(ctx, stave);
