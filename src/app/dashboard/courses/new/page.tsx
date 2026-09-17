@@ -28,7 +28,7 @@ import { getErrorMessage } from "@/lib/utils";
 import { datedSlugBase, slugify } from "@/lib/slug";
 import { customFieldTypeNeedsOptions } from "@/lib/course-custom-fields";
 import { useToast } from "@/app/_components/ui/toast";
-import { CourseType } from "~/generated/prisma/enums";
+import { ContentStatus, CourseType } from "~/generated/prisma/enums";
 import { Lock, Trash2, ImageIcon } from "lucide-react";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import { useAutosave } from "@/lib/useAutosave";
@@ -722,6 +722,14 @@ export default function NewCoursePage() {
       imageId: imageId || undefined,
       customFields:
         preparedCustomFields.length > 0 ? preparedCustomFields : undefined,
+      // Diese Zeile fehlte: submitAsDraft/submitAsApproved steuerten nur die
+      // Beschriftung des Knopfes und wanderten in den Autosave-Entwurf, kamen
+      // aber nie beim Server an.
+      status: submitAsDraft
+        ? ContentStatus.DRAFT
+        : submitAsApproved
+          ? ContentStatus.APPROVED
+          : ContentStatus.PENDING,
     });
   };
 
