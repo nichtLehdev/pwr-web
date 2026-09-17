@@ -32,6 +32,7 @@ export async function GET(
       courseNumber: true,
       createdById: true,
       invoicingEnabled: true,
+      downPaymentMode: true,
     },
   });
 
@@ -62,6 +63,10 @@ export async function GET(
           registrantLastName: true,
           registrantEmail: true,
           participants: { select: { firstName: true, lastName: true } },
+          registrationStatus: true,
+          downPaymentAmount: true,
+          downPaymentStatus: true,
+          downPaymentPaidAmount: true,
         },
       },
     },

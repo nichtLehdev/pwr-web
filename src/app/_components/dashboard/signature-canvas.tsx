@@ -144,7 +144,7 @@ export function SignatureCanvas({
     <div className="relative">
       <canvas
         ref={canvasRef}
-        className={`h-24 w-full rounded-md border-2 border-dashed border-gray-300 bg-white ${
+        className={`border-ink dark:border-night-text bg-paper h-24 w-full border-2 border-dashed ${
           disabled ? "cursor-not-allowed opacity-50" : "cursor-crosshair"
         }`}
         style={{ touchAction: "none" }}
@@ -160,7 +160,7 @@ export function SignatureCanvas({
         <button
           type="button"
           onClick={clearCanvas}
-          className="absolute top-2 right-2 rounded bg-white/80 p-1 text-gray-500 hover:bg-white hover:text-red-500"
+          className="bg-paper/80 text-dark dark:text-night-muted hover:bg-paper dark:hover:bg-night absolute top-2 right-2 p-1 hover:text-red-500"
           title="Löschen"
         >
           <TrashIcon className="h-4 w-4" />
@@ -168,7 +168,9 @@ export function SignatureCanvas({
       )}
       {!hasSignature && !disabled && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <span className="text-sm text-gray-400">Hier unterschreiben</span>
+          <span className="text-dark dark:text-night-muted text-sm">
+            Hier unterschreiben
+          </span>
         </div>
       )}
     </div>

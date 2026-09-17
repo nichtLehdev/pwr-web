@@ -28,9 +28,11 @@ import { getErrorMessage } from "@/lib/utils";
 import { datedSlugBase, slugify } from "@/lib/slug";
 import { customFieldTypeNeedsOptions } from "@/lib/course-custom-fields";
 import { useToast } from "@/app/_components/ui/toast";
-import { CourseType } from "~/generated/prisma/enums";
+import { ContentStatus, CourseType } from "~/generated/prisma/enums";
 import { Lock, Trash2, ImageIcon } from "lucide-react";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
+import RichTextEditor from "@/app/_components/editor/rich-text-editor-lazy";
+import { MAX_DESCRIPTION_LENGTH } from "@/lib/description";
 import { useAutosave } from "@/lib/useAutosave";
 import { useBeforeUnload } from "@/lib/useBeforeUnload";
 import {
@@ -43,6 +45,12 @@ import {
   validatePriceOptionDistinctness,
 } from "@/lib/course-price-options";
 import { validatePriceOptionAgeRanges } from "@/lib/course-price-option-age";
+import { CourseDownPaymentSettings } from "@/app/_components/dashboard/course-down-payment-settings";
+import {
+  validateDownPaymentSettings,
+  type DownPaymentModeValue,
+  type DownPaymentRefundPolicyValue,
+} from "@/lib/course-down-payment";
 
 const courseTypeLabels: Record<CourseType, string> = {
   LEHRGANG: "Lehrgang",
@@ -72,6 +80,8 @@ interface PriceOption {
   /** Vollendete Jahre am ersten Kurstag; undefined heißt „keine Grenze“. */
   minAge?: number;
   maxAge?: number;
+  /** Anzahlung pro Teilnehmer, nur bei Anzahlung "je Preiskategorie". */
+  downPaymentAmount?: number | null;
 }
 
 export default function NewCoursePage() {
@@ -96,6 +106,10 @@ export default function NewCoursePage() {
   const isHigherRole = hasApprovePermission;
   const canEnableInvoicing = hasPermission(
     "courses.enable_invoicing" as PermissionKey,
+  );
+  // Anzahlung und Kursnummer — dieselbe Berechtigung prüft courses.create.
+  const canEnableDownPayment = hasPermission(
+    PERMISSIONS.COURSES_ENABLE_DOWN_PAYMENT,
   );
   // Dieselbe Berechtigung, die courses.create/update serverseitig prüft.
   const canManageSiblingDiscount = hasPermission(
@@ -144,6 +158,14 @@ export default function NewCoursePage() {
   const [paymentInvoiceAllowed, setPaymentInvoiceAllowed] = useState(true);
   const [invoicingEnabled, setInvoicingEnabled] = useState(false);
   const [courseNumber, setCourseNumber] = useState("");
+  const [downPaymentMode, setDownPaymentMode] =
+    useState<DownPaymentModeValue>("NONE");
+  const [downPaymentAmount, setDownPaymentAmount] = useState<number | null>(
+    null,
+  );
+  const [downPaymentRefundPolicy, setDownPaymentRefundPolicy] =
+    useState<DownPaymentRefundPolicyValue>("NON_REFUNDABLE");
+  const [downPaymentRefundText, setDownPaymentRefundText] = useState("");
   const [priceInfo, setPriceInfo] = useState("");
   const [priceOptions, setPriceOptions] = useState<PriceOption[]>([]);
 
@@ -193,6 +215,10 @@ export default function NewCoursePage() {
       paymentInvoiceAllowed,
       invoicingEnabled,
       courseNumber,
+      downPaymentMode,
+      downPaymentAmount,
+      downPaymentRefundPolicy,
+      downPaymentRefundText,
       priceInfo,
       priceOptions,
       prerequisites,
@@ -232,6 +258,10 @@ export default function NewCoursePage() {
       paymentInvoiceAllowed,
       invoicingEnabled,
       courseNumber,
+      downPaymentMode,
+      downPaymentAmount,
+      downPaymentRefundPolicy,
+      downPaymentRefundText,
       priceInfo,
       priceOptions,
       prerequisites,
@@ -282,7 +312,7 @@ export default function NewCoursePage() {
   }, [registrationOpensAt, startDate, startTime]);
 
   const registrationFieldInputClass =
-    "focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none";
+    "border-ink dark:border-night-text dark:bg-night dark:text-night-text w-full border bg-paper px-3 py-2 text-ink";
 
   const handleRestoreDraft = () => {
     const saved = restoreDraft();
@@ -322,6 +352,12 @@ export default function NewCoursePage() {
       setPaymentInvoiceAllowed(saved.paymentInvoiceAllowed ?? true);
       setInvoicingEnabled(saved.invoicingEnabled ?? false);
       setCourseNumber(saved.courseNumber || "");
+      setDownPaymentMode(saved.downPaymentMode ?? "NONE");
+      setDownPaymentAmount(saved.downPaymentAmount ?? null);
+      setDownPaymentRefundPolicy(
+        saved.downPaymentRefundPolicy ?? "NON_REFUNDABLE",
+      );
+      setDownPaymentRefundText(saved.downPaymentRefundText || "");
       setPriceInfo(saved.priceInfo || "");
       setPriceOptions(saved.priceOptions || []);
       setPrerequisites(saved.prerequisites || "");
@@ -451,6 +487,17 @@ export default function NewCoursePage() {
       return;
     }
 
+    // Ohne `maxLength` am Textfeld muss die Länge hier geprüft
+    // werden: Sonst lehnte erst der Server ab, und zwar mit
+    // einer englischen Zod-Meldung.
+    if (description.length > MAX_DESCRIPTION_LENGTH) {
+      setError(
+        `Die Beschreibung ist zu lang (${description.length} von ${MAX_DESCRIPTION_LENGTH} Zeichen).`,
+      );
+      setIsSubmitting(false);
+      return;
+    }
+
     if (!startDate) {
       setError("Bitte wähle ein Startdatum aus.");
       setIsSubmitting(false);
@@ -559,6 +606,7 @@ export default function NewCoursePage() {
                 maxParticipants,
                 minAge,
                 maxAge,
+                downPaymentAmount: optionDownPayment,
               }) => ({
                 label: label.trim(),
                 price,
@@ -566,6 +614,10 @@ export default function NewCoursePage() {
                 maxParticipants: maxParticipants || undefined,
                 minAge: minAge ?? null,
                 maxAge: maxAge ?? null,
+                downPaymentAmount:
+                  downPaymentMode === "TICKET"
+                    ? (optionDownPayment ?? null)
+                    : null,
               }),
             )
         : undefined;
@@ -576,6 +628,29 @@ export default function NewCoursePage() {
       : null;
     if (priceOptionProblem) {
       setError(priceOptionProblem);
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Wie auf dem Server: kostenlose und externe Kurse haben keine Anzahlung.
+    const effectiveDownPaymentMode: DownPaymentModeValue =
+      isExternalProvider || isFree ? "NONE" : downPaymentMode;
+    const downPaymentProblem = canEnableDownPayment
+      ? validateDownPaymentSettings({
+          downPaymentMode: effectiveDownPaymentMode,
+          downPaymentAmount,
+          downPaymentRefundPolicy,
+          downPaymentRefundText,
+          isFree,
+          isExternal: isExternalProvider,
+          courseNumber,
+          allowSiblingDiscount:
+            canManageSiblingDiscount && allowSiblingDiscount,
+          priceOptions: preparedPriceOptions ?? [],
+        })
+      : null;
+    if (downPaymentProblem) {
+      setError(downPaymentProblem);
       setIsSubmitting(false);
       return;
     }
@@ -643,9 +718,16 @@ export default function NewCoursePage() {
       invoicingEnabled:
         isExternalProvider || !canEnableInvoicing ? false : invoicingEnabled,
       courseNumber:
-        isExternalProvider || !canEnableInvoicing
+        isExternalProvider || (!canEnableInvoicing && !canEnableDownPayment)
           ? undefined
           : courseNumber.trim(),
+      ...(canEnableDownPayment && {
+        downPaymentMode: effectiveDownPaymentMode,
+        downPaymentAmount:
+          effectiveDownPaymentMode === "COURSE" ? downPaymentAmount : null,
+        downPaymentRefundPolicy,
+        downPaymentRefundText: downPaymentRefundText.trim() || null,
+      }),
       priceInfo: priceInfo.trim() || undefined,
       priceOptions: preparedPriceOptions,
       prerequisites: prerequisites.trim() || undefined,
@@ -653,13 +735,21 @@ export default function NewCoursePage() {
       imageId: imageId || undefined,
       customFields:
         preparedCustomFields.length > 0 ? preparedCustomFields : undefined,
+      // Diese Zeile fehlte: submitAsDraft/submitAsApproved steuerten nur die
+      // Beschriftung des Knopfes und wanderten in den Autosave-Entwurf, kamen
+      // aber nie beim Server an.
+      status: submitAsDraft
+        ? ContentStatus.DRAFT
+        : submitAsApproved
+          ? ContentStatus.APPROVED
+          : ContentStatus.PENDING,
     });
   };
 
   if (sessionLoading || profileLoading || permissionsLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="dark:bg-night bg-paper flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
@@ -687,7 +777,7 @@ export default function NewCoursePage() {
 
       {/* Error Message */}
       {error && (
-        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
+        <div className="mb-6 border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
           <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
         </div>
       )}
@@ -712,7 +802,7 @@ export default function NewCoursePage() {
                       <div>
                         <label
                           htmlFor="new-course-title"
-                          className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                          className="dark:text-night-text text-ink mb-2 block text-sm font-medium"
                         >
                           Titel *
                         </label>
@@ -721,7 +811,7 @@ export default function NewCoursePage() {
                           type="text"
                           value={title}
                           onChange={(e) => setTitle(e.target.value)}
-                          className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                          className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper text-ink w-full border px-4 py-2.5"
                           placeholder="z.B. Bläserlehrgang 2025"
                           required
                           maxLength={200}
@@ -738,7 +828,7 @@ export default function NewCoursePage() {
                       <div>
                         <label
                           htmlFor="new-course-motto"
-                          className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                          className="dark:text-night-text text-ink mb-2 block text-sm font-medium"
                         >
                           Motto (optional)
                         </label>
@@ -747,35 +837,36 @@ export default function NewCoursePage() {
                           type="text"
                           value={motto}
                           onChange={(e) => setMotto(e.target.value)}
-                          className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                          className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper text-ink w-full border px-4 py-2.5"
                           placeholder="z.B. Gemeinsam musizieren"
                         />
                       </div>
 
                       <div>
-                        <label
-                          htmlFor="new-course-description"
-                          className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
-                        >
+                        <label className="dark:text-night-text text-ink mb-2 block text-sm font-medium">
                           Beschreibung *
                         </label>
-                        <textarea
-                          id="new-course-description"
-                          value={description}
-                          onChange={(e) => setDescription(e.target.value)}
-                          rows={5}
-                          className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                        {/* Markdown-Schreibfläche, siehe Termin anlegen. Die
+                            Pflicht prüft `handleSubmit` wie bisher. */}
+                        <RichTextEditor
+                          variant="beschreibung"
+                          ariaLabel="Beschreibung"
+                          ariaRequired
+                          content={description}
+                          onChange={setDescription}
                           placeholder="Beschreibe den Kurs..."
-                          required
-                          maxLength={10000}
                         />
+                        <p className="text-dark dark:text-night-muted mt-2 text-xs">
+                          Überschriften, Listen, Links und Hervorhebungen sind
+                          möglich.
+                        </p>
                       </div>
 
                       <div className="grid gap-4 sm:grid-cols-2">
                         <div>
                           <label
                             htmlFor="new-course-type"
-                            className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                            className="dark:text-night-text text-ink mb-2 block text-sm font-medium"
                           >
                             Kurstyp *
                           </label>
@@ -785,7 +876,7 @@ export default function NewCoursePage() {
                             onChange={(e) =>
                               setCourseType(e.target.value as CourseType)
                             }
-                            className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                            className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper text-ink w-full border px-4 py-2.5"
                           >
                             {Object.entries(courseTypeLabels).map(
                               ([value, label]) => (
@@ -805,7 +896,7 @@ export default function NewCoursePage() {
                       <div>
                         <label
                           htmlFor="new-course-prerequisites"
-                          className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                          className="dark:text-night-text text-ink mb-2 block text-sm font-medium"
                         >
                           Voraussetzungen (optional)
                         </label>
@@ -814,7 +905,7 @@ export default function NewCoursePage() {
                           value={prerequisites}
                           onChange={(e) => setPrerequisites(e.target.value)}
                           rows={3}
-                          className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                          className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper text-ink w-full border px-4 py-2.5"
                           placeholder="z.B. Grundkenntnisse auf dem Instrument"
                         />
                       </div>
@@ -822,7 +913,7 @@ export default function NewCoursePage() {
                       <div>
                         <label
                           htmlFor="new-course-what-to-bring"
-                          className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                          className="dark:text-night-text text-ink mb-2 block text-sm font-medium"
                         >
                           Mitzubringen (optional)
                         </label>
@@ -831,7 +922,7 @@ export default function NewCoursePage() {
                           value={whatToBring}
                           onChange={(e) => setWhatToBring(e.target.value)}
                           rows={3}
-                          className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                          className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper text-ink w-full border px-4 py-2.5"
                           placeholder="z.B. Instrument, Notenständer, ..."
                         />
                       </div>
@@ -844,7 +935,7 @@ export default function NewCoursePage() {
                   <div className="space-y-4">
                     {imageUrl ? (
                       <div className="relative">
-                        <div className="dark:border-dark-border relative aspect-video w-full overflow-hidden rounded-xl border border-gray-200 shadow-sm">
+                        <div className="dark:border-night-rule border-rule relative aspect-video w-full overflow-hidden border">
                           <Image
                             src={imageUrl}
                             alt="Kursbild"
@@ -856,7 +947,7 @@ export default function NewCoursePage() {
                           <button
                             type="button"
                             onClick={() => setShowMediaPicker(true)}
-                            className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-background-secondary rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
+                            className="border-rule dark:border-night-rule dark:text-night-text text-ink hover:bg-rule/25 dark:hover:bg-night-raised border px-4 py-2 text-sm font-medium transition-colors"
                           >
                             Bild ändern
                           </button>
@@ -866,7 +957,7 @@ export default function NewCoursePage() {
                               setImageId(null);
                               setImageUrl(null);
                             }}
-                            className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                            className="min-h-11 border border-red-300 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
                           >
                             Bild entfernen
                           </button>
@@ -876,13 +967,13 @@ export default function NewCoursePage() {
                       <button
                         type="button"
                         onClick={() => setShowMediaPicker(true)}
-                        className="dark:border-dark-border hover:border-primary dark:hover:bg-dark-background-secondary flex w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 p-6 transition-colors hover:bg-gray-50 sm:p-8"
+                        className="dark:border-night-rule hover:border-primary dark:hover:bg-night-raised border-rule hover:bg-rule/25 flex w-full flex-col items-center justify-center border-2 border-dashed p-6 transition-colors sm:p-8"
                       >
-                        <ImageIcon className="h-10 w-10 text-gray-400 sm:h-12 sm:w-12" />
-                        <span className="dark:text-dark-text mt-2 text-sm font-medium text-gray-700">
+                        <ImageIcon className="text-dark dark:text-night-muted h-10 w-10 sm:h-12 sm:w-12" />
+                        <span className="dark:text-night-text text-ink mt-2 text-sm font-medium">
                           Bild auswählen
                         </span>
-                        <span className="mt-1 text-center text-xs text-gray-500 dark:text-gray-400">
+                        <span className="text-dark dark:text-night-muted mt-1 text-center text-xs">
                           Mediathek oder neu hochladen
                         </span>
                       </button>
@@ -895,7 +986,7 @@ export default function NewCoursePage() {
 
           <div
             id="kurs-form-termin"
-            className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-14"
+            className="dark:border-night-rule dashboard-form-scroll-anchor border-rule border-t pt-14"
           >
             <DashboardFormZoneHeader
               step={2}
@@ -908,7 +999,7 @@ export default function NewCoursePage() {
                   <div>
                     <label
                       htmlFor="new-course-start-date"
-                      className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                      className="dark:text-night-text text-ink mb-2 block text-sm font-medium"
                     >
                       Startdatum *
                     </label>
@@ -917,14 +1008,14 @@ export default function NewCoursePage() {
                       type="date"
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
-                      className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                      className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper text-ink w-full border px-4 py-2.5"
                       required
                     />
                   </div>
                   <div>
                     <label
                       htmlFor="new-course-start-time"
-                      className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                      className="dark:text-night-text text-ink mb-2 block text-sm font-medium"
                     >
                       Startzeit *
                     </label>
@@ -933,14 +1024,14 @@ export default function NewCoursePage() {
                       type="time"
                       value={startTime}
                       onChange={(e) => setStartTime(e.target.value)}
-                      className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                      className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper text-ink w-full border px-4 py-2.5"
                       required
                     />
                   </div>
                   <div>
                     <label
                       htmlFor="new-course-end-date"
-                      className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                      className="dark:text-night-text text-ink mb-2 block text-sm font-medium"
                     >
                       Enddatum *
                     </label>
@@ -951,14 +1042,14 @@ export default function NewCoursePage() {
                       onChange={(e) => setEndDate(e.target.value)}
                       min={startDate || undefined}
                       title="Enddatum muss nach oder gleich dem Startdatum sein"
-                      className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                      className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper text-ink w-full border px-4 py-2.5"
                       required
                     />
                   </div>
                   <div>
                     <label
                       htmlFor="new-course-end-time"
-                      className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                      className="dark:text-night-text text-ink mb-2 block text-sm font-medium"
                     >
                       Endzeit *
                     </label>
@@ -967,7 +1058,7 @@ export default function NewCoursePage() {
                       type="time"
                       value={endTime}
                       onChange={(e) => setEndTime(e.target.value)}
-                      className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                      className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper text-ink w-full border px-4 py-2.5"
                       required
                     />
                   </div>
@@ -976,7 +1067,7 @@ export default function NewCoursePage() {
                 <div>
                   <label
                     htmlFor="new-course-bezirk"
-                    className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                    className="dark:text-night-text text-ink mb-2 block text-sm font-medium"
                   >
                     Bezirk
                   </label>
@@ -990,13 +1081,15 @@ export default function NewCoursePage() {
                             : "Wird geladen..."
                         }
                         disabled
-                        className="dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full cursor-not-allowed rounded-lg border border-gray-300 bg-gray-100 px-4 py-2.5 text-gray-900 opacity-60"
+                        className="dark:border-night-rule dark:bg-night-raised dark:text-night-text border-rule bg-rule/40 text-ink w-full cursor-not-allowed border px-4 py-2.5 opacity-60"
                       />
-                      <Lock className="h-5 w-5 shrink-0 text-gray-400" />
+                      <Lock className="text-dark dark:text-night-muted h-5 w-5 shrink-0" />
                     </div>
                   ) : hasNoDistrict ? (
-                    <div className="rounded-lg bg-yellow-50 p-4 dark:bg-yellow-900/20">
-                      <p className="text-sm text-yellow-800 dark:text-yellow-300">
+                    // Hinweis statt Alarm: Tinte auf Papier an einer
+                    // Haarlinie statt gelbem Kasten.
+                    <div className="border-ink dark:border-night-text border-l-2 py-1 pl-4">
+                      <p className="text-dark dark:text-night-muted text-sm">
                         <strong>Hinweis:</strong> Du bist keinem Bezirk
                         zugeordnet. Bitte wende dich an einen Administrator, um
                         Lehrgänge erstellen zu können.
@@ -1007,7 +1100,7 @@ export default function NewCoursePage() {
                       id="new-course-bezirk"
                       value={bezirkId}
                       onChange={(e) => setBezirkId(e.target.value)}
-                      className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                      className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper text-ink w-full border px-4 py-2.5"
                     >
                       {selectableBezirkIds === null && (
                         <option value="">Übergreifend / Kein Bezirk</option>
@@ -1020,7 +1113,7 @@ export default function NewCoursePage() {
                     </Select>
                   )}
                   {!isHigherRole && lockedBezirkId ? (
-                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-dark dark:text-night-muted mt-2 text-xs">
                       Du kannst nur Lehrgänge für deinen eigenen Bezirk
                       erstellen.
                     </p>
@@ -1030,7 +1123,7 @@ export default function NewCoursePage() {
                 <div className="relative" data-dropdown>
                   <label
                     htmlFor="new-course-location-search"
-                    className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                    className="dark:text-night-text text-ink mb-2 block text-sm font-medium"
                   >
                     Veranstaltungsort (optional)
                   </label>
@@ -1046,12 +1139,12 @@ export default function NewCoursePage() {
                     onFocus={() => setShowLocationDropdown(true)}
                     placeholder="Suche nach Ort…"
                     autoComplete="off"
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                    className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper text-ink w-full border px-4 py-2.5"
                   />
 
                   {/* Location Dropdown */}
                   {showLocationDropdown && locationsData && (
-                    <div className="dark:border-dark-border dark:bg-dark-surface absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
+                    <div className="border-ink bg-paper dark:border-night-text dark:bg-night-raised absolute z-10 mt-1 w-full overflow-hidden border-2">
                       <div
                         className="overflow-y-auto"
                         style={{ maxHeight: "240px" }}
@@ -1063,19 +1156,19 @@ export default function NewCoursePage() {
                                 key={location.id}
                                 type="button"
                                 onClick={() => handleLocationSelect(location)}
-                                className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
+                                className="hover:bg-rule/60 dark:hover:bg-night-rule block w-full px-4 py-2 text-left text-sm"
                               >
-                                <span className="dark:text-dark-text font-medium text-gray-900">
+                                <span className="dark:text-night-text text-ink font-medium">
                                   {location.name || location.city}
                                 </span>
                                 {location.name && (
-                                  <span className="text-gray-500 dark:text-gray-400">
+                                  <span className="text-dark dark:text-night-muted">
                                     {" "}
                                     – {location.city}
                                   </span>
                                 )}
                                 {location.street && (
-                                  <span className="block text-xs text-gray-400 dark:text-gray-500">
+                                  <span className="text-dark/70 dark:text-night-muted/70 block text-xs">
                                     {location.street}
                                   </span>
                                 )}
@@ -1083,7 +1176,7 @@ export default function NewCoursePage() {
                             ))}
                           </>
                         ) : (
-                          <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                          <div className="text-dark dark:text-night-muted px-4 py-3 text-sm">
                             Keine Orte gefunden
                           </div>
                         )}
@@ -1094,7 +1187,7 @@ export default function NewCoursePage() {
                           setShowLocationDropdown(false);
                           setShowNewLocationForm(true);
                         }}
-                        className="text-primary dark:border-dark-border block w-full border-t border-gray-200 px-4 py-2 text-left text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-700"
+                        className="text-primary-ink border-rule hover:bg-rule/60 dark:border-night-rule dark:text-primary dark:hover:bg-night-rule block w-full border-t px-4 py-2 text-left text-sm font-semibold"
                       >
                         + Neuen Ort erstellen
                       </button>
@@ -1122,7 +1215,7 @@ export default function NewCoursePage() {
 
           <div
             id="kurs-form-anmeldung"
-            className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-14"
+            className="dark:border-night-rule dashboard-form-scroll-anchor border-rule border-t pt-14"
           >
             <DashboardFormZoneHeader
               step={3}
@@ -1136,7 +1229,7 @@ export default function NewCoursePage() {
             <div className="space-y-10">
               <DashboardFormBlock title="Anmeldeeinstellungen">
                 <div className="space-y-6">
-                  <div className="dark:border-dark-border rounded-lg border border-gray-200 p-4">
+                  <div className="dark:border-night-rule border-rule border p-4">
                     <label className="flex cursor-pointer items-start gap-3">
                       <input
                         type="checkbox"
@@ -1145,13 +1238,13 @@ export default function NewCoursePage() {
                         onChange={(e) =>
                           setIsExternalProvider(e.target.checked)
                         }
-                        className="text-primary focus:ring-primary mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300"
+                        className="text-primary border-rule dark:border-night-text mt-0.5 h-4 w-4 shrink-0"
                       />
                       <span className="min-w-0">
-                        <span className="dark:text-dark-text block text-sm leading-snug font-medium text-gray-700">
+                        <span className="dark:text-night-text text-ink block text-sm leading-snug font-medium">
                           Externer Anbieter
                         </span>
-                        <span className="mt-1 block text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+                        <span className="text-dark dark:text-night-muted mt-1 block text-xs leading-relaxed">
                           Die Anmeldung erfolgt auf einer externen Website. Es
                           gibt kein Anmeldeformular und keine
                           Teilnehmerverwaltung hier.
@@ -1160,11 +1253,11 @@ export default function NewCoursePage() {
                     </label>
 
                     {isExternalProvider ? (
-                      <div className="mt-4 space-y-4 border-t border-gray-200 pt-4 dark:border-gray-700">
+                      <div className="dark:border-night-rule border-rule mt-4 space-y-4 border-t pt-4">
                         <div>
                           <label
                             htmlFor="new-course-external-provider-name"
-                            className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700"
+                            className="dark:text-night-text text-ink mb-1.5 block text-sm font-medium"
                           >
                             Name des Anbieters (optional)
                           </label>
@@ -1182,7 +1275,7 @@ export default function NewCoursePage() {
                         <div>
                           <label
                             htmlFor="new-course-external-registration-url"
-                            className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700"
+                            className="dark:text-night-text text-ink mb-1.5 block text-sm font-medium"
                           >
                             Link zur Anmeldung *
                           </label>
@@ -1201,7 +1294,7 @@ export default function NewCoursePage() {
                         <div>
                           <label
                             htmlFor="new-course-external-price-info"
-                            className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700"
+                            className="dark:text-night-text text-ink mb-1.5 block text-sm font-medium"
                           >
                             Hinweis zu Kosten (optional)
                           </label>
@@ -1218,7 +1311,7 @@ export default function NewCoursePage() {
                     ) : null}
                   </div>
 
-                  <fieldset className="dark:border-dark-border rounded-lg border border-gray-200 p-4">
+                  <fieldset className="dark:border-night-rule border-rule border p-4">
                     <legend className="sr-only">
                       Anmeldezeitpunkt und -fenster
                     </legend>
@@ -1231,17 +1324,17 @@ export default function NewCoursePage() {
                           onChange={(e) =>
                             setRegistrationOpen(e.target.checked)
                           }
-                          className="text-primary focus:ring-primary mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300"
+                          className="text-primary border-rule dark:border-night-text mt-0.5 h-4 w-4 shrink-0"
                         />
                         <label
                           htmlFor="new-course-registration-open"
-                          className="dark:text-dark-text cursor-pointer text-sm leading-snug font-medium text-gray-700"
+                          className="dark:text-night-text text-ink cursor-pointer text-sm leading-snug font-medium"
                         >
                           Anmeldung geöffnet
                         </label>
                       </div>
 
-                      <div className="border-t border-gray-200 pt-4 dark:border-gray-700">
+                      <div className="dark:border-night-rule border-rule border-t pt-4">
                         <label className="flex cursor-pointer items-start gap-3">
                           <input
                             type="checkbox"
@@ -1252,13 +1345,13 @@ export default function NewCoursePage() {
                               setScheduledRegistrationOpens(on);
                               if (!on) setRegistrationOpensAt("");
                             }}
-                            className="text-primary focus:ring-primary mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300"
+                            className="text-primary border-rule dark:border-night-text mt-0.5 h-4 w-4 shrink-0"
                           />
                           <span className="min-w-0">
-                            <span className="dark:text-dark-text block text-sm leading-snug font-medium text-gray-700">
+                            <span className="dark:text-night-text text-ink block text-sm leading-snug font-medium">
                               Anmeldebeginn später planen
                             </span>
-                            <span className="mt-1 block text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+                            <span className="text-dark dark:text-night-muted mt-1 block text-xs leading-relaxed">
                               {scheduledRegistrationOpens
                                 ? "Datum und Uhrzeit vor Kursbeginn wählen; Kursbeschreibung ist schon vorher sichtbar."
                                 : "Ohne Planung gilt der normale Zeitpunkt, sobald die Anmeldung freigeschaltet ist."}
@@ -1268,14 +1361,14 @@ export default function NewCoursePage() {
 
                         {scheduledRegistrationOpens ? (
                           <div className="mt-4 space-y-2">
-                            <p className="dark:text-dark-text text-sm font-medium text-gray-900">
+                            <p className="dark:text-night-text text-ink text-sm font-medium">
                               Anmeldung öffnet ab
                             </p>
                             <div className="grid max-w-xl grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
                               <div>
                                 <label
                                   htmlFor="new-course-registration-opens-date"
-                                  className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700"
+                                  className="dark:text-night-text text-ink mb-1.5 block text-sm font-medium"
                                 >
                                   Datum
                                 </label>
@@ -1299,7 +1392,7 @@ export default function NewCoursePage() {
                               <div>
                                 <label
                                   htmlFor="new-course-registration-opens-time"
-                                  className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700"
+                                  className="dark:text-night-text text-ink mb-1.5 block text-sm font-medium"
                                 >
                                   Uhrzeit
                                 </label>
@@ -1323,7 +1416,7 @@ export default function NewCoursePage() {
                                 />
                               </div>
                             </div>
-                            <p className="max-w-xl text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+                            <p className="text-dark dark:text-night-muted max-w-xl text-xs leading-relaxed">
                               Die Buttons zum Anmelden erscheinen erst ab diesem
                               Zeitpunkt; der Kurstext bleibt sichtbar.
                             </p>
@@ -1331,7 +1424,7 @@ export default function NewCoursePage() {
                         ) : null}
                       </div>
 
-                      <div className="border-t border-gray-200 pt-4 dark:border-gray-700">
+                      <div className="dark:border-night-rule border-rule border-t pt-4">
                         <label className="flex cursor-pointer items-start gap-3">
                           <input
                             type="checkbox"
@@ -1342,13 +1435,13 @@ export default function NewCoursePage() {
                               setHasRegistrationDeadline(on);
                               if (!on) setRegistrationDeadline("");
                             }}
-                            className="text-primary focus:ring-primary mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300"
+                            className="text-primary border-rule dark:border-night-text mt-0.5 h-4 w-4 shrink-0"
                           />
                           <span className="min-w-0">
-                            <span className="dark:text-dark-text block text-sm leading-snug font-medium text-gray-700">
+                            <span className="dark:text-night-text text-ink block text-sm leading-snug font-medium">
                               Anmeldeschluss festlegen
                             </span>
-                            <span className="mt-1 block text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+                            <span className="text-dark dark:text-night-muted mt-1 block text-xs leading-relaxed">
                               {hasRegistrationDeadline
                                 ? isExternalProvider
                                   ? "Datum wählen, bis wann der Anmelde-Link sichtbar bleibt."
@@ -1362,7 +1455,7 @@ export default function NewCoursePage() {
                           <div className="mt-4 max-w-xs">
                             <label
                               htmlFor="new-course-registration-deadline"
-                              className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700"
+                              className="dark:text-night-text text-ink mb-1.5 block text-sm font-medium"
                             >
                               Anmeldeschluss
                             </label>
@@ -1396,7 +1489,7 @@ export default function NewCoursePage() {
                       <div className="max-w-xs">
                         <label
                           htmlFor="new-course-max-participants"
-                          className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700"
+                          className="dark:text-night-text text-ink mb-1.5 block text-sm font-medium"
                         >
                           Maximale Teilnehmerzahl *
                         </label>
@@ -1424,11 +1517,11 @@ export default function NewCoursePage() {
                           onChange={(e) =>
                             setAllowWaitingList(e.target.checked)
                           }
-                          className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                          className="text-primary border-rule dark:border-night-text h-4 w-4"
                         />
                         <label
                           htmlFor="new-course-waiting-list"
-                          className="dark:text-dark-text text-sm font-medium text-gray-700"
+                          className="dark:text-night-text text-ink text-sm font-medium"
                         >
                           Warteliste aktivieren
                         </label>
@@ -1443,11 +1536,11 @@ export default function NewCoursePage() {
                             onChange={(e) =>
                               setAllowSiblingDiscount(e.target.checked)
                             }
-                            className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                            className="text-primary border-rule dark:border-night-text h-4 w-4"
                           />
                           <label
                             htmlFor="new-course-sibling-discount"
-                            className="dark:text-dark-text text-sm font-medium text-gray-700"
+                            className="dark:text-night-text text-ink text-sm font-medium"
                           >
                             Geschwisterkindrabatt erlauben (20% auf die Gebühr
                             jedes weiteren Geschwisterkindes ab dem zweiten
@@ -1477,7 +1570,7 @@ export default function NewCoursePage() {
           {!isExternalProvider ? (
             <div
               id="kurs-form-preise"
-              className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-14"
+              className="dark:border-night-rule dashboard-form-scroll-anchor border-rule border-t pt-14"
             >
               <DashboardFormZoneHeader
                 step={4}
@@ -1491,15 +1584,15 @@ export default function NewCoursePage() {
                       type="checkbox"
                       checked={isFree}
                       onChange={(e) => setIsFree(e.target.checked)}
-                      className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                      className="text-primary border-rule dark:border-night-text h-4 w-4"
                     />
-                    <span className="dark:text-dark-text text-sm text-gray-700">
+                    <span className="dark:text-night-text text-ink text-sm">
                       Kostenloser Kurs
                     </span>
                   </label>
 
                   <div>
-                    <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                    <label className="dark:text-night-text text-ink mb-1 block text-sm font-medium">
                       Preis-Informationen
                     </label>
                     <input
@@ -1511,16 +1604,16 @@ export default function NewCoursePage() {
                           ? "z.B. Verpflegung inklusive"
                           : "z.B. Frühbucherrabatt bis 31.01."
                       }
-                      className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+                      className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper text-ink block w-full border px-3 py-2"
                     />
                   </div>
 
                   {!isFree && (
-                    <div className="dark:border-dark-border space-y-3 rounded-lg border border-gray-200 p-4">
-                      <p className="dark:text-dark-text text-sm font-medium text-gray-700">
+                    <div className="dark:border-night-rule border-rule space-y-3 border p-4">
+                      <p className="dark:text-night-text text-ink text-sm font-medium">
                         Zahlungsweisen für Teilnehmer
                       </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                      <p className="text-dark dark:text-night-muted text-xs">
                         Mindestens eine Option aktivieren.
                       </p>
                       <label className="flex cursor-pointer items-center gap-3">
@@ -1530,9 +1623,9 @@ export default function NewCoursePage() {
                           onChange={(e) =>
                             setPaymentCashAllowed(e.target.checked)
                           }
-                          className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                          className="text-primary border-rule dark:border-night-text h-4 w-4"
                         />
-                        <span className="dark:text-dark-text text-sm text-gray-700">
+                        <span className="dark:text-night-text text-ink text-sm">
                           Barzahlung vor Ort
                         </span>
                       </label>
@@ -1543,45 +1636,53 @@ export default function NewCoursePage() {
                           onChange={(e) =>
                             setPaymentInvoiceAllowed(e.target.checked)
                           }
-                          className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                          className="text-primary border-rule dark:border-night-text h-4 w-4"
                         />
-                        <span className="dark:text-dark-text text-sm text-gray-700">
+                        <span className="dark:text-night-text text-ink text-sm">
                           Überweisung nach Rechnung
                         </span>
                       </label>
                     </div>
                   )}
 
-                  {!isFree && canEnableInvoicing && (
-                    <div className="dark:border-dark-border space-y-2 rounded-lg border border-gray-200 p-4">
-                      <label className="flex cursor-pointer items-start gap-3">
-                        <input
-                          type="checkbox"
-                          checked={invoicingEnabled}
-                          onChange={(e) =>
-                            setInvoicingEnabled(e.target.checked)
-                          }
-                          className="text-primary focus:ring-primary mt-0.5 h-4 w-4 rounded border-gray-300"
-                        />
-                        <span>
-                          <span className="dark:text-dark-text block text-sm font-medium text-gray-700">
-                            Rechnungsstellung aktivieren
+                  {!isFree && (canEnableInvoicing || canEnableDownPayment) && (
+                    <div className="dark:border-night-rule border-rule space-y-2 border p-4">
+                      {canEnableInvoicing && (
+                        <label className="flex cursor-pointer items-start gap-3">
+                          <input
+                            type="checkbox"
+                            checked={invoicingEnabled}
+                            onChange={(e) =>
+                              setInvoicingEnabled(e.target.checked)
+                            }
+                            className="text-primary border-rule dark:border-night-text mt-0.5 h-4 w-4"
+                          />
+                          <span>
+                            <span className="dark:text-night-text text-ink block text-sm font-medium">
+                              Rechnungsstellung aktivieren
+                            </span>
+                            <span className="text-dark dark:text-night-muted block text-xs">
+                              Erlaubt dem Kurs-Team, für diesen Kurs Rechnungen
+                              zu erstellen, zu bearbeiten und an die
+                              Anmelder:innen auszustellen.
+                            </span>
                           </span>
-                          <span className="block text-xs text-gray-500 dark:text-gray-400">
-                            Erlaubt dem Kurs-Team, für diesen Kurs Rechnungen zu
-                            erstellen, zu bearbeiten und an die Anmelder:innen
-                            auszustellen.
-                          </span>
-                        </span>
-                      </label>
+                        </label>
+                      )}
 
-                      <div className="dark:border-dark-border border-t border-gray-200 pt-3">
+                      <div
+                        className={
+                          canEnableInvoicing
+                            ? "dark:border-night-rule border-rule border-t pt-3"
+                            : undefined
+                        }
+                      >
                         <label
                           htmlFor="courseNumber"
-                          className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700"
+                          className="dark:text-night-text text-ink mb-1 block text-sm font-medium"
                         >
                           Kursnummer{" "}
-                          <span className="font-normal text-gray-500 dark:text-gray-400">
+                          <span className="text-dark dark:text-night-muted font-normal">
                             (optional)
                           </span>
                         </label>
@@ -1596,9 +1697,9 @@ export default function NewCoursePage() {
                             )
                           }
                           placeholder="z.B. 2601"
-                          className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full max-w-[12rem] rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                          className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper text-ink w-full max-w-[12rem] border px-4 py-2.5"
                         />
-                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        <p className="text-dark dark:text-night-muted mt-1 text-xs">
                           Interne Nummer für die Buchhaltung. Mit Kursnummer
                           lauten die Rechnungsnummern dieses Kurses RE-
                           {courseNumber || "<Nr.>"}-001, RE-
@@ -1612,22 +1713,49 @@ export default function NewCoursePage() {
                   )}
 
                   {!isFree && (
+                    <CourseDownPaymentSettings
+                      mode={downPaymentMode}
+                      onModeChange={setDownPaymentMode}
+                      amount={downPaymentAmount}
+                      onAmountChange={setDownPaymentAmount}
+                      refundPolicy={downPaymentRefundPolicy}
+                      onRefundPolicyChange={setDownPaymentRefundPolicy}
+                      refundText={downPaymentRefundText}
+                      onRefundTextChange={setDownPaymentRefundText}
+                      priceOptions={priceOptions}
+                      onPriceOptionAmountChange={(id, amount) =>
+                        updatePriceOption(
+                          id,
+                          "downPaymentAmount",
+                          amount ?? undefined,
+                        )
+                      }
+                      canEdit={canEnableDownPayment}
+                      locked={false}
+                      allowSiblingDiscount={
+                        canManageSiblingDiscount && allowSiblingDiscount
+                      }
+                      courseNumber={courseNumber}
+                    />
+                  )}
+
+                  {!isFree && (
                     <div>
                       <div className="mb-2 flex items-center justify-between">
-                        <label className="dark:text-dark-text text-sm font-medium text-gray-700">
+                        <label className="dark:text-night-text text-ink text-sm font-medium">
                           Preiskategorien
                         </label>
                         <button
                           type="button"
                           onClick={addPriceOption}
-                          className="text-primary hover:text-primary/80 text-sm font-medium"
+                          className="text-primary-ink dark:text-primary text-sm font-medium underline-offset-2 hover:underline"
                         >
                           + Kategorie hinzufügen
                         </button>
                       </div>
 
                       {priceOptions.length === 0 ? (
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                        <p className="text-dark dark:text-night-muted text-sm">
                           Noch keine Preiskategorien angelegt. Füge mindestens
                           eine hinzu.
                         </p>
@@ -1636,7 +1764,7 @@ export default function NewCoursePage() {
                           {priceOptions.map((option) => (
                             <div
                               key={option.id}
-                              className="dark:border-dark-border flex items-start gap-3 rounded-lg border border-gray-200 p-3"
+                              className="dark:border-night-rule border-rule flex items-start gap-3 border p-3"
                             >
                               <div className="flex-1 space-y-2">
                                 <div className="grid gap-2 sm:grid-cols-3">
@@ -1651,7 +1779,7 @@ export default function NewCoursePage() {
                                       )
                                     }
                                     placeholder="Bezeichnung (z.B. Erwachsene)"
-                                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
+                                    className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper border px-3 py-1.5 text-sm"
                                   />
                                   <div className="flex items-center gap-1">
                                     <input
@@ -1666,9 +1794,9 @@ export default function NewCoursePage() {
                                       }
                                       min="0"
                                       step="0.01"
-                                      className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-24 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
+                                      className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper w-24 border px-3 py-1.5 text-sm"
                                     />
-                                    <span className="text-sm text-gray-500">
+                                    <span className="text-dark dark:text-night-muted text-sm">
                                       €
                                     </span>
                                   </div>
@@ -1687,7 +1815,7 @@ export default function NewCoursePage() {
                                     min="1"
                                     max="500"
                                     placeholder="Max. Plätze (optional)"
-                                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
+                                    className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper border px-3 py-1.5 text-sm"
                                   />
                                 </div>
                                 <input
@@ -1701,13 +1829,13 @@ export default function NewCoursePage() {
                                     )
                                   }
                                   placeholder="Beschreibung (optional)"
-                                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
+                                  className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper w-full border px-3 py-1.5 text-sm"
                                 />
                                 {needsDistinguishingDescription(
                                   option,
                                   priceOptions,
                                 ) && (
-                                  <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+                                  <p className="text-primary-ink dark:text-primary mt-1 text-xs">
                                     Dieser Name kommt mehrfach vor — ohne
                                     unterscheidende Beschreibung sind die
                                     Kategorien bei der Anmeldung nicht
@@ -1719,13 +1847,13 @@ export default function NewCoursePage() {
                                   onChange={(field, value) =>
                                     updatePriceOption(option.id, field, value)
                                   }
-                                  inputClassName="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
+                                  inputClassName="border-ink dark:border-night-text dark:bg-night dark:text-night-text w-full border bg-paper px-3 py-1.5 text-sm"
                                 />
                               </div>
                               <button
                                 type="button"
                                 onClick={() => removePriceOption(option.id)}
-                                className="p-1 text-gray-400 hover:text-red-500"
+                                className="text-dark dark:text-night-muted p-1 hover:text-red-500"
                               >
                                 <Trash2 className="h-5 w-5" />
                               </button>
@@ -1742,7 +1870,7 @@ export default function NewCoursePage() {
 
           <div
             id="kurs-form-veroeffentlichung"
-            className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-14"
+            className="dark:border-night-rule dashboard-form-scroll-anchor border-rule border-t pt-14"
           >
             <DashboardFormZoneHeader
               step={isExternalProvider ? 4 : 5}
@@ -1762,13 +1890,13 @@ export default function NewCoursePage() {
                           setSubmitAsDraft(false);
                           setSubmitAsApproved(true);
                         }}
-                        className="text-primary focus:ring-primary mt-0.5 h-4 w-4 border-gray-300"
+                        className="text-primary border-rule dark:border-night-text mt-0.5 h-4 w-4"
                       />
                       <div>
-                        <span className="dark:text-dark-text font-medium text-gray-700">
+                        <span className="dark:text-night-text text-ink font-medium">
                           Direkt veröffentlichen
                         </span>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                        <p className="text-dark dark:text-night-muted text-sm">
                           Der Kurs wird sofort auf der Webseite angezeigt.
                         </p>
                       </div>
@@ -1782,13 +1910,13 @@ export default function NewCoursePage() {
                           setSubmitAsDraft(false);
                           setSubmitAsApproved(false);
                         }}
-                        className="text-primary focus:ring-primary mt-0.5 h-4 w-4 border-gray-300"
+                        className="text-primary border-rule dark:border-night-text mt-0.5 h-4 w-4"
                       />
                       <div>
-                        <span className="dark:text-dark-text font-medium text-gray-700">
+                        <span className="dark:text-night-text text-ink font-medium">
                           Zur Prüfung einreichen
                         </span>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                        <p className="text-dark dark:text-night-muted text-sm">
                           Der Kurs wird zur Prüfung durch einen Redakteur
                           eingereicht.
                         </p>
@@ -1803,13 +1931,13 @@ export default function NewCoursePage() {
                           setSubmitAsDraft(true);
                           setSubmitAsApproved(false);
                         }}
-                        className="text-primary focus:ring-primary mt-0.5 h-4 w-4 border-gray-300"
+                        className="text-primary border-rule dark:border-night-text mt-0.5 h-4 w-4"
                       />
                       <div>
-                        <span className="dark:text-dark-text font-medium text-gray-700">
+                        <span className="dark:text-night-text text-ink font-medium">
                           Als Entwurf speichern
                         </span>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                        <p className="text-dark dark:text-night-muted text-sm">
                           Der Kurs wird noch nicht veröffentlicht und ist nur
                           für dich sichtbar.
                         </p>
@@ -1823,13 +1951,13 @@ export default function NewCoursePage() {
                         type="checkbox"
                         checked={submitAsDraft}
                         onChange={(e) => setSubmitAsDraft(e.target.checked)}
-                        className="text-primary focus:ring-primary mt-0.5 h-4 w-4 rounded border-gray-300"
+                        className="text-primary border-rule dark:border-night-text mt-0.5 h-4 w-4"
                       />
                       <div>
-                        <span className="dark:text-dark-text font-medium text-gray-700">
+                        <span className="dark:text-night-text text-ink font-medium">
                           Als Entwurf speichern
                         </span>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                        <p className="text-dark dark:text-night-muted text-sm">
                           Der Kurs wird noch nicht zur Prüfung eingereicht und
                           ist nur für dich sichtbar.
                         </p>
@@ -1837,7 +1965,7 @@ export default function NewCoursePage() {
                     </label>
 
                     {!submitAsDraft && (
-                      <div className="rounded-lg bg-blue-50 p-3 dark:bg-blue-900/20">
+                      <div className="bg-blue-50 p-3 dark:bg-blue-900/20">
                         <p className="text-sm text-blue-800 dark:text-blue-300">
                           <strong>Hinweis:</strong> Nach dem Erstellen wird der
                           Kurs zur Prüfung eingereicht. Ein Redakteur wird den
@@ -1852,12 +1980,12 @@ export default function NewCoursePage() {
           </div>
 
           {/* Actions */}
-          <div className="dark:border-dark-border mt-16 flex flex-col gap-3 border-t border-gray-200/80 pt-10 sm:flex-row sm:justify-end">
+          <div className="dark:border-night-rule border-rule mt-16 flex flex-col gap-3 border-t pt-10 sm:flex-row sm:justify-end">
             <Link
               href="/dashboard/courses"
               data-skip-warning
               onClick={() => clear()}
-              className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-6 py-2.5 text-center font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="border-rule dark:border-night-rule dark:text-night-text text-ink hover:bg-rule/25 dark:hover:bg-night-raised border px-6 py-2.5 text-center font-medium transition-colors"
             >
               Abbrechen
             </Link>

@@ -8,7 +8,10 @@ import {
 import { permissionProcedure } from "../middleware/permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 import { sendEmail } from "@/server/email/send-email";
-import { generateNewsletterHtml } from "@/server/email/templates/newsletter-html";
+import {
+  generateNewsletterHtml,
+  generateNewsletterText,
+} from "@/server/email/templates/newsletter-html";
 import { maskEmail } from "@/lib/mask-email";
 import { getBaseUrl } from "@/server/utils/get-base-url";
 import { ContentStatus, type Prisma } from "~/generated/prisma/client";
@@ -18,10 +21,23 @@ import { searchAddresses } from "@/server/utils/address-search";
 import { clientKeyFromHeaders, rateLimit } from "@/server/utils/rate-limit";
 import { createUnsubscribeToken } from "@/server/utils/unsubscribe-token";
 import { eventPath, postPath } from "@/lib/slug";
+import { markdownToSingleLine } from "@/lib/markdown-to-plain-text";
 
 import { createLogger } from "@/server/utils/logger";
 
 const log = createLogger("Utils");
+
+/**
+ * Anriss einer Termin-Beschreibung für den Newsletter-Entwurf.
+ *
+ * Klartext, obwohl der Entwurf selbst Markdown ist: Der Anriss wird auf 200
+ * Zeichen gekürzt, und ein Schnitt mitten in `[Text](URL)` oder hinter einem
+ * einzelnen `**` hätte die Auszeichnung des restlichen Entwurfs verschoben.
+ */
+function kurzerAnriss(markdown: string, maxLength = 200): string {
+  const text = markdownToSingleLine(markdown);
+  return text.length > maxLength ? `${text.slice(0, maxLength)}…` : text;
+}
 
 marked.use({
   gfm: true,
@@ -515,6 +531,7 @@ export const newsletterRouter = createTRPCRouter({
           to: input.testEmail,
           subject: `[TEST] ${input.subject}`,
           html: emailHtml,
+          text: generateNewsletterText({ unsubscribeUrl: links.page }),
           headers: unsubscribeHeaders(links.oneClick),
         });
 
@@ -560,6 +577,10 @@ export const newsletterRouter = createTRPCRouter({
               to: subscriber.email,
               subject: input.subject,
               html: emailHtml,
+              text: generateNewsletterText({
+                unsubscribeUrl: links.page,
+                subscriberName: subscriber.name || undefined,
+              }),
               headers: unsubscribeHeaders(links.oneClick),
             });
           }),
@@ -686,9 +707,7 @@ export const newsletterRouter = createTRPCRouter({
                 locationText ? `**Ort:** ${locationText}\n\n` : ""
               }${
                 event.description
-                  ? `${event.description.substring(0, 200)}${
-                      event.description.length > 200 ? "..." : ""
-                    }\n\n`
+                  ? `${kurzerAnriss(event.description)}\n\n`
                   : ""
               }[Mehr erfahren →](${eventUrl})\n\n`,
             );

@@ -50,7 +50,7 @@ export function SocialLinksEditor({
           onClick={() =>
             onChange([...value, { type: "website", url: "", label: "" }])
           }
-          className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+          className="bg-rule/25 dark:bg-night-raised text-ink dark:text-night-text hover:bg-rule/50 dark:hover:bg-night-rule inline-flex min-h-11 items-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-colors"
         >
           <PlusIcon className="h-4 w-4" />
           Link hinzufügen
@@ -58,7 +58,7 @@ export function SocialLinksEditor({
       </div>
 
       {value.length === 0 ? (
-        <p className="dark:text-dark-muted py-4 text-center text-sm text-gray-500">
+        <p className="text-dark dark:text-night-muted py-4 text-center text-sm">
           {emptyLabel}
         </p>
       ) : (
@@ -66,23 +66,23 @@ export function SocialLinksEditor({
           {value.map((social, index) => (
             <div
               key={index}
-              className="dark:border-dark-border flex flex-col gap-3 rounded-lg border border-gray-200 bg-gray-50 p-4 sm:flex-row sm:items-start dark:bg-gray-800/50"
+              className="border-rule dark:border-night-rule dark:bg-night-raised bg-rule/25 flex flex-col gap-3 border p-4 sm:flex-row sm:items-start"
             >
               <div className="sm:w-48">
-                <label className="dark:text-dark-muted mb-1 block text-xs font-medium text-gray-500">
+                <label className="text-dark dark:text-night-muted mb-1 block text-xs font-medium">
                   Typ
                 </label>
                 <div className="flex items-center gap-2">
-                  <div className="dark:bg-dark-background-secondary dark:border-dark-border flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 bg-white">
+                  <div className="border-ink dark:border-night-text dark:bg-night bg-paper flex h-9 w-9 items-center justify-center border">
                     <SocialIcon
                       type={social.type}
-                      className="h-5 w-5 text-gray-600 dark:text-gray-400"
+                      className="text-dark dark:text-night-muted h-5 w-5"
                     />
                   </div>
                   <Select
                     value={social.type}
                     onChange={(e) => updateLink(index, "type", e.target.value)}
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:ring-1 focus:outline-none"
+                    className="flex-1 text-sm"
                   >
                     {SOCIAL_TYPE_OPTIONS.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -94,7 +94,7 @@ export function SocialLinksEditor({
               </div>
 
               <div className="flex-1">
-                <label className="dark:text-dark-muted mb-1 block text-xs font-medium text-gray-500">
+                <label className="text-dark dark:text-night-muted mb-1 block text-xs font-medium">
                   URL
                 </label>
                 <input
@@ -102,12 +102,12 @@ export function SocialLinksEditor({
                   value={social.url}
                   onChange={(e) => updateLink(index, "url", e.target.value)}
                   placeholder="https://..."
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:ring-1 focus:outline-none"
+                  className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper block w-full border px-3 py-2 text-sm"
                 />
               </div>
 
               <div className="sm:w-40">
-                <label className="dark:text-dark-muted mb-1 block text-xs font-medium text-gray-500">
+                <label className="text-dark dark:text-night-muted mb-1 block text-xs font-medium">
                   Anzeigename
                 </label>
                 <input
@@ -115,7 +115,7 @@ export function SocialLinksEditor({
                   value={social.label || ""}
                   onChange={(e) => updateLink(index, "label", e.target.value)}
                   placeholder="@username"
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:ring-1 focus:outline-none"
+                  className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper block w-full border px-3 py-2 text-sm"
                 />
               </div>
 
@@ -123,7 +123,7 @@ export function SocialLinksEditor({
                 <button
                   type="button"
                   onClick={() => onChange(value.filter((_, i) => i !== index))}
-                  className="rounded-lg p-2 text-red-500 transition-colors hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-900/20"
+                  className="p-2 text-red-500 transition-colors hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-900/20"
                   title="Entfernen"
                 >
                   <TrashIcon className="h-5 w-5" />

@@ -70,7 +70,7 @@ export function ScrollableModalCard({
 }) {
   return (
     <div
-      className={`flex w-full ${MAX_W_CLASSES[maxW]} dark:bg-dark-surface flex-col rounded-lg bg-white shadow-xl sm:max-h-[90vh] ${className}`}
+      className={`flex w-full ${MAX_W_CLASSES[maxW]} border-ink bg-paper dark:border-night-text dark:bg-night-raised flex-col border-2 sm:max-h-[90vh] ${className}`}
       onClick={(e) => {
         e.stopPropagation();
         onClick?.(e);
@@ -114,7 +114,7 @@ export function ScrollableModalFooter({
 }) {
   return (
     <div
-      className={`dark:border-dark-border shrink-0 border-t border-gray-200 p-4 sm:p-6 ${className}`}
+      className={`border-rule dark:border-night-rule shrink-0 border-t p-4 sm:p-6 ${className}`}
     >
       {children}
     </div>

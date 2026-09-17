@@ -42,13 +42,14 @@ export function CourseInvoicesButton({
 
   const styles =
     variant === "primary"
-      ? "bg-primary hover:bg-primary/90 text-white"
-      : "dark:border-dark-border dark:bg-dark-surface dark:text-dark-text border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700";
+      ? // Weiß auf Orange fällt unter AA — auf Orange steht immer Tinte.
+        "on-orange bg-primary hover:bg-primary/90 text-ink"
+      : "border-rule dark:border-night-rule text-ink dark:text-night-text border bg-paper dark:bg-night hover:bg-rule/30 dark:hover:bg-night-raised";
 
   return (
     <Link
       href={`/dashboard/courses/${courseId}/invoices`}
-      className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${styles} ${className ?? ""}`}
+      className={`inline-flex min-h-11 items-center gap-2 px-4 text-sm font-medium transition-colors ${styles} ${className ?? ""}`}
     >
       <ReceiptTextIcon className="h-4 w-4" />
       {short ? "Rechnungen" : "Rechnungen verwalten"}

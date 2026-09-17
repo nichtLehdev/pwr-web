@@ -48,6 +48,16 @@ const invoiceForPdfInclude = {
   },
   replaces: { select: { id: true, invoiceNumber: true } },
   replacedBy: { select: { id: true, invoiceNumber: true } },
+  // Anzahlungsstand der Anmeldung: der Editor weist darauf hin, wenn eine
+  // eingegangene Anzahlung in den Positionen noch fehlt.
+  registration: {
+    select: {
+      registrationStatus: true,
+      downPaymentAmount: true,
+      downPaymentStatus: true,
+      downPaymentPaidAmount: true,
+    },
+  },
 } satisfies Prisma.InvoiceInclude;
 
 const lineItemInput = z.object({
@@ -561,6 +571,11 @@ export const invoicesRouter = createTRPCRouter({
               registrantEmail: true,
               registrationStatus: true,
               participants: { select: { firstName: true, lastName: true } },
+              // Für den Hinweis, wenn eine Anzahlung erst nach dem Entwurf
+              // eingegangen ist und darin noch fehlt.
+              downPaymentAmount: true,
+              downPaymentStatus: true,
+              downPaymentPaidAmount: true,
             },
           },
         },
@@ -610,6 +625,10 @@ export const invoicesRouter = createTRPCRouter({
           totalPrice: true,
           paymentMethod: true,
           siblingDiscountStatus: true,
+          registrationStatus: true,
+          downPaymentAmount: true,
+          downPaymentStatus: true,
+          downPaymentPaidAmount: true,
           participants: { select: { firstName: true, lastName: true } },
           invoices: {
             where: {

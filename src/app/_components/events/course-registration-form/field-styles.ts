@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { fieldControlClasses } from "@/app/_components/programmheft/field";
 
 /**
  * One set of metrics for every field of the registration flow — text inputs,
@@ -17,7 +18,11 @@ export const FIELD_SIZE_CLASS =
 /** `Select`'s counterpart to {@link FIELD_SIZE_CLASS}. */
 export const FIELD_SELECT_SIZE = "md" as const;
 
-/** Full styling for the bare `<input>` elements of the registration steps. */
+/**
+ * Full styling for the bare `<input>` elements of the registration steps —
+ * built on the shared `fieldControlClasses` (Programmheft-Feld): quadratisch,
+ * 2px-Haarlinienrahmen, Tinte bei Fokus statt Ring.
+ */
 export function fieldClass(
   options: {
     /** Renders the red border used for missing or invalid values. */
@@ -27,9 +32,8 @@ export function fieldClass(
   } = {},
 ): string {
   return cn(
-    FIELD_SIZE_CLASS,
-    "focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text rounded-lg border focus:border-transparent focus:ring-2",
-    options.error ? "border-red-500 dark:border-red-500" : "border-gray-300",
+    fieldControlClasses,
+    options.error && "border-red-700! dark:border-red-400!",
     options.className,
   );
 }

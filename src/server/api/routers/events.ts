@@ -22,6 +22,7 @@ import {
   notifySubmittedForReview,
 } from "../helpers/review-notifications";
 import { PERMISSIONS } from "@/lib/permissions";
+import { MAX_DESCRIPTION_LENGTH } from "@/lib/description";
 import { permissionProcedure } from "../middleware/permissions";
 import { createEventSlug, updateEventSlug } from "../helpers/content-slug";
 import { isUuid, MAX_SLUG_LENGTH } from "@/lib/slug";
@@ -436,7 +437,9 @@ export const eventsRouter = createTRPCRouter({
         /** Empty means "derive it from the title"; see createEventSlug. */
         slug: z.string().max(MAX_SLUG_LENGTH).optional(),
         motto: z.string().max(500).optional(),
-        description: z.string().max(5000).optional(),
+        // Markdown, siehe MAX_DESCRIPTION_LENGTH: dieselbe Grenze wie bei
+        // Kursen, weil es derselbe Text in derselben Schreibfläche ist.
+        description: z.string().max(MAX_DESCRIPTION_LENGTH).optional(),
         coverImageId: z.string().optional(),
         downloadIds: z.array(z.string()).optional(),
         eventDate: z.date(),
@@ -568,7 +571,7 @@ export const eventsRouter = createTRPCRouter({
         /** Only sent when the author deliberately renamed it; empty = leave as is. */
         slug: z.string().max(MAX_SLUG_LENGTH).optional(),
         motto: z.string().max(500).optional(),
-        description: z.string().max(5000).optional(),
+        description: z.string().max(MAX_DESCRIPTION_LENGTH).optional(),
         coverImageId: z.string().optional().nullable(),
         downloadIds: z.array(z.string()).optional(),
         eventDate: z.date().optional(),
