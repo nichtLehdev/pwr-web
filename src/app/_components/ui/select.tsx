@@ -262,7 +262,11 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
 
     const triggerClasses = cn(
       "border-ink bg-paper text-ink flex w-full min-w-0 items-center justify-between gap-2 border px-3 py-2 text-left transition-colors",
-      fieldSize === "md" ? "h-11 text-base sm:px-4" : "text-sm",
+      // Ohne eigene Schriftgröße, wie `Input`: Mit `text-sm` war der Auslöser
+      // 38px hoch und stand neben 42px hohen Eingabefeldern sichtbar zu klein
+      // (gemeldet am Förderverein-Formular). Wer ein kompaktes Feld will,
+      // gibt `text-sm` über `className` mit, wie die Filterleisten es tun.
+      fieldSize === "md" ? "h-11 text-base sm:px-4" : undefined,
       "dark:border-night-text dark:bg-night dark:text-night-text",
       "hover:bg-rule/30 dark:hover:bg-night-raised",
       disabled &&
@@ -350,7 +354,7 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
                   className={cn(
                     "text-ink dark:text-night-text flex items-start gap-2 px-3",
                     // md: 44px hohe Zeilen, dieselbe Trefferfläche wie das Feld.
-                    fieldSize === "md" ? "py-2.5 text-base" : "py-2 text-sm",
+                    fieldSize === "md" ? "py-2.5 text-base" : "py-2",
                     index === highlight && "bg-rule/60 dark:bg-night-rule",
                     // Nur eine der beiden Zeigerformen: nebeneinander entschied
                     // die Reihenfolge im Stylesheet, und es blieb der Zeiger.
