@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import type { CourseWithRelations, RegistrationData } from "./types";
 import { formatEuro } from "@/lib/invoice-document";
 import { roundMoney } from "@/lib/sibling-discount";
@@ -35,6 +36,8 @@ interface DownPaymentSummaryProps {
   acknowledgement?: {
     checked: boolean;
     onChange: (checked: boolean) => void;
+    /** Meldung am Kästchen, wenn „Verbindlich anmelden“ ohne Haken scheitert. */
+    problem?: string;
   };
   /**
    * Die Anmeldung erscheint unter „Meine Anmeldungen“: angemeldet und mit der
@@ -59,6 +62,7 @@ export function DownPaymentSummary({
   acknowledgement,
   listedInMyRegistrations,
 }: DownPaymentSummaryProps) {
+  const problemId = useId();
   const reference = downPaymentReference(
     course.courseNumber,
     registrationData.registrantFirstName,
@@ -127,22 +131,36 @@ export function DownPaymentSummary({
       )}
 
       {acknowledgement ? (
-        <label className="mt-4 flex cursor-pointer items-start gap-3">
-          <input
-            type="checkbox"
-            checked={acknowledgement.checked}
-            onChange={(e) => acknowledgement.onChange(e.target.checked)}
-            required
-            className="border-ink dark:border-night-text mt-1 h-4 w-4 shrink-0 rounded-none"
-          />
-          <span className="text-ink dark:text-night-text text-sm">
-            Ich überweise die Anzahlung von {formatEuro(amount)}{" "}
-            {isWaitlist ? "nach der Platzbestätigung" : "zeitnah"} mit dem
-            angegebenen Verwendungszweck. {refundNotice} Teilnehmer hinzufügen,
-            entfernen oder die Anmeldung stornieren kann danach nur noch das
-            Kursteam.
-          </span>
-        </label>
+        <div className="mt-4">
+          {/* Die ganze Beschriftung ist Trefferfläche, mindestens 44px hoch. */}
+          <label className="flex min-h-11 cursor-pointer items-start gap-3">
+            <input
+              type="checkbox"
+              checked={acknowledgement.checked}
+              onChange={(e) => acknowledgement.onChange(e.target.checked)}
+              required
+              data-focus-key="downPaymentAcknowledged"
+              aria-invalid={acknowledgement.problem ? true : undefined}
+              aria-describedby={acknowledgement.problem ? problemId : undefined}
+              className="border-ink dark:border-night-text mt-1 h-4 w-4 shrink-0 rounded-none"
+            />
+            <span className="text-ink dark:text-night-text text-sm">
+              Ich überweise die Anzahlung von {formatEuro(amount)}{" "}
+              {isWaitlist ? "nach der Platzbestätigung" : "zeitnah"} mit dem
+              angegebenen Verwendungszweck. {refundNotice} Teilnehmer
+              hinzufügen, entfernen oder die Anmeldung stornieren kann danach
+              nur noch das Kursteam.
+            </span>
+          </label>
+          {acknowledgement.problem ? (
+            <p
+              id={problemId}
+              className="mt-1 text-sm font-medium text-red-700 dark:text-red-400"
+            >
+              {acknowledgement.problem}
+            </p>
+          ) : null}
+        </div>
       ) : (
         refundNotice && (
           <p className="text-dark dark:text-night-muted mt-3 text-xs">
