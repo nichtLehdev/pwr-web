@@ -479,6 +479,20 @@ body {
 }
 
 /*
+ * Der Einzähler schwingt bewusst über das Ziel hinaus (0.82 → 1.06 → 1): Das
+ * ist ein Taktakzent, kein Bedienelement, deshalb bleibt die Kurve. Wer
+ * reduzierte Bewegung eingestellt hat, soll die Zahl aber trotzdem sehen —
+ * ohne Animation steht sie in ihrem natürlichen Zustand, also sichtbar und
+ * unskaliert. Dieselbe Rücksicht nimmt das Spiel bei den Schlagpunkten schon
+ * (`beat-pulse.tsx`, `motion-reduce:scale-100`); an dieser Stelle fehlte sie.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .rhythm-count-pop {
+    animation: none;
+  }
+}
+
+/*
  * iOS Safari lays `input[type="date"]` (and the other date/time types) out from
  * its native widget instead of as a text box: the field keeps an intrinsic
  * width — so it overflows narrow grid columns rather than shrinking — and

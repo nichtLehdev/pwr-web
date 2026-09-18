@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { GAME_FOCUS_RING } from "../../../_lib/focus-ring";
@@ -36,18 +36,82 @@ export type InstrumentSelectorProps = {
   onRemoveCustomSet: () => void;
 };
 
-function difficultyButtonClass(active: boolean): string {
+/**
+ * Gewählt ist ein Druckfeld (Orange als Fläche, Tinte als Schrift) — in beiden
+ * Drucken dieselbe Farbe, weil Tinte auf Orange rund 9:1 trägt.
+ */
+function choiceCardClass(active: boolean): string {
   return cn(
-    "rounded-lg border p-3 text-center transition-colors active:scale-[0.99] md:p-4",
+    "flex min-h-11 w-full flex-col justify-center border p-3 text-center transition-colors active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100 md:p-4",
     GAME_FOCUS_RING,
     active
-      ? "border-primary bg-amber-50/90 dark:bg-amber-950/30"
-      : "border-dark-border/50 hover:border-primary/40 dark:border-dark-border dark:hover:border-primary/35",
+      ? "on-orange bg-primary text-ink border-ink"
+      : "border-rule text-ink hover:border-ink dark:border-night-rule dark:text-night-text dark:hover:border-night-text bg-transparent",
   );
 }
 
-const SMALL_ACTION_BUTTON_CLASS =
-  "border-dark-border/50 dark:border-dark-border text-dark dark:text-dark-text hover:border-primary/40 dark:hover:border-primary/35 rounded-lg border px-3 py-1.5 text-xs font-bold transition-colors active:scale-[0.99]";
+const SMALL_ACTION_BUTTON_CLASS = cn(
+  "border-rule text-ink hover:border-ink dark:border-night-rule dark:text-night-text dark:hover:border-night-text inline-flex min-h-11 items-center border px-4 text-xs font-bold transition-colors active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100",
+  GAME_FOCUS_RING,
+);
+
+type ChoiceCardProps = {
+  /** Sichtbarer Titel — zugleich der alleinige Vorlese-Name des Knopfes. */
+  title: ReactNode;
+  /** Sichtbarer Hinweis — per aria-describedby nachgereicht, nie Teil des Namens. */
+  hint: ReactNode;
+  /** Vorlese-Name; nötig, wenn `title` kein reiner String ist. */
+  label: string;
+  active: boolean;
+  disabled?: boolean;
+  onClick: () => void;
+  className?: string;
+};
+
+/**
+ * Auswahlkachel mit getrenntem Namen und Beschreibung.
+ *
+ * Vorher verschmolz ein Vorleseprogramm Titel und Hinweis zu einem einzigen
+ * Namen („AnfängerErste Töne rund um B-Dur …“). Der Name ist jetzt der Titel
+ * allein; der Hinweis hängt über `aria-describedby` daran und geht damit nicht
+ * verloren. `<span class="block">` statt `<p>`, weil ein Absatz in einem
+ * `<button>` kein gültiges Markup ist.
+ */
+function ChoiceCard({
+  title,
+  hint,
+  label,
+  active,
+  disabled = false,
+  onClick,
+  className,
+}: ChoiceCardProps) {
+  const hintId = `${useId()}-hinweis`;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-pressed={active}
+      aria-label={label}
+      aria-describedby={hintId}
+      className={cn(choiceCardClass(active), className)}
+    >
+      <span className="block font-bold" aria-hidden>
+        {title}
+      </span>
+      <span
+        id={hintId}
+        className={cn(
+          "mt-1 block text-xs leading-snug",
+          active ? "text-ink" : "text-dark dark:text-night-muted",
+        )}
+      >
+        {hint}
+      </span>
+    </button>
+  );
+}
 
 export function InstrumentSelector({
   instrument,
@@ -71,52 +135,44 @@ export function InstrumentSelector({
   );
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-[clamp(0.875rem,2.4dvh,1.5rem)]">
       <div>
-        <p className="text-dark dark:text-dark-text mb-2 text-center text-sm font-bold">
+        <p className="text-ink dark:text-night-text mb-2 text-center text-sm font-bold">
           Schwierigkeit
         </p>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-4 md:gap-3">
           {DIFFICULTY_ORDER_PRIMARY.map((id) => {
             const d = DIFFICULTY_LABELS[id];
             return (
-              <button
+              <ChoiceCard
                 key={id}
-                type="button"
+                title={d.title}
+                label={d.title}
+                hint={d.hint}
+                active={!customActive && difficulty === id}
                 onClick={() => {
                   onDifficulty(id);
                   setExtraOpen(false);
                 }}
-                aria-pressed={!customActive && difficulty === id}
-                className={difficultyButtonClass(
-                  !customActive && difficulty === id,
-                )}
-              >
-                <span className="text-dark dark:text-dark-text font-bold">
-                  {d.title}
-                </span>
-                <p className="text-dark dark:text-dark-text-muted mt-1 text-xs leading-snug">
-                  {d.hint}
-                </p>
-              </button>
+              />
             );
           })}
         </div>
 
-        <div className="border-dark-border/50 dark:border-dark-border mt-4 overflow-hidden rounded-lg border">
+        <div className="border-rule dark:border-night-rule mt-4 border">
           <button
             type="button"
             onClick={() => setExtraOpen((o) => !o)}
             aria-expanded={extraOpen}
             className={cn(
-              "text-dark dark:text-dark-text hover:bg-background-secondary/80 dark:hover:bg-dark-background/50 flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left text-sm font-bold transition-colors",
+              "text-ink hover:bg-rule/25 dark:text-night-text dark:hover:bg-night-raised flex min-h-11 w-full items-center justify-between gap-2 px-3 py-2.5 text-left text-sm font-bold transition-colors",
               GAME_FOCUS_RING,
             )}
           >
             <span>Weitere Modi (Altschlüssel, Tenorschlüssel, Hardcore)</span>
             <ChevronDown
               className={cn(
-                "h-4 w-4 shrink-0 transition-transform",
+                "h-4 w-4 shrink-0 transition-transform motion-reduce:transition-none",
                 extraOpen && "rotate-180",
               )}
               aria-hidden
@@ -125,16 +181,16 @@ export function InstrumentSelector({
           {!extraOpen &&
             !customActive &&
             isExtraSectionDifficulty(difficulty) && (
-              <p className="text-dark dark:text-dark-text-muted border-dark-border/40 dark:border-dark-border/60 border-t px-3 py-2 text-center text-xs">
+              <p className="text-dark dark:text-night-muted border-rule dark:border-night-rule border-t px-3 py-2 text-center text-xs">
                 Gewählt:{" "}
-                <span className="text-dark dark:text-dark-text font-bold">
+                <span className="text-ink dark:text-night-text font-bold">
                   {DIFFICULTY_LABELS[difficulty].title}
                 </span>
               </p>
             )}
           {extraOpen && (
-            <div className="border-dark-border/40 dark:border-dark-border/60 space-y-2 border-t p-3">
-              <p className="text-dark dark:text-dark-text-muted text-center text-[11px] leading-snug">
+            <div className="border-rule dark:border-night-rule space-y-2 border-t p-3">
+              <p className="text-dark dark:text-night-muted text-center text-[11px] leading-snug">
                 Altschlüssel und Tenorschlüssel (Anfänger/Mittel) sowie Hardcore
                 — ohne Instrumentwahl.
               </p>
@@ -142,25 +198,17 @@ export function InstrumentSelector({
                 {DIFFICULTY_ORDER_EXTRA.map((id) => {
                   const d = DIFFICULTY_LABELS[id];
                   return (
-                    <button
+                    <ChoiceCard
                       key={id}
-                      type="button"
+                      title={d.title}
+                      label={d.title}
+                      hint={d.hint}
+                      active={!customActive && difficulty === id}
                       onClick={() => {
                         onDifficulty(id);
                         setExtraOpen(true);
                       }}
-                      aria-pressed={!customActive && difficulty === id}
-                      className={difficultyButtonClass(
-                        !customActive && difficulty === id,
-                      )}
-                    >
-                      <span className="text-dark dark:text-dark-text font-bold">
-                        {d.title}
-                      </span>
-                      <p className="text-dark dark:text-dark-text-muted mt-1 text-xs leading-snug">
-                        {d.hint}
-                      </p>
-                    </button>
+                    />
                   );
                 })}
               </div>
@@ -170,48 +218,29 @@ export function InstrumentSelector({
 
         {/* Eigenes Set aus der öffentlichen Bibliothek als „Custom“-Stufe. */}
         <div className="mt-4">
-          <button
-            type="button"
-            onClick={onOpenLibrary}
+          <ChoiceCard
+            title={
+              customSet
+                ? customSet.name
+                : (customPending?.name ?? "Eigenes Set …")
+            }
+            label={
+              customSet
+                ? customSet.name
+                : (customPending?.name ?? "Eigenes Set wählen")
+            }
+            hint={
+              customSet
+                ? `Eigenes Set · ${customSet.noteCount === 1 ? "1 Note" : `${customSet.noteCount} Noten`}`
+                : customPending
+                  ? "Lädt …"
+                  : "Notenset aus der öffentlichen Bibliothek wählen"
+            }
+            active={customActive}
             disabled={customPending != null}
-            aria-pressed={customActive}
-            className={cn(
-              difficultyButtonClass(customActive),
-              "block w-full disabled:opacity-60",
-            )}
-          >
-            {customSet ? (
-              <>
-                <span className="text-dark dark:text-dark-text font-bold">
-                  {customSet.name}
-                </span>
-                <p className="text-dark dark:text-dark-text-muted mt-1 text-xs leading-snug">
-                  Eigenes Set ·{" "}
-                  {customSet.noteCount === 1
-                    ? "1 Note"
-                    : `${customSet.noteCount} Noten`}
-                </p>
-              </>
-            ) : customPending ? (
-              <>
-                <span className="text-dark dark:text-dark-text font-bold">
-                  {customPending.name ?? "Eigenes Set"}
-                </span>
-                <p className="text-dark dark:text-dark-text-muted mt-1 text-xs leading-snug">
-                  Lädt …
-                </p>
-              </>
-            ) : (
-              <>
-                <span className="text-dark dark:text-dark-text font-bold">
-                  Eigenes Set …
-                </span>
-                <p className="text-dark dark:text-dark-text-muted mt-1 text-xs leading-snug">
-                  Notenset aus der öffentlichen Bibliothek wählen
-                </p>
-              </>
-            )}
-          </button>
+            onClick={onOpenLibrary}
+            className="disabled:opacity-60"
+          />
           {customSet && (
             <div className="mt-2 flex justify-center gap-2">
               <button
@@ -231,7 +260,7 @@ export function InstrumentSelector({
             </div>
           )}
           {customNotice && (
-            <p className="mt-2 text-center text-xs font-bold text-amber-700 dark:text-amber-300">
+            <p className="text-primary-ink dark:text-primary mt-2 text-center text-xs font-bold">
               {customNotice}
             </p>
           )}
@@ -239,33 +268,21 @@ export function InstrumentSelector({
       </div>
 
       <div>
-        <p className="text-dark dark:text-dark-text mb-2 text-center text-sm font-bold">
+        <p className="text-ink dark:text-night-text mb-2 text-center text-sm font-bold">
           Modus
         </p>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 md:gap-3">
           {(Object.keys(GAME_MODE_LABELS) as GameModeId[]).map((id) => {
             const m = GAME_MODE_LABELS[id];
             return (
-              <button
+              <ChoiceCard
                 key={id}
-                type="button"
+                title={m.title}
+                label={m.title}
+                hint={m.hint}
+                active={mode === id}
                 onClick={() => onMode(id)}
-                aria-pressed={mode === id}
-                className={cn(
-                  "rounded-lg border p-3 text-center transition-colors active:scale-[0.99] md:p-4",
-                  GAME_FOCUS_RING,
-                  mode === id
-                    ? "border-primary bg-amber-50/90 dark:bg-amber-950/30"
-                    : "border-dark-border/50 hover:border-primary/40 dark:border-dark-border dark:hover:border-primary/35",
-                )}
-              >
-                <span className="text-dark dark:text-dark-text font-bold">
-                  {m.title}
-                </span>
-                <p className="text-dark dark:text-dark-text-muted mt-1 text-xs leading-snug">
-                  {m.hint}
-                </p>
-              </button>
+              />
             );
           })}
         </div>
@@ -273,40 +290,29 @@ export function InstrumentSelector({
 
       {customActive ? (
         <div>
-          <p className="text-dark dark:text-dark-text mb-2 text-center text-sm font-bold">
+          <p className="text-ink dark:text-night-text mb-2 text-center text-sm font-bold">
             Instrument
           </p>
-          <p className="text-dark dark:text-dark-text-muted text-center text-xs leading-snug">
+          <p className="text-dark dark:text-night-muted text-center text-xs leading-snug">
             Schlüssel und Töne kommen aus dem Set.
           </p>
         </div>
       ) : (
         !hideInstrument && (
           <div>
-            <p className="text-dark dark:text-dark-text mb-2 text-center text-sm font-bold">
+            <p className="text-ink dark:text-night-text mb-2 text-center text-sm font-bold">
               Instrument
             </p>
             <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
               {INSTRUMENTS.map((ins) => (
-                <button
+                <ChoiceCard
                   key={ins.id}
-                  type="button"
+                  title={ins.label}
+                  label={ins.label}
+                  hint={ins.description}
+                  active={instrument === ins.id}
                   onClick={() => onInstrument(ins.id)}
-                  aria-pressed={instrument === ins.id}
-                  className={cn(
-                    "flex flex-col items-center gap-1 rounded-lg border p-3 text-center transition-colors active:scale-[0.99] md:p-3.5",
-                    instrument === ins.id
-                      ? "border-primary bg-amber-50/90 dark:bg-amber-950/30"
-                      : "border-dark-border/50 hover:border-primary/40 dark:border-dark-border dark:hover:border-primary/35 bg-transparent",
-                  )}
-                >
-                  <span className="text-dark dark:text-dark-text leading-tight font-bold">
-                    {ins.label}
-                  </span>
-                  <span className="text-dark dark:text-dark-text-muted text-[11px] leading-snug">
-                    {ins.description}
-                  </span>
-                </button>
+                />
               ))}
             </div>
           </div>

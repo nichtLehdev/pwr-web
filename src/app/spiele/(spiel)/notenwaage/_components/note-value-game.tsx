@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Music, Settings2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/app/_components/ui/button";
@@ -20,17 +27,48 @@ import {
   type NoteValueId,
   type Puzzle,
 } from "../_lib/types";
-import { GameDock } from "../../../_components/game-shell-context";
+import { GameBarSlot, GameDock } from "../../../_components/game-shell-context";
 import { GameStepIndicator } from "../../../_components/game-step-indicator";
 import { useGameStats } from "../../../_lib/stats/use-game-stats";
 import { ScaleSVG } from "./scale-svg";
 import { NotePan, type PanEntry } from "./note-pan";
 import { NotePalette } from "./note-palette";
+import { NoteGlyph } from "./note-glyph-loader";
 import { NoteWaageResultView } from "./result-view";
 
 type Phase = "setup" | "play" | "result";
 const ROUND_LEN = 10;
 const SUCCESS_ADVANCE_MS = 1600;
+
+/*
+ * Maße nach Fensterhöhe statt in festen Pixeln. Gemessen stand der Inhalt bei
+ * 1440x1000 in einem 371px hohen Band, darüber und darunter 286/294px Leere.
+ * `calc(… dvh - …px)` bildet „Fensterhöhe minus feste Zeilen“ ab: Eine reine
+ * dvh-Quote kann das nicht leisten, weil Kopfleiste, Schrittanzeige, Aufgabe
+ * und Dock bei 650px Fensterhöhe fast die ganze Zeile füllen, bei 1000px aber
+ * nur ein Viertel.
+ */
+const WAAGE_HOEHE =
+  "h-[max(130px,min(calc(40dvh_-_108px),260px))] md:h-[max(110px,min(calc(65.7dvh_-_317px),440px))]";
+/*
+ * Die Waage auf dem Setup-Schirm: Sie fällt bei flachen Fenstern auf 0
+ * zusammen (bei 650px ergibt die Rechnung einen negativen Wert, `max(0px, …)`
+ * macht daraus null) — dort wird jeder Pixel für die Auswahl gebraucht. Erst
+ * wenn Platz da ist, tritt sie auf.
+ */
+const SETUP_WAAGE =
+  "h-[max(0px,min(calc(50dvh_-_440px),200px))] md:h-[max(0px,min(calc(70dvh_-_460px),320px))]";
+const STUFEN_KARTE =
+  "min-h-11 md:min-h-[max(76px,min(calc(14dvh_-_38px),150px))]";
+const VORSCHAU_FELD =
+  "min-h-[max(76px,min(calc(14dvh_-_20px),130px))] md:min-h-[max(88px,min(calc(20dvh_-_60px),180px))]";
+const VORSCHAU_GLYPH =
+  "h-[max(26px,min(calc(5dvh_-_14px),44px))] w-[max(26px,min(calc(5dvh_-_14px),44px))] md:h-[max(32px,min(calc(8dvh_-_26px),72px))] md:w-[max(32px,min(calc(8dvh_-_26px),72px))]";
+// Genau die halbe Glyphengröße: Das VexFlow-SVG ragt anteilig unter sein
+// Kästchen, der Abstand zur Beschriftung muss also mitwachsen.
+const VORSCHAU_ABSTAND =
+  "mt-[max(13px,min(calc(2.5dvh_-_7px),22px))] md:mt-[max(16px,min(calc(4dvh_-_13px),36px))]";
+const TITEL_ZEICHEN = "h-[clamp(40px,7dvh,72px)] w-[clamp(40px,7dvh,72px)]";
 
 // Stabile Schlüssel für Einträge in der rechten Schale: beim Entfernen einer
 // Note bleiben alle anderen NoteGlyphs gemountet (kein VexFlow-Re-Render).
@@ -67,6 +105,7 @@ export function NoteValueGame() {
 
   const advanceTimer = useRef<number | null>(null);
   const lastSignature = useRef<string | null>(null);
+  const hintBaseId = useId();
 
   // Gespeicherte Schwierigkeit erst nach dem Mount lesen (SSR-sicher).
   useEffect(() => {
@@ -323,9 +362,9 @@ export function NoteValueGame() {
           onSetup={goToSetup}
         />
         {aggregates && aggregates.plays > 0 && (
-          <p className="text-dark dark:text-dark-text-muted text-center text-sm">
+          <p className="text-dark dark:text-night-muted text-center text-sm">
             Persönlicher Rekord:{" "}
-            <span className="text-dark dark:text-dark-text font-bold">
+            <span className="text-ink dark:text-night-text font-bold">
               {aggregates.bestScore} Punkte
             </span>{" "}
             · {aggregates.plays} {aggregates.plays === 1 ? "Runde" : "Runden"}{" "}
@@ -338,49 +377,127 @@ export function NoteValueGame() {
 
   if (phase === "setup") {
     return (
-      <div className="space-y-5 md:space-y-6">
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 md:gap-5">
         <GameStepIndicator
           steps={["Setup", "Spielen", "Auswertung"]}
           current={0}
         />
         <div className="text-center">
           <Music
-            className="text-primary mx-auto h-11 w-11 md:h-16 md:w-16"
+            className={cn(
+              "text-primary-ink dark:text-primary mx-auto",
+              TITEL_ZEICHEN,
+            )}
             aria-hidden
           />
-          <h2 className="text-dark dark:text-dark-text mt-2 text-xl font-bold md:text-3xl">
+          <h2 className="text-ink dark:text-night-text mt-2 text-xl font-bold md:text-3xl">
             Notenwaage
           </h2>
-          <p className="text-dark dark:text-dark-text-secondary mx-auto mt-2 max-w-xl text-sm md:text-base">
+          <p className="text-dark dark:text-night-muted mx-auto mt-2 max-w-xl text-sm md:text-base">
             Fülle die rechte Waagschale mit Notenwerten, bis beide Seiten gleich
             schwer sind.
           </p>
         </div>
-        <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+        {/*
+          Das Bild des Spiels, ruhig und im Gleichgewicht — vorher stand hier
+          bei 1000px Fensterhöhe nichts als Papier. Rein schmückend, also ohne
+          Statuszeile und für Vorleseprogramme unsichtbar.
+        */}
+        <div className={cn("shrink-0 overflow-hidden", SETUP_WAAGE)}>
+          <ScaleSVG diffUnits={0} decorative />
+        </div>
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-3 md:gap-3">
           {(["beginner", "intermediate", "advanced"] as DifficultyId[]).map(
-            (id) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => selectDifficulty(id)}
-                className={cn(
-                  "rounded-lg border p-3 text-center transition active:scale-[0.99]",
-                  GAME_FOCUS_RING,
-                  difficulty === id
-                    ? "border-primary bg-amber-50/90 dark:bg-amber-950/30"
-                    : "border-dark-border/50 dark:border-dark-border",
-                )}
-              >
-                <p className="text-dark dark:text-dark-text font-bold">
-                  {DIFFICULTY_LABELS[id].title}
-                </p>
-                <p className="text-dark dark:text-dark-text-muted mt-1 text-xs">
-                  {DIFFICULTY_LABELS[id].hint}
-                </p>
-              </button>
-            ),
+            (id) => {
+              const selected = difficulty === id;
+              const hintId = `${hintBaseId}-${id}`;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => selectDifficulty(id)}
+                  // Ohne eigenen Namen las ein Vorleseprogramm Titel und
+                  // Hinweis als ein Wort vor („AnfängerGanze, Halbe, Viertel“).
+                  // Der Name ist jetzt der Titel, der Hinweis die Beschreibung
+                  // — er geht also nicht verloren, steht aber nicht im Namen.
+                  aria-label={DIFFICULTY_LABELS[id].title}
+                  aria-describedby={hintId}
+                  aria-pressed={selected}
+                  className={cn(
+                    "flex flex-col items-center justify-center gap-1 border p-3 text-center transition-colors motion-safe:active:scale-[0.99]",
+                    STUFEN_KARTE,
+                    GAME_FOCUS_RING,
+                    selected
+                      ? // Druckfeld: Orange ist die Fläche, alles darauf Tinte.
+                        "on-orange border-primary bg-primary"
+                      : "border-rule dark:border-night-rule",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "font-bold",
+                      selected ? "text-ink" : "text-ink dark:text-night-text",
+                    )}
+                  >
+                    {DIFFICULTY_LABELS[id].title}
+                  </span>
+                  <span
+                    id={hintId}
+                    className={cn(
+                      "text-xs",
+                      selected ? "text-ink" : "text-dark dark:text-night-muted",
+                    )}
+                  >
+                    {DIFFICULTY_LABELS[id].hint}
+                  </span>
+                </button>
+              );
+            },
           )}
         </div>
+
+        {/*
+          Die Stufe bleibt sonst ein Versprechen ohne Bild: Hier liegen die
+          Notenwerte, mit denen gleich gewogen wird — und sie füllen zugleich
+          den Platz, der bei 1000px Fensterhöhe leer stand.
+        */}
+        <section className="flex flex-col gap-2 md:gap-3">
+          <h3 className="border-rule dark:border-night-rule text-dark dark:text-night-muted border-b pb-1 text-center text-[11px] font-bold tracking-wide uppercase md:text-xs">
+            Diese Werte liegen bereit
+          </h3>
+          <ul
+            className={cn(
+              "grid gap-1.5 md:gap-2",
+              palette.length <= 6
+                ? "grid-cols-3"
+                : "grid-cols-4 md:grid-cols-7",
+            )}
+          >
+            {palette.map((id) => (
+              <li
+                key={id}
+                className={cn(
+                  "border-rule dark:border-night-rule flex flex-col items-center justify-center border p-1.5 text-center md:p-2",
+                  VORSCHAU_FELD,
+                )}
+              >
+                <NoteGlyph id={id} className={VORSCHAU_GLYPH} />
+                <span
+                  className={cn(
+                    "text-ink dark:text-night-text text-[9px] leading-tight font-bold md:text-[11px]",
+                    VORSCHAU_ABSTAND,
+                  )}
+                >
+                  {NOTE_VALUES[id].label}
+                </span>
+                <span className="text-dark dark:text-night-muted text-[9px] font-semibold md:text-[10px]">
+                  {unitsToBeatLabel(NOTE_VALUES[id].units)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+
         <Button type="button" size="lg" className="w-full" onClick={startGame}>
           Los geht&apos;s!
         </Button>
@@ -393,20 +510,42 @@ export function NoteValueGame() {
   const openSlots = Math.max(0, puzzle.rightCount - right.length);
 
   return (
-    <div className="mx-auto flex min-h-full w-full max-w-5xl flex-col gap-2 md:gap-3">
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-2 md:gap-3">
       <GameStepIndicator
         steps={["Setup", "Spielen", "Auswertung"]}
         current={1}
       />
-      <div className="flex items-center justify-between">
-        <p className="text-dark dark:text-dark-text text-xs font-bold md:text-sm">
-          Runde {roundIdx + 1}/{ROUND_LEN} · Streak: {firstTryStreak}
+
+      {/*
+        Der Spielstand gehört in den Status-Platz der Hülle — vorher standen
+        oben zwei Anzeigen nebeneinander (Chip links, Knopf rechts) und die
+        Zeile kostete Höhe, die der Waage fehlte.
+      */}
+      <GameBarSlot>
+        <p className="text-ink dark:text-night-text text-xs font-bold tabular-nums md:text-sm">
+          <span className="sr-only sm:not-sr-only">Runde </span>
+          {roundIdx + 1}/{ROUND_LEN}
+          <span className="text-dark dark:text-night-muted hidden sm:inline">
+            {" "}
+            · Streak: {firstTryStreak}
+          </span>
+        </p>
+      </GameBarSlot>
+
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-ink dark:text-night-text min-w-0 flex-1 text-xs font-bold md:text-sm">
+          Aufgabe: Rechte Seite mit genau{" "}
+          <span className="text-primary-ink dark:text-primary">
+            {puzzle.rightCount}
+          </span>{" "}
+          Symbolen ausgleichen
         </p>
         <button
           type="button"
           onClick={goToSetup}
+          aria-label="Zurück zum Setup"
           className={cn(
-            "border-dark-border text-dark dark:text-dark-text inline-flex items-center gap-1.5 rounded-lg border px-2 py-1 text-[11px] font-bold transition active:scale-[0.98] md:gap-2 md:text-xs",
+            "border-rule text-ink dark:border-night-rule dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-rule inline-flex min-h-11 shrink-0 items-center gap-1.5 border px-3 text-xs font-bold transition-colors motion-safe:active:scale-[0.98] md:gap-2",
             GAME_FOCUS_RING,
           )}
         >
@@ -414,19 +553,14 @@ export function NoteValueGame() {
           Setup
         </button>
       </div>
-      <p className="text-dark dark:text-dark-text-secondary text-center text-xs font-bold md:text-sm">
-        Aufgabe: Rechte Seite mit genau{" "}
-        <span className="text-primary">{puzzle.rightCount}</span> Symbolen
-        ausgleichen
-      </p>
       {puzzle.requiredRests != null && (
-        <p className="text-primary text-center text-[11px] font-bold md:text-xs">
+        <p className="text-primary-ink dark:text-primary text-[11px] font-bold md:text-xs">
           Challenge: genau {puzzle.rightCount - puzzle.requiredRests} Note(n) +{" "}
           {puzzle.requiredRests} Pause(n)
         </p>
       )}
 
-      <div className="h-[clamp(130px,26dvh,320px)] shrink-0 md:h-[clamp(185px,34dvh,400px)]">
+      <div className={cn("shrink-0", WAAGE_HOEHE)}>
         <ScaleSVG
           diffUnits={diffUnits}
           balancedFlash={flashBalanced}
@@ -434,7 +568,7 @@ export function NoteValueGame() {
         />
       </div>
 
-      <div className="grid min-h-[74px] shrink-0 grid-cols-2 gap-1.5 md:min-h-[110px] md:gap-2">
+      <div className="grid shrink-0 grid-cols-2 gap-1.5 md:gap-2">
         <NotePan title="Vorgegeben" notes={leftEntries} />
         <NotePan
           title="Deine Seite"
@@ -459,22 +593,20 @@ export function NoteValueGame() {
           className={cn(
             "shrink-0 text-xs md:text-sm",
             feedback
-              ? "border-dark-border/40 dark:bg-dark-background/50 rounded-lg border bg-white/60 px-2.5 py-1.5 md:px-3 md:py-2"
+              ? "border-rule bg-rule/25 dark:border-night-rule dark:bg-night-raised border px-2.5 py-1.5 md:px-3 md:py-2"
               : "sr-only",
           )}
         >
           {feedback && (
-            <p className="text-dark dark:text-dark-text-secondary">
-              {feedback}
-            </p>
+            <p className="text-ink dark:text-night-text">{feedback}</p>
           )}
           {pendingAdvance && (
-            <p className="text-primary dark:text-primary-light mt-0.5 font-bold">
+            <p className="text-primary-ink dark:text-primary mt-0.5 font-bold">
               Beide Seiten wiegen {unitsToBeatLabel(leftUnits)}
             </p>
           )}
         </div>
-        <p className="text-dark dark:text-dark-text-muted shrink-0 text-center text-[11px] font-semibold">
+        <p className="text-dark dark:text-night-muted shrink-0 text-center text-[11px] font-semibold">
           Tipp: Tippe ein Symbol in deiner Schale an, um es zu entfernen —
           langes Drücken auf ein Palette-Feld entfernt die zuletzt gelegte
           gleiche Note.

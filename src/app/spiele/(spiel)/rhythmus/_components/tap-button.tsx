@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
+import { cn } from "@/lib/utils";
+import { GAME_FOCUS_RING } from "../../../_lib/focus-ring";
 import { hapticsTap } from "../_lib/haptics";
 
 export interface TapButtonProps {
@@ -57,11 +59,21 @@ export function TapButton({
   }, [disabled, fire]);
 
   return (
-    <div className="flex w-full flex-col gap-2">
+    <div className="flex w-full flex-col gap-1.5">
       <button
         type="button"
         disabled={disabled}
-        className="focus-visible:ring-primary bg-primary hover:bg-primary-light dark:hover:bg-primary-dark flex min-h-[7.5rem] w-full touch-manipulation items-center justify-center rounded-lg border border-amber-900/15 text-xl font-bold text-white shadow-sm transition select-none hover:brightness-[1.03] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none active:brightness-95 disabled:cursor-not-allowed disabled:opacity-75 sm:min-h-[8rem] sm:text-2xl dark:border-amber-100/20"
+        className={cn(
+          /* Druckfläche statt Knopf: Orange trägt hier die Fläche, die Schrift
+             bleibt Tinte (weiß auf Orange wären 1,99:1). Die Höhe folgt dem
+             Fenster, damit auf niedrigen Bildschirmen nicht ein Drittel der
+             Seite Tippfläche ist. */
+          "semi-condensed flex min-h-[clamp(3.5rem,12dvh,6.5rem)] w-full touch-manipulation items-center justify-center border-2 text-xl font-bold transition select-none active:brightness-95 disabled:cursor-not-allowed sm:text-2xl",
+          GAME_FOCUS_RING,
+          disabled
+            ? "border-rule text-dark dark:border-night-rule dark:text-night-muted bg-transparent"
+            : "on-orange bg-primary border-ink text-ink hover:brightness-[1.03]",
+        )}
         aria-label={`${label}. Desktop: Leertaste oder Eingabetaste.`}
         aria-keyshortcuts="Space Enter"
         onTouchStart={(e) => {
@@ -76,13 +88,13 @@ export function TapButton({
       >
         {label}
       </button>
-      <p className="text-dark dark:text-dark-text-muted hidden shrink-0 text-center text-sm md:block">
+      <p className="text-dark dark:text-night-muted hidden shrink-0 text-center text-sm md:block">
         Desktop:{" "}
-        <kbd className="dark:bg-dark-surface dark:border-dark-border rounded-lg border border-gray-300 bg-gray-100 px-1.5 py-0.5 font-mono text-xs">
+        <kbd className="border-rule bg-rule/25 dark:border-night-rule dark:bg-night-raised border px-1.5 py-0.5 font-mono text-xs">
           Leertaste
         </kbd>{" "}
         oder{" "}
-        <kbd className="dark:bg-dark-surface dark:border-dark-border rounded-lg border border-gray-300 bg-gray-100 px-1.5 py-0.5 font-mono text-xs">
+        <kbd className="border-rule bg-rule/25 dark:border-night-rule dark:bg-night-raised border px-1.5 py-0.5 font-mono text-xs">
           Enter
         </kbd>
       </p>
