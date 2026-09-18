@@ -15,18 +15,20 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
 
 const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
   ({ className, variant = "default", size = "md", ...props }, ref) => {
-    const baseStyles = "inline-flex items-center rounded-full font-medium";
+    // Rechteckig wie `Tag`. Auf Orange und Gelb steht Tinte, Weiss verfehlt
+    // dort den Kontrast.
+    const baseStyles =
+      "semi-condensed inline-flex items-center font-semibold leading-none";
 
     const variants = {
-      default:
-        "bg-gray-100 text-gray-800 dark:bg-dark-background-secondary dark:text-dark-text",
-      primary: "bg-primary text-white dark:bg-primary-light",
-      secondary: "bg-gray-600 text-white dark:bg-gray-500",
-      success: "bg-green-600 text-white dark:bg-green-500",
-      danger: "bg-red-600 text-white dark:bg-red-500",
-      warning: "bg-yellow-500 text-white dark:bg-yellow-400",
+      default: "bg-rule/60 text-ink dark:bg-night-rule dark:text-night-text",
+      primary: "bg-primary text-ink",
+      secondary: "bg-ink text-paper dark:bg-night-text dark:text-night",
+      success: "bg-green-700 text-paper dark:bg-green-400 dark:text-night",
+      danger: "bg-red-700 text-paper dark:bg-red-400 dark:text-night",
+      warning: "bg-yellow-400 text-ink",
       outline:
-        "border-2 border-gray-300 bg-transparent text-gray-700 dark:border-dark-border dark:text-dark-text",
+        "border-ink text-ink dark:border-night-text dark:text-night-text border-2 bg-transparent",
     };
 
     const sizes = {

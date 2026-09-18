@@ -10,13 +10,13 @@ import { PERMISSIONS } from "@/lib/permissions";
 import Link from "next/link";
 import Image from "next/image";
 import { DashboardPage } from "@/app/_components/dashboard";
+import { Tag } from "@/app/_components/programmheft/tag";
 import {
   DataTable,
   createDataTableColumnHelper,
   type DataTableColumn,
 } from "@/app/_components/ui/data-table";
 import { ClockIcon, EyeIcon, PencilIcon, Plus, Trash2Icon } from "lucide-react";
-// Dashboard access is now controlled by permissions
 
 type HistoryEvent = RouterOutputs["organization"]["getHistory"][number];
 
@@ -47,7 +47,7 @@ export default function DashboardHistoryTimelinePage() {
     PERMISSIONS.ORGANIZATION_MANAGE_HISTORY,
   );
 
-  // Alle Kategorien auf einmal: die Kategorie ist jetzt ein Spaltenfilter.
+  // Alle Kategorien auf einmal: Die Kategorie ist ein Spaltenfilter.
   const {
     data: historyEvents,
     isLoading: historyLoading,
@@ -112,7 +112,7 @@ export default function DashboardHistoryTimelinePage() {
           header: "Jahr",
           meta: { filterVariant: "number", alwaysVisible: true },
           cell: ({ getValue }) => (
-            <span className="dark:text-dark-text font-semibold text-gray-900">
+            <span className="text-ink dark:text-night-text font-semibold">
               {getValue()}
             </span>
           ),
@@ -125,11 +125,11 @@ export default function DashboardHistoryTimelinePage() {
             <div>
               <Link
                 href={`/dashboard/history-timeline/${row.original.id}`}
-                className="hover:text-primary dark:text-dark-text font-medium text-gray-900"
+                className="hover:text-primary-ink dark:hover:text-primary text-ink dark:text-night-text font-medium"
               >
                 {row.original.title}
               </Link>
-              <p className="dark:text-dark-muted mt-1 line-clamp-2 text-sm text-gray-500">
+              <p className="text-dark dark:text-night-muted mt-1 line-clamp-2 text-sm">
                 {row.original.description}
               </p>
             </div>
@@ -146,11 +146,9 @@ export default function DashboardHistoryTimelinePage() {
             meta: { filterVariant: "set" },
             cell: ({ getValue }) =>
               getValue() ? (
-                <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
-                  {getValue()}
-                </span>
+                <Tag tone="inverse">{getValue()}</Tag>
               ) : (
-                <span className="dark:text-dark-muted text-sm text-gray-400 italic">
+                <span className="text-dark dark:text-night-muted text-sm italic">
                   Keine Kategorie
                 </span>
               ),
@@ -164,7 +162,7 @@ export default function DashboardHistoryTimelinePage() {
             meta: { filterVariant: "set" },
             cell: ({ row }) =>
               row.original.image?.url ? (
-                <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded">
+                <div className="relative h-10 w-10 shrink-0 overflow-hidden">
                   <Image
                     src={row.original.image.url}
                     alt={row.original.imageAlt ?? row.original.title}
@@ -173,7 +171,7 @@ export default function DashboardHistoryTimelinePage() {
                   />
                 </div>
               ) : (
-                <span className="dark:text-dark-muted text-sm text-gray-400 italic">
+                <span className="text-dark dark:text-night-muted text-sm italic">
                   Kein Bild
                 </span>
               ),
@@ -187,14 +185,14 @@ export default function DashboardHistoryTimelinePage() {
             <div className="flex items-center justify-end gap-2">
               <Link
                 href={`/dashboard/history-timeline/${row.original.id}`}
-                className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
+                className="text-dark hover:bg-rule/25 hover:text-ink dark:text-night-muted dark:hover:bg-night-raised dark:hover:text-night-text p-2 transition-colors"
                 title="Details anzeigen"
               >
                 <EyeIcon className="h-4 w-4" />
               </Link>
               <Link
                 href={`/dashboard/history-timeline/${row.original.id}/edit`}
-                className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
+                className="text-dark hover:bg-rule/25 hover:text-ink dark:text-night-muted dark:hover:bg-night-raised dark:hover:text-night-text p-2 transition-colors"
                 title="Bearbeiten"
               >
                 <PencilIcon className="h-4 w-4" />
@@ -204,7 +202,7 @@ export default function DashboardHistoryTimelinePage() {
                   handleDelete(row.original.id, row.original.title)
                 }
                 disabled={deletingId === row.original.id}
-                className="rounded p-1.5 text-red-500 transition-colors hover:bg-red-50 hover:text-red-700 disabled:opacity-50 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                className="p-2 text-red-600 transition-colors hover:bg-red-50 hover:text-red-700 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-900/20"
                 title="Löschen"
               >
                 {deletingId === row.original.id ? (
@@ -223,8 +221,8 @@ export default function DashboardHistoryTimelinePage() {
 
   if (isPending || profileLoading || historyLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
@@ -244,7 +242,7 @@ export default function DashboardHistoryTimelinePage() {
       actions={
         <Link
           href="/dashboard/history-timeline/new"
-          className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
+          className="bg-ink text-paper hover:bg-dark dark:bg-night-text dark:text-night dark:hover:bg-night-muted semi-condensed inline-flex min-h-11 items-center gap-2 px-4 py-2.5 font-semibold transition-colors"
         >
           <Plus className="h-5 w-5" />
           Neues Ereignis
@@ -261,16 +259,16 @@ export default function DashboardHistoryTimelinePage() {
         initialSorting={[{ id: "year", desc: true }]}
         emptyState={
           <>
-            <ClockIcon className="dark:text-dark-muted mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="dark:text-dark-text mt-4 mb-2 text-lg font-semibold text-gray-900">
+            <ClockIcon className="text-dark dark:text-night-muted mx-auto h-12 w-12" />
+            <h3 className="condensed text-ink dark:text-night-text mt-4 mb-2 text-lg font-bold">
               Keine Ereignisse gefunden
             </h3>
-            <p className="dark:text-dark-muted mb-6 text-gray-600">
+            <p className="text-dark dark:text-night-muted mb-6">
               Erstelle das erste Ereignis, um es hier anzuzeigen.
             </p>
             <Link
               href="/dashboard/history-timeline/new"
-              className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
+              className="bg-ink text-paper hover:bg-dark dark:bg-night-text dark:text-night dark:hover:bg-night-muted semi-condensed inline-flex min-h-11 items-center gap-2 px-4 py-2.5 font-semibold transition-colors"
             >
               <Plus className="h-5 w-5" />
               Ereignis erstellen

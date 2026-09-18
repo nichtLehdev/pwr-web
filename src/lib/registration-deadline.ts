@@ -1,17 +1,17 @@
+import { berlinDate, berlinParts } from "@/lib/berlin-time";
+
 /**
- * Registration deadlines are inclusive of their whole calendar day: a
- * deadline of "10. August" accepts registrations until 10.08. 23:59:59.
- *
- * Stored values may carry any time-of-day (legacy rows were saved as
- * midnight, newer ones as end-of-day), so every comparison must go through
- * these helpers instead of comparing the raw timestamp.
+ * Deadlines include their whole calendar day. Stored times vary (midnight or end-of-day),
+ * so always compare through these helpers, never the raw timestamp.
  */
 
-/** End of the deadline's calendar day (23:59:59.999 local time). */
+/**
+ * Ende des Fristtages, 23:59:59.999 deutscher Zeit. Nicht `setHours`: der Server
+ * läuft in UTC, maßgeblich ist der deutsche Kalendertag.
+ */
 export function deadlineEndOfDay(deadline: Date | string): Date {
-  const end = new Date(deadline);
-  end.setHours(23, 59, 59, 999);
-  return end;
+  const { year, month, day } = berlinParts(deadline);
+  return new Date(berlinDate(year, month, day + 1).getTime() - 1);
 }
 
 export function isRegistrationDeadlinePassed(

@@ -4,6 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/trpc/react";
 import { BellIcon, CheckCheckIcon } from "lucide-react";
+import { formatBerlin } from "@/lib/berlin-time";
+
+/** Gleiche Bausteine wie die Navigation, in der die Glocke steht. */
+const ICON_BUTTON =
+  "text-ink hover:bg-ink hover:text-paper dark:text-night-text dark:hover:bg-night-text dark:hover:text-night relative inline-flex h-11 w-11 items-center justify-center transition-colors";
+const PANEL =
+  "border-ink bg-paper dark:border-night-rule dark:bg-night-raised absolute top-full right-0 z-50 mt-2 w-80 border-2 sm:w-96";
 
 function formatRelativeTime(date: Date | string): string {
   const diffMs = Date.now() - new Date(date).getTime();
@@ -15,16 +22,12 @@ function formatRelativeTime(date: Date | string): string {
   const days = Math.floor(hours / 24);
   if (days === 1) return "gestern";
   if (days < 7) return `vor ${days} Tagen`;
-  return new Intl.DateTimeFormat("de-DE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  }).format(new Date(date));
+  return formatBerlin(date, "datumZweistellig");
 }
 
 /**
- * Header notification bell with unread badge and dropdown. Only rendered for
- * logged-in users (the parent guards on session).
+ * Nur für angemeldete Nutzer (die Navigation prüft die Sitzung). Zähler in Tinte auf Orange —
+ * Papier auf Orange fiele beim Kontrast durch.
  */
 export default function NotificationBell() {
   const [open, setOpen] = useState(false);
@@ -84,28 +87,29 @@ export default function NotificationBell() {
             ? `Benachrichtigungen (${unreadCount} ungelesen)`
             : "Benachrichtigungen"
         }
-        className="text-dark dark:text-dark-text hover:text-primary dark:hover:text-primary dark:hover:bg-dark-background-secondary relative rounded-md p-2 transition-colors hover:bg-gray-100"
+        aria-expanded={open}
+        className={ICON_BUTTON}
       >
-        <BellIcon className="h-5 w-5" />
+        <BellIcon className="h-5 w-5" aria-hidden />
         {unreadCount > 0 && (
-          <span className="bg-primary absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold text-white">
+          <span className="semi-condensed bg-primary text-ink absolute top-1.5 right-1.5 flex h-4 min-w-4 items-center justify-center px-1 text-[10px] leading-none font-bold">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="dark:bg-dark-surface dark:border-dark-border absolute right-0 z-50 mt-2 w-80 rounded-lg border border-gray-200 bg-white shadow-lg sm:w-96">
-          <div className="dark:border-dark-border flex items-center justify-between border-b border-gray-200 px-4 py-2.5">
-            <p className="dark:text-dark-text text-sm font-semibold text-gray-900">
+        <div className={PANEL}>
+          <div className="border-rule dark:border-night-rule flex items-center justify-between gap-3 border-b px-4 py-2.5">
+            <p className="semi-condensed text-ink dark:text-night-text text-base font-semibold">
               Benachrichtigungen
             </p>
             {unreadCount > 0 && (
               <button
                 onClick={() => markAllRead.mutate()}
-                className="text-primary flex items-center gap-1 text-xs font-medium hover:underline"
+                className="link-ink inline-flex min-h-8 shrink-0 items-center gap-1.5 text-sm"
               >
-                <CheckCheckIcon className="h-3.5 w-3.5" />
+                <CheckCheckIcon className="h-4 w-4" aria-hidden />
                 Alle gelesen
               </button>
             )}
@@ -113,33 +117,45 @@ export default function NotificationBell() {
 
           <div className="max-h-96 overflow-y-auto">
             {!data || data.notifications.length === 0 ? (
-              <p className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-dark dark:text-night-muted px-4 py-8 text-center text-sm">
                 Keine Benachrichtigungen
               </p>
             ) : (
-              <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+              <ul>
                 {data.notifications.map((notification) => (
-                  <li key={notification.id}>
+                  <li
+                    key={notification.id}
+                    className="fill-row border-rule dark:border-night-rule border-b last:border-b-0"
+                  >
                     <button
                       onClick={() => handleOpen(notification)}
-                      className={`dark:hover:bg-dark-background-secondary block w-full px-4 py-3 text-left transition-colors hover:bg-gray-50 ${
-                        notification.readAt ? "opacity-70" : ""
-                      }`}
+                      className="block w-full px-4 py-3 text-left"
                     >
-                      <span className="flex items-start gap-2">
-                        {!notification.readAt && (
-                          <span className="bg-primary mt-1.5 h-2 w-2 shrink-0 rounded-full" />
-                        )}
+                      <span className="flex items-start gap-2.5">
+                        <span
+                          aria-hidden
+                          className={`mt-2 h-2 w-2 shrink-0 ${
+                            notification.readAt
+                              ? "bg-transparent"
+                              : "bg-ink dark:bg-night-text"
+                          }`}
+                        />
                         <span className="min-w-0">
-                          <span className="dark:text-dark-text block text-sm font-medium text-gray-900">
+                          <span
+                            className={`text-ink dark:text-night-text block text-sm ${
+                              notification.readAt
+                                ? "font-medium"
+                                : "font-semibold"
+                            }`}
+                          >
                             {notification.title}
                           </span>
                           {notification.body && (
-                            <span className="block truncate text-xs text-gray-500 dark:text-gray-400">
+                            <span className="text-dark dark:text-night-muted block truncate text-xs">
                               {notification.body}
                             </span>
                           )}
-                          <span className="mt-0.5 block text-xs text-gray-400 dark:text-gray-500">
+                          <span className="text-dark dark:text-night-muted mt-0.5 block text-xs">
                             {formatRelativeTime(notification.createdAt)}
                           </span>
                         </span>

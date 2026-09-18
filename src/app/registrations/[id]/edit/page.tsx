@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type ReactNode } from "react";
 import { ParticipantCard } from "@/app/_components/events/course-registration-form/participant-card";
 import { ParticipantEditor } from "@/app/_components/events/course-registration-form/participant-editor";
 import { ParticipantSheet } from "@/app/_components/events/course-registration-form/participant-sheet";
@@ -17,7 +17,7 @@ import Link from "next/link";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { RegistrationStatus } from "~/generated/prisma/enums";
-import { getErrorMessage } from "@/lib/utils";
+import { getErrorMessage, cn } from "@/lib/utils";
 import { useToast } from "@/app/_components/ui/toast";
 import { CircleXIcon, PlusIcon, Info, Users } from "lucide-react";
 import {
@@ -39,6 +39,19 @@ import {
   priceOptionAgeReferenceDate,
   priceOptionIdForAge,
 } from "@/lib/course-price-option-age";
+import { formatEuro } from "@/lib/invoice-document";
+import PublicPage from "@/app/_components/general/public-page";
+import { headMeta } from "@/app/_components/programmheft/page-head";
+import { PageSection } from "@/app/_components/programmheft/page-section";
+import { Heading } from "@/app/_components/programmheft/section-head";
+import { Note } from "@/app/_components/programmheft/note";
+import {
+  FieldLabel,
+  Checkbox,
+  fieldControlClasses,
+} from "@/app/_components/programmheft/field";
+import { ValueTable } from "@/app/_components/programmheft/value-table";
+import { formatBerlin } from "@/lib/berlin-time";
 
 interface Participant {
   id: string;
@@ -71,6 +84,27 @@ function getReturnToPath(searchParams: URLSearchParams): string | null {
   const path = returnTo.startsWith("/") ? returnTo : `/${returnTo}`;
   if (!path.startsWith("/dashboard")) return null;
   return path;
+}
+
+const BTN_PRIMARY =
+  "bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-primary dark:text-ink dark:hover:bg-paper semi-condensed inline-flex min-h-12 items-center justify-center gap-2 px-6 text-base font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60";
+const BTN_OUTLINE =
+  "border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night semi-condensed inline-flex min-h-12 items-center justify-center gap-2 border-2 px-6 text-base font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60";
+
+/** Bezeichnung über einem schreibgeschützten Wert. */
+function InfoField({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <div>
+      <p className={headMeta.label}>{label}</p>
+      <p className="text-ink dark:text-night-text mt-1">{children}</p>
+    </div>
+  );
 }
 
 export default function EditRegistrationPage() {
@@ -131,11 +165,25 @@ export default function EditRegistrationPage() {
       { enabled: !!session?.user && !!registrationId },
     );
 
-  const { data: availability, isLoading: availabilityLoading } =
+  const { data: publicAvailability, isLoading: availabilityLoading } =
     api.courses.getAvailableSlots.useQuery(
       { id: registration?.course?.id ?? "" },
       { enabled: !!registration?.course?.id },
     );
+  // Öffentliche Plätze zählen ohne die, die Wartenden zustehen. Das Kursteam darf
+  // freie Plätze trotzdem vergeben und sieht die tatsächlichen (wie der Server).
+  const { data: teamOverview, isLoading: teamOverviewLoading } =
+    api.registrations.getWaitlistOverview.useQuery(
+      { courseId: registration?.course?.id ?? "" },
+      {
+        enabled: !!registration?.course?.id && !!management?.isStaff,
+        staleTime: 0,
+      },
+    );
+  const availability =
+    management?.isStaff && teamOverview
+      ? teamOverview.seats
+      : publicAvailability;
 
   const updateMutation = api.registrations.updateMyRegistration.useMutation({
     onSuccess: () => {
@@ -185,9 +233,7 @@ export default function EditRegistrationPage() {
     if (registration?.participants && registration?.course?.priceOptions) {
       setParticipants(
         registration.participants.map((p) => {
-          // Über die id, nicht über das Label: bei zwei gleichnamigen
-          // Kategorien hätte der Label-Treffer die Anmeldung beim Speichern
-          // stillschweigend auf die andere (und deren Preis) umgestellt.
+          // Über die id, nicht über das Label: Zwei Kategorien dürfen gleich heißen.
           const priceOption = resolveParticipantPriceOption(
             p,
             registration.course.priceOptions,
@@ -255,10 +301,9 @@ export default function EditRegistrationPage() {
   const canEdit = management?.canEdit ?? (isOwner && canEditRegistration());
   const canCancel = management?.canCancel ?? isOwner;
 
-  // Mit Anzahlung bleibt die Teilnehmerzahl dem Kursteam vorbehalten — und
-  // hängt der Betrag an der Kategorie, auch die Kategorien. Eine Anmeldung ohne
-  // Anzahlung darf keine Kategorie mit Anzahlung dazubuchen. Der Server prüft
-  // dasselbe (registrantEditViolation).
+  // Mit Anzahlung ändert nur das Kursteam die Teilnehmerzahl (bei TICKET auch die
+  // Kategorien); ohne Anzahlung keine Kategorie mit Anzahlung dazubuchen.
+  // Der Server prüft dasselbe (registrantEditViolation).
   const hasDownPayment = !!registration?.downPaymentAmount;
   const participantsLocked = !isStaff && hasDownPayment;
   const ticketsLocked =
@@ -270,18 +315,20 @@ export default function EditRegistrationPage() {
     downPaymentForPriceOption(registration.course, optionId) > 0;
 
   const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString("de-DE", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
+    return formatBerlin(date, "datumZweistellig");
   };
 
   const activeParticipants = participants.filter((p) => !p.isDeleted);
 
+  // Plätze belegt nur eine bestätigte Anmeldung; auf der Warteliste prüft sie erst
+  // das Nachrücken (wie der Server).
+  const holdsSeats =
+    registration?.registrationStatus === RegistrationStatus.CONFIRMED;
+
   const canAddParticipant = () => {
     if (!availability) return false;
     if (participantsLocked) return false;
+    if (!holdsSeats) return true;
     const currentActive = activeParticipants.length;
     const originalCount = registration?.participants.length ?? 0;
     const netNew = currentActive - originalCount;
@@ -294,6 +341,7 @@ export default function EditRegistrationPage() {
   };
 
   const isPriceOptionAvailable = (priceOptionId: string) => {
+    if (!holdsSeats) return true;
     if (
       !availability?.capacityByPriceOption ||
       !registration?.course?.priceOptions
@@ -305,8 +353,7 @@ export default function EditRegistrationPage() {
     );
     if (!priceOption) return false;
 
-    // Nach id nachschlagen: zwei Kategorien dürfen dasselbe Label tragen, und
-    // über das Label bekam die eine die Restplätze der anderen.
+    // Nach id nachschlagen: Zwei Kategorien dürfen dasselbe Label tragen.
     const available = availability.capacityByPriceOption[priceOption.id];
     if (available === undefined) return true;
 
@@ -333,8 +380,7 @@ export default function EditRegistrationPage() {
         id,
         firstName: "",
         lastName: "",
-        // Not `new Date()`: today is never a valid birthdate, so prefilling it
-        // handed the registrant an invalid value they had not entered.
+        // Not `new Date()`: today is never a valid birthdate.
         birthDate: null,
         city: "",
         instrument: null,
@@ -374,13 +420,9 @@ export default function EditRegistrationPage() {
         if (p.id !== participantId) return p;
         const next = { ...p, [field]: value };
 
-        // Ein neues Geburtsdatum kann die gewählte Kategorie aus ihrer
-        // Altersgrenze fallen lassen. Bleibt genau eine passende übrig, wird
-        // sie gesetzt; sonst bleibt die bisherige und die Prüfung meldet es.
-        //
-        // Nicht für das Kursteam: dort ist eine Kategorie außerhalb der
-        // Altersgrenze eine Absicht, und ein korrigierter Tippfehler im
-        // Geburtsdatum soll nicht stillschweigend den Preis ändern.
+        // Passt nach neuem Geburtsdatum genau eine Kategorie, wird sie gesetzt; sonst
+        // meldet es die Prüfung. Nicht fürs Kursteam: Dort ist eine Kategorie außerhalb
+        // der Altersgrenze Absicht, der Preis soll sich nicht stillschweigend ändern.
         if (field === "birthDate" && !isStaff && registration?.course) {
           next.priceOptionId =
             priceOptionIdForAge(
@@ -419,10 +461,7 @@ export default function EditRegistrationPage() {
     }, 0);
   };
 
-  /**
-   * Same shared rule the server applies when it saves the edit, so the price
-   * shown here is the price that ends up on the registration.
-   */
+  /** Same shared rule the server applies on save, so the shown price is the saved one. */
   const siblingDiscountInput = () =>
     activeParticipants.map((participant) => ({
       birthDate: participant.birthDate,
@@ -518,11 +557,7 @@ export default function EditRegistrationPage() {
 
   const hasSiblingGroups = activeParticipants.some((p) => p.siblingGroupId);
 
-  /**
-   * Required fields a participant is still missing, in the key vocabulary
-   * `ParticipantEditor` uses for its red borders (`customField:<name>` for the
-   * course's own fields).
-   */
+  /** Missing required fields, in `ParticipantEditor`'s key vocabulary (`customField:<name>`). */
   const participantMissingFields = (participant: Participant): string[] => {
     const missing: string[] = [];
     if (!participant.firstName?.trim()) missing.push("firstName");
@@ -549,19 +584,16 @@ export default function EditRegistrationPage() {
   };
 
   /**
-   * Altersgrenze der gewählten Preiskategorie, oder undefined wenn sie passt.
-   * Für das Kursteam immer undefined: es darf eine Kategorie bewusst entgegen
-   * ihrer Grenze vergeben, genau wie der Server es zulässt.
+   * Altersgrenze der gewählten Preiskategorie, oder undefined wenn sie passt. Fürs
+   * Kursteam immer undefined: Es darf eine Kategorie bewusst entgegen ihrer Grenze vergeben.
    */
   const participantAgeError = (
     participant: Participant,
   ): string | undefined => {
     if (isStaff || !registration?.course) return undefined;
 
-    // Wer in dieser Kategorie schon angemeldet ist, bleibt es — auch wenn ihre
-    // Altersgrenze nachträglich enger gezogen wurde. Sonst ließe sich die
-    // Anmeldung nicht einmal mehr in einem anderen Feld ändern. Der Server
-    // lässt dieselbe Ausnahme zu.
+    // Wer schon in dieser Kategorie steht, bleibt es, auch bei nachträglich engerer
+    // Altersgrenze — sonst wäre die Anmeldung gar nicht mehr änderbar (wie der Server).
     const booked = registration.participants.find(
       (p) => p.id === participant.id,
     );
@@ -585,11 +617,7 @@ export default function EditRegistrationPage() {
     );
   };
 
-  /**
-   * One line describing what is wrong with a participant, or undefined when it
-   * is complete. Computed on every render rather than only on submit, so the
-   * card badges say which person still needs attention before you try to save.
-   */
+  /** What is wrong with a participant, or undefined; on every render so card badges show it before saving. */
   const participantError = (participant: Participant): string | undefined => {
     if (participant.birthDate && participant.birthDate >= new Date()) {
       return "Geburtsdatum muss in der Vergangenheit liegen";
@@ -611,12 +639,8 @@ export default function EditRegistrationPage() {
       : 1;
 
   /**
-   * The list split into sibling groups and lone participants, so members of a
-   * group sit together instead of wherever they happen to fall in the list.
-   *
-   * A group takes the position of its first member, which keeps the rest of
-   * the order as the registrant entered it. Display only — `participants`
-   * keeps its own order for saving.
+   * Sibling groups together, each at its first member's position. Display only —
+   * `participants` keeps its own order for saving.
    */
   const participantBlocks: { key: string; members: Participant[] }[] = [];
   const placed = new Set<string>();
@@ -648,11 +672,7 @@ export default function EditRegistrationPage() {
     setDoneAttempted(false);
   };
 
-  /**
-   * "Fertig" only closes a participant that is complete. On an incomplete one
-   * it reveals what is missing and stays put — the X, the backdrop and Escape
-   * still leave, so nobody is stuck with a half-filled form.
-   */
+  /** "Fertig" only closes a complete participant; X, backdrop and Escape always leave. */
   const finishEditing = () => {
     if (editingParticipant && participantError(editingParticipant)) {
       setDoneAttempted(true);
@@ -755,7 +775,7 @@ export default function EditRegistrationPage() {
       birthDate: p.birthDate as Date,
       city: p.city,
       instrument: p.instrument ?? undefined,
-      priceOptionId: p.priceOptionId || "", // Ensure priceOptionId is never undefined
+      priceOptionId: p.priceOptionId || "",
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       customFields: p.customFields as any,
       siblingGroupId: p.siblingGroupId ?? undefined,
@@ -786,40 +806,38 @@ export default function EditRegistrationPage() {
     sessionLoading ||
     registrationLoading ||
     waitingForManagement ||
-    availabilityLoading
+    availabilityLoading ||
+    (isStaff && teamOverviewLoading)
   ) {
     return (
-      <div className="bg-background-secondary dark:bg-dark-background-secondary flex min-h-[calc(100vh-4rem)] items-center justify-center">
-        <div className="text-dark dark:text-dark-text">Lädt...</div>
+      <div className="bg-paper dark:bg-night text-ink dark:text-night-text flex min-h-[calc(100vh-4rem)] items-center justify-center">
+        <p className="semi-condensed text-lg font-semibold">Lädt...</p>
       </div>
     );
   }
 
   if (!registration) {
     return (
-      <div className="bg-background-secondary dark:bg-dark-background-secondary flex min-h-[calc(100vh-4rem)] items-center justify-center">
-        <div className="max-w-md px-4 text-center">
-          <h1 className="text-dark dark:text-dark-text mb-4 text-2xl font-bold">
+      <div className="bg-paper dark:bg-night text-ink dark:text-night-text flex min-h-[calc(100vh-4rem)] items-center justify-center px-4">
+        <div className="max-w-md text-center">
+          <h1 className="condensed text-[1.75rem] leading-none font-extrabold">
             Anmeldung nicht gefunden
           </h1>
           {isGuestAccess ? (
             <>
-              <p className="mb-4 text-gray-600 dark:text-gray-400">
+              <p className="text-dark dark:text-night-muted mt-4">
                 Dieser Zugangslink ist ungültig oder abgelaufen. Du kannst dir
                 jederzeit einen neuen Link schicken lassen.
               </p>
               <Link
                 href="/anmeldung-verwalten"
-                className="text-primary hover:text-primary-dark"
+                className="link-ink mt-4 inline-block"
               >
                 Neuen Zugangslink anfordern
               </Link>
             </>
           ) : (
-            <Link
-              href={backHref}
-              className="text-primary hover:text-primary-dark"
-            >
+            <Link href={backHref} className="link-ink mt-4 inline-block">
               Zurück zur Übersicht
             </Link>
           )}
@@ -830,19 +848,16 @@ export default function EditRegistrationPage() {
 
   if (!canView) {
     return (
-      <div className="bg-background-secondary dark:bg-dark-background-secondary flex min-h-[calc(100vh-4rem)] items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-dark dark:text-dark-text mb-4 text-2xl font-bold">
+      <div className="bg-paper dark:bg-night text-ink dark:text-night-text flex min-h-[calc(100vh-4rem)] items-center justify-center px-4">
+        <div className="max-w-md text-center">
+          <h1 className="condensed text-[1.75rem] leading-none font-extrabold">
             Keine Berechtigung
           </h1>
-          <p className="mb-4 text-gray-600 dark:text-gray-400">
+          <p className="text-dark dark:text-night-muted mt-4">
             Du kannst nur deine eigenen Anmeldungen oder Anmeldungen zu Kursen
             bearbeiten, für die du Admin, Kursleitung oder Ersteller:in bist.
           </p>
-          <Link
-            href={backHref}
-            className="text-primary hover:text-primary-dark"
-          >
+          <Link href={backHref} className="link-ink mt-4 inline-block">
             Zurück zur Übersicht
           </Link>
         </div>
@@ -852,19 +867,16 @@ export default function EditRegistrationPage() {
 
   if (!canEdit) {
     return (
-      <div className="bg-background-secondary dark:bg-dark-background-secondary flex min-h-[calc(100vh-4rem)] items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-dark dark:text-dark-text mb-4 text-2xl font-bold">
+      <div className="bg-paper dark:bg-night text-ink dark:text-night-text flex min-h-[calc(100vh-4rem)] items-center justify-center px-4">
+        <div className="max-w-md text-center">
+          <h1 className="condensed text-[1.75rem] leading-none font-extrabold">
             Bearbeitung nicht möglich
           </h1>
-          <p className="mb-4 text-gray-600 dark:text-gray-400">
+          <p className="text-dark dark:text-night-muted mt-4">
             Diese Anmeldung kann nicht mehr bearbeitet werden, da die Frist
             abgelaufen ist oder der Kurs bereits begonnen hat.
           </p>
-          <Link
-            href={backHref}
-            className="text-primary hover:text-primary-dark"
-          >
+          <Link href={backHref} className="link-ink mt-4 inline-block">
             Zurück zur Übersicht
           </Link>
         </div>
@@ -873,549 +885,511 @@ export default function EditRegistrationPage() {
   }
 
   return (
-    <div className="bg-background-secondary dark:bg-dark-background-secondary min-h-[calc(100vh-4rem)] px-4 py-8">
-      <div className="container mx-auto max-w-4xl">
-        {/* Header */}
-        <div className="mb-8">
+    <PublicPage
+      title="Anmeldung bearbeiten"
+      breadcrumbs={[
+        { label: "Start", href: "/" },
+        {
+          label: returnTo
+            ? "Teilnehmer"
+            : isGuestAccess
+              ? "Meine Anmeldung"
+              : "Meine Anmeldungen",
+          href: backHref,
+        },
+        { label: "Bearbeiten" },
+      ]}
+      heroSize="compact"
+      description={<p>{registration.course.title}</p>}
+    >
+      <PageSection>
+        <div className="space-y-10">
           {isStaff && (
-            <div className="mb-6 flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 dark:border-blue-800 dark:bg-blue-900/25">
-              <Info className="h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400" />
-              <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
+            <Note tone="info">
+              <p className="flex items-start gap-2">
+                <Info className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
                 Du bearbeitest diese Anmeldung als Kursleitung / Admin.
               </p>
-            </div>
+            </Note>
           )}
-          <nav className="mb-4 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-            <Link
-              href={backHref}
-              className="hover:text-primary transition-colors"
-            >
-              {returnTo
-                ? "Teilnehmer"
-                : isGuestAccess
-                  ? "Meine Anmeldung"
-                  : "Meine Anmeldungen"}
-            </Link>
-            <span>/</span>
-            <span className="text-dark dark:text-dark-text">Bearbeiten</span>
-          </nav>
-          <h1 className="text-dark dark:text-dark-text text-3xl font-bold">
-            Anmeldung bearbeiten
-          </h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
-            {registration.course.title}
-          </p>
-        </div>
 
-        {/* Course Info Card */}
-        <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="text-dark dark:text-dark-text mb-4 text-lg font-semibold">
-            Kursdetails
-          </h2>
-          <div className="grid gap-4 text-sm md:grid-cols-2">
-            <div>
-              <span className="font-medium text-gray-700 dark:text-gray-300">
-                Zeitraum:
-              </span>
-              <p className="text-gray-600 dark:text-gray-400">
-                {formatDate(registration.course.startDate)} -{" "}
+          <div>
+            <Heading as="h2" size="list" rule>
+              Kursdetails
+            </Heading>
+            <div className="mt-4 grid gap-6 text-sm sm:grid-cols-2">
+              <InfoField label="Zeitraum">
+                {formatDate(registration.course.startDate)} –{" "}
                 {formatDate(registration.course.endDate)}
-              </p>
-            </div>
-            {registration.course.location && (
-              <div>
-                <span className="font-medium text-gray-700 dark:text-gray-300">
-                  Ort:
-                </span>
-                <p className="text-gray-600 dark:text-gray-400">
+              </InfoField>
+              {registration.course.location && (
+                <InfoField label="Ort">
                   {registration.course.location.name},{" "}
                   {registration.course.location.city}
-                </p>
-              </div>
-            )}
-            <div>
-              <span className="font-medium text-gray-700 dark:text-gray-300">
-                Verfügbare Plätze:
-              </span>
-              <p
-                className={`${availability?.isFull ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"}`}
-              >
+                </InfoField>
+              )}
+              <InfoField label="Verfügbare Plätze">
                 {availability?.availableSlots ?? "?"} von{" "}
                 {availability?.totalCapacity ?? "?"}
-              </p>
-            </div>
-            {registration.course.registrationDeadline && (
-              <div>
-                <span className="font-medium text-gray-700 dark:text-gray-300">
-                  Anmeldefrist:
-                </span>
-                <p className="text-gray-600 dark:text-gray-400">
+              </InfoField>
+              {registration.course.registrationDeadline && (
+                <InfoField label="Anmeldefrist">
                   {formatDate(registration.course.registrationDeadline)}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Error/Success Messages */}
-        {error && (
-          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
-            <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
-          </div>
-        )}
-        {success && (
-          <div className="mb-6 rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
-            <p className="text-sm text-green-800 dark:text-green-300">
-              {success}
-            </p>
-          </div>
-        )}
-
-        {/* Edit Form */}
-        <form onSubmit={handleSubmit}>
-          {/* Registrant Info Section */}
-          <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="text-dark dark:text-dark-text mb-4 text-lg font-semibold">
-              Anmelder
-            </h2>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <label className="text-dark dark:text-dark-text mb-1 block text-sm font-medium">
-                  Name
-                </label>
-                <input
-                  type="text"
-                  value={`${registration.registrantFirstName} ${registration.registrantLastName}`}
-                  disabled
-                  className="dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full cursor-not-allowed rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 opacity-60"
-                />
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  {isGuestAccess ? (
-                    "Name und Adresse können nur vom Kursteam geändert werden – melde dich dafür bitte bei uns"
-                  ) : (
-                    <>
-                      Name und Adresse können in den{" "}
-                      <Link
-                        href="/settings"
-                        className="text-primary hover:underline"
-                      >
-                        Einstellungen
-                      </Link>{" "}
-                      geändert werden
-                    </>
-                  )}
-                </p>
-              </div>
-              <div>
-                <label className="text-dark dark:text-dark-text mb-1 block text-sm font-medium">
-                  E-Mail
-                </label>
-                <input
-                  type="email"
-                  value={registration.registrantEmail}
-                  disabled
-                  className="dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full cursor-not-allowed rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 opacity-60"
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className="text-dark dark:text-dark-text mb-1 block text-sm font-medium">
-                  Telefon
-                </label>
-                <input
-                  type="tel"
-                  value={registrantPhone}
-                  onChange={(e) => setRegistrantPhone(e.target.value)}
-                  maxLength={50}
-                  pattern="[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*"
-                  title="Bitte geben Sie eine gültige Telefonnummer ein"
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
-                  placeholder="Optional"
-                />
-              </div>
+                </InfoField>
+              )}
             </div>
           </div>
 
-          {/* Billing Address Section */}
-          <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-dark dark:text-dark-text text-lg font-semibold">
-                Rechnungsadresse
-              </h2>
-              <label className="flex cursor-pointer items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={useSeparateBilling}
-                  onChange={(e) => setUseSeparateBilling(e.target.checked)}
-                  className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
-                />
-                <span className="text-sm text-gray-700 dark:text-gray-300">
-                  Abweichende Rechnungsadresse
-                </span>
-              </label>
-            </div>
+          {error && (
+            <Note tone="error">
+              <p>{error}</p>
+            </Note>
+          )}
+          {success && (
+            <Note tone="info">
+              <p>{success}</p>
+            </Note>
+          )}
 
-            {useSeparateBilling ? (
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="md:col-span-2">
-                  <label className="text-dark dark:text-dark-text mb-1 block text-sm font-medium">
-                    Firma/Organisation
-                  </label>
+          <form onSubmit={handleSubmit} className="space-y-10">
+            <div>
+              <Heading as="h2" size="list" rule>
+                Anmelder
+              </Heading>
+              <div className="mt-4 grid gap-6 sm:grid-cols-2">
+                <div>
+                  <FieldLabel htmlFor="registrantName">Name</FieldLabel>
                   <input
+                    id="registrantName"
                     type="text"
-                    value={billingData.billingCompany}
-                    onChange={(e) =>
-                      setBillingData({
-                        ...billingData,
-                        billingCompany: e.target.value,
-                      })
-                    }
-                    maxLength={200}
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
+                    value={`${registration.registrantFirstName} ${registration.registrantLastName}`}
+                    disabled
+                    className={cn(fieldControlClasses, "cursor-not-allowed")}
+                  />
+                  <p className="text-dark dark:text-night-muted mt-2 text-xs">
+                    {isGuestAccess ? (
+                      "Name und Adresse können nur vom Kursteam geändert werden – melde dich dafür bitte bei uns"
+                    ) : (
+                      <>
+                        Name und Adresse können in den{" "}
+                        <Link href="/settings" className="link-ink">
+                          Einstellungen
+                        </Link>{" "}
+                        geändert werden
+                      </>
+                    )}
+                  </p>
+                </div>
+                <div>
+                  <FieldLabel htmlFor="registrantEmail">E-Mail</FieldLabel>
+                  <input
+                    id="registrantEmail"
+                    type="email"
+                    value={registration.registrantEmail}
+                    disabled
+                    className={cn(fieldControlClasses, "cursor-not-allowed")}
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <FieldLabel htmlFor="registrantPhone">Telefon</FieldLabel>
+                  <input
+                    id="registrantPhone"
+                    type="tel"
+                    value={registrantPhone}
+                    onChange={(e) => setRegistrantPhone(e.target.value)}
+                    maxLength={50}
+                    pattern="[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*"
+                    title="Bitte geben Sie eine gültige Telefonnummer ein"
+                    className={fieldControlClasses}
                     placeholder="Optional"
                   />
                 </div>
-                <div>
-                  <label className="text-dark dark:text-dark-text mb-1 block text-sm font-medium">
-                    Vorname *
-                  </label>
-                  <input
-                    type="text"
-                    value={billingData.billingFirstName}
-                    onChange={(e) =>
-                      setBillingData({
-                        ...billingData,
-                        billingFirstName: e.target.value,
-                      })
-                    }
-                    maxLength={100}
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="text-dark dark:text-dark-text mb-1 block text-sm font-medium">
-                    Nachname *
-                  </label>
-                  <input
-                    type="text"
-                    value={billingData.billingLastName}
-                    onChange={(e) =>
-                      setBillingData({
-                        ...billingData,
-                        billingLastName: e.target.value,
-                      })
-                    }
-                    maxLength={100}
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
-                    required
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="text-dark dark:text-dark-text mb-1 block text-sm font-medium">
-                    Straße und Hausnummer *
-                  </label>
-                  <input
-                    type="text"
-                    value={billingData.billingStreet}
-                    onChange={(e) =>
-                      setBillingData({
-                        ...billingData,
-                        billingStreet: e.target.value,
-                      })
-                    }
-                    maxLength={200}
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="text-dark dark:text-dark-text mb-1 block text-sm font-medium">
-                    PLZ *
-                  </label>
-                  <input
-                    type="text"
-                    value={billingData.billingZipCode}
-                    onChange={(e) =>
-                      setBillingData({
-                        ...billingData,
-                        billingZipCode: e.target.value,
-                      })
-                    }
-                    maxLength={20}
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="text-dark dark:text-dark-text mb-1 block text-sm font-medium">
-                    Stadt *
-                  </label>
-                  <input
-                    type="text"
-                    value={billingData.billingCity}
-                    onChange={(e) =>
-                      setBillingData({
-                        ...billingData,
-                        billingCity: e.target.value,
-                      })
-                    }
-                    maxLength={100}
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
-                    required
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="text-dark dark:text-dark-text mb-1 block text-sm font-medium">
-                    E-Mail für Rechnung *
-                  </label>
-                  <input
-                    type="email"
-                    value={billingData.billingEmail}
-                    onChange={(e) =>
-                      setBillingData({
-                        ...billingData,
-                        billingEmail: e.target.value,
-                      })
-                    }
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
-                    required
-                  />
-                </div>
               </div>
-            ) : (
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Die Rechnung wird an die E-Mail-Adresse des Anmelders gesendet.
-              </p>
-            )}
-          </div>
+            </div>
 
-          {/* Participants: a flat list of cards. The old markup nested a
-              max-h/overflow-y-auto box inside the page, which on a phone
-              trapped the scroll and pushed the save bar out of reach. */}
-          <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
-            <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-              <div className="min-w-0">
-                <h2 className="text-dark dark:text-dark-text text-lg font-semibold">
-                  Teilnehmer ({activeParticipants.length})
-                </h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Zum Bearbeiten auf eine Person tippen.
-                </p>
-                {participantsLocked && (
-                  <p className="mt-1 text-sm text-amber-700 dark:text-amber-400">
-                    Für diese Anmeldung ist eine Anzahlung vereinbart.
-                    Teilnehmer hinzufügen oder entfernen
-                    {ticketsLocked ? " und Preiskategorien ändern" : ""} kann
-                    nur das Kursteam.
-                  </p>
-                )}
+            <div>
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <Heading as="h2" size="list" rule className="flex-1">
+                  Rechnungsadresse
+                </Heading>
               </div>
-              <button
-                type="button"
-                onClick={addParticipant}
-                disabled={!canAddParticipant()}
-                className="bg-primary hover:bg-primary-dark inline-flex min-h-11 items-center gap-2 rounded-lg px-4 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+              <Checkbox
+                id="useSeparateBilling"
+                checked={useSeparateBilling}
+                onChange={(e) => setUseSeparateBilling(e.target.checked)}
+                className="mt-4"
               >
-                <PlusIcon className="h-5 w-5 shrink-0" />
-                Hinzufügen
-              </button>
-            </div>
+                Abweichende Rechnungsadresse
+              </Checkbox>
 
-            <div className="space-y-4">
-              {participantBlocks.map((block) => {
-                const isGroup = block.members.length > 1;
-                const cards = block.members.map((participant) => (
-                  <ParticipantCard
-                    key={participant.id}
-                    participant={participant}
-                    index={orderedParticipants.findIndex(
-                      (p) => p.id === participant.id,
-                    )}
-                    priceOptions={registration.course.priceOptions}
-                    validationError={participantError(participant)}
-                    siblingGroupSize={siblingGroupSize(participant)}
-                    badge={participant.isNew ? "Neu" : undefined}
-                    canRemove={
-                      activeParticipants.length > 1 && !participantsLocked
-                    }
-                    onEdit={() => openParticipant(participant.id)}
-                    onRemove={() => removeParticipant(participant.id)}
-                  />
-                ));
-
-                if (!isGroup) return <div key={block.key}>{cards}</div>;
-
-                // Tighter spacing inside a group than between blocks, plus one
-                // caption underneath — enough to read as a unit without
-                // wrapping the cards in yet another bordered box.
-                const eligible = hasDiscountEligibleSiblingGroup(block.members);
-                return (
-                  <div key={block.key}>
-                    <div className="space-y-2">{cards}</div>
-                    <p className="mt-2 flex items-start gap-1.5 pl-1 text-xs text-green-700 dark:text-green-400">
-                      <Users className="mt-px h-3.5 w-3.5 shrink-0" />
-                      <span>
-                        Geschwistergruppe:{" "}
-                        {block.members
-                          .map((p) =>
-                            getParticipantDisplayName(
-                              p.firstName,
-                              p.lastName,
-                              p.id,
-                            ),
-                          )
-                          .join(", ")}
-                        {registration.course.allowSiblingDiscount &&
-                          (eligible
-                            ? " — 20% Rabatt ab dem zweiten Kind"
-                            : " — Rabatt erst mit vollständigen Angaben")}
-                      </span>
-                    </p>
+              {useSeparateBilling ? (
+                <div className="mt-6 grid gap-6 sm:grid-cols-2">
+                  <div className="sm:col-span-2">
+                    <FieldLabel htmlFor="billingCompany">
+                      Firma/Organisation
+                    </FieldLabel>
+                    <input
+                      id="billingCompany"
+                      type="text"
+                      value={billingData.billingCompany}
+                      onChange={(e) =>
+                        setBillingData({
+                          ...billingData,
+                          billingCompany: e.target.value,
+                        })
+                      }
+                      maxLength={200}
+                      className={fieldControlClasses}
+                      placeholder="Optional"
+                    />
                   </div>
-                );
-              })}
+                  <div>
+                    <FieldLabel htmlFor="billingFirstName" required>
+                      Vorname
+                    </FieldLabel>
+                    <input
+                      id="billingFirstName"
+                      type="text"
+                      value={billingData.billingFirstName}
+                      onChange={(e) =>
+                        setBillingData({
+                          ...billingData,
+                          billingFirstName: e.target.value,
+                        })
+                      }
+                      maxLength={100}
+                      className={fieldControlClasses}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <FieldLabel htmlFor="billingLastName" required>
+                      Nachname
+                    </FieldLabel>
+                    <input
+                      id="billingLastName"
+                      type="text"
+                      value={billingData.billingLastName}
+                      onChange={(e) =>
+                        setBillingData({
+                          ...billingData,
+                          billingLastName: e.target.value,
+                        })
+                      }
+                      maxLength={100}
+                      className={fieldControlClasses}
+                      required
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <FieldLabel htmlFor="billingStreet" required>
+                      Straße und Hausnummer
+                    </FieldLabel>
+                    <input
+                      id="billingStreet"
+                      type="text"
+                      value={billingData.billingStreet}
+                      onChange={(e) =>
+                        setBillingData({
+                          ...billingData,
+                          billingStreet: e.target.value,
+                        })
+                      }
+                      maxLength={200}
+                      className={fieldControlClasses}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <FieldLabel htmlFor="billingZipCode" required>
+                      PLZ
+                    </FieldLabel>
+                    <input
+                      id="billingZipCode"
+                      type="text"
+                      value={billingData.billingZipCode}
+                      onChange={(e) =>
+                        setBillingData({
+                          ...billingData,
+                          billingZipCode: e.target.value,
+                        })
+                      }
+                      maxLength={20}
+                      className={fieldControlClasses}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <FieldLabel htmlFor="billingCity" required>
+                      Stadt
+                    </FieldLabel>
+                    <input
+                      id="billingCity"
+                      type="text"
+                      value={billingData.billingCity}
+                      onChange={(e) =>
+                        setBillingData({
+                          ...billingData,
+                          billingCity: e.target.value,
+                        })
+                      }
+                      maxLength={100}
+                      className={fieldControlClasses}
+                      required
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <FieldLabel htmlFor="billingEmail" required>
+                      E-Mail für Rechnung
+                    </FieldLabel>
+                    <input
+                      id="billingEmail"
+                      type="email"
+                      value={billingData.billingEmail}
+                      onChange={(e) =>
+                        setBillingData({
+                          ...billingData,
+                          billingEmail: e.target.value,
+                        })
+                      }
+                      className={fieldControlClasses}
+                      required
+                    />
+                  </div>
+                </div>
+              ) : (
+                <p className="text-dark dark:text-night-muted mt-4 text-sm">
+                  Die Rechnung wird an die E-Mail-Adresse des Anmelders
+                  gesendet.
+                </p>
+              )}
             </div>
 
-            {/* Sibling Discount Option: only if at least one group has 2+ siblings */}
-            {registration.course.allowSiblingDiscount &&
-              activeParticipants.length > 1 &&
-              hasSiblingGroups && (
-                <div className="mt-6 space-y-3">
-                  {hasEligibleSiblingGroupForDiscount ? (
-                    <div className="rounded-lg border-2 border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
-                      <label className="flex cursor-pointer items-start gap-3">
-                        <input
-                          type="checkbox"
+            <div>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <Heading as="h2" size="list" rule>
+                    Teilnehmer ({activeParticipants.length})
+                  </Heading>
+                  <p className="text-dark dark:text-night-muted mt-3 text-sm">
+                    Zum Bearbeiten auf eine Person tippen.
+                  </p>
+                  {participantsLocked && (
+                    <p className="text-dark dark:text-night-muted mt-1 text-sm">
+                      Für diese Anmeldung ist eine Anzahlung vereinbart.
+                      Teilnehmer hinzufügen oder entfernen
+                      {ticketsLocked ? " und Preiskategorien ändern" : ""} kann
+                      nur das Kursteam.
+                    </p>
+                  )}
+                  {!isStaff && holdsSeats && availability?.hasWaitingList && (
+                    // Vorrang der Warteliste, wie ihn der Server prüft — hier vorab, damit
+                    // niemand es erst nach dem Absenden erfährt.
+                    <p className="text-dark dark:text-night-muted mt-1 text-sm">
+                      Für diesen Kurs warten Anmeldungen auf der Warteliste.
+                      Freie Plätze, die sie nutzen könnten, gehen zuerst an sie;
+                      Teilnehmer hinzufügen oder die Preiskategorie wechseln
+                      geht nur, soweit die übrigen reichen.
+                    </p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={addParticipant}
+                  disabled={!canAddParticipant()}
+                  className={cn(BTN_PRIMARY, "shrink-0 px-4 text-sm")}
+                >
+                  <PlusIcon className="h-5 w-5 shrink-0" aria-hidden />
+                  Hinzufügen
+                </button>
+              </div>
+
+              <div className="mt-4 space-y-4">
+                {participantBlocks.map((block) => {
+                  const isGroup = block.members.length > 1;
+                  const cards = block.members.map((participant) => (
+                    <ParticipantCard
+                      key={participant.id}
+                      participant={participant}
+                      index={orderedParticipants.findIndex(
+                        (p) => p.id === participant.id,
+                      )}
+                      priceOptions={registration.course.priceOptions}
+                      validationError={participantError(participant)}
+                      siblingGroupSize={siblingGroupSize(participant)}
+                      badge={participant.isNew ? "Neu" : undefined}
+                      canRemove={
+                        activeParticipants.length > 1 && !participantsLocked
+                      }
+                      onEdit={() => openParticipant(participant.id)}
+                      onRemove={() => removeParticipant(participant.id)}
+                    />
+                  ));
+
+                  if (!isGroup) return <div key={block.key}>{cards}</div>;
+
+                  const eligible = hasDiscountEligibleSiblingGroup(
+                    block.members,
+                  );
+                  return (
+                    <div key={block.key}>
+                      <div className="space-y-2">{cards}</div>
+                      <p className="text-dark dark:text-night-muted mt-2 flex items-start gap-1.5 pl-1 text-xs">
+                        <Users
+                          className="mt-px h-3.5 w-3.5 shrink-0"
+                          aria-hidden
+                        />
+                        <span>
+                          Geschwistergruppe:{" "}
+                          {block.members
+                            .map((p) =>
+                              getParticipantDisplayName(
+                                p.firstName,
+                                p.lastName,
+                                p.id,
+                              ),
+                            )
+                            .join(", ")}
+                          {registration.course.allowSiblingDiscount &&
+                            (eligible
+                              ? " — 20% Rabatt ab dem zweiten Kind"
+                              : " — Rabatt erst mit vollständigen Angaben")}
+                        </span>
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {registration.course.allowSiblingDiscount &&
+                activeParticipants.length > 1 &&
+                hasSiblingGroups && (
+                  <div className="mt-6">
+                    {hasEligibleSiblingGroupForDiscount ? (
+                      <Note tone="info">
+                        <Checkbox
+                          id="siblingDiscountApplied"
                           checked={siblingDiscountApplied}
                           onChange={(e) =>
                             setSiblingDiscountApplied(e.target.checked)
                           }
-                          className="mt-1 h-5 w-5 rounded border-gray-300 text-green-600 focus:ring-2 focus:ring-green-500"
-                        />
-                        <div className="flex-1">
-                          <div className="font-semibold text-gray-900 dark:text-gray-100">
+                        >
+                          <span className="font-semibold">
                             Geschwisterkindrabatt beantragen
-                          </div>
-                          <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
+                          </span>
+                          <span className="mt-1 block text-sm">
                             Sie erhalten 20% Rabatt auf die Teilnahmegebühr
                             jedes weiteren Geschwisterkindes ab dem zweiten
                             Kind. Der Rabatt muss noch bestätigt werden.
-                          </p>
+                          </span>
                           {siblingDiscountApplied &&
                             calculateDiscountAmount() > 0 && (
-                              <div className="mt-2 text-sm font-semibold text-green-700 dark:text-green-400">
+                              <span className="mt-2 block text-sm font-semibold">
                                 Ersparnis:{" "}
-                                {calculateDiscountAmount().toFixed(2)} €
-                              </div>
+                                {formatEuro(calculateDiscountAmount())}
+                              </span>
                             )}
-                        </div>
-                      </label>
-                    </div>
-                  ) : (
-                    <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20">
-                      <p className="text-sm text-amber-800 dark:text-amber-200">
-                        Für den Geschwisterkindrabatt müssen mindestens zwei
-                        Geschwister in einer Geschwistergruppe zusammengefasst
-                        sein.
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
-          </div>
-
-          {/* Price Summary: the breakdown gets the full card width on a phone
-              and a fixed column from sm: up. Squeezed into half the card it
-              wrapped the discount label onto three lines and broke the amount
-              itself across two. */}
-          <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <div className="min-w-0">
-                <h2 className="text-dark dark:text-dark-text text-lg font-semibold">
-                  Gesamtpreis
-                </h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Basierend auf {activeParticipants.length} Teilnehmer
-                  {activeParticipants.length !== 1 && "n"}
-                </p>
-              </div>
-              <div className="w-full sm:w-72 sm:shrink-0">
-                {siblingDiscountApplied &&
-                registration.course.allowSiblingDiscount &&
-                calculateDiscountAmount() > 0 ? (
-                  <div className="space-y-2">
-                    <div className="flex items-baseline justify-between gap-3 text-sm">
-                      <span className="text-gray-600 dark:text-gray-400">
-                        Zwischensumme
-                      </span>
-                      <span className="shrink-0 whitespace-nowrap text-gray-900 line-through dark:text-gray-100">
-                        {calculateOriginalPrice().toFixed(2)} €
-                      </span>
-                    </div>
-                    <div className="flex items-baseline justify-between gap-3 text-sm">
-                      <span className="text-green-600 dark:text-green-400">
-                        Geschwisterkindrabatt
-                        <span className="block text-xs">
-                          20% pro weiteres Kind
-                        </span>
-                      </span>
-                      <span className="shrink-0 font-semibold whitespace-nowrap text-green-600 dark:text-green-400">
-                        -{calculateDiscountAmount().toFixed(2)} €
-                      </span>
-                    </div>
-                    <div className="dark:border-dark-border flex items-baseline justify-between gap-3 border-t border-gray-200 pt-2">
-                      <span className="text-dark dark:text-dark-text text-sm font-semibold">
-                        Gesamt
-                      </span>
-                      <span className="text-primary text-2xl font-bold whitespace-nowrap sm:text-3xl">
-                        {calculateTotalPrice().toFixed(2)} €
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      * Der Rabatt muss noch bestätigt werden
-                    </p>
+                        </Checkbox>
+                      </Note>
+                    ) : (
+                      <Note tone="info">
+                        <p>
+                          Für den Geschwisterkindrabatt müssen mindestens zwei
+                          Geschwister in einer Geschwistergruppe zusammengefasst
+                          sein.
+                        </p>
+                      </Note>
+                    )}
                   </div>
-                ) : (
-                  <p className="text-primary text-2xl font-bold whitespace-nowrap sm:text-right sm:text-3xl">
-                    {calculateTotalPrice().toFixed(2)} €
-                  </p>
                 )}
+            </div>
+
+            <div>
+              <Heading as="h2" size="list" rule>
+                Gesamtpreis
+              </Heading>
+              <p className="text-dark dark:text-night-muted mt-3 text-sm">
+                Basierend auf {activeParticipants.length} Teilnehmer
+                {activeParticipants.length !== 1 && "n"}
+              </p>
+              {siblingDiscountApplied &&
+              registration.course.allowSiblingDiscount &&
+              calculateDiscountAmount() > 0 ? (
+                <>
+                  <ValueTable
+                    className="mt-4"
+                    rows={[
+                      {
+                        label: "Zwischensumme",
+                        value: (
+                          <span className="line-through decoration-2">
+                            {formatEuro(calculateOriginalPrice())}
+                          </span>
+                        ),
+                      },
+                      {
+                        label: (
+                          <span>
+                            Geschwisterkindrabatt
+                            <span className="text-dark dark:text-night-muted block text-xs">
+                              20% pro weiteres Kind
+                            </span>
+                          </span>
+                        ),
+                        value: `- ${formatEuro(calculateDiscountAmount())}`,
+                      },
+                      {
+                        label: "Gesamt",
+                        value: formatEuro(calculateTotalPrice()),
+                      },
+                    ]}
+                  />
+                  <p className="text-dark dark:text-night-muted mt-2 text-xs">
+                    * Der Rabatt muss noch bestätigt werden
+                  </p>
+                </>
+              ) : (
+                <ValueTable
+                  className="mt-4"
+                  rows={[
+                    {
+                      label: "Gesamtpreis",
+                      value: formatEuro(calculateTotalPrice()),
+                    },
+                  ]}
+                />
+              )}
+            </div>
+
+            {/* Nicht klebend: Am Fensterboden verdeckte die Leiste beim Scrollen Eingabefelder. */}
+            <div className="border-rule dark:border-night-rule -mx-1 flex flex-col gap-3 border-t-2 px-1 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:flex-row sm:items-center sm:justify-between">
+              {canCancel ? (
+                <button
+                  type="button"
+                  onClick={() => setCancelModalOpen(true)}
+                  className={BTN_OUTLINE}
+                >
+                  <CircleXIcon className="h-5 w-5" aria-hidden />
+                  Anmeldung stornieren
+                </button>
+              ) : (
+                <div />
+              )}
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Link href={backHref} className={BTN_OUTLINE}>
+                  Abbrechen
+                </Link>
+                <button
+                  type="submit"
+                  disabled={!canEdit || isSubmitting}
+                  className={BTN_PRIMARY}
+                >
+                  {isSubmitting ? "Speichert..." : "Änderungen speichern"}
+                </button>
               </div>
             </div>
-          </div>
-
-          {/* Actions: sticky so "Speichern" stays reachable however many
-              participants the registration has. */}
-          <div className="dark:border-dark-border dark:bg-dark-background-secondary sticky bottom-0 z-20 -mx-4 flex flex-col gap-3 border-t border-gray-200 bg-gray-50/90 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-sm sm:mx-0 sm:flex-row sm:justify-between sm:rounded-lg sm:border sm:px-4">
-            {canCancel ? (
-              <button
-                type="button"
-                onClick={() => setCancelModalOpen(true)}
-                className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-300 bg-white px-6 py-3 font-semibold text-red-600 transition-colors hover:bg-red-50 dark:border-red-700 dark:bg-transparent dark:text-red-400 dark:hover:bg-red-900/20"
-              >
-                <CircleXIcon className="h-5 w-5" />
-                Anmeldung stornieren
-              </button>
-            ) : (
-              <div />
-            )}
-            <div className="flex flex-col gap-4 sm:flex-row">
-              <Link
-                href={backHref}
-                className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background-secondary rounded-lg border border-gray-300 bg-white px-6 py-3 text-center font-semibold text-gray-700 transition-colors hover:bg-gray-50"
-              >
-                Abbrechen
-              </Link>
-              <button
-                type="submit"
-                disabled={!canEdit || isSubmitting}
-                className="bg-primary hover:bg-primary-dark rounded-lg px-6 py-3 font-semibold text-white transition-colors disabled:opacity-50"
-              >
-                {isSubmitting ? "Speichert..." : "Änderungen speichern"}
-              </button>
-            </div>
-          </div>
-        </form>
+          </form>
+        </div>
 
         {editingParticipant ? (
           <ParticipantSheet
@@ -1444,8 +1418,7 @@ export default function EditRegistrationPage() {
                     value as Record<string, unknown>,
                   );
                 } else if (field === "instrument") {
-                  // Kept nullable in the database, so an emptied field must not
-                  // save as "".
+                  // Nullable in the database: an emptied field must not save as "".
                   updateParticipant(
                     editingParticipant.id,
                     "instrument",
@@ -1491,11 +1464,9 @@ export default function EditRegistrationPage() {
                     : "";
                 },
                 ageReferenceDate: registration.course.startDate,
-                // Das Kursteam darf eine Kategorie entgegen ihrer
-                // Altersgrenze vergeben — der Hinweis bleibt trotzdem stehen.
+                // Das Kursteam darf entgegen der Altersgrenze vergeben; der Hinweis bleibt.
                 allowAgeMismatch: isStaff,
-                // Und die Kategorie, in der jemand schon steckt, bleibt ihm
-                // erhalten, auch wenn ihre Grenze inzwischen enger ist.
+                // Die bisherige Kategorie bleibt, auch bei inzwischen engerer Grenze.
                 ageExemptOptionId:
                   registration.participants.find(
                     (p) => p.id === editingParticipant.id,
@@ -1544,41 +1515,43 @@ export default function EditRegistrationPage() {
           </ParticipantSheet>
         ) : null}
 
-        {/* Cancel Confirmation Modal */}
         {cancelModalOpen && (
           <ScrollableModal>
-            <ScrollableModalCard maxW="md">
+            <ScrollableModalCard
+              maxW="md"
+              className="border-ink dark:border-night-text rounded-none! border-2 shadow-none!"
+            >
               <ScrollableModalBody>
-                <h3 className="text-dark dark:text-dark-text mb-4 text-lg font-bold">
+                <Heading as="h2" size="list" className="text-[1.375rem]">
                   Anmeldung stornieren?
-                </h3>
-                <p className="mb-6 text-gray-600 dark:text-gray-400">
+                </Heading>
+                <p className="text-ink dark:text-night-text mt-4">
                   Bist du sicher, dass du diese Anmeldung stornieren möchtest?
                   Diese Aktion kann nicht rückgängig gemacht werden.
                 </p>
                 {cancelError && (
-                  <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20">
-                    <p className="text-sm text-red-800 dark:text-red-300">
-                      {cancelError}
-                    </p>
-                  </div>
+                  <Note tone="error" className="mt-4">
+                    <p>{cancelError}</p>
+                  </Note>
                 )}
               </ScrollableModalBody>
-              <ScrollableModalFooter>
+              <ScrollableModalFooter className="border-rule dark:border-night-rule">
                 <div className="flex gap-3">
                   <button
+                    type="button"
                     onClick={() => {
                       setCancelModalOpen(false);
                       setCancelError("");
                     }}
-                    className="dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+                    className={cn(BTN_OUTLINE, "flex-1")}
                   >
                     Zurück
                   </button>
                   <button
+                    type="button"
                     onClick={confirmCancel}
                     disabled={cancelMutation.isPending}
-                    className="flex-1 rounded-lg bg-red-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+                    className={cn(BTN_PRIMARY, "flex-1")}
                   >
                     {cancelMutation.isPending
                       ? "Wird storniert..."
@@ -1589,7 +1562,7 @@ export default function EditRegistrationPage() {
             </ScrollableModalCard>
           </ScrollableModal>
         )}
-      </div>
-    </div>
+      </PageSection>
+    </PublicPage>
   );
 }

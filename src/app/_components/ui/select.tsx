@@ -10,9 +10,8 @@ export type SelectProps = Omit<
 > & {
   error?: boolean;
   /**
-   * `md` matches the shared `Input` (16px text, 44px tall) so a select can sit
-   * in a row of text inputs without looking shorter. Below 16px iOS Safari also
-   * zooms the page in when the control is focused.
+   * `md` matches `Input` (16px text, 44px tall). Below 16px iOS Safari zooms
+   * the page in on focus.
    */
   fieldSize?: "sm" | "md";
   children: React.ReactNode;
@@ -23,9 +22,8 @@ type ParsedOption = {
   label: string;
   disabled?: boolean;
   /**
-   * Text pinned to the right of the label (e.g. a price), set via
-   * `data-trailing` on the `<option>`. It never truncates, so it stays readable
-   * on narrow screens where the label itself has to be cut off.
+   * Text pinned right of the label (e.g. a price), set via `data-trailing` on
+   * the `<option>`. Never truncates.
    */
   trailing?: string;
 };
@@ -97,6 +95,7 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
       name,
       required,
       autoFocus,
+      "aria-label": ariaLabel,
       "aria-invalid": ariaInvalid,
       "aria-describedby": ariaDescribedBy,
       "aria-labelledby": ariaLabelledBy,
@@ -171,11 +170,13 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
 
     React.useEffect(() => {
       if (!open) return;
-      const idx = Math.max(
-        0,
-        options.findIndex((o) => o.value === value),
+      // Markierung auf der Auswahl, auch wenn gesperrt (man hört, wo man steht);
+      // ohne Auswahl auf dem ersten wählbaren Eintrag.
+      const selectedIndex = options.findIndex((o) => o.value === value);
+      const firstEnabled = options.findIndex((o) => !o.disabled);
+      setHighlight(
+        selectedIndex >= 0 ? selectedIndex : Math.max(0, firstEnabled),
       );
-      setHighlight(idx);
     }, [open, options, value]);
 
     React.useEffect(() => {
@@ -183,6 +184,15 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
       const el = listRef.current.querySelector(`[data-index="${highlight}"]`);
       el?.scrollIntoView({ block: "nearest" });
     }, [highlight, open]);
+
+    /** Nächster wählbarer Eintrag in Pfeilrichtung; ohne einen bleibt die Markierung stehen. */
+    const stepHighlight = (delta: 1 | -1) =>
+      setHighlight((h) => {
+        for (let i = h + delta; i >= 0 && i < options.length; i += delta) {
+          if (!options[i]?.disabled) return i;
+        }
+        return h;
+      });
 
     const onKeyDownButton = (e: React.KeyboardEvent<HTMLButtonElement>) => {
       if (disabled) return;
@@ -192,18 +202,7 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
           setOpen(true);
           return;
         }
-        const delta = e.key === "ArrowDown" ? 1 : -1;
-        setHighlight((h) => {
-          let next = h + delta;
-          next = Math.max(0, Math.min(options.length - 1, next));
-          let guard = 0;
-          while (options[next]?.disabled && guard < options.length) {
-            next += delta;
-            next = Math.max(0, Math.min(options.length - 1, next));
-            guard += 1;
-          }
-          return next;
-        });
+        stepHighlight(e.key === "ArrowDown" ? 1 : -1);
       } else if (e.key === "Enter" || e.key === " ") {
         if (open) {
           e.preventDefault();
@@ -213,38 +212,49 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
             close();
           }
         }
-      } else if (e.key === "Escape") {
+      } else if (e.key === "Escape" && open) {
+        // Escape schließt nur die Liste, nicht das umgebende Fenster samt Eingaben.
         e.preventDefault();
+        e.stopPropagation();
         close();
         buttonRef.current?.focus();
       }
     };
 
     const onKeyDownList = (e: React.KeyboardEvent<HTMLUListElement>) => {
-      if (e.key === "ArrowDown") {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
         e.preventDefault();
-        setHighlight((h) => Math.min(options.length - 1, h + 1));
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        setHighlight((h) => Math.max(0, h - 1));
+        stepHighlight(e.key === "ArrowDown" ? 1 : -1);
       } else if (e.key === "Escape") {
         e.preventDefault();
+        e.stopPropagation();
         close();
         buttonRef.current?.focus();
       }
     };
 
+    const optionId = (index: number) => `${listId}-option-${index}`;
+
+    // `role="combobox"` nimmt keinen Namen aus dem Inhalt (WCAG 4.1.2). Ersatzname
+    // ist der Platzhalter, der sich anders als `displayText` nicht mit der Auswahl
+    // ändert. Mit `id` koppelt der Aufrufer per <label for>, dann kein aria-label.
+    const platzhalterLabel = options.find((o) => o.value === "")?.label;
+    const hatEigenenNamen = Boolean(ariaLabel ?? ariaLabelledBy ?? id);
+    const ariaLabelEffektiv = hatEigenenNamen ? ariaLabel : platzhalterLabel;
+
     const triggerClasses = cn(
-      "flex w-full min-w-0 items-center justify-between gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-left text-gray-900 shadow-sm transition-colors",
-      fieldSize === "md" ? "h-11 text-base sm:px-4" : "text-sm",
-      "focus:border-primary focus:ring-primary focus:ring-1 focus:outline-none",
-      "dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text",
-      "hover:bg-gray-50 dark:hover:bg-dark-background",
+      "border-ink bg-paper text-ink flex w-full min-w-0 items-center justify-between gap-2 border px-3 py-2 text-left transition-colors",
+      // Ohne eigene Schriftgröße, wie `Input`, damit die Höhen neben
+      // Textfeldern passen. Kompakte Felder geben `text-sm` per `className` mit.
+      fieldSize === "md" ? "h-11 text-base sm:px-4" : undefined,
+      "dark:border-night-text dark:bg-night dark:text-night-text",
+      "hover:bg-rule/30 dark:hover:bg-night-raised",
       disabled &&
-        "cursor-not-allowed opacity-50 hover:bg-white dark:hover:bg-dark-background-secondary",
-      error &&
-        "border-red-500 focus:border-red-500 focus:ring-red-500 dark:border-red-500",
-      open && "border-primary ring-primary ring-1 dark:border-primary",
+        "hover:bg-paper dark:hover:bg-night cursor-not-allowed opacity-50",
+      error && "border-red-600 dark:border-red-400",
+      // Geoeffnet: zweite Linie statt Farbwechsel — der Zustand soll sich
+      // abheben, ohne dass Orange zur Rahmenfarbe wird.
+      open && "border-2",
       className,
     );
 
@@ -261,10 +271,16 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
           aria-expanded={open}
           aria-controls={listId}
           aria-haspopup="listbox"
+          // Der Fokus bleibt auf dem Knopf; welcher Eintrag gerade markiert
+          // ist, erfahren Vorlesegeräte nur hierüber.
+          aria-activedescendant={
+            open && options[highlight] ? optionId(highlight) : undefined
+          }
           aria-required={required}
           aria-invalid={ariaInvalid}
           aria-describedby={ariaDescribedBy}
           aria-labelledby={ariaLabelledBy}
+          aria-label={ariaLabelEffektiv}
           disabled={disabled}
           autoFocus={autoFocus}
           className={triggerClasses}
@@ -274,19 +290,19 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
           <span
             className={cn(
               "min-w-0 flex-1 truncate",
-              mutedTrigger && "text-gray-500 dark:text-gray-400",
+              mutedTrigger && "text-dark dark:text-night-muted",
             )}
           >
             {displayText}
           </span>
           {selectedOption?.trailing ? (
-            <span className="shrink-0 font-medium text-gray-700 dark:text-gray-300">
+            <span className="text-ink dark:text-night-text shrink-0 font-medium">
               {selectedOption.trailing}
             </span>
           ) : null}
           <ChevronDown
             className={cn(
-              "h-4 w-4 shrink-0 text-gray-500 transition-transform dark:text-gray-400",
+              "text-dark dark:text-night-muted h-4 w-4 shrink-0 transition-transform",
               open && "rotate-180",
             )}
             aria-hidden
@@ -300,21 +316,29 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
             role="listbox"
             tabIndex={-1}
             onKeyDown={onKeyDownList}
-            className="dark:border-dark-border dark:bg-dark-surface absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:shadow-black/40"
+            className="border-ink bg-paper dark:border-night-text dark:bg-night-raised absolute z-50 mt-1 max-h-60 w-full overflow-auto border py-1"
           >
             {options.map((opt, index) => {
               const selected = opt.value === value;
               return (
                 <li
                   key={`${index}-${opt.value}`}
+                  id={optionId(index)}
                   role="option"
                   aria-selected={selected}
+                  // Gesperrt auch für Vorlesegeräte, nicht nur ausgegraut.
+                  aria-disabled={opt.disabled || undefined}
                   data-index={index}
                   className={cn(
-                    "dark:text-dark-text flex cursor-pointer items-start gap-2 px-3 py-2 text-gray-900",
-                    fieldSize === "md" ? "text-base" : "text-sm",
-                    index === highlight && "bg-primary/10 dark:bg-primary/15",
-                    opt.disabled && "cursor-not-allowed opacity-40",
+                    "text-ink dark:text-night-text flex items-start gap-2 px-3",
+                    // md: 44px hohe Zeilen, dieselbe Trefferfläche wie das Feld.
+                    fieldSize === "md" ? "py-2.5 text-base" : "py-2",
+                    index === highlight && "bg-rule/60 dark:bg-night-rule",
+                    // Nur eine Zeigerform setzen, sonst entscheidet die
+                    // Reihenfolge im Stylesheet.
+                    opt.disabled
+                      ? "cursor-not-allowed opacity-40"
+                      : "cursor-pointer",
                     selected && "font-medium",
                   )}
                   onMouseEnter={() => !opt.disabled && setHighlight(index)}
@@ -337,13 +361,13 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
                     {opt.label}
                   </span>
                   {opt.trailing ? (
-                    <span className="shrink-0 font-medium text-gray-700 dark:text-gray-300">
+                    <span className="text-ink dark:text-night-text shrink-0 font-medium">
                       {opt.trailing}
                     </span>
                   ) : null}
                   {selected && (
                     <Check
-                      className="text-primary mt-1 h-4 w-4 shrink-0"
+                      className="text-ink dark:text-night-text mt-1 h-4 w-4 shrink-0"
                       aria-hidden
                     />
                   )}

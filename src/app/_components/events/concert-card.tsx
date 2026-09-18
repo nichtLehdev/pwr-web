@@ -4,12 +4,9 @@ import type { RouterOutputs } from "@/trpc/react";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import { Calendar, MapPin } from "lucide-react";
 import { eventPath } from "@/lib/slug";
+import { Tag } from "@/app/_components/programmheft/tag";
 
-/**
- * Der Auswahlchor-Überblick rendert auf dem Server, dessen Zeitzone UTC ist.
- * Ohne feste Zone stand hier 15:00, während die Detailseite im Browser 17:00
- * anzeigte — Termine sind immer deutsche Ortszeit.
- */
+/** Feste Zone: rendert auf dem Server (UTC), Termine sind aber immer deutsche Ortszeit. */
 const BERLIN_DATE = new Intl.DateTimeFormat("de-DE", {
   year: "numeric",
   month: "long",
@@ -33,48 +30,36 @@ interface ConcertCardProps {
   i: number;
 }
 
-const ConcertCard: React.FC<ConcertCardProps> = ({ concert, ensemble, i }) => {
+/** Termin als Wegzeile: Haarlinie statt Farbstreifen, Etikett statt Farbfläche. */
+const ConcertCard: React.FC<ConcertCardProps> = ({ concert, i }) => {
   return (
-    <Link href={eventPath(concert)}>
-      <div
-        key={i}
-        className="dark:bg-dark-surface dark:hover:shadow-dark-border mb-4 rounded-md border-l-4 bg-white py-2 pl-4 transition-all hover:shadow-md"
-        style={{ borderColor: ensemble.colorHex }}
-      >
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="min-w-[200px] flex-1">
-            <h4 className="text-dark dark:text-dark-text mb-1 line-clamp-2 font-bold">
-              {concert.title}
-            </h4>
-            <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
-              {/* Date Information */}
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                {BERLIN_DATE.format(new Date(concert.eventDate))},{" "}
-                {BERLIN_TIME.format(new Date(concert.eventDate))}
-              </div>
-
-              {/* Location Information */}
-              <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4" />
-
-                {concert.location && (
-                  <span className="font-semibold">
-                    {concert.location.name}, {concert.location.city}
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Category Tag */}
-          <span
-            className={`rounded-full px-3 py-1 text-xs font-semibold ${ensemble.color} shrink-0 text-white`}
-          >
-            {capitalizeFirstLetter(concert.category)}
+    <Link
+      key={i}
+      href={eventPath(concert)}
+      className="fill-row border-rule dark:border-night-rule flex items-start justify-between gap-4 border-b px-1 py-3"
+    >
+      <span className="min-w-0">
+        <span className="condensed text-ink dark:text-night-text block text-lg leading-tight font-bold">
+          {concert.title}
+        </span>
+        <span className="text-dark dark:text-night-muted mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+          <span className="inline-flex items-center gap-1.5">
+            <Calendar className="h-4 w-4 shrink-0" aria-hidden />
+            {BERLIN_DATE.format(new Date(concert.eventDate))},{" "}
+            {BERLIN_TIME.format(new Date(concert.eventDate))}
           </span>
-        </div>
-      </div>
+          {concert.location && (
+            <span className="inline-flex items-center gap-1.5">
+              <MapPin className="h-4 w-4 shrink-0" aria-hidden />
+              {concert.location.name}, {concert.location.city}
+            </span>
+          )}
+        </span>
+      </span>
+
+      <Tag tone="inverse" className="shrink-0">
+        {capitalizeFirstLetter(concert.category)}
+      </Tag>
     </Link>
   );
 };

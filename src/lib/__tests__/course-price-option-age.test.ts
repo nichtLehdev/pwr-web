@@ -29,6 +29,14 @@ describe("ageOnDate", () => {
     expect(ageOnDate(born, courseStart)).toBe(18);
   });
 
+  it("rechnet mit dem deutschen Kurstag, auch wenn der Kurs um Mitternacht beginnt", () => {
+    // Kursbeginn 05.05.2027 00:00 Berlin ist in UTC noch der 04.05.; wer am 05.05.
+    // Geburtstag hat, ist trotzdem schon 18.
+    const mitternacht = new Date("2027-05-04T22:00:00.000Z");
+    expect(ageOnDate("2009-05-05", mitternacht)).toBe(18);
+    expect(ageOnDate("2009-05-06", mitternacht)).toBe(17);
+  });
+
   it("returns null for a missing or unusable birth date", () => {
     expect(ageOnDate(null, courseStart)).toBeNull();
     expect(ageOnDate("", courseStart)).toBeNull();

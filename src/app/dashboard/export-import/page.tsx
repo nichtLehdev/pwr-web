@@ -3,10 +3,12 @@
 import { useSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { useEffect, useRef } from "react";
+import { Loader2 } from "lucide-react";
 import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 import { DashboardPage } from "@/app/_components/dashboard";
+import { Card } from "@/app/_components/ui";
 import ExportImportSection from "@/app/_components/dashboard/export-import-section";
 
 export default function ExportImportPage() {
@@ -45,8 +47,8 @@ export default function ExportImportPage() {
 
   if (isPending || profileLoading) {
     return (
-      <div className="bg-background-secondary dark:bg-dark-background-secondary flex min-h-[calc(100vh-4rem)] items-center justify-center">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="bg-paper dark:bg-night flex min-h-[calc(100vh-4rem)] items-center justify-center">
+        <Loader2 className="text-primary h-8 w-8 animate-spin" aria-hidden />
       </div>
     );
   }
@@ -64,12 +66,11 @@ export default function ExportImportPage() {
         { label: "Export & Import" },
       ]}
     >
-      {/* Content */}
-      <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white shadow-sm">
+      <Card>
         <div className="p-6">
           <ExportImportSection />
         </div>
-      </div>
+      </Card>
     </DashboardPage>
   );
 }

@@ -12,6 +12,14 @@ import EventDetailModal from "../event-detail-modal";
 import MoreEventsModal from "./more-events-modal";
 import HolidayModal from "./holiday-modal";
 import { ChevronLeft, ChevronRight, X, Users, StarIcon } from "lucide-react";
+import {
+  berlinDate,
+  berlinParts,
+  daysInMonth as countDaysInMonth,
+  formatBerlin,
+  isSameBerlinDay,
+  weekdayOf,
+} from "@/lib/berlin-time";
 
 const MAX_EVENTS_PER_DAY = 4;
 const MAX_VISIBLE_WHEN_OVERFLOW = 3;
@@ -77,10 +85,21 @@ interface DesktopCalendarViewProps {
   items: CalendarItem[];
 }
 
+/** Ein Kalendermonat in Deutschland; `month` läuft von 1 bis 12. */
+type CalendarMonth = { year: number; month: number };
+
+function currentBerlinMonth(): CalendarMonth {
+  const { year, month } = berlinParts(new Date());
+  return { year, month };
+}
+
 export default function DesktopCalendarView({
   items,
 }: DesktopCalendarViewProps) {
-  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
+  // Zellen sind deutsche Kalendertage: der Kalender rendert zuerst auf dem Server (UTC),
+  // wo `new Date(y, m, d)` einen Termin um 00:30 in den Vortag legte.
+  const [currentMonth, setCurrentMonth] =
+    useState<CalendarMonth>(currentBerlinMonth);
   const [selectedEvent, setSelectedEvent] =
     useState<CalendarItemInternal | null>(null);
   const [showMoreEventsDay, setShowMoreEventsDay] = useState<number | null>(
@@ -140,39 +159,28 @@ export default function DesktopCalendarView({
     [items],
   );
 
-  const getDaysInMonth = (date: Date) => {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const daysInMonth = lastDay.getDate();
-    const startingDayOfWeek = (firstDay.getDay() + 6) % 7;
-
-    return { daysInMonth, startingDayOfWeek };
-  };
-
-  const { daysInMonth, startingDayOfWeek } = getDaysInMonth(currentMonth);
+  const { year, month } = currentMonth;
+  const daysInMonth = countDaysInMonth(year, month);
+  /** Spalte des Tages, Montag = 0. */
+  const columnOf = (day: number) => (weekdayOf(year, month, day) + 6) % 7;
+  const startingDayOfWeek = columnOf(1);
+  /** Beginn des Tages in Berlin und Beginn des nächsten (exklusiv). */
+  const dayBounds = (day: number) => ({
+    startOfDay: berlinDate(year, month, day),
+    startOfNextDay: berlinDate(year, month, day + 1),
+  });
 
   const holidaysThisMonth = useMemo(
-    () =>
-      getHolidaysForMonth(currentMonth.getFullYear(), currentMonth.getMonth()),
-    [currentMonth],
+    () => getHolidaysForMonth(year, month - 1),
+    [year, month],
   );
 
   const getEventsForDay = (day: number) => {
-    const date = new Date(
-      currentMonth.getFullYear(),
-      currentMonth.getMonth(),
-      day,
-    );
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
+    const { startOfDay, startOfNextDay } = dayBounds(day);
 
     return calendarItems.filter((item): item is CalendarEventInternal => {
       if (item.type === "event") {
-        return item.date >= startOfDay && item.date <= endOfDay;
+        return item.date >= startOfDay && item.date < startOfNextDay;
       }
       return false;
     });
@@ -215,15 +223,7 @@ export default function DesktopCalendarView({
   }, [calendarItems]);
 
   const getCoursesForDay = (day: number) => {
-    const date = new Date(
-      currentMonth.getFullYear(),
-      currentMonth.getMonth(),
-      day,
-    );
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
+    const { startOfDay, startOfNextDay } = dayBounds(day);
 
     const coursesAtDay: Array<{
       course: CalendarCourseInternal;
@@ -235,20 +235,13 @@ export default function DesktopCalendarView({
 
     courseRows.forEach((row, rowIndex) => {
       const course = row.find(
-        (c) => c.date <= endOfDay && c.endDate >= startOfDay,
+        (c) => c.date < startOfNextDay && c.endDate >= startOfDay,
       );
 
       if (course) {
-        const startDate = new Date(course.date);
-        startDate.setHours(0, 0, 0, 0);
-        const endDate = new Date(course.endDate);
-        endDate.setHours(0, 0, 0, 0);
-
-        const isStart = startDate >= startOfDay && startDate <= endOfDay;
-        const isEnd = endDate >= startOfDay && endDate <= endOfDay;
-
-        const dayOfWeek = (date.getDay() + 6) % 7;
-        const isWeekStart = dayOfWeek === 0 && startDate < startOfDay;
+        const isStart = isSameBerlinDay(course.date, startOfDay);
+        const isEnd = isSameBerlinDay(course.endDate, startOfDay);
+        const isWeekStart = columnOf(day) === 0 && course.date < startOfDay;
 
         coursesAtDay.push({
           course,
@@ -267,21 +260,14 @@ export default function DesktopCalendarView({
     const mappings = new Map<number, Map<number, number>>();
 
     const getCoursesForDayInline = (day: number) => {
-      const date = new Date(
-        currentMonth.getFullYear(),
-        currentMonth.getMonth(),
-        day,
-      );
-      const startOfDay = new Date(date);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(date);
-      endOfDay.setHours(23, 59, 59, 999);
+      const startOfDay = berlinDate(year, month, day);
+      const startOfNextDay = berlinDate(year, month, day + 1);
 
       const coursesAtDay: Array<{ row: number }> = [];
 
       courseRows.forEach((row, rowIndex) => {
         const course = row.find(
-          (c) => c.date <= endOfDay && c.endDate! >= startOfDay,
+          (c) => c.date < startOfNextDay && c.endDate! >= startOfDay,
         );
 
         if (course) {
@@ -293,12 +279,7 @@ export default function DesktopCalendarView({
     };
 
     for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(
-        currentMonth.getFullYear(),
-        currentMonth.getMonth(),
-        day,
-      );
-      const dayOfWeek = (date.getDay() + 6) % 7;
+      const dayOfWeek = (weekdayOf(year, month, day) + 6) % 7;
       const mondayDay = day - dayOfWeek;
 
       if (mondayDay >= 1 && !mappings.has(mondayDay)) {
@@ -325,18 +306,11 @@ export default function DesktopCalendarView({
     }
 
     return mappings;
-  }, [currentMonth, daysInMonth, courseRows]);
+  }, [year, month, daysInMonth, courseRows]);
 
   const getCompactCoursesForDay = (day: number) => {
     const coursesAtDay = getCoursesForDay(day);
-    const date = new Date(
-      currentMonth.getFullYear(),
-      currentMonth.getMonth(),
-      day,
-    );
-    const dayOfWeek = (date.getDay() + 6) % 7;
-
-    const mondayDay = day - dayOfWeek;
+    const mondayDay = day - columnOf(day);
 
     const rowMapping = weekRowMappings.get(mondayDay);
 
@@ -352,24 +326,22 @@ export default function DesktopCalendarView({
 
   const goToPreviousMonth = () => {
     setCurrentMonth(
-      new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1),
+      month === 1 ? { year: year - 1, month: 12 } : { year, month: month - 1 },
     );
   };
 
   const goToNextMonth = () => {
     setCurrentMonth(
-      new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1),
+      month === 12 ? { year: year + 1, month: 1 } : { year, month: month + 1 },
     );
   };
 
   const goToToday = () => {
-    setCurrentMonth(new Date());
+    setCurrentMonth(currentBerlinMonth());
   };
 
-  const monthName = currentMonth.toLocaleDateString("de-DE", {
-    month: "long",
-    year: "numeric",
-  });
+  const firstOfMonth = berlinDate(year, month, 1);
+  const monthName = formatBerlin(firstOfMonth, "monatJahr");
   const weekDays = [
     "Montag",
     "Dienstag",
@@ -381,12 +353,8 @@ export default function DesktopCalendarView({
   ];
 
   const isToday = (day: number) => {
-    const today = new Date();
-    return (
-      day === today.getDate() &&
-      currentMonth.getMonth() === today.getMonth() &&
-      currentMonth.getFullYear() === today.getFullYear()
-    );
+    const today = berlinParts(new Date());
+    return day === today.day && month === today.month && year === today.year;
   };
 
   const lastRowIndex = Math.ceil((startingDayOfWeek + daysInMonth) / 7) - 1;
@@ -395,52 +363,48 @@ export default function DesktopCalendarView({
 
   return (
     <>
-      <div className="dark:shadow-dark-border bg-background-secondary dark:bg-dark-surface overflow-hidden rounded-lg shadow-lg">
-        {/* Header */}
-        <div className="dark:border-dark-border flex items-center justify-between border-b border-gray-200 p-4">
-          <h2 className="text-dark text-2xl font-bold dark:text-white">
+      <div className="border-ink dark:border-night-text bg-paper dark:bg-night border-2">
+        <div className="border-rule dark:border-night-rule flex items-center justify-between border-b p-4">
+          <h2 className="condensed text-ink dark:text-night-text text-2xl font-extrabold">
             {monthName}
           </h2>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-1">
             <button
               onClick={goToPreviousMonth}
-              className="text-dark dark:text-dark-text rounded-lg p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="text-ink hover:bg-ink hover:text-paper dark:text-night-text dark:hover:bg-night-text dark:hover:text-night flex h-11 w-11 items-center justify-center transition-colors"
               aria-label="Vorheriger Monat"
             >
-              <ChevronLeft className="h-5 w-5" />
+              <ChevronLeft className="h-5 w-5" aria-hidden />
             </button>
             <button
               onClick={goToToday}
-              className="text-primary hover:bg-primary/10 rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
+              className="semi-condensed text-primary-ink dark:text-primary hover:bg-ink hover:text-paper dark:hover:bg-night-text dark:hover:text-night flex h-11 items-center px-4 text-sm font-semibold transition-colors"
               aria-label="Zum heutigen Tag springen"
             >
               Heute
             </button>
             <button
               onClick={goToNextMonth}
-              className="text-dark dark:text-dark-text rounded-lg p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="text-ink hover:bg-ink hover:text-paper dark:text-night-text dark:hover:bg-night-text dark:hover:text-night flex h-11 w-11 items-center justify-center transition-colors"
               aria-label="Nächster Monat"
             >
-              <ChevronRight className="h-5 w-5" />
+              <ChevronRight className="h-5 w-5" aria-hidden />
             </button>
           </div>
         </div>
 
-        {/* Week days */}
-        <div className="dark:border-dark-border bg-background-tertiary dark:bg-dark-background-secondary grid grid-cols-7 border-b border-gray-200">
+        <div className="border-rule dark:border-night-rule grid grid-cols-7 border-b">
           {weekDays.map((day) => (
             <div
               key={day}
-              className="px-2 py-3 text-center text-sm font-semibold text-gray-600 dark:text-gray-300"
+              className="semi-condensed text-dark dark:text-night-muted px-2 py-3 text-center text-sm font-semibold"
             >
               {day}
             </div>
           ))}
         </div>
 
-        {/* Calendar Grid */}
         <div className="grid grid-cols-7" style={{ gridAutoRows: "150px" }}>
-          {/* Empty cells */}
           {Array.from({ length: startingDayOfWeek }).map((_, i) => {
             const isLastColumn = i === 6;
             const isLastRow = 0 === lastRowIndex;
@@ -448,25 +412,18 @@ export default function DesktopCalendarView({
             return (
               <div
                 key={`empty-${i}`}
-                className={`bg-background-tertiary dark:bg-dark-background-secondary opacity-50 ${!isLastColumn ? "dark:border-dark-border border-r border-gray-200" : ""} ${
+                className={`bg-rule/20 dark:bg-night-rule/20 ${!isLastColumn ? "border-rule dark:border-night-rule border-r" : ""} ${
                   !isLastRow
-                    ? "dark:border-dark-border border-b border-gray-200"
+                    ? "border-rule dark:border-night-rule border-b"
                     : ""
                 }`}
               ></div>
             );
           })}
 
-          {/* Days */}
           {Array.from({ length: daysInMonth }).map((_, i) => {
             const day = i + 1;
-            const date = new Date(
-              currentMonth.getFullYear(),
-              currentMonth.getMonth(),
-              day,
-            );
-            const dayOfWeek = (date.getDay() + 6) % 7;
-            const isLastColumn = dayOfWeek === 6;
+            const isLastColumn = columnOf(day) === 6;
             const currentCellIndex = startingDayOfWeek + i;
             const currentRowIndex = Math.floor(currentCellIndex / 7);
             const isLastRow = currentRowIndex === lastRowIndex;
@@ -474,7 +431,7 @@ export default function DesktopCalendarView({
             const today = isToday(day);
             const coursesAtDay = getCompactCoursesForDay(day);
             const holiday = holidaysThisMonth.find(
-              (h) => h.date.getDate() === day,
+              (h) => berlinParts(h.date).day === day,
             );
 
             const allEventsForDay = [
@@ -500,23 +457,22 @@ export default function DesktopCalendarView({
             return (
               <div
                 key={day}
-                className={`relative ${!isLastColumn ? "dark:border-dark-border border-r border-gray-200" : ""} ${
+                className={`relative ${!isLastColumn ? "border-rule dark:border-night-rule border-r" : ""} ${
                   !isLastRow
-                    ? "dark:border-dark-border border-b border-gray-200"
+                    ? "border-rule dark:border-night-rule border-b"
                     : ""
                 } ${
                   today
-                    ? "bg-primary/5 dark:bg-primary/10"
-                    : "dark:hover:bg-dark-background-secondary hover:bg-gray-50"
+                    ? "bg-ink/[0.04] dark:bg-night-text/[0.06]"
+                    : "hover:bg-rule/20 dark:hover:bg-night-rule/20"
                 }`}
               >
-                {/* Date */}
                 <div className="absolute top-2 left-2 z-10 flex items-center gap-1.5">
                   <span
                     className={`text-sm font-semibold ${
                       today
-                        ? "bg-primary flex h-6 w-6 items-center justify-center rounded-full text-white"
-                        : "text-gray-700 dark:text-gray-200"
+                        ? "bg-ink text-paper dark:bg-night-text dark:text-night flex h-6 w-6 items-center justify-center"
+                        : "text-ink dark:text-night-text"
                     }`}
                   >
                     {day}
@@ -527,7 +483,7 @@ export default function DesktopCalendarView({
                         e.stopPropagation();
                         setSelectedHoliday(holiday);
                       }}
-                      className="text-amber-600 transition-transform hover:scale-125 dark:text-amber-400"
+                      className="text-primary-ink dark:text-primary transition-transform hover:scale-125"
                       title={holiday.name}
                       aria-label={`Details zu ${holiday.name}`}
                     >
@@ -579,11 +535,11 @@ export default function DesktopCalendarView({
                           key={rowIndex}
                           className={`mb-1 h-5 cursor-pointer truncate py-0.5 text-[11px] font-semibold text-white transition-opacity hover:opacity-90 ${
                             isStart && isEnd
-                              ? "mx-2 rounded px-2"
+                              ? "mx-2 px-2"
                               : isStart
-                                ? "-mr-px ml-2 rounded-l pr-0 pl-2"
+                                ? "-mr-px ml-2 pr-0 pl-2"
                                 : isEnd
-                                  ? "mr-2 -ml-px rounded-r pr-2 pl-0"
+                                  ? "mr-2 -ml-px pr-2 pl-0"
                                   : "-mx-px pr-0 pl-0"
                           }`}
                           style={{
@@ -628,13 +584,7 @@ export default function DesktopCalendarView({
                       >
                         <div className="space-y-1">
                           {displayedEvents.map((event, idx) => {
-                            const time = event.date.toLocaleTimeString(
-                              "de-DE",
-                              {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              },
-                            );
+                            const time = formatBerlin(event.date, "uhrzeit");
                             const categoryStyle = getEventCategoryStyle(
                               event.category,
                             );
@@ -649,10 +599,10 @@ export default function DesktopCalendarView({
                               <button
                                 key={idx}
                                 onClick={() => setSelectedEvent(event)}
-                                className={`flex w-full cursor-pointer items-center gap-1 truncate rounded px-2 py-0.5 text-left text-[11px] font-medium transition-all hover:brightness-95 ${
+                                className={`flex w-full cursor-pointer items-center gap-1 truncate px-2 py-0.5 text-left text-[11px] font-medium transition-all hover:brightness-95 ${
                                   isCancelled
-                                    ? "border-2 border-red-500 bg-red-100 text-gray-500 line-through dark:bg-red-900/30 dark:text-gray-400"
-                                    : `text-dark dark:text-dark-text ${categoryStyle.borderClass}`
+                                    ? "border-2 border-red-700 bg-red-100 text-red-800 line-through dark:border-red-400 dark:bg-red-900/30 dark:text-red-300"
+                                    : `text-ink dark:text-night-text ${categoryStyle.borderClass}`
                                 }`}
                                 style={
                                   isCancelled
@@ -688,7 +638,7 @@ export default function DesktopCalendarView({
                           {hasMoreThanLimit && (
                             <button
                               onClick={() => setShowMoreEventsDay(day)}
-                              className="text-primary hover:bg-primary/10 w-full rounded px-2 py-1 text-left text-[11px] font-medium transition-colors"
+                              className="text-primary-ink dark:text-primary hover:bg-ink hover:text-paper dark:hover:bg-night-text dark:hover:text-night w-full px-2 py-1 text-left text-[11px] font-semibold transition-colors"
                             >
                               +{totalEventsCount - displayedCount} weitere
                               Events
@@ -705,52 +655,53 @@ export default function DesktopCalendarView({
         </div>
       </div>
 
-      {/* Legend */}
-      <div className="dark:border-dark-border dark:shadow-dark-border bg-background-secondary dark:bg-dark-surface mt-6 rounded-lg border border-gray-200 p-4 shadow-md">
-        <h3 className="text-dark dark:text-dark-text mb-3 text-sm font-bold">
+      <div className="border-ink dark:border-night-text bg-paper dark:bg-night mt-6 border-2 p-4">
+        <h3 className="condensed text-ink dark:text-night-text mb-3 text-sm font-bold">
           Legende
         </h3>
-        <div className="grid grid-cols-1 gap-3 text-xs text-gray-600 md:grid-cols-2 dark:text-gray-300">
+        <div className="text-dark dark:text-night-muted grid grid-cols-1 gap-3 text-xs md:grid-cols-2">
           <div className="flex items-center gap-2">
-            <Users className="h-3 w-3" />
+            <Users className="h-3 w-3" aria-hidden />
             <span>= Mitspielen möglich</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="flex h-3 w-8 items-center justify-center rounded border-2 border-red-500 bg-red-100 dark:bg-red-900/30">
-              <X className="h-2.5 w-2.5 text-red-500" />
+            <div className="flex h-3 w-8 items-center justify-center border-2 border-red-700 bg-red-100 dark:border-red-400 dark:bg-red-900/30">
+              <X
+                className="h-2.5 w-2.5 text-red-700 dark:text-red-400"
+                aria-hidden
+              />
             </div>
             <span>Abgesagt</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="h-3 w-8 rounded border-2 border-blue-500 bg-blue-500/20"></div>
+            <div className="h-3 w-8 border-2 border-blue-500 bg-blue-500/20"></div>
             <span>Konzert (dicker Rand)</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="h-3 w-8 rounded border border-blue-500 bg-blue-500/15"></div>
+            <div className="h-3 w-8 border border-blue-500 bg-blue-500/15"></div>
             <span>Gottesdienst (dünner Rand)</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="h-3 w-8 rounded border border-dashed border-blue-500 bg-blue-500/15"></div>
+            <div className="h-3 w-8 border border-dashed border-blue-500 bg-blue-500/15"></div>
             <span>Probe (gestrichelt)</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="h-3 w-8 rounded border border-dotted border-blue-500 bg-blue-500/10"></div>
+            <div className="h-3 w-8 border border-dotted border-blue-500 bg-blue-500/10"></div>
             <span>Sonstiges (gepunktet)</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="bg-primary h-3 w-8 rounded"></div>
+            <div className="bg-ink dark:bg-night-text h-3 w-8"></div>
             <span>Mehrtägige Veranstaltung</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-amber-600 dark:text-amber-400">
-              <StarIcon className="h-3 w-3" />
+            <span className="text-primary-ink dark:text-primary">
+              <StarIcon className="h-3 w-3" aria-hidden />
             </span>
             <span>Feiertag</span>
           </div>
         </div>
       </div>
 
-      {/* Event Detail Modal */}
       {selectedEvent && (
         <EventDetailModal
           event={selectedEvent}
@@ -758,11 +709,10 @@ export default function DesktopCalendarView({
         />
       )}
 
-      {/* More Events Modal */}
       {showMoreEventsDay !== null && (
         <MoreEventsModal
           day={showMoreEventsDay}
-          currentMonth={currentMonth}
+          currentMonth={firstOfMonth}
           events={[
             ...getCoursesForDay(showMoreEventsDay).map((c) => c.course),
             ...getEventsForDay(showMoreEventsDay),
@@ -772,7 +722,6 @@ export default function DesktopCalendarView({
         />
       )}
 
-      {/* Holiday Modal */}
       {selectedHoliday && (
         <HolidayModal
           holiday={selectedHoliday}

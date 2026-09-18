@@ -1,6 +1,5 @@
 "use client";
 
-import { getDistrictColor } from "@/lib/district-color";
 import type { CalendarItemInternal } from "./desktop-calendar-view";
 import { useEffect } from "react";
 import { X, Users } from "lucide-react";
@@ -10,6 +9,9 @@ import {
   ScrollableModalHeader,
   ScrollableModalBody,
 } from "@/app/_components/ui/scrollable-modal";
+import { BezirkLabel } from "@/app/_components/programmheft/bezirk-label";
+import { Tag } from "@/app/_components/programmheft/tag";
+import { formatBerlin } from "@/lib/berlin-time";
 
 interface MoreEventsModalProps {
   day: number;
@@ -39,105 +41,90 @@ export default function MoreEventsModal({
     <ScrollableModal zIndex="z-40" onBackdropClick={onClose}>
       <ScrollableModalCard
         maxW="md"
-        className="bg-background-secondary dark:bg-dark-surface dark:shadow-dark-border overflow-hidden"
+        className="border-ink dark:border-night-text rounded-none! border-2 shadow-none!"
       >
-        <ScrollableModalHeader className="dark:border-dark-border border-b border-gray-200 pb-4">
+        <ScrollableModalHeader className="border-ink dark:border-night-text border-b-2 pb-4">
           <div className="flex items-center justify-between">
             <h3
               id="more-events-title"
-              className="text-dark dark:text-dark-text text-lg font-bold"
+              className="condensed text-ink dark:text-night-text text-lg font-extrabold"
             >
-              Events am {day}.{" "}
-              {currentMonth.toLocaleDateString("de-DE", {
-                month: "long",
-                year: "numeric",
-              })}
+              Events am {day}. {formatBerlin(currentMonth, "monatJahr")}
             </h3>
             <button
               onClick={onClose}
-              className="dark:hover:bg-dark-background-secondary rounded p-1 transition-colors hover:bg-gray-100"
+              className="text-ink hover:bg-ink hover:text-paper dark:text-night-text dark:hover:bg-night-text dark:hover:text-night flex h-9 w-9 items-center justify-center transition-colors"
               aria-label="Modal schließen"
             >
-              <X className="h-5 w-5" />
+              <X className="h-5 w-5" aria-hidden />
             </button>
           </div>
         </ScrollableModalHeader>
 
-        <ScrollableModalBody className="space-y-2 p-4">
-          {events.map((item, idx) => {
-            const isCourse = item.type === "course";
-            const isCancelled = item.type === "event" && item.cancelled;
-            const districtColor = getDistrictColor(item.bezirk?.number);
+        <ScrollableModalBody className="p-0">
+          <ul>
+            {events.map((item, idx) => {
+              const isCourse = item.type === "course";
+              const isCancelled = item.type === "event" && item.cancelled;
 
-            return (
-              <button
-                key={idx}
-                onClick={() => {
-                  onSelectEvent(item);
-                }}
-                className={`w-full rounded-lg border p-3 text-left transition-colors ${
-                  isCancelled
-                    ? "border-red-300 bg-red-50 dark:border-red-900 dark:bg-red-950/30"
-                    : "dark:border-dark-border dark:bg-dark-surface dark:hover:bg-dark-background border-gray-200 bg-white hover:bg-gray-50"
-                }`}
-                style={{
-                  borderLeftWidth: "4px",
-                  borderLeftColor: isCancelled ? "#dc2626" : districtColor,
-                }}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div
-                    className={`flex-1 font-semibold ${
-                      isCancelled
-                        ? "text-gray-500 line-through dark:text-gray-400"
-                        : "text-dark dark:text-dark-text"
-                    }`}
+              return (
+                <li
+                  key={idx}
+                  className="border-rule dark:border-night-rule border-b"
+                >
+                  <button
+                    onClick={() => {
+                      onSelectEvent(item);
+                    }}
+                    className="fill-row flex w-full flex-col gap-1 px-4 py-3 text-left transition-colors"
                   >
-                    {item.title}
-                  </div>
-                  {isCancelled && (
-                    <span className="inline-flex shrink-0 items-center gap-1 rounded bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white">
-                      <X className="h-2.5 w-2.5" />
-                      Abgesagt
-                    </span>
-                  )}
-                  {!isCancelled &&
-                    !isCourse &&
-                    item.type === "event" &&
-                    item.openToParticipants && (
-                      <span className="inline-flex shrink-0 items-center gap-1 rounded bg-green-50 px-2 py-0.5 text-[10px] font-semibold text-green-600 dark:bg-green-900/20 dark:text-green-400">
-                        <Users className="h-2.5 w-2.5" />
-                        Mitspielen
+                    <div className="flex items-start justify-between gap-2">
+                      <span
+                        className={`condensed flex-1 font-bold ${
+                          isCancelled
+                            ? "text-dark dark:text-night-muted line-through"
+                            : "text-ink dark:text-night-text"
+                        }`}
+                      >
+                        {item.title}
                       </span>
-                    )}
-                </div>
-                <div className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-                  {isCourse ? (
-                    <>
-                      {item.date.toLocaleDateString("de-DE")} -{" "}
-                      {item.endDate?.toLocaleDateString("de-DE")}
-                      <span className="bg-primary/10 text-primary ml-2 rounded px-2 py-0.5 text-xs">
-                        Lehrgang
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      {item.date.toLocaleTimeString("de-DE", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                      <span className="bg-background-tertiary dark:bg-dark-background-secondary text-dark dark:text-dark-text ml-2 rounded px-2 py-0.5 text-xs">
-                        {item.type === "event" && item.category}
-                      </span>
-                    </>
-                  )}
-                </div>
-                <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  {item.bezirk?.name || ""}
-                </div>
-              </button>
-            );
-          })}
+                      {isCancelled && <Tag tone="cancelled">Abgesagt</Tag>}
+                      {!isCancelled &&
+                        !isCourse &&
+                        item.type === "event" &&
+                        item.openToParticipants && (
+                          <Tag tone="orange">
+                            <Users className="h-3 w-3 shrink-0" aria-hidden />
+                            Mitspielen
+                          </Tag>
+                        )}
+                    </div>
+                    <div className="text-dark dark:text-night-muted text-sm">
+                      {isCourse ? (
+                        <>
+                          {formatBerlin(item.date)} -{" "}
+                          {item.endDate && formatBerlin(item.endDate)}
+                          <span className="ml-2">Lehrgang</span>
+                        </>
+                      ) : (
+                        <>
+                          {formatBerlin(item.date, "uhrzeit")}
+                          <span className="ml-2">
+                            {item.type === "event" && item.category}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                    {item.bezirk ? (
+                      <div className="text-dark dark:text-night-muted text-xs">
+                        <BezirkLabel bezirk={item.bezirk} />
+                      </div>
+                    ) : null}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
         </ScrollableModalBody>
       </ScrollableModalCard>
     </ScrollableModal>

@@ -22,9 +22,11 @@ import {
   notifySubmittedForReview,
 } from "../helpers/review-notifications";
 import { PERMISSIONS } from "@/lib/permissions";
+import { MAX_DESCRIPTION_LENGTH } from "@/lib/description";
 import { permissionProcedure } from "../middleware/permissions";
 import { createEventSlug, updateEventSlug } from "../helpers/content-slug";
 import { isUuid, MAX_SLUG_LENGTH } from "@/lib/slug";
+import { berlinDate } from "@/lib/berlin-time";
 
 export const eventsRouter = createTRPCRouter({
   getAll: publicProcedure
@@ -97,10 +99,7 @@ export const eventsRouter = createTRPCRouter({
       };
     }),
 
-  /**
-   * Accepts either the UUID or the slug. Public links use the slug; the
-   * dashboard and links shared before slugs existed still pass a UUID.
-   */
+  /** Accepts UUID or slug; the dashboard and older shared links still pass a UUID. */
   getById: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
@@ -159,9 +158,8 @@ export const eventsRouter = createTRPCRouter({
           });
         }
 
-        // EVENTS_VIEW allein reicht nicht für fremde Entwürfe aus anderen
-        // Bezirken — sonst liest jeder Obmann die noch ungeprüften Termine
-        // des ganzen Werks mit.
+        // EVENTS_VIEW allein reicht nicht für fremde Entwürfe anderer Bezirke,
+        // sonst liest jeder Obmann die ungeprüften Termine des ganzen Werks mit.
         const canViewEvent = await userHasPermission(
           ctx.session.user.id,
           PERMISSIONS.EVENTS_VIEW,
@@ -392,10 +390,8 @@ export const eventsRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
-      // PENDING is the review marker itself — a separate pendingReview
-      // column never existed in the schema.
-      // Freigeben ist bewusst nicht bezirksgebunden: wer EVENTS_APPROVE hat
-      // (Admin, LPW, RPW), prüft für das ganze Werk.
+      // PENDING is the review marker itself; there is no pendingReview column.
+      // Freigeben ist bewusst nicht bezirksgebunden: EVENTS_APPROVE prüft für das ganze Werk.
       const where: { status: ContentStatus } = {
         status: ContentStatus.PENDING,
       };
@@ -436,7 +432,9 @@ export const eventsRouter = createTRPCRouter({
         /** Empty means "derive it from the title"; see createEventSlug. */
         slug: z.string().max(MAX_SLUG_LENGTH).optional(),
         motto: z.string().max(500).optional(),
-        description: z.string().max(5000).optional(),
+        // Markdown, siehe MAX_DESCRIPTION_LENGTH: dieselbe Grenze wie bei
+        // Kursen, weil es derselbe Text in derselben Schreibfläche ist.
+        description: z.string().max(MAX_DESCRIPTION_LENGTH).optional(),
         coverImageId: z.string().optional(),
         downloadIds: z.array(z.string()).optional(),
         eventDate: z.date(),
@@ -568,7 +566,7 @@ export const eventsRouter = createTRPCRouter({
         /** Only sent when the author deliberately renamed it; empty = leave as is. */
         slug: z.string().max(MAX_SLUG_LENGTH).optional(),
         motto: z.string().max(500).optional(),
-        description: z.string().max(5000).optional(),
+        description: z.string().max(MAX_DESCRIPTION_LENGTH).optional(),
         coverImageId: z.string().optional().nullable(),
         downloadIds: z.array(z.string()).optional(),
         eventDate: z.date().optional(),
@@ -1187,15 +1185,16 @@ export const eventsRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
-      const startDate = new Date(input.year, input.month - 1, 1);
-      const endDate = new Date(input.year, input.month, 0, 23, 59, 59, 999);
+      // Monat in deutscher Zeit: `new Date(y, m, 1)` rechnet in UTC und verschiebt Termine am Monatsrand.
+      const startDate = berlinDate(input.year, input.month, 1);
+      const nextMonth = berlinDate(input.year, input.month + 1, 1);
 
       const events = await ctx.db.event.findMany({
         where: {
           status: ContentStatus.APPROVED,
           eventDate: {
             gte: startDate,
-            lte: endDate,
+            lt: nextMonth,
           },
         },
         include: {

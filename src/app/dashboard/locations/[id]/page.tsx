@@ -11,6 +11,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { DashboardPage } from "@/app/_components/dashboard";
 import { Edit, UserIcon } from "lucide-react";
 import { ArrowLeftIcon } from "lucide-react";
+import { formatBerlin } from "@/lib/berlin-time";
 
 export default function LocationDetailPage() {
   const router = useRouter();
@@ -57,8 +58,8 @@ export default function LocationDetailPage() {
 
   if (sessionLoading || profileLoading || locationLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
@@ -69,14 +70,14 @@ export default function LocationDetailPage() {
 
   if (!location) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <h1 className="dark:text-dark-text text-xl font-semibold text-gray-900">
+          <h1 className="text-ink dark:text-night-text text-xl font-semibold">
             Standort nicht gefunden
           </h1>
           <Link
             href="/dashboard/locations"
-            className="text-primary mt-4 inline-block hover:underline"
+            className="link-ink mt-4 inline-block"
           >
             Zurück zur Übersicht
           </Link>
@@ -97,7 +98,7 @@ export default function LocationDetailPage() {
       actions={
         <Link
           href={`/dashboard/locations/${locationId}/edit`}
-          className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
+          className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-night-text dark:text-night dark:hover:bg-primary dark:hover:text-ink inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm font-semibold transition-colors"
         >
           <Edit className="h-4 w-4" />
           Bearbeiten
@@ -105,64 +106,60 @@ export default function LocationDetailPage() {
       }
       maxWidth="7xl"
     >
-      {/* Address */}
-      <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-        <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+      <div className="border-rule dark:border-night-rule mb-6 border p-6">
+        <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
           Adresse
         </h2>
         <dl className="space-y-3">
           {location.street && (
             <div>
-              <dt className="dark:text-dark-muted text-sm text-gray-500">
+              <dt className="text-dark dark:text-night-muted text-sm">
                 Straße
               </dt>
-              <dd className="dark:text-dark-text font-medium text-gray-900">
+              <dd className="text-ink dark:text-night-text font-medium">
                 {location.street}
               </dd>
             </div>
           )}
           {(location.zipCode || location.city) && (
             <div>
-              <dt className="dark:text-dark-muted text-sm text-gray-500">
-                Ort
-              </dt>
-              <dd className="dark:text-dark-text font-medium text-gray-900">
+              <dt className="text-dark dark:text-night-muted text-sm">Ort</dt>
+              <dd className="text-ink dark:text-night-text font-medium">
                 {location.zipCode && `${location.zipCode} `}
                 {location.city}
               </dd>
             </div>
           )}
           {!location.street && !location.zipCode && !location.city && (
-            <p className="dark:text-dark-muted text-gray-500 italic">
+            <p className="text-dark dark:text-night-muted italic">
               Keine Adresse angegeben
             </p>
           )}
         </dl>
       </div>
 
-      {/* Coordinates */}
       {(location.latitude || location.longitude) && (
-        <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+        <div className="border-rule dark:border-night-rule mb-6 border p-6">
+          <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
             Koordinaten
           </h2>
           <dl className="grid gap-4 sm:grid-cols-2">
             {location.latitude && (
               <div>
-                <dt className="dark:text-dark-muted text-sm text-gray-500">
+                <dt className="text-dark dark:text-night-muted text-sm">
                   Breitengrad
                 </dt>
-                <dd className="dark:text-dark-text font-medium text-gray-900">
+                <dd className="text-ink dark:text-night-text font-medium">
                   {location.latitude}
                 </dd>
               </div>
             )}
             {location.longitude && (
               <div>
-                <dt className="dark:text-dark-muted text-sm text-gray-500">
+                <dt className="text-dark dark:text-night-muted text-sm">
                   Längengrad
                 </dt>
-                <dd className="dark:text-dark-text font-medium text-gray-900">
+                <dd className="text-ink dark:text-night-text font-medium">
                   {location.longitude}
                 </dd>
               </div>
@@ -171,25 +168,24 @@ export default function LocationDetailPage() {
         </div>
       )}
 
-      {/* Usage */}
-      <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-        <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+      <div className="border-rule dark:border-night-rule mb-6 border p-6">
+        <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
           Verwendung
         </h2>
         <div className="space-y-4">
           {location.events && location.events.length > 0 && (
             <div>
-              <h3 className="dark:text-dark-text mb-2 text-sm font-medium text-gray-700">
+              <h3 className="text-ink dark:text-night-text mb-2 text-sm font-medium">
                 Kommende Termine ({location.events.length})
               </h3>
               <div className="space-y-2">
                 {location.events.slice(0, 5).map((event) => (
                   <div
                     key={event.id}
-                    className="dark:border-dark-border flex items-center gap-3 rounded-lg border border-gray-100 p-3"
+                    className="border-rule dark:border-night-rule flex items-center gap-3 border p-3"
                   >
                     {event.coverImage?.url ? (
-                      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded">
+                      <div className="relative h-12 w-12 shrink-0 overflow-hidden">
                         <Image
                           src={event.coverImage.url}
                           alt={event.title}
@@ -198,28 +194,18 @@ export default function LocationDetailPage() {
                         />
                       </div>
                     ) : (
-                      <div className="text-primary shrink-0 text-center">
+                      <div className="text-primary-ink dark:text-primary shrink-0 text-center">
                         <div className="text-sm font-medium">
-                          {new Date(event.eventDate).toLocaleDateString(
-                            "de-DE",
-                            {
-                              day: "2-digit",
-                              month: "short",
-                            },
-                          )}
+                          {formatBerlin(event.eventDate, "tagMonatKurz")}
                         </div>
                       </div>
                     )}
                     <div className="min-w-0 flex-1">
-                      <p className="dark:text-dark-text truncate font-medium text-gray-900">
+                      <p className="text-ink dark:text-night-text truncate font-medium">
                         {event.title}
                       </p>
-                      <p className="dark:text-dark-muted truncate text-sm text-gray-500">
-                        {new Date(event.eventDate).toLocaleDateString("de-DE", {
-                          day: "2-digit",
-                          month: "long",
-                          year: "numeric",
-                        })}
+                      <p className="text-dark dark:text-night-muted truncate text-sm">
+                        {formatBerlin(event.eventDate, "datumLangZweistellig")}
                       </p>
                     </div>
                   </div>
@@ -230,34 +216,22 @@ export default function LocationDetailPage() {
 
           {location.courses && location.courses.length > 0 && (
             <div>
-              <h3 className="dark:text-dark-text mb-2 text-sm font-medium text-gray-700">
+              <h3 className="text-ink dark:text-night-text mb-2 text-sm font-medium">
                 Kurse ({location.courses.length})
               </h3>
               <div className="space-y-2">
                 {location.courses.slice(0, 5).map((course) => (
                   <div
                     key={course.id}
-                    className="dark:border-dark-border flex items-center gap-3 rounded-lg border border-gray-100 p-3"
+                    className="border-rule dark:border-night-rule flex items-center gap-3 border p-3"
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="dark:text-dark-text truncate font-medium text-gray-900">
+                      <p className="text-ink dark:text-night-text truncate font-medium">
                         {course.title}
                       </p>
-                      <p className="dark:text-dark-muted truncate text-sm text-gray-500">
-                        {new Date(course.startDate).toLocaleDateString(
-                          "de-DE",
-                          {
-                            day: "2-digit",
-                            month: "long",
-                            year: "numeric",
-                          },
-                        )}{" "}
-                        -{" "}
-                        {new Date(course.endDate).toLocaleDateString("de-DE", {
-                          day: "2-digit",
-                          month: "long",
-                          year: "numeric",
-                        })}
+                      <p className="text-dark dark:text-night-muted truncate text-sm">
+                        {formatBerlin(course.startDate, "datumLangZweistellig")}{" "}
+                        - {formatBerlin(course.endDate, "datumLangZweistellig")}
                       </p>
                     </div>
                   </div>
@@ -268,17 +242,17 @@ export default function LocationDetailPage() {
 
           {location.ensembles && location.ensembles.length > 0 && (
             <div>
-              <h3 className="dark:text-dark-text mb-2 text-sm font-medium text-gray-700">
+              <h3 className="text-ink dark:text-night-text mb-2 text-sm font-medium">
                 Ensembles ({location.ensembles.length})
               </h3>
               <div className="space-y-2">
                 {location.ensembles.slice(0, 5).map((ensemble) => (
                   <div
                     key={ensemble.id}
-                    className="dark:border-dark-border flex items-center gap-3 rounded-lg border border-gray-100 p-3"
+                    className="border-rule dark:border-night-rule flex items-center gap-3 border p-3"
                   >
                     {ensemble.image?.url ? (
-                      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded">
+                      <div className="relative h-12 w-12 shrink-0 overflow-hidden">
                         <Image
                           src={ensemble.image.url}
                           alt={ensemble.name}
@@ -287,12 +261,12 @@ export default function LocationDetailPage() {
                         />
                       </div>
                     ) : (
-                      <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-12 w-12 shrink-0 items-center justify-center rounded bg-gray-100 text-gray-500">
+                      <div className="bg-rule/25 text-dark dark:bg-night-raised dark:text-night-muted flex h-12 w-12 shrink-0 items-center justify-center">
                         <UserIcon className="h-6 w-6" />
                       </div>
                     )}
                     <div className="min-w-0 flex-1">
-                      <p className="dark:text-dark-text truncate font-medium text-gray-900">
+                      <p className="text-ink dark:text-night-text truncate font-medium">
                         {ensemble.name}
                       </p>
                     </div>
@@ -305,51 +279,41 @@ export default function LocationDetailPage() {
           {(!location.events || location.events.length === 0) &&
             (!location.courses || location.courses.length === 0) &&
             (!location.ensembles || location.ensembles.length === 0) && (
-              <p className="dark:text-dark-muted text-gray-500 italic">
+              <p className="text-dark dark:text-night-muted italic">
                 Dieser Standort wird derzeit nicht verwendet
               </p>
             )}
         </div>
       </div>
 
-      {/* Metadata */}
-      <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-        <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+      <div className="border-rule dark:border-night-rule border p-6">
+        <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
           Details
         </h2>
         <dl className="grid gap-4 sm:grid-cols-2">
           <div>
-            <dt className="dark:text-dark-muted text-sm text-gray-500">
+            <dt className="text-dark dark:text-night-muted text-sm">
               Erstellt am
             </dt>
-            <dd className="dark:text-dark-text font-medium text-gray-900">
-              {new Date(location.createdAt).toLocaleDateString("de-DE", {
-                day: "2-digit",
-                month: "long",
-                year: "numeric",
-              })}
+            <dd className="text-ink dark:text-night-text font-medium">
+              {formatBerlin(location.createdAt, "datumLangZweistellig")}
             </dd>
           </div>
           <div>
-            <dt className="dark:text-dark-muted text-sm text-gray-500">
+            <dt className="text-dark dark:text-night-muted text-sm">
               Zuletzt aktualisiert
             </dt>
-            <dd className="dark:text-dark-text font-medium text-gray-900">
-              {new Date(location.updatedAt).toLocaleDateString("de-DE", {
-                day: "2-digit",
-                month: "long",
-                year: "numeric",
-              })}
+            <dd className="text-ink dark:text-night-text font-medium">
+              {formatBerlin(location.updatedAt, "datumLangZweistellig")}
             </dd>
           </div>
         </dl>
       </div>
 
-      {/* Actions */}
       <div className="mt-6 flex flex-wrap gap-3">
         <Link
           href="/dashboard/locations"
-          className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+          className="border-ink dark:border-night-text text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised inline-flex min-h-11 items-center gap-2 border px-4 py-2 transition-colors"
         >
           <ArrowLeftIcon className="h-4 w-4" />
           Zurück zur Übersicht

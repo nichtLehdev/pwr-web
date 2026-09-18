@@ -209,9 +209,6 @@ export const bezirkeRouter = createTRPCRouter({
       };
     }),
 
-  /**
-   * Get all users for dropdown selection
-   */
   getUsersForDropdown: permissionProcedure(
     PERMISSIONS.ORGANIZATION_MANAGE_BEZIRKE,
   ).query(async ({ ctx }) => {
@@ -227,9 +224,8 @@ export const bezirkeRouter = createTRPCRouter({
   }),
 
   /**
-   * Obleute eines Bezirks setzen. Jeder Eintrag steht für sich: entweder mit
-   * verknüpftem Benutzerkonto oder mit frei gepflegten Angaben — ein Konto ist
-   * ausdrücklich nicht nötig. Die Liste ersetzt den bisherigen Stand.
+   * Jeder Eintrag hat ein verknüpftes Konto oder frei gepflegte Angaben (Konto nicht nötig).
+   * Die Liste ersetzt den bisherigen Stand.
    */
   setPeople: permissionProcedure(PERMISSIONS.ORGANIZATION_MANAGE_BEZIRKE)
     .input(
@@ -330,8 +326,7 @@ export const bezirkeRouter = createTRPCRouter({
           }
         }
 
-        // Die Rollenbezeichnung am Benutzerkonto spiegelt weiterhin das Amt —
-        // Suche, Navigation und Kursansichten lesen sie dort.
+        // Die Rollenbezeichnung am Konto spiegelt das Amt; Suche, Navigation und Kursansichten lesen sie dort.
         const removedUserIds = removed
           .map((row) => row.userId)
           .filter((id): id is string => !!id)

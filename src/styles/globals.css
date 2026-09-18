@@ -14,16 +14,30 @@
   --color-foerderverein-dark: #5a8fc4;
   --color-foerderverein-light: #9bc2e8;
 
-  /* Dark Mode Colors */
-  --color-dark-background: #0f1419;
-  --color-dark-background-secondary: #1a1f27;
-  --color-dark-surface: #252b36;
-  --color-dark-border: #2d3340;
-  --color-dark-text: #e4e6eb;
-  --color-dark-text-secondary: #b0b3ba;
-  --color-dark-text-muted: #8a8d93;
+  /*
+   * Nachtfarben: Die Namen bleiben wegen der vielen Verwendungen, die Werte
+   * entsprechen der Nachtpalette des Programmhefts (siehe unten).
+   */
+  --color-dark-background: #141517;
+  --color-dark-background-secondary: #1d1f22;
+  --color-dark-surface: #1d1f22;
+  --color-dark-border: #34373c;
+  --color-dark-text: #ecebe8;
+  --color-dark-text-secondary: #a6a8ad;
+  --color-dark-text-muted: #a6a8ad;
 
-  /* Bezirks-Farben */
+  /* Programmheft (öffentliche Website) */
+  --font-programm: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --color-ink: #1c1d1f;
+  --color-paper: #ffffff;
+  --color-primary-ink: #a55800;
+  --color-rule: #d4d4d1;
+  --color-night: #141517;
+  --color-night-raised: #1d1f22;
+  --color-night-rule: #34373c;
+  --color-night-text: #ecebe8;
+  --color-night-muted: #a6a8ad;
+
   --color-district-all: #faa619;
   --color-district-1: #3b82f6;
   --color-district-2: #10b981;
@@ -40,6 +54,216 @@
   --color-district-13: #22d3ee;
 }
 
+/* Programmheft: schmale Archivo-Schnitte (Breitenachse) und Satzbreite der öffentlichen Seiten. */
+@utility condensed {
+  font-variation-settings: "wdth" 68;
+}
+
+@utility semi-condensed {
+  font-variation-settings: "wdth" 84;
+}
+
+@utility sheet {
+  width: 100%;
+  max-width: 100rem;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+
+  @media (width >= 40rem) {
+    padding-inline: 2.5rem;
+  }
+
+  @media (width >= 64rem) {
+    padding-inline: 3.5rem;
+  }
+}
+
+.programm ::selection {
+  background-color: var(--color-primary);
+  color: var(--color-ink);
+}
+
+.programm {
+  caret-color: var(--color-primary-ink);
+}
+
+/* Tailwinds `appearance-none` setzt kein `-webkit-`-Präfix; ohne es zeigt Safari sein Dreieck neben unserem. */
+.programm select {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.programm :focus-visible {
+  outline: 3px solid var(--color-ink);
+  outline-offset: 2px;
+}
+
+.dark .programm {
+  caret-color: var(--color-primary);
+}
+
+.dark .programm :focus-visible,
+.programm .on-ink :focus-visible,
+.programm.on-ink :focus-visible {
+  outline-color: var(--color-primary);
+}
+
+.dark .programm .on-orange :focus-visible,
+.dark .programm .print-field :focus-visible {
+  outline-color: var(--color-ink);
+}
+
+/*
+ * Druckfläche in Fördervereinsblau: alles in Tinte, auch nachts (≈ 6,8:1).
+ * Ungelayert, damit es die hellen/dunklen Utilities überstimmt.
+ */
+.print-field :is(h2, h3, h4, p, span, svg, a, li, dt, dd) {
+  color: var(--color-ink);
+}
+
+.print-field .border-ink {
+  border-color: var(--color-ink);
+}
+
+.print-field .border-rule {
+  border-color: color-mix(in srgb, var(--color-ink) 30%, transparent);
+}
+
+.print-field .fill-row::before {
+  background-color: var(--color-paper);
+}
+
+/* Programmzeile füllt sich bei Hover/Fokus von links mit Orange; Inhalt wird Tinte für den Kontrast. */
+.fill-row {
+  position: relative;
+  isolation: isolate;
+}
+
+.fill-row::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-color: var(--color-primary);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 280ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Förderverein-Zeilen füllen sich in Fördervereinsblau (Tinte darauf ≥ 6:1). */
+.fill-row[data-tone="foerderverein"]::before {
+  background-color: var(--color-foerderverein);
+}
+
+.fill-row:focus-within::before {
+  transform: scaleX(1);
+}
+
+.fill-row:focus-within :is(h2, h3, h4, p, span, svg, a):not([data-tag]) {
+  color: var(--color-ink);
+}
+
+@media (hover: hover) {
+  .fill-row:hover::before {
+    transform: scaleX(1);
+  }
+
+  .fill-row:hover :is(h2, h3, h4, p, span, svg, a):not([data-tag]) {
+    color: var(--color-ink);
+  }
+}
+
+.fill-row:has(a:focus-visible) {
+  outline: 3px solid var(--color-ink);
+  outline-offset: -3px;
+}
+
+.fill-row a:focus-visible {
+  outline: none;
+}
+
+/*
+ * Suchfeld ist beim Öffnen fokussiert: statt Fokusrahmen (Kasten im Kasten) wird
+ * die Unterlinie zur Tinte. Ungelayert, sonst gewinnt der allgemeine Rahmen.
+ */
+.programm .suchfeld:focus-visible {
+  outline: none;
+}
+
+/* Textlink immer unterstrichen, damit er nicht nur an der Farbe erkennbar ist. */
+.link-ink {
+  color: var(--color-primary-ink);
+  font-weight: 600;
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+.link-ink:hover {
+  text-decoration-thickness: 2px;
+}
+
+.dark .link-ink {
+  color: var(--color-primary);
+}
+
+.on-orange .link-ink,
+.dark .on-orange .link-ink {
+  color: var(--color-ink);
+}
+
+/*
+ * Gestreckter Titel-Link: Fokusrahmen um die ganze Spalte statt um den Link.
+ * Ungelayert, weil `.programm :focus-visible` sonst jede Tailwind-Utility überstimmt.
+ */
+.stretch-item:has(a:focus-visible) {
+  outline: 3px solid var(--color-ink);
+  outline-offset: 4px;
+}
+
+.dark .stretch-item:has(a:focus-visible) {
+  outline-color: var(--color-primary);
+}
+
+.stretch-item a:focus-visible {
+  outline: none;
+}
+
+/* Bezirksflächen als Tonwert, damit die Chor-Marker darauf lesbar bleiben. */
+.bezirk-path {
+  fill-opacity: 0.45;
+  stroke: currentColor;
+  stroke-opacity: 1;
+  stroke-width: 1px;
+  vector-effect: non-scaling-stroke;
+}
+
+/* Nachts höhere Deckkraft: gegen fast Schwarz gemischt wirken die Flächen sonst dumpf. */
+.dark .bezirk-path {
+  fill-opacity: 0.65;
+}
+
+.titelblatt-photo {
+  transition: opacity 800ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (width >= 64rem) {
+  .titelblatt-min-h {
+    min-height: min(56rem, calc(100svh - var(--main-padding-top, 5rem)));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.scroll-smooth {
+    scroll-behavior: auto;
+  }
+
+  .fill-row::before,
+  .titelblatt-photo {
+    transition: none;
+  }
+}
+
 /**
  * Scroll-Lock ohne `position: fixed` am body — das bricht auf iOS Safari oft
  * das Layout (sichtbarer Bereich / fehlende untere Buttons).
@@ -49,7 +273,6 @@ body.modal-open {
   overflow: hidden;
 }
 
-/* Container Auto-Centering */
 .container {
   margin-left: auto;
   margin-right: auto;
@@ -57,11 +280,7 @@ body.modal-open {
   padding-right: 1rem;
 }
 
-/*
- * Horizontal overflow: use `clip` instead of `hidden` so descendants can use
- * `position: sticky` (Safari/Chromium treat overflow-x:hidden on html/body as
- * blocking sticky). Still prevents sideways scroll from full-bleed sections.
- */
+/* `clip`, not `hidden`: overflow-x:hidden on html/body breaks `position: sticky` in descendants. */
 html {
   overflow-x: clip;
   width: 100%;
@@ -72,24 +291,29 @@ body {
   overflow-x: clip;
 }
 
-/*
- * Dashboard long forms: extra air below fixed shell for sticky UI.
- * --main-padding-top is set on MainContent <main> as a fully resolved calc (no nested
- * var(--nav-height)) so sticky offsets and scroll-margin inherit correctly in deep trees.
- */
+/* Extra space below the fixed dashboard shell for sticky UI. */
 :root {
   --dashboard-sticky-top-extra: 1.5rem;
 }
 
 /*
- * Sticky offsets for dashboard shell (nav + optional banner live in `--main-padding-top` on <main>).
- * Defined here instead of Tailwind arbitrary `top-[calc(var(--,...))]` because commas inside
- * arbitrary values break JIT parsing and yield invalid `top`, which disables `position: sticky`.
+ * Named classes instead of Tailwind arbitrary `top-[calc(...)]`: commas inside
+ * arbitrary values break JIT parsing and silently disable `position: sticky`.
  */
 @layer utilities {
   .dashboard-sticky-shell-top {
     top: calc(
       var(--main-padding-top, 9rem) + var(--dashboard-sticky-top-extra)
+    );
+  }
+
+  /*
+   * Klebeversatz unter Navigation (+ Banner) und Kolumnentitel. Keine feste Zahl
+   * wie `top-24`: Die Navigationshöhe hängt vom Banner ab.
+   */
+  .sticky-below-nav {
+    top: calc(
+      var(--main-padding-top, 5rem) + var(--kolumnentitel-hoehe, 0px) + 1.5rem
     );
   }
 }
@@ -109,7 +333,6 @@ body {
   }
 }
 
-/* TipTap Editor Placeholder */
 .tiptap p.is-editor-empty:first-child::before {
   color: #9ca3af;
   content: attr(data-placeholder);
@@ -122,7 +345,6 @@ body {
   color: #6b7280;
 }
 
-/* TipTap Table: selected cells */
 .tiptap td.selectedCell,
 .tiptap th.selectedCell {
   background-color: rgba(250, 166, 25, 0.15);
@@ -135,7 +357,6 @@ body {
   border-color: #fbb847;
 }
 
-/* TipTap Table: column resize handle */
 .tiptap .column-resize-handle {
   position: absolute;
   top: 0;
@@ -162,80 +383,8 @@ body {
   box-sizing: border-box;
 }
 
-/* Resize cursor when hovering near column borders */
 .tiptap.resize-cursor {
   cursor: col-resize;
-}
-
-/* Homepage upcoming courses carousels — direction matches navigation (incl. wrap) */
-@keyframes homepage-course-enter-fwd {
-  from {
-    opacity: 0;
-    transform: translate3d(12px, 0, 0);
-  }
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
-}
-
-@keyframes homepage-course-enter-bwd {
-  from {
-    opacity: 0;
-    transform: translate3d(-12px, 0, 0);
-  }
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
-}
-
-@keyframes homepage-open-enter-fwd {
-  from {
-    opacity: 0;
-    transform: translate3d(0, 10px, 0);
-  }
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
-}
-
-@keyframes homepage-open-enter-bwd {
-  from {
-    opacity: 0;
-    transform: translate3d(0, -10px, 0);
-  }
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
-}
-
-.animate-homepage-course-fwd {
-  animation: homepage-course-enter-fwd 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-.animate-homepage-course-bwd {
-  animation: homepage-course-enter-bwd 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-.animate-homepage-open-fwd {
-  animation: homepage-open-enter-fwd 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-.animate-homepage-open-bwd {
-  animation: homepage-open-enter-bwd 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-@media (max-width: 1023px) {
-  .animate-homepage-course-fwd,
-  .animate-homepage-course-bwd,
-  .animate-homepage-open-fwd,
-  .animate-homepage-open-bwd {
-    animation-duration: 700ms;
-    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-  }
 }
 
 /* Rhythmus-Spiel: Einzähler-Zahl kurz „ploppen“ */
@@ -258,12 +407,18 @@ body {
 }
 
 /*
- * iOS Safari lays `input[type="date"]` (and the other date/time types) out from
- * its native widget instead of as a text box: the field keeps an intrinsic
- * width — so it overflows narrow grid columns rather than shrinking — and
- * centres its value, which makes it taller than the inputs next to it. Reset it
- * to a plain field so mixed rows (e.g. Geburtsdatum next to Wohnort in der
- * Kursanmeldung) line up.
+ * Das Überschwingen ist als Taktakzent gewollt. Ohne Animation steht die Zahl
+ * sichtbar und unskaliert da.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .rhythm-count-pop {
+    animation: none;
+  }
+}
+
+/*
+ * iOS Safari renders date/time inputs as native widgets (intrinsic width,
+ * centred and taller); reset them to plain fields so mixed rows line up.
  */
 input[type="date"],
 input[type="time"],

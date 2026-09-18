@@ -1,7 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Check, ChevronDown, Music, Settings2, X } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  Music,
+  RotateCcw,
+  Settings2,
+  SlidersHorizontal,
+  X,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/react";
 import { Button } from "@/app/_components/ui/button";
@@ -52,6 +60,7 @@ import {
   type StaffAccidentalLayout,
 } from "../_lib/staff-accidental-layout";
 import { GameStepIndicator } from "../../../_components/game-step-indicator";
+import { GameBarSlot, GameDock } from "../../../_components/game-shell-context";
 import { useGameStats } from "../../../_lib/stats/use-game-stats";
 import { InstrumentSelector } from "./instrument-selector";
 import { StaffDisplay, type StaffFlash } from "./staff-display-loader";
@@ -127,11 +136,7 @@ function parseStoredCustomSet(raw: unknown): StoredCustomSet | null {
   };
 }
 
-/**
- * Einstellungen als ein JSON-Blob; migriert den alten Instrument-Key
- * (inkl. dessen trumpet_bb → trumpet_c Migration). Alte Blobs ohne
- * `customSet`/"custom" bleiben gültig.
- */
+/** Ein JSON-Blob; migriert den alten Instrument-Key (inkl. trumpet_bb → trumpet_c). */
 function readStoredSettings(): Partial<StoredSettings> {
   if (typeof window === "undefined") return {};
   try {
@@ -259,9 +264,8 @@ export function NoteReadingGame() {
   useEffect(() => {
     const stored = readStoredSettings();
 
-    /* Deep-Link `?set=CODE` bewusst ohne useSearchParams lesen (keine
-     * Suspense-Boundary nötig); Param sofort entfernen, damit ein Reload
-     * die Aktivierung nicht erneut auslöst. */
+    /* `?set=CODE` ohne useSearchParams (keine Suspense-Boundary nötig); sofort
+     * entfernen, damit ein Reload die Aktivierung nicht wiederholt. */
     let pending: PendingCustomSet | null = null;
     try {
       const params = new URLSearchParams(window.location.search);
@@ -386,8 +390,7 @@ export function NoteReadingGame() {
     recordUseMutate,
   ]);
 
-  /* VexFlow-Chunk + Notenfonts schon im Setup laden, damit die erste
-   * Quiz-Frage nicht 1–3 s ihres Zeitbudgets ans Chunk-Laden verliert. */
+  /* VexFlow und Notenfonts schon im Setup laden, damit die erste Quiz-Frage keine Zeit verliert. */
   useEffect(() => {
     if (phase !== "setup") return;
     void import("./staff-display").then((m) => m.preloadStaffFonts());
@@ -563,8 +566,7 @@ export function NoteReadingGame() {
         return;
       }
       const left = Math.max(0, (d - performance.now()) / 1000);
-      /* State nur setzen, wenn sich die angezeigte Zehntelsekunde ändert —
-       * sonst rendert der ganze Baum mit 60 fps. */
+      /* Nur bei geänderter Zehntelsekunde setzen, sonst rendert der Baum mit 60 fps. */
       const tenth = Math.ceil(left * 10);
       if (tenth !== lastShownTenthRef.current) {
         lastShownTenthRef.current = tenth;
@@ -746,30 +748,33 @@ export function NoteReadingGame() {
 
   if (!hydrated) {
     return (
-      <div className="text-dark dark:text-dark-text-muted py-16 text-center text-sm">
+      <div className="text-dark dark:text-night-muted py-16 text-center text-sm">
         Lädt …
       </div>
     );
   }
 
+  const modeLabel =
+    mode === "learn" ? "Lernen" : mode === "quiz" ? "Quiz" : "Endlos";
+
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 md:gap-6">
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-[clamp(0.625rem,1.8dvh,1.5rem)]">
       <GameStepIndicator
         steps={["Setup", "Spielen", "Auswertung"]}
         current={phase === "setup" ? 0 : phase === "play" ? 1 : 2}
       />
 
       {phase === "setup" && (
-        <div className="space-y-5 md:space-y-6">
+        <div className="flex flex-col gap-[clamp(0.75rem,2.2dvh,1.75rem)]">
           <div className="text-center">
             <Music
-              className="text-primary mx-auto h-11 w-11 stroke-[1.45] md:h-16 md:w-16 md:stroke-[1.35]"
+              className="text-primary-ink dark:text-primary mx-auto h-10 w-10 stroke-[1.45] md:h-14 md:w-14 md:stroke-[1.35]"
               aria-hidden
             />
-            <h2 className="text-dark dark:text-dark-text mt-2 text-xl font-bold tracking-tight md:mt-3 md:text-3xl">
+            <h2 className="condensed text-ink dark:text-night-text mt-2 text-xl font-bold tracking-tight md:text-3xl">
               Noten lesen
             </h2>
-            <p className="text-dark dark:text-dark-text-secondary mx-auto mt-2 max-w-lg text-sm md:text-base">
+            <p className="text-dark dark:text-night-muted mx-auto mt-2 max-w-lg text-sm md:text-base">
               Eine Note im richtigen Schlüssel — schnell den Tonnamen wählen.
               Geschriebene Tonhöhe (wie in der Stimme), ohne Audio.
             </p>
@@ -792,7 +797,12 @@ export function NoteReadingGame() {
             onOpenLibrary={() => setLibraryOpen(true)}
             onRemoveCustomSet={handleRemoveCustomSet}
           />
+        </div>
+      )}
 
+      {/* Hauptaktion im Dock, sonst liegt sie auf kurzen Fenstern unter dem Setup. */}
+      {phase === "setup" && !libraryOpen && (
+        <GameDock>
           <Button
             type="button"
             size="lg"
@@ -801,47 +811,40 @@ export function NoteReadingGame() {
           >
             Los geht&apos;s!
           </Button>
-        </div>
+        </GameDock>
       )}
 
       {phase === "play" && pitch && (
-        <div className="flex flex-col gap-4 md:gap-5">
-          <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-col gap-[clamp(0.5rem,1.6dvh,1.25rem)]">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={() => setSetupOpen((o) => !o)}
+              aria-expanded={setupOpen}
+              aria-label={`Einstellungen: ${setupBarLabel} · ${modeLabel}`}
               className={cn(
-                "border-dark-border text-dark hover:bg-background-secondary dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-background inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-bold transition active:scale-[0.98]",
+                "border-rule text-ink hover:bg-rule/25 dark:border-night-rule dark:text-night-text dark:hover:bg-night-raised inline-flex min-h-11 items-center gap-2 border px-3 py-2 text-sm font-bold transition-colors active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100",
                 GAME_FOCUS_RING,
               )}
             >
               <Settings2 className="h-4 w-4 shrink-0 stroke-[2]" aria-hidden />
-              {setupBarLabel}
-              {" · "}
-              {mode === "learn"
-                ? "Lernen"
-                : mode === "quiz"
-                  ? "Quiz"
-                  : "Endlos"}
+              <span aria-hidden>
+                {setupBarLabel}
+                {" · "}
+                {modeLabel}
+              </span>
               <ChevronDown
-                className={cn("h-4 w-4 transition", setupOpen && "rotate-180")}
+                className={cn(
+                  "h-4 w-4 shrink-0 transition-transform motion-reduce:transition-none",
+                  setupOpen && "rotate-180",
+                )}
                 aria-hidden
               />
-            </button>
-            <button
-              type="button"
-              onClick={openSetup}
-              className={cn(
-                "text-dark dark:text-dark-text-muted rounded-lg text-xs font-bold underline-offset-2 hover:underline active:opacity-70",
-                GAME_FOCUS_RING,
-              )}
-            >
-              Zurück zum Setup
             </button>
           </div>
 
           {setupOpen && (
-            <div className="border-dark-border/60 dark:border-dark-border dark:bg-dark-surface/40 rounded-lg border bg-white/50 p-4">
+            <div className="border-rule dark:border-night-rule dark:bg-night-raised bg-rule/25 border p-4">
               <InstrumentSelector
                 instrument={instrument}
                 mode={mode}
@@ -864,7 +867,7 @@ export function NoteReadingGame() {
               />
               <Button
                 type="button"
-                size="md"
+                size="lg"
                 className="mt-4 w-full"
                 onClick={() => {
                   setSetupOpen(false);
@@ -881,15 +884,17 @@ export function NoteReadingGame() {
             </div>
           )}
 
-          <ScoreBar
-            mode={mode}
-            streak={streak}
-            bestStreak={bestStreak}
-            quizCorrect={mode === "quiz" ? quizCorrect : undefined}
-            quizIndex={mode === "quiz" ? quizIndex : undefined}
-            quizTotal={mode === "quiz" ? QUIZ_ROUND_LEN : undefined}
-            secondsLeft={mode === "quiz" ? quizSecondsLeft : null}
-          />
+          <GameBarSlot>
+            <ScoreBar
+              mode={mode}
+              streak={streak}
+              bestStreak={bestStreak}
+              quizCorrect={mode === "quiz" ? quizCorrect : undefined}
+              quizIndex={mode === "quiz" ? quizIndex : undefined}
+              quizTotal={mode === "quiz" ? QUIZ_ROUND_LEN : undefined}
+              secondsLeft={mode === "quiz" ? quizSecondsLeft : null}
+            />
+          </GameBarSlot>
 
           <div className="relative">
             <StaffDisplay
@@ -897,8 +902,9 @@ export function NoteReadingGame() {
               pitch={pitch}
               staffAccidentalLayout={staffAccidentalLayout}
               flash={flash}
-              /* Positionsbeschreibung statt Tonname — das Standard-Label
-               * würde die Antwort verraten. */
+              /* Höhe nach Fensterhöhe — die Notenschrift wächst mit. */
+              className="h-[clamp(9.5rem,40dvh,28rem)]"
+              /* Positionsbeschreibung statt Tonname, sonst verrät das Label die Antwort. */
               ariaLabel={`Notensystem — ${describeWrittenNote(pitch, clef)}`}
             />
             {/* Nicht nur Farbe: Icon + Text zum Flash (Farbenblindheit). */}
@@ -906,8 +912,10 @@ export function NoteReadingGame() {
               <div
                 aria-hidden
                 className={cn(
-                  "pointer-events-none absolute top-2 right-2 flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-bold text-white",
-                  flash === "correct" ? "bg-emerald-600" : "bg-rose-600",
+                  "pointer-events-none absolute top-2 right-2 flex items-center gap-1 px-2 py-1 text-xs font-bold",
+                  flash === "correct"
+                    ? "on-orange bg-primary text-ink"
+                    : "text-paper bg-red-700",
                 )}
               >
                 {flash === "correct" ? (
@@ -925,32 +933,14 @@ export function NoteReadingGame() {
           <p
             aria-live="polite"
             className={cn(
-              "min-h-[2.75rem] rounded-lg border px-3 py-2 text-sm leading-snug",
+              "min-h-[2.75rem] border px-3 py-2 text-sm leading-snug",
               learnLine
-                ? "text-dark dark:text-dark-text-secondary border-dark-border/40 dark:border-dark-border dark:bg-dark-background/50 bg-white/60"
+                ? "text-ink dark:text-night-text border-rule dark:border-night-rule dark:bg-night-raised bg-rule/25"
                 : "border-transparent",
             )}
           >
             {learnLine}
           </p>
-
-          {mode === "learn" && (
-            <div className="min-h-[3.25rem]">
-              {awaitingNext && (
-                <Button
-                  type="button"
-                  size="lg"
-                  className="w-full"
-                  onClick={handleLearnNext}
-                >
-                  Weiter
-                  <span className="ml-2 hidden text-xs font-bold opacity-80 md:inline">
-                    (Enter oder Leertaste)
-                  </span>
-                </Button>
-              )}
-            </div>
-          )}
 
           <AnswerButtons
             labels={options}
@@ -967,25 +957,18 @@ export function NoteReadingGame() {
         <div className="flex flex-col gap-4">
           <div className="text-center">
             <Music
-              className="text-primary mx-auto h-10 w-10 stroke-[1.4]"
+              className="text-primary-ink dark:text-primary mx-auto h-10 w-10 stroke-[1.4]"
               aria-hidden
             />
-            <p className="text-dark dark:text-dark-text mt-2 text-lg font-bold">
+            <p className="text-ink dark:text-night-text mt-2 text-lg font-bold">
               Runde zu Ende
             </p>
           </div>
-          <NoteReadingResultView
-            result={roundResult}
-            onRetry={() => {
-              setRoundResult(null);
-              startGame();
-            }}
-            onChangeSetup={openSetup}
-          />
+          <NoteReadingResultView result={roundResult} />
           {aggregates && aggregates.plays > 0 && (
-            <p className="text-dark dark:text-dark-text-muted text-center text-sm">
+            <p className="text-dark dark:text-night-muted text-center text-sm">
               Persönlicher Rekord:{" "}
-              <span className="text-dark dark:text-dark-text font-bold">
+              <span className="text-ink dark:text-night-text font-bold">
                 {aggregates.bestScore}/{QUIZ_ROUND_LEN} richtig
               </span>
               {aggregates.bestStreak > 0 && (
@@ -994,6 +977,58 @@ export function NoteReadingGame() {
             </p>
           )}
         </div>
+      )}
+
+      {/* „Weiter“ steht auch vor der Antwort (gesperrt), damit der Inhalt beim
+       * Erscheinen nicht springt. */}
+      {phase === "play" && pitch && mode === "learn" && !libraryOpen && (
+        <GameDock>
+          <Button
+            type="button"
+            size="lg"
+            variant={awaitingNext ? "primary" : "secondary"}
+            className="w-full"
+            onClick={handleLearnNext}
+            disabled={!awaitingNext}
+          >
+            Weiter
+            <span className="ml-2 hidden text-xs font-bold opacity-80 md:inline">
+              (Enter oder Leertaste)
+            </span>
+          </Button>
+        </GameDock>
+      )}
+
+      {phase === "result" && roundResult && !libraryOpen && (
+        <GameDock>
+          <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
+            <Button
+              type="button"
+              size="lg"
+              className="gap-2 sm:min-w-64"
+              onClick={() => {
+                setRoundResult(null);
+                startGame();
+              }}
+            >
+              <RotateCcw className="h-5 w-5 shrink-0 stroke-[2]" aria-hidden />
+              Nochmal spielen
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              className="gap-2 sm:min-w-64"
+              onClick={openSetup}
+            >
+              <SlidersHorizontal
+                className="h-5 w-5 shrink-0 stroke-[2]"
+                aria-hidden
+              />
+              Schwierigkeit / Modus
+            </Button>
+          </div>
+        </GameDock>
       )}
 
       {/* Kein clef/lockClef: Jedes Set ist spielbar, weil sein Schlüssel das

@@ -46,11 +46,8 @@ const hornBeginnerHi: WrittenPitch = { letter: "G", octave: 5, alter: 0 };
 const hornIntermediateLo: WrittenPitch = { letter: "F", octave: 3, alter: 0 };
 const hornIntermediateHi: WrittenPitch = { letter: "A", octave: 5, alter: 0 };
 
-/**
- * Fortgeschritten: chromatisch geschrieben bis tief **Fis3/Ges3** (MIDI 54) —
- * der tiefste reguläre geschriebene Trompetenton (ohne Pedaltöne).
- */
-const TRUMPET_ADV_LO_MIDI = 54; // Geschriebenes Fis3/Ges3 — tiefster regulärer Ton
+/** Fis3/Ges3 ist der tiefste reguläre geschriebene Trompetenton (ohne Pedaltöne). */
+const TRUMPET_ADV_LO_MIDI = 54;
 const TRUMPET_ADV_HI_MIDI = 86; // D6
 
 /** Horn in F: chromatisch geschrieben, etwas mehr Tiefe als Trompete, hoher Kantilene-Bereich. */
@@ -99,10 +96,8 @@ const EXPERT_LO_MIDI = Math.min(BASS_ADV_LO_MIDI, TRUMPET_ADV_LO_MIDI);
 const EXPERT_HI_MIDI = Math.max(BASS_ADV_HI_MIDI, TRUMPET_ADV_HI_MIDI);
 
 /**
- * Experte/Hardcore: pro Schlüssel geklemmter Umfang, damit keine Note weiter
- * als ca. 3–4 Hilfslinien vom System entfernt erscheint (z. B. kein B1 im
- * Violinschlüssel). Der Schlüssel wird zuerst gezogen, dann der Ton aus
- * diesem Pool.
+ * Experte/Hardcore: Umfang je Schlüssel geklemmt, damit keine Note mehr als ca. 3–4
+ * Hilfslinien vom System entfernt steht. Erst wird der Schlüssel gezogen, dann der Ton.
  */
 export const EXPERT_CLEF_MIDI_BOUNDS: Record<
   ClefKind,
@@ -162,9 +157,8 @@ function walkDiatonicRange(lo: WrittenPitch, hi: WrittenPitch): WrittenPitch[] {
 }
 
 /**
- * Chromatische Umschrift (Fortgeschritten): deutsche **-es**-Namen wo üblich
- * (Des, Es, Ges, As, B), daneben **-is** (Cis, Dis, Fis, Gis, Ais).
- * Passt zu `answerLabelForPitch` (Des, Ges, As, …).
+ * Chromatische Umschrift: -es-Namen wo üblich (Des, Es, Ges, As, B), sonst -is;
+ * passend zu `answerLabelForPitch`.
  */
 export function midiToWrittenPitch(midi: number): WrittenPitch {
   const pc = ((midi % 12) + 12) % 12;

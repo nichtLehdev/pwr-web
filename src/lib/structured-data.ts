@@ -1,12 +1,6 @@
 import { SITE_NAME, siteUrl } from "@/lib/seo";
 
-/**
- * schema.org builders for the public pages.
- *
- * Every graph node that other nodes point at gets a stable `@id` so search
- * engines merge the organisation across pages instead of treating each page's
- * copy as a separate entity.
- */
+/** Referenced nodes get a stable `@id` so search engines merge them across pages. */
 
 export const ORGANIZATION_ID = "#organization";
 

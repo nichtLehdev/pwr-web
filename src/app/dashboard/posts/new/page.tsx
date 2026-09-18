@@ -46,8 +46,6 @@ const categoryLabels: Record<PostCategory, string> = {
   ANDERE: "Andere",
 };
 
-// Dashboard access is now controlled by permissions
-
 export default function NewPostPage() {
   const router = useRouter();
   const toast = useToast();
@@ -63,10 +61,8 @@ export default function NewPostPage() {
   const hasCreatePermission = hasPermission(PERMISSIONS.POSTS_CREATE);
   const isHigherRole = hasApprovePermission;
   const scopedBezirkIds = profile?.bezirkScopes?.map((s) => s.bezirkId) ?? [];
-  // Zuständigkeit statt Zugehörigkeit: `profile.bezirkId` sagt, wo jemand im
-  // Werk verortet ist (und trägt öffentlich ein Amt), nicht wofür er schreiben
-  // darf. Beides zu vermischen hieße, für eine einzelne Ausnahme ein Amt zu
-  // vergeben.
+  // Zuständigkeit (bezirkScopes), nicht Zugehörigkeit (`profile.bezirkId`, trägt
+  // öffentlich ein Amt) entscheidet, wofür jemand schreiben darf.
   const { lockedBezirkId, hasNoDistrict, selectableBezirkIds } =
     districtFieldState(isHigherRole, scopedBezirkIds);
 
@@ -230,8 +226,7 @@ export default function NewPostPage() {
 
   useEffect(() => {
     if (!profileLoading && profile && !hasRedirected.current) {
-      // Nicht nur "irgendein Dashboard-Recht": ohne das Anlage-Recht lehnt der
-      // Server ab, das Formular soll gar nicht erst aufgehen.
+      // Ohne das Anlage-Recht lehnt der Server ab; das Formular soll gar nicht erst aufgehen.
       if (!hasDashboardAccess || !hasCreatePermission) {
         hasRedirected.current = true;
         router.push("/dashboard");
@@ -301,8 +296,8 @@ export default function NewPostPage() {
 
   if (sessionLoading || profileLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="dark:bg-night bg-paper flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
@@ -329,20 +324,17 @@ export default function NewPostPage() {
         storageFailed={storageFailed}
       />
 
-      {/* Error Message */}
       {error && (
-        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
+        <div className="mb-6 border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
           <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
         </div>
       )}
 
-      {/* Form */}
       <form onSubmit={handleSubmit}>
         <DashboardSectionedFormLayout
           navItems={NEW_POST_NAV_ITEMS}
           contentClassName="space-y-0"
         >
-          {/* Basic Information */}
           <section
             id="post-form-basic"
             className="dashboard-form-scroll-anchor"
@@ -384,8 +376,11 @@ export default function NewPostPage() {
               </div>
 
               <div>
-                <Label required>Kategorie</Label>
+                <Label htmlFor="post-category" required>
+                  Kategorie
+                </Label>
                 <Select
+                  id="post-category"
                   value={category}
                   onChange={(e) => setCategory(e.target.value as PostCategory)}
                 >
@@ -399,10 +394,9 @@ export default function NewPostPage() {
             </div>
           </section>
 
-          {/* Cover Image */}
           <section
             id="post-form-media"
-            className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+            className="dashboard-form-scroll-anchor border-rule dark:border-night-rule border-t pt-10"
           >
             <DashboardFormZoneHeader
               step={2}
@@ -412,7 +406,7 @@ export default function NewPostPage() {
             <div className="space-y-4">
               {coverImageUrl ? (
                 <div className="relative">
-                  <div className="dark:border-dark-border relative aspect-video w-full overflow-hidden rounded-lg border border-gray-200">
+                  <div className="border-rule dark:border-night-rule relative aspect-video w-full overflow-hidden border">
                     <Image
                       src={coverImageUrl}
                       alt="Titelbild"
@@ -464,13 +458,13 @@ export default function NewPostPage() {
                 <button
                   type="button"
                   onClick={() => setShowMediaPicker(true)}
-                  className="dark:border-dark-border hover:border-primary dark:hover:bg-dark-background-secondary flex w-full flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-8 transition-colors hover:bg-gray-50"
+                  className="border-ink dark:border-night-text hover:border-primary dark:hover:bg-night-raised hover:bg-rule/25 flex min-h-11 w-full flex-col items-center justify-center border-2 border-dashed p-8 transition-colors"
                 >
-                  <ImageIcon className="h-12 w-12 text-gray-400" />
-                  <span className="dark:text-dark-text mt-2 text-sm font-medium text-gray-700">
+                  <ImageIcon className="text-dark dark:text-night-muted h-12 w-12" />
+                  <span className="text-ink dark:text-night-text mt-2 text-sm font-medium">
                     Titelbild auswählen
                   </span>
-                  <span className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  <span className="text-dark dark:text-night-muted mt-1 text-xs">
                     Aus der Medienbibliothek auswählen oder neues Bild hochladen
                   </span>
                 </button>
@@ -478,10 +472,9 @@ export default function NewPostPage() {
             </div>
           </section>
 
-          {/* Content */}
           <section
             id="post-form-content"
-            className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+            className="dashboard-form-scroll-anchor border-rule dark:border-night-rule border-t pt-10"
           >
             <DashboardFormZoneHeader
               step={3}
@@ -490,7 +483,7 @@ export default function NewPostPage() {
             />
             <div className="space-y-4">
               <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
                   Beitragsinhalt *
                 </label>
                 <RichTextEditor
@@ -498,7 +491,7 @@ export default function NewPostPage() {
                   onChange={setContent}
                   placeholder="Schreibe hier deinen Beitrag..."
                 />
-                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-dark dark:text-night-muted mt-2 text-xs">
                   Nutze die Werkzeugleiste zur Formatierung. Unterstützt
                   Überschriften, Listen, Links, Bilder und mehr.
                 </p>
@@ -506,10 +499,9 @@ export default function NewPostPage() {
             </div>
           </section>
 
-          {/* District */}
           <section
             id="post-form-district"
-            className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+            className="dashboard-form-scroll-anchor border-rule dark:border-night-rule border-t pt-10"
           >
             <DashboardFormZoneHeader
               step={4}
@@ -519,7 +511,7 @@ export default function NewPostPage() {
             <div className="space-y-4">
               {!isHigherRole && lockedBezirkId ? (
                 <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                  <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
                     Dein Bezirk
                   </label>
                   <div className="flex items-center gap-2">
@@ -531,30 +523,29 @@ export default function NewPostPage() {
                           : "Wird geladen..."
                       }
                       disabled
-                      className="dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full cursor-not-allowed rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-gray-900 opacity-60"
+                      className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-rule/25 text-ink block w-full cursor-not-allowed border px-3 py-2 opacity-60"
                     />
-                    <Lock className="h-5 w-5 shrink-0 text-gray-400" />
+                    <Lock className="text-dark dark:text-night-muted h-5 w-5 shrink-0" />
                   </div>
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-dark dark:text-night-muted mt-1 text-xs">
                     Du kannst nur Beiträge für deinen eigenen Bezirk erstellen.
                   </p>
                 </div>
               ) : hasNoDistrict ? (
-                <div className="rounded-lg bg-yellow-50 p-4 dark:bg-yellow-900/20">
-                  <p className="text-sm text-yellow-800 dark:text-yellow-300">
+                <div className="border-ink dark:border-night-text border-l-2 py-1 pl-4">
+                  <p className="text-dark dark:text-night-muted text-sm">
                     <strong>Hinweis:</strong> Du bist keinem Bezirk zugeordnet.
                     Der Beitrag wird ohne Bezirkszuordnung erstellt.
                   </p>
                 </div>
               ) : (
                 <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                  <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
                     Bezirk auswählen
                   </label>
                   <Select
                     value={bezirkId}
                     onChange={(e) => setBezirkId(e.target.value)}
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                   >
                     {selectableBezirkIds === null && (
                       <option value="">Übergreifend / Kein Bezirk</option>
@@ -570,23 +561,22 @@ export default function NewPostPage() {
             </div>
           </section>
 
-          {/* Author */}
           <section
             id="post-form-author"
-            className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+            className="dashboard-form-scroll-anchor border-rule dark:border-night-rule border-t pt-10"
           >
             <DashboardFormZoneHeader
               step={5}
               title="Autor"
               description="Optionalen Autor verknuepfen oder Namen setzen."
             />
-            <p className="dark:text-dark-muted mb-4 text-sm text-gray-600">
+            <p className="text-dark dark:text-night-muted mb-4 text-sm">
               Optional: Wenn der Beitrag von jemand anderem geschrieben wurde
               oder du einen benutzerdefinierten Autorennamen verwenden möchtest.
             </p>
             <div className="space-y-4">
               <div className="author-dropdown-container relative">
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
                   Autor suchen (Benutzer verknüpfen)
                 </label>
                 <div className="relative">
@@ -603,36 +593,35 @@ export default function NewPostPage() {
                     }}
                     onFocus={() => setShowAuthorDropdown(true)}
                     placeholder="Name oder E-Mail eingeben..."
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 pr-10 text-gray-900 focus:ring-1 focus:outline-none"
+                    className="border-ink dark:border-night-text dark:bg-night dark:text-night-text text-ink bg-paper block w-full border px-3 py-2 pr-10"
                   />
                   {authorId && (
                     <button
                       type="button"
                       onClick={handleClearAuthor}
-                      className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                      className="text-dark dark:text-night-muted hover:text-ink dark:hover:text-night-text absolute top-1/2 right-3 -translate-y-1/2"
                     >
                       <X className="h-4 w-4" />
                     </button>
                   )}
                 </div>
 
-                {/* User Dropdown */}
                 {showAuthorDropdown &&
                   authorSearch &&
                   filteredUsers &&
                   filteredUsers.length > 0 && (
-                    <div className="dark:border-dark-border dark:bg-dark-surface absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg">
+                    <div className="border-rule dark:border-night-rule dark:bg-night-raised bg-paper absolute z-10 mt-1 max-h-60 w-full overflow-auto border">
                       {filteredUsers.slice(0, 10).map((user) => (
                         <button
                           key={user.id}
                           type="button"
                           onClick={() => handleAuthorSelect(user)}
-                          className="dark:hover:bg-dark-background-secondary w-full px-4 py-2 text-left text-sm transition-colors hover:bg-gray-50"
+                          className="hover:bg-rule/25 dark:hover:bg-night-rule w-full px-4 py-2 text-left text-sm transition-colors"
                         >
-                          <div className="dark:text-dark-text font-medium text-gray-900">
+                          <div className="text-ink dark:text-night-text font-medium">
                             {user.displayName || "Kein Name"}
                           </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                          <div className="text-dark dark:text-night-muted text-xs">
                             {user.email}
                           </div>
                         </button>
@@ -642,15 +631,15 @@ export default function NewPostPage() {
               </div>
 
               <div className="relative">
-                <div className="dark:border-dark-border my-4 flex items-center gap-2 border-t border-gray-200">
-                  <span className="dark:text-dark-muted dark:bg-dark-surface bg-white px-2 text-sm text-gray-500">
+                <div className="border-rule dark:border-night-rule my-4 flex items-center gap-2 border-t">
+                  <span className="text-dark dark:text-night-muted dark:bg-night bg-paper px-2 text-sm">
                     Oder
                   </span>
                 </div>
               </div>
 
               <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
                   Benutzerdefinierter Autorenname
                 </label>
                 <input
@@ -665,9 +654,9 @@ export default function NewPostPage() {
                   }}
                   placeholder="z.B. Redaktionsteam, Pressestelle..."
                   maxLength={200}
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+                  className="border-ink dark:border-night-text dark:bg-night dark:text-night-text text-ink bg-paper block w-full border px-3 py-2"
                 />
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-dark dark:text-night-muted mt-1 text-xs">
                   Wenn kein Autor ausgewählt wird, wird der Ersteller des
                   Beitrags als Autor angezeigt.
                 </p>
@@ -675,10 +664,9 @@ export default function NewPostPage() {
             </div>
           </section>
 
-          {/* Options for users with approve permission */}
           {hasApprovePermission && (
-            <section className="dark:border-dark-border border-t border-gray-200/80 pt-10">
-              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+            <section className="border-rule dark:border-night-rule border-t pt-10">
+              <h2 className="text-ink dark:text-night-text mb-4 text-lg font-semibold">
                 Admin-Optionen
               </h2>
               <div className="space-y-4">
@@ -687,9 +675,9 @@ export default function NewPostPage() {
                     type="checkbox"
                     checked={pinned}
                     onChange={(e) => setPinned(e.target.checked)}
-                    className="focus:ring-primary text-primary h-4 w-4 rounded border-gray-300"
+                    className="text-primary border-ink dark:border-night-text h-4 w-4"
                   />
-                  <span className="dark:text-dark-text text-sm text-gray-700">
+                  <span className="text-ink dark:text-night-text text-sm">
                     Beitrag anpinnen (wird ganz oben angezeigt)
                   </span>
                 </label>
@@ -697,10 +685,9 @@ export default function NewPostPage() {
             </section>
           )}
 
-          {/* Submit Options */}
           <section
             id="post-form-publish"
-            className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+            className="dashboard-form-scroll-anchor border-rule dark:border-night-rule border-t pt-10"
           >
             <DashboardFormZoneHeader
               step={6}
@@ -708,7 +695,6 @@ export default function NewPostPage() {
               description="Speichern, einreichen oder direkt veröffentlichen."
             />
             <div className="space-y-4">
-              {/* Status selection for higher roles */}
               {isHigherRole ? (
                 <div className="space-y-3">
                   <label className="flex cursor-pointer items-start gap-3">
@@ -720,13 +706,13 @@ export default function NewPostPage() {
                         setSubmitAsDraft(false);
                         setSubmitAsApproved(true);
                       }}
-                      className="focus:ring-primary text-primary mt-0.5 h-4 w-4 border-gray-300"
+                      className="text-primary border-ink dark:border-night-text mt-0.5 h-4 w-4"
                     />
                     <div>
-                      <span className="dark:text-dark-text font-medium text-gray-700">
+                      <span className="text-ink dark:text-night-text font-medium">
                         Direkt veröffentlichen
                       </span>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                      <p className="text-dark dark:text-night-muted text-sm">
                         Der Beitrag wird sofort auf der Webseite angezeigt.
                       </p>
                     </div>
@@ -740,13 +726,13 @@ export default function NewPostPage() {
                         setSubmitAsDraft(false);
                         setSubmitAsApproved(false);
                       }}
-                      className="focus:ring-primary text-primary mt-0.5 h-4 w-4 border-gray-300"
+                      className="text-primary border-ink dark:border-night-text mt-0.5 h-4 w-4"
                     />
                     <div>
-                      <span className="dark:text-dark-text font-medium text-gray-700">
+                      <span className="text-ink dark:text-night-text font-medium">
                         Zur Prüfung einreichen
                       </span>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                      <p className="text-dark dark:text-night-muted text-sm">
                         Der Beitrag wird zur Prüfung durch einen Redakteur
                         eingereicht.
                       </p>
@@ -761,13 +747,13 @@ export default function NewPostPage() {
                         setSubmitAsDraft(true);
                         setSubmitAsApproved(false);
                       }}
-                      className="focus:ring-primary text-primary mt-0.5 h-4 w-4 border-gray-300"
+                      className="text-primary border-ink dark:border-night-text mt-0.5 h-4 w-4"
                     />
                     <div>
-                      <span className="dark:text-dark-text font-medium text-gray-700">
+                      <span className="text-ink dark:text-night-text font-medium">
                         Als Entwurf speichern
                       </span>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                      <p className="text-dark dark:text-night-muted text-sm">
                         Der Beitrag wird noch nicht veröffentlicht und ist nur
                         für dich sichtbar.
                       </p>
@@ -781,13 +767,13 @@ export default function NewPostPage() {
                       type="checkbox"
                       checked={submitAsDraft}
                       onChange={(e) => setSubmitAsDraft(e.target.checked)}
-                      className="focus:ring-primary text-primary mt-0.5 h-4 w-4 rounded border-gray-300"
+                      className="text-primary border-ink dark:border-night-text mt-0.5 h-4 w-4"
                     />
                     <div>
-                      <span className="dark:text-dark-text font-medium text-gray-700">
+                      <span className="text-ink dark:text-night-text font-medium">
                         Als Entwurf speichern
                       </span>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                      <p className="text-dark dark:text-night-muted text-sm">
                         Der Beitrag wird noch nicht zur Prüfung eingereicht und
                         ist nur für dich sichtbar.
                       </p>
@@ -795,7 +781,7 @@ export default function NewPostPage() {
                   </label>
 
                   {!submitAsDraft && (
-                    <div className="rounded-lg bg-blue-50 p-3 dark:bg-blue-900/20">
+                    <div className="bg-blue-50 p-3 dark:bg-blue-900/20">
                       <p className="text-sm text-blue-800 dark:text-blue-300">
                         <strong>Hinweis:</strong> Nach dem Erstellen wird der
                         Beitrag zur Prüfung eingereicht. Ein Redakteur wird den
@@ -808,13 +794,12 @@ export default function NewPostPage() {
             </div>
           </section>
 
-          {/* Actions */}
-          <div className="dark:border-dark-border mt-10 flex flex-col gap-3 border-t border-gray-200/80 pt-6 sm:flex-row sm:justify-end">
+          <div className="border-rule dark:border-night-rule mt-10 flex flex-col gap-3 border-t pt-6 sm:flex-row sm:justify-end">
             <Link
               href="/dashboard/posts"
               data-skip-warning
               onClick={() => clear()}
-              className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-6 py-2.5 text-center font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="border-ink dark:border-night-text text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised min-h-11 border px-6 py-2.5 text-center font-medium transition-colors"
             >
               Abbrechen
             </Link>
@@ -833,7 +818,6 @@ export default function NewPostPage() {
         </DashboardSectionedFormLayout>
       </form>
 
-      {/* Media Picker Modal */}
       <MediaPickerModal
         isOpen={showMediaPicker}
         onClose={() => setShowMediaPicker(false)}
@@ -846,7 +830,6 @@ export default function NewPostPage() {
         }}
       />
 
-      {/* Image Position Editor */}
       {showImagePositionEditor && coverImageUrl && (
         <ImagePositionEditor
           imageUrl={coverImageUrl}

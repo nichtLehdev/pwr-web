@@ -1,5 +1,4 @@
 "use client";
-import { Select } from "@/app/_components/ui";
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -13,6 +12,17 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { DashboardPage } from "@/app/_components/dashboard";
 import { getErrorMessage } from "@/lib/utils";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Input,
+  Label,
+  Select,
+  Textarea,
+} from "@/app/_components/ui";
 
 export default function NewHistoryEventPage() {
   const router = useRouter();
@@ -117,8 +127,8 @@ export default function NewHistoryEventPage() {
 
   if (sessionLoading || profileLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
@@ -138,208 +148,180 @@ export default function NewHistoryEventPage() {
       ]}
       maxWidth="7xl"
     >
-      {/* Error */}
       {error && (
-        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
+        <div className="mb-6 border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
           <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
         </div>
       )}
 
-      {/* Form */}
       <form onSubmit={handleSubmit}>
         <div className="space-y-6">
-          {/* Basic Information */}
-          <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
-              Grundinformationen
-            </h2>
-
-            {/* Year */}
-            <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Jahr *
-              </label>
-              <input
-                type="number"
-                value={year}
-                onChange={(e) => setYear(e.target.value)}
-                required
-                min="1900"
-                max="2100"
-                className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                placeholder="z.B. 1995"
-              />
-            </div>
-
-            {/* Title */}
-            <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Titel *
-              </label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-                maxLength={255}
-                className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                placeholder="z.B. Gründung des Posaunenwerks"
-              />
-            </div>
-
-            {/* Description */}
-            <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Beschreibung *
-              </label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                required
-                rows={6}
-                maxLength={5000}
-                className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                placeholder="Beschreibe das Ereignis..."
-              />
-            </div>
-
-            {/* Category */}
-            <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Kategorie
-              </label>
-              <Select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Keine Kategorie</option>
-                <option value="FOUNDING">Gründung</option>
-                <option value="MILESTONE">Meilenstein</option>
-                <option value="EXPANSION">Erweiterung</option>
-                <option value="MODERNIZATION">Modernisierung</option>
-                <option value="PARTNERSHIP">Partnerschaft</option>
-              </Select>
-            </div>
-
-            {/* Sort Order */}
-            <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Sortierreihenfolge
-              </label>
-              <input
-                type="number"
-                value={sortOrder}
-                onChange={(e) => setSortOrder(e.target.value)}
-                min="0"
-                className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                placeholder="0"
-              />
-              <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                Niedrigere Zahlen erscheinen zuerst bei gleichem Jahr
-              </p>
-            </div>
-          </div>
-
-          {/* Image */}
-          <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
-              Bild
-            </h2>
-
-            <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Bild
-              </label>
-              {imageUrl ? (
-                <div className="flex items-start gap-4">
-                  <div className="relative h-24 w-24 overflow-hidden rounded-lg">
-                    <Image
-                      src={imageUrl}
-                      alt={imageAlt || title || "Ereignis Bild"}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                  <div className="flex flex-1 flex-col gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setShowMediaPicker(true)}
-                      className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-3 py-1.5 text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-                    >
-                      Ändern
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setImageUrl("");
-                        setImageId(null);
-                        setImageAlt("");
-                      }}
-                      className="rounded-lg border border-red-300 px-3 py-1.5 text-sm text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
-                    >
-                      Entfernen
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setShowMediaPicker(true)}
-                  className="dark:border-dark-border dark:text-dark-text flex h-24 w-full items-center justify-center rounded-lg border-2 border-dashed border-gray-300 text-gray-500 transition-colors hover:border-gray-400 hover:text-gray-600"
-                >
-                  <div className="text-center">
-                    <svg
-                      className="mx-auto h-8 w-8"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      />
-                    </svg>
-                    <span className="mt-1 block text-sm">Bild auswählen</span>
-                  </div>
-                </button>
-              )}
-            </div>
-
-            {/* Image Alt */}
-            {imageUrl && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Grundinformationen</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
               <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Alt-Text für Bild
-                </label>
-                <input
-                  type="text"
-                  value={imageAlt}
-                  onChange={(e) => setImageAlt(e.target.value)}
-                  maxLength={255}
-                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                  placeholder="Beschreibung des Bildes für Barrierefreiheit"
+                <Label required>Jahr</Label>
+                <Input
+                  type="number"
+                  value={year}
+                  onChange={(e) => setYear(e.target.value)}
+                  required
+                  min="1900"
+                  max="2100"
+                  placeholder="z.B. 1995"
                 />
               </div>
-            )}
-          </div>
 
-          {/* Actions */}
+              <div>
+                <Label required>Titel</Label>
+                <Input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  required
+                  maxLength={255}
+                  placeholder="z.B. Gründung des Posaunenwerks"
+                />
+              </div>
+
+              <div>
+                <Label required>Beschreibung</Label>
+                <Textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  required
+                  rows={6}
+                  maxLength={5000}
+                  placeholder="Beschreibe das Ereignis..."
+                />
+              </div>
+
+              <div>
+                <Label>Kategorie</Label>
+                <Select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                >
+                  <option value="">Keine Kategorie</option>
+                  <option value="FOUNDING">Gründung</option>
+                  <option value="MILESTONE">Meilenstein</option>
+                  <option value="EXPANSION">Erweiterung</option>
+                  <option value="MODERNIZATION">Modernisierung</option>
+                  <option value="PARTNERSHIP">Partnerschaft</option>
+                </Select>
+              </div>
+
+              <div>
+                <Label>Sortierreihenfolge</Label>
+                <Input
+                  type="number"
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value)}
+                  min="0"
+                  placeholder="0"
+                />
+                <p className="text-dark dark:text-night-muted mt-1 text-xs">
+                  Niedrigere Zahlen erscheinen zuerst bei gleichem Jahr
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Bild</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <Label>Bild</Label>
+                {imageUrl ? (
+                  <div className="flex items-start gap-4">
+                    <div className="border-rule dark:border-night-rule relative h-24 w-24 overflow-hidden border">
+                      <Image
+                        src={imageUrl}
+                        alt={imageAlt || title || "Ereignis Bild"}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    <div className="flex flex-1 flex-col gap-2">
+                      <Button
+                        type="button"
+                        onClick={() => setShowMediaPicker(true)}
+                        variant="outline"
+                        size="sm"
+                      >
+                        Ändern
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          setImageUrl("");
+                          setImageId(null);
+                          setImageAlt("");
+                        }}
+                        variant="outline"
+                        size="sm"
+                        className="border-red-300 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                      >
+                        Entfernen
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowMediaPicker(true)}
+                    className="border-ink dark:border-night-text hover:border-primary-ink dark:hover:bg-night-raised text-dark dark:text-night-muted hover:bg-rule/25 flex h-24 w-full items-center justify-center border-2 border-dashed transition-colors"
+                  >
+                    <div className="text-center">
+                      <svg
+                        className="mx-auto h-8 w-8"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
+                      </svg>
+                      <span className="mt-1 block text-sm">Bild auswählen</span>
+                    </div>
+                  </button>
+                )}
+              </div>
+
+              {imageUrl && (
+                <div>
+                  <Label>Alt-Text für Bild</Label>
+                  <Input
+                    type="text"
+                    value={imageAlt}
+                    onChange={(e) => setImageAlt(e.target.value)}
+                    maxLength={255}
+                    placeholder="Beschreibung des Bildes für Barrierefreiheit"
+                  />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-            <button
+            <Button
               type="submit"
               disabled={isSubmitting || createMutation.isPending}
-              className="bg-primary hover:bg-primary/90 rounded-lg px-6 py-2.5 font-medium text-white transition-colors disabled:opacity-50"
+              isLoading={isSubmitting || createMutation.isPending}
             >
-              {isSubmitting || createMutation.isPending
-                ? "Wird erstellt..."
-                : "Ereignis erstellen"}
-            </button>
+              Ereignis erstellen
+            </Button>
             <Link
               href="/dashboard/history-timeline"
-              className="dark:border-dark-border dark:text-dark-text inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-2.5 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="border-ink dark:border-night-text text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised inline-flex min-h-11 items-center justify-center gap-2 border px-4 py-2.5 transition-colors"
             >
               Abbrechen
             </Link>
@@ -347,7 +329,6 @@ export default function NewHistoryEventPage() {
         </div>
       </form>
 
-      {/* Media Picker Modal */}
       <MediaPickerModal
         isOpen={showMediaPicker}
         onClose={() => setShowMediaPicker(false)}

@@ -8,10 +8,7 @@ import { createLogger } from "@/server/utils/logger";
 
 const log = createLogger("sitemap");
 
-/**
- * Regenerated hourly rather than pinned at build time — posts and events are
- * published from the dashboard, not by a deploy.
- */
+/** Hourly, not at build time: content is published from the dashboard, not by a deploy. */
 export const revalidate = 3600;
 
 /** Public routes that exist as files; everything else is content-driven. */
@@ -31,6 +28,7 @@ const STATIC_ROUTES: Array<{ path: string; priority: number }> = [
   { path: "/mitmachen/jungblaeser", priority: 0.7 },
   { path: "/mitmachen/bildung", priority: 0.7 },
   { path: "/mitmachen/ehrenamt", priority: 0.6 },
+  { path: "/mitmachen/mitgliedschaft", priority: 0.6 },
   { path: "/materialien", priority: 0.7 },
   { path: "/materialien/literatur", priority: 0.6 },
   { path: "/materialien/blechblatt", priority: 0.6 },
@@ -48,11 +46,7 @@ const STATIC_ROUTES: Array<{ path: string; priority: number }> = [
   { path: "/lizenzen", priority: 0.2 },
 ];
 
-/**
- * Events and courses older than this are dropped: the pages stay reachable,
- * but a sitemap that grows without bound spends the site's crawl budget on
- * Rüstzeiten from a decade ago.
- */
+/** Older events and courses are dropped so the sitemap doesn't grow without bound (crawl budget). */
 function archiveCutoff(): Date {
   const cutoff = new Date();
   cutoff.setFullYear(cutoff.getFullYear() - 2);

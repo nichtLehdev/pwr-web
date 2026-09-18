@@ -15,11 +15,7 @@ import {
 
 const DIFFICULTIES: DifficultyId[] = ["beginner", "intermediate", "advanced"];
 
-/**
- * Unabhängiger Brute-Force-Löser (Kombinationen): zählt alle Multisets aus
- * `values` mit exakt `count` Symbolen, Summe `target` und optional exakt
- * `requiredRests` Pausen. Bewusst simpel gehalten, keine Memoisierung.
- */
+/** Unabhängiger Brute-Force-Löser über Multisets, bewusst ohne Memoisierung. */
 function bruteForceWays(
   values: NoteValueId[],
   target: number,
@@ -48,7 +44,7 @@ function bruteForceWays(
 
 describe("countWays", () => {
   it("zählt Multisets, keine Reihenfolgen: {Viertel, Halbe} ist EINE Lösung", () => {
-    // 24 + 48 = 72 — die alte, geordnete Zählung ergab hier fälschlich 2.
+    // 24 + 48 = 72 — eine Kombination, nicht zwei Reihenfolgen.
     expect(countWays(["quarter", "half"], 72, 2)).toBe(1);
   });
 

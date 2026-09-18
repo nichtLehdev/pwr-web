@@ -23,12 +23,14 @@ import {
   downPaymentState,
 } from "@/lib/course-down-payment";
 import { registrationPaymentState } from "@/lib/invoice-payment";
+import { Tag, type TagTone } from "@/app/_components/programmheft/tag";
 import type {
   ColumnFiltersState,
   PaginationState,
   SortingState,
 } from "@tanstack/react-table";
 import { PencilIcon, SearchIcon, UsersIcon } from "lucide-react";
+import { formatBerlin } from "@/lib/berlin-time";
 
 type AdminRegistration =
   RouterOutputs["registrations"]["getAllAdmin"]["registrations"][number];
@@ -39,12 +41,10 @@ const REGISTRATION_STATUS_LABELS: Record<RegistrationStatus, string> = {
   CANCELLED: "Storniert",
 };
 
-const REGISTRATION_STATUS_BADGES: Record<RegistrationStatus, string> = {
-  CONFIRMED:
-    "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300",
-  WAITLIST:
-    "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300",
-  CANCELLED: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300",
+const REGISTRATION_STATUS_TONE: Record<RegistrationStatus, TagTone> = {
+  CONFIRMED: "ink",
+  WAITLIST: "orange",
+  CANCELLED: "cancelled",
 };
 
 const DISCOUNT_OPTIONS = [
@@ -79,14 +79,9 @@ function formatPrice(price: number) {
 }
 
 function formatDate(date: Date | string) {
-  return new Intl.DateTimeFormat("de-DE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  }).format(new Date(date));
+  return formatBerlin(date, "datumZweistellig");
 }
 
-/** Reads one set filter out of the table's filter state. */
 function setFilterValues(filters: ColumnFiltersState, id: string): string[] {
   const value = filters.find((filter) => filter.id === id)?.value;
   return Array.isArray(value) ? (value as string[]) : [];
@@ -97,23 +92,19 @@ export default function AdminRegistrationsPage() {
 
   const canViewAll = hasPermission(PERMISSIONS.COURSES_MANAGE_REGISTRATIONS);
   /**
-   * Wer nur den Geschwisterkindrabatt verwaltet, sieht hier ausschließlich
-   * Anmeldungen mit Rabattstatus — über die entscheidet er, über alle anderen
-   * nicht. Der Server lässt die Abfrage für ihn deshalb auch nur mit gesetztem
-   * Rabattfilter zu, weshalb "Alle" für ihn keine wählbare Option ist.
+   * Wer nur den Geschwisterkindrabatt verwaltet, sieht nur Anmeldungen mit Rabattstatus;
+   * der Server verlangt für ihn einen Rabattfilter, "Alle" ist daher nicht wählbar.
    */
   const discountOnly =
     !canViewAll &&
     hasPermission(PERMISSIONS.REGISTRATIONS_MANAGE_SIBLING_DISCOUNT);
   const canView = canViewAll || discountOnly;
 
-  // Vorbelegt über ?discount=PENDING — so landet die Freigabe-Kachel des
-  // Dashboards direkt auf den offenen Rabatten statt auf der vollen Liste.
+  // Vorbelegt über ?discount=PENDING (Freigabe-Kachel des Dashboards).
   const searchParams = useSearchParams();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(() => {
     const requested = searchParams.get("discount");
-    // NONE ist kein Rabattstatus, den man hier prüfen würde, und steht auch im
-    // Filter nicht zur Wahl — aus der URL wird er deshalb nicht übernommen.
+    // NONE steht im Filter nicht zur Wahl und wird daher nicht aus der URL übernommen.
     const initial =
       requested &&
       requested !== SiblingDiscountStatus.NONE &&
@@ -127,9 +118,8 @@ export default function AdminRegistrationsPage() {
     return initial ? [{ id: "discount", value: [initial] }] : [];
   });
 
-  // Die Liste geht über alle Kurse und wird serverseitig geblättert; Sortierung,
-  // Spaltenfilter und Suche sind darum Abfrageparameter — sonst würden sie nur
-  // die gerade geladene Seite betreffen.
+  // Serverseitig geblättert: Sortierung, Filter und Suche sind Abfrageparameter,
+  // sonst beträfen sie nur die geladene Seite.
   const [sorting, setSorting] = useState<SortingState>([
     { id: "createdAt", desc: true },
   ]);
@@ -152,8 +142,7 @@ export default function AdminRegistrationsPage() {
       registrationStatus: statusFilter.length
         ? (statusFilter as RegistrationStatus[])
         : undefined,
-      // Nur eindeutig: "offen" und "bezahlt" zugleich ist dasselbe wie kein
-      // Filter, denn der Server kennt hier nur ein Ja/Nein.
+      // Beide Werte zugleich heißt kein Filter: Der Server kennt nur Ja/Nein.
       paid:
         paymentFilter.length === 1 ? paymentFilter[0] === "paid" : undefined,
       siblingDiscountStatus: discountFilter.length
@@ -187,12 +176,12 @@ export default function AdminRegistrationsPage() {
               <>
                 <Link
                   href={`/dashboard/courses/${row.original.course.id}/participants/${row.original.id}`}
-                  className="text-primary font-medium hover:underline"
+                  className="text-primary-ink dark:text-primary font-medium hover:underline"
                 >
                   {row.original.registrantFirstName}{" "}
                   {row.original.registrantLastName}
                 </Link>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-dark dark:text-night-muted text-xs">
                   {row.original.registrantEmail}
                 </p>
               </>
@@ -214,11 +203,11 @@ export default function AdminRegistrationsPage() {
             <>
               <Link
                 href={`/dashboard/courses/${row.original.course.id}/participants`}
-                className="dark:text-dark-text text-gray-900 hover:underline"
+                className="text-ink dark:text-night-text hover:underline"
               >
                 {row.original.course.title}
               </Link>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-dark dark:text-night-muted text-xs">
                 {formatDate(row.original.course.startDate)}
               </p>
             </>
@@ -245,11 +234,11 @@ export default function AdminRegistrationsPage() {
             ),
           },
           cell: ({ row }) => (
-            <span
-              className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${REGISTRATION_STATUS_BADGES[row.original.registrationStatus]}`}
+            <Tag
+              tone={REGISTRATION_STATUS_TONE[row.original.registrationStatus]}
             >
               {REGISTRATION_STATUS_LABELS[row.original.registrationStatus]}
-            </span>
+            </Tag>
           ),
         }),
         column.accessor(
@@ -293,7 +282,7 @@ export default function AdminRegistrationsPage() {
               {formatPrice(row.original.totalPrice)}
               {row.original.siblingDiscountStatus ===
                 SiblingDiscountStatus.PENDING && (
-                <span className="mt-0.5 block text-xs font-medium whitespace-nowrap text-orange-600 dark:text-orange-400">
+                <span className="text-primary-ink dark:text-primary mt-0.5 block text-xs font-medium whitespace-nowrap">
                   Rabatt prüfen
                   {row.original.siblingDiscountAmount
                     ? ` (${formatPrice(row.original.siblingDiscountAmount)})`
@@ -335,13 +324,12 @@ export default function AdminRegistrationsPage() {
           header: "Aktionen",
           meta: { align: "right", label: "Aktionen" },
           cell: ({ row }) =>
-            // Wer nur den Rabatt prüft, darf die Anmeldung nicht zwangsläufig
-            // bearbeiten — er wird auf die Anmeldungsseite geschickt, wo
-            // genehmigen und ablehnen sitzen.
+            // Wer nur den Rabatt prüft, darf nicht zwangsläufig bearbeiten: Er landet
+            // auf der Anmeldungsseite, wo genehmigen und ablehnen sitzen.
             discountOnly ? (
               <Link
                 href={`/dashboard/courses/${row.original.course.id}/participants/${row.original.id}`}
-                className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="border-rule dark:border-night-rule text-ink dark:text-night-text bg-paper dark:bg-night hover:bg-rule/30 dark:hover:bg-night-raised inline-flex items-center gap-1.5 border px-2.5 py-1 text-xs font-medium transition-colors"
               >
                 <SearchIcon className="h-3.5 w-3.5" />
                 Rabatt prüfen
@@ -352,7 +340,7 @@ export default function AdminRegistrationsPage() {
                 href={`/registrations/${row.original.id}/edit?returnTo=${encodeURIComponent(
                   "/dashboard/registrations",
                 )}`}
-                className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="border-rule dark:border-night-rule text-ink dark:text-night-text bg-paper dark:bg-night hover:bg-rule/30 dark:hover:bg-night-raised inline-flex items-center gap-1.5 border px-2.5 py-1 text-xs font-medium transition-colors"
               >
                 <PencilIcon className="h-3.5 w-3.5" />
                 Bearbeiten
@@ -366,7 +354,7 @@ export default function AdminRegistrationsPage() {
   if (!permissionsLoading && !canView) {
     return (
       <DashboardPage title="Anmeldungen">
-        <p className="text-gray-600 dark:text-gray-400">
+        <p className="text-dark dark:text-night-muted">
           Du hast keine Berechtigung, diese Seite zu sehen.
         </p>
       </DashboardPage>
@@ -383,7 +371,7 @@ export default function AdminRegistrationsPage() {
       }
     >
       {discountOnly && discountFilter.length === 0 && (
-        <div className="mb-6 rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800 dark:border-yellow-900/50 dark:bg-yellow-900/20 dark:text-yellow-200">
+        <div className="border-ink dark:border-night-text text-dark dark:text-night-muted mb-6 border-l-2 py-1 pl-4 text-sm">
           Wähle im Spaltenfilter „Rabatt“ einen Status aus — deine Berechtigung
           gilt nur für Anmeldungen mit Geschwisterkindrabatt.
         </div>
@@ -398,7 +386,7 @@ export default function AdminRegistrationsPage() {
         searchPlaceholder="Name, E-Mail, Teilnehmer oder Rechnungsnummer…"
         pageSizeOptions={[25, 50, 100, 250]}
         emptyState={
-          <span className="flex flex-col items-center gap-2 text-gray-500 dark:text-gray-400">
+          <span className="text-dark dark:text-night-muted flex flex-col items-center gap-2">
             <UsersIcon className="h-8 w-8" />
             Keine Anmeldungen gefunden.
           </span>

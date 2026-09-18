@@ -7,12 +7,8 @@ import {
 } from "./types";
 
 /**
- * Local-first-Speicher für Spielstatistiken.
- * - Pro Spiel ein versionierter localStorage-Eintrag (Bestwerte, letzte Runden).
- * - Ein gemeinsamer Postausgang (Outbox) für den späteren Server-Sync:
- *   Ergebnisse werden angehängt und nach erfolgreichem Upload entfernt.
- * Alle Zugriffe sind abgesichert — ohne Storage (z. B. Privatmodus) wird
- * einfach nichts gespeichert.
+ * Local-first-Speicher für Spielstatistiken: je Spiel ein versionierter localStorage-Eintrag plus
+ * eine gemeinsame Outbox für den Server-Sync. Ohne Storage (Privatmodus) wird nichts gespeichert.
  */
 
 const PREFIX = "pwr.spiele.v1";

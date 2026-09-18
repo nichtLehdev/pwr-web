@@ -3,14 +3,12 @@ import { db } from "@/server/db";
 import { ContentStatus } from "~/generated/prisma/client";
 import { getBaseUrl } from "@/server/utils/get-base-url";
 import { coursePath, eventPath } from "@/lib/slug";
+import { markdownToPlainText } from "@/lib/markdown-to-plain-text";
 
 import { createLogger } from "@/server/utils/logger";
 
 const log = createLogger("Feed");
 
-/**
- * Escapes special characters for iCal format
- */
 function escapeIcalText(text: string): string {
   return text
     .replace(/\\/g, "\\\\")
@@ -20,9 +18,7 @@ function escapeIcalText(text: string): string {
     .replace(/\r/g, "");
 }
 
-/**
- * Formats a date for iCal (YYYYMMDDTHHMMSSZ format in UTC)
- */
+/** YYYYMMDDTHHMMSSZ in UTC. */
 function formatIcalDate(date: Date): string {
   const year = date.getUTCFullYear();
   const month = String(date.getUTCMonth() + 1).padStart(2, "0");
@@ -33,9 +29,6 @@ function formatIcalDate(date: Date): string {
   return `${year}${month}${day}T${hours}${minutes}${seconds}Z`;
 }
 
-/**
- * Generates a unique ID for an event
- */
 function generateEventUid(eventId: string, baseUrl: string): string {
   const hostname = new URL(baseUrl).hostname;
   return `${eventId}@${hostname}`;
@@ -151,7 +144,8 @@ export async function GET(request: NextRequest) {
 
           const descriptionParts: string[] = [];
           if (event.description) {
-            descriptionParts.push(event.description);
+            // Klartext: Kalender stellen kein Markdown dar.
+            descriptionParts.push(markdownToPlainText(event.description));
           }
           if (event.motto) {
             descriptionParts.push(`Motto: ${event.motto}`);
@@ -169,7 +163,9 @@ export async function GET(request: NextRequest) {
             descriptionParts.push(`Preis: ${event.priceInfo}`);
           }
           descriptionParts.push(`\nMehr Informationen: ${eventUrl}`);
-          const description = descriptionParts.join("\\n");
+          // Echter Umbruch, kein `\n`: `escapeIcalText` escapt ihn selbst und
+          // würde einen vorab escapten Rückstrich verdoppeln.
+          const description = descriptionParts.join("\n");
 
           let summary = event.title;
           if (event.bezirk) {
@@ -273,7 +269,8 @@ END:VEVENT`;
 
           const descriptionParts: string[] = [];
           if (course.description) {
-            descriptionParts.push(course.description);
+            // Klartext, siehe Termine weiter oben.
+            descriptionParts.push(markdownToPlainText(course.description));
           }
           if (course.motto) {
             descriptionParts.push(`Motto: ${course.motto}`);
@@ -294,7 +291,7 @@ END:VEVENT`;
             descriptionParts.push(`Preis: ${course.priceInfo}`);
           }
           descriptionParts.push(`\nMehr Informationen: ${courseUrl}`);
-          const description = descriptionParts.join("\\n");
+          const description = descriptionParts.join("\n");
 
           let summary = course.title;
           if (course.bezirk) {

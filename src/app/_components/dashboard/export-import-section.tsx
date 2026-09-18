@@ -5,6 +5,7 @@ import { useState } from "react";
 import { DownloadIcon, UploadIcon } from "lucide-react";
 import { usePermissions } from "@/lib/use-permissions";
 import { PERMISSIONS } from "@/lib/permissions";
+import { berlinDayKey } from "@/lib/berlin-time";
 
 type ContentType =
   | "posts"
@@ -54,7 +55,7 @@ export default function ExportImportSection() {
       a.href = url;
 
       const contentDisposition = response.headers.get("Content-Disposition");
-      let filename = `${type}-export-${new Date().toISOString().split("T")[0]}.zip`;
+      let filename = `${type}-export-${berlinDayKey(new Date())}.zip`;
       if (contentDisposition) {
         const filenameMatch = contentDisposition.match(/filename="(.+)"/);
         if (filenameMatch) {
@@ -139,10 +140,10 @@ export default function ExportImportSection() {
     <div>
       {canExport && (
         <div className="mb-6">
-          <h3 className="dark:text-dark-text mb-3 text-base font-medium text-gray-900">
+          <h3 className="text-ink dark:text-night-text mb-3 text-base font-medium">
             Export
           </h3>
-          <p className="dark:text-dark-muted mb-4 text-sm text-gray-600">
+          <p className="text-dark dark:text-night-muted mb-4 text-sm">
             Exportieren Sie Inhalte als ZIP-Datei (inkl. Medien-Dateien) für
             Backup oder Migration.
           </p>
@@ -163,7 +164,7 @@ export default function ExportImportSection() {
               <button
                 key={type}
                 onClick={() => handleExport(type)}
-                className="hover:border-primary dark:border-dark-border dark:bg-dark-background dark:text-dark-text dark:hover:border-primary flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-all"
+                className="border-rule dark:border-night-rule dark:bg-night dark:text-night-text text-ink hover:border-ink dark:hover:border-night-text bg-paper flex min-h-11 items-center justify-center gap-2 border px-3 py-2 text-sm font-medium transition-colors"
               >
                 <DownloadIcon className="h-4 w-4" />
                 {contentTypeLabels[type]}
@@ -174,17 +175,17 @@ export default function ExportImportSection() {
       )}
 
       {canImport && (
-        <div className="dark:border-dark-border border-t border-gray-200 pt-6">
-          <h3 className="dark:text-dark-text mb-3 text-base font-medium text-gray-900">
+        <div className="border-rule dark:border-night-rule border-t pt-6">
+          <h3 className="text-ink dark:text-night-text mb-3 text-base font-medium">
             Import
           </h3>
-          <p className="dark:text-dark-muted mb-4 text-sm text-gray-600">
+          <p className="text-dark dark:text-night-muted mb-4 text-sm">
             Importieren Sie Inhalte aus einer ZIP- oder JSON-Datei. ZIP-Dateien
             enthalten auch die Medien-Dateien.
           </p>
           <div className="space-y-4">
             <div>
-              <label className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700">
+              <label className="text-dark dark:text-night-muted mb-2 block text-sm font-medium">
                 Inhaltstyp
               </label>
               <Select
@@ -192,7 +193,7 @@ export default function ExportImportSection() {
                 onChange={(e) =>
                   setSelectedType(e.target.value as ContentType | null)
                 }
-                className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-1 focus:outline-none"
+                className="w-full text-sm"
               >
                 <option value="">Bitte wählen...</option>
                 {(
@@ -215,30 +216,36 @@ export default function ExportImportSection() {
               </Select>
             </div>
             <div>
-              <label className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="import-file"
+                className="text-dark dark:text-night-muted mb-2 block text-sm font-medium"
+              >
                 ZIP- oder JSON-Datei
               </label>
               <input
                 type="file"
+                id="import-file"
                 accept=".zip,.json"
                 onChange={(e) => setImportFile(e.target.files?.[0] ?? null)}
-                className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-1 focus:outline-none"
+                className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper w-full border px-3 py-2 text-sm"
               />
             </div>
             {importError && (
-              <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
+              <div className="border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
                 {importError}
               </div>
             )}
             {importSuccess && (
-              <div className="rounded-lg bg-green-50 p-3 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400">
-                {importSuccess}
+              <div className="border-ink dark:border-night-text border-l-2 py-1 pl-4">
+                <p className="text-dark dark:text-night-muted text-sm">
+                  {importSuccess}
+                </p>
               </div>
             )}
             <button
               onClick={handleImport}
               disabled={!selectedType || !importFile || isImporting}
-              className="hover:bg-primary-dark bg-primary flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:bg-gray-300"
+              className="hover:bg-primary-dark bg-primary text-ink flex min-h-11 items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
             >
               <UploadIcon className="h-4 w-4" />
               {isImporting ? "Importiere..." : "Importieren"}

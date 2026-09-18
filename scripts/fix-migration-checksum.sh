@@ -1,27 +1,7 @@
 #!/usr/bin/env bash
-# =============================================================================
-# Fix Migration Checksum Script (Bash / macOS / Linux)
-# =============================================================================
-# Updates Prisma migration checksum to match the current migration file content.
-#
-# Usage:
-#   ./scripts/fix-migration-checksum.sh <migration-name>
-#   bash scripts/fix-migration-checksum.sh <migration-name>
-#
-# Example:
-#   ./scripts/fix-migration-checksum.sh 20260201120000_add_media_copyright_creator
-#
-# Requires:
-#   - psql (PostgreSQL client)
-#   - openssl (for SHA-256; common on macOS/Linux)
-#
-# Env (same defaults as fix-migration-checksum.ps1):
-#   POSTGRES_HOST      (default: localhost)
-#   POSTGRES_PORT      (default: 5432)
-#   POSTGRES_DB        (default: posaunenwerk)
-#   POSTGRES_USER      (default: postgres)
-#   POSTGRES_PASSWORD  (required)
-# =============================================================================
+# Updates a Prisma migration checksum to match the current migration file (needs psql, openssl).
+# Usage: ./scripts/fix-migration-checksum.sh <migration-name>
+# Env: POSTGRES_HOST/PORT/DB/USER (default localhost/5432/posaunenwerk/postgres), POSTGRES_PASSWORD required
 
 set -euo pipefail
 

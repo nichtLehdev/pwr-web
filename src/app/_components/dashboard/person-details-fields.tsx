@@ -7,10 +7,8 @@ import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import { api } from "@/trpc/react";
 
 /**
- * Personen auf öffentlichen Seiten brauchen kein Benutzerkonto. Diese beiden
- * Bausteine bilden das ab: eigene Angaben (Bild, Name, Kontakt) plus eine
- * optionale Verknüpfung zu einem Konto, aus dem leer gelassene Felder ergänzt
- * werden.
+ * Personen brauchen kein Benutzerkonto: eigene Angaben plus optionale Verknüpfung zu
+ * einem Konto, aus dem leer gelassene Felder ergänzt werden.
  */
 
 export type PersonDetails = {
@@ -34,13 +32,13 @@ export const emptyPersonDetails = (): PersonDetails => ({
 });
 
 const inputClass =
-  "focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none";
+  "border-ink dark:border-night-text dark:bg-night dark:text-night-text block w-full border bg-paper px-3 py-2";
 
 const labelClass =
-  "dark:text-dark-text mb-1 block text-sm font-medium text-gray-700";
+  "text-dark dark:text-night-muted mb-1 block text-sm font-medium";
 
 const sectionClass =
-  "dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm";
+  "border-rule dark:border-night-rule dark:bg-night border bg-paper p-6";
 
 export function PersonDetailsFields({
   value,
@@ -67,7 +65,7 @@ export function PersonDetailsFields({
   return (
     <>
       <section className={sectionClass}>
-        <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+        <h2 className="text-ink dark:text-night-text mb-4 text-lg font-semibold">
           {imageLabel}
         </h2>
         <div className="flex items-center gap-6">
@@ -81,15 +79,15 @@ export function PersonDetailsFields({
               />
             </div>
           ) : (
-            <div className="dark:bg-dark-background-secondary flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-gray-100">
-              <UserIcon className="dark:text-dark-muted h-12 w-12 text-gray-400" />
+            <div className="bg-rule/25 dark:bg-night-raised flex h-24 w-24 shrink-0 items-center justify-center rounded-full">
+              <UserIcon className="text-dark dark:text-night-muted h-12 w-12" />
             </div>
           )}
           <div className="flex flex-col gap-2">
             <button
               type="button"
               onClick={() => setIsMediaPickerOpen(true)}
-              className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors"
+              className="bg-primary hover:bg-primary/90 text-ink min-h-11 px-4 py-2 text-sm font-medium transition-colors"
             >
               {value.imageUrl ? "Bild ändern" : "Bild auswählen"}
             </button>
@@ -97,7 +95,7 @@ export function PersonDetailsFields({
               <button
                 type="button"
                 onClick={() => onChange({ imageId: null, imageUrl: null })}
-                className="rounded-lg px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                className="min-h-11 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
               >
                 Bild entfernen
               </button>
@@ -107,10 +105,10 @@ export function PersonDetailsFields({
       </section>
 
       <section className={sectionClass}>
-        <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+        <h2 className="text-ink dark:text-night-text mb-4 text-lg font-semibold">
           Angaben zur Person
         </h2>
-        <p className="dark:text-dark-muted mb-4 text-sm text-gray-600">
+        <p className="text-dark dark:text-night-muted mb-4 text-sm">
           {hasLinkedUser
             ? "Ausgefüllte Felder werden veröffentlicht; leere Felder übernehmen die Daten des verknüpften Kontos."
             : "Diese Angaben erscheinen auf der öffentlichen Seite. Ein Benutzerkonto ist dafür nicht nötig."}
@@ -242,22 +240,22 @@ export function UserLinkField({
 
   return (
     <section className={sectionClass}>
-      <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+      <h2 className="text-ink dark:text-night-text mb-4 text-lg font-semibold">
         Benutzerverknüpfung
       </h2>
-      <p className="dark:text-dark-muted mb-4 text-sm text-gray-600">
+      <p className="text-dark dark:text-night-muted mb-4 text-sm">
         {description}
       </p>
 
       {userId ? (
-        <div className="dark:border-dark-border dark:bg-dark-background-secondary flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2">
-          <span className="dark:text-dark-text flex-1 text-sm text-gray-900">
+        <div className="border-rule dark:border-night-rule dark:bg-night flex items-center gap-2 border px-3 py-2">
+          <span className="text-ink dark:text-night-text flex-1 text-sm">
             {userLabel || "Verknüpftes Konto"}
           </span>
           <button
             type="button"
             onClick={onClear}
-            className="text-gray-400 transition-colors hover:text-gray-600 dark:hover:text-gray-300"
+            className="text-dark dark:text-night-muted hover:text-ink dark:hover:text-night-text transition-colors"
             title="Verknüpfung entfernen"
           >
             <XIcon className="h-4 w-4" />
@@ -278,7 +276,7 @@ export function UserLinkField({
           />
 
           {isOpen && (
-            <div className="dark:border-dark-border dark:bg-dark-surface absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
+            <div className="border-rule dark:border-night-rule dark:bg-night bg-paper absolute z-10 mt-1 w-full overflow-hidden border">
               <div className="max-h-60 overflow-y-auto">
                 {results && results.length > 0 ? (
                   results.map((user) => (
@@ -290,13 +288,13 @@ export function UserLinkField({
                         setSearch("");
                         setIsOpen(false);
                       }}
-                      className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
+                      className="hover:bg-rule/30 dark:hover:bg-night-raised block w-full px-4 py-2 text-left text-sm"
                     >
-                      <span className="dark:text-dark-text font-medium text-gray-900">
+                      <span className="text-ink dark:text-night-text font-medium">
                         {user.displayName ?? user.email}
                       </span>
                       {user.displayName && (
-                        <span className="text-gray-500 dark:text-gray-400">
+                        <span className="text-dark dark:text-night-muted">
                           {" "}
                           – {user.email}
                         </span>
@@ -304,7 +302,7 @@ export function UserLinkField({
                     </button>
                   ))
                 ) : (
-                  <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                  <div className="text-dark dark:text-night-muted px-4 py-3 text-sm">
                     {search.trim().length >= 2
                       ? "Keine Benutzer gefunden"
                       : "Tippe, um Benutzer zu suchen"}

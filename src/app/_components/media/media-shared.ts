@@ -1,5 +1,6 @@
 import { ContentStatus } from "~/generated/prisma/enums";
 import type { RouterOutputs } from "@/trpc/react";
+import { formatBerlin } from "@/lib/berlin-time";
 
 export type MediaItem = RouterOutputs["media"]["getAll"]["media"][number];
 
@@ -53,11 +54,7 @@ export function getMimeTypeLabel(mimeType: string): string {
 }
 
 export function formatDate(value: Date | string): string {
-  return new Intl.DateTimeFormat("de-DE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  }).format(new Date(value));
+  return formatBerlin(value, "datumZweistellig");
 }
 
 /** `object-position` aus dem gespeicherten Fokuspunkt, sonst die Vorgabe. */
@@ -69,10 +66,7 @@ export function focalPointStyle(item: {
   return { objectPosition: `${item.focalPointX}% ${item.focalPointY}%` };
 }
 
-/**
- * Der Name, unter dem eine Datei im Downloads-Ordner landen soll: der gepflegte
- * Medienname plus die Endung der tatsächlichen Datei.
- */
+/** Gepflegter Medienname plus die Endung der tatsächlichen Datei. */
 export function downloadFileName(item: {
   name: string;
   extension: string;
@@ -81,10 +75,7 @@ export function downloadFileName(item: {
   return item.extension ? `${base}.${item.extension}` : base;
 }
 
-/**
- * Download-URL. Die Route liefert Bilder sonst zur Anzeige aus; `?download=1`
- * setzt `Content-Disposition: attachment`, `name` den lesbaren Dateinamen.
- */
+/** `?download=1` setzt `Content-Disposition: attachment`, `name` den lesbaren Dateinamen. */
 export function downloadUrl(item: {
   url: string;
   name: string;

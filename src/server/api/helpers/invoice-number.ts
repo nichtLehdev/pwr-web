@@ -1,4 +1,5 @@
 import type { Prisma } from "~/generated/prisma/client";
+import { berlinParts } from "@/lib/berlin-time";
 
 type Tx = Prisma.TransactionClient;
 
@@ -7,20 +8,14 @@ const YEAR_SEQUENCE_DIGITS = 5;
 /** Width of the running number in a course invoice id, e.g. "RE-2601-001". */
 const COURSE_SEQUENCE_DIGITS = 3;
 
+/** Das Jahr im Rechnungsnummernkreis: deutsches Kalenderjahr. */
+export function invoiceYear(now: Date = new Date()): number {
+  return berlinParts(now).year;
+}
+
 /**
- * Issue the next invoice number. Must be called inside the same transaction
- * that persists the invoice so numbers stay continuous (§14 UStG) — a
- * rolled-back transaction rolls the counter back with it.
- *
- * Courses carrying an internal number get their own sequence,
- * "RE-<Kursnummer>-<lfd.>" (e.g. "RE-2601-001"), which is what makes a bank
- * statement checkable against a single course. Everything else keeps the
- * per-year sequence, "RE-<Jahr>-<lfd.>" (e.g. "RE-2026-00042").
- *
- * The two shapes cannot collide in practice: a course number that happened to
- * equal a year would still have to reach a five-digit sequence before its ids
- * looked like the yearly ones, and `Invoice.invoiceNumber` is unique, so such a
- * clash would abort the transaction rather than duplicate a number.
+ * Must run in the transaction that persists the invoice, so numbers stay continuous (§14 UStG).
+ * Courses with an internal number get "RE-<Kursnummer>-<lfd.>", everything else "RE-<Jahr>-<lfd.>".
  */
 export async function nextInvoiceId(
   tx: Tx,
@@ -36,7 +31,8 @@ export async function nextInvoiceId(
     return `RE-${scoped}-${String(counter.value).padStart(COURSE_SEQUENCE_DIGITS, "0")}`;
   }
 
-  const year = new Date().getFullYear();
+  // Deutsches Kalenderjahr, nicht UTC: sonst bekäme eine Rechnung am Neujahrsmorgen das Vorjahr.
+  const year = invoiceYear();
   const counter = await tx.invoiceCounter.upsert({
     where: { year },
     update: { value: { increment: 1 } },

@@ -3,11 +3,14 @@
 import { useState, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import PublicPage from "../../_components/general/public-page";
+import { PageSection } from "../../_components/programmheft/page-section";
+import { Note } from "../../_components/programmheft/note";
+import { ArrowLink } from "../../_components/programmheft/section-head";
 
 /**
- * Step two of the double opt-in. The click happens here rather than straight
- * from the mail: link scanners and mail-security prefetchers follow GET links
- * on their own, and a subscription confirmed by a robot is no confirmation.
+ * Double opt-in, step two. Confirmed by a click here, not by the mail's GET link:
+ * link scanners and mail-security prefetchers follow those on their own.
  */
 function ConfirmContent() {
   const searchParams = useSearchParams();
@@ -59,34 +62,36 @@ function ConfirmContent() {
   };
 
   return (
-    <main className="dark:bg-dark-background min-h-screen bg-gray-50">
-      <div className="container mx-auto max-w-2xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-8 shadow-lg dark:border-gray-700">
-          <h1 className="dark:text-dark-text mb-4 text-3xl font-bold text-gray-900">
-            Newsletter-Anmeldung bestätigen
-          </h1>
-
+    <PublicPage
+      title="Newsletter-Anmeldung bestätigen"
+      breadcrumbs={[
+        { label: "Start", href: "/" },
+        { label: "Newsletter", href: "/newsletter" },
+        { label: "Bestätigen" },
+      ]}
+    >
+      <PageSection>
+        <div className="max-w-[38rem]">
           {status === "success" ? (
-            <div className="rounded-lg bg-green-50 p-4 dark:bg-green-900/20">
-              <p className="text-green-800 dark:text-green-400">{message}</p>
-              <p className="mt-2 text-sm text-green-800 dark:text-green-400">
+            <Note tone="info">
+              <p>{message}</p>
+              <p className="mt-3">
                 Du kannst dich jederzeit über den Link am Ende jedes Newsletters
                 wieder abmelden.
               </p>
-              <Link
-                href="/"
-                className="text-primary mt-4 inline-block hover:underline"
-              >
-                Zur Startseite →
-              </Link>
-            </div>
+              <ArrowLink href="/" className="mt-4 -ml-1">
+                Zur Startseite
+              </ArrowLink>
+            </Note>
           ) : (
             <>
-              <p className="dark:text-dark-muted mb-8 text-gray-600">
+              <p className="text-ink dark:text-night-text text-lg leading-relaxed">
                 {email ? (
                   <>
                     Bitte bestätige, dass du den Newsletter des Posaunenwerks
-                    Rheinland an <strong>{email}</strong> erhalten möchtest.
+                    Rheinland an{" "}
+                    <strong className="font-semibold">{email}</strong> erhalten
+                    möchtest.
                   </>
                 ) : (
                   "Dieser Link ist unvollständig. Bitte öffne den Bestätigungslink aus der E-Mail erneut."
@@ -94,47 +99,41 @@ function ConfirmContent() {
               </p>
 
               {status === "error" && (
-                <div className="mb-6 rounded-lg bg-red-50 p-4 dark:bg-red-900/20">
-                  <p className="text-red-800 dark:text-red-400">{message}</p>
-                  <Link
-                    href="/newsletter"
-                    className="text-primary mt-2 inline-block text-sm hover:underline"
-                  >
-                    Erneut anmelden →
-                  </Link>
-                </div>
+                <Note tone="error" className="mt-6">
+                  <p>{message}</p>
+                  <ArrowLink href="/newsletter" className="mt-3 -ml-1">
+                    Erneut anmelden
+                  </ArrowLink>
+                </Note>
               )}
 
               <button
                 type="button"
                 onClick={handleConfirm}
                 disabled={status === "loading" || !email || !token}
-                className="bg-primary hover:bg-primary/90 w-full rounded-lg px-6 py-3 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+                className="semi-condensed bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-primary dark:text-ink dark:hover:bg-paper mt-8 inline-flex min-h-12 w-full items-center justify-center px-6 text-lg font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {status === "loading"
-                  ? "Wird bestätigt..."
+                  ? "Wird bestätigt…"
                   : "Anmeldung bestätigen"}
               </button>
             </>
           )}
 
-          <div className="mt-8 border-t border-gray-200 pt-6 dark:border-gray-700">
-            <p className="dark:text-dark-muted text-sm text-gray-600">
+          <div className="border-rule dark:border-night-rule mt-10 border-t pt-6">
+            <p className="text-dark dark:text-night-muted text-sm leading-relaxed">
               Du hast dich nicht angemeldet? Dann schließe diese Seite einfach —
               ohne Bestätigung versenden wir nichts an diese Adresse.
             </p>
-            <p className="dark:text-dark-muted mt-2 text-sm text-gray-600">
-              <Link
-                href="/datenschutz"
-                className="text-primary hover:underline"
-              >
+            <p className="mt-2 text-sm">
+              <Link href="/datenschutz" className="link-ink">
                 Datenschutzerklärung
               </Link>
             </p>
           </div>
         </div>
-      </div>
-    </main>
+      </PageSection>
+    </PublicPage>
   );
 }
 

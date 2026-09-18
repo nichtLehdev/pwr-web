@@ -2,19 +2,14 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
-import ImageWithFallback from "@/app/_components/ui/image-with-fallback";
+import { SearchIcon } from "lucide-react";
+import PublicPage from "../_components/general/public-page";
+import { PageSection } from "../_components/programmheft/page-section";
+import { Heading } from "../_components/programmheft/section-head";
+import { WayList, WayRow } from "../_components/programmheft/way-list";
 import { api } from "@/trpc/react";
 import type { SearchResultType } from "@/server/api/routers/search";
-import {
-  CalendarIcon,
-  DownloadIcon,
-  FileTextIcon,
-  GraduationCapIcon,
-  LayoutIcon,
-  MusicIcon,
-  SearchIcon,
-} from "lucide-react";
+import { formatBerlin } from "@/lib/berlin-time";
 
 const TYPE_LABELS: Record<SearchResultType, string> = {
   post: "Beiträge",
@@ -40,22 +35,8 @@ const TYPE_ORDER: SearchResultType[] = [
 
 const PAGE_RESULTS_CAP = 4;
 
-const TYPE_ICONS: Record<SearchResultType, React.ReactNode> = {
-  post: <FileTextIcon className="h-5 w-5" />,
-  event: <CalendarIcon className="h-5 w-5" />,
-  course: <GraduationCapIcon className="h-5 w-5" />,
-  download: <DownloadIcon className="h-5 w-5" />,
-  ensemble: <MusicIcon className="h-5 w-5" />,
-  auswahlchor: <MusicIcon className="h-5 w-5" />,
-  page: <LayoutIcon className="h-5 w-5" />,
-};
-
 function formatDate(date: Date | string) {
-  return new Intl.DateTimeFormat("de-DE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  }).format(new Date(date));
+  return formatBerlin(date, "datumZweistellig");
 }
 
 function SearchPageContent() {
@@ -89,49 +70,58 @@ function SearchPageContent() {
   }
 
   return (
-    <div className="bg-background-secondary dark:bg-dark-background-secondary min-h-[calc(100vh-4rem)]">
-      <div className="container mx-auto max-w-3xl px-4 py-10 sm:px-6">
-        <h1 className="text-dark dark:text-dark-text mb-6 text-3xl font-bold">
-          Suche
-        </h1>
-
-        <form onSubmit={handleSubmit} className="mb-8">
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <SearchIcon className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400" />
-              <input
-                type="search"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Wonach suchst du?"
-                autoFocus
-                className="dark:bg-dark-surface dark:border-dark-border dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white py-3 pr-4 pl-10 shadow-sm"
-              />
-            </div>
-            <button
-              type="submit"
-              className="bg-primary hover:bg-primary-dark rounded-lg px-5 py-3 font-semibold text-white"
-            >
-              Suchen
-            </button>
+    <PublicPage
+      title="Suche"
+      breadcrumbs={[{ label: "Start", href: "/" }, { label: "Suche" }]}
+    >
+      <PageSection flush="top">
+        <form onSubmit={handleSubmit} className="flex max-w-[38rem] gap-3">
+          <div className="relative flex-1">
+            <SearchIcon
+              className="text-dark dark:text-night-muted pointer-events-none absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2"
+              aria-hidden
+            />
+            <input
+              type="search"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Wonach suchst du?"
+              autoFocus
+              className="border-ink dark:border-night-text text-ink dark:text-night-text bg-paper dark:bg-night w-full border-2 py-3 pr-4 pl-11 text-base"
+            />
           </div>
+          <button
+            type="submit"
+            className="semi-condensed bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-primary dark:text-ink dark:hover:bg-paper inline-flex min-h-12 items-center px-6 text-lg font-semibold transition-colors"
+          >
+            Suchen
+          </button>
         </form>
 
         {query.length < 2 ? (
-          <p className="text-gray-500 dark:text-gray-400">
+          <p className="text-dark dark:text-night-muted mt-8 text-lg">
             Gib mindestens zwei Zeichen ein, um zu suchen.
           </p>
         ) : isLoading ? (
-          <div className="flex justify-center py-16">
-            <div className="border-primary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />
+          <div
+            aria-busy="true"
+            aria-label="Suche läuft"
+            className="mt-8 max-w-[38rem] space-y-3"
+          >
+            {[0, 1, 2].map((i) => (
+              <span
+                key={i}
+                className="bg-rule dark:bg-night-rule block h-14 w-full"
+              />
+            ))}
           </div>
         ) : !data || data.results.length === 0 ? (
-          <p className="text-gray-500 dark:text-gray-400">
+          <p className="text-dark dark:text-night-muted mt-8 text-lg">
             Keine Ergebnisse für „{query}“.
           </p>
         ) : (
-          <div className="space-y-8">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+          <div className="mt-10 space-y-14">
+            <p className="text-dark dark:text-night-muted text-sm">
               {data.total} {data.total === 1 ? "Ergebnis" : "Ergebnisse"} für „
               {data.query}“
             </p>
@@ -143,54 +133,34 @@ function SearchPageContent() {
                   ? allResults.slice(0, PAGE_RESULTS_CAP)
                   : allResults;
               return (
-                <section key={type}>
-                  <h2 className="dark:text-dark-muted mb-3 text-xs font-semibold tracking-wide text-gray-500 uppercase">
+                <section key={type} aria-labelledby={`suche-${type}`}>
+                  <Heading as="h2" id={`suche-${type}`} size="list" rule>
                     {TYPE_LABELS[type]}
-                  </h2>
-                  <ul className="space-y-2">
+                  </Heading>
+                  <WayList>
                     {capped.map((result) => (
-                      <li key={`${result.type}-${result.id}`}>
-                        <Link
-                          href={result.url}
-                          className="dark:bg-dark-surface dark:border-dark-border flex items-start gap-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
-                        >
-                          <ImageWithFallback
-                            src={result.imageUrl}
-                            alt=""
-                            width={48}
-                            height={48}
-                            className="h-12 w-12 shrink-0 rounded-lg object-cover"
-                            fallback={
-                              <span className="bg-primary/10 text-primary flex h-12 w-12 shrink-0 items-center justify-center rounded-lg">
-                                {TYPE_ICONS[result.type]}
-                              </span>
-                            }
-                          />
-                          <div className="min-w-0">
-                            <p className="text-dark dark:text-dark-text font-semibold">
-                              {result.title}
-                            </p>
-                            {result.description && (
-                              <p className="line-clamp-2 text-sm text-gray-600 dark:text-gray-400">
-                                {result.description}
-                              </p>
-                            )}
-                            {result.date && (
-                              <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
-                                {formatDate(result.date)}
-                              </p>
-                            )}
-                          </div>
-                        </Link>
-                      </li>
+                      <WayRow
+                        key={`${result.type}-${result.id}`}
+                        href={result.url}
+                        title={result.title}
+                        description={
+                          result.description || result.date ? (
+                            <>
+                              {result.description}
+                              {result.description && result.date ? " · " : null}
+                              {result.date ? formatDate(result.date) : null}
+                            </>
+                          ) : undefined
+                        }
+                      />
                     ))}
-                  </ul>
+                  </WayList>
                   {type === "page" &&
                     !showAllPages &&
                     allResults.length > PAGE_RESULTS_CAP && (
                       <button
                         onClick={() => setShowAllPages(true)}
-                        className="text-primary mt-2 text-sm font-medium hover:underline"
+                        className="semi-condensed text-primary-ink dark:text-primary mt-4 inline-flex min-h-11 items-center text-sm font-semibold underline-offset-4 hover:underline"
                       >
                         {allResults.length - PAGE_RESULTS_CAP} weitere Seiten
                         anzeigen
@@ -201,8 +171,8 @@ function SearchPageContent() {
             })}
           </div>
         )}
-      </div>
-    </div>
+      </PageSection>
+    </PublicPage>
   );
 }
 
@@ -210,9 +180,20 @@ export default function SearchPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
-          <div className="border-primary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />
-        </div>
+        <PublicPage
+          title="Suche"
+          breadcrumbs={[{ label: "Start", href: "/" }, { label: "Suche" }]}
+        >
+          <PageSection flush="top">
+            <div
+              aria-busy="true"
+              aria-label="Lädt"
+              className="max-w-[38rem] space-y-3"
+            >
+              <span className="bg-rule dark:bg-night-rule block h-12 w-full" />
+            </div>
+          </PageSection>
+        </PublicPage>
       }
     >
       <SearchPageContent />

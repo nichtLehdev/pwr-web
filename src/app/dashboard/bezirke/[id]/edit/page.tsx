@@ -22,12 +22,9 @@ import {
   TrashIcon,
   UserIcon,
 } from "lucide-react";
+import { Button, Input, Label, Card, CardContent } from "@/app/_components/ui";
 
-/**
- * Ein Bezirksamt im Formular. `id` fehlt bei neu angelegten Zeilen; alles
- * andere wird so übernommen, wie es hier steht — ein Benutzerkonto ist
- * optional, ein Name reicht.
- */
+/** Ein Bezirksamt im Formular; `id` fehlt bei neuen Zeilen, ein Konto ist optional. */
 type PersonDraft = {
   id?: string;
   userId: string | null;
@@ -212,8 +209,8 @@ export default function EditBezirkPage() {
 
   if (sessionLoading || profileLoading || bezirkLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
@@ -224,14 +221,14 @@ export default function EditBezirkPage() {
 
   if (!bezirk) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <h1 className="dark:text-dark-text text-xl font-semibold text-gray-900">
+          <h1 className="text-ink dark:text-night-text text-xl font-semibold">
             Bezirk nicht gefunden
           </h1>
           <Link
             href="/dashboard/bezirke"
-            className="text-primary mt-4 inline-block hover:underline"
+            className="link-ink mt-4 inline-block"
           >
             Zurück zur Übersicht
           </Link>
@@ -252,86 +249,75 @@ export default function EditBezirkPage() {
       ]}
       maxWidth="7xl"
     >
-      {/* Error */}
       {error && (
-        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
+        <div className="mb-6 border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
           <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
         </div>
       )}
 
-      {/* Form */}
       <form onSubmit={handleSubmit}>
-        {/* Obleute */}
-        <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="mb-1 flex items-center justify-between">
-            <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
-              Obleute
-            </h2>
-            <button
-              type="button"
-              onClick={() =>
-                setPeople((current) => [
-                  ...current,
-                  emptyDraft("Bezirksobmann"),
-                ])
-              }
-              className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
-            >
-              <PlusIcon className="h-4 w-4" />
-              Person hinzufügen
-            </button>
-          </div>
-          <p className="dark:text-dark-muted mb-4 text-sm text-gray-600">
-            Ein Benutzerkonto ist nicht nötig – Name und Kontaktdaten können
-            direkt hier gepflegt werden. Ist ein Konto verknüpft, füllen dessen
-            Daten alle Felder, die hier leer bleiben. Die Reihenfolge bestimmt
-            die Anzeige auf der Bezirksseite.
-          </p>
-
-          {people.length === 0 ? (
-            <p className="dark:text-dark-muted py-4 text-center text-sm text-gray-500">
-              Noch keine Obleute eingetragen.
-            </p>
-          ) : (
-            <div className="space-y-4">
-              {people.map((person, index) => (
-                <PersonCard
-                  key={person.id ?? `new-${index}`}
-                  person={person}
-                  index={index}
-                  total={people.length}
-                  users={users}
-                  onChange={(patch) => updatePerson(index, patch)}
-                  onRemove={() => removePerson(index)}
-                  onMove={(direction) => movePerson(index, direction)}
-                />
-              ))}
+        <Card>
+          <CardContent>
+            <div className="mb-1 flex items-center justify-between">
+              <h2 className="condensed text-ink dark:text-night-text text-lg font-bold">
+                Obleute
+              </h2>
+              <button
+                type="button"
+                onClick={() =>
+                  setPeople((current) => [
+                    ...current,
+                    emptyDraft("Bezirksobmann"),
+                  ])
+                }
+                className="bg-rule/25 text-ink hover:bg-rule/60 dark:bg-night-raised dark:text-night-text dark:hover:bg-night-rule inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-colors"
+              >
+                <PlusIcon className="h-4 w-4" />
+                Person hinzufügen
+              </button>
             </div>
-          )}
-        </div>
+            <p className="text-dark dark:text-night-muted mb-4 text-sm">
+              Ein Benutzerkonto ist nicht nötig – Name und Kontaktdaten können
+              direkt hier gepflegt werden. Ist ein Konto verknüpft, füllen
+              dessen Daten alle Felder, die hier leer bleiben. Die Reihenfolge
+              bestimmt die Anzeige auf der Bezirksseite.
+            </p>
 
-        {/* Actions */}
+            {people.length === 0 ? (
+              <p className="text-dark dark:text-night-muted py-4 text-center text-sm">
+                Noch keine Obleute eingetragen.
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {people.map((person, index) => (
+                  <PersonCard
+                    key={person.id ?? `new-${index}`}
+                    person={person}
+                    index={index}
+                    total={people.length}
+                    users={users}
+                    onChange={(patch) => updatePerson(index, patch)}
+                    onRemove={() => removePerson(index)}
+                    onMove={(direction) => movePerson(index, direction)}
+                  />
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         <div className="mt-6 flex flex-wrap gap-3">
-          <button
+          <Button
             type="submit"
             disabled={isSubmitting}
-            className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors disabled:opacity-50"
+            isLoading={isSubmitting}
           >
-            {isSubmitting ? (
-              <>
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                Speichern...
-              </>
-            ) : (
-              <>
-                <SaveIcon className="h-4 w-4" />
-                Speichern
-              </>
-            )}
-          </button>
+            <SaveIcon className="h-4 w-4" />
+            Speichern
+          </Button>
           <Link
             href={`/dashboard/bezirke/${bezirkId}`}
-            className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="border-ink dark:border-night-text text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised inline-flex min-h-11 items-center gap-2 border px-4 py-2 transition-colors"
           >
             Abbrechen
           </Link>
@@ -347,9 +333,6 @@ type UserOption = {
   email: string;
   username: string | null;
 };
-
-const inputClass =
-  "dark:border-dark-border dark:bg-dark-background dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-1 focus:outline-none";
 
 function PersonCard({
   person,
@@ -372,19 +355,16 @@ function PersonCard({
   const linkedUser = users?.find((user) => user.id === person.userId);
 
   return (
-    <div className="dark:border-dark-border dark:bg-dark-background-secondary rounded-lg border border-gray-200 bg-gray-50 p-4">
+    <div className="border-rule dark:border-night-rule bg-rule/10 dark:bg-night-raised border p-4">
       <div className="mb-4 flex items-start gap-3">
         <div className="flex-1">
-          <label className="dark:text-dark-text mb-1 block text-xs font-medium text-gray-500">
-            Funktion *
-          </label>
-          <input
+          <Label>Funktion *</Label>
+          <Input
             type="text"
             value={person.roleName}
             onChange={(e) => onChange({ roleName: e.target.value })}
             placeholder="z.B. Bezirksobmann, Stell. Bezirksobfrau"
             maxLength={100}
-            className={inputClass}
           />
         </div>
         <div className="flex items-end gap-1 pt-5">
@@ -392,7 +372,7 @@ function PersonCard({
             type="button"
             onClick={() => onMove(-1)}
             disabled={index === 0}
-            className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-200 disabled:opacity-30 dark:hover:bg-gray-700"
+            className="text-dark dark:text-night-muted hover:bg-rule/25 dark:hover:bg-night-rule p-2 transition-colors disabled:opacity-30"
             title="Nach oben"
           >
             <ChevronUp className="h-4 w-4" />
@@ -401,7 +381,7 @@ function PersonCard({
             type="button"
             onClick={() => onMove(1)}
             disabled={index === total - 1}
-            className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-200 disabled:opacity-30 dark:hover:bg-gray-700"
+            className="text-dark dark:text-night-muted hover:bg-rule/25 dark:hover:bg-night-rule p-2 transition-colors disabled:opacity-30"
             title="Nach unten"
           >
             <ChevronDown className="h-4 w-4" />
@@ -409,7 +389,7 @@ function PersonCard({
           <button
             type="button"
             onClick={onRemove}
-            className="rounded-lg p-2 text-red-500 transition-colors hover:bg-red-50 dark:hover:bg-red-900/20"
+            className="p-2 text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
             title="Entfernen"
           >
             <TrashIcon className="h-4 w-4" />
@@ -417,14 +397,11 @@ function PersonCard({
         </div>
       </div>
 
-      {/* Benutzerverknüpfung */}
       <div className="mb-4">
-        <label className="dark:text-dark-text mb-1 block text-xs font-medium text-gray-500">
-          Benutzerkonto (optional)
-        </label>
+        <Label>Benutzerkonto (optional)</Label>
         {person.userId ? (
-          <div className="dark:border-dark-border dark:bg-dark-surface flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2">
-            <span className="dark:text-dark-text flex-1 text-sm text-gray-900">
+          <div className="border-ink dark:border-night-text bg-paper dark:bg-night flex items-center gap-2 border px-3 py-2">
+            <span className="text-ink dark:text-night-text flex-1 text-sm">
               {linkedUser
                 ? (linkedUser.displayName ?? linkedUser.email)
                 : "Verknüpftes Konto"}
@@ -432,7 +409,7 @@ function PersonCard({
             <button
               type="button"
               onClick={() => onChange({ userId: null })}
-              className="text-gray-400 transition-colors hover:text-gray-600"
+              className="text-dark hover:text-ink dark:text-night-muted dark:hover:text-night-text transition-colors"
               title="Verknüpfung entfernen"
             >
               <X className="h-4 w-4" />
@@ -446,7 +423,6 @@ function PersonCard({
         )}
       </div>
 
-      {/* Bild */}
       <div className="mb-4 flex items-center gap-4">
         {person.imageUrl ? (
           <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full">
@@ -458,23 +434,23 @@ function PersonCard({
             />
           </div>
         ) : (
-          <div className="dark:bg-dark-surface flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gray-200 text-gray-400">
+          <div className="bg-rule/25 text-dark dark:bg-night-rule dark:text-night-muted flex h-16 w-16 shrink-0 items-center justify-center rounded-full">
             <UserIcon className="h-8 w-8" />
           </div>
         )}
         <div className="flex flex-col gap-1">
-          <button
+          <Button
             type="button"
             onClick={() => setIsMediaPickerOpen(true)}
-            className="bg-primary hover:bg-primary/90 rounded-lg px-3 py-1.5 text-sm font-medium text-white transition-colors"
+            size="sm"
           >
             {person.imageUrl ? "Bild ändern" : "Bild auswählen"}
-          </button>
+          </Button>
           {person.imageUrl && (
             <button
               type="button"
               onClick={() => onChange({ imageId: null, imageUrl: null })}
-              className="rounded-lg px-3 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+              className="px-3 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
             >
               Bild entfernen
             </button>
@@ -482,89 +458,70 @@ function PersonCard({
         </div>
       </div>
 
-      {/* Kontaktdaten */}
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="sm:col-span-2">
-          <label className="dark:text-dark-text mb-1 block text-xs font-medium text-gray-500">
-            Name {person.userId ? "" : "*"}
-          </label>
-          <input
+          <Label>Name {person.userId ? "" : "*"}</Label>
+          <Input
             type="text"
             value={person.name}
             onChange={(e) => onChange({ name: e.target.value })}
             placeholder="Vollständiger Name"
             maxLength={100}
-            className={inputClass}
           />
         </div>
         <div>
-          <label className="dark:text-dark-text mb-1 block text-xs font-medium text-gray-500">
-            E-Mail
-          </label>
-          <input
+          <Label>E-Mail</Label>
+          <Input
             type="email"
             value={person.email}
             onChange={(e) => onChange({ email: e.target.value })}
             placeholder="email@example.com"
-            className={inputClass}
           />
         </div>
         <div>
-          <label className="dark:text-dark-text mb-1 block text-xs font-medium text-gray-500">
-            Telefon
-          </label>
-          <input
+          <Label>Telefon</Label>
+          <Input
             type="tel"
             value={person.phone}
             onChange={(e) => onChange({ phone: e.target.value })}
             placeholder="+49 123 456789"
             maxLength={50}
-            className={inputClass}
           />
         </div>
         <div className="sm:col-span-2">
-          <label className="dark:text-dark-text mb-1 block text-xs font-medium text-gray-500">
-            Straße
-          </label>
-          <input
+          <Label>Straße</Label>
+          <Input
             type="text"
             value={person.street}
             onChange={(e) => onChange({ street: e.target.value })}
             placeholder="Musterstraße 1"
             maxLength={200}
-            className={inputClass}
           />
         </div>
         <div>
-          <label className="dark:text-dark-text mb-1 block text-xs font-medium text-gray-500">
-            PLZ
-          </label>
-          <input
+          <Label>PLZ</Label>
+          <Input
             type="text"
             value={person.zipCode}
             onChange={(e) => onChange({ zipCode: e.target.value })}
             placeholder="40213"
             maxLength={20}
-            className={inputClass}
           />
         </div>
         <div>
-          <label className="dark:text-dark-text mb-1 block text-xs font-medium text-gray-500">
-            Ort
-          </label>
-          <input
+          <Label>Ort</Label>
+          <Input
             type="text"
             value={person.city}
             onChange={(e) => onChange({ city: e.target.value })}
             placeholder="Düsseldorf"
             maxLength={100}
-            className={inputClass}
           />
         </div>
       </div>
 
       {person.userId && (
-        <p className="dark:text-dark-muted mt-2 text-xs text-gray-500">
+        <p className="text-dark dark:text-night-muted mt-2 text-xs">
           Ausgefüllte Felder werden veröffentlicht; leere Felder übernehmen die
           Daten des verknüpften Kontos.
         </p>
@@ -624,8 +581,8 @@ function UserPicker({
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
-      <input
+      <Search className="text-dark dark:text-night-muted absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+      <Input
         type="text"
         value={searchQuery}
         onChange={(e) => {
@@ -634,11 +591,11 @@ function UserPicker({
         }}
         onFocus={() => setIsOpen(true)}
         placeholder="Benutzer suchen (optional)..."
-        className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 py-2 pr-3 pl-9 text-sm focus:ring-1 focus:outline-none"
+        className="pr-3 pl-9"
       />
 
       {isOpen && (
-        <div className="dark:bg-dark-surface dark:border-dark-border absolute z-50 mt-1 max-h-56 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg">
+        <div className="border-ink dark:border-night-text dark:bg-night-raised bg-paper absolute z-50 mt-1 max-h-56 w-full overflow-auto border">
           {filteredUsers.length > 0 ? (
             <div className="py-1">
               {filteredUsers.slice(0, 50).map((user) => (
@@ -650,19 +607,21 @@ function UserPicker({
                     setSearchQuery("");
                     setIsOpen(false);
                   }}
-                  className="dark:text-dark-text w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-rule w-full px-4 py-2 text-left text-sm transition-colors"
                 >
                   <div className="font-medium">
                     {user.displayName ?? user.email}
                   </div>
                   {user.displayName && (
-                    <div className="text-xs text-gray-500">{user.email}</div>
+                    <div className="text-dark dark:text-night-muted text-xs">
+                      {user.email}
+                    </div>
                   )}
                 </button>
               ))}
             </div>
           ) : (
-            <div className="px-4 py-6 text-center text-sm text-gray-500">
+            <div className="text-dark dark:text-night-muted px-4 py-6 text-center text-sm">
               Keine Benutzer gefunden
             </div>
           )}

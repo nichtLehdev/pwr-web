@@ -1,10 +1,8 @@
 import type { GeneratedRhythm, RhythmEvent, TimeSignature } from "./types";
 
 /**
- * Reine Arithmetik-Validierung ohne VexFlow: der Generator arbeitet in exakten
- * Sechzehntel-Einheiten, also reichen Ticksummen + ms-Konsistenz. Der
- * VexFlow-Gegencheck lebt weiter in `rhythm-validation.ts` (nur lazy geladen),
- * damit die Route-Bundle-Größe klein bleibt.
+ * Validierung ohne VexFlow über Sechzehntel-Ticksummen; der VexFlow-Gegencheck in
+ * `rhythm-validation.ts` wird nur lazy geladen, damit das Route-Bundle klein bleibt.
  */
 
 /** Sechzehntel-Einheiten pro Takt (z. B. 4/4 → 16, 3/4 → 12, 6/8 → 12). */
@@ -72,10 +70,8 @@ export function totalDurationMs(events: RhythmEvent[]): number {
 }
 
 /**
- * Tick-Summe eines Event-Abschnitts in Sechzehntel-Einheiten.
- * Triolengruppen zählen als belegter Raum (notesOccupied × Grundwert),
- * nicht als 3 × Einzelnote. Rückgabe null bei unbekanntem Notenwert
- * oder am Taktende zerrissener Triole.
+ * Tick-Summe in Sechzehntel-Einheiten; Triolen zählen als belegter Raum (notesOccupied × Grundwert).
+ * null bei unbekanntem Notenwert oder am Taktende zerrissener Triole.
  */
 export function eventTickUnits(events: RhythmEvent[]): number | null {
   let units = 0;

@@ -7,12 +7,15 @@ type Props = {
   balancedFlash?: boolean;
   /** Anzahl noch unbelegter Felder rechts — Gleichgewicht allein reicht nicht. */
   openSlots?: number;
+  /** Nur als Bild (Setup): ohne Statuszeile und `aria-live`, für Vorleseprogramme unsichtbar. */
+  decorative?: boolean;
 };
 
 export function ScaleSVG({
   diffUnits,
   balancedFlash = false,
   openSlots = 0,
+  decorative = false,
 }: Props) {
   const tilt = Math.max(-16, Math.min(16, diffUnits / 2.4));
   const balanced = Math.abs(diffUnits) < 0.01;
@@ -26,12 +29,19 @@ export function ScaleSVG({
 
   return (
     <div
+      aria-hidden={decorative || undefined}
       className={cn(
-        "border-dark-border/50 dark:border-dark-border dark:from-dark-surface/60 dark:to-dark-surface/35 text-dark dark:text-dark-text relative h-full min-h-[130px] w-full overflow-hidden rounded-lg border bg-gradient-to-b from-white/80 to-white/55 md:min-h-[220px]",
-        balancedFlash && "ring-2 ring-emerald-500/75",
+        "border-rule dark:border-night-rule text-ink dark:text-night-text flex h-full w-full flex-col overflow-hidden border",
+        // Gleichgewicht wird mit Tinte quittiert, nicht mit Gruen.
+        balancedFlash && "ring-ink dark:ring-night-text ring-[3px] ring-inset",
       )}
     >
-      <svg viewBox="0 0 600 320" className="h-full w-full" aria-hidden>
+      <svg
+        viewBox="0 0 600 320"
+        preserveAspectRatio="xMidYMid meet"
+        className="min-h-0 w-full flex-1"
+        aria-hidden
+      >
         <ellipse
           cx="300"
           cy="286"
@@ -54,6 +64,7 @@ export function ScaleSVG({
 
         <g
           transform={`rotate(${tilt} 300 120)`}
+          // Bei reduzierter Bewegung springt der Balken sofort in seine Lage, statt zu schwingen.
           className="motion-safe:[transition:transform_300ms_cubic-bezier(0.22,1,0.36,1)]"
         >
           <line
@@ -121,15 +132,17 @@ export function ScaleSVG({
           />
         </g>
       </svg>
-      <div className="pointer-events-none absolute inset-x-0 bottom-2 text-center">
-        <span
-          role="status"
-          aria-live="polite"
-          className="text-dark dark:text-dark-text-secondary text-xs font-bold"
-        >
-          {status}
-        </span>
-      </div>
+      {!decorative && (
+        <div className="pointer-events-none shrink-0 px-2 pb-1 text-center">
+          <span
+            role="status"
+            aria-live="polite"
+            className="text-dark dark:text-night-muted text-xs font-bold md:text-sm"
+          >
+            {status}
+          </span>
+        </div>
+      )}
     </div>
   );
 }

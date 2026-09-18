@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Send, Check } from "lucide-react";
+import { Send } from "lucide-react";
 import { api } from "@/trpc/react";
-import { Select } from "@/app/_components/ui";
+import {
+  Checkbox,
+  FieldLabel,
+  fieldControlClasses,
+} from "@/app/_components/programmheft/field";
 import { CONTACT_SUBJECTS, type ContactSubject } from "@/lib/contact-subjects";
-
-const inputClasses =
-  "focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 px-4 py-2 transition-all outline-none focus:border-transparent focus:ring-2";
 
 const emptyForm = {
   name: "",
@@ -44,16 +45,13 @@ export function ContactForm() {
 
   if (sent) {
     return (
-      <div className="rounded-lg border border-green-200 bg-green-50 p-6 text-center dark:border-green-800 dark:bg-green-900/20">
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/40">
-          <Check className="h-6 w-6 text-green-600 dark:text-green-400" />
-        </div>
-        <h4 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
+      <div className="border-ink dark:border-night-text border-2 p-6 md:p-8">
+        <p className="condensed text-ink dark:text-night-text text-[1.375rem] leading-tight font-bold">
           Nachricht gesendet
-        </h4>
-        <p className="mb-4 text-gray-600 dark:text-gray-400">
+        </p>
+        <p className="text-ink dark:text-night-text mt-3 max-w-[60ch] text-lg leading-relaxed">
           Vielen Dank für deine Nachricht! Wir melden uns zeitnah bei dir unter{" "}
-          <strong>{form.email}</strong>.
+          <strong className="font-semibold">{form.email}</strong>.
         </p>
         <button
           type="button"
@@ -62,7 +60,7 @@ export function ContactForm() {
             sendMessage.reset();
             setSent(false);
           }}
-          className="text-primary hover:text-primary-dark font-medium"
+          className="link-ink mt-6 inline-flex min-h-11 items-center"
         >
           Weitere Nachricht senden
         </button>
@@ -73,8 +71,11 @@ export function ContactForm() {
   return (
     <form className="space-y-6" onSubmit={handleSubmit}>
       {sendMessage.isError && (
-        <div className="rounded-md border-l-4 border-red-500 bg-red-50 p-3 dark:border-red-400 dark:bg-red-900/20">
-          <p className="text-sm text-red-800 dark:text-red-300">
+        <div
+          role="alert"
+          className="border-2 border-red-700 p-4 dark:border-red-400"
+        >
+          <p className="text-sm font-semibold text-red-700 dark:text-red-400">
             {sendMessage.error.message}
           </p>
         </div>
@@ -82,12 +83,9 @@ export function ContactForm() {
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <div>
-          <label
-            htmlFor="name"
-            className="text-dark dark:text-dark-text mb-2 block text-sm font-semibold"
-          >
-            Name *
-          </label>
+          <FieldLabel htmlFor="name" required>
+            Name
+          </FieldLabel>
           <input
             type="text"
             id="name"
@@ -96,18 +94,15 @@ export function ContactForm() {
             maxLength={100}
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
-            className={inputClasses}
+            className={fieldControlClasses}
             placeholder="Max Mustermann"
           />
         </div>
 
         <div>
-          <label
-            htmlFor="email"
-            className="text-dark dark:text-dark-text mb-2 block text-sm font-semibold"
-          >
-            E-Mail *
-          </label>
+          <FieldLabel htmlFor="email" required>
+            E-Mail
+          </FieldLabel>
           <input
             type="email"
             id="email"
@@ -115,7 +110,7 @@ export function ContactForm() {
             required
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
-            className={inputClasses}
+            className={fieldControlClasses}
             placeholder="max@example.com"
           />
         </div>
@@ -123,12 +118,7 @@ export function ContactForm() {
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <div>
-          <label
-            htmlFor="phone"
-            className="text-dark dark:text-dark-text mb-2 block text-sm font-semibold"
-          >
-            Telefon (optional)
-          </label>
+          <FieldLabel htmlFor="phone">Telefon (optional)</FieldLabel>
           <input
             type="tel"
             id="phone"
@@ -136,19 +126,16 @@ export function ContactForm() {
             maxLength={50}
             value={form.phone}
             onChange={(e) => setForm({ ...form, phone: e.target.value })}
-            className={inputClasses}
+            className={fieldControlClasses}
             placeholder="+49 123 456789"
           />
         </div>
 
         <div>
-          <label
-            htmlFor="subject"
-            className="text-dark dark:text-dark-text mb-2 block text-sm font-semibold"
-          >
-            Betreff *
-          </label>
-          <Select
+          <FieldLabel htmlFor="subject" required>
+            Betreff
+          </FieldLabel>
+          <select
             id="subject"
             name="subject"
             required
@@ -159,7 +146,7 @@ export function ContactForm() {
                 subject: e.target.value as "" | ContactSubject,
               })
             }
-            className={inputClasses}
+            className={fieldControlClasses}
           >
             <option value="">Bitte wählen...</option>
             {Object.entries(CONTACT_SUBJECTS).map(([value, label]) => (
@@ -167,17 +154,14 @@ export function ContactForm() {
                 {label}
               </option>
             ))}
-          </Select>
+          </select>
         </div>
       </div>
 
       <div>
-        <label
-          htmlFor="message"
-          className="text-dark dark:text-dark-text mb-2 block text-sm font-semibold"
-        >
-          Ihre Nachricht *
-        </label>
+        <FieldLabel htmlFor="message" required>
+          Ihre Nachricht
+        </FieldLabel>
         <textarea
           id="message"
           name="message"
@@ -187,46 +171,39 @@ export function ContactForm() {
           rows={6}
           value={form.message}
           onChange={(e) => setForm({ ...form, message: e.target.value })}
-          className={`${inputClasses} resize-y`}
+          className={`${fieldControlClasses} resize-y`}
           placeholder="Beschreiben Sie Ihr Anliegen..."
         />
       </div>
 
-      <div className="flex items-start gap-3">
-        <input
-          type="checkbox"
-          id="privacy"
-          name="privacy"
-          required
-          checked={form.privacyAccepted}
-          onChange={(e) =>
-            setForm({ ...form, privacyAccepted: e.target.checked })
-          }
-          className="text-primary focus:ring-primary dark:border-dark-border mt-1 h-4 w-4 rounded border-gray-300"
-        />
-        <label
-          htmlFor="privacy"
-          className="text-sm text-gray-600 dark:text-gray-400"
-        >
-          Ich habe die{" "}
-          <Link href="/datenschutz" className="text-primary hover:underline">
-            Datenschutzerklärung
-          </Link>{" "}
-          zur Kenntnis genommen. Ich stimme zu, dass meine Angaben zur
-          Kontaktaufnahme und für Rückfragen gespeichert werden. *
-        </label>
-      </div>
+      <Checkbox
+        id="privacy"
+        checked={form.privacyAccepted}
+        onChange={(e) =>
+          setForm({ ...form, privacyAccepted: e.target.checked })
+        }
+        required
+      >
+        Ich habe die{" "}
+        <Link href="/datenschutz" className="link-ink">
+          Datenschutzerklärung
+        </Link>{" "}
+        zur Kenntnis genommen. Ich stimme zu, dass meine Angaben zur
+        Kontaktaufnahme und für Rückfragen gespeichert werden. *
+      </Checkbox>
 
       <div>
         <button
           type="submit"
           disabled={sendMessage.isPending}
-          className="bg-primary hover:bg-primary-dark inline-flex items-center rounded-lg px-8 py-3 font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+          className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-primary dark:text-ink dark:hover:bg-paper semi-condensed inline-flex min-h-12 items-center gap-3 px-6 text-lg font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60"
         >
           {sendMessage.isPending ? "Wird gesendet..." : "Nachricht senden"}
-          <Send className="ml-2 h-5 w-5" />
+          <Send className="h-5 w-5 shrink-0" aria-hidden />
         </button>
-        <p className="mt-3 text-xs text-gray-500">* Pflichtfelder</p>
+        <p className="text-dark dark:text-night-muted mt-3 text-sm">
+          * Pflichtfelder
+        </p>
       </div>
     </form>
   );

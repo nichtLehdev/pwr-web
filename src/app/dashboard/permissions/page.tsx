@@ -4,6 +4,7 @@ import { useSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { api, type RouterOutputs } from "@/trpc/react";
+import { cn } from "@/lib/utils";
 import { DashboardPage } from "@/app/_components/dashboard";
 import {
   DataTable,
@@ -31,6 +32,7 @@ import {
   ScrollableModalBody,
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
+import { fieldControlClasses } from "@/app/_components/programmheft/field";
 
 type Tab = "roles" | "users";
 
@@ -64,8 +66,8 @@ export default function PermissionsPage() {
 
   if (isPending || canManageLoading || canManage === undefined) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="dark:bg-night bg-paper flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
@@ -83,28 +85,28 @@ export default function PermissionsPage() {
         { label: "Berechtigungen" },
       ]}
     >
-      <div className="dark:border-dark-border mb-6 border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
+      <div className="border-ink dark:border-night-text mb-6 border-b-2">
+        <nav className="-mb-0.5 flex gap-6 sm:gap-8">
           <button
             onClick={() => setActiveTab("roles")}
-            className={`border-b-2 px-1 py-4 text-sm font-medium whitespace-nowrap transition-colors ${
+            className={`semi-condensed inline-flex items-center gap-2 border-b-[3px] px-1 py-4 text-sm font-semibold whitespace-nowrap transition-colors ${
               activeTab === "roles"
-                ? "border-primary text-primary"
-                : "dark:text-dark-muted dark:hover:text-dark-text border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                ? "border-primary text-ink dark:text-night-text"
+                : "text-dark hover:border-ink hover:text-ink dark:text-night-muted dark:hover:border-night-text dark:hover:text-night-text border-transparent"
             }`}
           >
-            <Shield className="mr-2 inline h-4 w-4" />
+            <Shield className="h-4 w-4" />
             Rollen
           </button>
           <button
             onClick={() => setActiveTab("users")}
-            className={`border-b-2 px-1 py-4 text-sm font-medium whitespace-nowrap transition-colors ${
+            className={`semi-condensed inline-flex items-center gap-2 border-b-[3px] px-1 py-4 text-sm font-semibold whitespace-nowrap transition-colors ${
               activeTab === "users"
-                ? "border-primary text-primary"
-                : "dark:text-dark-muted dark:hover:text-dark-text border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                ? "border-primary text-ink dark:text-night-text"
+                : "text-dark hover:border-ink hover:text-ink dark:text-night-muted dark:hover:border-night-text dark:hover:text-night-text border-transparent"
             }`}
           >
-            <Users className="mr-2 inline h-4 w-4" />
+            <Users className="h-4 w-4" />
             Benutzerzuweisungen
           </button>
         </nav>
@@ -208,7 +210,9 @@ function RolesTab() {
             <>
               {row.original.name}
               {row.original.isSystem && (
-                <span className="ml-2 text-xs text-gray-500">(System)</span>
+                <span className="text-dark dark:text-night-muted ml-2 text-xs">
+                  (System)
+                </span>
               )}
             </>
           ),
@@ -237,14 +241,18 @@ function RolesTab() {
           cell: ({ row }) => {
             const role = row.original;
             if (role.isSystem && isAdminRole(role.name)) {
-              return <span className="text-gray-400">Admin</span>;
+              return (
+                <span className="text-dark dark:text-night-muted">Admin</span>
+              );
             }
             if (editingId === role.id) {
               return (
-                <div className="flex items-center justify-end gap-2">
+                <div className="flex items-center justify-end gap-3">
                   <button
                     onClick={handleSave}
-                    className="text-green-600 hover:text-green-900"
+                    aria-label="Speichern"
+                    title="Speichern"
+                    className="text-primary-ink dark:text-primary hover:underline"
                   >
                     <Save className="h-4 w-4" />
                   </button>
@@ -257,7 +265,9 @@ function RolesTab() {
                         permissionKeys: [],
                       });
                     }}
-                    className="text-gray-600 hover:text-gray-900"
+                    aria-label="Abbrechen"
+                    title="Abbrechen"
+                    className="text-dark dark:text-night-muted hover:text-ink dark:hover:text-night-text"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -265,10 +275,10 @@ function RolesTab() {
               );
             }
             return (
-              <div className="flex items-center justify-end gap-2">
+              <div className="flex items-center justify-end gap-3">
                 <button
                   onClick={() => handleEdit(role)}
-                  className="text-blue-600 hover:text-blue-900"
+                  className="text-primary-ink dark:text-primary hover:underline"
                   title={
                     role.isSystem ? "Berechtigungen bearbeiten" : "Bearbeiten"
                   }
@@ -282,7 +292,9 @@ function RolesTab() {
                         deleteMutation.mutate({ id: role.id });
                       }
                     }}
-                    className="text-red-600 hover:text-red-900"
+                    aria-label="Löschen"
+                    title="Löschen"
+                    className="text-red-700 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -298,8 +310,8 @@ function RolesTab() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between">
-        <h2 className="dark:text-dark-text text-xl font-semibold text-gray-900">
+      <div className="flex items-center justify-between">
+        <h2 className="condensed text-ink dark:text-night-text text-xl font-bold">
           Rollen
         </h2>
         <button
@@ -308,7 +320,7 @@ function RolesTab() {
             setFormData({ name: "", description: "", permissionKeys: [] });
             setShowCreateModal(true);
           }}
-          className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
+          className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-night-text dark:text-night dark:hover:bg-primary dark:hover:text-ink inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm font-semibold transition-colors"
         >
           <Plus className="h-5 w-5" />
           Neue Rolle
@@ -325,20 +337,19 @@ function RolesTab() {
         initialSorting={[{ id: "name", desc: false }]}
         emptyState={
           <>
-            <Shield className="mx-auto h-12 w-12 text-gray-400" />
-            <p className="dark:text-dark-muted mt-4 text-gray-500">
+            <Shield className="text-dark dark:text-night-muted mx-auto h-12 w-12" />
+            <p className="text-dark dark:text-night-muted mt-4">
               Noch keine Rollen vorhanden
             </p>
           </>
         }
       />
 
-      {/* Create/Edit Modal */}
       {(showCreateModal || editingId) && (
         <ScrollableModal>
           <ScrollableModalCard maxW="md">
             <ScrollableModalBody>
-              <h3 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+              <h3 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
                 {editingId
                   ? isEditingSystemRole
                     ? "Berechtigungen bearbeiten"
@@ -349,8 +360,14 @@ function RolesTab() {
                 {(!isEditingSystemRole || !editingId) && (
                   <>
                     <div>
-                      <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                        Name *
+                      <label className="text-ink dark:text-night-text mb-1 block text-sm font-semibold">
+                        Name{" "}
+                        <span
+                          aria-hidden
+                          className="text-primary-ink dark:text-primary"
+                        >
+                          *
+                        </span>
                       </label>
                       <input
                         type="text"
@@ -359,11 +376,11 @@ function RolesTab() {
                           setFormData({ ...formData, name: e.target.value })
                         }
                         placeholder="z.B. Content Manager"
-                        className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-1 focus:outline-none"
+                        className={fieldControlClasses}
                       />
                     </div>
                     <div>
-                      <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                      <label className="text-ink dark:text-night-text mb-1 block text-sm font-semibold">
                         Beschreibung
                       </label>
                       <textarea
@@ -375,14 +392,16 @@ function RolesTab() {
                           })
                         }
                         rows={3}
-                        className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-1 focus:outline-none"
+                        className={fieldControlClasses}
                       />
                     </div>
                   </>
                 )}
                 {isEditingSystemRole && editingId && (
-                  <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
-                    <p className="font-medium">Systemrolle: {formData.name}</p>
+                  <div className="on-orange bg-primary text-ink p-3 text-sm">
+                    <p className="font-semibold">
+                      Systemrolle: {formData.name}
+                    </p>
                     <p className="mt-1 text-xs">
                       Name und Beschreibung können nicht geändert werden.
                       Berechtigungen können angepasst werden.
@@ -390,16 +409,16 @@ function RolesTab() {
                   </div>
                 )}
                 <div>
-                  <label className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700">
+                  <label className="text-ink dark:text-night-text mb-2 block text-sm font-semibold">
                     Berechtigungen
                   </label>
-                  <div className="dark:bg-dark-surface dark:border-dark-border max-h-64 overflow-y-auto rounded-lg border border-gray-200 p-4">
+                  <div className="border-rule dark:border-night-rule max-h-64 overflow-y-auto border p-4">
                     {permissions && permissions.length > 0 ? (
                       <div className="space-y-2">
                         {permissions.map((perm) => (
                           <label
                             key={perm.key}
-                            className="dark:text-dark-text flex flex-wrap items-center gap-x-2 text-sm"
+                            className="text-ink dark:text-night-text flex flex-wrap items-center gap-x-2 text-sm"
                           >
                             <input
                               type="checkbox"
@@ -407,17 +426,17 @@ function RolesTab() {
                                 perm.key,
                               )}
                               onChange={() => togglePermission(perm.key)}
-                              className="text-primary focus:ring-primary h-4 w-4 shrink-0 rounded border-gray-300"
+                              className="border-ink checked:bg-ink dark:border-night-text dark:checked:bg-night-text bg-paper dark:bg-night h-4 w-4 shrink-0 cursor-pointer appearance-none border-2"
                             />
                             <span className="font-medium">{perm.name}</span>
-                            <span className="break-all text-gray-500">
+                            <span className="text-dark dark:text-night-muted break-all">
                               ({perm.key})
                             </span>
                           </label>
                         ))}
                       </div>
                     ) : (
-                      <p className="dark:text-dark-muted text-sm text-gray-500">
+                      <p className="text-dark dark:text-night-muted text-sm">
                         Keine Berechtigungen verfügbar
                       </p>
                     )}
@@ -437,14 +456,14 @@ function RolesTab() {
                       permissionKeys: [],
                     });
                   }}
-                  className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  className="border-ink dark:border-night-text text-ink dark:text-night-text hover:bg-rule/60 dark:hover:bg-night-rule inline-flex min-h-11 items-center border-2 px-4 py-2 text-sm font-semibold transition-colors"
                 >
                   Abbrechen
                 </button>
                 <button
                   onClick={handleSave}
                   disabled={!editingId && !formData.name}
-                  className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                  className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-night-text dark:text-night dark:hover:bg-primary dark:hover:text-ink inline-flex min-h-11 items-center px-4 py-2 text-sm font-semibold transition-colors disabled:opacity-50"
                 >
                   Speichern
                 </button>
@@ -534,7 +553,7 @@ function UserSearchDropdown({
     <div className="relative" ref={dropdownRef}>
       <div className="relative">
         <div className="relative">
-          <Search className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400" />
+          <Search className="text-dark dark:text-night-muted absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2" />
           <input
             ref={inputRef}
             type="text"
@@ -554,7 +573,7 @@ function UserSearchDropdown({
               }
             }}
             placeholder={selectedUser && !isOpen ? undefined : placeholder}
-            className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 py-2 pr-10 pl-10 focus:ring-1 focus:outline-none"
+            className={cn(fieldControlClasses, "py-2 pr-10 pl-10")}
           />
           {selectedUser && (
             <button
@@ -562,7 +581,8 @@ function UserSearchDropdown({
                 e.stopPropagation();
                 handleClear();
               }}
-              className="absolute top-1/2 right-2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              aria-label="Auswahl aufheben"
+              className="text-dark dark:text-night-muted hover:text-ink dark:hover:text-night-text absolute top-1/2 right-2 -translate-y-1/2"
             >
               <X className="h-4 w-4" />
             </button>
@@ -570,7 +590,8 @@ function UserSearchDropdown({
           {!selectedUser && (
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="absolute top-1/2 right-2 -translate-y-1/2 text-gray-400"
+              aria-label={isOpen ? "Liste schließen" : "Liste öffnen"}
+              className="text-dark dark:text-night-muted absolute top-1/2 right-2 -translate-y-1/2"
             >
               {isOpen ? (
                 <ChevronUp className="h-5 w-5" />
@@ -582,25 +603,44 @@ function UserSearchDropdown({
         </div>
 
         {isOpen && (
-          <div className="dark:bg-dark-surface dark:border-dark-border absolute z-50 mt-1 max-h-64 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg">
+          <div className="border-ink dark:border-night-text bg-paper dark:bg-night absolute z-50 mt-1 max-h-64 w-full overflow-auto border-2">
             {filteredUsers.length > 0 ? (
               <div className="py-1">
                 {filteredUsers.map((user) => (
                   <button
                     key={user.id}
                     onClick={() => handleSelect(user.id)}
-                    className={`dark:text-dark-text dark:hover:bg-dark-surface w-full px-4 py-2 text-left text-sm hover:bg-gray-100 ${
-                      selectedUserId === user.id ? "bg-primary/10" : ""
-                    }`}
+                    className={cn(
+                      "w-full px-4 py-2 text-left text-sm",
+                      selectedUserId === user.id
+                        ? "on-orange bg-primary text-ink"
+                        : "text-ink dark:text-night-text hover:bg-rule/60 dark:hover:bg-night-rule",
+                    )}
                   >
                     <div className="font-medium">
                       {user.displayName || user.email}
                     </div>
                     {user.displayName && (
-                      <div className="text-xs text-gray-500">{user.email}</div>
+                      <div
+                        className={cn(
+                          "text-xs",
+                          selectedUserId === user.id
+                            ? "text-ink"
+                            : "text-dark dark:text-night-muted",
+                        )}
+                      >
+                        {user.email}
+                      </div>
                     )}
                     {user.username && (
-                      <div className="text-xs text-gray-400">
+                      <div
+                        className={cn(
+                          "text-xs",
+                          selectedUserId === user.id
+                            ? "text-ink"
+                            : "text-dark dark:text-night-muted",
+                        )}
+                      >
                         @{user.username}
                       </div>
                     )}
@@ -608,7 +648,7 @@ function UserSearchDropdown({
                 ))}
               </div>
             ) : (
-              <div className="px-4 py-8 text-center text-sm text-gray-500">
+              <div className="text-dark dark:text-night-muted px-4 py-8 text-center text-sm">
                 {searchQuery.trim()
                   ? "Keine Benutzer gefunden"
                   : "Tippen Sie, um zu suchen..."}
@@ -638,7 +678,6 @@ function UsersTab() {
     { enabled: !!selectedUserId },
   );
 
-  // Effective permission preview
   const { data: preview } =
     api.permissions.previewEffectivePermissions.useQuery(
       {
@@ -756,7 +795,6 @@ function UsersTab() {
           userPermissions?.customRoles.some((ura) => ura.role.id === role.id)),
     ) ?? false;
 
-  // Group preview permissions by category
   const groupedPreview = useMemo(() => {
     if (!preview || !permissions) return null;
     const groups: Record<
@@ -787,15 +825,14 @@ function UsersTab() {
 
   return (
     <div className="space-y-6">
-      <h2 className="dark:text-dark-text text-xl font-semibold text-gray-900">
+      <h2 className="condensed text-ink dark:text-night-text text-xl font-bold">
         Benutzerzuweisungen
       </h2>
 
       <div className="grid items-start gap-6 lg:grid-cols-2">
-        {/* Left Column: User Selection + Assignment */}
         <div className="space-y-4">
           <div>
-            <label className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700">
+            <label className="text-ink dark:text-night-text mb-2 block text-sm font-semibold">
               Benutzer auswählen
             </label>
             <UserSearchDropdown
@@ -808,15 +845,16 @@ function UsersTab() {
 
           {selectedUserId && (
             <>
-              {/* Role Assignment */}
-              <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg border border-gray-200 p-4">
-                <h3 className="dark:text-dark-text mb-3 text-sm font-semibold text-gray-900">
+              <div className="border-rule dark:border-night-rule border p-4">
+                <h3 className="condensed text-ink dark:text-night-text mb-3 text-sm font-bold">
                   Rollen zuweisen
                 </h3>
                 {hasAdminRole && (
-                  <div className="mb-3 rounded-lg bg-blue-50 p-3 text-sm text-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
-                    <p className="font-medium">Admin-Rolle zugewiesen</p>
-                    <p className="mt-1 text-xs">
+                  <div className="border-ink dark:border-night-text mb-3 border-2 p-3 text-sm">
+                    <p className="text-ink dark:text-night-text font-semibold">
+                      Admin-Rolle zugewiesen
+                    </p>
+                    <p className="text-dark dark:text-night-muted mt-1 text-xs">
                       Die Admin-Rolle gewährt automatisch alle Berechtigungen.
                       Andere Rollen sind nicht mehr erforderlich.
                     </p>
@@ -833,10 +871,10 @@ function UsersTab() {
                       return (
                         <label
                           key={role.id}
-                          className={`flex items-center gap-2 text-sm ${
+                          className={`flex min-h-11 items-center gap-2 text-sm ${
                             isDisabled
                               ? "cursor-not-allowed opacity-50"
-                              : "dark:text-dark-text"
+                              : "text-ink dark:text-night-text"
                           }`}
                         >
                           <input
@@ -872,10 +910,8 @@ function UsersTab() {
                                 );
                               }
                             }}
-                            className={`h-4 w-4 rounded border-gray-300 ${
-                              isDisabled
-                                ? "cursor-not-allowed opacity-50"
-                                : "text-primary focus:ring-primary"
+                            className={`border-ink checked:bg-ink dark:border-night-text dark:checked:bg-night-text bg-paper dark:bg-night h-4 w-4 shrink-0 cursor-pointer appearance-none border-2 ${
+                              isDisabled ? "cursor-not-allowed opacity-50" : ""
                             }`}
                           />
                           <span>{role.name}</span>
@@ -884,27 +920,28 @@ function UsersTab() {
                     })}
                     <button
                       onClick={handleSaveRoles}
-                      className="bg-primary hover:bg-primary/90 mt-3 w-full rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors"
+                      className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-night-text dark:text-night dark:hover:bg-primary dark:hover:text-ink mt-3 inline-flex min-h-11 w-full items-center justify-center px-4 py-2 text-sm font-semibold transition-colors"
                     >
                       Rollen speichern
                     </button>
                   </div>
                 ) : (
-                  <p className="dark:text-dark-muted text-sm text-gray-500">
+                  <p className="text-dark dark:text-night-muted text-sm">
                     Keine Rollen verfügbar
                   </p>
                 )}
               </div>
 
-              {/* Direct Permission Assignment */}
-              <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg border border-gray-200 p-4">
-                <h3 className="dark:text-dark-text mb-3 text-sm font-semibold text-gray-900">
+              <div className="border-rule dark:border-night-rule border p-4">
+                <h3 className="condensed text-ink dark:text-night-text mb-3 text-sm font-bold">
                   Direkte Berechtigungen
                 </h3>
                 {hasAdminRole && (
-                  <div className="mb-3 rounded-lg bg-blue-50 p-3 text-sm text-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
-                    <p className="font-medium">Admin-Rolle zugewiesen</p>
-                    <p className="mt-1 text-xs">
+                  <div className="border-ink dark:border-night-text mb-3 border-2 p-3 text-sm">
+                    <p className="text-ink dark:text-night-text font-semibold">
+                      Admin-Rolle zugewiesen
+                    </p>
+                    <p className="text-dark dark:text-night-muted mt-1 text-xs">
                       Die Admin-Rolle gewährt automatisch alle Berechtigungen.
                       Einzelne Berechtigungen können nicht mehr zugewiesen
                       werden.
@@ -916,10 +953,10 @@ function UsersTab() {
                     {permissions.map((perm) => (
                       <label
                         key={perm.key}
-                        className={`flex items-center gap-2 text-sm ${
+                        className={`flex min-h-11 items-center gap-2 text-sm ${
                           hasAdminRole
                             ? "cursor-not-allowed opacity-50"
-                            : "dark:text-dark-text"
+                            : "text-ink dark:text-night-text"
                         }`}
                       >
                         <input
@@ -941,30 +978,30 @@ function UsersTab() {
                               );
                             }
                           }}
-                          className={`h-4 w-4 rounded border-gray-300 ${
-                            hasAdminRole
-                              ? "cursor-not-allowed opacity-50"
-                              : "text-primary focus:ring-primary"
+                          className={`border-ink checked:bg-ink dark:border-night-text dark:checked:bg-night-text bg-paper dark:bg-night h-4 w-4 shrink-0 cursor-pointer appearance-none border-2 ${
+                            hasAdminRole ? "cursor-not-allowed opacity-50" : ""
                           }`}
                         />
                         <span className="font-medium">{perm.name}</span>
-                        <span className="text-gray-500">({perm.key})</span>
+                        <span className="text-dark dark:text-night-muted">
+                          ({perm.key})
+                        </span>
                       </label>
                     ))}
                     <button
                       onClick={handleSavePermissions}
                       disabled={hasAdminRole}
-                      className={`mt-3 w-full rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors ${
+                      className={`mt-3 inline-flex min-h-11 w-full items-center justify-center px-4 py-2 text-sm font-semibold transition-colors ${
                         hasAdminRole
-                          ? "cursor-not-allowed bg-gray-400 opacity-50"
-                          : "bg-primary hover:bg-primary/90"
+                          ? "border-rule dark:border-night-rule text-dark dark:text-night-muted cursor-not-allowed border-2"
+                          : "bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-night-text dark:text-night dark:hover:bg-primary dark:hover:text-ink"
                       }`}
                     >
                       Berechtigungen speichern
                     </button>
                   </div>
                 ) : (
-                  <p className="dark:text-dark-muted text-sm text-gray-500">
+                  <p className="text-dark dark:text-night-muted text-sm">
                     Keine Berechtigungen verfügbar
                   </p>
                 )}
@@ -973,26 +1010,39 @@ function UsersTab() {
           )}
         </div>
 
-        {/* Right Column: Effective Permission Preview */}
-        <div className="dark:bg-dark-surface dark:border-dark-border sticky top-4 max-h-[calc(100vh-6rem)] overflow-hidden rounded-lg border border-gray-200 p-4">
-          <h3 className="dark:text-dark-text mb-3 flex items-center gap-2 text-sm font-semibold text-gray-900">
+        {/* Versatz aus `--main-padding-top` statt fester Zahl (Banner, Breakpoints). Eigene
+            Klasse, weil Kommas in Tailwinds Arbitrary-Werten den JIT-Parser zerbrechen. */}
+        <div
+          className="dashboard-sticky-shell-top border-rule dark:border-night-rule bg-paper dark:bg-night sticky overflow-hidden border p-4"
+          style={{
+            maxHeight:
+              "calc(100vh - (var(--main-padding-top, 9rem) + var(--dashboard-sticky-top-extra)) - 1.5rem)",
+          }}
+        >
+          <h3 className="condensed text-ink dark:text-night-text mb-3 flex items-center gap-2 text-sm font-bold">
             <Eye className="h-4 w-4" />
             Effektive Berechtigungen
           </h3>
           {selectedUserId && groupedPreview ? (
-            <div className="max-h-[calc(100vh-12rem)] space-y-4 overflow-y-auto">
+            <div
+              className="space-y-4 overflow-y-auto"
+              style={{
+                maxHeight:
+                  "calc(100vh - (var(--main-padding-top, 9rem) + var(--dashboard-sticky-top-extra)) - 4.5rem)",
+              }}
+            >
               {Object.entries(groupedPreview).map(([category, perms]) => (
                 <div key={category}>
-                  <h4 className="dark:text-dark-text mb-2 text-xs font-semibold tracking-wider text-gray-500 uppercase">
+                  <h4 className="text-dark dark:text-night-muted mb-2 text-xs font-semibold tracking-wider uppercase">
                     {category}
                   </h4>
                   <div className="space-y-1">
                     {perms.map((perm) => (
                       <div
                         key={perm.key}
-                        className={`rounded px-3 py-2 text-sm ${
+                        className={`px-3 py-2 text-sm ${
                           perm.granted
-                            ? "bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-300"
+                            ? "bg-rule/25 dark:bg-night-raised text-ink dark:text-night-text"
                             : "bg-red-50 text-red-800 dark:bg-red-900/20 dark:text-red-300"
                         }`}
                       >
@@ -1008,9 +1058,9 @@ function UsersTab() {
                           {perm.sources.map((source, i) => (
                             <span
                               key={i}
-                              className={`inline-block rounded px-1.5 py-0.5 text-xs ${
+                              className={`inline-block px-1.5 py-0.5 text-xs ${
                                 perm.granted
-                                  ? "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400"
+                                  ? "bg-rule dark:bg-night-rule text-ink dark:text-night-text"
                                   : "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400"
                               }`}
                             >
@@ -1024,13 +1074,13 @@ function UsersTab() {
                 </div>
               ))}
               {Object.keys(groupedPreview).length === 0 && (
-                <p className="dark:text-dark-muted text-sm text-gray-500">
+                <p className="text-dark dark:text-night-muted text-sm">
                   Keine Berechtigungen mit aktueller Auswahl
                 </p>
               )}
             </div>
           ) : (
-            <p className="dark:text-dark-muted text-sm text-gray-500">
+            <p className="text-dark dark:text-night-muted text-sm">
               {selectedUserId
                 ? "Vorschau wird geladen..."
                 : "Wählen Sie einen Benutzer aus, um die effektiven Berechtigungen zu sehen"}

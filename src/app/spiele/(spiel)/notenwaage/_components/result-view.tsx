@@ -27,26 +27,27 @@ export function NoteWaageResultView({
 }: Props) {
   const percent = total > 0 ? Math.round((100 * solved) / total) : 0;
   return (
-    <div className="dark:border-dark-border/80 space-y-5 border-t border-gray-200/90 pt-5 md:space-y-6 md:pt-6">
+    <div className="border-rule dark:border-night-rule space-y-5 border-t pt-5 md:space-y-6 md:pt-6">
       <div className="text-center">
         {percent >= 75 ? (
           <Trophy
-            className="text-primary mx-auto h-12 w-12 stroke-[1.35] md:h-16 md:w-16"
+            className="text-primary-ink dark:text-primary mx-auto h-12 w-12 stroke-[1.35] md:h-16 md:w-16"
             aria-hidden
           />
         ) : (
           <PartyPopper
-            className="text-primary mx-auto h-12 w-12 stroke-[1.35] md:h-16 md:w-16"
+            className="text-primary-ink dark:text-primary mx-auto h-12 w-12 stroke-[1.35] md:h-16 md:w-16"
             aria-hidden
           />
         )}
-        <p className="text-dark dark:text-dark-text mt-3 text-lg font-bold md:text-xl">
+        <p className="text-ink dark:text-night-text mt-3 text-lg font-bold md:text-xl">
           Runde beendet
         </p>
-        <p className="text-primary dark:text-primary-light mt-2 text-4xl font-bold tabular-nums md:text-5xl">
+        {/* Orange als Schrift auf Papier hat nur 1,99:1, daher Messing-Tinte; nachts trägt Orange. */}
+        <p className="text-primary-ink dark:text-primary mt-2 text-4xl font-bold tabular-nums md:text-5xl">
           {score}
         </p>
-        <p className="text-dark dark:text-dark-text-secondary mt-2 text-sm font-medium">
+        <p className="text-dark dark:text-night-muted mt-2 text-sm font-medium">
           Gelöst: {solved}/{total} · Beste First-Try-Serie: {bestStreak}
         </p>
       </div>

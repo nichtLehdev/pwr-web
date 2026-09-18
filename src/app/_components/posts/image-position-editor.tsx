@@ -104,15 +104,15 @@ export default function ImagePositionEditor({
 
   return (
     <ScrollableModal className="bg-black/80">
-      <ScrollableModalCard maxW="4xl" className="dark:bg-dark-surface">
-        <ScrollableModalHeader className="dark:border-dark-border border-b border-gray-200 pb-4">
+      <ScrollableModalCard maxW="4xl">
+        <ScrollableModalHeader className="border-rule dark:border-night-rule border-b pb-4">
           <div className="flex items-center justify-between">
-            <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
+            <h2 className="text-ink dark:text-night-text text-lg font-semibold">
               Bildposition anpassen
             </h2>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              className="text-dark hover:bg-rule/60 hover:text-ink dark:text-night-muted dark:hover:bg-night-rule dark:hover:text-night-text p-2 transition-colors"
               aria-label="Schließen"
             >
               <svg
@@ -133,8 +133,7 @@ export default function ImagePositionEditor({
         </ScrollableModalHeader>
 
         <ScrollableModalBody className="p-0">
-          {/* Instructions */}
-          <div className="dark:border-dark-border border-b border-gray-200 bg-blue-50 p-4 dark:bg-blue-900/20">
+          <div className="border-rule dark:border-night-rule border-b bg-blue-50 p-4 dark:bg-blue-900/20">
             <p className="text-sm text-blue-800 dark:text-blue-300">
               Klicke oder ziehe auf das Bild, um den Fokuspunkt zu setzen. Der
               Fokuspunkt bestimmt, welcher Teil des Bildes beim Zuschneiden im
@@ -142,11 +141,10 @@ export default function ImagePositionEditor({
             </p>
           </div>
 
-          {/* Image Container */}
           <div className="p-6">
             <div
               ref={containerRef}
-              className="dark:border-dark-border relative aspect-video w-full cursor-crosshair overflow-hidden rounded-lg border-2 border-gray-300 bg-gray-100 select-none dark:bg-gray-800"
+              className="border-rule dark:border-night-rule bg-rule/25 dark:bg-night-raised relative aspect-video w-full cursor-crosshair overflow-hidden border-2 select-none"
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
@@ -173,26 +171,23 @@ export default function ImagePositionEditor({
                 }}
               >
                 <div className="relative">
-                  {/* Crosshair */}
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="h-8 w-0.5 bg-white shadow-lg" />
                     <div className="h-0.5 w-8 bg-white shadow-lg" />
                   </div>
-                  {/* Circle */}
                   <div className="h-12 w-12 rounded-full border-4 border-white shadow-lg" />
                 </div>
               </div>
             </div>
 
-            {/* Position Display */}
             <div className="mt-4 flex items-center justify-center gap-4 text-sm">
-              <div className="text-gray-600 dark:text-gray-400">
+              <div className="text-dark dark:text-night-muted">
                 X:{" "}
                 <span className="font-mono font-semibold">
                   {currentX.toFixed(1)}%
                 </span>
               </div>
-              <div className="text-gray-600 dark:text-gray-400">
+              <div className="text-dark dark:text-night-muted">
                 Y:{" "}
                 <span className="font-mono font-semibold">
                   {currentY.toFixed(1)}%

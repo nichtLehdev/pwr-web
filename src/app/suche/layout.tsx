@@ -9,11 +9,7 @@ export const metadata = buildPageMetadata({
   noIndex: true,
 });
 
-/**
- * Metadata holder for the client-rendered page in this segment.
- *
- * Result pages carry no content of their own — indexed they would only dilute the pages they link to.
- */
+/** Metadata holder for the client-rendered page; noindex, since result pages only dilute what they link to. */
 export default function SucheLayout({ children }: { children: ReactNode }) {
   return children;
 }

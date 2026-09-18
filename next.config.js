@@ -19,6 +19,9 @@ const config = {
   },
 
   experimental: {
+    // Sonst 10 MB durch `src/proxy.ts`, zu wenig für Medien-ZIPs; der Rumpf liegt ganz im
+    // Speicher. Die Grenze des vorgelagerten Webservers (mittwald) muss dazu passen.
+    proxyClientMaxBodySize: "100mb",
     webpackMemoryOptimizations: true,
     optimizePackageImports: [
       "recharts",

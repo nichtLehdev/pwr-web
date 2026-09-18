@@ -1,24 +1,35 @@
 "use client";
-import { Select } from "@/app/_components/ui";
 
 import { useEffect, useMemo, useState } from "react";
 import { api, type RouterOutputs } from "@/trpc/react";
 import PublicPage from "@/app/_components/general/public-page";
-import PostCard from "@/app/_components/posts/post-card";
+import { PageSection } from "@/app/_components/programmheft/page-section";
+import { Heading } from "@/app/_components/programmheft/section-head";
+import { NewsColumns } from "@/app/_components/programmheft/news";
 import { FilterIcon, PinIcon, XCircleIcon, Rss } from "lucide-react";
-import { CircleXIcon } from "lucide-react";
 import FeedConfigModal from "@/app/_components/feeds/feed-config-modal";
 import { useBanner } from "@/app/_components/ui/banner-context";
+import { useStickyTop } from "@/lib/use-sticky-top";
+import { useTitelVorbei } from "@/lib/use-titel-vorbei";
+import { cn } from "@/lib/utils";
 
 type PostWithRelations = RouterOutputs["posts"]["getAll"]["posts"][number];
 type FilterCategory = PostWithRelations["category"] | "all";
 
+const TOOLBAR_BUTTON =
+  "semi-condensed inline-flex min-h-11 items-center justify-center gap-2 border-2 px-3 text-sm font-semibold transition-colors";
+const TOOLBAR_BUTTON_OFF =
+  "border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night";
+const TOOLBAR_BUTTON_ON = "border-ink bg-primary text-ink";
+const FIELD_LABEL =
+  "semi-condensed text-ink dark:text-night-text mb-2 block text-sm font-semibold";
+
 export default function AktuellesClient() {
   const { bannerHeight } = useBanner();
-  const [filterBarTop, setFilterBarTop] = useState(112);
+  const stickyTop = useStickyTop(bannerHeight);
+  const { marke, vorbei } = useTitelVorbei(stickyTop);
 
   useEffect(() => {
-    // Store original overflow value
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
@@ -29,22 +40,8 @@ export default function AktuellesClient() {
 
     return () => {
       clearTimeout(timer);
-      // Ensure overflow is restored on cleanup
       document.body.style.overflow = originalOverflow || "";
     };
-  }, []);
-
-  useEffect(() => {
-    const updateFilterBarTop = () => {
-      // Original values were top-28 (112px) mobile and md:top-36 (144px) desktop
-      // We add bannerHeight to these original values
-      const baseTop = window.innerWidth >= 768 ? 144 : 112;
-      setFilterBarTop(baseTop);
-    };
-
-    updateFilterBarTop();
-    window.addEventListener("resize", updateFilterBarTop);
-    return () => window.removeEventListener("resize", updateFilterBarTop);
   }, []);
 
   const [selectedDistrict, setSelectedDistrict] = useState<string>("all");
@@ -150,18 +147,23 @@ export default function AktuellesClient() {
   const hasActiveFilters =
     selectedDistrict !== "all" || selectedCategory !== "all";
 
+  const resetFilters = () => {
+    setSelectedCategory("all");
+    setSelectedDistrict("all");
+  };
+
   if (isLoading) {
     return (
       <PublicPage
         title="Aktuelles"
-        color="primary"
         breadcrumbs={[{ label: "Start", href: "/" }, { label: "Aktuelles" }]}
+        stickyTitle={false}
       >
-        <div className="bg-background dark:bg-dark-background min-h-screen">
-          <div className="flex items-center justify-center py-12">
-            <p className="text-gray-600 dark:text-gray-400">Lade Beiträge...</p>
-          </div>
-        </div>
+        <PageSection flush="top">
+          <p className="text-dark dark:text-night-muted py-12 text-center text-lg">
+            Lade Beiträge...
+          </p>
+        </PageSection>
       </PublicPage>
     );
   }
@@ -169,221 +171,179 @@ export default function AktuellesClient() {
   return (
     <PublicPage
       title="Aktuelles"
-      color="primary"
       breadcrumbs={[{ label: "Start", href: "/" }, { label: "Aktuelles" }]}
       description={<p>News, Berichte und Ankündigungen aus dem Posaunenwerk</p>}
+      // Die Filterleiste dieser Seite trägt den Kolumnentitel bereits.
+      stickyTitle={false}
     >
-      <div className="bg-background dark:bg-dark-background min-h-screen">
-        {/* Filter Bar */}
-        <section
-          className="dark:bg-dark-surface dark:border-dark-border sticky z-20 border-b bg-white shadow-sm"
-          style={{
-            top: `${bannerHeight + filterBarTop}px`,
-          }}
-        >
-          <div className="container mx-auto px-4 py-3">
-            {/* Mobile: Compact Row */}
-            <div className="flex items-center justify-between gap-2">
-              {/* Left: Results Count */}
-              <div className="flex-1">
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  {totalFiltered} {totalFiltered === 1 ? "Beitrag" : "Beiträge"}
-                  {hasActiveFilters && (
-                    <span className="text-primary ml-1 font-semibold">
-                      (gefiltert)
-                    </span>
-                  )}
-                </span>
-              </div>
-
-              {/* Right: RSS Feed & Filter Toggle Button */}
-              <div className="flex gap-1">
-                <button
-                  onClick={() => setRssModalOpen(true)}
-                  className="text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-background flex items-center gap-2 rounded-lg bg-gray-100 px-3 py-2 text-sm font-semibold transition-colors hover:bg-gray-200"
-                  aria-label="RSS Feed"
-                  title="RSS Feed abonnieren"
-                >
-                  <Rss className="h-4 w-4" />
-                  <span className="hidden sm:inline">RSS</span>
-                </button>
-                {!filtersOpen && hasActiveFilters && (
-                  <button
-                    onClick={() => {
-                      setSelectedCategory("all");
-                      setSelectedDistrict("all");
-                    }}
-                    aria-label="Filter zurücksetzen"
-                  >
-                    <XCircleIcon className="h-5 w-5 text-gray-400 transition-colors hover:text-gray-600" />
-                  </button>
+      {/* Marke für „Titel vorbei“: steht genau hinter dem Seitenkopf. */}
+      <div ref={marke} aria-hidden className="h-px" />
+      <section
+        className="bg-paper dark:bg-night border-rule dark:border-night-rule sticky z-20 border-b"
+        style={{ top: `${stickyTop}px` }}
+      >
+        <div className="sheet py-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-4">
+              {/* Kolumnentitel erst, wenn der große Titel aus dem Bild ist; wächst aus Breite null.
+                  `-mr-4` schluckt eingeklappt den `gap-4` der Zeile. */}
+              <p
+                aria-hidden={!vorbei}
+                className={cn(
+                  "condensed text-ink dark:text-night-text hidden overflow-hidden text-xl leading-none font-bold whitespace-nowrap transition-[max-width,opacity,margin] duration-200 motion-reduce:transition-none lg:block",
+                  vorbei ? "max-w-48 opacity-100" : "-mr-4 max-w-0 opacity-0",
                 )}
-                <button
-                  onClick={() => setFiltersOpen(!filtersOpen)}
-                  className={`relative cursor-pointer rounded-lg p-2 transition-colors ${
-                    filtersOpen
-                      ? "bg-primary text-white"
-                      : "text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-background bg-gray-100 hover:bg-gray-200"
-                  }`}
-                  aria-label="Filter öffnen"
-                >
-                  <FilterIcon className="h-4 w-4" />
-                  {/* Active Filter Badge */}
-                  {hasActiveFilters && (
-                    <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-white bg-red-500"></span>
-                  )}
-                </button>
-              </div>
+              >
+                Aktuelles
+              </p>
+              <p className="text-dark dark:text-night-muted text-sm">
+                {totalFiltered} {totalFiltered === 1 ? "Beitrag" : "Beiträge"}
+                {hasActiveFilters && (
+                  <span className="text-primary-ink dark:text-primary ml-1 font-semibold">
+                    (gefiltert)
+                  </span>
+                )}
+              </p>
             </div>
 
-            {/* Collapsible Filter Panel */}
-            {filtersOpen && (
-              <div className="animate-in slide-in-from-top-2 mt-3 space-y-3 border-t pt-4">
-                {/* Category Filter */}
-                <div>
-                  <label className="mb-2 block text-xs font-semibold text-gray-700 dark:text-gray-300">
-                    Kategorie
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {categories.map((cat) => (
-                      <button
-                        key={cat}
-                        onClick={() => setSelectedCategory(cat)}
-                        className={`rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
-                          selectedCategory === cat
-                            ? "bg-dark dark:bg-primary text-white"
-                            : "text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-border bg-gray-100 hover:bg-gray-200"
-                        }`}
-                      >
-                        {categoryLabels[cat]}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* District Filter */}
-                <div>
-                  <label className="mb-2 block text-xs font-semibold text-gray-700 dark:text-gray-300">
-                    Bezirk
-                  </label>
-                  <Select
-                    value={selectedDistrict}
-                    onChange={(e) => setSelectedDistrict(e.target.value)}
-                    className="focus:ring-primary dark:border-dark-border dark:bg-dark-surface text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-transparent focus:ring-2"
-                  >
-                    <option value="all">Alle Bezirke</option>
-                    {districtSelectOptions.slice(1).map((district) => (
-                      <option key={district} value={district}>
-                        {district}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
-
-                {/* Reset Button */}
-                {hasActiveFilters && (
-                  <button
-                    onClick={() => {
-                      setSelectedCategory("all");
-                      setSelectedDistrict("all");
-                    }}
-                    className="text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary w-full px-3 py-2 text-sm font-semibold transition-colors"
-                  >
-                    Filter zurücksetzen
-                  </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setRssModalOpen(true)}
+                className="semi-condensed text-ink hover:bg-ink hover:text-paper dark:text-night-text dark:hover:bg-night-text dark:hover:text-night inline-flex min-h-11 items-center gap-2 px-3 text-sm font-semibold transition-colors"
+                aria-label="RSS Feed"
+                title="RSS Feed abonnieren"
+              >
+                <Rss className="h-4 w-4" aria-hidden />
+                <span className="hidden sm:inline">RSS</span>
+              </button>
+              {!filtersOpen && hasActiveFilters && (
+                <button
+                  onClick={resetFilters}
+                  className="text-dark hover:text-ink dark:text-night-muted dark:hover:text-night-text inline-flex min-h-11 min-w-11 items-center justify-center transition-colors"
+                  aria-label="Filter zurücksetzen"
+                >
+                  <XCircleIcon className="h-5 w-5" aria-hidden />
+                </button>
+              )}
+              <button
+                onClick={() => setFiltersOpen(!filtersOpen)}
+                aria-expanded={filtersOpen}
+                className={cn(
+                  TOOLBAR_BUTTON,
+                  "relative min-w-11",
+                  filtersOpen ? TOOLBAR_BUTTON_ON : TOOLBAR_BUTTON_OFF,
                 )}
-              </div>
-            )}
+                aria-label="Filter öffnen"
+              >
+                <FilterIcon className="h-4 w-4" aria-hidden />
+                {hasActiveFilters && (
+                  <span
+                    aria-hidden
+                    className="bg-primary-ink dark:bg-primary absolute -top-1 -right-1 h-2.5 w-2.5"
+                  />
+                )}
+              </button>
+            </div>
           </div>
-        </section>
 
-        {/* Content */}
-        <section className="py-6 md:py-12">
-          <div className="container mx-auto px-4">
-            {/* Pinned Posts */}
-            {filteredPinned.length > 0 && (
-              <div className="mb-12">
-                <h2 className="text-dark dark:text-dark-text border-primary mb-4 flex items-center gap-2 border-b-2 pb-2 text-lg font-bold md:mb-6 md:text-2xl">
-                  <PinIcon className="text-primary dark:text-primary-light h-5 w-5 md:h-6 md:w-6" />
-                  Angepinnte Beiträge
-                </h2>
-                <div className="grid grid-cols-1 gap-4 md:gap-6 lg:grid-cols-2 xl:grid-cols-3">
-                  {filteredPinned.map((post) => (
-                    <PostCard
-                      key={post.id}
-                      id={post.id}
-                      slug={post.slug}
-                      title={post.title}
-                      excerpt={post.excerpt || ""}
-                      date={post.publishedAt || post.createdAt}
-                      category={post.category}
-                      image={post.coverImage?.url}
-                      imagePositionX={post.coverImagePositionX}
-                      imagePositionY={post.coverImagePositionY}
-                      pinned={post.pinned}
-                      district={post.bezirk?.number}
-                      content={post.content}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Regular Posts */}
-            {sortedRegular.length > 0 && (
+          {filtersOpen && (
+            <div className="border-rule dark:border-night-rule mt-3 space-y-4 border-t pt-4">
               <div>
-                {filteredPinned.length > 0 && (
-                  <h2 className="text-dark dark:text-dark-text dark:border-dark-border mb-4 border-b-2 border-gray-200 pb-2 text-lg font-bold md:mb-6 md:text-2xl">
-                    Alle Beiträge
-                  </h2>
-                )}
-                <div className="grid grid-cols-1 gap-4 md:gap-6 lg:grid-cols-2 xl:grid-cols-3">
-                  {sortedRegular.map((post) => (
-                    <PostCard
-                      key={post.id}
-                      id={post.id}
-                      slug={post.slug}
-                      title={post.title}
-                      excerpt={post.excerpt || ""}
-                      date={post.publishedAt || post.createdAt}
-                      category={post.category}
-                      image={post.coverImage?.url}
-                      imagePositionX={post.coverImagePositionX}
-                      imagePositionY={post.coverImagePositionY}
-                      pinned={false}
-                      district={post.bezirk?.number}
-                      content={post.content}
-                    />
+                <span className={FIELD_LABEL}>Kategorie</span>
+                <div className="grid grid-cols-3 gap-2">
+                  {categories.map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => setSelectedCategory(cat)}
+                      className={cn(
+                        TOOLBAR_BUTTON,
+                        selectedCategory === cat
+                          ? TOOLBAR_BUTTON_ON
+                          : TOOLBAR_BUTTON_OFF,
+                      )}
+                    >
+                      {categoryLabels[cat]}
+                    </button>
                   ))}
                 </div>
               </div>
-            )}
 
-            {/* No Results */}
-            {totalFiltered === 0 && (
-              <div className="py-12 text-center">
-                <CircleXIcon className="mx-auto mb-4 h-16 w-16 text-gray-300" />
-                <p className="mb-4 text-base text-gray-600 md:text-lg dark:text-gray-400">
-                  Keine Beiträge gefunden.
-                </p>
-                {hasActiveFilters && (
-                  <button
-                    onClick={() => {
-                      setSelectedCategory("all");
-                      setSelectedDistrict("all");
-                    }}
-                    className="text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary font-semibold"
-                  >
-                    Filter zurücksetzen
-                  </button>
-                )}
+              <div>
+                <label htmlFor="bezirk-filter" className={FIELD_LABEL}>
+                  Bezirk
+                </label>
+                <select
+                  id="bezirk-filter"
+                  value={selectedDistrict}
+                  onChange={(e) => setSelectedDistrict(e.target.value)}
+                  className="border-ink dark:border-night-text text-ink dark:text-night-text bg-paper dark:bg-night w-full border-2 px-3 py-2 text-sm"
+                >
+                  <option value="all">Alle Bezirke</option>
+                  {districtSelectOptions.slice(1).map((district) => (
+                    <option key={district} value={district}>
+                      {district}
+                    </option>
+                  ))}
+                </select>
               </div>
+
+              {hasActiveFilters && (
+                <button
+                  onClick={resetFilters}
+                  className="semi-condensed text-primary-ink dark:text-primary inline-flex min-h-11 w-full items-center justify-center text-sm font-semibold underline-offset-4 hover:underline"
+                >
+                  Filter zurücksetzen
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </section>
+
+      <PageSection>
+        {filteredPinned.length > 0 && (
+          <div>
+            <Heading
+              as="h2"
+              size="list"
+              rule
+              className="flex items-center gap-2"
+            >
+              <PinIcon className="h-5 w-5 shrink-0" aria-hidden />
+              Angepinnte Beiträge
+            </Heading>
+            <NewsColumns posts={filteredPinned} />
+          </div>
+        )}
+
+        {sortedRegular.length > 0 && (
+          <div className={filteredPinned.length > 0 ? "mt-16" : undefined}>
+            {filteredPinned.length > 0 && (
+              <Heading as="h2" size="list" rule>
+                Alle Beiträge
+              </Heading>
+            )}
+            <NewsColumns posts={sortedRegular} />
+          </div>
+        )}
+
+        {totalFiltered === 0 && (
+          <div className="border-ink dark:border-night-text border-t-2 py-8 text-center">
+            <p className="text-dark dark:text-night-muted text-lg">
+              Keine Beiträge gefunden.
+            </p>
+            {hasActiveFilters && (
+              <button
+                onClick={resetFilters}
+                className="semi-condensed text-primary-ink dark:text-primary mt-4 inline-flex min-h-11 items-center text-sm font-semibold underline-offset-4 hover:underline"
+              >
+                Filter zurücksetzen
+              </button>
             )}
           </div>
-        </section>
-      </div>
+        )}
+      </PageSection>
 
-      {/* RSS Feed Modal */}
       <FeedConfigModal
         isOpen={rssModalOpen}
         onClose={() => setRssModalOpen(false)}

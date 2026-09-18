@@ -2,17 +2,10 @@
 
 import { useCallback, useRef } from "react";
 import ImageWithFallback from "@/app/_components/ui/image-with-fallback";
-import { Button } from "@/app/_components/ui";
+import { Button, Input } from "@/app/_components/ui";
 import { CrosshairIcon } from "lucide-react";
 
-/**
- * Fokuspunkt eines Bildes setzen: der Punkt, der sichtbar bleibt, wenn das Bild
- * irgendwo als `object-cover` beschnitten wird (Kartenkopf, Karussell, Kachel).
- *
- * Die Spalten gab es schon, nur keinen Weg sie zu setzen — bis hierher blieb
- * als einziges Mittel, das Bild neu zuzuschneiden und damit das Original zu
- * verlieren. Der Fokuspunkt lässt die Datei in Ruhe.
- */
+/** Fokuspunkt: bleibt sichtbar, wenn das Bild als `object-cover` beschnitten wird; die Datei bleibt unverändert. */
 export function FocalPointPicker({
   url,
   alt,
@@ -51,7 +44,7 @@ export function FocalPointPicker({
         // Kein <button>: der Klick trägt eine Position, keine Ja/Nein-Auswahl.
         // Für die Tastatur stehen darunter die beiden Zahlenfelder.
         onClick={(event) => setFromEvent(event.clientX, event.clientY)}
-        className="dark:border-dark-border relative aspect-video w-full cursor-crosshair overflow-hidden rounded-lg border border-gray-200 bg-gray-100 dark:bg-gray-800"
+        className="border-rule dark:border-night-rule bg-rule/25 dark:bg-night-raised relative aspect-video w-full cursor-crosshair overflow-hidden border"
         title="Klicken, um den Bildmittelpunkt zu setzen"
       >
         <ImageWithFallback
@@ -71,9 +64,9 @@ export function FocalPointPicker({
       </div>
 
       <div className="flex flex-wrap items-end gap-2">
-        <label className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400">
+        <label className="text-dark dark:text-night-muted flex items-center gap-1.5 text-xs">
           X&nbsp;%
-          <input
+          <Input
             type="number"
             min={0}
             max={100}
@@ -85,12 +78,12 @@ export function FocalPointPicker({
                 y: y ?? 50,
               })
             }
-            className="dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-16 rounded-md border border-gray-300 px-2 py-1 tabular-nums"
+            className="w-16 py-1 tabular-nums"
           />
         </label>
-        <label className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400">
+        <label className="text-dark dark:text-night-muted flex items-center gap-1.5 text-xs">
           Y&nbsp;%
-          <input
+          <Input
             type="number"
             min={0}
             max={100}
@@ -102,7 +95,7 @@ export function FocalPointPicker({
                   event.target.value === "" ? null : Number(event.target.value),
               })
             }
-            className="dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-16 rounded-md border border-gray-300 px-2 py-1 tabular-nums"
+            className="w-16 py-1 tabular-nums"
           />
         </label>
         <Button
@@ -116,7 +109,7 @@ export function FocalPointPicker({
           Zurücksetzen
         </Button>
       </div>
-      <p className="dark:text-dark-muted text-xs text-gray-500">
+      <p className="text-dark dark:text-night-muted text-xs">
         Bestimmt, welcher Bildausschnitt sichtbar bleibt, wenn das Bild
         beschnitten dargestellt wird. Ohne Fokuspunkt wird die Bildmitte
         verwendet.

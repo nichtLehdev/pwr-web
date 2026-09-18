@@ -1,4 +1,3 @@
-// Export all UI components for easy importing
 export { Button, type ButtonProps } from "./button";
 export { Input, type InputProps } from "./input";
 export { Textarea, type TextareaProps } from "./textarea";
@@ -15,7 +14,6 @@ export {
   type CardProps,
 } from "./card";
 export { Badge, type BadgeProps } from "./badge";
-export { Alert, AlertTitle, AlertDescription, type AlertProps } from "./alert";
 export {
   PasswordStrengthMeter,
   type PasswordStrengthMeterProps,

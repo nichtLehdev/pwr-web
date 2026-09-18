@@ -2,7 +2,9 @@
 
 import ImageWithFallback from "@/app/_components/ui/image-with-fallback";
 import { Checkbox } from "@/app/_components/ui";
+import { ContentStatusBadge } from "@/app/_components/dashboard/content-status";
 import { ContentStatus } from "~/generated/prisma/enums";
+import { cn } from "@/lib/utils";
 import {
   CheckIcon,
   CropIcon,
@@ -15,18 +17,10 @@ import {
   formatFileSize,
   getMimeTypeIcon,
   getMimeTypeLabel,
-  statusColors,
-  statusLabels,
   type MediaItem,
 } from "./media-shared";
 
-/**
- * Eine Aktion in der Fußzeile der Kachel.
- *
- * Die Schaltflächen lagen früher als schwebende Leiste über dem Bild und waren
- * am Desktop bis zum Hover unsichtbar — man musste wissen, dass es sie gibt.
- * Jetzt stehen sie in einer eigenen Zeile unter den Angaben, immer sichtbar.
- */
+/** Eine Aktion in der Fußzeile der Kachel, immer sichtbar statt erst bei Hover. */
 function CardAction({
   label,
   icon: Icon,
@@ -40,11 +34,11 @@ function CardAction({
 }) {
   const tones = {
     neutral:
-      "text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-100",
+      "text-dark hover:bg-rule/60 hover:text-ink dark:text-night-muted dark:hover:bg-night-rule dark:hover:text-night-text",
     success:
-      "text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/30",
+      "text-green-700 hover:bg-rule/60 dark:text-green-400 dark:hover:bg-night-rule",
     danger:
-      "text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30",
+      "text-red-600 hover:bg-rule/60 hover:text-red-700 dark:text-red-400 dark:hover:bg-night-rule dark:hover:text-red-300",
   } as const;
 
   return (
@@ -56,7 +50,7 @@ function CardAction({
         event.stopPropagation();
         onClick();
       }}
-      className={`rounded-md p-1.5 transition-colors ${tones[tone]}`}
+      className={`p-1.5 transition-colors ${tones[tone]}`}
     >
       <Icon className="h-4 w-4" />
     </button>
@@ -99,11 +93,12 @@ export function MediaGrid({
         return (
           <div
             key={item.id}
-            className={`dark:bg-dark-surface group relative flex flex-col overflow-hidden rounded-lg border bg-white shadow-sm transition-shadow hover:shadow-md ${
+            className={cn(
+              "group bg-paper dark:bg-night-raised relative flex flex-col overflow-hidden border transition-colors",
               isSelected
-                ? "border-primary ring-primary/40 ring-2"
-                : "dark:border-dark-border border-gray-200"
-            }`}
+                ? "border-ink dark:border-night-text border-2"
+                : "border-rule dark:border-night-rule",
+            )}
           >
             <div
               role="button"
@@ -115,7 +110,7 @@ export function MediaGrid({
                   onPreview(item);
                 }
               }}
-              className="relative aspect-square cursor-pointer overflow-hidden bg-gray-100 dark:bg-gray-800"
+              className="bg-rule/25 dark:bg-night-raised relative aspect-square cursor-pointer overflow-hidden"
             >
               {isImage ? (
                 <ImageWithFallback
@@ -132,18 +127,15 @@ export function MediaGrid({
                 </div>
               )}
 
-              <span
-                className={`absolute top-2 left-8 inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[item.status]}`}
-              >
-                {statusLabels[item.status]}
-              </span>
+              <ContentStatusBadge
+                status={item.status}
+                className="absolute top-2 left-9"
+              />
 
-              {/* Ohne Alt-Text ist das Bild für Screenreader stumm — in einer
-                  Übersicht, in der genau das gepflegt wird, gehört der Hinweis
-                  auf die Kachel und nicht in ein Untermenü. */}
+              {/* Fehlender Alt-Text direkt auf der Kachel, denn genau das wird hier gepflegt. */}
               {isImage && !item.alt && (
                 <span
-                  className="absolute right-2 bottom-2 rounded bg-amber-500/90 px-1.5 py-0.5 text-[10px] font-semibold text-white"
+                  className="text-paper dark:text-night absolute right-2 bottom-2 bg-amber-700 px-1.5 py-0.5 text-[10px] font-semibold dark:bg-amber-400"
                   title="Kein Alt-Text hinterlegt"
                 >
                   Alt fehlt
@@ -152,7 +144,7 @@ export function MediaGrid({
             </div>
 
             <label
-              className="absolute top-2 left-2 flex cursor-pointer items-center rounded bg-white/80 p-0.5 backdrop-blur-sm dark:bg-black/50"
+              className="bg-paper/80 dark:bg-night/80 absolute top-2 left-2 flex cursor-pointer items-center p-0.5"
               onClick={(event) => event.stopPropagation()}
             >
               <Checkbox
@@ -164,17 +156,17 @@ export function MediaGrid({
 
             <div className="flex min-w-0 flex-1 flex-col p-3">
               <p
-                className="dark:text-dark-text truncate text-sm font-medium text-gray-900"
+                className="text-ink dark:text-night-text truncate text-sm font-medium"
                 title={item.name}
               >
                 {item.name}
               </p>
-              <p className="dark:text-dark-muted text-xs text-gray-500">
+              <p className="text-dark dark:text-night-muted text-xs">
                 {getMimeTypeLabel(item.mimeType)}
                 {item.size ? ` · ${formatFileSize(item.size)}` : ""}
               </p>
 
-              <div className="dark:border-dark-border mt-2 flex items-center gap-0.5 border-t border-gray-100 pt-2">
+              <div className="border-rule dark:border-night-rule mt-2 flex items-center gap-0.5 border-t pt-2">
                 <CardAction
                   label="Herunterladen"
                   icon={DownloadIcon}

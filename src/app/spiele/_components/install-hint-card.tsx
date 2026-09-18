@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Share, Smartphone } from "lucide-react";
-import { Button } from "@/app/_components/ui/button";
+import { Share } from "lucide-react";
+import { Note } from "@/app/_components/programmheft/note";
 import { isIos, isStandalone } from "@/lib/pwa";
 
 type BeforeInstallPromptEvent = Event & {
@@ -11,9 +11,8 @@ type BeforeInstallPromptEvent = Event & {
 };
 
 /**
- * Install-Hinweis auf der Spiele-Übersicht: Chromium bekommt einen echten
- * Install-Button (beforeinstallprompt), iOS Safari die "Zum Home-Bildschirm"-
- * Anleitung. In der installierten App unsichtbar.
+ * Chromium bekommt einen Install-Button (beforeinstallprompt), iOS Safari die
+ * "Zum Home-Bildschirm"-Anleitung; in der installierten App unsichtbar.
  */
 export function InstallHintCard() {
   const [installEvent, setInstallEvent] =
@@ -44,23 +43,13 @@ export function InstallHintCard() {
   if (installed || (!installEvent && !showIosHint)) return null;
 
   return (
-    <div className="border-dark-border/50 dark:border-dark-border dark:bg-dark-surface/60 mb-8 flex flex-col gap-3 rounded-lg border bg-white/70 p-4 sm:flex-row sm:items-center sm:justify-between md:p-5">
-      <div className="flex items-start gap-3">
-        <Smartphone
-          className="text-primary mt-0.5 h-5 w-5 shrink-0"
-          aria-hidden
-        />
-        <div>
-          <p className="text-dark dark:text-dark-text text-sm font-bold">
-            Als App aufs Handy
-          </p>
+    <Note tone="info" title="Als App aufs Handy" className="mb-8">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <p className="max-w-[46ch]">
           {installEvent ? (
-            <p className="text-dark dark:text-dark-text-secondary text-sm">
-              Installiere die Spiele als App — sie funktionieren dann auch
-              offline.
-            </p>
+            "Installiere die Spiele als App — sie funktionieren dann auch offline."
           ) : (
-            <p className="text-dark dark:text-dark-text-secondary text-sm">
+            <>
               In Safari:{" "}
               <Share
                 className="inline h-4 w-4 align-text-bottom"
@@ -68,22 +57,21 @@ export function InstallHintCard() {
               />{" "}
               Teilen → „Zum Home-Bildschirm" — die Spiele funktionieren dann
               auch offline.
-            </p>
+            </>
           )}
-        </div>
+        </p>
+        {installEvent ? (
+          <button
+            type="button"
+            onClick={() => {
+              void installEvent.prompt();
+            }}
+            className="border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night semi-condensed inline-flex min-h-12 shrink-0 items-center gap-3 border-2 px-6 text-lg font-semibold transition-colors"
+          >
+            App installieren
+          </button>
+        ) : null}
       </div>
-      {installEvent && (
-        <Button
-          type="button"
-          size="md"
-          className="shrink-0"
-          onClick={() => {
-            void installEvent.prompt();
-          }}
-        >
-          App installieren
-        </Button>
-      )}
-    </div>
+    </Note>
   );
 }

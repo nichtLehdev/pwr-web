@@ -4,9 +4,8 @@ import { randomInt } from "crypto";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 /**
- * Öffentliche Bibliothek von Notensets für die Spiele unter /spiele.
- * Lesen ist öffentlich (Spiele funktionieren ohne Anmeldung), Veröffentlichen
- * erfordert einen Account, damit jedes Set eine verantwortliche Person hat.
+ * Notensets für /spiele: Lesen ist öffentlich, Veröffentlichen braucht einen Account,
+ * damit jedes Set eine verantwortliche Person hat.
  */
 
 const clefSchema = z.enum(["treble", "bass", "alto", "tenor"]);
@@ -63,7 +62,6 @@ const setListSelect = {
 } as const;
 
 export const noteSetsRouter = createTRPCRouter({
-  /** Bibliothek durchsuchen — öffentlich. */
   list: publicProcedure
     .input(
       z
@@ -121,7 +119,6 @@ export const noteSetsRouter = createTRPCRouter({
       return { ok: true };
     }),
 
-  /** Set veröffentlichen — nur mit Account. */
   create: protectedProcedure
     .input(
       z.object({

@@ -20,6 +20,12 @@ import type {
 } from "@tanstack/react-table";
 import { useToast } from "@/app/_components/ui/toast";
 import { Mail } from "lucide-react";
+import { Tag, type TagTone } from "@/app/_components/programmheft/tag";
+import { formatBerlin } from "@/lib/berlin-time";
+
+/** Gefüllte Werkbank-Schaltfläche, wie auf den Formularseiten des Hefts. */
+const BTN_PRIMARY =
+  "bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-primary dark:text-ink dark:hover:bg-paper semi-condensed inline-flex min-h-11 items-center gap-2 px-4 text-sm font-semibold transition-colors";
 
 type Subscriber =
   RouterOutputs["newsletter"]["getSubscribers"]["subscribers"][number];
@@ -39,6 +45,16 @@ const STATUS_OPTIONS = [
   { value: "inactive", label: "Inaktiv" },
 ];
 
+/** `inverse` statt `ink`: `ink` verschwindet im Nachtdruck fast auf dem dunklen Werkbank-Grund. */
+const SUBSCRIBER_STATUS_TONE: Record<
+  "confirmed" | "pending" | "inactive",
+  TagTone
+> = {
+  confirmed: "inverse",
+  pending: "orange",
+  inactive: "inverse",
+};
+
 const column = createDataTableColumnHelper<Subscriber>();
 
 /** Der Status, den die Statusspalte zeigt — passend zum Serverfilter benannt. */
@@ -47,7 +63,6 @@ function subscriberStatus(subscriber: Subscriber): string {
   return subscriber.confirmedAt ? "confirmed" : "pending";
 }
 
-/** Reads one set filter out of the table's filter state. */
 function setFilterValues(filters: ColumnFiltersState, id: string): string[] {
   const value = filters.find((filter) => filter.id === id)?.value;
   return Array.isArray(value) ? (value as string[]) : [];
@@ -56,9 +71,8 @@ function setFilterValues(filters: ColumnFiltersState, id: string): string[] {
 export default function DashboardNewsletterSubscribersPage() {
   const { data: session, isPending } = useSession();
   const hasRedirected = useRef(false);
-  // Die Abonnentenliste wächst unbegrenzt und wird deshalb serverseitig
-  // geblättert; Sortierung, Statusfilter und Suche sind darum Abfrageparameter
-  // — sonst würden sie nur die gerade geladene Seite betreffen.
+  // Serverseitig geblättert: Sortierung, Filter und Suche sind Abfrageparameter,
+  // sonst beträfen sie nur die geladene Seite.
   const [sorting, setSorting] = useState<SortingState>([
     { id: "subscribedAt", desc: true },
   ]);
@@ -110,8 +124,7 @@ export default function DashboardNewsletterSubscribersPage() {
   const toast = useToast();
 
   const deleteSubscriber = api.newsletter.deleteSubscriber.useMutation({
-    // Invalidate instead of reloading the page — a full reload threw away
-    // the current search text, filter and page on every single delete.
+    // Invalidate instead of reloading, so search, filter and page survive.
     onSuccess: () => {
       toast.success("Abonnent gelöscht");
       void utils.newsletter.getSubscribers.invalidate();
@@ -166,26 +179,17 @@ export default function DashboardNewsletterSubscribersPage() {
             const subscriber = row.original;
             if (subscriber.isActive && subscriber.confirmedAt) {
               return (
-                <span className="inline-flex rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-800 dark:bg-green-900/30 dark:text-green-400">
-                  Bestätigt
-                </span>
+                <Tag tone={SUBSCRIBER_STATUS_TONE.confirmed}>Bestätigt</Tag>
               );
             }
             if (subscriber.isActive) {
               return (
-                <span
-                  className="inline-flex rounded-full bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
-                  title="Anmeldung wurde noch nicht über den Link in der Bestätigungs-E-Mail bestätigt — erhält keinen Newsletter."
-                >
-                  Ausstehend
+                <span title="Anmeldung wurde noch nicht über den Link in der Bestätigungs-E-Mail bestätigt — erhält keinen Newsletter.">
+                  <Tag tone={SUBSCRIBER_STATUS_TONE.pending}>Ausstehend</Tag>
                 </span>
               );
             }
-            return (
-              <span className="inline-flex rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-800 dark:bg-gray-800 dark:text-gray-300">
-                Inaktiv
-              </span>
-            );
+            return <Tag tone={SUBSCRIBER_STATUS_TONE.inactive}>Inaktiv</Tag>;
           },
         }),
         column.accessor((subscriber) => subscriber.subscribedAt, {
@@ -193,8 +197,7 @@ export default function DashboardNewsletterSubscribersPage() {
           header: "Abonniert am",
           enableColumnFilter: false,
           meta: { cellClassName: "whitespace-nowrap" },
-          cell: ({ getValue }) =>
-            new Date(getValue()).toLocaleDateString("de-DE"),
+          cell: ({ getValue }) => formatBerlin(new Date(getValue())),
         }),
         column.display({
           id: "actions",
@@ -222,8 +225,8 @@ export default function DashboardNewsletterSubscribersPage() {
 
   if (isPending || profileLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
@@ -242,52 +245,43 @@ export default function DashboardNewsletterSubscribersPage() {
         { label: "Abonnenten" },
       ]}
       actions={
-        <Link
-          href="/dashboard/newsletter/compose"
-          className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2.5 font-medium text-white transition-colors"
-        >
-          <Mail className="h-5 w-5" />
+        <Link href="/dashboard/newsletter/compose" className={BTN_PRIMARY}>
+          <Mail className="h-4 w-4" aria-hidden />
           Newsletter erstellen
         </Link>
       }
     >
-      {/* Statistics */}
       {statistics && (
         <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700">
-            <p className="dark:text-dark-muted text-sm text-gray-600">Gesamt</p>
-            <p className="dark:text-dark-text text-2xl font-bold text-gray-900">
+          <div className="bg-rule/25 dark:bg-night-raised p-4">
+            <p className="text-dark dark:text-night-muted text-sm">Gesamt</p>
+            <p className="text-ink dark:text-night-text text-2xl font-bold">
               {statistics.total}
             </p>
           </div>
-          <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700">
-            <p className="dark:text-dark-muted text-sm text-gray-600">
-              Bestätigt
-            </p>
-            <p className="dark:text-dark-text text-2xl font-bold text-green-600">
+          <div className="bg-rule/25 dark:bg-night-raised p-4">
+            <p className="text-dark dark:text-night-muted text-sm">Bestätigt</p>
+            <p className="dark:text-night-text text-ink text-2xl font-bold">
               {statistics.active}
             </p>
           </div>
-          <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700">
-            <p className="dark:text-dark-muted text-sm text-gray-600">
+          <div className="bg-rule/25 dark:bg-night-raised p-4">
+            <p className="text-dark dark:text-night-muted text-sm">
               Bestätigung ausstehend
             </p>
-            <p className="dark:text-dark-text text-2xl font-bold text-yellow-600">
+            <p className="text-primary-ink dark:text-primary text-2xl font-bold">
               {statistics.pending}
             </p>
           </div>
-          <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700">
-            <p className="dark:text-dark-muted text-sm text-gray-600">
-              Inaktiv
-            </p>
-            <p className="dark:text-dark-text text-2xl font-bold text-gray-600">
+          <div className="bg-rule/25 dark:bg-night-raised p-4">
+            <p className="text-dark dark:text-night-muted text-sm">Inaktiv</p>
+            <p className="text-ink dark:text-night-text text-2xl font-bold">
               {statistics.inactive}
             </p>
           </div>
         </div>
       )}
 
-      {/* Filters */}
       <DataTable
         data={subscribersData?.subscribers}
         columns={columns}
@@ -297,7 +291,7 @@ export default function DashboardNewsletterSubscribersPage() {
         searchPlaceholder="Suche nach E-Mail oder Name…"
         pageSizeOptions={[50, 100, 250]}
         emptyState={
-          <span className="dark:text-dark-muted text-gray-600">
+          <span className="text-dark dark:text-night-muted">
             Keine Abonnenten gefunden.
           </span>
         }

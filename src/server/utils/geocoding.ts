@@ -1,7 +1,4 @@
-/**
- * Geocoding utility using OpenStreetMap Nominatim API
- * Free, no API key required, but please respect rate limits (1 request per second)
- */
+/** OpenStreetMap Nominatim: no API key, but max. 1 request per second. */
 
 import { env } from "@/env";
 
@@ -14,11 +11,7 @@ interface GeocodeResult {
   longitude: number | null;
 }
 
-/**
- * Geocode an address to get latitude and longitude coordinates
- * @param address - Address object with street, zipCode, and city
- * @returns Promise with latitude and longitude, or null if geocoding fails
- */
+/** Never throws; both coordinates are null when geocoding fails. */
 export async function geocodeAddress(address: {
   street?: string | null;
   zipCode?: string | null;
@@ -38,8 +31,7 @@ export async function geocodeAddress(address: {
       queryParts.push(address.city);
     }
 
-    // Nominatim understands localised country names, so the stored value can
-    // be passed straight through; fall back to our default catchment area.
+    // Nominatim understands localised country names.
     queryParts.push(address.country?.trim() || "Germany");
 
     const query = queryParts.join(", ");
@@ -84,9 +76,6 @@ export async function geocodeAddress(address: {
   }
 }
 
-/**
- * Add a small delay to respect Nominatim rate limits (1 request per second)
- */
 export function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }

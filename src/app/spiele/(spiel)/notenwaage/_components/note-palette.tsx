@@ -15,6 +15,17 @@ type Props = {
   showDescriptions?: boolean;
 };
 
+/*
+ * Größen folgen der Fensterhöhe (siehe note-pan.tsx). Abstand zur Beschriftung = halbe
+ * Notengröße, weil das VexFlow-SVG anteilig unter sein Kästchen ragt.
+ */
+export const PALETTE_FELD =
+  "min-h-[max(64px,min(calc(12dvh_-_14px),110px))] md:min-h-[max(72px,min(calc(28.3dvh_-_112px),190px))]";
+export const PALETTE_GLYPH =
+  "h-[max(26px,min(calc(5dvh_-_14px),44px))] w-[max(26px,min(calc(5dvh_-_14px),44px))] md:h-[max(34px,min(calc(10dvh_-_28px),80px))] md:w-[max(34px,min(calc(10dvh_-_28px),80px))]";
+export const PALETTE_ABSTAND =
+  "mt-[max(13px,min(calc(2.5dvh_-_7px),22px))] md:mt-[max(17px,min(calc(5dvh_-_14px),40px))]";
+
 export function NotePalette({
   ids,
   onAdd,
@@ -67,20 +78,25 @@ export function NotePalette({
             onPointerCancel={clearPressTimer}
             onContextMenu={(e) => e.preventDefault()}
             className={cn(
-              "border-dark-border/60 dark:border-dark-border dark:bg-dark-surface/60 flex min-h-[56px] touch-manipulation flex-col items-center justify-center rounded-lg border bg-white/80 p-1.5 transition select-none motion-safe:active:scale-[0.98] md:min-h-[64px] md:p-2",
+              "border-rule dark:border-night-rule dark:bg-night-raised flex touch-manipulation flex-col items-center justify-center border p-1.5 transition-colors select-none motion-safe:active:scale-[0.98] md:p-2",
+              PALETTE_FELD,
               GAME_FOCUS_RING,
-              !disabled && "hover:border-primary/50",
+              !disabled && "hover:bg-rule/25 dark:hover:bg-night-rule",
               disabled && "opacity-60",
             )}
           >
-            <NoteGlyph id={id} className="h-7 w-7 md:h-10 md:w-10" />
+            <NoteGlyph id={id} className={PALETTE_GLYPH} />
             {showDescriptions && (
               <>
-                {/* Glyph-SVG ragt sichtbar unter seine Box (overflow visible) — Abstand statt Überlappung. */}
-                <span className="text-dark dark:text-dark-text mt-5 text-[9px] leading-tight font-bold md:mt-6 md:text-[11px]">
+                <span
+                  className={cn(
+                    "text-ink dark:text-night-text text-[9px] leading-tight font-bold md:text-[11px]",
+                    PALETTE_ABSTAND,
+                  )}
+                >
                   {def.label}
                 </span>
-                <span className="text-dark dark:text-dark-text-muted text-[9px] font-semibold md:text-[10px]">
+                <span className="text-dark dark:text-night-muted text-[9px] font-semibold md:text-[10px]">
                   {unitsToBeatLabel(def.units)}
                 </span>
               </>

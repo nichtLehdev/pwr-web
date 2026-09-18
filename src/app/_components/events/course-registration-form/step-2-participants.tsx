@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BookOpen, UserIcon, Plus, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { RouterOutputs } from "@/trpc/react";
@@ -16,15 +16,15 @@ import {
   priceOptionIdForAge,
   priceOptionAgeReferenceDate,
 } from "@/lib/course-price-option-age";
+import { formatEuro } from "@/lib/invoice-document";
+import { isPriceOptionFullFor } from "@/lib/registration-seat-shortage";
+import { Checkbox } from "@/app/_components/programmheft/field";
+import { Heading } from "@/app/_components/programmheft/section-head";
+import { Note } from "@/app/_components/programmheft/note";
 
-/** The two places the add buttons appear: above the list and after it. */
 type LibraryAnchor = "top" | "bottom";
 
-/**
- * From this many participants on, the list is long enough that the header
- * group has scrolled away by the time you finish the last one — below that,
- * both groups sit on one screen and the second just reads as a duplicate.
- */
+/** Below this, both action groups fit on one screen and the second reads as a duplicate. */
 const REPEAT_ACTIONS_FROM = 3;
 
 interface Step2ParticipantsProps {
@@ -50,7 +50,17 @@ interface Step2ParticipantsProps {
    * whose age limits they fall outside of.
    */
   staffMode?: boolean;
+  /** Sprungziel für den Fokus beim Wechsel in diesen Schritt. */
+  headingId: string;
+  /** Restplätze je Preiskategorie, um ausgebuchte zu kennzeichnen. */
+  capacityByPriceOption?: Record<string, number> | null;
 }
+
+/** Schlüssel (`data-focus-key`) des oberen „Hinzufügen“. */
+export const ADD_PARTICIPANT_FOCUS_KEY = "add-participant";
+
+/** Schlüssel (`data-focus-key`) der Karte eines Teilnehmers. */
+export const participantFocusKey = (index: number) => `participant-${index}`;
 
 export function Step2Participants({
   course,
@@ -66,14 +76,12 @@ export function Step2Participants({
   groupIdCounterRef,
   siblingDiscountError,
   staffMode = false,
+  headingId,
+  capacityByPriceOption,
 }: Step2ParticipantsProps) {
   /**
-   * Die Preiskategorie, die zu diesem Geburtsdatum passt. Bleibt genau eine
-   * übrig, wird sie gesetzt — sonst bleibt die bisherige stehen und die
-   * Prüfung sagt, dass gewählt werden muss.
-   *
-   * Nicht im Kursteam-Modus: dort ist eine Kategorie außerhalb der
-   * Altersgrenze eine Absicht und kein Versehen, das korrigiert gehört.
+   * Passt genau eine Kategorie zum Geburtsdatum, wird sie gesetzt. Nicht im Kursteam-Modus:
+   * dort ist eine Kategorie außerhalb der Altersgrenze Absicht.
    */
   const priceOptionForBirthDate = (
     birthDate: Date | string | null | undefined,
@@ -93,8 +101,32 @@ export function Step2Participants({
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   /** Set once "Fertig" is pressed on an incomplete participant. */
   const [doneAttempted, setDoneAttempted] = useState(false);
-  /** Which of the two action groups the library popup belongs to. */
+  /** Zählt jedes gescheiterte „Fertig“ — der Fokus springt dann ins Feld. */
+  const [doneFailures, setDoneFailures] = useState(0);
   const [libraryAnchor, setLibraryAnchor] = useState<LibraryAnchor>("top");
+
+  const rootRef = useRef<HTMLDivElement>(null);
+  /**
+   * Fokusziel nach dem Schließen: der auslösende Knopf, und ist der verschwunden
+   * (das „Hinzufügen“ der leeren Liste), der gleichwertige über der Liste.
+   */
+  const sheetReturn = useRef<{
+    element: HTMLElement | null;
+    key: string;
+  } | null>(null);
+  /** Fokus, der nach dem nächsten Rendern gesetzt wird. */
+  const pendingFocus = useRef<(() => void) | null>(null);
+
+  const focusByKey = (key: string) =>
+    rootRef.current
+      ?.querySelector<HTMLElement>(`[data-focus-key="${key}"]`)
+      ?.focus();
+
+  useEffect(() => {
+    const run = pendingFocus.current;
+    pendingFocus.current = null;
+    run?.();
+  });
 
   const toggleParticipantLibrary = (anchor: LibraryAnchor) => {
     if (showParticipantLibrary && libraryAnchor === anchor) {
@@ -105,22 +137,62 @@ export function Step2Participants({
     setShowParticipantLibrary(true);
   };
 
-  const openParticipant = (index: number | null) => {
+  const openParticipant = (
+    index: number | null,
+    returnKey: string = index === null ? "" : participantFocusKey(index),
+  ) => {
+    if (index !== null) {
+      // Safari fokussiert angeklickte Knöpfe nicht, sondern den fokussierbaren Vorfahren
+      // (`main`) — nur ein Element aus dieser Liste taugt als Rückweg.
+      const active = document.activeElement;
+      sheetReturn.current = {
+        element:
+          active instanceof HTMLElement && rootRef.current?.contains(active)
+            ? active
+            : null,
+        key: returnKey,
+      };
+    } else if (editingIndex !== null && sheetReturn.current) {
+      const { element, key } = sheetReturn.current;
+      sheetReturn.current = null;
+      pendingFocus.current = () => {
+        if (element?.isConnected) element.focus();
+        else focusByKey(key);
+      };
+    }
     setEditingIndex(index);
     setDoneAttempted(false);
   };
 
   /**
-   * "Fertig" only closes a participant that is complete. On an incomplete one
-   * it reveals what is missing and stays put — the X, the backdrop and Escape
-   * still leave, so nobody is stuck with a half-filled form.
+   * "Fertig" only closes a complete participant; otherwise it shows what is missing.
+   * X, backdrop and Escape still leave.
    */
   const finishEditing = () => {
     if (editingIndex !== null && validationErrors[editingIndex]) {
       setDoneAttempted(true);
+      setDoneFailures((n) => n + 1);
       return;
     }
     openParticipant(null);
+  };
+
+  /**
+   * Vorbelegung: die erste noch freie Kategorie, damit die Anmeldung nicht unbemerkt
+   * auf der Warteliste landet. Sind alle voll, die erste.
+   */
+  const defaultPriceOptionId = (): string | undefined => {
+    const taken = registrationData.participants.map((p) => p.priceOptionId);
+    const free = course.priceOptions.find(
+      (option) =>
+        !isPriceOptionFullFor({
+          priceOptionId: option.id,
+          otherParticipantPriceOptionIds: taken,
+          priceOptions: course.priceOptions,
+          capacityByPriceOption,
+        }),
+    );
+    return (free ?? course.priceOptions[0])?.id;
   };
 
   const addParticipant = () => {
@@ -128,7 +200,7 @@ export function Step2Participants({
       console.error("Course price options are not defined.");
       return;
     }
-    const firstPriceOption = course.priceOptions[0];
+    const firstPriceOption = defaultPriceOptionId();
     if (!firstPriceOption) {
       console.error("No price options available");
       return;
@@ -140,12 +212,11 @@ export function Step2Participants({
         {
           firstName: "",
           lastName: "",
-          // Empty like the other fields — pre-filling "today" instantly
-          // failed validation before the user typed anything.
+          // Empty: pre-filling "today" would fail validation immediately.
           birthDate: "" as any,
           city: "",
           instrument: "",
-          priceOptionId: firstPriceOption.id,
+          priceOptionId: firstPriceOption,
           customFields: {},
           siblingGroupId: undefined,
         },
@@ -153,7 +224,10 @@ export function Step2Participants({
     });
     // A blank card has nothing to read, so go straight to the fields. The
     // prefilled routes below don't, since their card already says who it is.
-    openParticipant(registrationData.participants.length);
+    openParticipant(
+      registrationData.participants.length,
+      ADD_PARTICIPANT_FOCUS_KEY,
+    );
   };
 
   const addMyselfAsParticipant = () => {
@@ -161,7 +235,7 @@ export function Step2Participants({
       console.error("Course price options are not defined.");
       return;
     }
-    const firstPriceOption = course.priceOptions[0];
+    const firstPriceOption = defaultPriceOptionId();
     if (!firstPriceOption) {
       console.error("No price options available");
       return;
@@ -180,7 +254,7 @@ export function Step2Participants({
           instrument: "",
           priceOptionId: priceOptionForBirthDate(
             currentUser?.birthDate,
-            firstPriceOption.id,
+            firstPriceOption,
           ),
           customFields: {},
           siblingGroupId: undefined,
@@ -196,7 +270,7 @@ export function Step2Participants({
       console.error("Course price options are not defined.");
       return;
     }
-    const firstPriceOption = course.priceOptions[0];
+    const firstPriceOption = defaultPriceOptionId();
     if (!firstPriceOption) {
       console.error("No price options available");
       return;
@@ -213,7 +287,7 @@ export function Step2Participants({
           instrument: saved.instrument || "",
           priceOptionId: priceOptionForBirthDate(
             saved.birthDate,
-            firstPriceOption.id,
+            firstPriceOption,
           ),
           customFields: (saved.customFields as Record<string, any>) || {},
           siblingGroupId: undefined,
@@ -249,6 +323,15 @@ export function Step2Participants({
     // Removing shifts every later index, which would leave the sheet pointing
     // at the wrong participant.
     openParticipant(null);
+    const remaining = registrationData.participants.length - 1;
+    // Der Entfernen-Knopf verschwindet mit der Karte; der Fokus geht zur
+    // Karte, die nachrückt, sonst zur vorigen, sonst zu „Hinzufügen“.
+    pendingFocus.current = () =>
+      focusByKey(
+        remaining > 0
+          ? participantFocusKey(Math.min(index, remaining - 1))
+          : ADD_PARTICIPANT_FOCUS_KEY,
+      );
     setRegistrationData({
       ...registrationData,
       participants: registrationData.participants.filter((_, i) => i !== index),
@@ -329,23 +412,16 @@ export function Step2Participants({
       ? registrationData.participants[editingIndex]
       : undefined;
 
-  // Three labelled buttons need ~376px and a phone card offers ~300, so they
-  // cannot share one row without labels too terse to read. Rather than let
-  // them wrap into a ragged second line, they are laid out as a deliberate
-  // 2-up grid with the primary spanning both — and collapse to a single row
-  // from sm: up, where the width is there.
+  // Three labelled buttons don't fit one row on phones: 2-up grid with the
+  // primary spanning both, a single row from sm: up.
   const ADD_BUTTON_GROUP =
     "grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center";
   const ADD_BUTTON_BASE =
-    "inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-lg px-3 text-xs font-semibold transition-colors sm:w-auto sm:gap-2 sm:px-4 sm:text-sm";
+    "semi-condensed inline-flex h-11 w-full items-center justify-center gap-1.5 px-3 text-xs font-semibold transition-colors sm:w-auto sm:gap-2 sm:px-4 sm:text-sm";
   const ADD_BUTTON_SECONDARY =
-    "text-dark dark:text-dark-text dark:border-dark-border dark:hover:bg-dark-background border border-gray-300 bg-white hover:bg-gray-50";
+    "border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night border-2";
 
-  /**
-   * Rendered above and below the list, so adding a tenth person does not mean
-   * scrolling back to the header. `anchor` decides which of the two triggers
-   * the library popup hangs off — they share one open flag.
-   */
+  /** Rendered above and below the list; `anchor` picks which trigger the shared library popup hangs off. */
   const renderActionButtons = (anchor: LibraryAnchor) => (
     <>
       {currentUser && (
@@ -379,31 +455,65 @@ export function Step2Participants({
       <button
         type="button"
         onClick={addParticipant}
+        data-focus-key={
+          anchor === "top" ? ADD_PARTICIPANT_FOCUS_KEY : undefined
+        }
         className={cn(
           ADD_BUTTON_BASE,
-          "bg-primary hover:bg-primary-dark col-span-2 text-white",
+          "bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-primary dark:text-ink dark:hover:bg-paper col-span-2",
         )}
       >
-        <Plus className="h-4 w-4 shrink-0" />
+        <Plus className="h-4 w-4 shrink-0" aria-hidden />
         Hinzufügen
       </button>
     </>
   );
 
+  // Ohne Preiskategorie kann sich niemand anmelden: der Server verlangt je Person eine `priceOptionId`.
+  if (!course.priceOptions || course.priceOptions.length === 0) {
+    return (
+      <Note tone="error" title="Anmeldung noch nicht möglich" titleAs="h3">
+        <p>
+          Für diesen Kurs sind noch keine Preiskategorien hinterlegt, und ohne
+          sie lässt sich niemand anmelden. Bitte wenden Sie sich an das
+          Posaunenwerk.
+        </p>
+      </Note>
+    );
+  }
+
+  /**
+   * Ausgebucht für die Person im Fenster; die übrigen Personen dieser Anmeldung zählen mit.
+   * Gesperrt nur ohne Warteliste, wo der Server ablehnen würde.
+   */
+  const priceOptionFull = (optionId: string) =>
+    editingIndex !== null &&
+    isPriceOptionFullFor({
+      priceOptionId: optionId,
+      otherParticipantPriceOptionIds: registrationData.participants
+        .filter((_, i) => i !== editingIndex)
+        .map((p) => p.priceOptionId),
+      priceOptions: course.priceOptions,
+      capacityByPriceOption,
+    });
+
   return (
-    <div className="flex flex-col">
-      {/* Actions live in the header, like the edit page. They used to sit in a
-          bordered "Weitere Teilnehmer" panel wedged between the description
-          and the list — a box and a heading around what is really one button. */}
+    <div ref={rootRef} className="flex flex-col">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="text-dark dark:text-dark-text text-lg font-bold sm:text-xl">
+          <Heading
+            as="h3"
+            size="list"
+            id={headingId}
+            tabIndex={-1}
+            className="text-lg sm:text-[1.375rem]"
+          >
             Teilnehmer
             {hasParticipants
               ? ` (${registrationData.participants.length})`
               : ""}
-          </h3>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+          </Heading>
+          <p className="text-dark dark:text-night-muted mt-1 text-sm">
             {hasParticipants
               ? "Zum Bearbeiten auf eine Person tippen."
               : "Fügen Sie alle Personen hinzu, die Sie für diesen Lehrgang anmelden möchten."}
@@ -420,12 +530,15 @@ export function Step2Participants({
 
       <div className="flex-1">
         {!hasParticipants ? (
-          <div className="dark:border-dark-border dark:bg-dark-background-secondary bg-background-secondary rounded-lg border border-dashed border-gray-300 px-4 py-8 text-center sm:py-9">
-            <Users className="text-primary/60 dark:text-primary/40 mx-auto mb-2 h-9 w-9" />
-            <p className="text-dark dark:text-dark-text text-sm font-medium">
+          <div className="border-rule dark:border-night-rule border border-dashed px-4 py-8 text-center sm:py-9">
+            <Users
+              className="text-dark dark:text-night-muted mx-auto mb-2 h-9 w-9"
+              aria-hidden
+            />
+            <p className="text-ink dark:text-night-text text-sm font-medium">
               Noch keine Teilnehmer
             </p>
-            <p className="mx-auto mt-1 mb-5 max-w-sm text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-dark dark:text-night-muted mx-auto mt-1 mb-5 max-w-sm text-xs">
               {currentUser
                 ? "Übernehmen Sie Daten aus Ihrer Bibliothek, tragen Sie sich selbst ein oder legen Sie eine neue Person an."
                 : "Legen Sie eine neue Teilnehmerperson an."}
@@ -446,6 +559,7 @@ export function Step2Participants({
                 siblingGroupSize={siblingGroupSize(index)}
                 onEdit={() => openParticipant(index)}
                 onRemove={() => removeParticipant(index)}
+                focusKey={participantFocusKey(index)}
                 onSaveToLibrary={
                   currentUser ? () => saveParticipant(index) : undefined
                 }
@@ -453,15 +567,12 @@ export function Step2Participants({
               />
             ))}
 
-            {/* Same group again once the list is long, so the tenth
-                participant can be followed by an eleventh without scrolling
-                back up. A dashed row rather than a second solid toolbar: it
-                reads as the end of the list. */}
+            {/* Same group again once the list is long; dashed so it reads as the end of the list. */}
             {registrationData.participants.length >= REPEAT_ACTIONS_FROM ? (
               <div
                 className={cn(
                   ADD_BUTTON_GROUP,
-                  "dark:border-dark-border rounded-lg border border-dashed border-gray-300 p-3 sm:justify-center",
+                  "border-rule dark:border-night-rule border border-dashed p-3 sm:justify-center",
                 )}
               >
                 {renderActionButtons("bottom")}
@@ -471,51 +582,44 @@ export function Step2Participants({
         )}
       </div>
 
-      {/* Sibling Discount Option */}
       {course.allowSiblingDiscount &&
         registrationData.participants.length > 1 &&
         hasSiblingGroups && (
-          <div className="mt-6 rounded-lg border-2 border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
-            <label className="flex cursor-pointer items-start gap-3">
-              <input
-                type="checkbox"
-                checked={registrationData.siblingDiscountApplied}
-                onChange={(e) =>
-                  setRegistrationData({
-                    ...registrationData,
-                    siblingDiscountApplied: e.target.checked,
-                  })
-                }
-                className="mt-1 h-5 w-5 rounded border-gray-300 text-green-600 focus:ring-2 focus:ring-green-500"
-              />
-              <div className="flex-1">
-                <div className="font-semibold text-gray-900 dark:text-gray-100">
-                  Geschwisterkindrabatt beantragen
-                </div>
-                <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
-                  Sie erhalten 20% Rabatt auf die Teilnahmegebühr jedes weiteren
-                  Geschwisterkindes ab dem zweiten Kind. Der Rabatt muss noch
-                  bestätigt werden.
-                </p>
-                {registrationData.siblingDiscountApplied &&
-                  calculateDiscountAmount(registrationData, course) > 0 && (
-                    <div className="mt-2 text-sm font-semibold text-green-700 dark:text-green-400">
-                      Ersparnis:{" "}
-                      {calculateDiscountAmount(
-                        registrationData,
-                        course,
-                      ).toFixed(2)}{" "}
-                      €
-                    </div>
-                  )}
-                {siblingDiscountError && (
-                  <div className="mt-2 text-sm text-red-600 dark:text-red-400">
-                    {siblingDiscountError}
-                  </div>
+          <Note tone="important" className="mt-6">
+            <Checkbox
+              id="sibling-discount-applied"
+              checked={!!registrationData.siblingDiscountApplied}
+              onChange={(e) =>
+                setRegistrationData({
+                  ...registrationData,
+                  siblingDiscountApplied: e.target.checked,
+                })
+              }
+            >
+              <span className="font-semibold">
+                Geschwisterkindrabatt beantragen
+              </span>
+              <span className="mt-1 block text-sm">
+                Sie erhalten 20% Rabatt auf die Teilnahmegebühr jedes weiteren
+                Geschwisterkindes ab dem zweiten Kind. Der Rabatt muss noch
+                bestätigt werden.
+              </span>
+              {registrationData.siblingDiscountApplied &&
+                calculateDiscountAmount(registrationData, course) > 0 && (
+                  <span className="mt-2 block text-sm font-semibold">
+                    Ersparnis:{" "}
+                    {formatEuro(
+                      calculateDiscountAmount(registrationData, course),
+                    )}
+                  </span>
                 )}
-              </div>
-            </label>
-          </div>
+              {siblingDiscountError && (
+                <span className="mt-2 block text-sm">
+                  {siblingDiscountError}
+                </span>
+              )}
+            </Checkbox>
+          </Note>
         )}
 
       {editingIndex !== null && editingParticipant ? (
@@ -534,9 +638,16 @@ export function Step2Participants({
             priceOptions={course.priceOptions}
             customFields={course.customFields ?? []}
             priceOptionField={{
+              isOptionDisabled: (optionId) =>
+                !staffMode &&
+                !course.allowWaitingList &&
+                priceOptionFull(optionId),
+              getOptionSuffix: (optionId) =>
+                priceOptionFull(optionId) ? " (ausgebucht)" : "",
               ageReferenceDate: course.startDate,
               allowAgeMismatch: staffMode,
             }}
+            focusProblemSignal={doneFailures}
             participant={editingParticipant}
             onChange={(field, value) =>
               updateParticipant(editingIndex, field, value)

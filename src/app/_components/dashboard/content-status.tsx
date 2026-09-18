@@ -1,10 +1,7 @@
 import type { ContentStatus } from "~/generated/prisma/enums";
+import { Tag, type TagTone } from "@/app/_components/programmheft/tag";
 
-/**
- * Ein Freigabestatus, eine Beschriftung, eine Farbe — Karten, Tabellen und
- * Filterlisten der Übersichten greifen auf dieselbe Tabelle zu, damit derselbe
- * Status nicht je nach Ansicht anders heißt.
- */
+/** Gemeinsam für Karten, Tabellen und Filter, damit ein Status überall gleich heißt. */
 export const CONTENT_STATUS_LABELS: Record<ContentStatus, string> = {
   DRAFT: "Entwurf",
   PENDING: "Zur Prüfung",
@@ -13,14 +10,16 @@ export const CONTENT_STATUS_LABELS: Record<ContentStatus, string> = {
   ARCHIVED: "Archiviert",
 };
 
-export const CONTENT_STATUS_BADGE_CLASSES: Record<ContentStatus, string> = {
-  DRAFT: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
-  PENDING:
-    "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
-  APPROVED:
-    "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
-  REJECTED: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
-  ARCHIVED: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
+/**
+ * Der Ton trägt die Dringlichkeit: gefüllt heißt „das musst du sehen", umrandet (`muted`)
+ * nur „das ist der Stand" — Entwurf und Archiviert verlangen nichts.
+ */
+const CONTENT_STATUS_TONE: Record<ContentStatus, TagTone> = {
+  DRAFT: "muted",
+  PENDING: "orange",
+  APPROVED: "ink",
+  REJECTED: "cancelled",
+  ARCHIVED: "muted",
 };
 
 /** Set-Filter-Optionen für eine Statusspalte. */
@@ -36,10 +35,8 @@ export function ContentStatusBadge({
   className?: string;
 }) {
   return (
-    <span
-      className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap ${CONTENT_STATUS_BADGE_CLASSES[status]} ${className ?? ""}`}
-    >
+    <Tag tone={CONTENT_STATUS_TONE[status]} className={className}>
       {CONTENT_STATUS_LABELS[status]}
-    </span>
+    </Tag>
   );
 }

@@ -18,6 +18,7 @@ import {
   type DashboardSectionNavItem,
 } from "@/app/_components/dashboard";
 import { getErrorMessage } from "@/lib/utils";
+import { Button, Input, Label, Textarea } from "@/app/_components/ui";
 
 const LOCATION_EDIT_NAV_ITEMS: DashboardSectionNavItem[] = [
   { href: "#location-edit-grunddaten", label: "Grunddaten" },
@@ -131,8 +132,8 @@ export default function EditLocationPage() {
 
   if (sessionLoading || profileLoading || locationLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
@@ -143,14 +144,14 @@ export default function EditLocationPage() {
 
   if (!location) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <h1 className="dark:text-dark-text text-xl font-semibold text-gray-900">
+          <h1 className="text-ink dark:text-night-text text-xl font-semibold">
             Standort nicht gefunden
           </h1>
           <Link
             href="/dashboard/locations"
-            className="text-primary mt-4 inline-block hover:underline"
+            className="link-ink mt-4 inline-block"
           >
             Zurück zur Übersicht
           </Link>
@@ -174,14 +175,12 @@ export default function EditLocationPage() {
       ]}
       maxWidth="7xl"
     >
-      {/* Error */}
       {error && (
-        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
+        <div className="mb-6 border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
           <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
         </div>
       )}
 
-      {/* Form */}
       <form onSubmit={handleSubmit}>
         <DashboardSectionedFormLayout
           navItems={LOCATION_EDIT_NAV_ITEMS}
@@ -198,8 +197,6 @@ export default function EditLocationPage() {
             />
             <DashboardFormBlock title="Adresse">
               <div className="space-y-6">
-                {/* Address search — same component as the new-location form,
-                    here it overwrites the fields of an existing standort. */}
                 <AddressAutocomplete
                   hint="Vorschlag auswählen, um die Felder unten zu überschreiben"
                   onSelect={(suggestion) => {
@@ -213,99 +210,75 @@ export default function EditLocationPage() {
                   }}
                 />
 
-                {/* Name */}
                 <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    Name
-                  </label>
-                  <input
+                  <Label>Name</Label>
+                  <Input
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     maxLength={200}
-                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
                     placeholder="z.B. Gemeindehaus Köln-Deutz"
                   />
-                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                  <p className="text-dark dark:text-night-muted mt-1 text-xs">
                     Optional: Name des Standorts
                   </p>
                 </div>
 
-                {/* City */}
                 <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    Stadt
-                  </label>
-                  <input
+                  <Label>Stadt</Label>
+                  <Input
                     type="text"
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
                     maxLength={100}
-                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
                     placeholder="z.B. Köln"
                   />
                 </div>
 
-                {/* Country */}
                 <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    Land
-                  </label>
-                  <input
+                  <Label>Land</Label>
+                  <Input
                     type="text"
                     value={country}
                     onChange={(e) => setCountry(e.target.value)}
                     maxLength={100}
                     autoComplete="country-name"
-                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
                     placeholder={DEFAULT_LOCATION_COUNTRY}
                   />
                 </div>
 
-                {/* Street */}
                 <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    Straße
-                  </label>
-                  <input
+                  <Label>Straße</Label>
+                  <Input
                     type="text"
                     value={street}
                     onChange={(e) => setStreet(e.target.value)}
                     maxLength={200}
-                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
                     placeholder="z.B. Musterstraße 123"
                   />
                 </div>
 
-                {/* Zip Code */}
                 <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    Postleitzahl
-                  </label>
-                  <input
+                  <Label>Postleitzahl</Label>
+                  <Input
                     type="text"
                     value={zipCode}
                     onChange={(e) => setZipCode(e.target.value)}
                     maxLength={20}
-                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
                     placeholder="z.B. 50679"
                   />
                 </div>
 
-                {/* Additional Info */}
                 <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    Zusätzliche Informationen
-                  </label>
-                  <textarea
+                  <Label>Zusätzliche Informationen</Label>
+                  <Textarea
                     value={additionalInfo}
                     onChange={(e) => setAdditionalInfo(e.target.value)}
                     rows={3}
                     maxLength={500}
-                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
                     placeholder="z.B. Eingang über den Hinterhof"
                   />
-                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                  <p className="text-dark dark:text-night-muted mt-1 text-xs">
                     Optional: Weitere Hinweise zum Standort
                   </p>
                 </div>
@@ -315,7 +288,7 @@ export default function EditLocationPage() {
 
           <div
             id="location-edit-koordinaten"
-            className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-14"
+            className="border-rule dark:border-night-rule dashboard-form-scroll-anchor border-t pt-14"
           >
             <DashboardFormZoneHeader
               step={2}
@@ -324,38 +297,30 @@ export default function EditLocationPage() {
             />
             <DashboardFormBlock title="Kartenposition">
               <div className="space-y-6">
-                {/* Latitude */}
                 <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    Breitengrad (Latitude)
-                  </label>
-                  <input
+                  <Label>Breitengrad (Latitude)</Label>
+                  <Input
                     type="number"
                     step="any"
                     value={latitude}
                     onChange={(e) => setLatitude(e.target.value)}
-                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
                     placeholder="z.B. 50.9375"
                   />
-                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                  <p className="text-dark dark:text-night-muted mt-1 text-xs">
                     Optional: Für die Anzeige auf einer Karte
                   </p>
                 </div>
 
-                {/* Longitude */}
                 <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    Längengrad (Longitude)
-                  </label>
-                  <input
+                  <Label>Längengrad (Longitude)</Label>
+                  <Input
                     type="number"
                     step="any"
                     value={longitude}
                     onChange={(e) => setLongitude(e.target.value)}
-                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
                     placeholder="z.B. 6.9603"
                   />
-                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                  <p className="text-dark dark:text-night-muted mt-1 text-xs">
                     Optional: Für die Anzeige auf einer Karte
                   </p>
                 </div>
@@ -363,20 +328,17 @@ export default function EditLocationPage() {
             </DashboardFormBlock>
           </div>
 
-          {/* Actions */}
-          <div className="dark:border-dark-border mt-16 flex flex-col gap-3 border-t border-gray-200/80 pt-10 sm:flex-row sm:justify-end">
-            <button
+          <div className="border-rule dark:border-night-rule mt-16 flex flex-col gap-3 border-t pt-10 sm:flex-row sm:justify-end">
+            <Button
               type="submit"
               disabled={isSubmitting || updateMutation.isPending}
-              className="bg-primary hover:bg-primary/90 rounded-lg px-6 py-2.5 font-medium text-white transition-colors disabled:opacity-50"
+              isLoading={isSubmitting || updateMutation.isPending}
             >
-              {isSubmitting || updateMutation.isPending
-                ? "Wird gespeichert..."
-                : "Änderungen speichern"}
-            </button>
+              Änderungen speichern
+            </Button>
             <Link
               href={`/dashboard/locations/${locationId}`}
-              className="dark:border-dark-border dark:text-dark-text inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-2.5 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="border-ink dark:border-night-text text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised inline-flex min-h-11 items-center justify-center gap-2 border px-4 py-2.5 transition-colors"
             >
               Abbrechen
             </Link>

@@ -7,6 +7,10 @@ import {
   MEDIA_UPLOAD_MAX_BYTES,
   MEDIA_UPLOAD_MIME_TYPES,
 } from "@/lib/media-upload";
+import {
+  DOWNLOAD_UPLOAD_MAX_BYTES,
+  DOWNLOAD_UPLOAD_MIME_TYPES,
+} from "@/lib/download-file-types";
 
 import { createLogger } from "@/server/utils/logger";
 
@@ -26,19 +30,7 @@ function isAllowedFolder(folder: string): folder is UploadFolder {
 
 const validTypesByFolder: Record<string, string[]> = {
   profiles: ["image/jpeg", "image/jpg", "image/png", "image/webp"],
-  downloads: [
-    "application/pdf",
-    "application/msword",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "application/vnd.ms-excel",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    "application/zip",
-    "application/x-zip-compressed",
-    "audio/mpeg",
-    "audio/mp3",
-    "audio/wav",
-    "audio/ogg",
-  ],
+  downloads: [...DOWNLOAD_UPLOAD_MIME_TYPES],
   media: [...MEDIA_UPLOAD_MIME_TYPES],
   // Attachments for course mails. No audio: these travel inside the message,
   // where a 30 MB recording would just bounce off the recipients' mailboxes.
@@ -57,14 +49,18 @@ const validTypesByFolder: Record<string, string[]> = {
 
 const maxSizeByFolder: Record<string, number> = {
   profiles: 5 * 1024 * 1024,
-  downloads: 50 * 1024 * 1024,
+  downloads: DOWNLOAD_UPLOAD_MAX_BYTES,
   media: MEDIA_UPLOAD_MAX_BYTES,
   // Per file; the send mutation additionally caps the combined size, since
   // mail servers reject the whole message once it grows past ~25 MB.
   "course-mail": 10 * 1024 * 1024,
 };
 
-const magicBytes: Record<string, number[][]> = {
+// `null` = beliebiges Byte. WebP und WAV sind beide RIFF und unterscheiden sich
+// erst ab Byte 8; mit nur „RIFF“ käme jede WAV als image/webp durch.
+const RIFF_ANY_SIZE = [0x52, 0x49, 0x46, 0x46, null, null, null, null];
+
+const magicBytes: Record<string, (number | null)[][]> = {
   "image/jpeg": [[0xff, 0xd8, 0xff]],
   "image/jpg": [[0xff, 0xd8, 0xff]],
   "image/png": [[0x89, 0x50, 0x4e, 0x47]],
@@ -72,7 +68,7 @@ const magicBytes: Record<string, number[][]> = {
     [0x47, 0x49, 0x46, 0x38, 0x37, 0x61],
     [0x47, 0x49, 0x46, 0x38, 0x39, 0x61],
   ],
-  "image/webp": [[0x52, 0x49, 0x46, 0x46]],
+  "image/webp": [[...RIFF_ANY_SIZE, 0x57, 0x45, 0x42, 0x50]],
   "application/pdf": [[0x25, 0x50, 0x44, 0x46]],
   // Legacy Office formats are OLE compound files
   "application/msword": [[0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]],
@@ -106,7 +102,7 @@ const magicBytes: Record<string, number[][]> = {
     [0xff, 0xf2],
     [0x49, 0x44, 0x33],
   ],
-  "audio/wav": [[0x52, 0x49, 0x46, 0x46]],
+  "audio/wav": [[...RIFF_ANY_SIZE, 0x57, 0x41, 0x56, 0x45]],
   "audio/ogg": [[0x4f, 0x67, 0x67, 0x53]],
 };
 
@@ -115,13 +111,14 @@ function validateMagicBytes(buffer: Buffer, claimedType: string): boolean {
   // Fail closed: a type we can't verify is a type we don't accept
   if (!signatures) return false;
   return signatures.some((sig) =>
-    sig.every((byte, i) => buffer.length > i && buffer[i] === byte),
+    sig.every(
+      (byte, i) => buffer.length > i && (byte === null || buffer[i] === byte),
+    ),
   );
 }
 
-// The stored extension must come from the validated MIME type, never from the
-// client-supplied filename — otherwise a file validated as image/jpeg can be
-// stored (and later served) as .svg or .html.
+// Extension from the validated MIME type, never the client filename, or an
+// image/jpeg could be stored and served as .svg or .html.
 const mimeToExt: Record<string, string> = {
   "image/jpeg": "jpg",
   "image/jpg": "jpg",

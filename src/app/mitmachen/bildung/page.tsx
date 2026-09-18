@@ -1,13 +1,17 @@
 import PublicPage from "@/app/_components/general/public-page";
+import { ButtonLink } from "@/app/_components/programmheft/button-link";
+import { Note } from "@/app/_components/programmheft/note";
 import {
-  BookOpenIcon,
-  CalendarIcon,
-  DownloadIcon,
-  MusicIcon,
-} from "lucide-react";
-import { Globe2Icon, GiftIcon, MapPinIcon, MailIcon } from "lucide-react";
-import Link from "next/link";
-import { StarIcon } from "lucide-react";
+  PageSection,
+  Split,
+} from "@/app/_components/programmheft/page-section";
+import {
+  Heading,
+  SectionHead,
+} from "@/app/_components/programmheft/section-head";
+import { PointList } from "@/app/_components/programmheft/point-list";
+import { WayList, WayRow } from "@/app/_components/programmheft/way-list";
+import { ClosingCall } from "@/app/_components/programmheft/closing-call";
 import { buildPageMetadata } from "@/lib/seo";
 
 export const metadata = buildPageMetadata({
@@ -17,61 +21,49 @@ export const metadata = buildPageMetadata({
   path: "/mitmachen/bildung",
 });
 
-export default function BildungPage() {
-  const courseCategories = [
-    {
-      id: "blaeser",
-      title: "Bläserkurse",
-      description:
-        "Von Anfänger bis Fortgeschrittene, von Jung bis Alt – Lehrgänge für alle Leistungsstufen",
-      icon: <MusicIcon className="h-6 w-6" />,
-      color: "bg-district-2",
-    },
-    {
-      id: "chorleitung",
-      title: "Chorleitung",
-      description: "Ausbildung für Chorleiter und angehende Dirigenten",
-      icon: <MusicIcon className="h-6 w-6" />,
-      color: "bg-district-5",
-    },
-    {
-      id: "workshops",
-      title: "Workshops",
-      description:
-        "Spezialthemen wie Improvisation, Arrangement, Registerarbeit",
-      icon: <MusicIcon className="h-6 w-6" />,
-      color: "bg-district-6",
-    },
-    {
-      id: "komponisten",
-      title: "Komponistenportraits",
-      description:
-        "Musikalische Reisen durch Leben und Werk großer Komponisten",
-      icon: <BookOpenIcon className="h-6 w-6" />,
-      color: "bg-district-3",
-    },
-    {
-      id: "studienfahrten",
-      title: "Studienfahrten",
-      description:
-        "Musikalische Bildungsreisen zu besonderen Orten und Festivals",
-      icon: <MapPinIcon className="h-6 w-6" />,
-      color: "bg-primary",
-    },
-    {
-      id: "freizeiten",
-      title: "Bläserfreizeiten",
-      description:
-        "Gemeinsames Musizieren, Lernen und Erleben für alle Altersgruppen",
-      icon: <Globe2Icon className="h-6 w-6" />,
-      color: "bg-district-9",
-    },
-  ];
+/** Fließtext der Seite: Tinte, ruhige Zeilenlänge (65ch). */
+const PROSE =
+  "text-ink dark:text-night-text max-w-[65ch] space-y-4 text-lg leading-relaxed";
 
+const BILDUNGSANGEBOTE = [
+  {
+    title: "Bläserkurse",
+    text: "Von Anfänger bis Fortgeschrittene, von Jung bis Alt – Lehrgänge für alle Leistungsstufen.",
+  },
+  {
+    title: "Chorleitung",
+    text: "Ausbildung für Chorleiter und angehende Dirigenten.",
+  },
+  {
+    title: "Workshops",
+    text: "Spezialthemen wie Improvisation, Arrangement, Registerarbeit.",
+  },
+  {
+    title: "Komponistenportraits",
+    text: "Musikalische Reisen durch Leben und Werk großer Komponisten.",
+  },
+  {
+    title: "Studienfahrten",
+    text: "Musikalische Bildungsreisen zu besonderen Orten und Festivals.",
+  },
+  {
+    title: "Bläserfreizeiten",
+    text: "Gemeinsames Musizieren, Lernen und Erleben für alle Altersgruppen.",
+  },
+];
+
+const ARBEITSHILFE_THEMEN = [
+  { title: "Wie generiere ich neue BläserInnen?" },
+  { title: "Beispielhafter Ablauf einer ersten Kontaktstunde" },
+  { title: "Verschiedene Kooperationsmodelle zur Ausbildung" },
+  { title: "Wie integriere ich die jungen Menschen in den Posaunenchor?" },
+];
+
+/** Durchgehend mit „du“ (wie auf /mitmachen). */
+export default function BildungPage() {
   return (
     <PublicPage
       title="Aus- und Weiterbildung"
-      color="district-2"
       breadcrumbs={[
         { label: "Start", href: "/" },
         { label: "Mitmachen", href: "/mitmachen" },
@@ -87,266 +79,177 @@ export default function BildungPage() {
         </p>
       }
     >
-      {/* Hinweis: Offen für alle */}
-      <section className="bg-primary/10 dark:bg-dark-background-secondary py-8">
-        <div className="container">
-          <div className="mx-auto max-w-4xl text-center">
-            <p className="text-lg text-gray-700 dark:text-gray-300">
-              <strong>Wichtig:</strong> Unser Angebot richtet sich nicht
-              ausschließlich an Mitglieder des Posaunenwerks, sondern steht{" "}
-              <strong>allen Interessierten offen</strong>!
+      {/* Hinweis mit Rahmen statt oranger Füllung: Die Seite trägt schon zwei Farbflächen. */}
+      <PageSection labelledBy="angebote-heading">
+        <Note tone="info" title="Wichtig" titleAs="h2" className="mb-14">
+          <p>
+            Unser Angebot richtet sich nicht ausschließlich an Mitglieder des
+            Posaunenwerks, sondern steht allen Interessierten offen!
+          </p>
+        </Note>
+
+        <Split
+          head={
+            <SectionHead
+              id="angebote-heading"
+              title={<>Unsere Bildungs&shy;angebote</>}
+              intro="Von Anfängerkursen bis zur Dirigenten-Ausbildung – finde das passende Angebot für dein musikalisches Weiterkommen."
+              className="hyphens-manual"
+            />
+          }
+          bodyClassName="mt-8"
+        >
+          <PointList items={BILDUNGSANGEBOTE} columns={2} />
+        </Split>
+      </PageSection>
+
+      <PageSection labelledBy="lehrgaenge-heading" rule>
+        <Split
+          side="right"
+          head={
+            <Heading id="lehrgaenge-heading" className="hyphens-manual">
+              Aktuelle Lehrgänge &amp; Anmeldung
+            </Heading>
+          }
+          bodyClassName="mt-8"
+        >
+          <WayList labelledBy="lehrgaenge-heading">
+            <WayRow
+              href="/termine?type=courses&view=list"
+              title="Zu den Lehrgängen"
+              description="Das aktuelle Angebot und Anmeldemöglichkeiten findest du in unserer Terminübersicht. Dort kannst du dich direkt für die Lehrgänge anmelden."
+            />
+          </WayList>
+        </Split>
+      </PageSection>
+
+      <PageSection labelledBy="stempel-heading" rule>
+        <Split
+          head={
+            <Heading id="stempel-heading" className="hyphens-manual">
+              Leistungs&shy;stufen &amp; Stempel
+            </Heading>
+          }
+          bodyClassName="mt-8"
+        >
+          <Heading as="h3" size="list" rule>
+            Aufbauende Ausbildung
+          </Heading>
+          <div className={`${PROSE} mt-5`}>
+            <p>
+              Begleitend zur Ausbildung eines (Jung-)Bläsers können aufeinander
+              aufbauende Leistungsstufen (Stempel) erworben werden. Hierzu
+              werden durch den Jungbläserausbilder, Chorleiter oder Posaunenwart
+              kleine Prüfungen abgehalten.
+            </p>
+            <p>
+              Die erreichte Leistungsstufe wird auf dem Mitgliedsausweis durch
+              einen Stempel dokumentiert.
             </p>
           </div>
-        </div>
-      </section>
+          <ButtonLink
+            href="/downloads/leistungsstempel.pdf"
+            kind="download"
+            variant="outline"
+            className="mt-6"
+          >
+            Infos zu Leistungsstempeln herunterladen
+          </ButtonLink>
+        </Split>
+      </PageSection>
 
-      {/* Kurs-Kategorien */}
-      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
-        <div className="container">
-          <div className="mx-auto max-w-6xl">
-            <h2 className="text-dark dark:text-dark-text mb-4 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
-              Unsere Bildungsangebote
-            </h2>
-            <p className="mx-auto mb-12 max-w-3xl text-center text-lg text-gray-600 dark:text-gray-400">
-              Von Anfängerkursen bis zur Dirigenten-Ausbildung – finde das
-              passende Angebot für dein musikalisches Weiterkommen.
-            </p>
+      <PageSection labelledBy="jungblaeser-heading" rule>
+        <Split
+          side="right"
+          head={
+            <Heading id="jungblaeser-heading" className="hyphens-manual">
+              Jungbläser&shy;ausbildung
+            </Heading>
+          }
+          bodyClassName="mt-8"
+        >
+          <p className="text-ink dark:text-night-text max-w-[65ch] text-lg leading-relaxed">
+            Eine vom Landesposaunenwart und den Regionalposaunenwarten
+            zusammengestellte Arbeitshilfe zum Thema Jungbläserausbildung
+            versucht Antworten auf die vielen Fragen rund um das Thema zu geben:
+          </p>
+          <PointList
+            items={ARBEITSHILFE_THEMEN}
+            columns={2}
+            titleAs="p"
+            className="mt-6"
+          />
+          <ButtonLink
+            href="/downloads/arbeitshilfe-jungblaeser.pdf"
+            kind="download"
+            variant="outline"
+            className="mt-6"
+          >
+            Arbeitshilfe Jungbläser herunterladen
+          </ButtonLink>
+        </Split>
+      </PageSection>
 
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {courseCategories.map((category) => (
-                <div
-                  key={category.id}
-                  className="dark:bg-dark-surface dark:border-dark-border rounded-lg border-t-4 bg-white p-6 shadow-lg transition-all hover:shadow-xl dark:border dark:shadow-none"
-                  style={{
-                    borderTopColor: `var(--color-${category.color.replace(
-                      "bg-",
-                      "",
-                    )})`,
-                  }}
-                >
-                  <div
-                    className={`h-12 w-12 ${category.color} mb-4 flex items-center justify-center rounded-full text-white`}
-                  >
-                    {category.icon}
-                  </div>
-                  <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
-                    {category.title}
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    {category.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Hier spricht der Förderverein: volle blaue Druckfläche. */}
+      <PageSection labelledBy="foerderverein-heading" surface="foerderverein">
+        <Split
+          side="right"
+          head={
+            <>
+              <Heading id="foerderverein-heading" className="hyphens-manual">
+                Förder&shy;möglichkeiten durch den Förderverein
+              </Heading>
+              <span aria-hidden className="bg-ink mt-6 block h-1.5 w-24" />
+            </>
+          }
+          bodyClassName="mt-6"
+        >
+          <p className="max-w-[60ch] text-xl leading-relaxed">
+            Der Förderverein unterstützt die Bildungsarbeit des Posaunenwerks!
+            Geschwisterkinder erhalten ab dem zweiten Kind 20 % Ermäßigung auf
+            die Lehrgangskosten. Zusätzlich trägt der Förderverein weitere
+            Kosten, um die Teilnehmerbeiträge für alle zu reduzieren.
+          </p>
+          <WayList className="mt-8">
+            <WayRow
+              href="/foerderverein"
+              title="Mehr zum Förderverein"
+              tone="foerderverein"
+            />
+          </WayList>
+        </Split>
+      </PageSection>
 
-      {/* Aktuelle Lehrgänge */}
-      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
-        <div className="container">
-          <div className="mx-auto max-w-4xl">
-            <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg bg-white p-8 text-center shadow-xl md:p-10 dark:border dark:shadow-none">
-              <div className="bg-district-2 mb-6 inline-block rounded-full p-3">
-                <CalendarIcon className="h-12 w-12 text-white" />
-              </div>
-              <h2 className="text-dark dark:text-dark-text mb-4 text-2xl font-bold md:text-3xl">
-                Aktuelle Lehrgänge & Anmeldung
-              </h2>
-              <p className="mb-8 text-lg leading-relaxed text-gray-600 dark:text-gray-400">
-                Das aktuelle Angebot und Anmeldemöglichkeiten findest du in
-                unserer Terminübersicht. Dort kannst du dich direkt für die
-                Lehrgänge anmelden.
-              </p>
-              <Link
-                href="/termine?type=courses&view=list"
-                className="bg-district-2 inline-flex items-center rounded-lg px-8 py-4 font-bold text-white shadow-lg transition-opacity hover:opacity-90"
-              >
-                <CalendarIcon className="mr-2 h-5 w-5" />
-                Zu den Lehrgängen
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+      <PageSection labelledBy="minderjaehrige-heading" rule>
+        <Split
+          head={
+            <Heading id="minderjaehrige-heading" className="hyphens-manual">
+              Für minderjährige Teilnehmer
+            </Heading>
+          }
+          bodyClassName="mt-8"
+        >
+          <p className="text-ink dark:text-night-text max-w-[65ch] text-lg leading-relaxed">
+            Minderjährige Lehrgangsteilnehmer müssen vorab eine ausgefüllte und
+            unterzeichnete Zusatzerklärung einreichen.
+          </p>
+          <ButtonLink
+            href="/downloads/zusatzerklaerung-minderjaehrige.pdf"
+            kind="download"
+            variant="outline"
+            className="mt-6"
+          >
+            Zusatzerklärung herunterladen
+          </ButtonLink>
+        </Split>
+      </PageSection>
 
-      {/* Leistungsstufen & Stempel */}
-      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
-        <div className="container">
-          <div className="mx-auto max-w-4xl">
-            <h2 className="text-dark dark:text-dark-text mb-8 text-2xl font-bold md:text-3xl lg:text-4xl">
-              Leistungsstufen & Stempel
-            </h2>
-
-            <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg bg-white p-8 shadow-lg dark:border dark:shadow-none">
-              <div className="mb-6 flex items-start gap-4">
-                <div className="bg-primary flex h-12 w-12 shrink-0 items-center justify-center rounded-full">
-                  <StarIcon className="h-6 w-6 text-white" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
-                    Aufbauende Ausbildung
-                  </h3>
-                  <p className="mb-4 leading-relaxed text-gray-600 dark:text-gray-400">
-                    Begleitend zur Ausbildung eines (Jung-)Bläsers können
-                    aufeinander aufbauende Leistungsstufen (Stempel) erworben
-                    werden. Hierzu werden durch den Jungbläserausbilder,
-                    Chorleiter oder Posaunenwart kleine Prüfungen abgehalten.
-                  </p>
-                  <p className="mb-6 leading-relaxed text-gray-600 dark:text-gray-400">
-                    Die erreichte Leistungsstufe wird auf dem Mitgliedsausweis
-                    durch einen Stempel dokumentiert.
-                  </p>
-                  <a
-                    href="/downloads/leistungsstempel.pdf"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary hover:text-primary-dark inline-flex items-center font-semibold"
-                  >
-                    <DownloadIcon className="mr-2 h-5 w-5" />
-                    Infos zu Leistungsstempeln herunterladen
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Jungbläserausbildung */}
-      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
-        <div className="container">
-          <div className="mx-auto max-w-4xl">
-            <h2 className="text-dark dark:text-dark-text mb-8 text-2xl font-bold md:text-3xl lg:text-4xl">
-              Jungbläserausbildung
-            </h2>
-
-            <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg bg-white p-8 shadow-lg dark:border dark:shadow-none">
-              <p className="mb-6 leading-relaxed text-gray-600 dark:text-gray-400">
-                Eine vom Landesposaunenwart und den Regionalposaunenwarten
-                zusammengestellte Arbeitshilfe zum Thema Jungbläserausbildung
-                versucht Antworten auf die vielen Fragen rund um das Thema zu
-                geben:
-              </p>
-
-              <ul className="mb-6 space-y-2 text-gray-700 dark:text-gray-300">
-                <li className="flex items-start gap-2">
-                  <span className="bg-primary mt-2 h-2 w-2 shrink-0 rounded-full"></span>
-                  <span>Wie generiere ich neue BläserInnen?</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="bg-primary mt-2 h-2 w-2 shrink-0 rounded-full"></span>
-                  <span>Beispielhafter Ablauf einer ersten Kontaktstunde</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="bg-primary mt-2 h-2 w-2 shrink-0 rounded-full"></span>
-                  <span>Verschiedene Kooperationsmodelle zur Ausbildung</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="bg-primary mt-2 h-2 w-2 shrink-0 rounded-full"></span>
-                  <span>
-                    Wie integriere ich die jungen Menschen in den Posaunenchor?
-                  </span>
-                </li>
-              </ul>
-
-              <a
-                href="/downloads/arbeitshilfe-jungblaeser.pdf"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-district-9 inline-flex items-center rounded-lg px-6 py-3 font-semibold text-white transition-opacity hover:opacity-90"
-              >
-                <DownloadIcon className="mr-2 h-5 w-5" />
-                Arbeitshilfe Jungbläser herunterladen
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Fördermöglichkeiten */}
-      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
-        <div className="container">
-          <div className="mx-auto max-w-4xl">
-            <div className="bg-foerderverein/10 dark:bg-foerderverein/20 border-foerderverein rounded-lg border-l-4 p-8">
-              <div className="flex items-start gap-4">
-                <div className="bg-foerderverein flex h-12 w-12 shrink-0 items-center justify-center rounded-full">
-                  <GiftIcon className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
-                    Fördermöglichkeiten durch den Förderverein
-                  </h3>
-                  <p className="mb-4 leading-relaxed text-gray-700 dark:text-gray-300">
-                    Der Förderverein unterstützt die Bildungsarbeit des
-                    Posaunenwerks! Geschwisterkinder erhalten eine Ermäßigung
-                    von 25 € pro weiterem Kind bei der Anmeldung für Lehrgänge.
-                    Zusätzlich trägt der Förderverein weitere Kosten, um die
-                    Teilnehmerbeiträge für alle zu reduzieren.
-                  </p>
-                  <Link
-                    href="/foerderverein"
-                    className="text-foerderverein hover:text-foerderverein-dark inline-flex items-center font-semibold"
-                  >
-                    Mehr zum Förderverein →
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Downloads & Wichtige Hinweise */}
-      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
-        <div className="container">
-          <div className="mx-auto max-w-4xl">
-            <h2 className="text-dark dark:text-dark-text mb-8 text-2xl font-bold md:text-3xl lg:text-4xl">
-              Wichtige Hinweise & Downloads
-            </h2>
-
-            <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg bg-white p-8 shadow-lg dark:border dark:shadow-none">
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
-                    Für minderjährige Teilnehmer
-                  </h3>
-                  <p className="mb-4 text-gray-600 dark:text-gray-400">
-                    Minderjährige Lehrgangsteilnehmer müssen vorab eine
-                    ausgefüllte und unterzeichnete Zusatzerklärung einreichen.
-                  </p>
-                  <a
-                    href="/downloads/zusatzerklaerung-minderjaehrige.pdf"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary hover:text-primary-dark inline-flex items-center font-semibold"
-                  >
-                    <DownloadIcon className="mr-2 h-5 w-5" />
-                    Zusatzerklärung herunterladen
-                  </a>
-                </div>
-
-                <div className="dark:border-dark-border border-t border-gray-200 pt-6">
-                  <h3 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
-                    Fragen zur Ausbildung?
-                  </h3>
-                  <p className="mb-4 text-gray-600 dark:text-gray-400">
-                    Unser Bildungsreferat berät dich gerne zu allen Fragen rund
-                    um Aus- und Weiterbildung.
-                  </p>
-                  <Link
-                    href="/kontakt"
-                    className="bg-district-2 inline-flex items-center rounded-lg px-6 py-3 font-semibold text-white transition-opacity hover:opacity-90"
-                  >
-                    <MailIcon className="mr-2 h-5 w-5" />
-                    Kontakt aufnehmen
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <ClosingCall
+        id="fragen-heading"
+        title="Fragen zur Ausbildung?"
+        text="Unser Bildungsreferat berät dich gerne zu allen Fragen rund um Aus- und Weiterbildung."
+        actions={[{ href: "/kontakt", label: "Kontakt aufnehmen" }]}
+      />
     </PublicPage>
   );
 }

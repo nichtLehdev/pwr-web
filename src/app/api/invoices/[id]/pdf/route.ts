@@ -13,16 +13,9 @@ import {
 } from "~/generated/prisma/client";
 
 /**
- * The one way to read a stored invoice PDF.
- *
- * The files themselves are named after their invoice number and therefore
- * trivially enumerable, so /api/uploads refuses the folder outright and every
- * download passes the check below instead:
- *
- * - the registrant the invoice was issued to (by account or by the address on
- *   the registration), but only once it is actually published
- * - the course's organizers, plus holders of invoices.generate / invoices.view,
- *   who also get to see drafts and cancelled documents
+ * The only way to read an invoice PDF (file names are enumerable, /api/uploads
+ * refuses them). Allowed: the registrant (account or address) once published;
+ * organizers and holders of invoices.generate / invoices.view, drafts included.
  */
 export async function GET(
   request: NextRequest,
@@ -96,9 +89,8 @@ export async function GET(
     invoice.pdfFilename ??
     `Rechnung_${invoice.invoiceNumber ?? invoice.id}.pdf`;
 
-  // A draft has no frozen document yet, so it is rendered on the fly for the
-  // preview in the editor — watermarked "ENTWURF" by the renderer and never
-  // written to disk, which is what keeps "issued" and "drafted" distinguishable.
+  // Drafts are rendered on the fly (watermarked) and never written to disk,
+  // which keeps "issued" and "drafted" distinguishable.
   if (!invoice.pdfPath) {
     const bytes = await renderInvoiceBytes(invoice);
     return new NextResponse(bytes as unknown as BodyInit, {

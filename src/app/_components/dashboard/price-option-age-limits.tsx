@@ -30,22 +30,14 @@ const parseAge = (raw: string): number | undefined => {
 };
 
 /**
- * Mindest- und Höchstalter einer Preiskategorie.
- *
- * Beide Felder sind optional und einzeln nutzbar: „Kinder & Jugendliche“
- * braucht meist nur ein Höchstalter, „Erwachsene“ nur ein Mindestalter. Wo die
- * Grenze liegt, entscheidet der Kurs — im einen Haus ist man mit 18 erwachsen,
- * im anderen zählt man bis 26 zur Jugend.
- *
- * Ab der ersten Anmeldung gesperrt, genau wie Bezeichnung und Preis: die
- * Grenzen entscheiden, wer welchen Preis zahlt, und nachträglich verschoben
- * stünden Angemeldete in einer Kategorie, die ihnen nicht mehr zusteht.
+ * Mindest- und Höchstalter einer Preiskategorie, beide optional. Ab der ersten Anmeldung
+ * gesperrt: sonst stünden Angemeldete in einer Kategorie, die ihnen nicht mehr zusteht.
  */
 export function PriceOptionAgeLimits({
   option,
   onChange,
   inputClassName,
-  labelClassName = "mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400",
+  labelClassName = "text-dark dark:text-night-muted mb-1 block text-xs font-medium",
   disabled = false,
 }: PriceOptionAgeLimitsProps) {
   const problem = validatePriceOptionAgeRange(option);
@@ -78,11 +70,11 @@ export function PriceOptionAgeLimits({
       {problem ? (
         <p className="mt-1 text-xs text-red-600 dark:text-red-400">{problem}</p>
       ) : summary ? (
-        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+        <p className="text-dark dark:text-night-muted mt-1 text-xs">
           Wählbar für {summary} — gerechnet auf den ersten Kurstag.
         </p>
       ) : (
-        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+        <p className="text-dark dark:text-night-muted mt-1 text-xs">
           Ohne Grenzen steht die Kategorie jedem Alter offen.
         </p>
       )}

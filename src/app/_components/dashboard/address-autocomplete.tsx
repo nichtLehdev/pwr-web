@@ -6,9 +6,8 @@ import { api } from "@/trpc/react";
 import { cn } from "@/lib/utils";
 
 /**
- * Adressuche mit Vorschlägen während der Eingabe (Photon/OpenStreetMap).
- * Füllt Name, Straße, PLZ, Stadt und Koordinaten in einem Rutsch — die
- * Koordinaten sparen beim Speichern den Geocoding-Aufruf.
+ * Adresssuche mit Vorschlägen (Photon/OpenStreetMap). Liefert auch die Koordinaten,
+ * das spart beim Speichern den Geocoding-Aufruf.
  */
 
 export type AddressSuggestion = {
@@ -25,7 +24,7 @@ const MIN_QUERY_LENGTH = 3;
 const DEBOUNCE_MS = 350;
 
 const defaultInputClass =
-  "focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white py-2 pr-9 pl-9 text-gray-900 focus:ring-1 focus:outline-none";
+  "border-ink dark:border-night-text dark:bg-night dark:text-night-text block w-full border bg-paper py-2 pr-9 pl-9";
 
 /** Verzögert den Wert, damit nicht jeder Tastendruck eine Anfrage auslöst. */
 function useDebouncedValue<T>(value: T, delayMs: number): T {
@@ -102,8 +101,7 @@ export function AddressAutocomplete({
     }
 
     if (event.key === "Enter") {
-      // Die Suche liegt innerhalb des Seitenformulars — Enter darf dieses
-      // niemals abschicken, sondern höchstens einen Vorschlag übernehmen.
+      // Die Suche liegt im Seitenformular: Enter darf es nie abschicken.
       event.preventDefault();
       const active = results[activeIndex];
       if (isOpen && active) {
@@ -136,7 +134,7 @@ export function AddressAutocomplete({
       {label ? (
         <label
           htmlFor={listboxId + "-input"}
-          className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700"
+          className="text-dark dark:text-night-muted mb-1 block text-sm font-medium"
         >
           {label}
         </label>
@@ -144,7 +142,7 @@ export function AddressAutocomplete({
 
       <div className="relative">
         <Search
-          className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400"
+          className="text-dark dark:text-night-muted pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2"
           aria-hidden
         />
         <input
@@ -169,23 +167,21 @@ export function AddressAutocomplete({
         />
         {isFetching && isSearchable ? (
           <Loader2
-            className="absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 animate-spin text-gray-400"
+            className="text-dark dark:text-night-muted absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 animate-spin"
             aria-hidden
           />
         ) : null}
       </div>
 
       {hint ? (
-        <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-          {hint}
-        </p>
+        <p className="text-dark dark:text-night-muted mt-1 text-xs">{hint}</p>
       ) : null}
 
       {showDropdown ? (
         <div
           id={listboxId}
           role="listbox"
-          className="dark:border-dark-border dark:bg-dark-surface absolute z-20 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg"
+          className="border-rule dark:border-night-rule dark:bg-night bg-paper absolute z-20 mt-1 max-h-60 w-full overflow-y-auto border"
         >
           {results.length > 0 ? (
             results.map((suggestion, index) => (
@@ -199,19 +195,19 @@ export function AddressAutocomplete({
                 className={cn(
                   "flex w-full items-start gap-2 px-3 py-2 text-left text-sm",
                   index === activeIndex
-                    ? "bg-gray-100 dark:bg-gray-700"
-                    : "hover:bg-gray-100 dark:hover:bg-gray-700",
+                    ? "bg-rule/30 dark:bg-night-raised"
+                    : "hover:bg-rule/30 dark:hover:bg-night-raised",
                 )}
               >
                 <MapPin
-                  className="mt-0.5 h-4 w-4 shrink-0 text-gray-400"
+                  className="text-dark dark:text-night-muted mt-0.5 h-4 w-4 shrink-0"
                   aria-hidden
                 />
                 <span className="min-w-0">
-                  <span className="dark:text-dark-text block font-medium text-gray-900">
+                  <span className="text-ink dark:text-night-text block font-medium">
                     {suggestion.name ?? suggestion.street ?? suggestion.city}
                   </span>
-                  <span className="block text-xs text-gray-500 dark:text-gray-400">
+                  <span className="text-dark dark:text-night-muted block text-xs">
                     {[
                       suggestion.name ? suggestion.street : null,
                       [suggestion.zipCode, suggestion.city]
@@ -225,7 +221,7 @@ export function AddressAutocomplete({
               </button>
             ))
           ) : (
-            <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
+            <div className="text-dark dark:text-night-muted px-3 py-2 text-sm">
               {isFetching ? "Suche läuft …" : "Keine Adresse gefunden"}
             </div>
           )}

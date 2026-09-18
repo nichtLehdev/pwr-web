@@ -5,17 +5,14 @@ import { Camera } from "lucide-react";
 interface MediaCreditProps {
   copyright?: string | null;
   creator?: string | null;
-  /** Optional: use light text (e.g. on dark image backgrounds) */
+  /** `light`: auf Nachtgrund (Lightbox). */
   variant?: "default" | "light";
   /** Optional: show a small camera icon next to the photographer/creator */
   showCreatorIcon?: boolean;
   className?: string;
 }
 
-/**
- * Displays copyright and creator (photographer) for media when set.
- * Use below or overlay on images wherever media is displayed.
- */
+/** Copyright and creator (photographer) of a medium, when set. */
 export default function MediaCredit({
   copyright,
   creator,
@@ -28,8 +25,8 @@ export default function MediaCredit({
 
   const variantClasses =
     variant === "light"
-      ? "text-white/90 text-shadow-sm"
-      : "text-dark-muted text-gray-500 dark:text-gray-400";
+      ? "text-night-muted"
+      : "text-dark dark:text-night-muted";
 
   return (
     <p

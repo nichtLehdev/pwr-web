@@ -1,13 +1,6 @@
 /**
- * Post-Migration Setup Script
- *
- * This script runs AFTER migrations to ensure:
- * 1. System roles exist (permissions are now hardcoded in codebase)
- * 2. Admin user has Administrator role assigned
- *
- * Usage: pnpm tsx prisma/post-migration-setup.ts [admin-email]
- *
- * If admin-email is not provided, it will try to find the first user or use environment variable ADMIN_EMAIL
+ * Runs after migrations: ensures system roles and Bezirke, assigns the Administrator role.
+ * Usage: pnpm tsx prisma/post-migration-setup.ts [admin-email]  (ADMIN_EMAIL takes precedence)
  */
 import "dotenv/config";
 import { db } from "@/server/db";
@@ -20,19 +13,14 @@ async function main() {
   console.log("🚀 Starting post-migration setup...\n");
 
   try {
-    // Permissions are now hardcoded in the codebase (src/lib/permissions.ts)
-
-    // Step 1: Create system roles
     console.log("👥 Step 1: Creating system roles...");
     const adminRole = await ensureSystemRolesExist();
     console.log("  ✅ System roles ready\n");
 
-    // Step 2: Ensure the hardcoded districts exist
     console.log("🗺️  Step 2: Ensuring Bezirke exist...");
     await ensureBezirkeExist();
     console.log("  ✅ Bezirke ready\n");
 
-    // Step 3: Assign admin role to admin user
     if (ADMIN_EMAIL) {
       console.log(
         `🔐 Step 3: Assigning Administrator role to ${ADMIN_EMAIL}...`,
@@ -56,7 +44,6 @@ async function main() {
 }
 
 async function ensureSystemRolesExist() {
-  // 1. Administrator Role
   const adminRole = await db.role.upsert({
     where: { name: "Administrator" },
     update: {
@@ -70,10 +57,8 @@ async function ensureSystemRolesExist() {
     },
   });
 
-  // Assign all permissions to admin (using permission keys directly)
   const adminPermissionKeys = Object.values(PERMISSIONS);
 
-  // Remove existing permissions and add all
   await db.rolePermission.deleteMany({
     where: { roleId: adminRole.id },
   });
@@ -91,7 +76,6 @@ async function ensureSystemRolesExist() {
     `  ✓ Administrator role ready (${adminPermissionKeys.length} permissions)`,
   );
 
-  // 2. Delete legacy roles (Landesposaunenwart, Benutzer) if they exist
   for (const legacyName of ["Landesposaunenwart", "Benutzer"]) {
     const legacyRole = await db.role.findUnique({
       where: { name: legacyName },
@@ -106,7 +90,7 @@ async function ensureSystemRolesExist() {
     }
   }
 
-  // 3. Regionalposaunenwart Role (renamed from Posaunenrat)
+  // Regionalposaunenwart was formerly named Posaunenrat
   const existingPosaunenrat = await db.role.findUnique({
     where: { name: "Posaunenrat" },
   });
@@ -135,10 +119,8 @@ async function ensureSystemRolesExist() {
     });
   }
 
-  // Freigeben ist bewusst nicht bezirksgebunden: RPWs prüfen wie LPW und Admin
-  // für das ganze Werk. Die *_APPROVE-Rechte sind zugleich die Marke, an der
-  // der Bezirks-Zuschnitt endet (siehe helpers/district-scope.ts) — ohne sie
-  // wäre ein RPW wie ein Obmann auf seinen eigenen Bezirk beschränkt.
+  // Freigeben ist bewusst nicht bezirksgebunden. Die *_APPROVE-Rechte beenden den Bezirks-Zuschnitt
+  // (helpers/district-scope.ts); ohne sie wäre ein RPW wie ein Obmann auf seinen Bezirk beschränkt.
   const rpwPermissionKeys = [
     PERMISSIONS.EVENTS_CREATE,
     PERMISSIONS.EVENTS_EDIT,
@@ -148,9 +130,7 @@ async function ensureSystemRolesExist() {
     PERMISSIONS.COURSES_EDIT,
     PERMISSIONS.COURSES_APPROVE,
     PERMISSIONS.COURSES_VIEW,
-    // RPWs entscheiden für ihre eigenen Kurse, ob abgerechnet wird; das
-    // Erstellen der Rechnungen selbst läuft über die Kurs-Organisatorenrolle
-    // bzw. invoices.generate (LPW/Admin).
+    // Nur die Entscheidung, ob abgerechnet wird; Rechnungen erstellen Organisatoren bzw. invoices.generate.
     PERMISSIONS.COURSES_ENABLE_INVOICING,
     // Anzahlungen gehören zur selben Entscheidung wie die Rechnungsstellung.
     PERMISSIONS.COURSES_ENABLE_DOWN_PAYMENT,
@@ -187,7 +167,6 @@ async function ensureSystemRolesExist() {
     `  ✓ Regionalposaunenwart role ready (${rpwPermissionKeys.length} permissions)`,
   );
 
-  // 4. Obleute Role
   const obleuteRole = await db.role.upsert({
     where: { name: "Obleute" },
     update: {
@@ -246,7 +225,6 @@ async function ensureBezirkeExist() {
 }
 
 async function assignAdminRole(email: string, adminRoleId: string) {
-  // Find user by email
   const user = await db.user.findUnique({
     where: { email },
   });
@@ -264,7 +242,6 @@ async function assignAdminRole(email: string, adminRoleId: string) {
     return;
   }
 
-  // Check if user already has admin role
   const existingAssignment = await db.userRoleAssignment.findUnique({
     where: {
       userId_roleId: {
@@ -279,12 +256,6 @@ async function assignAdminRole(email: string, adminRoleId: string) {
     return;
   }
 
-  // Remove all existing role assignments (optional - comment out if you want to keep other roles)
-  // await db.userRoleAssignment.deleteMany({
-  //   where: { userId: user.id },
-  // });
-
-  // Assign admin role
   await db.userRoleAssignment.create({
     data: {
       userId: user.id,
@@ -294,10 +265,6 @@ async function assignAdminRole(email: string, adminRoleId: string) {
 
   console.log(`  ✓ Assigned Administrator role to ${email}`);
 }
-
-// ============================================================================
-// RUN
-// ============================================================================
 
 main()
   .then(() => {

@@ -20,9 +20,9 @@ export type PayableInvoice = {
 };
 
 const inputClass =
-  "dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none";
+  "border-ink dark:border-night-text dark:bg-night dark:text-night-text w-full border px-3 py-2 text-sm";
 const labelClass =
-  "dark:text-dark-text mb-1 block text-sm font-medium text-gray-700";
+  "text-dark dark:text-night-muted mb-1 block text-sm font-medium";
 
 /** Heute als YYYY-MM-DD in lokaler Zeit — `<input type="date">` will kein ISO-Instant. */
 export function todayInputValue(): string {
@@ -38,13 +38,7 @@ export function dateFromInput(value: string): Date | undefined {
   return new Date(year, month - 1, day);
 }
 
-/**
- * Zahlung an einer Rechnung verbuchen — mit Betrag, Wertstellung und Notiz.
- *
- * Der Ein-Klick-Weg ("voller Betrag, heute") bleibt daneben bestehen; dieser
- * Dialog ist für alles, was davon abweicht: Teilzahlungen und Überweisungen,
- * die vor Tagen eingegangen sind.
- */
+/** Zahlung verbuchen, wenn sie vom Ein-Klick-Weg („voller Betrag, heute“) abweicht. */
 export function InvoicePaymentDialog({
   invoice,
   onClose,
@@ -88,10 +82,10 @@ export function InvoicePaymentDialog({
     <ScrollableModal onBackdropClick={onClose}>
       <ScrollableModalCard maxW="md">
         <ScrollableModalBody>
-          <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
+          <h2 className="text-ink dark:text-night-text text-lg font-semibold">
             Zahlung verbuchen
           </h2>
-          <p className="dark:text-dark-muted mt-1 text-sm text-gray-500">
+          <p className="text-dark dark:text-night-muted mt-1 text-sm">
             {invoice.invoiceNumber ?? "Rechnung ohne Nummer"} ·{" "}
             {formatEuro(invoice.totalAmount)}
           </p>
@@ -108,7 +102,7 @@ export function InvoicePaymentDialog({
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
           />
-          <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+          <p className="text-dark dark:text-night-muted mt-1 text-xs">
             {isPartial
               ? `Teilzahlung — offen bleiben ${formatEuro(invoice.totalAmount - parsedAmount)}.`
               : "Voreingestellt ist der volle Rechnungsbetrag."}
@@ -126,7 +120,10 @@ export function InvoicePaymentDialog({
           />
 
           <label className={`${labelClass} mt-4`} htmlFor="paymentNote">
-            Notiz <span className="font-normal text-gray-400">(optional)</span>
+            Notiz{" "}
+            <span className="text-dark dark:text-night-muted font-normal">
+              (optional)
+            </span>
           </label>
           <input
             id="paymentNote"
@@ -137,7 +134,7 @@ export function InvoicePaymentDialog({
             value={note}
             onChange={(e) => setNote(e.target.value)}
           />
-          <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+          <p className="text-dark dark:text-night-muted mt-1 text-xs">
             Interne Notiz — erscheint nicht auf dem PDF.
           </p>
         </ScrollableModalBody>
@@ -147,14 +144,14 @@ export function InvoicePaymentDialog({
               type="button"
               onClick={submit}
               disabled={!amountValid || markPaid.isPending}
-              className="bg-primary hover:bg-primary/90 w-full rounded-md px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              className="bg-primary hover:bg-primary/90 text-ink min-h-11 w-full px-4 py-2 text-sm font-medium disabled:opacity-50"
             >
               {markPaid.isPending ? "Verbuche…" : "Zahlung verbuchen"}
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="dark:text-dark-muted w-full px-4 py-2 text-sm text-gray-500"
+              className="text-dark dark:text-night-muted min-h-11 w-full px-4 py-2 text-sm"
             >
               Abbrechen
             </button>

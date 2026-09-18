@@ -14,6 +14,10 @@ export type ScoreBarProps = {
   className?: string;
 };
 
+/**
+ * Punktestand für `GameBarSlot` in der Kopfleiste. Nebenwerte erst ab `sm`, damit auf
+ * dem Handy neben Zurück-Link und Titel nichts umbricht.
+ */
 export function ScoreBar({
   mode,
   streak,
@@ -24,42 +28,42 @@ export function ScoreBar({
   secondsLeft,
   className,
 }: ScoreBarProps) {
+  const isQuiz = mode === "quiz";
   return (
     <div
       className={cn(
-        "border-dark-border/50 dark:border-dark-border dark:bg-dark-surface/60 flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-white/60 px-3 py-2 text-sm font-bold",
+        "text-ink dark:text-night-text flex items-center gap-2 text-xs font-bold tabular-nums sm:gap-3 sm:text-sm",
         className,
       )}
     >
-      <div className="text-dark dark:text-dark-text flex flex-wrap gap-x-4 gap-y-1">
+      {isQuiz && quizIndex !== undefined && quizTotal !== undefined && (
         <span>
-          Streak: <span className="text-primary tabular-nums">{streak}</span>
+          <span className="sr-only">Note </span>
+          {quizIndex + 1}/{quizTotal}
         </span>
-        <span className="text-dark dark:text-dark-text-muted font-semibold">
-          Beste: <span className="tabular-nums">{bestStreak}</span>
+      )}
+      {isQuiz && quizCorrect !== undefined && (
+        <span className="text-dark dark:text-night-muted hidden font-semibold sm:inline">
+          Richtig {quizCorrect}
         </span>
-      </div>
-      {mode === "quiz" &&
-        quizIndex !== undefined &&
-        quizTotal !== undefined && (
-          <span className="text-dark dark:text-dark-text flex flex-wrap items-center gap-x-3 gap-y-1 tabular-nums">
-            <span>
-              Note {quizIndex + 1}/{quizTotal}
-            </span>
-            {quizCorrect !== undefined && (
-              <span className="text-dark dark:text-dark-text-muted text-xs font-bold md:text-sm">
-                Richtig: {quizCorrect}
-              </span>
-            )}
-          </span>
-        )}
-      {mode === "quiz" && secondsLeft != null && (
+      )}
+      <span>
+        <span className="text-dark dark:text-night-muted font-semibold">
+          Serie{" "}
+        </span>
+        {streak}
+      </span>
+      {bestStreak > 0 && (
+        <span className="text-dark dark:text-night-muted hidden font-semibold sm:inline">
+          Beste {bestStreak}
+        </span>
+      )}
+      {isQuiz && secondsLeft != null && (
         <span
+          /* Druckfeld statt farbiger Schrift; unter zwei Sekunden Rot. */
           className={cn(
-            "tabular-nums",
-            secondsLeft <= 2
-              ? "text-rose-600 dark:text-rose-400"
-              : "text-primary",
+            "on-orange px-1.5 py-0.5",
+            secondsLeft <= 2 ? "text-paper bg-red-700" : "bg-primary text-ink",
           )}
         >
           {secondsLeft.toFixed(1)} s

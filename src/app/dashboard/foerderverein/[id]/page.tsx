@@ -10,9 +10,11 @@ import { PERMISSIONS } from "@/lib/permissions";
 import Link from "next/link";
 import Image from "next/image";
 import { DashboardPage } from "@/app/_components/dashboard";
+import { Tag } from "@/app/_components/programmheft/tag";
 import { EditIcon } from "lucide-react";
 import { TrashIcon } from "lucide-react";
 import { ArrowLeftIcon } from "lucide-react";
+import { formatBerlin } from "@/lib/berlin-time";
 
 const FOERDERVEREIN_ROLE_LABELS: Record<string, string> = {
   VORSITZENDER: "Vorsitzender",
@@ -99,8 +101,8 @@ export default function FoerdervereinDetailPage() {
 
   if (isPending || profileLoading || memberLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
@@ -111,14 +113,14 @@ export default function FoerdervereinDetailPage() {
 
   if (!member) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <h1 className="dark:text-dark-text text-xl font-semibold text-gray-900">
+          <h1 className="text-ink dark:text-night-text text-xl font-semibold">
             Fördervereinsmitglied nicht gefunden
           </h1>
           <Link
             href="/dashboard/foerderverein"
-            className="text-primary mt-4 inline-block hover:underline"
+            className="text-primary-ink dark:text-primary mt-4 inline-block hover:underline"
           >
             Zurück zur Übersicht
           </Link>
@@ -144,7 +146,7 @@ export default function FoerdervereinDetailPage() {
         <div className="flex gap-2">
           <Link
             href={`/dashboard/foerderverein/${memberId}/edit`}
-            className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
+            className="bg-ink text-paper hover:bg-dark dark:bg-night-text dark:text-night dark:hover:bg-night-muted semi-condensed inline-flex min-h-11 items-center gap-2 px-4 py-2 font-semibold transition-colors"
           >
             <EditIcon className="h-4 w-4" />
             Bearbeiten
@@ -152,7 +154,7 @@ export default function FoerdervereinDetailPage() {
           <button
             onClick={handleDelete}
             disabled={isDeleting}
-            className="inline-flex items-center gap-2 rounded-lg border border-red-300 px-4 py-2 font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+            className="semi-condensed inline-flex min-h-11 items-center gap-2 border border-red-300 px-4 py-2 font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
           >
             {isDeleting ? (
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-500 border-t-transparent" />
@@ -165,7 +167,6 @@ export default function FoerdervereinDetailPage() {
       }
       maxWidth="7xl"
     >
-      {/* Avatar and Role Badges */}
       <div className="mb-6 flex items-center gap-4">
         {imageUrl ? (
           <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full">
@@ -177,41 +178,39 @@ export default function FoerdervereinDetailPage() {
             />
           </div>
         ) : (
-          <div className="dark:bg-dark-background-secondary flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-gray-100">
-            <span className="dark:text-dark-muted text-2xl font-medium text-gray-500">
+          <div className="bg-rule/25 dark:bg-night-raised flex h-20 w-20 shrink-0 items-center justify-center rounded-full">
+            <span className="text-dark dark:text-night-muted text-2xl font-medium">
               {displayName.charAt(0).toUpperCase()}
             </span>
           </div>
         )}
         <div className="flex flex-wrap items-center gap-2">
           {member.position && (
-            <span className="dark:text-dark-text text-gray-700">
+            <span className="text-ink dark:text-night-text">
               {member.position}
             </span>
           )}
-          <span className="inline-flex items-center rounded-full bg-rose-100 px-3 py-1 text-sm font-medium text-rose-800 dark:bg-rose-900/30 dark:text-rose-300">
+          <Tag tone="inverse">
             {FOERDERVEREIN_ROLE_LABELS[member.role] || member.role}
-          </span>
+          </Tag>
         </div>
       </div>
 
-      {/* Details */}
       <div className="space-y-6">
-        {/* Contact Info */}
-        <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+        <section className="border-rule dark:border-night-rule dark:bg-night-raised bg-paper border p-6">
+          <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
             Kontaktinformationen
           </h2>
           <dl className="grid gap-4 sm:grid-cols-2">
             <div>
-              <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
+              <dt className="text-dark dark:text-night-muted text-sm font-medium">
                 E-Mail
               </dt>
-              <dd className="dark:text-dark-text mt-1 text-gray-900">
+              <dd className="text-ink dark:text-night-text mt-1">
                 {displayEmail !== "-" ? (
                   <a
                     href={`mailto:${displayEmail}`}
-                    className="text-primary hover:underline"
+                    className="text-primary-ink dark:text-primary hover:underline"
                   >
                     {displayEmail}
                   </a>
@@ -222,46 +221,33 @@ export default function FoerdervereinDetailPage() {
             </div>
             {member.person.phone && (
               <div>
-                <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
+                <dt className="text-dark dark:text-night-muted text-sm font-medium">
                   Telefon
                 </dt>
-                <dd className="dark:text-dark-text mt-1 text-gray-900">
+                <dd className="text-ink dark:text-night-text mt-1">
                   <a
                     href={`tel:${member.person.phone}`}
-                    className="text-primary hover:underline"
+                    className="text-primary-ink dark:text-primary hover:underline"
                   >
                     {member.person.phone}
                   </a>
                 </dd>
               </div>
             )}
-            {member.memberSince && (
-              <div>
-                <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
-                  Mitglied seit
-                </dt>
-                <dd className="dark:text-dark-text mt-1 text-gray-900">
-                  {new Date(member.memberSince).toLocaleDateString("de-DE", {
-                    year: "numeric",
-                    month: "long",
-                  })}
-                </dd>
-              </div>
-            )}
             <div>
-              <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
+              <dt className="text-dark dark:text-night-muted text-sm font-medium">
                 Verknüpfung
               </dt>
-              <dd className="dark:text-dark-text mt-1 text-gray-900">
+              <dd className="text-ink dark:text-night-text mt-1">
                 {member.user ? (
                   <Link
                     href={`/dashboard/users/${member.user.id}`}
-                    className="text-primary hover:underline"
+                    className="text-primary-ink dark:text-primary hover:underline"
                   >
                     Benutzer anzeigen
                   </Link>
                 ) : (
-                  <span className="dark:text-dark-muted text-gray-500">
+                  <span className="text-dark dark:text-night-muted">
                     Manueller Eintrag (kein Benutzerkonto)
                   </span>
                 )}
@@ -270,65 +256,54 @@ export default function FoerdervereinDetailPage() {
           </dl>
         </section>
 
-        {/* Description / Bio */}
         {displayBio && (
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+          <section className="border-rule dark:border-night-rule dark:bg-night-raised bg-paper border p-6">
+            <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
               Beschreibung
             </h2>
-            <p className="dark:text-dark-muted whitespace-pre-wrap text-gray-600">
+            <p className="text-dark dark:text-night-muted whitespace-pre-wrap">
               {displayBio}
             </p>
           </section>
         )}
 
-        {/* Meta Info */}
-        <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+        <section className="border-rule dark:border-night-rule dark:bg-night-raised bg-paper border p-6">
+          <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
             Weitere Informationen
           </h2>
           <dl className="grid gap-4 sm:grid-cols-2">
             <div>
-              <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
+              <dt className="text-dark dark:text-night-muted text-sm font-medium">
                 Reihenfolge
               </dt>
-              <dd className="dark:text-dark-text mt-1 text-gray-900">
+              <dd className="text-ink dark:text-night-text mt-1">
                 {member.sortOrder}
               </dd>
             </div>
             <div>
-              <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
+              <dt className="text-dark dark:text-night-muted text-sm font-medium">
                 Erstellt am
               </dt>
-              <dd className="dark:text-dark-text mt-1 text-gray-900">
-                {new Date(member.createdAt).toLocaleDateString("de-DE", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                })}
+              <dd className="text-ink dark:text-night-text mt-1">
+                {formatBerlin(member.createdAt, "datumZweistellig")}
               </dd>
             </div>
             <div>
-              <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
+              <dt className="text-dark dark:text-night-muted text-sm font-medium">
                 Zuletzt aktualisiert
               </dt>
-              <dd className="dark:text-dark-text mt-1 text-gray-900">
-                {new Date(member.updatedAt).toLocaleDateString("de-DE", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                })}
+              <dd className="text-ink dark:text-night-text mt-1">
+                {formatBerlin(member.updatedAt, "datumZweistellig")}
               </dd>
             </div>
           </dl>
         </section>
       </div>
 
-      {/* Back Link */}
       <div className="mt-8">
         <Link
           href="/dashboard/foerderverein"
-          className="hover:text-primary dark:text-dark-muted dark:hover:text-primary inline-flex items-center gap-2 text-gray-600"
+          className="text-dark hover:text-primary-ink dark:text-night-muted dark:hover:text-primary inline-flex items-center gap-2"
         >
           <ArrowLeftIcon className="h-4 w-4" />
           Zurück zur Übersicht

@@ -17,12 +17,8 @@ import {
 } from "./media-shared";
 
 /**
- * Löschdialog mit Verwendungsnachweis.
- *
- * Der vorherige Dialog fragte nur „bist du sicher?“ und nannte nicht einmal die
- * Datei. Das war vor allem deshalb heikel, weil zwei Beziehungen auf
- * `onDelete: Cascade` stehen: mit dem Bild verschwand stillschweigend das ganze
- * Bläserheft bzw. die Karussell-Folie.
+ * Löschdialog mit Verwendungsnachweis: zwei Beziehungen stehen auf `onDelete: Cascade`,
+ * mit dem Bild verschwinden Bläserheft bzw. Karussell-Folie.
  */
 export function MediaDeleteDialog({
   media,
@@ -46,12 +42,12 @@ export function MediaDeleteDialog({
     <ScrollableModal onClose={isDeleting ? undefined : onClose}>
       <ScrollableModalCard maxW="lg">
         <ScrollableModalBody className="space-y-4">
-          <h3 className="dark:text-dark-text text-lg font-semibold text-gray-900">
+          <h3 className="text-ink dark:text-night-text text-lg font-semibold">
             Medium löschen
           </h3>
 
-          <div className="dark:border-dark-border flex items-center gap-3 rounded-lg border border-gray-200 p-3">
-            <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded bg-gray-100 dark:bg-gray-800">
+          <div className="border-rule dark:border-night-rule flex items-center gap-3 border p-3">
+            <div className="bg-rule/25 dark:bg-night-raised relative h-14 w-14 shrink-0 overflow-hidden">
               {media.mimeType.startsWith("image/") ? (
                 <ImageWithFallback
                   src={media.url}
@@ -67,21 +63,21 @@ export function MediaDeleteDialog({
               )}
             </div>
             <div className="min-w-0">
-              <p className="dark:text-dark-text truncate font-medium text-gray-900">
+              <p className="text-ink dark:text-night-text truncate font-medium">
                 {media.name}
               </p>
-              <p className="dark:text-dark-muted text-xs text-gray-500">
+              <p className="text-dark dark:text-night-muted text-xs">
                 {formatFileSize(media.size)}
               </p>
             </div>
           </div>
 
           {isLoading ? (
-            <p className="dark:text-dark-muted text-sm text-gray-500">
+            <p className="text-dark dark:text-night-muted text-sm">
               Verwendung wird geprüft …
             </p>
           ) : cascades.length > 0 ? (
-            <div className="rounded-lg border border-red-300 bg-red-50 p-3 dark:border-red-900/50 dark:bg-red-900/20">
+            <div className="border border-red-300 bg-red-50 p-3 dark:border-red-900/50 dark:bg-red-900/20">
               <p className="flex items-start gap-2 text-sm font-semibold text-red-800 dark:text-red-300">
                 <AlertTriangleIcon className="mt-0.5 h-4 w-4 shrink-0" />
                 Achtung: Es werden weitere Einträge mitgelöscht
@@ -103,12 +99,12 @@ export function MediaDeleteDialog({
           ) : null}
 
           {references.length > 0 && (
-            <div className="dark:border-dark-border dark:bg-dark-background rounded-lg border border-gray-200 bg-gray-50 p-3">
-              <p className="dark:text-dark-text text-sm font-medium text-gray-900">
+            <div className="border-rule dark:border-night-rule bg-rule/25 dark:bg-night-raised border p-3">
+              <p className="text-ink dark:text-night-text text-sm font-medium">
                 Wird an {references.length}{" "}
                 {references.length === 1 ? "Stelle" : "Stellen"} verwendet
               </p>
-              <ul className="dark:text-dark-muted mt-1.5 space-y-1 text-sm text-gray-600">
+              <ul className="text-dark dark:text-night-muted mt-1.5 space-y-1 text-sm">
                 {references.slice(0, 8).map((entry, index) => (
                   <li key={`${entry.kind}-${index}`}>
                     <span className="font-medium">{entry.kind}:</span>{" "}
@@ -119,19 +115,19 @@ export function MediaDeleteDialog({
                   <li>… und {references.length - 8} weitere</li>
                 )}
               </ul>
-              <p className="dark:text-dark-muted mt-2 text-xs text-gray-500">
+              <p className="text-dark dark:text-night-muted mt-2 text-xs">
                 Dort bleibt der Eintrag bestehen, verliert aber sein Bild.
               </p>
             </div>
           )}
 
           {!isLoading && usage?.total === 0 && (
-            <p className="dark:text-dark-muted text-sm text-gray-600">
+            <p className="text-dark dark:text-night-muted text-sm">
               Das Medium wird derzeit nirgendwo verwendet.
             </p>
           )}
 
-          <p className="dark:text-dark-muted text-sm text-gray-600">
+          <p className="text-dark dark:text-night-muted text-sm">
             Die Datei wird auch von der Festplatte entfernt. Diese Aktion kann
             nicht rückgängig gemacht werden.
           </p>

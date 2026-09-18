@@ -1,24 +1,7 @@
-# =============================================================================
-# Posaunenwerk Docker Compose - Production (uses pre-built image)
-# =============================================================================
-#
-# This file is for production deployment using pre-built images from GHCR.
-# For local development, use docker-compose.yml instead.
-#
-# Quick Start:
-#   1. Copy .env.example to .env and configure values
-#   2. Set CRON_SECRET (and SMTP_*) in .env
-#   3. Run: docker compose -f docker-compose.prod.yml up -d
-#
-# APP_IMAGE_TAG pins the image version (default: latest). The release
-# workflow sets it to the exact release version so pre-releases deploy too.
-#
-# =============================================================================
+# Server deployment with pre-built GHCR images; local development uses docker-compose.yml.
+# APP_IMAGE_TAG pins the version (default latest); the release workflow sets it so pre-releases deploy too.
 
 services:
-  # ===========================================================================
-  # PostgreSQL Database
-  # ===========================================================================
   posaunenwerk-db:
     image: postgres:16-alpine
     container_name: posaunenwerk-db
@@ -42,9 +25,6 @@ services:
       retries: 5
       start_period: 10s
 
-  # ===========================================================================
-  # Database Migration (runs once on startup)
-  # ===========================================================================
   db-migrate:
     image: ghcr.io/nichtlehdev/pwr-web:${APP_IMAGE_TAG:-latest}
     container_name: posaunenwerk-migrate
@@ -57,14 +37,8 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@posaunenwerk-db:5432/${POSTGRES_DB:-posaunenwerk}
       NODE_ENV: production
       SKIP_ENV_VALIDATION: 1
-    # Invoke prisma directly (not via pnpm) to avoid pnpm 11's
-    # runDepsStatusCheck which tries to reinstall node_modules at startup.
-    #
-    # The slug backfill runs straight after the migration, mirroring the app
-    # start command in deploy/stack.yaml, so a deploy never leaves new rows
-    # without a slug. It is non-fatal on purpose: slugs are nullable and the
-    # detail routes fall back to the UUID, so a failure here must not stop
-    # `app` — which waits on this service — from coming up.
+    # prisma directly, not via pnpm (pnpm 11's runDepsStatusCheck reinstalls node_modules).
+    # Slug backfill is non-fatal: slugs are nullable with UUID fallback, and `app` waits on this.
     command:
       - "sh"
       - "-c"
@@ -74,9 +48,7 @@ services:
         echo "Slug backfill failed (non-fatal)"; }
     restart: "no"
 
-  # ===========================================================================
-  # Post-Migration Setup (run once after permission migrations)
-  # ===========================================================================
+  # Run once after permission migrations
   post-migration-setup:
     image: ghcr.io/nichtlehdev/pwr-web:${APP_IMAGE_TAG:-latest}
     container_name: posaunenwerk-post-migration-setup
@@ -97,16 +69,8 @@ services:
       ["node", "node_modules/tsx/dist/cli.mjs", "prisma/post-migration-setup.ts"]
     restart: "no"
 
-  # ===========================================================================
-  # Slug Backfill (fills Post/Ensemble/Event/Course slugs)
-  #
-  # Runs automatically as part of db-migrate; this profile is for re-running it
-  # on demand — imports and duplicates deliberately leave the slug NULL, so new
-  # rows can appear without one between deploys.
-  #
-  # Idempotent: only rows whose slug is still NULL are touched.
+  # Re-run on demand (imports and duplicates leave the slug NULL); only touches NULL slugs:
   #   docker compose -f docker-compose.prod.yml --profile slug-backfill up
-  # ===========================================================================
   slug-backfill:
     image: ghcr.io/nichtlehdev/pwr-web:${APP_IMAGE_TAG:-latest}
     container_name: posaunenwerk-slug-backfill
@@ -126,9 +90,6 @@ services:
     command: ["node", "node_modules/tsx/dist/cli.mjs", "prisma/backfill-slugs.ts"]
     restart: "no"
 
-  # ===========================================================================
-  # Database Seeding (optional, run manually)
-  # ===========================================================================
   db-seed:
     image: ghcr.io/nichtlehdev/pwr-web:${APP_IMAGE_TAG:-latest}
     container_name: posaunenwerk-seed
@@ -150,9 +111,6 @@ services:
     command: ["node", "node_modules/tsx/dist/cli.mjs", "prisma/seed.ts"]
     restart: "no"
 
-  # ===========================================================================
-  # Database Backup Service (scheduled backups)
-  # ===========================================================================
   db-backup:
     image: ghcr.io/nichtlehdev/pwr-backup:${APP_IMAGE_TAG:-latest}
     container_name: posaunenwerk-backup
@@ -175,9 +133,6 @@ services:
       BACKUP_SCHEDULE: ${BACKUP_SCHEDULE:-0 2 * * *} # Default: 2 AM daily
       BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-30} # Keep backups for 30 days
 
-  # ===========================================================================
-  # Registration-closed e-mails (every 6h, calls app cron API)
-  # ===========================================================================
   registration-closed-cron:
     image: ghcr.io/nichtlehdev/pwr-cron:${APP_IMAGE_TAG:-latest}
     container_name: posaunenwerk-registration-closed-cron
@@ -193,9 +148,6 @@ services:
       APP_INTERNAL_URL: http://app:3000
       REGISTRATION_CLOSED_CRON_SCHEDULE: ${REGISTRATION_CLOSED_CRON_SCHEDULE:-0 */6 * * *}
 
-  # ===========================================================================
-  # Next.js Application
-  # ===========================================================================
   app:
     image: ghcr.io/nichtlehdev/pwr-web:${APP_IMAGE_TAG:-latest}
     container_name: posaunenwerk-app
@@ -211,31 +163,23 @@ services:
     expose:
       - "3000"
     volumes:
-      # Mounted outside public/ so file access always goes through the
-      # authorizing /api/uploads route (public/ would be served directly).
+      # Outside public/, so access goes through the authorizing /api/uploads route.
       - uploads_data:/app/uploads
     environment:
-      # Database
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@posaunenwerk-db:5432/${POSTGRES_DB:-posaunenwerk}
 
-      # Application
       NODE_ENV: production
       NEXT_TELEMETRY_DISABLED: 1
 
-      # Log verbosity: debug | info | warn | error | silent.
-      # Production defaults to warn so per-request tRPC chatter stays out of
-      # the container log and errors are actually readable. Set to debug for
-      # one deploy when tracing a live issue.
+      # debug | info | warn | error | silent. "warn" keeps tRPC chatter out of the log;
+      # set to debug when tracing a live issue.
       LOG_LEVEL: ${LOG_LEVEL:-warn}
 
-      # Public URLs
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
 
-      # Better Auth
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?BETTER_AUTH_SECRET is required}
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
 
-      # Github Settings
       GITHUB_REPO: ${GITHUB_REPO:-}
       GITHUB_TOKEN: ${GITHUB_TOKEN:-}
 

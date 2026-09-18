@@ -9,11 +9,7 @@ export const metadata = buildPageMetadata({
   noIndex: true,
 });
 
-/**
- * Metadata holder for the client-rendered page in this segment.
- *
- * A transactional self-service page; nothing to rank.
- */
+/** Metadata holder for the client-rendered page in this segment. */
 export default function ManageRegistrationLayout({
   children,
 }: {

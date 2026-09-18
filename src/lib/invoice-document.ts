@@ -1,15 +1,11 @@
 /**
- * The invoice document: its data shape and its arithmetic.
- *
- * Dependency-free on purpose — dashboard pages, the tRPC router and the PDF
- * renderer (see ./invoice-render) all agree on these types and on how a total
- * is computed, without any of them dragging in a PDF library.
+ * Invoice data shape and arithmetic. Dependency-free so dashboard, router and PDF
+ * renderer share them without pulling in a PDF library.
  */
 
 /**
- * One line of the invoice. `unitPrice` may be negative — that is how discounts,
- * already-paid deposits and subsidies are expressed, so the sum of the lines is
- * always the amount due.
+ * `unitPrice` may be negative (discounts, paid deposits, subsidies), so the sum of
+ * the lines is always the amount due.
  */
 export interface InvoiceLineItem {
   description: string;
@@ -77,12 +73,8 @@ export const DEFAULT_INVOICE_ORGANIZATION: InvoiceOrganization = {
 };
 
 /**
- * Digits only, at most ten of them.
- *
- * The course number ends up inside the invoice number, and the invoice number
- * names the frozen PDF on disk (see storeInvoicePdf) — so it has to stay free
- * of separators, umlauts and anything that could walk out of the folder. Digits
- * are also what the treasurer types into the banking search.
+ * Digits only: the course number ends up in the invoice number, which names the
+ * frozen PDF on disk (see storeInvoicePdf) — no separators or path escapes.
  */
 export const COURSE_NUMBER_PATTERN = /^\d{1,10}$/;
 
@@ -90,10 +82,7 @@ export function isValidCourseNumber(value: string): boolean {
   return COURSE_NUMBER_PATTERN.test(value);
 }
 
-/**
- * Normalises what an organizer typed into the course-number field. Empty (or
- * blank) input means "no number" and is stored as null.
- */
+/** Blank input means "no number" and is stored as null. */
 export function normalizeCourseNumber(
   value: string | null | undefined,
 ): string | null {
@@ -105,13 +94,8 @@ export function normalizeCourseNumber(
 export const COURSE_PAYMENT_REFERENCE_PREFIX = "Bläserlehrgang";
 
 /**
- * The Verwendungszweck for a bank transfer: the invoice number, prefixed with
- * the course the payment belongs to when that course carries an internal
- * number. Having both on one line lets the treasurer match a statement entry to
- * a course at a glance and still to the exact invoice.
- *
- * Used for the printed line and for the EPC QR payload, so a scanned transfer
- * and a hand-typed one arrive with the same reference.
+ * Verwendungszweck: the invoice number, prefixed with the course number if set.
+ * Shared by the printed line and the EPC QR payload so both arrive identical.
  */
 export function invoicePaymentReference(
   invoiceNumber: string,
@@ -126,20 +110,10 @@ export function invoicePaymentReference(
 export const DEFAULT_INVOICE_CLOSING_TEXT =
   "Wir freuen uns auf eine gemeinsame Zeit!";
 
-/**
- * Description of the negative line item {@link lineItemsFromRegistration}
- * pushes for the sibling discount (Geschwisterkindrabatt, subsidised by the
- * Förderverein). Exported so features that need that amount back out of an
- * invoice — e.g. the invoice CSV export — can find those lines without
- * re-deriving the discount from the registration.
- */
+/** Negative sibling-discount line; exports find the discount amount by this name. */
 export const SIBLING_DISCOUNT_LINE_DESCRIPTION = "Geschwisterkindrabatt (20 %)";
 
-/**
- * Description of the negative line item for a down payment that was already
- * received, so the invoice asks only for the remainder. Exported for the same
- * reason as the sibling discount line: exports find the amount by this name.
- */
+/** Negative line for a down payment already received; exports find it by this name. */
 export const DOWN_PAYMENT_LINE_DESCRIPTION = "Anzahlung (bereits gezahlt)";
 
 /** Cent-safe rounding — floats accumulate visible drift over many lines. */
@@ -171,12 +145,8 @@ export function toDate(value: Date | string | null | undefined): Date | null {
 }
 
 /**
- * Kalendertag, wie ihn Empfänger:innen und Geschäftsstelle lesen. Rechnung
- * und Anzahlungszeile entstehen auf dem Server, und der läuft in UTC: eine
- * Zahlung um 01:30 deutscher Zeit stand dort sonst einen Tag zu früh auf der
- * Rechnung, eine nach Mitternacht ausgestellte Rechnung trug das Datum von
- * gestern. Auf UTC-Mitternacht gespeicherte Tage (Geburtsdaten) bleiben, weil
- * Berlin UTC voraus ist, derselbe Tag.
+ * Der Server läuft in UTC, Rechnungsdaten gelten in deutscher Zeit. Auf UTC-Mitternacht
+ * gespeicherte Tage (Geburtsdaten) bleiben derselbe Tag, weil Berlin UTC voraus ist.
  */
 const DOCUMENT_TIME_ZONE = "Europe/Berlin";
 

@@ -1,16 +1,8 @@
 import { maskUserContact } from "./mask-user-contact";
 
 /**
- * Personen auf öffentlichen Seiten (Posaunenwarte, Obleute, Vorstand,
- * Posaunenrat, Förderverein, Team) müssen ohne Benutzerkonto pflegbar sein.
- * Jeder dieser Datensätze trägt daher eigene Felder und optional eine
- * Verknüpfung zu einem User.
- *
- * Regel: Ein am Datensatz gesetztes Feld gewinnt, sonst greifen die Nutzerdaten.
- * So bleibt das Eingegebene das Angezeigte, auch wenn später ein Konto
- * verknüpft wird. Nutzerdaten laufen weiterhin durch maskUserContact, damit die
- * Privatsphäre-Einstellungen der Person greifen; eigene Felder sind bewusst
- * gepflegte Veröffentlichungsdaten und werden nicht maskiert.
+ * Ein am Datensatz gesetztes Feld gewinnt, sonst greifen die Nutzerdaten. Nur diese laufen
+ * durch maskUserContact; eigene Felder sind bewusst veröffentlicht und bleiben unmaskiert.
  */
 
 type ImageLike = { url: string };

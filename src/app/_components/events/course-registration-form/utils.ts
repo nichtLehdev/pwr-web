@@ -13,12 +13,9 @@ import {
 } from "@/lib/course-payment-methods";
 import type { CoursePaymentMethod } from "~/generated/prisma/client";
 import { registrationDownPayment } from "@/lib/course-down-payment";
+import { berlinParts } from "@/lib/berlin-time";
 
-/**
- * Maps the form's participants onto the shared discount rule. The preview the
- * registrant sees and the price the server persists come from the same
- * function, so the summary step can't quote a total the server won't honour.
- */
+/** Shared discount rule, same as the server's, so the summary can't quote a total the server won't honour. */
 function siblingDiscountInput(
   registrationData: RegistrationData,
   course: CourseWithRelations,
@@ -70,10 +67,7 @@ export function calculateTotalPrice(
   );
 }
 
-/**
- * Anzahlung, die der Server für diese Teilnehmer speichern wird — `null`, wenn
- * keine fällig ist. Dieselbe Funktion wie auf dem Server.
- */
+/** Anzahlung wie auf dem Server berechnet — `null`, wenn keine fällig ist. */
 export function calculateDownPayment(
   registrationData: RegistrationData,
   course: CourseWithRelations,
@@ -101,71 +95,165 @@ export function getParticipantDisplayName(
   return `${firstName} ${firstLetter}.`;
 }
 
+/** Etwas, das einem Schritt noch fehlt. */
+export interface FormProblem {
+  /** Schlüssel des Feldes (`data-focus-key`), in das der Fokus springt. */
+  field: string;
+  /** Kurzform für die Sammelmeldung am Weiter-Knopf („Noch offen: …“). */
+  label: string;
+  message: string;
+}
+
+export const EMAIL_HINT =
+  "Bitte eine gültige E-Mail-Adresse eingeben, z. B. max@example.com";
+
+/** Sammelmeldung am Weiter-Knopf aus den Kurzformen, in Feldreihenfolge. */
+export function problemSummary(problems: readonly FormProblem[]): string {
+  return `Noch offen: ${problems.map((p) => p.label).join(", ")}.`;
+}
+
+/** Was in Schritt 1 fehlt, in Feldreihenfolge; dieselben Regeln wie `validateStep`. */
+export function registrantProblems(
+  registrationData: RegistrationData,
+  /** Siehe {@link validateStep}: Telefon und Adresse sind hier optional. */
+  staffMode = false,
+): FormProblem[] {
+  const problems: FormProblem[] = [];
+  const missing = (field: string, label: string, message: string) =>
+    problems.push({ field, label, message });
+  const d = registrationData;
+
+  if (!d.registrantFirstName)
+    missing("registrantFirstName", "Vorname", "Bitte Vornamen angeben.");
+  if (!d.registrantLastName)
+    missing("registrantLastName", "Nachname", "Bitte Nachnamen angeben.");
+  // Format schon hier prüfen, sonst scheitert ein Tippfehler erst am Server, drei Schritte weiter.
+  if (!d.registrantEmail)
+    missing("registrantEmail", "E-Mail", "Bitte E-Mail-Adresse angeben.");
+  else if (!isPlausibleEmail(d.registrantEmail))
+    missing("registrantEmail", "gültige E-Mail-Adresse", EMAIL_HINT);
+  if (!staffMode && !d.registrantPhone)
+    missing("registrantPhone", "Telefon", "Bitte Telefonnummer angeben.");
+
+  // Mit abweichender Rechnungsadresse zählt deren Anschrift, sonst die
+  // eigene — für das Kursteam ist die eigene optional.
+  if (d.useSeparateBilling) {
+    if (!d.billingStreet)
+      missing(
+        "billingStreet",
+        "Straße und Hausnummer der Rechnungsadresse",
+        "Bitte Straße und Hausnummer angeben.",
+      );
+    if (!d.billingZipCode)
+      missing(
+        "billingZipCode",
+        "PLZ der Rechnungsadresse",
+        "Bitte Postleitzahl angeben.",
+      );
+    if (!d.billingCity)
+      missing(
+        "billingCity",
+        "Stadt der Rechnungsadresse",
+        "Bitte Stadt angeben.",
+      );
+    // Optional — wenn aber ausgefüllt, prüft der Server sie genauso.
+    if (d.billingEmail && !isPlausibleEmail(d.billingEmail))
+      missing("billingEmail", "gültige E-Mail für die Rechnung", EMAIL_HINT);
+  } else if (!staffMode) {
+    if (!d.registrantStreet)
+      missing(
+        "registrantStreet",
+        "Straße und Hausnummer",
+        "Bitte Straße und Hausnummer angeben.",
+      );
+    if (!d.registrantZipCode)
+      missing("registrantZipCode", "PLZ", "Bitte Postleitzahl angeben.");
+    if (!d.registrantCity)
+      missing("registrantCity", "Ort", "Bitte Ort angeben.");
+  }
+  return problems;
+}
+
+/** Was vor dem Absenden fehlt: Zahlungsweise, Anzahlungs-Bestätigung, Zustimmung (Seitenreihenfolge). */
+export function summaryProblems(
+  registrationData: RegistrationData,
+  course: CourseWithRelations,
+  {
+    termsAccepted = false,
+    staffMode = false,
+    downPaymentAcknowledged = false,
+  }: {
+    termsAccepted?: boolean;
+    staffMode?: boolean;
+    downPaymentAcknowledged?: boolean;
+  },
+): FormProblem[] {
+  const problems: FormProblem[] = [];
+  if (
+    registrationNeedsPaymentMethod(course) &&
+    courseRequiresPaymentMethodChoice(course)
+  ) {
+    const pm = registrationData.paymentMethod as
+      CoursePaymentMethod | undefined;
+    if (pm !== "CASH" && pm !== "INVOICE") {
+      problems.push({
+        field: "paymentMethod",
+        label: "Zahlungsweise",
+        message: "Bitte wählen Sie eine Zahlungsweise.",
+      });
+    }
+  }
+  // Nur bei der öffentlichen Anmeldung und nur, wenn überhaupt eine
+  // Anzahlung fällig wird.
+  if (
+    !staffMode &&
+    !downPaymentAcknowledged &&
+    calculateDownPayment(registrationData, course) !== null
+  ) {
+    problems.push({
+      field: "downPaymentAcknowledged",
+      label: "Bestätigung zur Anzahlung",
+      message: "Bitte bestätigen Sie die Angaben zur Anzahlung.",
+    });
+  }
+  if (!termsAccepted) {
+    problems.push(
+      staffMode
+        ? {
+            field: "termsAccepted",
+            label: "Zustimmung des Anmelders",
+            message: "Bitte bestätigen Sie, dass der Anmelder zugestimmt hat.",
+          }
+        : {
+            field: "termsAccepted",
+            label: "Zustimmung zu AGB und Datenschutzerklärung",
+            message:
+              "Bitte stimmen Sie den Allgemeinen Geschäftsbedingungen und der Datenschutzerklärung zu.",
+          },
+    );
+  }
+  return problems;
+}
+
 export function validateStep(
   step: 1 | 2 | 3,
   registrationData: RegistrationData,
   course: CourseWithRelations,
   validationErrors: Record<number, string>,
   termsAccepted?: boolean,
-  /**
-   * The course team often only has a name and an e-mail when it records a
-   * registration from a phone call or a paper form, so phone and address stay
-   * optional there instead of forcing invented values.
-   */
+  /** Staff often records phone/paper registrations with only name and e-mail, so phone and address are optional. */
   staffMode = false,
-  /**
-   * Hinweise zur Anzahlung bestätigt. Nur bei der öffentlichen Anmeldung und
-   * nur, wenn überhaupt eine Anzahlung fällig wird.
-   */
+  /** Nur bei der öffentlichen Anmeldung und nur, wenn eine Anzahlung fällig wird. */
   downPaymentAcknowledged = false,
 ): boolean {
   switch (step) {
     case 1:
-      const {
-        registrantFirstName,
-        registrantLastName,
-        registrantEmail,
-        registrantPhone,
-        registrantStreet,
-        registrantZipCode,
-        registrantCity,
-      } = registrationData;
-
-      // Das Format gehört hierher, nicht erst zum Absenden: eine Adresse mit
-      // Tippfehler kam sonst durch Schritt 1 und 2 und scheiterte erst am
-      // Server — drei Schritte entfernt von dem Feld, um das es geht.
-      const basicValid = !!(
-        registrantFirstName &&
-        registrantLastName &&
-        isPlausibleEmail(registrantEmail) &&
-        (staffMode || registrantPhone)
-      );
-
-      if (registrationData.useSeparateBilling) {
-        const { billingStreet, billingZipCode, billingCity, billingEmail } =
-          registrationData;
-        // Die Rechnungsadresse ist optional — wenn sie aber ausgefüllt ist,
-        // prüft der Server sie genauso.
-        if (billingEmail && !isPlausibleEmail(billingEmail)) return false;
-        return basicValid && !!(billingStreet && billingZipCode && billingCity);
-      }
-
-      if (staffMode) {
-        return basicValid;
-      }
-
-      return (
-        basicValid &&
-        !!(registrantStreet && registrantZipCode && registrantCity)
-      );
+      return registrantProblems(registrationData, staffMode).length === 0;
     case 2:
-      // Must have at least one participant
       if (registrationData.participants.length === 0) {
         return false;
       }
-      // All participants must have required fields filled
       return registrationData.participants.every((p) => {
-        // Check basic required fields
         if (
           !p.firstName?.trim() ||
           !p.lastName?.trim() ||
@@ -175,7 +263,6 @@ export function validateStep(
         ) {
           return false;
         }
-        // Check birthDate is valid
         const birthDate = new Date(p.birthDate);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -207,7 +294,6 @@ export function validateStep(
             return false;
           }
         }
-        // Check required custom fields
         if (course.customFields) {
           for (const field of course.customFields) {
             if (field.isRequired) {
@@ -222,34 +308,20 @@ export function validateStep(
         }
         return true;
       });
-    case 3: {
-      if (
-        registrationNeedsPaymentMethod(course) &&
-        courseRequiresPaymentMethodChoice(course)
-      ) {
-        const pm = registrationData.paymentMethod as
-          CoursePaymentMethod | undefined;
-        if (pm !== "CASH" && pm !== "INVOICE") return false;
-      }
-      if (
-        !staffMode &&
-        !downPaymentAcknowledged &&
-        calculateDownPayment(registrationData, course) !== null
-      ) {
-        return false;
-      }
-      return termsAccepted === true;
-    }
+    case 3:
+      return (
+        summaryProblems(registrationData, course, {
+          termsAccepted,
+          staffMode,
+          downPaymentAcknowledged,
+        }).length === 0
+      );
     default:
       return false;
   }
 }
 
-/**
- * Age in completed years, for the one-line summary on a participant card.
- * Returns null while the birthdate is empty or not yet a usable date, so the
- * card can simply leave the age out instead of printing "NaN Jahre".
- */
+/** Age in completed years; null while the birthdate is empty or not yet a usable date. */
 export function participantAge(
   birthDate: Date | string | null | undefined,
 ): number | null {
@@ -257,13 +329,12 @@ export function participantAge(
   const born = new Date(birthDate);
   if (Number.isNaN(born.getTime())) return null;
 
-  const today = new Date();
-  let age = today.getFullYear() - born.getFullYear();
-  const monthsApart = today.getMonth() - born.getMonth();
-  if (
-    monthsApart < 0 ||
-    (monthsApart === 0 && today.getDate() < born.getDate())
-  ) {
+  // Deutscher Kalendertag wie bei `ageOnDate` — auch beim ersten Rendern auf
+  // dem Server (UTC) soll dasselbe Alter dastehen wie danach im Browser.
+  const b = berlinParts(born);
+  const today = berlinParts(new Date());
+  let age = today.year - b.year;
+  if (today.month < b.month || (today.month === b.month && today.day < b.day)) {
     age--;
   }
   return age >= 0 && age < 150 ? age : null;

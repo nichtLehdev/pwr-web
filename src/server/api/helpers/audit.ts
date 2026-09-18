@@ -20,9 +20,8 @@ export type AuditEntry = {
 };
 
 /**
- * Write an audit-log entry. Fire-and-forget by design: an audit failure must
- * never fail the audited mutation, so errors are logged and swallowed.
- * Call without await (`void logAudit(...)`) unless ordering matters.
+ * Fire-and-forget: an audit failure must never fail the audited mutation. Call
+ * without await (`void logAudit(...)`) unless ordering matters.
  */
 export async function logAudit(db: Db, entry: AuditEntry): Promise<void> {
   try {

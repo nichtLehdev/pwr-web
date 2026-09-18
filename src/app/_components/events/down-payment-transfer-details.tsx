@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import QRCode from "qrcode";
 import {
   DEFAULT_INVOICE_ORGANIZATION,
@@ -8,20 +8,62 @@ import {
 } from "@/lib/invoice-document";
 import { buildEpcQrPayload } from "@/lib/epc-qr";
 
-interface DownPaymentTransferDetailsProps {
+type ValueTableRow = { label: ReactNode; value: ReactNode };
+
+/** Setzt eine `ValueTable`-Zeile von der großen Betrags-Stimme auf normalen Fließtext zurück. */
+function PlainValue({
+  className,
+  children,
+}: {
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <span
+      className={`text-ink dark:text-night-text block max-w-full text-right text-base font-normal break-words whitespace-normal normal-case ${className ?? ""}`}
+    >
+      {children}
+    </span>
+  );
+}
+
+/** Überweisungsdaten als Zeilen derselben `ValueTable` wie Anzahlung und Restbetrag. */
+export function transferDetailRows(
+  amount: number,
+  reference: string,
+): ValueTableRow[] {
+  const org = DEFAULT_INVOICE_ORGANIZATION;
+  return [
+    { label: "Empfänger", value: <PlainValue>{org.name}</PlainValue> },
+    {
+      label: "IBAN",
+      value: (
+        <PlainValue className="font-mono break-all">{org.iban}</PlainValue>
+      ),
+    },
+    {
+      label: "BIC",
+      value: <PlainValue className="font-mono">{org.bic}</PlainValue>,
+    },
+    { label: "Betrag", value: formatEuro(amount) },
+    {
+      label: "Verwendungszweck",
+      value: <PlainValue className="break-words">{reference}</PlainValue>,
+    },
+  ];
+}
+
+interface DownPaymentQrFigureProps {
   amount: number;
   /** Verwendungszweck, siehe `downPaymentReference`. */
   reference: string;
 }
 
-/**
- * Bankverbindung, Betrag und Verwendungszweck einer Anzahlung mit GiroCode —
- * im Anmeldeformular und auf der Anmeldungsseite dieselbe Darstellung.
- */
-export function DownPaymentTransferDetails({
+/** GiroCode zur Anzahlung, neben oder unter der `ValueTable` aus `transferDetailRows`. */
+export function DownPaymentQrFigure({
   amount,
   reference,
-}: DownPaymentTransferDetailsProps) {
+}: DownPaymentQrFigureProps) {
   const org = DEFAULT_INVOICE_ORGANIZATION;
   const [qrCode, setQrCode] = useState<string | null>(null);
 
@@ -43,45 +85,19 @@ export function DownPaymentTransferDetails({
     };
   }, [org.name, org.iban, org.bic, amount, reference]);
 
+  if (!qrCode) return null;
+
   return (
-    <div className="dark:border-dark-border flex flex-col gap-4 rounded-lg border border-amber-200 bg-white p-4 sm:flex-row sm:items-start dark:bg-gray-900/40">
-      {/* Auf dem Handy untereinander: nebeneinander ließ die Beschriftung
-          "Verwendungszweck" dem Wert zu wenig Platz, und der Kasten lief über. */}
-      <dl className="grid min-w-0 flex-1 grid-cols-1 gap-x-3 text-sm sm:grid-cols-[auto_1fr] sm:gap-y-1">
-        <dt className="text-gray-500 dark:text-gray-400">Empfänger</dt>
-        <dd className="mb-1.5 min-w-0 text-gray-900 sm:mb-0 dark:text-gray-100">
-          {org.name}
-        </dd>
-        <dt className="text-gray-500 dark:text-gray-400">IBAN</dt>
-        <dd className="mb-1.5 min-w-0 font-mono break-all text-gray-900 sm:mb-0 dark:text-gray-100">
-          {org.iban}
-        </dd>
-        <dt className="text-gray-500 dark:text-gray-400">BIC</dt>
-        <dd className="mb-1.5 min-w-0 font-mono text-gray-900 sm:mb-0 dark:text-gray-100">
-          {org.bic}
-        </dd>
-        <dt className="text-gray-500 dark:text-gray-400">Betrag</dt>
-        <dd className="mb-1.5 min-w-0 font-semibold text-gray-900 sm:mb-0 dark:text-gray-100">
-          {formatEuro(amount)}
-        </dd>
-        <dt className="text-gray-500 dark:text-gray-400">Verwendungszweck</dt>
-        <dd className="mb-1.5 min-w-0 break-words text-gray-900 sm:mb-0 dark:text-gray-100">
-          {reference}
-        </dd>
-      </dl>
-      {qrCode && (
-        <figure className="shrink-0 self-center text-center">
-          {/* eslint-disable-next-line @next/next/no-img-element -- data: URL, nichts zu optimieren */}
-          <img
-            src={qrCode}
-            alt="GiroCode für die Anzahlung"
-            className="h-32 w-32 rounded bg-white p-1"
-          />
-          <figcaption className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            Mit der Banking-App scannen
-          </figcaption>
-        </figure>
-      )}
-    </div>
+    <figure className="mt-4 text-center sm:mt-0 sm:self-center">
+      {/* eslint-disable-next-line @next/next/no-img-element -- data: URL, nichts zu optimieren */}
+      <img
+        src={qrCode}
+        alt="GiroCode für die Anzahlung"
+        className="h-32 w-32"
+      />
+      <figcaption className="text-dark dark:text-night-muted mt-1 text-xs">
+        Mit der Banking-App scannen
+      </figcaption>
+    </figure>
   );
 }

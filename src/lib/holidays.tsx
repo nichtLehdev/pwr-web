@@ -1,8 +1,3 @@
-/**
- * German Public Holidays Utility
- * Calculates German public holidays based on Easter date
- */
-
 import {
   CloudIcon,
   CrossIcon,
@@ -16,6 +11,7 @@ import React from "react";
 import { WrenchIcon } from "lucide-react";
 import { FlagIcon } from "lucide-react";
 import { ChurchIcon } from "lucide-react";
+import { berlinDate, berlinParts, isSameBerlinDay } from "./berlin-time";
 
 const icons = {
   sparkles: <SparkleIcon className="h-4 w-4" />,
@@ -109,10 +105,10 @@ const icons = {
 export interface Holiday {
   name: string;
   date: Date;
-  isNationwide: boolean; // Some holidays are state-specific
+  isNationwide: boolean;
   icon: React.ReactNode;
   states?: string[]; // German states where this holiday is valid (if not nationwide)
-  description?: string; // Short description of the holiday
+  description?: string;
   isLegalHoliday?: boolean; // False for religious/observance days that aren't legal holidays
 }
 
@@ -139,9 +135,21 @@ function getEasterSunday(year: number): Date {
 }
 
 /**
- * Gets all German public holidays for a given year
+ * Jeder Feiertag als 00:00 Uhr Berliner Zeit; ein lokales Mitternachtsdatum
+ * läge östlich von Berlin dort noch auf dem Vortag.
  */
 export function getGermanPublicHolidays(year: number): Holiday[] {
+  return computeGermanPublicHolidays(year).map((holiday) => ({
+    ...holiday,
+    date: berlinDate(
+      holiday.date.getFullYear(),
+      holiday.date.getMonth() + 1,
+      holiday.date.getDate(),
+    ),
+  }));
+}
+
+function computeGermanPublicHolidays(year: number): Holiday[] {
   const holidays: Holiday[] = [];
   const easter = getEasterSunday(year);
 
@@ -392,23 +400,17 @@ export function getGermanPublicHolidays(year: number): Holiday[] {
   return holidays;
 }
 
-/**
- * Checks if a given date is a German public holiday
- */
 export function isGermanPublicHoliday(date: Date): Holiday | null {
-  const year = date.getFullYear();
-  const holidays = getGermanPublicHolidays(year);
-
-  const dateStr = date.toDateString();
+  const holidays = getGermanPublicHolidays(berlinParts(date).year);
   return (
-    holidays.find((holiday) => holiday.date.toDateString() === dateStr) || null
+    holidays.find((holiday) => isSameBerlinDay(holiday.date, date)) || null
   );
 }
 
-/**
- * Gets holidays for a specific month
- */
 export function getHolidaysForMonth(year: number, month: number): Holiday[] {
   const holidays = getGermanPublicHolidays(year);
-  return holidays.filter((holiday) => holiday.date.getMonth() === month);
+  // `month` wie bei `getMonth()` ab 0.
+  return holidays.filter(
+    (holiday) => berlinParts(holiday.date).month === month + 1,
+  );
 }

@@ -27,8 +27,16 @@ import {
   ScrollableModalBody,
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
-
-// Dashboard access is now controlled by permissions
+import { Tag, type TagTone } from "@/app/_components/programmheft/tag";
+import {
+  DOWNLOAD_FILE_TYPE_ICONS,
+  DOWNLOAD_FILE_TYPE_LABELS,
+  DOWNLOAD_UPLOAD_ACCEPT,
+  DOWNLOAD_UPLOAD_FORMATS_LABEL,
+  DOWNLOAD_UPLOAD_MAX_BYTES,
+  DOWNLOAD_UPLOAD_MAX_LABEL,
+  downloadFileTypeForExtension,
+} from "@/lib/download-file-types";
 
 type DashboardDownload =
   RouterOutputs["materials"]["getDownloads"]["downloads"][number];
@@ -43,14 +51,16 @@ const statusLabels: Record<ContentStatus, string> = {
   ARCHIVED: "Archiviert",
 };
 
-const statusColors: Record<ContentStatus, string> = {
-  DRAFT: "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300",
-  PENDING:
-    "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-  APPROVED:
-    "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  REJECTED: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-  ARCHIVED: "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400",
+/**
+ * Spiegelt `content-status.tsx`, derselbe Status muss überall gleich aussehen.
+ * TODO: durch `ContentStatusBadge` aus `content-status.tsx` ersetzen.
+ */
+const statusTone: Record<ContentStatus, TagTone> = {
+  DRAFT: "muted",
+  PENDING: "orange",
+  APPROVED: "ink",
+  REJECTED: "cancelled",
+  ARCHIVED: "muted",
 };
 
 const categoryLabels: Record<DownloadCategory, string> = {
@@ -59,22 +69,6 @@ const categoryLabels: Record<DownloadCategory, string> = {
   UEBUNGEN: "Übungen",
   FORMULARE: "Formulare",
   SONSTIGES: "Sonstiges",
-};
-
-const fileTypeLabels: Record<FileType, string> = {
-  PDF: "PDF",
-  DOCX: "Word",
-  XLSX: "Excel",
-  ZIP: "ZIP",
-  MP3: "Audio",
-};
-
-const fileTypeIcons: Record<FileType, string> = {
-  PDF: "📄",
-  DOCX: "📝",
-  XLSX: "📊",
-  ZIP: "📦",
-  MP3: "🎵",
 };
 
 function formatFileSize(bytes: number | null): string {
@@ -133,8 +127,7 @@ export default function DashboardDownloadsPage() {
 
   const utils = api.useUtils();
 
-  // Die ganze Liste auf einmal: Kategorie, Status und Suche sind jetzt Filter
-  // der Tabelle und müssen über alle Zeilen greifen, nicht nur über eine Seite.
+  // Die ganze Liste auf einmal, damit die Tabellenfilter über alle Zeilen greifen.
   const { data, isLoading } = api.materials.getDownloads.useQuery(
     { page: 1, limit: 100, includeAll: true },
     { enabled: !!profile },
@@ -255,8 +248,10 @@ export default function DashboardDownloadsPage() {
     const file = e instanceof File ? e : e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 50 * 1024 * 1024) {
-      setUploadError("Die Datei ist zu groß. Maximal 50MB erlaubt.");
+    if (file.size > DOWNLOAD_UPLOAD_MAX_BYTES) {
+      setUploadError(
+        `Die Datei ist zu groß. Maximal ${DOWNLOAD_UPLOAD_MAX_LABEL} erlaubt.`,
+      );
       return;
     }
 
@@ -287,12 +282,10 @@ export default function DashboardDownloadsPage() {
       setUploadedFileUrl(data.url);
       setUploadedFileSize(data.size);
 
-      const ext = data.extension.toLowerCase();
-      if (ext === "pdf") setNewFileType("PDF");
-      else if (["doc", "docx"].includes(ext)) setNewFileType("DOCX");
-      else if (["xls", "xlsx"].includes(ext)) setNewFileType("XLSX");
-      else if (ext === "zip") setNewFileType("ZIP");
-      else if (["mp3", "wav", "ogg"].includes(ext)) setNewFileType("MP3");
+      // Dieselbe Endungstabelle wie im Download-Picker.
+      setNewFileType(
+        downloadFileTypeForExtension(data.extension) ?? FileType.PDF,
+      );
 
       if (!newTitle) {
         const baseName = file.name.replace(/\.[^/.]+$/, "");
@@ -367,14 +360,14 @@ export default function DashboardDownloadsPage() {
             return (
               <div className="flex items-center gap-3">
                 <span className="text-2xl">
-                  {fileTypeIcons[download.fileType]}
+                  {DOWNLOAD_FILE_TYPE_ICONS[download.fileType]}
                 </span>
                 <div className="min-w-0">
-                  <p className="dark:text-dark-text font-medium text-gray-900">
+                  <p className="text-ink dark:text-night-text font-medium">
                     {download.title}
                   </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {fileTypeLabels[download.fileType]}
+                  <p className="text-dark dark:text-night-muted text-sm">
+                    {DOWNLOAD_FILE_TYPE_LABELS[download.fileType]}
                     {download.fileSize &&
                       ` • ${formatFileSize(download.fileSize)}`}
                   </p>
@@ -388,11 +381,14 @@ export default function DashboardDownloadsPage() {
           header: "Kategorie",
           meta: { filterVariant: "set" },
         }),
-        column.accessor((download) => fileTypeLabels[download.fileType], {
-          id: "fileType",
-          header: "Typ",
-          meta: { filterVariant: "set" },
-        }),
+        column.accessor(
+          (download) => DOWNLOAD_FILE_TYPE_LABELS[download.fileType],
+          {
+            id: "fileType",
+            header: "Typ",
+            meta: { filterVariant: "set" },
+          },
+        ),
         column.accessor((download) => download.fileSize ?? 0, {
           id: "fileSize",
           header: "Größe",
@@ -405,11 +401,7 @@ export default function DashboardDownloadsPage() {
           header: "Status",
           meta: { filterVariant: "set" },
           cell: ({ row, getValue }) => (
-            <span
-              className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${statusColors[row.original.status]}`}
-            >
-              {getValue()}
-            </span>
+            <Tag tone={statusTone[row.original.status]}>{getValue()}</Tag>
           ),
         }),
         column.accessor(
@@ -432,7 +424,7 @@ export default function DashboardDownloadsPage() {
                   href={download.fileUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="dark:hover:bg-dark-border rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  className="text-dark hover:bg-rule/60 hover:text-ink dark:text-night-muted dark:hover:bg-night-rule dark:hover:text-night-text p-1"
                   title="Herunterladen"
                 >
                   <DownloadIcon className="h-5 w-5" />
@@ -440,7 +432,7 @@ export default function DashboardDownloadsPage() {
                 {isReviewer && (
                   <button
                     onClick={() => openEditModal(download)}
-                    className="dark:hover:bg-dark-border rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                    className="text-dark hover:bg-rule/60 hover:text-ink dark:text-night-muted dark:hover:bg-night-rule dark:hover:text-night-text p-1"
                     title="Bearbeiten"
                   >
                     <EditIcon className="h-5 w-5" />
@@ -455,7 +447,7 @@ export default function DashboardDownloadsPage() {
                       })
                     }
                     disabled={reviewMutation.isPending}
-                    className="rounded p-1 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
+                    className="text-primary-ink hover:bg-primary/10 dark:text-primary dark:hover:bg-primary/10 p-1"
                     title="Freigeben"
                   >
                     <CheckIcon className="h-5 w-5" />
@@ -464,7 +456,7 @@ export default function DashboardDownloadsPage() {
                 {canDelete && (
                   <button
                     onClick={() => setShowDeleteModal(download.id)}
-                    className="rounded p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    className="p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                     title="Löschen"
                   >
                     <TrashIcon className="h-5 w-5" />
@@ -481,8 +473,8 @@ export default function DashboardDownloadsPage() {
 
   if (isPending || profileLoading || permissionsLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
@@ -503,7 +495,7 @@ export default function DashboardDownloadsPage() {
         actions={
           <button
             onClick={() => setShowUploadModal(true)}
-            className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white transition-colors"
+            className="bg-primary hover:bg-primary-dark text-ink semi-condensed inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm font-semibold transition-colors"
           >
             <PlusIcon className="h-4 w-4" />
             Neuer Download
@@ -520,8 +512,8 @@ export default function DashboardDownloadsPage() {
           initialSorting={[{ id: "title", desc: false }]}
           emptyState={
             <>
-              <SearchIcon className="mx-auto h-12 w-12 text-gray-400" />
-              <p className="dark:text-dark-muted mt-4 text-gray-500">
+              <SearchIcon className="text-dark dark:text-night-muted mx-auto h-12 w-12" />
+              <p className="text-dark dark:text-night-muted mt-4">
                 Keine Downloads gefunden
               </p>
             </>
@@ -529,19 +521,17 @@ export default function DashboardDownloadsPage() {
         />
       </DashboardPage>
 
-      {/* Upload Modal */}
       {showUploadModal && (
         <ScrollableModal>
           <ScrollableModalCard maxW="lg">
             <ScrollableModalBody>
-              <h2 className="dark:text-dark-text mb-4 text-xl font-semibold text-gray-900">
+              <h2 className="text-ink dark:text-night-text mb-4 text-xl font-semibold">
                 Neuer Download
               </h2>
 
               <div className="space-y-4">
-                {/* File Upload with Drag & Drop */}
                 <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                  <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
                     Datei
                   </label>
                   <div
@@ -549,88 +539,86 @@ export default function DashboardDownloadsPage() {
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
                     onClick={() => fileInputRef.current?.click()}
-                    className={`relative cursor-pointer rounded-lg border-2 border-dashed p-6 text-center transition-colors ${
+                    className={`relative cursor-pointer border-2 border-dashed p-6 text-center transition-colors ${
                       isDragging
                         ? "border-primary bg-primary/5 dark:bg-primary/10"
                         : uploadedFileUrl
-                          ? "border-green-400 bg-green-50 dark:border-green-600 dark:bg-green-900/20"
-                          : "dark:border-dark-border border-gray-300 hover:border-gray-400 dark:hover:border-gray-500"
+                          ? "border-ink dark:border-night-text bg-rule/25 dark:bg-night-raised"
+                          : "border-ink dark:border-night-text hover:bg-rule/25 dark:hover:bg-night-raised"
                     }`}
                   >
                     <input
                       ref={fileInputRef}
                       type="file"
                       onChange={handleFileUpload}
-                      accept=".pdf,.doc,.docx,.xls,.xlsx,.zip,.mp3,.wav,.ogg"
+                      accept={DOWNLOAD_UPLOAD_ACCEPT}
                       className="hidden"
                     />
                     {isUploading ? (
                       <div className="flex flex-col items-center gap-2">
-                        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
+                        <p className="text-dark dark:text-night-muted text-sm">
                           Lädt hoch...
                         </p>
                       </div>
                     ) : uploadedFileUrl ? (
                       <div className="flex flex-col items-center gap-2">
-                        <CheckIcon className="h-10 w-10 text-green-500" />
-                        <p className="text-sm font-medium text-green-600 dark:text-green-400">
+                        <CheckIcon className="dark:text-night-text text-ink h-10 w-10" />
+                        <p className="dark:text-night-text text-ink text-sm font-medium">
                           Datei hochgeladen
                         </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                        <p className="text-dark dark:text-night-muted text-xs">
                           Klicken oder ziehen, um eine andere Datei auszuwählen
                         </p>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center gap-2">
                         <PlusIcon
-                          className={`h-10 w-10 ${isDragging ? "text-primary" : "text-gray-400"}`}
+                          className={`h-10 w-10 ${isDragging ? "text-primary" : "text-dark dark:text-night-muted"}`}
                         />
-                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <p className="text-ink dark:text-night-text text-sm font-medium">
                           {isDragging
                             ? "Datei hier ablegen"
                             : "Datei hierher ziehen"}
                         </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                        <p className="text-dark dark:text-night-muted text-xs">
                           oder klicken zum Auswählen
                         </p>
-                        <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
-                          PDF, Word, Excel, ZIP, Audio (max. 50MB)
+                        <p className="text-dark dark:text-night-muted mt-1 text-xs">
+                          {DOWNLOAD_UPLOAD_FORMATS_LABEL} (max.{" "}
+                          {DOWNLOAD_UPLOAD_MAX_LABEL})
                         </p>
                       </div>
                     )}
                   </div>
                 </div>
 
-                {/* Title */}
                 <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                  <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
                     Titel *
                   </label>
                   <input
                     type="text"
                     value={newTitle}
                     onChange={(e) => setNewTitle(e.target.value)}
-                    className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
+                    className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper w-full border px-4 py-2"
                   />
                 </div>
 
-                {/* Description */}
                 <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                  <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
                     Beschreibung
                   </label>
                   <textarea
                     value={newDescription}
                     onChange={(e) => setNewDescription(e.target.value)}
                     rows={2}
-                    className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
+                    className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper w-full border px-4 py-2"
                   />
                 </div>
 
-                {/* Category */}
                 <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                  <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
                     Kategorie
                   </label>
                   <Select
@@ -638,7 +626,6 @@ export default function DashboardDownloadsPage() {
                     onChange={(e) =>
                       setNewCategory(e.target.value as DownloadCategory)
                     }
-                    className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
                   >
                     {Object.entries(categoryLabels).map(([value, label]) => (
                       <option key={value} value={value}>
@@ -648,9 +635,8 @@ export default function DashboardDownloadsPage() {
                   </Select>
                 </div>
 
-                {/* Tags */}
                 <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                  <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
                     Tags
                   </label>
                   <input
@@ -658,9 +644,9 @@ export default function DashboardDownloadsPage() {
                     value={newTags}
                     onChange={(e) => setNewTags(e.target.value)}
                     placeholder="Kommagetrennte Tags, z.B. noten, ostern, chor"
-                    className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
+                    className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper w-full border px-4 py-2"
                   />
-                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                  <p className="text-dark dark:text-night-muted mt-1 text-xs">
                     Mehrere Tags mit Komma trennen
                   </p>
                 </div>
@@ -677,7 +663,7 @@ export default function DashboardDownloadsPage() {
                     resetUploadForm();
                     setShowUploadModal(false);
                   }}
-                  className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-border rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  className="border-ink dark:border-night-text text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised min-h-11 border px-4 py-2 text-sm font-semibold"
                 >
                   Abbrechen
                 </button>
@@ -686,7 +672,7 @@ export default function DashboardDownloadsPage() {
                   disabled={
                     !uploadedFileUrl || !newTitle || createMutation.isPending
                   }
-                  className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                  className="bg-primary hover:bg-primary-dark text-ink min-h-11 px-4 py-2 text-sm font-semibold disabled:opacity-50"
                 >
                   {createMutation.isPending ? "Speichern..." : "Speichern"}
                 </button>
@@ -696,15 +682,14 @@ export default function DashboardDownloadsPage() {
         </ScrollableModal>
       )}
 
-      {/* Delete Confirmation Modal */}
       {showDeleteModal && (
         <ScrollableModal>
           <ScrollableModalCard maxW="md">
             <ScrollableModalBody>
-              <h3 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+              <h3 className="text-ink dark:text-night-text mb-4 text-lg font-semibold">
                 Download löschen
               </h3>
-              <p className="dark:text-dark-muted mb-4 text-gray-600">
+              <p className="text-dark dark:text-night-muted mb-4">
                 Bist du sicher, dass du diesen Download löschen möchtest? Diese
                 Aktion kann nicht rückgängig gemacht werden.
               </p>
@@ -713,14 +698,14 @@ export default function DashboardDownloadsPage() {
               <div className="flex justify-end gap-3">
                 <button
                   onClick={() => setShowDeleteModal(null)}
-                  className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-border rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  className="border-ink dark:border-night-text text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised min-h-11 border px-4 py-2 text-sm font-semibold"
                 >
                   Abbrechen
                 </button>
                 <button
                   onClick={() => deleteMutation.mutate({ id: showDeleteModal })}
                   disabled={deleteMutation.isPending}
-                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                  className="min-h-11 bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
                 >
                   {deleteMutation.isPending ? "Löschen..." : "Löschen"}
                 </button>
@@ -730,45 +715,41 @@ export default function DashboardDownloadsPage() {
         </ScrollableModal>
       )}
 
-      {/* Edit Modal */}
       {showEditModal && (
         <ScrollableModal>
           <ScrollableModalCard maxW="lg">
             <ScrollableModalBody>
-              <h2 className="dark:text-dark-text mb-4 text-xl font-semibold text-gray-900">
+              <h2 className="text-ink dark:text-night-text mb-4 text-xl font-semibold">
                 Download bearbeiten
               </h2>
 
               <div className="space-y-4">
-                {/* Title */}
                 <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                  <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
                     Titel *
                   </label>
                   <input
                     type="text"
                     value={editTitle}
                     onChange={(e) => setEditTitle(e.target.value)}
-                    className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
+                    className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper w-full border px-4 py-2"
                   />
                 </div>
 
-                {/* Description */}
                 <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                  <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
                     Beschreibung
                   </label>
                   <textarea
                     value={editDescription}
                     onChange={(e) => setEditDescription(e.target.value)}
                     rows={3}
-                    className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
+                    className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper w-full border px-4 py-2"
                   />
                 </div>
 
-                {/* Category */}
                 <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                  <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
                     Kategorie
                   </label>
                   <Select
@@ -776,7 +757,6 @@ export default function DashboardDownloadsPage() {
                     onChange={(e) =>
                       setEditCategory(e.target.value as DownloadCategory)
                     }
-                    className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
                   >
                     {Object.entries(categoryLabels).map(([value, label]) => (
                       <option key={value} value={value}>
@@ -786,9 +766,8 @@ export default function DashboardDownloadsPage() {
                   </Select>
                 </div>
 
-                {/* Tags */}
                 <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                  <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
                     Tags
                   </label>
                   <input
@@ -796,25 +775,24 @@ export default function DashboardDownloadsPage() {
                     value={editTags}
                     onChange={(e) => setEditTags(e.target.value)}
                     placeholder="Kommagetrennte Tags, z.B. noten, ostern, chor"
-                    className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
+                    className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper w-full border px-4 py-2"
                   />
-                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                  <p className="text-dark dark:text-night-muted mt-1 text-xs">
                     Mehrere Tags mit Komma trennen
                   </p>
                 </div>
 
-                {/* Public Toggle */}
                 <div className="flex items-center gap-3">
                   <input
                     type="checkbox"
                     id="editIsPublic"
                     checked={editIsPublic}
                     onChange={(e) => setEditIsPublic(e.target.checked)}
-                    className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                    className="text-primary border-ink dark:border-night-text h-4 w-4 border"
                   />
                   <label
                     htmlFor="editIsPublic"
-                    className="dark:text-dark-text text-sm font-medium text-gray-700"
+                    className="text-ink dark:text-night-text text-sm font-medium"
                   >
                     Öffentlich sichtbar
                   </label>
@@ -829,14 +807,14 @@ export default function DashboardDownloadsPage() {
               <div className="flex justify-end gap-3">
                 <button
                   onClick={() => setShowEditModal(null)}
-                  className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-border rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  className="border-ink dark:border-night-text text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised min-h-11 border px-4 py-2 text-sm font-semibold"
                 >
                   Abbrechen
                 </button>
                 <button
                   onClick={handleUpdate}
                   disabled={!editTitle || updateMutation.isPending}
-                  className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                  className="bg-primary hover:bg-primary-dark text-ink min-h-11 px-4 py-2 text-sm font-semibold disabled:opacity-50"
                 >
                   {updateMutation.isPending ? "Speichern..." : "Speichern"}
                 </button>

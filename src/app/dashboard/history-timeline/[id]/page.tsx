@@ -9,7 +9,8 @@ import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 import { DashboardPage } from "@/app/_components/dashboard";
-// Dashboard access is now controlled by permissions
+import { Tag } from "@/app/_components/programmheft/tag";
+import { formatBerlin } from "@/lib/berlin-time";
 
 export default function HistoryEventDetailPage() {
   const router = useRouter();
@@ -62,8 +63,8 @@ export default function HistoryEventDetailPage() {
 
   if (sessionLoading || profileLoading || eventLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
@@ -74,14 +75,14 @@ export default function HistoryEventDetailPage() {
 
   if (!historyEvent) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <h1 className="dark:text-dark-text text-xl font-semibold text-gray-900">
+          <h1 className="text-ink dark:text-night-text text-xl font-semibold">
             Ereignis nicht gefunden
           </h1>
           <Link
             href="/dashboard/history-timeline"
-            className="text-primary mt-4 inline-block hover:underline"
+            className="link-ink mt-4 inline-block"
           >
             Zurück zur Übersicht
           </Link>
@@ -110,7 +111,7 @@ export default function HistoryEventDetailPage() {
       actions={
         <Link
           href={`/dashboard/history-timeline/${eventId}/edit`}
-          className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
+          className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-night-text dark:text-night dark:hover:bg-primary dark:hover:text-ink inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm font-semibold transition-colors"
         >
           <svg
             className="h-4 w-4"
@@ -130,10 +131,9 @@ export default function HistoryEventDetailPage() {
       }
       maxWidth="7xl"
     >
-      {/* Image and Category Badge */}
       <div className="mb-6 flex items-center gap-4">
         {historyEvent.image?.url ? (
-          <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg">
+          <div className="border-rule dark:border-night-rule relative h-20 w-20 shrink-0 overflow-hidden border">
             <Image
               src={historyEvent.image.url}
               alt={historyEvent.imageAlt || historyEvent.title}
@@ -142,7 +142,7 @@ export default function HistoryEventDetailPage() {
             />
           </div>
         ) : (
-          <div className="bg-primary flex h-20 w-20 shrink-0 items-center justify-center rounded-lg text-white">
+          <div className="bg-primary text-ink flex h-20 w-20 shrink-0 items-center justify-center">
             <svg
               className="h-10 w-10"
               fill="none"
@@ -159,31 +159,29 @@ export default function HistoryEventDetailPage() {
           </div>
         )}
         {historyEvent.category && (
-          <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
+          <Tag tone="inverse">
             {categoryLabels[historyEvent.category] || historyEvent.category}
-          </span>
+          </Tag>
         )}
       </div>
 
-      {/* Description */}
       {historyEvent.description && (
-        <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-3 text-lg font-semibold text-gray-900">
+        <div className="border-rule dark:border-night-rule mb-6 border p-6">
+          <h2 className="condensed text-ink dark:text-night-text mb-3 text-lg font-bold">
             Beschreibung
           </h2>
-          <p className="dark:text-dark-muted whitespace-pre-wrap text-gray-600">
+          <p className="text-dark dark:text-night-muted whitespace-pre-wrap">
             {historyEvent.description}
           </p>
         </div>
       )}
 
-      {/* Image */}
       {historyEvent.image?.url && (
-        <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-3 text-lg font-semibold text-gray-900">
+        <div className="border-rule dark:border-night-rule mb-6 border p-6">
+          <h2 className="condensed text-ink dark:text-night-text mb-3 text-lg font-bold">
             Bild
           </h2>
-          <div className="relative aspect-video w-full overflow-hidden rounded-lg">
+          <div className="border-rule dark:border-night-rule relative aspect-video w-full overflow-hidden border">
             <Image
               src={historyEvent.image.url}
               alt={historyEvent.imageAlt || historyEvent.title}
@@ -192,34 +190,30 @@ export default function HistoryEventDetailPage() {
             />
           </div>
           {historyEvent.imageAlt && (
-            <p className="dark:text-dark-muted mt-2 text-sm text-gray-500">
+            <p className="text-dark dark:text-night-muted mt-2 text-sm">
               {historyEvent.imageAlt}
             </p>
           )}
         </div>
       )}
 
-      {/* Details Grid */}
       <div className="mb-6 grid gap-6 sm:grid-cols-2">
-        {/* Basic Info */}
-        <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+        <div className="border-rule dark:border-night-rule border p-6">
+          <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
             Informationen
           </h2>
           <dl className="space-y-3">
             <div>
-              <dt className="dark:text-dark-muted text-sm text-gray-500">
-                Jahr
-              </dt>
-              <dd className="dark:text-dark-text font-medium text-gray-900">
+              <dt className="text-dark dark:text-night-muted text-sm">Jahr</dt>
+              <dd className="text-ink dark:text-night-text font-medium">
                 {historyEvent.year}
               </dd>
             </div>
             <div>
-              <dt className="dark:text-dark-muted text-sm text-gray-500">
+              <dt className="text-dark dark:text-night-muted text-sm">
                 Kategorie
               </dt>
-              <dd className="dark:text-dark-text font-medium text-gray-900">
+              <dd className="text-ink dark:text-night-text font-medium">
                 {historyEvent.category
                   ? categoryLabels[historyEvent.category] ||
                     historyEvent.category
@@ -227,55 +221,45 @@ export default function HistoryEventDetailPage() {
               </dd>
             </div>
             <div>
-              <dt className="dark:text-dark-muted text-sm text-gray-500">
+              <dt className="text-dark dark:text-night-muted text-sm">
                 Sortierreihenfolge
               </dt>
-              <dd className="dark:text-dark-text font-medium text-gray-900">
+              <dd className="text-ink dark:text-night-text font-medium">
                 {historyEvent.sortOrder}
               </dd>
             </div>
           </dl>
         </div>
 
-        {/* Metadata */}
-        <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+        <div className="border-rule dark:border-night-rule border p-6">
+          <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
             Details
           </h2>
           <dl className="space-y-3">
             <div>
-              <dt className="dark:text-dark-muted text-sm text-gray-500">
+              <dt className="text-dark dark:text-night-muted text-sm">
                 Erstellt am
               </dt>
-              <dd className="dark:text-dark-text font-medium text-gray-900">
-                {new Date(historyEvent.createdAt).toLocaleDateString("de-DE", {
-                  day: "2-digit",
-                  month: "long",
-                  year: "numeric",
-                })}
+              <dd className="text-ink dark:text-night-text font-medium">
+                {formatBerlin(historyEvent.createdAt, "datumLangZweistellig")}
               </dd>
             </div>
             <div>
-              <dt className="dark:text-dark-muted text-sm text-gray-500">
+              <dt className="text-dark dark:text-night-muted text-sm">
                 Zuletzt aktualisiert
               </dt>
-              <dd className="dark:text-dark-text font-medium text-gray-900">
-                {new Date(historyEvent.updatedAt).toLocaleDateString("de-DE", {
-                  day: "2-digit",
-                  month: "long",
-                  year: "numeric",
-                })}
+              <dd className="text-ink dark:text-night-text font-medium">
+                {formatBerlin(historyEvent.updatedAt, "datumLangZweistellig")}
               </dd>
             </div>
           </dl>
         </div>
       </div>
 
-      {/* Actions */}
       <div className="mt-6 flex flex-wrap gap-3">
         <Link
           href="/dashboard/history-timeline"
-          className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+          className="border-ink dark:border-night-text text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised inline-flex min-h-11 items-center gap-2 border px-4 py-2 transition-colors"
         >
           <svg
             className="h-4 w-4"

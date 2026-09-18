@@ -20,6 +20,7 @@ import {
 } from "@/app/_components/ui/scrollable-modal";
 import { CropIcon, DownloadIcon } from "lucide-react";
 import ImageCropEditor from "@/app/_components/posts/image-crop-editor";
+import { ContentStatusBadge } from "@/app/_components/dashboard/content-status";
 import { splitMediaTags } from "@/lib/media-tags";
 import { FocalPointPicker } from "./focal-point-picker";
 import { useMediaDownload } from "./use-media-download";
@@ -29,16 +30,10 @@ import {
   formatFileSize,
   getMimeTypeIcon,
   getMimeTypeLabel,
-  statusColors,
-  statusLabels,
   type MediaItem,
 } from "./media-shared";
 
-/**
- * Der Formularzustand, wie ihn der Dialog beim Öffnen aus dem Medium zieht.
- * Strings bleiben Strings — die Umwandlung leerer Felder zu `null` passiert
- * erst beim Speichern, damit die Eingabe sich normal bedienen lässt.
- */
+/** Leere Felder werden erst beim Speichern zu `null`, damit die Eingabe normal bedienbar bleibt. */
 type EditForm = {
   name: string;
   alt: string;
@@ -82,16 +77,10 @@ export function MediaEditModal({
   const [error, setError] = useState("");
   const [isCropping, setIsCropping] = useState(false);
 
-  /**
-   * Der Zuschnitt läuft *über* diesem Dialog, nicht an seiner Stelle: „Abbrechen“
-   * im Zuschneide-Fenster führt damit zurück ins Formular, und die bereits
-   * getippten Angaben stehen noch da.
-   */
+  /** Der Zuschnitt läuft *über* diesem Dialog, damit „Abbrechen“ die getippten Angaben behält. */
   const { replace, isBusy: isReplacing } = useReplaceMediaFile(() => {
     setIsCropping(false);
-    // Der Server verwirft den Fokuspunkt beim Ersetzen — er zeigte auf einen
-    // Ausschnitt, den es nicht mehr gibt. Das Formular muss mitziehen, sonst
-    // schriebe „Speichern“ den alten Punkt wieder zurück.
+    // Der Server verwirft den Fokuspunkt beim Ersetzen; sonst schriebe „Speichern“ den alten zurück.
     setForm((current) => ({
       ...current,
       focalPointX: null,
@@ -127,9 +116,7 @@ export function MediaEditModal({
     updateMutation.mutate({
       id: media.id,
       name,
-      // `|| null` statt `|| undefined`: ein geleertes Feld soll die Spalte
-      // leeren. Mit `undefined` ließe Prisma den alten Wert stehen, und der
-      // Dialog meldete eine Änderung, die nie stattgefunden hat.
+      // `|| null`, nicht `|| undefined`: mit `undefined` ließe Prisma den alten Wert stehen.
       alt: form.alt.trim() || null,
       title: form.title.trim() || null,
       caption: form.caption.trim() || null,
@@ -147,21 +134,14 @@ export function MediaEditModal({
       <ScrollableModalCard maxW="4xl">
         <ScrollableModalHeader>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="dark:text-dark-text text-xl font-semibold text-gray-900">
+            <h2 className="text-ink dark:text-night-text text-xl font-semibold">
               Medium bearbeiten
             </h2>
-            <span
-              className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${statusColors[media.status]}`}
-            >
-              {statusLabels[media.status]}
-            </span>
+            <ContentStatusBadge status={media.status} />
           </div>
         </ScrollableModalHeader>
 
         <ScrollableModalBody>
-          {/* Links das Bild samt Werkzeugen, rechts die Metadaten: das
-              Formular ist der eigentliche Zweck des Dialogs und bekommt die
-              Spalte, die nicht scrollen muss. */}
           <div className="grid gap-6 md:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
             <div className="space-y-3">
               {isImage ? (
@@ -179,7 +159,7 @@ export function MediaEditModal({
                   }
                 />
               ) : (
-                <div className="dark:border-dark-border flex aspect-video items-center justify-center rounded-lg border border-gray-200 bg-gray-100 text-5xl dark:bg-gray-800">
+                <div className="border-rule dark:border-night-rule bg-rule/25 dark:bg-night-raised flex aspect-video items-center justify-center border text-5xl">
                   {getMimeTypeIcon(media.mimeType)}
                 </div>
               )}
@@ -207,7 +187,7 @@ export function MediaEditModal({
                 </Button>
               </div>
 
-              <dl className="dark:text-dark-muted space-y-1 text-xs text-gray-500">
+              <dl className="text-dark dark:text-night-muted space-y-1 text-xs">
                 <div className="flex justify-between gap-4">
                   <dt>Typ</dt>
                   <dd>{getMimeTypeLabel(media.mimeType)}</dd>
@@ -251,7 +231,7 @@ export function MediaEditModal({
                   onChange={(event) => set("name", event.target.value)}
                   error={!form.name.trim()}
                 />
-                <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                <p className="text-dark dark:text-night-muted mt-1 text-xs">
                   Interne Bezeichnung in der Medienübersicht und im Download.
                 </p>
               </div>
@@ -333,12 +313,14 @@ export function MediaEditModal({
                   checked={form.isPublic}
                   onChange={(event) => set("isPublic", event.target.checked)}
                 />
-                <Label htmlFor="mediaIsPublic" className="mb-0">
-                  Öffentlich sichtbar
-                </Label>
+                <Label htmlFor="mediaIsPublic">Öffentlich sichtbar</Label>
               </div>
 
-              {error && <p className="text-sm text-red-600">{error}</p>}
+              {error && (
+                <p className="text-sm text-red-700 dark:text-red-400">
+                  {error}
+                </p>
+              )}
             </div>
           </div>
         </ScrollableModalBody>

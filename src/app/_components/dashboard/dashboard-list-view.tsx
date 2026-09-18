@@ -30,11 +30,7 @@ const VIEWS: {
   },
 ];
 
-/**
- * Kartenraster oder Tabelle — die Wahl bleibt pro Liste gespeichert, weil sie
- * zur Arbeitsweise gehört und nicht zur einzelnen Sitzung: wer die Termine
- * lieber als Tabelle pflegt, will sie beim nächsten Aufruf wieder so sehen.
- */
+/** Kartenraster oder Tabelle, pro Liste dauerhaft gespeichert: die Wahl gehört zur Arbeitsweise. */
 export function useDashboardListView(
   storageKey: string,
   fallback: DashboardListView = "cards",
@@ -46,7 +42,12 @@ export function useDashboardListView(
   );
 }
 
-/** Umschalter zwischen Kartenraster und Tabelle. */
+// Tinte auf Orange im aktiven Zustand, wie beim Sidebar-Pendant — nie Orange
+// als Schriftfarbe.
+const AKTIV = "on-orange bg-primary text-ink";
+const RUHEND =
+  "text-dark dark:text-night-muted hover:bg-rule/60 hover:text-ink dark:hover:bg-night-rule dark:hover:text-night-text";
+
 export function DashboardListViewToggle({
   view,
   onChange,
@@ -61,7 +62,7 @@ export function DashboardListViewToggle({
       role="group"
       aria-label="Ansicht"
       className={cn(
-        "dark:border-dark-border inline-flex shrink-0 rounded-md border border-gray-200/90 p-0.5",
+        "border-rule dark:border-night-rule inline-flex shrink-0 border p-0.5",
         className,
       )}
     >
@@ -76,10 +77,8 @@ export function DashboardListViewToggle({
             aria-pressed={active}
             title={entry.title}
             className={cn(
-              "inline-flex min-w-0 shrink-0 items-center gap-1.5 rounded px-2.5 py-1.5 text-xs font-medium transition-colors sm:text-sm",
-              active
-                ? "dark:bg-dark-surface dark:text-dark-text bg-white text-gray-900 shadow-sm"
-                : "text-gray-500 hover:text-gray-800 dark:hover:text-gray-200",
+              "semi-condensed inline-flex min-h-11 min-w-0 shrink-0 items-center gap-1.5 px-2.5 text-xs font-semibold whitespace-nowrap transition-colors sm:text-sm",
+              active ? AKTIV : RUHEND,
             )}
           >
             <Icon className="h-4 w-4" />

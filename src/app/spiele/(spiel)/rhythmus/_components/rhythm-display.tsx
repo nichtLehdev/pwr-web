@@ -30,27 +30,46 @@ export interface RhythmDisplayProps {
   bars: number;
   /** Wo Takte wechseln (Index der ersten Note des neuen Takts); für Taktstriche. */
   barStartEventIndices?: number[];
-  /**
-   * Optional (Ergebnis-Phase): Urteil je Event-Index — färbt Notenköpfe
-   * grün/gelb/rot. Pausen bleiben `undefined`; ohne Prop ändert sich nichts.
-   */
+  /** Ergebnis-Phase: Urteil je Event-Index, färbt Notenköpfe (Pausen `undefined`). */
   eventVerdicts?: (OnsetVerdict | undefined)[];
+  /** `play`: Notenzeile füllt den Platz; `review`: kleiner, neben der Auswertung. */
+  variant?: "play" | "review";
 }
+
+/**
+ * Höhe des Notenkastens; das Spielmaß nutzt auch `rhythm-display-loader.tsx`.
+ * `svh` statt `dvh`, sonst zeichnet die ein-/ausfahrende Adresszeile das Bild mitten im Spiel neu.
+ */
+export const NOTATION_BOX_PLAY =
+  "h-[clamp(10rem,26svh,15rem)] md:h-[clamp(12rem,32svh,20rem)]";
+export const NOTATION_BOX_REVIEW =
+  "h-[clamp(8rem,17svh,10rem)] md:h-[clamp(9rem,20svh,13rem)]";
+
+/** Logische Zeichenfläche. Die viewBox zieht sie danach auf die Tinte zusammen. */
+const LOGICAL_HEIGHT = 300;
+const STAVE_Y = 60;
+/** Obergrenze, damit bei sehr wenig Tinte (eine Ganze) nichts plakatgroß wird. */
+const MAX_SCALE = 2.0;
+/**
+ * Tintenhöhe einer Zeile bei Maßstab 1. Zu klein angesetzt, wird das Bild über
+ * die Höhe eingepasst und steht schmaler als die Satzbreite.
+ */
+const INK_HEIGHT = 210;
 
 function timeSigString(ts: TimeSignature): string {
   return `${ts.numerator}/${ts.denominator}`;
 }
 
-/** Urteil → Notenfarbe (getrennt für Hell/Dunkel wegen Kontrast). */
+/** Kein Grün: getroffen ist Tinte, knapp daneben Messing, daneben Rot. */
 function verdictColor(verdict: OnsetVerdict, dark: boolean): string {
   switch (verdict) {
     case "good":
-      return dark ? "#34d399" : "#059669";
+      return dark ? "#ecebe8" : "#1c1d1f";
     case "ok":
-      return dark ? "#fbbf24" : "#b45309";
+      return dark ? "#faa619" : "#a55800";
     case "off":
     case "missed":
-      return dark ? "#f87171" : "#dc2626";
+      return dark ? "#f87171" : "#b91c1c";
   }
 }
 
@@ -77,6 +96,7 @@ export function RhythmDisplay({
   bars,
   barStartEventIndices = [],
   eventVerdicts,
+  variant = "play",
 }: RhythmDisplayProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { resolvedTheme } = useTheme();
@@ -88,12 +108,19 @@ export function RhythmDisplay({
 
     await ensureVexFlowFonts();
 
-    const containerW = Math.max(280, el.clientWidth);
-    /** Schmalere Notenlinie + kleinere Abstände, damit lange Level auf dem Handy passen. */
-    const compact = containerW < 640;
-    /** Genug Höhe: Pausen-Fähnchen/-Hälse ragen oft unter die Linie; zu wenig → „fehlende“ Pausen. */
-    const height = compact ? (containerW < 400 ? 220 : 232) : 280;
+    const boxW = Math.max(240, el.clientWidth);
+    const boxH = Math.max(120, el.clientHeight);
     const colors = notationColors(dark);
+
+    /**
+     * Die logische Breite steuert nur die Notendichte, die Größe entscheidet der Platz.
+     * Die Zeile wächst nur bis zu einem Maß mit (1.8); der Rest bleibt Luft.
+     */
+    const targetScale = Math.min(1.8, boxH / INK_HEIGHT);
+    const minLogicalW = Math.max(300, 60 + events.length * 22);
+    const logicalW = Math.max(minLogicalW, Math.round(boxW / targetScale));
+    /** Enge Metriken erst, wenn die Zeile logisch wirklich schmal wird. */
+    const compact = logicalW < 560;
 
     const compactMetrics = compact
       ? {
@@ -107,7 +134,6 @@ export function RhythmDisplay({
 
     withCompactMetrics(compactMetrics, () => {
       const marginX = compact ? 6 : 12;
-      const staveY = compact ? 30 : 36;
       const tsStr = timeSigString(timeSignature);
       const beamGroups = Beam.getDefaultBeamGroups(tsStr);
 
@@ -149,9 +175,7 @@ export function RhythmDisplay({
       };
 
       const built = buildStemmables();
-      /** Feste Notenlinien-Breite = verfügbare Breite — kein Verbreitern, kein horizontales Scrollen. */
-      const baseInner = containerW - marginX * 2;
-      const staveWidth = Math.max(120, baseInner);
+      const staveWidth = Math.max(120, logicalW - marginX * 2);
 
       const formatterOpts = {
         maxIterations: compact ? 22 : 28,
@@ -163,18 +187,13 @@ export function RhythmDisplay({
 
       el.innerHTML = "";
 
-      const svgWidth = staveWidth + marginX * 2;
       const renderer = new Renderer(el, RendererBackends.SVG);
-      renderer.resize(svgWidth, height);
+      renderer.resize(logicalW, LOGICAL_HEIGHT);
       const ctx = renderer.getContext();
 
-      const stave = new Stave(marginX, staveY, staveWidth)
+      const stave = new Stave(marginX, STAVE_Y, staveWidth)
         .addClef("treble")
         .addTimeSignature(tsStr);
-
-      if (dark) {
-        stave.setStyle({ fillStyle: colors.stave, strokeStyle: colors.stave });
-      }
 
       const voice = new Voice({
         numBeats: timeSignature.numerator * bars,
@@ -191,6 +210,11 @@ export function RhythmDisplay({
         .joinVoices([voice])
         .formatToStave([voice], stave, { context: ctx, stave });
 
+      /* Farbe an den Kontext, nicht an den Stave: Notenlinien, Schlüssel, Taktart,
+       * Balken und Triolen fallen sonst auf den Kontext-Standard reines Schwarz zurück. */
+      ctx.setFillStyle(colors.stave);
+      ctx.setStrokeStyle(colors.stave);
+
       stave.draw();
       voice.draw(ctx, stave);
 
@@ -201,12 +225,6 @@ export function RhythmDisplay({
       beams.forEach((b) => {
         b.setContext(ctx).draw();
       });
-
-      const svg = el.querySelector("svg");
-      if (svg) {
-        svg.setAttribute("overflow", "visible");
-        (svg as SVGSVGElement).style.overflow = "visible";
-      }
 
       /** Taktstriche zwischen mehreren Takten (eine lange Voice = sonst kein Strich). */
       const stroke = colors.barline;
@@ -228,8 +246,58 @@ export function RhythmDisplay({
           ctx.restore();
         }
       }
+
+      /** Erst zeichnen, dann die viewBox auf die tatsächliche Tinte ziehen. */
+      const svg = el.querySelector("svg");
+      if (svg instanceof SVGSVGElement) {
+        let vbX = 0;
+        let vbY = 0;
+        let vbW = logicalW;
+        let vbH = LOGICAL_HEIGHT;
+        try {
+          const bb = svg.getBBox();
+          if (bb.width > 0 && bb.height > 0) {
+            const padX = 4;
+            const padY = 8;
+            vbX = bb.x - padX;
+            vbY = bb.y - padY;
+            vbW = bb.width + padX * 2;
+            vbH = bb.height + padY * 2;
+          }
+        } catch {
+          /* Ohne getBBox bleibt die volle Zeichenfläche stehen. */
+        }
+
+        /** Nur aufziehen, nie beschneiden: der Deckel vergrößert die viewBox. */
+        const fit = Math.min(boxW / vbW, boxH / vbH);
+        if (fit > MAX_SCALE) {
+          const cx = vbX + vbW / 2;
+          const cy = vbY + vbH / 2;
+          vbW = boxW / MAX_SCALE;
+          vbH = boxH / MAX_SCALE;
+          vbX = cx - vbW / 2;
+          vbY = cy - vbH / 2;
+        }
+
+        svg.setAttribute("viewBox", `${vbX} ${vbY} ${vbW} ${vbH}`);
+        svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+        svg.setAttribute("width", "100%");
+        svg.setAttribute("height", "100%");
+        svg.style.width = "100%";
+        svg.style.height = "100%";
+        svg.style.display = "block";
+      }
     });
-  }, [barStartEventIndices, bars, dark, events, eventVerdicts, timeSignature]);
+  }, [
+    barStartEventIndices,
+    bars,
+    dark,
+    events,
+    eventVerdicts,
+    timeSignature,
+    // `variant` steht bewusst nicht in der Liste: `draw` liest die Kastenhöhe
+    // aus dem DOM, und den Wechsel meldet der ResizeObserver unten.
+  ]);
 
   useEffect(() => {
     void draw();
@@ -238,16 +306,19 @@ export function RhythmDisplay({
   useEffect(() => {
     const el = containerRef.current;
     if (!el || typeof ResizeObserver === "undefined") return;
-    /** Entprellt + nur bei Breitenänderung — mobile URL-Bar ändert nur die Höhe. */
+    /** Entprellt; Höhenänderungen zählen erst ab 8px. */
     let lastWidth = el.clientWidth;
+    let lastHeight = el.clientHeight;
     let timer: number | null = null;
     const ro = new ResizeObserver(() => {
       const width = el.clientWidth;
-      if (width === lastWidth) return;
+      const height = el.clientHeight;
+      if (width === lastWidth && Math.abs(height - lastHeight) < 8) return;
       if (timer !== null) window.clearTimeout(timer);
       timer = window.setTimeout(() => {
         timer = null;
         lastWidth = el.clientWidth;
+        lastHeight = el.clientHeight;
         void draw();
       }, 100);
     });
@@ -259,16 +330,14 @@ export function RhythmDisplay({
   }, [draw]);
 
   return (
+    // Das SVG passt sich über seine viewBox ein, daher kein horizontales Scrollen.
     <div
-      className="border-dark-border/40 dark:border-dark-border dark:bg-dark-surface w-full overflow-y-visible rounded-lg border bg-white p-2 pb-4 md:p-3"
+      ref={containerRef}
       role="img"
       aria-label={`Rhythmus-Notation: ${events.length} Symbole im ${timeSignature.numerator}/${timeSignature.denominator}-Takt`}
-    >
-      {/* Feste SVG-Breite = Container; kein horizontales Scrollen (VexFlow packt in die Notenlinien). */}
-      <div
-        ref={containerRef}
-        className="min-h-[220px] w-full max-w-full overflow-x-hidden sm:min-h-[232px] md:min-h-[280px]"
-      />
-    </div>
+      className={`w-full max-w-full overflow-hidden ${
+        variant === "review" ? NOTATION_BOX_REVIEW : NOTATION_BOX_PLAY
+      }`}
+    />
   );
 }

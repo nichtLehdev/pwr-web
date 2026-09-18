@@ -27,11 +27,9 @@ import {
 } from "../helpers/invoice-pdf";
 import { invoiceTotal, type InvoiceLineItem } from "@/lib/invoice-document";
 import { invoiceOpenAmount } from "@/lib/invoice-payment";
+import { berlinDate } from "@/lib/berlin-time";
 
-/**
- * Everything the PDF renderer needs, in one reusable include. Both storno
- * partners are pulled in so the correction notes can name the other document.
- */
+/** Includes both storno partners so the correction notes can name the other document. */
 const invoiceForPdfInclude = {
   course: {
     select: {
@@ -178,13 +176,8 @@ async function loadInvoiceForWrite(
 }
 
 /**
- * Load an invoice for booking a payment.
- *
- * Weiter gefasst als {@link loadInvoiceForWrite}: einen Zahlungseingang zu
- * verbuchen ist Buchhaltung, kein Ausstellen eines Dokuments. Wer bisher
- * Anmeldungen als bezahlt markieren durfte, kann das weiterhin — sonst hätte
- * der Umzug des Zahlungsstatus an die Rechnung dieser Rolle die Aufgabe
- * genommen.
+ * Weiter gefasst als {@link loadInvoiceForWrite}: Zahlungen verbuchen ist Buchhaltung, kein
+ * Ausstellen; wer Anmeldungen als bezahlt markieren darf, darf es auch hier.
  */
 async function loadInvoiceForPayment(
   db: PrismaClient,
@@ -221,11 +214,7 @@ async function loadInvoiceForPayment(
   return { invoice };
 }
 
-/**
- * Load an invoice for reading. Anyone who may work on it, plus holders of
- * invoices.view — the archive links straight to this page, so a bookkeeper who
- * can list an invoice must also be able to open it (read-only).
- */
+/** Also open to invoices.view holders (read-only), since the archive links straight here. */
 async function loadInvoiceForRead(
   db: PrismaClient,
   invoiceId: string,
@@ -310,19 +299,14 @@ function toLineItems(
   }));
 }
 
-/**
- * Line items go into a Json column. Prisma's InputJsonValue does not accept an
- * interface array directly (no index signature), so the shape is widened here
- * in one place instead of casting at every call site.
- */
+/** Prisma's InputJsonValue rejects interface arrays (no index signature), so widen once here. */
 function lineItemsAsJson(items: InvoiceLineItem[]): Prisma.InputJsonValue {
   return items as unknown as Prisma.InputJsonValue;
 }
 
 /**
- * Keep the denormalized invoice columns on the registration in step with its
- * newest published invoice. The participants list, its search and the payment
- * dialog all read those fields.
+ * Keeps the registration's denormalized invoice columns in step with its newest published
+ * invoice; participants list, search and payment dialog read them.
  */
 async function syncRegistrationInvoiceFields(
   tx: Prisma.TransactionClient,
@@ -347,15 +331,8 @@ async function syncRegistrationInvoiceFields(
 }
 
 /**
- * Issue one draft: assign the next continuous number, freeze the PDF on disk
- * and tell the registrant. Shared by the single-invoice publish mutation and
- * the "finalize all drafts" bulk mutation, so both go through one code path.
- *
- * The number is drawn inside the transaction that flips the status, so a
- * failure rolls the counter back with it and the sequence stays unbroken
- * (§14 UStG). Rendering happens after the number exists but before the row is
- * marked published — a failed render therefore leaves a draft behind, never a
- * published invoice without a document.
+ * Shared by single and bulk publish. The number is drawn in the status-flipping transaction, so
+ * a failure rolls it back (§14 UStG); rendering precedes the flip, so a failed render leaves a draft.
  */
 async function publishDraftInvoice(
   db: PrismaClient,
@@ -387,26 +364,18 @@ async function publishDraftInvoice(
   }
 
   const now = new Date();
-  // Der Dialog schickt den Namen mit, mit dem tatsächlich unterschrieben
-  // wird. Er wird zusammen mit der Nummer festgeschrieben, damit die Zeile
-  // unter der Unterschrift und die gespeicherte Zeile dasselbe sagen.
+  // Mit der Nummer festgeschrieben, damit gespeicherter Name und Zeile unter der Unterschrift übereinstimmen.
   const signatureName =
     options.signatureName === undefined
       ? invoice.signatureName
       : normalizeOptional(options.signatureName);
-  // Same "undefined leaves it alone" rule as the signature name — a bulk
-  // finalize can set one deadline for every invoice in the batch, but only
-  // if the organizer actually typed one in. A draft with no due date means
-  // the organizer deliberately removed it, so it stays unset rather than
-  // falling back to a computed default — no deadline, no payment sentence.
+  // `undefined` leaves it alone. A draft without due date stays without (no computed default).
   const dueDate =
     options.dueDate === undefined ? invoice.dueDate : options.dueDate;
 
   const invoiceNumber = await db.$transaction(async (tx) => {
-    // Claim the draft first: the conditional update both takes the row lock
-    // and rules out a second publisher, so two organizers pressing the
-    // button at once cannot each draw a number and burn a gap into the
-    // sequence. The loser waits here and then matches zero rows.
+    // Claim first: the conditional update takes the row lock, so two concurrent publishers
+    // cannot both draw a number; the loser matches zero rows.
     const claimed = await tx.invoice.updateMany({
       where: { id: invoice.id, status: InvoiceStatus.DRAFT },
       data: {
@@ -471,14 +440,8 @@ async function publishDraftInvoice(
     },
   });
 
-  // Only registrants with an account can be notified in-app; guests get
-  // their invoice by mail from the organizer instead.
-  //
-  // Die Zuordnung laeuft ueber die E-Mail, nicht ueber registrantId: die
-  // Spalte wird nirgends geschrieben und ist an jeder Anmeldung null, also
-  // fiel diese Benachrichtigung bisher immer aus. Anmeldung und Konto
-  // haengen ueberall sonst an der Adresse zusammen — getMyRegistrations,
-  // myInvoices und der PDF-Download suchen genauso.
+  // Only registrants with an account can be notified in-app. Zuordnung ueber die E-Mail:
+  // registrantId wird nirgends geschrieben und ist praktisch immer null.
   if (options.notifyRegistrant && invoice.registrationId) {
     const registration = await db.courseRegistration.findUnique({
       where: { id: invoice.registrationId },
@@ -519,11 +482,7 @@ async function publishDraftInvoice(
 }
 
 export const invoicesRouter = createTRPCRouter({
-  /**
-   * Whether the viewer may issue invoices for this course. The dashboard asks
-   * the server rather than re-deriving the rule, so button and mutation cannot
-   * drift apart.
-   */
+  /** Asked server-side so button and mutation cannot drift apart. */
   canManageCourseInvoices: protectedProcedure
     .input(z.object({ courseId: z.string() }))
     .query(async ({ ctx, input }) => {
@@ -596,11 +555,7 @@ export const invoicesRouter = createTRPCRouter({
       return { ...invoice, canManage, canBookPayments };
     }),
 
-  /**
-   * Registrations of a course that could still be invoiced — the picker behind
-   * "Rechnung erstellen". Cancelled registrations and ones that already have a
-   * live invoice are filtered out.
-   */
+  /** Picker behind "Rechnung erstellen": excludes cancelled registrations and those with a live invoice. */
   invoiceableRegistrations: protectedProcedure
     .input(z.object({ courseId: z.string() }))
     .query(async ({ ctx, input }) => {
@@ -703,10 +658,7 @@ export const invoicesRouter = createTRPCRouter({
       return invoice;
     }),
 
-  /**
-   * Draft one invoice per selected registration. Registrations that already
-   * have a draft or a published invoice are skipped rather than duplicated.
-   */
+  /** Registrations that already have a draft or published invoice are skipped, not duplicated. */
   createDraftsBulk: protectedProcedure
     .input(
       z.object({
@@ -823,11 +775,7 @@ export const invoicesRouter = createTRPCRouter({
       z.object({
         id: z.string(),
         signatureBase64: signatureInput,
-        /**
-         * Wer unterschreibt, steht im Ausstellen-Dialog neben der Unterschrift.
-         * Leer heißt "ohne Namen" — das PDF zeichnet dann mit dem Team-Absender.
-         * `undefined` lässt den am Entwurf gespeicherten Namen unberührt.
-         */
+        /** Leer heißt ohne Namen (PDF zeichnet mit dem Team-Absender); `undefined` behält den gespeicherten. */
         signatureName: z.string().trim().max(120).nullish(),
         /** Skip the in-app notification, e.g. when mailing the PDF instead. */
         notifyRegistrant: z.boolean().default(true),
@@ -850,24 +798,14 @@ export const invoicesRouter = createTRPCRouter({
       });
     }),
 
-  /**
-   * Finalize every draft of a course in one go — the "Alle Entwürfe
-   * ausstellen" action behind the confirmation modal. Drafts publish one at a
-   * time (never in parallel: the course's invoice numbers must stay
-   * continuous) and a draft that fails validation is skipped rather than
-   * aborting the rest, so one bad recipient doesn't block thirty good ones.
-   */
+  /** Publishes sequentially (numbers must stay continuous); a failing draft is skipped, not fatal. */
   publishAllDrafts: protectedProcedure
     .input(
       z.object({
         courseId: z.string(),
         notifyRegistrant: z.boolean().default(true),
         signatureBase64: signatureInput,
-        /**
-         * Same signature image and signer name for every invoice in the
-         * batch. `signatureName` left unset keeps each draft's own name
-         * (e.g. one carried over from a cancel-and-replace).
-         */
+        /** Unset keeps each draft's own name (e.g. carried over from a cancel-and-replace). */
         signatureName: z.string().trim().max(120).nullish(),
         /** One shared deadline for the whole batch; unset keeps each draft's own. */
         dueDate: z.date().nullish(),
@@ -928,15 +866,8 @@ export const invoicesRouter = createTRPCRouter({
     }),
 
   /**
-   * Void a published invoice. The document itself is kept — cancelling an
-   * invoice is not the same as making it disappear.
-   */
-  /**
-   * Zahlungseingang verbuchen. Nur an ausgestellten Rechnungen: an einem
-   * Entwurf gibt es nichts zu zahlen, und ein Storno ist gegenstandslos.
-   *
-   * Der Dokumentstatus bleibt PUBLISHED — bezahlt zu sein ändert nichts daran,
-   * dass die Rechnung ausgestellt und nach §14 UStG eingefroren ist.
+   * Nur an ausgestellten Rechnungen. Der Status bleibt PUBLISHED: bezahlt ändert nichts daran,
+   * dass die Rechnung nach §14 UStG eingefroren ist.
    */
   markPaid: protectedProcedure
     .input(
@@ -944,11 +875,7 @@ export const invoicesRouter = createTRPCRouter({
         id: z.string(),
         /** Wertstellung; ohne Angabe der heutige Tag. */
         paidAt: z.date().optional(),
-        /**
-         * Tatsächlich eingegangener Betrag. Weglassen heißt "voller Betrag" —
-         * so muss der Normalfall keine Zahl tippen und eine spätere Korrektur
-         * am Rechnungsbetrag läuft nicht aus dem Ruder.
-         */
+        /** Tatsächlich eingegangener Betrag; weglassen heißt "voller Betrag". */
         paidAmount: z.number().min(0).max(1_000_000).nullish(),
         note: z.string().trim().max(500).nullish(),
       }),
@@ -1201,11 +1128,7 @@ export const invoicesRouter = createTRPCRouter({
       return { deleted: true };
     }),
 
-  /**
-   * Organisation-wide archive. Separate from the course view: this is the list
-   * the office works with, so it spans every course and keeps cancelled
-   * documents visible.
-   */
+  /** Organisation-wide archive across all courses, cancelled documents included. */
   list: permissionProcedure(PERMISSIONS.INVOICES_VIEW)
     .input(
       z.object({
@@ -1246,10 +1169,11 @@ export const invoicesRouter = createTRPCRouter({
           ...(years
             ? [
                 {
+                  // Das Jahr auf der Rechnung: Rechnungsdatum in Berliner Zeit, nicht UTC.
                   OR: years.map((year) => ({
                     invoiceDate: {
-                      gte: new Date(Date.UTC(year, 0, 1)),
-                      lt: new Date(Date.UTC(year + 1, 0, 1)),
+                      gte: berlinDate(year, 1, 1),
+                      lt: berlinDate(year + 1, 1, 1),
                     },
                   })),
                 },

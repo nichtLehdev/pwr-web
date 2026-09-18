@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/auth";
@@ -23,9 +23,7 @@ import {
   Eye,
   Edit,
   X,
-  FileText,
   Download,
-  ChevronRight,
 } from "lucide-react";
 import {
   ScrollableModal,
@@ -33,6 +31,53 @@ import {
   ScrollableModalBody,
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
+import PublicPage from "@/app/_components/general/public-page";
+import { headMeta } from "@/app/_components/programmheft/page-head";
+import { PageSection } from "@/app/_components/programmheft/page-section";
+import { formatEuro } from "@/lib/invoice-document";
+import { Heading } from "@/app/_components/programmheft/section-head";
+import { Note } from "@/app/_components/programmheft/note";
+import { Tag, type TagTone } from "@/app/_components/programmheft/tag";
+import { ValueTable } from "@/app/_components/programmheft/value-table";
+import { ButtonLink } from "@/app/_components/programmheft/button-link";
+import { cn } from "@/lib/utils";
+import { formatBerlin } from "@/lib/berlin-time";
+
+const BTN_PRIMARY =
+  "bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-primary dark:text-ink dark:hover:bg-paper semi-condensed inline-flex min-h-12 items-center justify-center gap-2 px-6 text-base font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60";
+const BTN_OUTLINE =
+  "border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night semi-condensed inline-flex min-h-12 items-center justify-center gap-2 border-2 px-6 text-base font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60";
+/** Reihen-Aktionen wie im kompakten Seitenkopf (`headMeta.action`), 40px hoch. */
+const BTN_ROW = headMeta.action;
+
+const META_LINE =
+  "flex flex-col gap-2 text-[0.9375rem] sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-1 sm:gap-y-2";
+
+const STATUS_TAG: Record<RegistrationStatus, { label: string; tone: TagTone }> =
+  {
+    CONFIRMED: { label: "Teilnahme Bestätigt", tone: "inverse" },
+    WAITLIST: { label: "Auf Warteliste", tone: "orange" },
+    CANCELLED: { label: "Storniert", tone: "cancelled" },
+  };
+
+/** Aus Sicht der Anmeldenden: „wird geprüft“ statt „prüfen“ (das steht im Dashboard). */
+const DISCOUNT_TAG: Partial<
+  Record<SiblingDiscountStatus, { label: string; tone: TagTone }>
+> = {
+  PENDING: { label: "Rabatt wird geprüft", tone: "orange" },
+  APPROVED: { label: "Rabatt genehmigt", tone: "inverse" },
+  REJECTED: { label: "Rabatt abgelehnt", tone: "ink" },
+};
+
+/** `aria-pressed` statt `aria-current`: Hier wird gefiltert, nicht navigiert. */
+function choiceButtonClass(active: boolean) {
+  return cn(
+    "semi-condensed inline-flex shrink-0 items-center gap-2 border-b-[3px] px-3 py-3 text-[1.0625rem] font-semibold whitespace-nowrap transition-colors",
+    active
+      ? "border-primary text-ink dark:text-night-text"
+      : "text-dark hover:border-ink hover:text-ink dark:text-night-muted dark:hover:border-night-text dark:hover:text-night-text border-transparent",
+  );
+}
 
 export default function MyRegistrationsPage() {
   const router = useRouter();
@@ -115,64 +160,8 @@ export default function MyRegistrationsPage() {
     return null;
   }
 
-  const getStatusBadge = (status: RegistrationStatus) => {
-    const badges: Record<RegistrationStatus, string> = {
-      CONFIRMED:
-        "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
-      WAITLIST:
-        "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
-      CANCELLED: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
-    };
-    const labels: Record<RegistrationStatus, string> = {
-      CONFIRMED: "Teilnahme Bestätigt",
-      WAITLIST: "Auf Warteliste",
-      CANCELLED: "Storniert",
-    };
-
-    return (
-      <span
-        className={`rounded-full px-3 py-1 text-xs font-semibold ${badges[status]}`}
-      >
-        {labels[status]}
-      </span>
-    );
-  };
-
-  const getDiscountStatusBadge = (
-    status: SiblingDiscountStatus | null | undefined,
-  ) => {
-    if (!status || status === SiblingDiscountStatus.NONE) return null;
-
-    const badges: Record<SiblingDiscountStatus, string> = {
-      NONE: "",
-      PENDING:
-        "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
-      APPROVED:
-        "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
-      REJECTED: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
-    };
-    const labels: Record<SiblingDiscountStatus, string> = {
-      NONE: "",
-      PENDING: "Rabatt prüfen",
-      APPROVED: "Rabatt genehmigt",
-      REJECTED: "Rabatt abgelehnt",
-    };
-
-    return (
-      <span
-        className={`rounded-full px-3 py-1 text-xs font-semibold ${badges[status]}`}
-      >
-        {labels[status]}
-      </span>
-    );
-  };
-
   const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString("de-DE", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
+    return formatBerlin(date, "datumZweistellig");
   };
 
   const getEditDeadlineInfo = (
@@ -185,18 +174,14 @@ export default function MyRegistrationsPage() {
       : null;
 
     if (registration.registrationStatus === RegistrationStatus.CANCELLED) {
-      return {
-        canEdit: false,
-        message: "Stornierte Anmeldung",
-        color: "text-gray-500",
-      };
+      return { canEdit: false, message: "Stornierte Anmeldung", urgent: false };
     }
 
     if (courseStart <= now) {
       return {
         canEdit: false,
         message: "Kurs hat bereits begonnen",
-        color: "text-gray-500",
+        urgent: false,
       };
     }
 
@@ -204,7 +189,7 @@ export default function MyRegistrationsPage() {
       return {
         canEdit: false,
         message: "Anmeldefrist abgelaufen",
-        color: "text-red-600 dark:text-red-400",
+        urgent: false,
       };
     }
 
@@ -217,7 +202,7 @@ export default function MyRegistrationsPage() {
       return {
         canEdit: true,
         message: `Noch ${daysUntil} Tag${daysUntil === 1 ? "" : "e"} bearbeitbar`,
-        color: "text-orange-600 dark:text-orange-400",
+        urgent: true,
       };
     }
 
@@ -225,418 +210,400 @@ export default function MyRegistrationsPage() {
       return {
         canEdit: true,
         message: `Bearbeitbar bis ${formatDate(editUntil)}`,
-        color: "text-yellow-600 dark:text-yellow-400",
+        urgent: true,
       };
     }
 
     return {
       canEdit: true,
       message: `Bearbeitbar bis ${formatDate(editUntil)}`,
-      color: "text-green-600 dark:text-green-400",
+      urgent: false,
     };
   };
 
   if (sessionLoading || isLoading) {
     return (
-      <div className="bg-background-secondary dark:bg-dark-background-secondary flex min-h-[calc(100vh-4rem)] items-center justify-center">
-        <div className="text-dark dark:text-dark-text">Lädt...</div>
+      <div className="bg-paper dark:bg-night text-ink dark:text-night-text flex min-h-[calc(100vh-4rem)] items-center justify-center">
+        <p className="semi-condensed text-lg font-semibold">Lädt...</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-background-secondary dark:bg-dark-background-secondary min-h-[calc(100vh-4rem)] px-4 py-8">
-      <div className="container mx-auto max-w-6xl">
-        {/* Header */}
-        <div className="mb-8">
-          <nav className="mb-4 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-            <Link
-              href="/dashboard"
-              className="hover:text-primary transition-colors"
-            >
-              Dashboard
-            </Link>
-            <span>/</span>
-            <span className="text-dark dark:text-dark-text">
-              Meine Anmeldungen
-            </span>
-          </nav>
-          <h1 className="text-dark dark:text-dark-text text-3xl font-bold">
-            Meine Anmeldungen
-          </h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Übersicht über alle deine Anmeldungen.
-          </p>
+    <PublicPage
+      title="Meine Anmeldungen"
+      breadcrumbs={[
+        { label: "Start", href: "/" },
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Meine Anmeldungen" },
+      ]}
+      heroSize="compact"
+      description={<p>Übersicht über alle deine Anmeldungen.</p>}
+    >
+      <PageSection>
+        <div
+          role="group"
+          aria-label="Nach Status filtern"
+          className="border-ink dark:border-night-text -mx-1 flex gap-1 overflow-x-auto border-b-2 px-1 sm:gap-2"
+        >
+          <button
+            type="button"
+            onClick={() => setStatusFilter(undefined)}
+            aria-pressed={statusFilter === undefined}
+            className={choiceButtonClass(statusFilter === undefined)}
+          >
+            Alle
+          </button>
+          <button
+            type="button"
+            onClick={() => setStatusFilter(RegistrationStatus.CONFIRMED)}
+            aria-pressed={statusFilter === RegistrationStatus.CONFIRMED}
+            className={choiceButtonClass(
+              statusFilter === RegistrationStatus.CONFIRMED,
+            )}
+          >
+            Bestätigt
+          </button>
+          <button
+            type="button"
+            onClick={() => setStatusFilter(RegistrationStatus.WAITLIST)}
+            aria-pressed={statusFilter === RegistrationStatus.WAITLIST}
+            className={choiceButtonClass(
+              statusFilter === RegistrationStatus.WAITLIST,
+            )}
+          >
+            Warteliste
+          </button>
+          <button
+            type="button"
+            onClick={() => setStatusFilter(RegistrationStatus.CANCELLED)}
+            aria-pressed={statusFilter === RegistrationStatus.CANCELLED}
+            className={choiceButtonClass(
+              statusFilter === RegistrationStatus.CANCELLED,
+            )}
+          >
+            Storniert
+          </button>
         </div>
 
-        {/* Filters */}
-        <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-          <div className="flex flex-wrap items-center gap-4">
-            <label className="text-dark dark:text-dark-text text-sm font-medium">
-              Filter:
-            </label>
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setStatusFilter(undefined)}
-                className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                  statusFilter === undefined
-                    ? "bg-primary text-white"
-                    : "dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
-                }`}
-              >
-                Alle
-              </button>
-              <button
-                onClick={() => setStatusFilter(RegistrationStatus.CONFIRMED)}
-                className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                  statusFilter === RegistrationStatus.CONFIRMED
-                    ? "bg-primary text-white"
-                    : "dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
-                }`}
-              >
-                Bestätigt
-              </button>
-              <button
-                onClick={() => setStatusFilter(RegistrationStatus.WAITLIST)}
-                className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                  statusFilter === RegistrationStatus.WAITLIST
-                    ? "bg-primary text-white"
-                    : "dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
-                }`}
-              >
-                Warteliste
-              </button>
-              <button
-                onClick={() => setStatusFilter(RegistrationStatus.CANCELLED)}
-                className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                  statusFilter === RegistrationStatus.CANCELLED
-                    ? "bg-primary text-white"
-                    : "dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
-                }`}
-              >
-                Storniert
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Registrations List */}
         {data?.registrations && data.registrations.length > 0 ? (
-          <div className="space-y-4">
+          <ul className="border-ink dark:border-night-text mt-10 border-t-2">
             {data.registrations.map((registration) => {
               const editInfo = getEditDeadlineInfo(registration);
+              const statusTag = STATUS_TAG[registration.registrationStatus];
+              // Storniert: kein Rabatt-Etikett mehr, die Entscheidung kommt nicht mehr.
+              const cancelled =
+                registration.registrationStatus ===
+                RegistrationStatus.CANCELLED;
+              const discountTag =
+                !cancelled &&
+                registration.siblingDiscountStatus &&
+                registration.siblingDiscountStatus !==
+                  SiblingDiscountStatus.NONE
+                  ? DISCOUNT_TAG[registration.siblingDiscountStatus]
+                  : null;
+              const invoice = invoiceByRegistration.get(registration.id);
+              const mayCancelDownPayment =
+                registrantMayCancelDownPayment(registration);
+
+              const priceRows: { label: ReactNode; value: ReactNode }[] = [];
+              if (
+                registration.siblingDiscountStatus ===
+                  SiblingDiscountStatus.APPROVED &&
+                registration.siblingDiscountApplied &&
+                registration.originalTotalPrice &&
+                registration.siblingDiscountAmount
+              ) {
+                priceRows.push({
+                  label: "Zwischensumme",
+                  value: (
+                    <span className="line-through decoration-2">
+                      {formatEuro(registration.originalTotalPrice)}
+                    </span>
+                  ),
+                });
+                priceRows.push({
+                  label: "Geschwisterkindrabatt (20% pro weiteres Kind)",
+                  value: `- ${formatEuro(registration.siblingDiscountAmount)}`,
+                });
+              }
+              priceRows.push({
+                label: "Gesamtpreis",
+                value: formatEuro(registration.totalPrice),
+              });
 
               return (
-                <div
+                <li
                   key={registration.id}
-                  className="dark:bg-dark-surface dark:border-dark-border overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md"
+                  className="border-rule dark:border-night-rule border-b py-8"
                 >
-                  <div className="p-6">
-                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                      {/* Course Info */}
-                      <div className="flex-1">
-                        <div className="mb-2 flex flex-wrap items-center gap-2">
-                          <h2 className="text-dark dark:text-dark-text text-xl font-bold">
-                            {registration.course.title}
-                          </h2>
-                          {getStatusBadge(registration.registrationStatus)}
-                          {getDiscountStatusBadge(
-                            registration.siblingDiscountStatus,
-                          )}
-                        </div>
-
-                        <div className="mb-4 space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4" />
-                            <span>
-                              {formatDate(registration.course.startDate)} -{" "}
-                              {formatDate(registration.course.endDate)}
-                            </span>
-                          </div>
-
-                          {registration.course.location && (
-                            <div className="flex items-center gap-2">
-                              <MapPin className="h-4 w-4" />
-                              <span>
-                                {registration.course.location.name},{" "}
-                                {registration.course.location.city}
-                              </span>
-                            </div>
-                          )}
-
-                          <div className="flex items-center gap-2">
-                            <Users className="h-4 w-4" />
-                            <span>
-                              {registration.participants.length} Teilnehmer
-                            </span>
-                          </div>
-
-                          {/* Edit deadline info */}
-                          <div
-                            className={`flex items-center gap-2 ${editInfo.color}`}
-                          >
-                            <Clock className="h-4 w-4" />
-                            <span className="text-sm font-medium">
-                              {editInfo.message}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Participants */}
-                        <div className="mb-4">
-                          <h3 className="text-dark dark:text-dark-text mb-2 text-sm font-semibold">
-                            Teilnehmer:
-                          </h3>
-                          <div className="space-y-1">
-                            {registration.participants.map((participant) => (
-                              <div
-                                key={participant.id}
-                                className="text-sm text-gray-600 dark:text-gray-400"
-                              >
-                                {participant.firstName} {participant.lastName}
-                                {participant.instrument && (
-                                  <span className="ml-2 text-xs">
-                                    ({participant.instrument})
-                                  </span>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Price */}
-                        <div className="space-y-2">
-                          {registration.siblingDiscountStatus ===
-                            SiblingDiscountStatus.APPROVED &&
-                          registration.siblingDiscountApplied &&
-                          registration.originalTotalPrice &&
-                          registration.siblingDiscountAmount ? (
-                            <div className="space-y-1">
-                              <div className="flex items-center justify-between text-sm">
-                                <span className="text-gray-600 dark:text-gray-400">
-                                  Zwischensumme:
-                                </span>
-                                <span className="text-gray-900 line-through dark:text-gray-100">
-                                  {registration.originalTotalPrice.toFixed(2)} €
-                                </span>
-                              </div>
-                              <div className="flex items-center justify-between text-sm">
-                                <span className="text-green-600 dark:text-green-400">
-                                  Geschwisterkindrabatt (20% pro weiteres Kind):
-                                </span>
-                                <span className="font-semibold text-green-600 dark:text-green-400">
-                                  -
-                                  {registration.siblingDiscountAmount.toFixed(
-                                    2,
-                                  )}{" "}
-                                  €
-                                </span>
-                              </div>
-                            </div>
-                          ) : null}
-                          <div className="flex items-baseline gap-2">
-                            <span className="text-dark dark:text-dark-text text-sm font-medium">
-                              Gesamtpreis:
-                            </span>
-                            <span className="text-primary text-xl font-bold">
-                              {registration.totalPrice.toFixed(2)} €
-                            </span>
-                          </div>
-                          {registration.downPaymentAmount ? (
-                            <p className="text-xs text-gray-600 dark:text-gray-400">
-                              davon Anzahlung{" "}
-                              {registration.downPaymentAmount.toFixed(2)} € ·{" "}
-                              {
-                                DOWN_PAYMENT_STATE_LABELS[
-                                  downPaymentState(registration)
-                                ]
-                              }
-                            </p>
-                          ) : null}
-                          {(() => {
-                            const invoice = invoiceByRegistration.get(
-                              registration.id,
-                            );
-                            if (!invoice) return null;
-                            return (
-                              <div className="mt-3 flex flex-wrap items-center gap-3">
-                                <span className="text-xs text-gray-600 dark:text-gray-400">
-                                  Rechnungsnr.:{" "}
-                                  <span className="font-mono">
-                                    {invoice.invoiceNumber}
-                                  </span>
-                                </span>
-                                <a
-                                  href={`/api/invoices/${invoice.id}/pdf`}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="text-primary inline-flex items-center gap-1.5 text-xs font-medium hover:underline"
-                                >
-                                  <Download className="h-3.5 w-3.5" />
-                                  Rechnung herunterladen
-                                </a>
-                              </div>
-                            );
-                          })()}
-                        </div>
-
-                        {/* Discount Rejected Actions */}
-                        {registration.siblingDiscountStatus ===
-                          SiblingDiscountStatus.REJECTED && (
-                          <div className="mt-4 rounded-lg border-2 border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
-                            <p className="mb-3 text-sm font-medium text-red-800 dark:text-red-300">
-                              Dein Antrag auf Geschwisterkindrabatt wurde
-                              abgelehnt. Du kannst die Anmeldung zum vollen
-                              Preis bestätigen oder stornieren.
-                            </p>
-                            <div className="flex flex-wrap gap-2">
-                              <button
-                                onClick={() =>
-                                  confirmAtFullPriceMutation.mutate({
-                                    registrationId: registration.id,
-                                  })
-                                }
-                                disabled={confirmAtFullPriceMutation.isPending}
-                                className="bg-primary hover:bg-primary-dark inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50"
-                              >
-                                {confirmAtFullPriceMutation.isPending
-                                  ? "Wird bestätigt..."
-                                  : "Zum vollen Preis bestätigen"}
-                              </button>
-                              {registrantMayCancelDownPayment(registration) && (
-                                <button
-                                  onClick={() =>
-                                    handleCancelClick(registration.id)
-                                  }
-                                  className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:bg-red-950/30 dark:text-red-400 dark:hover:bg-red-900/50"
-                                >
-                                  <X className="h-4 w-4" />
-                                  Stornieren
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        )}
+                  <div className="lg:flex lg:items-start lg:justify-between lg:gap-10">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <h2 className="condensed text-ink dark:text-night-text text-[1.5rem] leading-tight font-bold">
+                          {registration.course.title}
+                        </h2>
+                        <Tag tone={statusTag.tone}>{statusTag.label}</Tag>
+                        {discountTag ? (
+                          <Tag tone={discountTag.tone}>{discountTag.label}</Tag>
+                        ) : null}
+                        {registration.registrationGroupId ? (
+                          <Tag tone="muted">Aufgeteilt</Tag>
+                        ) : null}
+                        {registration.registrationStatus ===
+                          RegistrationStatus.WAITLIST &&
+                        registration.promotionOfferExpiresAt &&
+                        new Date(registration.promotionOfferExpiresAt) >
+                          new Date() ? (
+                          <Tag tone="orange">Nachrücken möglich</Tag>
+                        ) : null}
                       </div>
 
-                      {/* Actions */}
-                      <div className="flex flex-col gap-2 lg:min-w-[140px] lg:items-stretch">
-                        <Link
-                          href={`/registrations/${registration.id}`}
-                          className="dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
-                        >
-                          <Eye className="h-4 w-4" />
-                          Details
-                        </Link>
-                        {editInfo.canEdit && (
-                          <Link
-                            href={`/registrations/${registration.id}/edit`}
-                            className="bg-primary hover:bg-primary-dark inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors"
-                          >
-                            <Edit className="h-4 w-4" />
-                            Bearbeiten
-                          </Link>
-                        )}
-                        {editInfo.canEdit &&
-                          !registrantMayCancelDownPayment(registration) && (
-                            <span className="text-center text-xs text-gray-500 dark:text-gray-400">
-                              Stornierung über das Kursteam
+                      <div className={cn(META_LINE, "mt-3")}>
+                        <span className="inline-flex items-center gap-2">
+                          <Calendar className={headMeta.icon} aria-hidden />
+                          {formatDate(registration.course.startDate)} –{" "}
+                          {formatDate(registration.course.endDate)}
+                        </span>
+                        {registration.course.location && (
+                          <>
+                            <span className={headMeta.separator} aria-hidden>
+                              ·
                             </span>
-                          )}
-                        {editInfo.canEdit &&
-                          registrantMayCancelDownPayment(registration) && (
-                            <button
-                              onClick={() => handleCancelClick(registration.id)}
-                              className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:border-red-300 hover:bg-red-100 hover:text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-400 dark:hover:border-red-600 dark:hover:bg-red-900/50 dark:hover:text-red-300"
-                            >
-                              <X className="h-4 w-4" />
-                              Stornieren
-                            </button>
-                          )}
-
-                        {/* Meta info */}
-                        <span className="mt-1 text-center text-xs text-gray-500 dark:text-gray-400">
-                          Angemeldet am {formatDate(registration.createdAt)}
+                            <span className="inline-flex items-center gap-2">
+                              <MapPin className={headMeta.icon} aria-hidden />
+                              {registration.course.location.name},{" "}
+                              {registration.course.location.city}
+                            </span>
+                          </>
+                        )}
+                        <span className={headMeta.separator} aria-hidden>
+                          ·
+                        </span>
+                        <span className="inline-flex items-center gap-2">
+                          <Users className={headMeta.icon} aria-hidden />
+                          {registration.participants.length} Teilnehmer
                         </span>
                       </div>
+
+                      <p
+                        className={cn(
+                          "mt-3 inline-flex items-center gap-2 text-sm font-semibold",
+                          editInfo.urgent
+                            ? "on-orange bg-primary text-ink px-1.5 py-0.5"
+                            : "text-dark dark:text-night-muted",
+                        )}
+                      >
+                        <Clock className="h-4 w-4 shrink-0" aria-hidden />
+                        {editInfo.message}
+                      </p>
+
+                      <div className="mt-6">
+                        <h3 className="semi-condensed text-ink dark:text-night-text text-sm font-semibold">
+                          Teilnehmer:
+                        </h3>
+                        <ul className="mt-2 space-y-1">
+                          {registration.participants.map((participant) => (
+                            <li
+                              key={participant.id}
+                              className="text-dark dark:text-night-muted text-sm"
+                            >
+                              {participant.firstName} {participant.lastName}
+                              {participant.instrument
+                                ? ` (${participant.instrument})`
+                                : ""}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      {invoice ? (
+                        <p className="mt-3 flex flex-wrap items-center gap-3 text-sm">
+                          <span className="text-dark dark:text-night-muted">
+                            Rechnungsnr.{" "}
+                            <span className="tabular-nums">
+                              {invoice.invoiceNumber}
+                            </span>
+                          </span>
+                          <a
+                            href={`/api/invoices/${invoice.id}/pdf`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="link-ink inline-flex items-center gap-1.5"
+                          >
+                            <Download className="h-4 w-4" aria-hidden />
+                            Rechnung herunterladen
+                            <span className="sr-only">
+                              {" "}
+                              (PDF, öffnet in neuem Tab)
+                            </span>
+                          </a>
+                        </p>
+                      ) : null}
+
+                      {registration.siblingDiscountStatus ===
+                        SiblingDiscountStatus.REJECTED && (
+                        <Note tone="error" className="mt-6">
+                          <p>
+                            Dein Antrag auf Geschwisterkindrabatt wurde
+                            abgelehnt. Du kannst die Anmeldung zum vollen Preis
+                            bestätigen oder stornieren.
+                          </p>
+                          <div className="mt-4 flex flex-wrap gap-3">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                confirmAtFullPriceMutation.mutate({
+                                  registrationId: registration.id,
+                                })
+                              }
+                              disabled={confirmAtFullPriceMutation.isPending}
+                              className={BTN_PRIMARY}
+                            >
+                              {confirmAtFullPriceMutation.isPending
+                                ? "Wird bestätigt..."
+                                : "Zum vollen Preis bestätigen"}
+                            </button>
+                            {mayCancelDownPayment && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleCancelClick(registration.id)
+                                }
+                                className={BTN_OUTLINE}
+                              >
+                                <X className="h-4 w-4" aria-hidden />
+                                Stornieren
+                              </button>
+                            )}
+                          </div>
+                        </Note>
+                      )}
+                    </div>
+
+                    <div className="mt-6 flex shrink-0 flex-col gap-2 lg:mt-0 lg:w-80 lg:items-stretch">
+                      <ValueTable rows={priceRows} />
+                      {registration.downPaymentAmount ? (
+                        <p className="text-dark dark:text-night-muted mb-2 text-xs">
+                          davon Anzahlung{" "}
+                          {formatEuro(registration.downPaymentAmount)} ·{" "}
+                          {
+                            DOWN_PAYMENT_STATE_LABELS[
+                              downPaymentState(registration)
+                            ]
+                          }
+                        </p>
+                      ) : null}
+                      <Link
+                        href={`/registrations/${registration.id}`}
+                        className={BTN_ROW}
+                      >
+                        <Eye className="h-4 w-4" aria-hidden />
+                        Details
+                      </Link>
+                      {editInfo.canEdit && (
+                        <Link
+                          href={`/registrations/${registration.id}/edit`}
+                          className={BTN_ROW}
+                        >
+                          <Edit className="h-4 w-4" aria-hidden />
+                          Bearbeiten
+                        </Link>
+                      )}
+                      {editInfo.canEdit && !mayCancelDownPayment && (
+                        <p className="text-dark dark:text-night-muted text-center text-xs">
+                          Stornierung über das Kursteam
+                        </p>
+                      )}
+                      {editInfo.canEdit && mayCancelDownPayment && (
+                        <button
+                          type="button"
+                          onClick={() => handleCancelClick(registration.id)}
+                          className={BTN_ROW}
+                        >
+                          <X className="h-4 w-4" aria-hidden />
+                          Stornieren
+                        </button>
+                      )}
+
+                      <p className="text-dark dark:text-night-muted mt-1 text-center text-xs">
+                        Angemeldet am {formatDate(registration.createdAt)}
+                      </p>
                     </div>
                   </div>
-                </div>
+                </li>
               );
             })}
-          </div>
+          </ul>
         ) : (
-          <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg border border-gray-200 bg-white p-12 text-center shadow-sm">
-            <FileText className="text-primary mx-auto mb-4 h-16 w-16 opacity-50" />
-            <h3 className="text-dark dark:text-dark-text mb-2 text-lg font-semibold">
+          <div className="border-ink dark:border-night-text mt-10 border-t-2 pt-10 text-center">
+            <h2 className="condensed text-ink dark:text-night-text text-[1.75rem] leading-none font-extrabold">
               Keine Anmeldungen gefunden
-            </h3>
+            </h2>
             {statusFilter !== undefined ? (
               <>
-                <p className="mb-6 text-gray-600 dark:text-gray-400">
+                <p className="text-dark dark:text-night-muted mx-auto mt-3 max-w-md text-base">
                   Für diesen Filter gibt es keine Anmeldungen.
                 </p>
                 <button
                   type="button"
                   onClick={() => setStatusFilter(undefined)}
-                  className="bg-primary hover:bg-primary-dark dark:bg-primary-light dark:hover:bg-primary inline-flex items-center gap-2 rounded-lg px-6 py-3 font-semibold text-white transition-colors"
+                  className={cn(BTN_PRIMARY, "mt-6")}
                 >
                   Filter zurücksetzen
                 </button>
               </>
             ) : (
               <>
-                <p className="mb-6 text-gray-600 dark:text-gray-400">
+                <p className="text-dark dark:text-night-muted mx-auto mt-3 max-w-md text-base">
                   Du hast dich noch nicht für einen Kurs angemeldet.
                 </p>
-                <Link
-                  href="/termine"
-                  className="bg-primary hover:bg-primary-dark dark:bg-primary-light dark:hover:bg-primary inline-flex items-center gap-2 rounded-lg px-6 py-3 font-semibold text-white transition-colors"
-                >
+                <ButtonLink href="/termine" className="mt-6">
                   Kurse entdecken
-                  <ChevronRight className="h-5 w-5" />
-                </Link>
+                </ButtonLink>
               </>
             )}
           </div>
         )}
 
-        {/* Cancel Confirmation Modal */}
         {cancelModalOpen && (
           <ScrollableModal>
-            <ScrollableModalCard maxW="md">
+            <ScrollableModalCard
+              maxW="md"
+              className="border-ink dark:border-night-text rounded-none! border-2 shadow-none!"
+            >
               <ScrollableModalBody>
-                <h3 className="text-dark dark:text-dark-text mb-4 text-lg font-bold">
+                <Heading as="h2" size="list" className="text-[1.375rem]">
                   Anmeldung stornieren?
-                </h3>
-                <p className="mb-6 text-gray-600 dark:text-gray-400">
+                </Heading>
+                <p className="text-ink dark:text-night-text mt-4">
                   Bist du sicher, dass du diese Anmeldung stornieren möchtest?
                   Diese Aktion kann nicht rückgängig gemacht werden.
                 </p>
                 {cancelError && (
-                  <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20">
-                    <p className="text-sm text-red-800 dark:text-red-300">
-                      {cancelError}
-                    </p>
-                  </div>
+                  <Note tone="error" className="mt-4">
+                    <p>{cancelError}</p>
+                  </Note>
                 )}
               </ScrollableModalBody>
-              <ScrollableModalFooter>
+              <ScrollableModalFooter className="border-rule dark:border-night-rule">
                 <div className="flex gap-3">
                   <button
+                    type="button"
                     onClick={() => {
                       setCancelModalOpen(false);
                       setRegistrationToCancel(null);
                       setCancelError("");
                     }}
-                    className="dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+                    className={cn(BTN_OUTLINE, "flex-1")}
                   >
                     Abbrechen
                   </button>
                   <button
+                    type="button"
                     onClick={confirmCancel}
                     disabled={cancelMutation.isPending}
-                    className="flex-1 rounded-lg bg-red-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+                    className={cn(BTN_PRIMARY, "flex-1")}
                   >
                     {cancelMutation.isPending
                       ? "Wird storniert..."
@@ -648,29 +615,28 @@ export default function MyRegistrationsPage() {
           </ScrollableModal>
         )}
 
-        {/* Pagination */}
         {data && data.pages > 1 && (
-          <div className="mt-8 flex items-center justify-center gap-2">
+          <div className="mt-10 flex items-center justify-center gap-3">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text rounded-lg border border-gray-300 bg-white px-4 py-2 font-medium transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-gray-800"
+              className={BTN_OUTLINE}
             >
               Zurück
             </button>
-            <span className="text-dark dark:text-dark-text px-4">
+            <span className="text-ink dark:text-night-text semi-condensed px-2 text-sm font-semibold">
               Seite {page} von {data.pages}
             </span>
             <button
               onClick={() => setPage((p) => Math.min(data.pages, p + 1))}
               disabled={page === data.pages}
-              className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text rounded-lg border border-gray-300 bg-white px-4 py-2 font-medium transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-gray-800"
+              className={BTN_OUTLINE}
             >
               Weiter
             </button>
           </div>
         )}
-      </div>
-    </div>
+      </PageSection>
+    </PublicPage>
   );
 }

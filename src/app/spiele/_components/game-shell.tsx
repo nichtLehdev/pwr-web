@@ -10,9 +10,8 @@ import { GameShellProvider } from "./game-shell-context";
 import { StatsSyncRunner } from "./stats-sync-runner";
 
 /**
- * Gemeinsame Vollbild-Hülle aller Spiele: schlanke Kopfleiste (zurück, Titel,
- * Status-Slot), scrollender Inhalt und unteres Aktions-Dock — als 100dvh-Grid,
- * damit nichts abgeschnitten wird und ausschließlich der Inhalt scrollt.
+ * Vollbild-Hülle aller Spiele (Kopfleiste, Inhalt, Aktions-Dock) als 100dvh-Grid,
+ * damit nichts abgeschnitten wird und nur der Inhalt scrollt.
  */
 export function GameShell({ children }: { children: ReactNode }) {
   const segment = useSelectedLayoutSegment();
@@ -30,13 +29,13 @@ export function GameShell({ children }: { children: ReactNode }) {
   return (
     <GameShellProvider value={ctx}>
       <StatsSyncRunner />
-      <div className="bg-background dark:bg-dark-background to-background dark:from-dark-background dark:to-dark-background grid h-dvh grid-rows-[auto_minmax(0,1fr)_auto] overflow-x-hidden bg-gradient-to-b from-amber-50/95 via-sky-50/35 pr-[env(safe-area-inset-right,0px)] pl-[env(safe-area-inset-left,0px)] dark:via-amber-950/25">
-        <header className="border-dark-border/40 dark:border-dark-border bg-background/85 dark:bg-dark-surface/85 z-20 border-b pt-[env(safe-area-inset-top,0px)] backdrop-blur-sm">
+      <div className="programm font-programm bg-paper text-ink dark:bg-night dark:text-night-text grid h-dvh grid-rows-[auto_minmax(0,1fr)_auto] overflow-x-hidden pr-[env(safe-area-inset-right,0px)] pl-[env(safe-area-inset-left,0px)]">
+        <header className="border-rule dark:border-night-rule bg-paper dark:bg-night z-20 border-b pt-[env(safe-area-inset-top,0px)]">
           <div className="mx-auto flex h-12 w-full max-w-5xl items-center gap-2 px-3 md:px-5">
             <div className="flex flex-1 items-center justify-start">
               <Link
                 href="/spiele"
-                className="text-dark hover:bg-background-secondary dark:text-dark-text dark:hover:bg-dark-background -ml-2 inline-flex items-center gap-0.5 rounded-lg py-1.5 pr-2.5 pl-1 text-sm font-bold transition-colors"
+                className="text-ink hover:bg-rule/25 dark:text-night-text dark:hover:bg-night-raised -ml-2 inline-flex min-h-11 items-center gap-0.5 py-1.5 pr-2.5 pl-1 text-sm font-bold transition-colors"
               >
                 <ChevronLeft
                   className="h-5 w-5 shrink-0 stroke-[2.25]"
@@ -45,7 +44,7 @@ export function GameShell({ children }: { children: ReactNode }) {
                 Spiele
               </Link>
             </div>
-            <h1 className="text-dark dark:text-dark-text min-w-0 truncate text-base font-bold">
+            <h1 className="condensed text-ink dark:text-night-text min-w-0 truncate text-base font-bold">
               {title}
             </h1>
             <div
@@ -58,16 +57,17 @@ export function GameShell({ children }: { children: ReactNode }) {
         <main
           aria-label={title}
           className={cn(
-            "min-h-0 overscroll-contain px-3 pt-3 pb-6 md:px-5 md:pt-4",
+            "flex min-h-0 flex-col overscroll-contain px-3 pt-3 pb-6 md:px-5 md:pt-4",
             scrollLocked ? "overflow-hidden" : "overflow-y-auto",
           )}
         >
-          {children}
+          {/* `m-auto` statt `justify-center`: zentriert, ohne bei hohem Inhalt den oberen Rand abzuschneiden. */}
+          <div className="m-auto w-full">{children}</div>
         </main>
 
         <div
           ref={setDockEl}
-          className="border-dark-border/40 dark:border-dark-border dark:bg-dark-surface/90 z-20 border-t bg-white/90 px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_32px_rgba(0,0,0,0.08)] backdrop-blur-sm empty:hidden md:px-5 dark:shadow-[0_-8px_32px_rgba(0,0,0,0.35)]"
+          className="border-rule dark:border-night-rule bg-paper dark:bg-night z-20 border-t px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] empty:hidden md:px-5"
         />
       </div>
     </GameShellProvider>

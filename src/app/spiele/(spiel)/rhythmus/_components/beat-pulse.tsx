@@ -16,18 +16,13 @@ export interface BeatPulseTiming {
 
 interface BeatPulseProps {
   /**
-   * Timing kommt per Ref statt Props: der Spiel-Parent rendert während des
-   * Tippens bewusst nicht neu (Zero-Re-Render-Tap-Pfad) — dieser Baustein
-   * treibt sich selbst über rAF und pollt das Ref, bis Daten da sind.
+   * Per Ref statt Props: der Spiel-Parent rendert beim Tippen bewusst nicht neu;
+   * dieser Baustein pollt das Ref selbst per rAF.
    */
   timingRef: RefObject<BeatPulseTiming | null>;
 }
 
-/**
- * Puls-Anzeige für Einzählen + Spielen: eine Reihe Punkte (einer je Schlag im
- * Takt), der aktive Punkt pulst pro Schlag. `prefers-reduced-motion`:
- * statisches Hervorheben statt Skalierung (Tailwind `motion-reduce`).
- */
+/** Ein Punkt je Schlag im Takt, der aktive pulst (bei reduzierter Bewegung statisch hervorgehoben). */
 export function BeatPulse({ timingRef }: BeatPulseProps) {
   const [beatsPerBar, setBeatsPerBar] = useState<number | null>(null);
   const [activeIdx, setActiveIdx] = useState(-1);
@@ -79,10 +74,11 @@ export function BeatPulse({ timingRef }: BeatPulseProps) {
         <span
           key={i}
           className={cn(
+            /* Punkte bleiben rund — sie sind Notenköpfe, keine Kästen. */
             "h-2.5 w-2.5 rounded-full transition-transform duration-100 md:h-3 md:w-3",
             i === activeIdx
-              ? "bg-primary scale-125 motion-reduce:scale-100"
-              : "bg-dark-border/30 dark:bg-dark-border scale-100",
+              ? "bg-primary scale-[1.35] motion-reduce:scale-100"
+              : "bg-rule dark:bg-night-rule scale-100",
           )}
         />
       ))}

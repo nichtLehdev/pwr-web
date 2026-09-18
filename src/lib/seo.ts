@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getBaseUrl } from "@/server/utils/get-base-url";
-import { markdownToPlainText } from "@/lib/markdown-to-plain-text";
+import { markdownToSingleLine } from "@/lib/markdown-to-plain-text";
 
 export const SITE_NAME = "Posaunenwerk Rheinland";
 export const SITE_DESCRIPTION =
@@ -14,22 +14,14 @@ export function siteUrl(path = "/"): string {
   return `${base}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
-/**
- * Plain-text summary for `<meta description>` / `og:description`.
- *
- * Post and course bodies are markdown, but the TipTap editor can leave inline
- * HTML behind, so tags are stripped first. Truncation lands on a word boundary
- * because search engines cut mid-word descriptions with an ellipsis anyway.
- */
+/** Plain-text summary for `<meta description>` / `og:description`, cut at a word boundary. */
 export function plainTextExcerpt(
   source: string | null | undefined,
   maxLength = 160,
 ): string | undefined {
   if (!source) return undefined;
 
-  const text = markdownToPlainText(source.replace(/<[^>]*>/g, " "))
-    .replace(/\s+/g, " ")
-    .trim();
+  const text = markdownToSingleLine(source);
 
   if (!text) return undefined;
   if (text.length <= maxLength) return text;
@@ -40,11 +32,8 @@ export function plainTextExcerpt(
 }
 
 /**
- * Feed autodiscovery, repeated on every page that builds its own metadata.
- *
- * Next replaces `alternates` wholesale instead of deep-merging it, so a page
- * that sets a canonical would otherwise drop the link the root layout
- * declares.
+ * Repeated on every page with its own metadata: Next replaces `alternates` wholesale,
+ * so a canonical would otherwise drop the root layout's feed link.
  */
 export const RSS_ALTERNATE = {
   "application/rss+xml": [
@@ -79,12 +68,8 @@ export interface PageMetadataInput {
 }
 
 /**
- * The generated card from `app/opengraph-image.tsx`, referenced explicitly.
- *
- * Next only auto-injects that file for segments that do not declare an
- * `openGraph` block of their own — every page built here does, so without this
- * an entry without a cover image would ship no `og:image` at all and share as
- * a bare link.
+ * Explicit, because Next only auto-injects `app/opengraph-image.tsx` for segments
+ * without their own `openGraph` block — and every page built here has one.
  */
 const FALLBACK_OG_IMAGE: SeoImage = {
   url: "/opengraph-image",
@@ -121,10 +106,8 @@ export function buildPageMetadata({
   ];
 
   return {
-    // Absolute rather than relying on the root layout's title template: a
-    // template only reaches the segments directly below the layout that
-    // declares it, so any passthrough layout setting a plain string title
-    // silently strips the suffix from every page beneath it.
+    // Absolute, not via the title template: a passthrough layout with a plain
+    // string title would silently strip the suffix from every page beneath it.
     title: {
       absolute: titleAbsolute ? title : `${title} | ${SITE_NAME}`,
     },

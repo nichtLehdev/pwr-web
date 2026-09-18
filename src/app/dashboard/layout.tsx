@@ -7,11 +7,8 @@ import { usePermissions } from "@/lib/use-permissions";
 import DashboardSidebar from "@/app/_components/dashboard/dashboard-sidebar";
 
 /**
- * Central access guard for every /dashboard route.
- *
- * Waits for BOTH the session and the permissions query before deciding —
- * redirecting as soon as the profile is loaded (while permissions are still
- * in flight) bounced legitimate admins to "/" on every full page load.
+ * Central access guard for every /dashboard route. Waits for BOTH session and
+ * permissions — deciding earlier bounces legitimate admins to "/".
  */
 export default function DashboardLayout({
   children,
@@ -49,16 +46,27 @@ export default function DashboardLayout({
 
   if (sessionPending || permissionsLoading || !session || !hasDashboardAccess) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
+        {/* Der Kreis bleibt rund: „keine Rundungen“ gilt Kästen, nicht einem Ladezeiger. */}
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
 
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
+      {/* Sprunglink über die Seitenleiste. Verschoben statt `sr-only`: `sr-only`/
+          `not-sr-only` streiten sich um dieselbe `position`-Eigenschaft. */}
+      <a
+        href="#dashboard-inhalt"
+        className="programm bg-ink text-paper dark:bg-night-text dark:text-night fixed top-2 left-2 z-50 -translate-y-24 px-4 py-2 text-sm font-semibold opacity-0 transition-transform focus:translate-y-0 focus:opacity-100"
+      >
+        Zum Inhalt springen
+      </a>
       <DashboardSidebar />
-      <div className="min-w-0 flex-1">{children}</div>
+      <div id="dashboard-inhalt" tabIndex={-1} className="min-w-0 flex-1">
+        {children}
+      </div>
     </div>
   );
 }

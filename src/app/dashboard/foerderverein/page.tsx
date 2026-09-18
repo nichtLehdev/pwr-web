@@ -11,6 +11,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import Link from "next/link";
 import Image from "next/image";
 import { DashboardPage } from "@/app/_components/dashboard";
+import { Tag } from "@/app/_components/programmheft/tag";
 import {
   DataTable,
   createDataTableColumnHelper,
@@ -149,9 +150,8 @@ export default function DashboardFoerdervereinPage() {
   const columns = useMemo<DataTableColumn<FoerdervereinMember>[]>(
     () =>
       column.columns([
-        // Die gespeicherte Reihenfolge als eigene Spalte: nur so bleiben die
-        // Hoch/Runter-Pfeile nachvollziehbar, wenn nach etwas anderem sortiert
-        // wird — sie verschieben immer die gespeicherte Position, nie die Sicht.
+        // Eigene Spalte: Die Hoch/Runter-Pfeile verschieben immer die gespeicherte
+        // Position, nie die Sicht — auch wenn nach etwas anderem sortiert wird.
         column.accessor((member) => (members?.indexOf(member) ?? 0) + 1, {
           id: "position",
           header: "#",
@@ -179,18 +179,18 @@ export default function DashboardFoerdervereinPage() {
                     />
                   </div>
                 ) : (
-                  <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500">
+                  <div className="bg-rule/25 dark:bg-night-raised text-dark dark:text-night-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
                     <UserIcon className="h-5 w-5" />
                   </div>
                 )}
                 <div className="min-w-0">
                   <Link
                     href={`/dashboard/foerderverein/${member.id}`}
-                    className="hover:text-primary dark:text-dark-text font-medium text-gray-900"
+                    className="hover:text-primary-ink dark:hover:text-primary text-ink dark:text-night-text font-medium"
                   >
                     {displayName}
                   </Link>
-                  <p className="dark:text-dark-muted text-sm text-gray-500">
+                  <p className="text-dark dark:text-night-muted text-sm">
                     {member.user?.email ?? member.email ?? "-"}
                   </p>
                 </div>
@@ -207,45 +207,29 @@ export default function DashboardFoerdervereinPage() {
             cell: ({ row, getValue }) => (
               <div className="flex flex-col gap-1">
                 {row.original.position && (
-                  <span className="dark:text-dark-text text-sm text-gray-900">
+                  <span className="text-ink dark:text-night-text text-sm">
                     {row.original.position}
                   </span>
                 )}
-                <span className="dark:bg-dark-background-secondary dark:text-dark-muted inline-flex w-fit rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">
+                <Tag tone="inverse" className="w-fit">
                   {getValue()}
-                </span>
+                </Tag>
               </div>
             ),
           },
         ),
-        column.accessor((member) => member.memberSince, {
-          id: "memberSince",
-          header: "Mitglied seit",
-          sortFn: "datetime",
-          sortUndefined: "last",
-          meta: { filterVariant: "date", cellClassName: "whitespace-nowrap" },
-          cell: ({ getValue }) => {
-            const value = getValue();
-            return value
-              ? new Date(value).toLocaleDateString("de-DE", {
-                  year: "numeric",
-                  month: "long",
-                })
-              : "-";
-          },
-        }),
         column.accessor((member) => (member.user ? "Verknüpft" : "Manuell"), {
           id: "linked",
           header: "Verknüpfung",
           meta: { filterVariant: "set" },
           cell: ({ row }) =>
             row.original.user ? (
-              <span className="inline-flex items-center gap-1 text-sm text-green-600">
+              <span className="dark:text-night-text text-ink inline-flex items-center gap-1 text-sm">
                 <CheckIcon className="h-4 w-4" />
                 Verknüpft
               </span>
             ) : (
-              <span className="dark:text-dark-muted inline-flex items-center gap-1 text-sm text-gray-500">
+              <span className="text-dark dark:text-night-muted inline-flex items-center gap-1 text-sm">
                 <UserIcon className="h-4 w-4" />
                 Manuell
               </span>
@@ -264,7 +248,7 @@ export default function DashboardFoerdervereinPage() {
                   disabled={index <= 0 || isReordering}
                   aria-label="Nach oben"
                   title="Nach oben"
-                  className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-gray-800"
+                  className="text-dark hover:bg-rule/25 hover:text-ink dark:text-night-muted dark:hover:bg-night-raised dark:hover:text-night-text p-1.5 transition-colors disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <ChevronUpIcon className="h-4 w-4" />
                 </button>
@@ -277,13 +261,13 @@ export default function DashboardFoerdervereinPage() {
                   }
                   aria-label="Nach unten"
                   title="Nach unten"
-                  className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-gray-800"
+                  className="text-dark hover:bg-rule/25 hover:text-ink dark:text-night-muted dark:hover:bg-night-raised dark:hover:text-night-text p-1.5 transition-colors disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <ChevronDownIcon className="h-4 w-4" />
                 </button>
                 <Link
                   href={`/dashboard/foerderverein/${row.original.id}/edit`}
-                  className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
+                  className="text-dark hover:bg-rule/25 hover:text-ink dark:text-night-muted dark:hover:bg-night-raised dark:hover:text-night-text p-1.5 transition-colors"
                   title="Bearbeiten"
                 >
                   <EditIcon className="h-4 w-4" />
@@ -291,7 +275,7 @@ export default function DashboardFoerdervereinPage() {
                 <button
                   onClick={() => handleDelete(row.original.id)}
                   disabled={deletingId === row.original.id}
-                  className="rounded p-1.5 text-red-500 transition-colors hover:bg-red-50 hover:text-red-700 disabled:opacity-50 dark:hover:bg-red-900/20"
+                  className="p-1.5 text-red-600 transition-colors hover:bg-red-50 hover:text-red-700 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-900/20"
                   title="Löschen"
                 >
                   {deletingId === row.original.id ? (
@@ -311,8 +295,8 @@ export default function DashboardFoerdervereinPage() {
 
   if (isPending || profileLoading || membersLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
@@ -332,7 +316,7 @@ export default function DashboardFoerdervereinPage() {
       actions={
         <Link
           href="/dashboard/foerderverein/new"
-          className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2.5 font-medium text-white transition-colors"
+          className="bg-ink text-paper hover:bg-dark dark:bg-night-text dark:text-night dark:hover:bg-night-muted semi-condensed inline-flex min-h-11 items-center gap-2 px-4 py-2.5 font-semibold transition-colors"
         >
           <PlusIcon className="h-5 w-5" />
           Neues Mitglied
@@ -349,16 +333,16 @@ export default function DashboardFoerdervereinPage() {
         initialSorting={[{ id: "position", desc: false }]}
         emptyState={
           <>
-            <UsersIcon className="dark:text-dark-muted mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="dark:text-dark-text mt-4 mb-2 text-lg font-semibold text-gray-900">
+            <UsersIcon className="text-dark dark:text-night-muted mx-auto h-12 w-12" />
+            <h3 className="condensed text-ink dark:text-night-text mt-4 mb-2 text-lg font-bold">
               Keine Fördervereinsmitglieder
             </h3>
-            <p className="dark:text-dark-muted mb-6 text-gray-600">
+            <p className="text-dark dark:text-night-muted mb-6">
               Es wurden noch keine Fördervereinsmitglieder angelegt.
             </p>
             <Link
               href="/dashboard/foerderverein/new"
-              className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
+              className="bg-ink text-paper hover:bg-dark dark:bg-night-text dark:text-night dark:hover:bg-night-muted semi-condensed inline-flex min-h-11 items-center gap-2 px-4 py-2.5 font-semibold transition-colors"
             >
               Erstes Mitglied anlegen
             </Link>

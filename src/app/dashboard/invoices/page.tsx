@@ -23,6 +23,11 @@ import type {
   SortingState,
 } from "@tanstack/react-table";
 import { DownloadIcon, ReceiptTextIcon } from "lucide-react";
+import { berlinParts } from "@/lib/berlin-time";
+
+/** Gefüllte Werkbank-Schaltfläche, wie auf den Formularseiten des Hefts. */
+const BTN_PRIMARY =
+  "bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-primary dark:text-ink dark:hover:bg-paper semi-condensed inline-flex min-h-11 items-center justify-center gap-2 px-4 text-sm font-semibold transition-colors";
 
 type ArchiveInvoice = RouterOutputs["invoices"]["list"]["invoices"][number];
 
@@ -46,7 +51,7 @@ const STATUS_OPTIONS = [
 
 /** Invoice years to offer in the date filter: the current one and the four before. */
 function recentYears(): number[] {
-  const current = new Date().getFullYear();
+  const current = berlinParts(new Date()).year;
   return [0, 1, 2, 3, 4].map((offset) => current - offset);
 }
 
@@ -63,7 +68,6 @@ function recipientName(invoice: ArchiveInvoice): string {
   );
 }
 
-/** Reads one set filter out of the table's filter state. */
 function setFilter(filters: ColumnFiltersState, id: string): string[] {
   const value = filters.find((filter) => filter.id === id)?.value;
   return Array.isArray(value) ? (value as string[]) : [];
@@ -74,9 +78,8 @@ export default function InvoiceArchivePage() {
   const { hasPermission, isLoading: permissionsLoading } = usePermissions();
   const canView = hasPermission("invoices.view" as PermissionKey);
 
-  // The archive is paged on the server, so sorting, the set filters and the
-  // search term are query input rather than something the table does locally —
-  // otherwise each of them would only ever see the 25 rows already fetched.
+  // Paged on the server: sorting, filters and search are query input, otherwise
+  // they would only ever see the 25 rows already fetched.
   const [sorting, setSorting] = useState<SortingState>([
     { id: "invoiceDate", desc: true },
   ]);
@@ -129,17 +132,17 @@ export default function InvoiceArchivePage() {
             <>
               <Link
                 href={`/dashboard/courses/${row.original.course.id}/invoices/${row.original.id}`}
-                className="dark:text-dark-text font-medium text-gray-900 hover:underline"
+                className="text-ink dark:text-night-text font-medium hover:underline"
               >
                 {row.original.invoiceNumber ?? "Entwurf"}
               </Link>
               {row.original.replaces?.invoiceNumber && (
-                <span className="dark:text-dark-muted block text-xs text-gray-500">
+                <span className="text-dark dark:text-night-muted block text-xs">
                   ersetzt {row.original.replaces.invoiceNumber}
                 </span>
               )}
               {row.original.replacedBy?.invoiceNumber && (
-                <span className="dark:text-dark-muted block text-xs text-gray-500">
+                <span className="text-dark dark:text-night-muted block text-xs">
                   ersetzt durch {row.original.replacedBy.invoiceNumber}
                 </span>
               )}
@@ -154,7 +157,7 @@ export default function InvoiceArchivePage() {
             <>
               <span className="block">{recipientName(row.original)}</span>
               {row.original.recipientEmail && (
-                <span className="dark:text-dark-muted block text-xs text-gray-500">
+                <span className="text-dark dark:text-night-muted block text-xs">
                   {row.original.recipientEmail}
                 </span>
               )}
@@ -174,20 +177,18 @@ export default function InvoiceArchivePage() {
           },
           cell: ({ row }) => {
             const course = row.original.course;
-            // Kurs-Organisator:innen springen von hier direkt in die
-            // Rechnungsliste des Kurses; wer den Kurs nicht abrechnen darf,
-            // bekommt weiterhin nur den Titel — die Seite wäre für sie gesperrt.
+            // Nur wer den Kurs abrechnen darf, bekommt den Link — sonst wäre die Seite gesperrt.
             return manageableCourses.has(course.id) ? (
               <Link
                 href={`/dashboard/courses/${course.id}/invoices`}
                 title="Rechnungen dieses Kurses verwalten"
-                className="text-primary inline-flex items-center gap-1 hover:underline"
+                className="text-primary-ink dark:text-primary inline-flex items-center gap-1 hover:underline"
               >
                 <ReceiptTextIcon className="h-3.5 w-3.5 shrink-0" />
                 {course.title}
               </Link>
             ) : (
-              <span className="dark:text-dark-muted text-gray-600">
+              <span className="text-dark dark:text-night-muted">
                 {course.title}
               </span>
             );
@@ -225,13 +226,13 @@ export default function InvoiceArchivePage() {
                 {formatEuro(invoice.totalAmount)}
                 {invoice.status === InvoiceStatus.PUBLISHED &&
                   (invoice.paidAt ? (
-                    <span className="block text-xs font-normal text-green-600 dark:text-green-400">
+                    <span className="text-dark dark:text-night-muted block text-xs font-normal">
                       {invoiceOpenAmount(invoice) > 0
                         ? `${formatEuro(invoiceOpenAmount(invoice))} offen`
                         : "bezahlt"}
                     </span>
                   ) : (
-                    <span className="block text-xs font-normal text-amber-600 dark:text-amber-400">
+                    <span className="text-dark dark:text-night-muted block text-xs font-normal">
                       offen
                     </span>
                   ))}
@@ -261,14 +262,12 @@ export default function InvoiceArchivePage() {
                 target="_blank"
                 rel="noreferrer"
                 aria-label={`PDF ${row.original.invoiceNumber ?? ""} öffnen`}
-                className="text-primary inline-flex items-center gap-1 hover:underline"
+                className="text-primary-ink dark:text-primary inline-flex items-center gap-1 hover:underline"
               >
                 <DownloadIcon className="h-4 w-4" />
               </a>
             ) : (
-              <span className="dark:text-dark-muted text-xs text-gray-400">
-                —
-              </span>
+              <span className="text-dark dark:text-night-muted text-xs">—</span>
             ),
         }),
       ]),
@@ -277,8 +276,8 @@ export default function InvoiceArchivePage() {
 
   if (sessionLoading || permissionsLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
@@ -286,14 +285,11 @@ export default function InvoiceArchivePage() {
   if (!canView) {
     return (
       <DashboardPage title="Rechnungsarchiv">
-        <div className="dark:bg-dark-surface rounded-lg bg-white p-8 text-center shadow">
-          <p className="dark:text-dark-muted text-gray-600">
+        <div className="border-rule dark:border-night-rule border p-8 text-center">
+          <p className="text-dark dark:text-night-muted">
             Du hast keine Berechtigung, das Rechnungsarchiv einzusehen.
           </p>
-          <Link
-            href="/dashboard"
-            className="text-primary mt-4 inline-block hover:underline"
-          >
+          <Link href="/dashboard" className="link-ink mt-4 inline-block">
             Zurück zum Dashboard
           </Link>
         </div>
@@ -301,8 +297,6 @@ export default function InvoiceArchivePage() {
     );
   }
 
-  // Genau ein Kurs ausgewählt und abrechenbar: dann ist der Sprung in dessen
-  // Rechnungsliste die wahrscheinlichste nächste Handlung.
   const selectedCourse =
     courseFilter.length === 1
       ? courses?.find((course) => course.id === courseFilter[0])
@@ -316,41 +310,40 @@ export default function InvoiceArchivePage() {
         selectedCourse?.canManage ? (
           <Link
             href={`/dashboard/courses/${selectedCourse.id}/invoices`}
-            className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white"
+            className={BTN_PRIMARY}
           >
-            <ReceiptTextIcon className="h-4 w-4" />
+            <ReceiptTextIcon className="h-4 w-4" aria-hidden />
             Rechnungen verwalten
           </Link>
         ) : undefined
       }
     >
-      {/* Summary */}
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="dark:bg-dark-surface rounded-lg bg-white p-4 shadow">
-          <p className="dark:text-dark-muted text-xs text-gray-500">
+        <div className="bg-rule/25 dark:bg-night-raised p-4">
+          <p className="text-dark dark:text-night-muted text-xs">
             Rechnungen in dieser Auswahl
           </p>
-          <p className="dark:text-dark-text mt-1 text-2xl font-semibold text-gray-900">
+          <p className="text-ink dark:text-night-text mt-1 text-2xl font-semibold">
             {data?.total ?? 0}
           </p>
         </div>
-        <div className="dark:bg-dark-surface rounded-lg bg-white p-4 shadow">
-          <p className="dark:text-dark-muted text-xs text-gray-500">
+        <div className="bg-rule/25 dark:bg-night-raised p-4">
+          <p className="text-dark dark:text-night-muted text-xs">
             Summe der ausgestellten Rechnungen
           </p>
-          <p className="dark:text-dark-text mt-1 text-2xl font-semibold text-gray-900">
+          <p className="text-ink dark:text-night-text mt-1 text-2xl font-semibold">
             {formatEuro(data?.publishedTotal ?? 0)}
           </p>
         </div>
-        <div className="dark:bg-dark-surface rounded-lg bg-white p-4 shadow">
-          <p className="dark:text-dark-muted text-xs text-gray-500">
+        <div className="bg-rule/25 dark:bg-night-raised p-4">
+          <p className="text-dark dark:text-night-muted text-xs">
             Davon noch offen
           </p>
           <p
             className={`mt-1 text-2xl font-semibold ${
               (data?.openTotal ?? 0) > 0
-                ? "text-amber-600 dark:text-amber-400"
-                : "text-green-600 dark:text-green-400"
+                ? "text-primary-ink dark:text-primary"
+                : "text-ink dark:text-night-text"
             }`}
           >
             {formatEuro(data?.openTotal ?? 0)}
@@ -367,11 +360,14 @@ export default function InvoiceArchivePage() {
         searchPlaceholder="Nummer, Empfänger oder Kurs"
         emptyState={
           <>
-            <ReceiptTextIcon className="mx-auto h-10 w-10 text-gray-300" />
-            <p className="dark:text-dark-text mt-3 font-medium text-gray-900">
+            <ReceiptTextIcon
+              className="text-dark/50 dark:text-night-muted/50 mx-auto h-10 w-10"
+              aria-hidden
+            />
+            <p className="text-ink dark:text-night-text mt-3 font-medium">
               Keine Rechnungen gefunden
             </p>
-            <p className="dark:text-dark-muted mt-1 text-sm text-gray-500">
+            <p className="text-dark dark:text-night-muted mt-1 text-sm">
               Passe die Filter an oder erstelle Rechnungen im jeweiligen Kurs.
             </p>
           </>

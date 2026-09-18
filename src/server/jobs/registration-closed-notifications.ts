@@ -90,11 +90,8 @@ async function notifyCourse(courseId: string): Promise<"emailed" | "skipped"> {
     return "skipped";
   }
 
-  // Claim before sending: the conditional updateMany only succeeds for one
-  // caller, so overlapping cron runs (or a manual trigger during a scheduled
-  // run) cannot both mail the same course. If the process dies mid-send the
-  // course stays claimed — at-most-once beats duplicate mails with
-  // attachments to every organizer.
+  // Claim before sending: the conditional updateMany succeeds for one caller
+  // only, so overlapping runs can't both mail. At-most-once beats duplicates.
   const claim = await db.course.updateMany({
     where: { id: course.id, registrationClosedNotifiedAt: null },
     data: { registrationClosedNotifiedAt: now },
@@ -146,9 +143,8 @@ async function notifyCourse(courseId: string): Promise<"emailed" | "skipped"> {
       sentCount += 1;
     }
   } catch (error) {
-    // If nobody was reached yet, retrying is safe — release the claim so the
-    // next run picks the course up again. After a partial send, keep the
-    // claim: at-most-once beats duplicate mails to the earlier recipients.
+    // Nobody reached yet: release the claim so the next run retries. After a
+    // partial send the claim stays (at-most-once).
     if (sentCount === 0) {
       await db.course
         .update({

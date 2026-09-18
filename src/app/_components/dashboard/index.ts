@@ -50,6 +50,7 @@ export {
 } from "./new-location-form";
 export { SocialLinksEditor, cleanSocialLinks } from "./social-links-editor";
 export { CourseInvoicesButton } from "./course-invoices-button";
+export { EntryExportButton, useEntryExport } from "./entry-export";
 export {
   DashboardListViewToggle,
   useDashboardListView,
@@ -58,6 +59,5 @@ export {
 export {
   ContentStatusBadge,
   CONTENT_STATUS_LABELS,
-  CONTENT_STATUS_BADGE_CLASSES,
   CONTENT_STATUS_OPTIONS,
 } from "./content-status";

@@ -1,6 +1,18 @@
 import { Prisma, RegistrationStatus } from "~/generated/prisma/client";
 import { TRPCError } from "@trpc/server";
 import type { db as database } from "@/server/db";
+import {
+  SEAT_SELECTION_OUTDATED_MESSAGE,
+  type SeatAvailability,
+} from "@/lib/registration-split";
+import { registrationSeatShortage } from "@/lib/registration-seat-shortage";
+import { resolveParticipantPriceOption } from "@/lib/course-price-options";
+import {
+  seatsLeftForNewRegistrations,
+  seatSummaryForNewRegistrations,
+  WAITLIST_PRIORITY_SPLIT_MESSAGE,
+} from "@/lib/waitlist-priority";
+import { getCourseCapacitySummary } from "@/lib/course-available-slots";
 
 type Db = typeof database;
 type Tx = Prisma.TransactionClient;
@@ -11,14 +23,9 @@ export type CapacityCourse = {
 };
 
 /**
- * Canonical total seat capacity of a course. Returns Infinity for genuinely
- * unlimited courses.
- *
- * - Course-level maxParticipants always caps, when set (a stored 0 means 0,
- *   not unlimited).
- * - If every price tier has its own limit, the sum of tier limits also caps.
- * - A course with no course-level limit and at least one unlimited tier (or
- *   no tiers at all) is unlimited.
+ * Total seat capacity. Course-level maxParticipants always caps (0 means 0); if every
+ * tier has a limit, their sum caps too. Infinity only without a course limit and with
+ * an unlimited tier or no tiers at all.
  */
 export function computeCourseCapacity(course: CapacityCourse): number {
   const limitedTiers = course.priceOptions.filter(
@@ -44,11 +51,7 @@ export function computeCourseCapacity(course: CapacityCourse): number {
   return Infinity;
 }
 
-/**
- * Number of participants currently occupying seats. Only CONFIRMED
- * registrations consume capacity — waitlisted, cancelled, and
- * pending-discount registrations do not.
- */
+/** Only CONFIRMED registrations occupy seats (not waitlisted, cancelled or pending-discount). */
 export async function countConfirmedParticipants(
   db: Db | Tx,
   courseId: string,
@@ -67,63 +70,313 @@ export async function countConfirmedParticipants(
   });
 }
 
+type TierPriceOption = {
+  id: string;
+  label: string;
+  maxParticipants: number | null;
+};
+
+/** In Eingangsreihenfolge laden (`createdAt: "asc"`), sonst hängt die Reservierung von der DB ab. */
+type WaitingParticipants = {
+  participants: ReadonlyArray<{
+    priceOptionId: string | null;
+    priceOption: string | null;
+  }>;
+};
+
 /**
- * Throws BAD_REQUEST when adding `additionsByLabel` participants would
- * overbook any limited price tier (counting CONFIRMED registrations only).
+ * Preiskategorie je wartendem Teilnehmer, als Eingabe für `@/lib/waitlist-priority`.
+ * Ohne aktivierte Warteliste zählen WAITLIST-Anmeldungen nicht, sonst sperren sie neue für immer aus.
  */
+export function waitlistSeatRequests(
+  course: {
+    allowWaitingList: boolean | null;
+    priceOptions: ReadonlyArray<{ id: string; label: string }>;
+  },
+  waitlist: readonly WaitingParticipants[],
+): Array<Array<string | undefined>> {
+  if (!course.allowWaitingList) return [];
+  return waitlist.map((registration) =>
+    registration.participants.map(
+      (participant) =>
+        resolveParticipantPriceOption(participant, course.priceOptions)?.id,
+    ),
+  );
+}
+
+/** Für die öffentliche Platzübersicht: nur Status und Kategorien, nie Kontakt- oder Rechnungsdaten. */
+export const seatRegistrationsQuery = {
+  where: {
+    registrationStatus: {
+      in: [RegistrationStatus.CONFIRMED, RegistrationStatus.WAITLIST],
+    },
+  },
+  orderBy: { createdAt: "asc" },
+  select: {
+    registrationStatus: true,
+    participants: {
+      orderBy: { createdAt: "asc" },
+      select: { priceOptionId: true, priceOption: true },
+    },
+  },
+} satisfies Prisma.CourseRegistrationFindManyArgs;
+
 /**
- * Prüft je Preiskategorie, ob die neuen Teilnehmer noch hineinpassen.
- *
- * Zählt über `priceOptionId`, nicht über das Label: ein Kurs darf zwei
- * Kategorien mit demselben Namen führen, und über das Label wurde die eine
- * gegen das Limit der anderen geprüft — mal zu streng, mal zu lasch.
- *
- * Teilnehmer aus der Zeit vor der id-Migration werden mitgezählt, sofern ihr
- * Label im Kurs eindeutig ist; bei Duplikaten sind sie nicht zuzuordnen und
- * bleiben außen vor (die Kurs-Gesamtkapazität greift weiterhin).
+ * Freie Plätze für neue Anmeldungen, ohne die, die Wartende nutzen könnten.
+ * Erwartet mit {@link seatRegistrationsQuery} geladene Anmeldungen.
  */
-export async function assertPriceTierCapacity(
+export function seatSummaryForPublic(course: {
+  maxParticipants: number | null;
+  allowWaitingList: boolean | null;
+  priceOptions: TierPriceOption[];
+  registrations: ReadonlyArray<
+    WaitingParticipants & { registrationStatus: RegistrationStatus }
+  >;
+}) {
+  const confirmed = course.registrations.filter(
+    (r) => r.registrationStatus === RegistrationStatus.CONFIRMED,
+  );
+  const waitlist = waitlistSeatRequests(
+    course,
+    course.registrations.filter(
+      (r) => r.registrationStatus === RegistrationStatus.WAITLIST,
+    ),
+  );
+  const summary = getCourseCapacitySummary({
+    maxParticipants: course.maxParticipants,
+    priceOptions: course.priceOptions,
+    registrations: confirmed.map((r) => ({
+      registrationStatus: r.registrationStatus,
+      participants: [...r.participants],
+    })),
+  });
+  return {
+    ...seatSummaryForNewRegistrations(summary, course.priceOptions, waitlist),
+    hasWaitingList: waitlist.length > 0,
+  };
+}
+
+/**
+ * {@link loadSeatAvailability} ohne die Plätze, die Wartende nutzen könnten.
+ * Das Team vergibt weiterhin aus den tatsächlichen.
+ */
+export async function loadSeatsForNewRegistrations(
+  db: Db | Tx,
+  course: {
+    id: string;
+    maxParticipants: number | null;
+    allowWaitingList: boolean | null;
+    priceOptions: TierPriceOption[];
+  },
+): Promise<Awaited<ReturnType<typeof loadSeatAvailability>>> {
+  const availability = await loadSeatAvailability(db, course);
+  if (!course.allowWaitingList) return availability;
+  const waitlist = await db.courseRegistration.findMany({
+    where: {
+      courseId: course.id,
+      registrationStatus: RegistrationStatus.WAITLIST,
+    },
+    orderBy: { createdAt: "asc" },
+    select: {
+      participants: {
+        orderBy: { createdAt: "asc" },
+        select: { priceOptionId: true, priceOption: true },
+      },
+    },
+  });
+  return seatsLeftForNewRegistrations(
+    availability,
+    waitlistSeatRequests(course, waitlist),
+  );
+}
+
+export function priceTierFullMessage(option: { label: string }): string {
+  return `Die Preisoption "${option.label}" ist ausgebucht.`;
+}
+
+/**
+ * Erste Preiskategorie, in die die neuen Teilnehmer nicht mehr passen, sonst `null`.
+ * Zählt über `priceOptionId`, da Labels doppelt vorkommen dürfen; Teilnehmer ohne id
+ * nur bei eindeutigem Label.
+ */
+export async function findFullPriceTier(
   db: Db | Tx,
   courseId: string,
-  priceOptions: Array<{
-    id: string;
-    label: string;
-    maxParticipants: number | null;
-  }>,
+  priceOptions: TierPriceOption[],
   additionsByOptionId: Record<string, number>,
   excludeRegistrationId?: string,
-): Promise<void> {
+): Promise<TierPriceOption | null> {
   for (const [optionId, addition] of Object.entries(additionsByOptionId)) {
     const priceOption = priceOptions.find((p) => p.id === optionId);
     if (priceOption?.maxParticipants == null) continue;
 
-    const labelIsUnique =
-      priceOptions.filter((p) => p.label === priceOption.label).length === 1;
-
-    const currentCount = await db.participant.count({
-      where: {
-        OR: [
-          { priceOptionId: optionId },
-          ...(labelIsUnique
-            ? [{ priceOptionId: null, priceOption: priceOption.label }]
-            : []),
-        ],
-        registration: {
-          courseId,
-          registrationStatus: RegistrationStatus.CONFIRMED,
-          ...(excludeRegistrationId
-            ? { id: { not: excludeRegistrationId } }
-            : {}),
-        },
-      },
-    });
+    const currentCount = await countConfirmedInPriceOption(
+      db,
+      courseId,
+      priceOption,
+      priceOptions,
+      excludeRegistrationId,
+    );
 
     if (currentCount + addition > priceOption.maxParticipants) {
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message: `Die Preisoption "${priceOption.label}" ist ausgebucht.`,
-      });
+      return priceOption;
     }
+  }
+  return null;
+}
+
+/** Bestätigte Teilnehmer einer Kategorie, gezählt wie in {@link findFullPriceTier}. */
+async function countConfirmedInPriceOption(
+  db: Db | Tx,
+  courseId: string,
+  priceOption: TierPriceOption,
+  priceOptions: TierPriceOption[],
+  excludeRegistrationId?: string,
+): Promise<number> {
+  const labelIsUnique =
+    priceOptions.filter((p) => p.label === priceOption.label).length === 1;
+
+  return db.participant.count({
+    where: {
+      OR: [
+        { priceOptionId: priceOption.id },
+        ...(labelIsUnique
+          ? [{ priceOptionId: null, priceOption: priceOption.label }]
+          : []),
+      ],
+      registration: {
+        courseId,
+        registrationStatus: RegistrationStatus.CONFIRMED,
+        ...(excludeRegistrationId
+          ? { id: { not: excludeRegistrationId } }
+          : {}),
+      },
+    },
+  });
+}
+
+/**
+ * Freie Plätze nach denselben Regeln wie die Prüfungen beim Bestätigen (Kategorien nach id,
+ * nicht nach Label). Grundlage fürs Nachrücken.
+ */
+export async function loadSeatAvailability(
+  db: Db | Tx,
+  course: {
+    id: string;
+    maxParticipants: number | null;
+    priceOptions: TierPriceOption[];
+  },
+): Promise<{
+  availableSlots: number;
+  priceOptions: TierPriceOption[];
+  capacityByPriceOption: Record<string, number>;
+}> {
+  const confirmed = await countConfirmedParticipants(db, course.id);
+  const capacityByPriceOption: Record<string, number> = {};
+  for (const option of course.priceOptions) {
+    if (option.maxParticipants == null) continue;
+    const used = await countConfirmedInPriceOption(
+      db,
+      course.id,
+      option,
+      course.priceOptions,
+    );
+    capacityByPriceOption[option.id] = Math.max(
+      0,
+      option.maxParticipants - used,
+    );
+  }
+  return {
+    availableSlots: Math.max(0, computeCourseCapacity(course) - confirmed),
+    priceOptions: course.priceOptions,
+    capacityByPriceOption,
+  };
+}
+
+/** Wie {@link findFullPriceTier}, lehnt eine volle Kategorie aber ab. */
+export async function assertPriceTierCapacity(
+  ...args: Parameters<typeof findFullPriceTier>
+): Promise<void> {
+  const fullOption = await findFullPriceTier(...args);
+  if (fullOption) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: priceTierFullMessage(fullOption),
+    });
+  }
+}
+
+/**
+ * Prüft beim Aufteilen, ob die gewählten Teilnehmer noch passen: die Plätze stammen vom
+ * Laden der Seite und können inzwischen vergeben sein.
+ */
+export async function assertSeatSelectionFits(
+  db: Db | Tx,
+  {
+    course,
+    participants,
+    selection,
+    confirmedCount,
+    seatsForNewRegistrations,
+  }: {
+    course: {
+      id: string;
+      maxParticipants: number | null;
+      priceOptions: TierPriceOption[];
+    };
+    participants: ReadonlyArray<{ priceOptionId: string }>;
+    selection: readonly number[];
+    confirmedCount: number;
+    /**
+     * Nur bei neuen Anmeldungen ({@link loadSeatsForNewRegistrations}); fehlt beim
+     * Annehmen eines Nachrück-Angebots, dort ist die Wartende dran.
+     */
+    seatsForNewRegistrations?: SeatAvailability;
+  },
+): Promise<void> {
+  const outdated = () =>
+    new TRPCError({
+      code: "BAD_REQUEST",
+      message: SEAT_SELECTION_OUTDATED_MESSAGE,
+    });
+
+  if (confirmedCount + selection.length > computeCourseCapacity(course)) {
+    throw outdated();
+  }
+
+  const additionsByOptionId: Record<string, number> = {};
+  for (const index of selection) {
+    const optionId = participants[index]?.priceOptionId;
+    if (optionId) {
+      additionsByOptionId[optionId] = (additionsByOptionId[optionId] ?? 0) + 1;
+    }
+  }
+  if (
+    await findFullPriceTier(
+      db,
+      course.id,
+      course.priceOptions,
+      additionsByOptionId,
+    )
+  ) {
+    throw outdated();
+  }
+
+  // Die Plätze sind frei, stehen aber zum Teil Wartenden zu: eine eigene
+  // Meldung, weil „nicht mehr genug frei“ hier nicht stimmt.
+  if (
+    seatsForNewRegistrations &&
+    registrationSeatShortage({
+      participantPriceOptionIds: selection.map(
+        (index) => participants[index]?.priceOptionId,
+      ),
+      ...seatsForNewRegistrations,
+    })
+  ) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: WAITLIST_PRIORITY_SPLIT_MESSAGE,
+    });
   }
 }
 
@@ -131,9 +384,8 @@ const SERIALIZATION_FAILURE = "P2034";
 const MAX_RETRIES = 3;
 
 /**
- * Run `fn` in a SERIALIZABLE transaction, retrying on serialization
- * failures. This is what makes capacity-check-then-insert safe against
- * concurrent registrations for the last seat.
+ * SERIALIZABLE with retries on serialization failures: makes capacity-check-then-insert
+ * safe against concurrent registrations for the last seat.
  */
 export async function runSerializable<T>(
   db: Db,

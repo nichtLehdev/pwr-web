@@ -1,19 +1,62 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState } from "react";
-import CompactEventCard from "../event-card-compact";
+import { useMemo, useState } from "react";
 import { getDistrictColor } from "@/lib/district-color";
 import type { CalendarItem } from "@/lib/types/calendar";
 import { ChevronLeft, ChevronRight, XCircleIcon, XIcon } from "lucide-react";
+import { Heading } from "@/app/_components/programmheft/section-head";
+import { ProgrammeList } from "@/app/_components/programmheft/programme";
+import {
+  courseEntry,
+  eventEntry,
+  type ProgrammeEntry,
+} from "@/app/_components/programmheft/programme-data";
+import {
+  berlinDate,
+  berlinParts,
+  daysInMonth as countDaysInMonth,
+  formatBerlin,
+  startOfBerlinDay,
+  startOfNextBerlinDay,
+  weekdayOf,
+} from "@/lib/berlin-time";
 
 interface CalendarViewProps {
   items: CalendarItem[];
 }
 
+/** Ein Kalendermonat in Deutschland; `month` läuft von 1 bis 12. */
+type CalendarMonth = { year: number; month: number };
+
+function currentBerlinMonth(): CalendarMonth {
+  const { year, month } = berlinParts(new Date());
+  return { year, month };
+}
+
+/**
+ * Tage, Monat und „heute" in Berliner Zeit, weil zuerst auf dem Server (UTC) gerendert wird.
+ * `selectedDate` ist immer 00:00 Uhr Berliner Zeit des gewählten Tages.
+ */
 export default function CalendarView({ items }: CalendarViewProps) {
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(() =>
+    startOfBerlinDay(new Date()),
+  );
+  const [currentMonth, setCurrentMonth] =
+    useState<CalendarMonth>(currentBerlinMonth);
+  const calendarNow = useMemo(() => startOfBerlinDay(new Date()), []);
+
+  /** Termin oder Kurs als Programmzeile; das Mitmachangebot steht mangels eigenem Platz als Statuszeile. */
+  const toProgrammeEntry = (item: CalendarItem): ProgrammeEntry => {
+    if (item.type === "event") {
+      const entry = eventEntry(item);
+      if (!item.cancelled && item.openToParticipants) {
+        entry.status = { text: "Mitspielen möglich!", tone: "muted" };
+      }
+      return entry;
+    }
+    return courseEntry(item, calendarNow);
+  };
 
   const calendarItems = items.map((item) => ({
     ...item,
@@ -22,51 +65,31 @@ export default function CalendarView({ items }: CalendarViewProps) {
     ),
   }));
 
-  const getDaysInMonth = (date: Date) => {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const daysInMonth = lastDay.getDate();
-    const startingDayOfWeek = (firstDay.getDay() + 6) % 7;
+  const { year, month } = currentMonth;
+  const daysInMonth = countDaysInMonth(year, month);
+  const startingDayOfWeek = (weekdayOf(year, month, 1) + 6) % 7;
 
-    return { daysInMonth, startingDayOfWeek, firstDay, lastDay };
-  };
-
-  const { daysInMonth, startingDayOfWeek } = getDaysInMonth(currentMonth);
-
-  const getEventsForDay = (day: number) => {
-    const date = new Date(
-      currentMonth.getFullYear(),
-      currentMonth.getMonth(),
-      day,
-    );
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
-
-    return calendarItems.filter((item) => {
+  /** Termine, die in [startOfDay, startOfNextDay) fallen; Kurse, die ihn berühren. */
+  const itemsBetween = (startOfDay: Date, startOfNextDay: Date) =>
+    calendarItems.filter((item) => {
       if (item.type === "course") {
         const course = item;
         const endDate = new Date(course.endDate);
-        return item.date <= endOfDay && endDate >= startOfDay;
+        return item.date < startOfNextDay && endDate >= startOfDay;
       }
 
-      return item.date >= startOfDay && item.date <= endOfDay;
+      return item.date >= startOfDay && item.date < startOfNextDay;
     });
-  };
+
+  const getEventsForDay = (day: number) =>
+    itemsBetween(
+      berlinDate(year, month, day),
+      berlinDate(year, month, day + 1),
+    );
 
   const getCourseStatusForDay = (day: number) => {
-    const date = new Date(
-      currentMonth.getFullYear(),
-      currentMonth.getMonth(),
-      day,
-    );
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
+    const startOfDay = berlinDate(year, month, day);
+    const startOfNextDay = berlinDate(year, month, day + 1);
 
     const courses = calendarItems.filter((item) => item.type === "course");
 
@@ -74,15 +97,15 @@ export default function CalendarView({ items }: CalendarViewProps) {
       const startDate = course.date;
       const endDate = new Date(course.endDate);
 
-      if (startDate >= startOfDay && startDate <= endOfDay) {
+      if (startDate >= startOfDay && startDate < startOfNextDay) {
         return "start";
       }
 
-      if (endDate >= startOfDay && endDate <= endOfDay) {
+      if (endDate >= startOfDay && endDate < startOfNextDay) {
         return "end";
       }
 
-      if (startDate < startOfDay && endDate > endOfDay) {
+      if (startDate < startOfDay && endDate >= startOfNextDay) {
         return "ongoing";
       }
     }
@@ -90,29 +113,14 @@ export default function CalendarView({ items }: CalendarViewProps) {
     return null;
   };
 
-  const getItemsForSelectedDay = () => {
-    const startOfDay = new Date(selectedDate);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(selectedDate);
-    endOfDay.setHours(23, 59, 59, 999);
-
-    return calendarItems
-      .filter((item) => {
-        if (item.type === "course") {
-          const course = item;
-          const endDate = new Date(course.endDate);
-          return item.date <= endOfDay && endDate >= startOfDay;
-        }
-
-        return item.date >= startOfDay && item.date <= endOfDay;
-      })
-      .sort((a, b) => a.date.getTime() - b.date.getTime());
-  };
+  const getItemsForSelectedDay = () =>
+    itemsBetween(
+      startOfBerlinDay(selectedDate),
+      startOfNextBerlinDay(selectedDate),
+    ).sort((a, b) => a.date.getTime() - b.date.getTime());
 
   const getUpcomingItems = () => {
-    const startOfNextDay = new Date(selectedDate);
-    startOfNextDay.setDate(startOfNextDay.getDate() + 1);
-    startOfNextDay.setHours(0, 0, 0, 0);
+    const startOfNextDay = startOfNextBerlinDay(selectedDate);
 
     return calendarItems
       .filter((item) => item.date >= startOfNextDay)
@@ -125,99 +133,84 @@ export default function CalendarView({ items }: CalendarViewProps) {
 
   const goToPreviousMonth = () => {
     setCurrentMonth(
-      new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1),
+      month === 1 ? { year: year - 1, month: 12 } : { year, month: month - 1 },
     );
   };
 
   const goToNextMonth = () => {
     setCurrentMonth(
-      new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1),
+      month === 12 ? { year: year + 1, month: 1 } : { year, month: month + 1 },
     );
   };
 
   const goToToday = () => {
-    const today = new Date();
-    setCurrentMonth(today);
-    setSelectedDate(today);
+    setCurrentMonth(currentBerlinMonth());
+    setSelectedDate(startOfBerlinDay(new Date()));
   };
 
-  const monthName = currentMonth.toLocaleDateString("de-DE", {
-    month: "long",
-    year: "numeric",
-  });
+  const monthName = formatBerlin(berlinDate(year, month, 1), "monatJahr");
   const weekDays = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 
   const isToday = (day: number) => {
-    const today = new Date();
-    return (
-      day === today.getDate() &&
-      currentMonth.getMonth() === today.getMonth() &&
-      currentMonth.getFullYear() === today.getFullYear()
-    );
+    const today = berlinParts(new Date());
+    return day === today.day && month === today.month && year === today.year;
   };
 
-  const isSelected = (day: number) => {
-    return (
-      day === selectedDate.getDate() &&
-      currentMonth.getMonth() === selectedDate.getMonth() &&
-      currentMonth.getFullYear() === selectedDate.getFullYear()
-    );
-  };
+  const selectedParts = berlinParts(selectedDate);
+  const isSelected = (day: number) =>
+    day === selectedParts.day &&
+    month === selectedParts.month &&
+    year === selectedParts.year;
 
   return (
     <div className="space-y-6">
-      {/* Mobile Kalender (< lg) */}
       <div className="lg:hidden">
-        {/* Kalender Header */}
-        <div className="bg-background-secondary dark:bg-dark-surface dark:shadow-dark-border rounded-lg p-4 shadow-md">
+        <div className="border-ink dark:border-night-text bg-paper dark:bg-night border-2 p-4">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-dark text-xl font-bold dark:text-white">
+            <h2 className="condensed text-ink dark:text-night-text text-xl font-extrabold">
               {monthName}
             </h2>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-1">
               <button
                 onClick={goToPreviousMonth}
-                className="dark:hover:bg-dark-background rounded-lg p-2 transition-colors hover:bg-gray-100"
+                className="text-ink hover:bg-ink hover:text-paper dark:text-night-text dark:hover:bg-night-text dark:hover:text-night flex h-11 w-11 items-center justify-center transition-colors"
                 aria-label="Vorheriger Monat"
               >
-                <ChevronLeft className="h-5 w-5" />
+                <ChevronLeft className="h-5 w-5" aria-hidden />
               </button>
               <button
                 onClick={goToToday}
-                className="text-primary hover:bg-primary/10 rounded-lg px-3 py-1 text-sm font-semibold transition-colors"
+                className="semi-condensed text-primary-ink dark:text-primary hover:bg-ink hover:text-paper dark:hover:bg-night-text dark:hover:text-night flex h-11 items-center px-3 text-sm font-semibold transition-colors"
               >
                 Heute
               </button>
               <button
                 onClick={goToNextMonth}
-                className="rounded-lg p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="text-ink hover:bg-ink hover:text-paper dark:text-night-text dark:hover:bg-night-text dark:hover:text-night flex h-11 w-11 items-center justify-center transition-colors"
                 aria-label="Nächster Monat"
               >
-                <ChevronRight className="h-5 w-5" />
+                <ChevronRight className="h-5 w-5" aria-hidden />
               </button>
             </div>
           </div>
 
-          {/* Wochentage */}
           <div className="mb-2 grid grid-cols-7 gap-1">
             {weekDays.map((day) => (
               <div
                 key={day}
-                className="py-2 text-center text-xs font-semibold text-gray-600 dark:text-gray-300"
+                className="semi-condensed text-dark dark:text-night-muted py-2 text-center text-xs font-semibold"
               >
                 {day}
               </div>
             ))}
           </div>
 
-          {/* Tage */}
           <div className="grid grid-cols-7 gap-1">
             {/* Leere Zellen für Tage vor dem 1. */}
             {Array.from({ length: startingDayOfWeek }).map((_, i) => (
               <div key={`empty-${i}`} className="aspect-square" />
             ))}
 
-            {/* Tage des Monats */}
             {Array.from({ length: daysInMonth }).map((_, i) => {
               const day = i + 1;
               const events = getEventsForDay(day);
@@ -235,43 +228,35 @@ export default function CalendarView({ items }: CalendarViewProps) {
               return (
                 <button
                   key={day}
-                  onClick={() =>
-                    setSelectedDate(
-                      new Date(
-                        currentMonth.getFullYear(),
-                        currentMonth.getMonth(),
-                        day,
-                      ),
-                    )
-                  }
-                  className={`relative flex aspect-square flex-col items-center justify-center rounded-lg transition-colors dark:text-white ${
+                  onClick={() => setSelectedDate(berlinDate(year, month, day))}
+                  /* Schriftfarbe in jedem Zweig, nicht als Grundwert: es gilt die Reihenfolge im
+                     Stylesheet, ein vorangestelltes `dark:text-night-text` gewann sonst. */
+                  className={`relative flex aspect-square flex-col items-center justify-center transition-colors ${
                     selected
-                      ? "bg-primary font-bold text-white"
+                      ? "bg-ink text-paper dark:bg-night-text dark:text-night font-bold"
                       : today
-                        ? "bg-primary/20 text-primary font-bold"
+                        ? "text-ink dark:text-night-text bg-ink/[0.06] dark:bg-night-text/[0.08] font-bold"
                         : courseStatus
-                          ? "bg-primary/5"
-                          : "hover:bg-gray-100 dark:hover:bg-gray-700"
+                          ? "text-ink dark:text-night-text bg-rule/20 dark:bg-night-rule/20"
+                          : "text-ink dark:text-night-text hover:bg-rule/20 dark:hover:bg-night-rule/20"
                   }`}
                 >
-                  {/* Cancelled Indicator oben links */}
                   {hasCancelledEvent && (
                     <div
-                      className={`absolute top-0.5 left-0.5 flex h-3 w-3 items-center justify-center rounded-full ${
-                        selected ? "bg-red-300" : "bg-red-500"
-                      } shadow-sm`}
+                      className={`absolute top-0.5 left-0.5 flex h-3 w-3 items-center justify-center ${
+                        selected ? "bg-red-400" : "bg-red-700 dark:bg-red-400"
+                      }`}
                       title="Abgesagt"
                     >
-                      <XCircleIcon className="h-2 w-2 text-white" />
+                      <XCircleIcon className="h-2 w-2 text-white" aria-hidden />
                     </div>
                   )}
 
-                  {/* Mitmachangebot-Indicator oben rechts */}
                   {hasOpenToParticipants && (
                     <div
-                      className={`absolute top-0.5 right-0.5 h-2 w-2 rounded-full ${
-                        selected ? "bg-green-300" : "bg-green-500"
-                      } shadow-sm`}
+                      className={`absolute top-0.5 right-0.5 h-2 w-2 ${
+                        selected ? "bg-paper dark:bg-night" : "bg-primary"
+                      }`}
                       title="Mitmachangebot"
                     />
                   )}
@@ -280,13 +265,9 @@ export default function CalendarView({ items }: CalendarViewProps) {
                   {courseStatus && (
                     <div
                       className={`absolute top-0 right-0 left-0 h-0.5 ${
-                        selected ? "bg-white dark:bg-[#1a1614]" : "bg-primary"
-                      } ${
-                        courseStatus === "start"
-                          ? "rounded-l-full"
-                          : courseStatus === "end"
-                            ? "rounded-r-full"
-                            : ""
+                        selected
+                          ? "bg-paper dark:bg-night"
+                          : "bg-ink dark:bg-night-text"
                       }`}
                     />
                   )}
@@ -302,7 +283,7 @@ export default function CalendarView({ items }: CalendarViewProps) {
                         return (
                           <div
                             key={idx}
-                            className="h-1 w-1 rounded-full"
+                            className="h-1 w-1"
                             style={{
                               backgroundColor: selected
                                 ? "#FFFFFF"
@@ -318,103 +299,63 @@ export default function CalendarView({ items }: CalendarViewProps) {
             })}
           </div>
 
-          {/* Legende */}
-          <div className="dark:border-dark-border mt-4 border-t border-gray-200 pt-4">
-            <div className="flex flex-wrap gap-4 text-xs text-gray-600 dark:text-gray-300">
+          <div className="border-rule dark:border-night-rule mt-4 border-t pt-4">
+            <div className="text-dark dark:text-night-muted flex flex-wrap gap-4 text-xs">
               <div className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-full bg-green-500"></div>
+                <div className="bg-primary h-2.5 w-2.5"></div>
                 <span>Mitspielen möglich</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="flex h-3 w-3 items-center justify-center rounded-full bg-red-500">
-                  <XIcon className="h-2 w-2 text-white" />
+                <div className="flex h-2.5 w-2.5 items-center justify-center bg-red-700 dark:bg-red-400">
+                  <XIcon className="h-2 w-2 text-white" aria-hidden />
                 </div>
                 <span>Abgesagt</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="bg-primary h-0.5 w-3 rounded-full"></div>
+                <div className="bg-ink dark:bg-night-text h-0.5 w-3"></div>
                 <span>Mehrtägige Veranstaltung</span>
               </div>
             </div>
           </div>
         </div>
       </div>
-      {/* Ende Mobile Kalender */}
 
-      {/* Events für den ausgewählten Tag - nur Mobile */}
+      {/* Termine für den ausgewählten Tag - nur Mobile */}
       <div className="lg:hidden">
-        <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
-          {selectedDate.toLocaleDateString("de-DE", {
-            weekday: "long",
-            day: "numeric",
-            month: "long",
-            year:
-              selectedDate.getFullYear() !== new Date().getFullYear()
-                ? "numeric"
-                : undefined,
-          })}
-        </h3>
+        <Heading as="h3" size="list" rule>
+          {formatBerlin(
+            selectedDate,
+            selectedParts.year !== berlinParts(new Date()).year
+              ? "datumMitWochentag"
+              : { weekday: "long", day: "numeric", month: "long" },
+          )}
+        </Heading>
 
         {todayItems.length > 0 ? (
-          <div className="mb-6 space-y-2">
-            {todayItems.map((item, idx) => (
-              <CompactEventCard
-                key={`today-${item.type}-${item.id}-${idx}`}
-                id={item.id}
-                slug={item.slug}
-                title={item.title}
-                date={item.type === "event" ? item.eventDate : item.startDate}
-                endDate={item.type === "course" ? item.endDate : undefined}
-                location={item.location?.city || ""}
-                category={
-                  item.type === "event" ? item.category : item.courseType
-                }
-                type={item.type}
-                openToParticipants={
-                  item.type === "event" ? item.openToParticipants : undefined
-                }
-                cancelled={item.type === "event" ? item.cancelled : undefined}
-              />
-            ))}
-          </div>
+          <ProgrammeList
+            entries={todayItems.map(toProgrammeEntry)}
+            now={calendarNow}
+          />
         ) : (
-          <p className="bg-background-secondary dark:bg-dark-background-secondary text-dark dark:text-dark-text mb-6 rounded-lg py-4 text-center text-sm">
+          <p className="text-dark dark:text-night-muted border-rule dark:border-night-rule border-b py-4 text-center text-sm">
             Keine Termine an diesem Tag
           </p>
         )}
 
-        {/* Nächste Termine */}
         {upcomingItems.length > 0 && (
-          <>
-            <h4 className="text-dark dark:text-dark-text mt-6 mb-3 text-base font-bold">
+          <div className="mt-8">
+            <Heading as="h4" size="list" className="text-[1.375rem]">
               Nächste Termine
-            </h4>
-            <div className="space-y-2">
-              {upcomingItems.map((item, idx) => (
-                <CompactEventCard
-                  key={`upcoming-${item.type}-${item.id}-${idx}`}
-                  id={item.id}
-                  slug={item.slug}
-                  title={item.title}
-                  date={item.type === "event" ? item.eventDate : item.startDate}
-                  endDate={item.type === "course" ? item.endDate : undefined}
-                  location={item.location?.city || ""}
-                  category={
-                    item.type === "event" ? item.category : item.courseType
-                  }
-                  type={item.type}
-                  openToParticipants={
-                    item.type === "event" ? item.openToParticipants : undefined
-                  }
-                  cancelled={item.type === "event" ? item.cancelled : undefined}
-                />
-              ))}
-            </div>
-          </>
+            </Heading>
+            <ProgrammeList
+              entries={upcomingItems.map(toProgrammeEntry)}
+              now={calendarNow}
+            />
+          </div>
         )}
 
         {todayItems.length === 0 && upcomingItems.length === 0 && (
-          <p className="py-8 text-center text-gray-600 dark:text-gray-300">
+          <p className="text-dark dark:text-night-muted py-8 text-center">
             Keine weiteren Termine geplant.
           </p>
         )}

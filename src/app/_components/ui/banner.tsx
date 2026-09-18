@@ -5,8 +5,9 @@ import Link from "next/link";
 import { useBanner } from "./banner-context";
 import { XIcon } from "lucide-react";
 import { ArrowRightIcon } from "lucide-react";
+import { Tag, type TagTone } from "../programmheft/tag";
 
-export type BannerVariant = "info" | "warning" | "success" | "maintenance";
+export type BannerVariant = "info" | "warning" | "maintenance";
 
 export interface AnnouncementBannerProps {
   /** Unique ID used for localStorage dismissal tracking */
@@ -17,11 +18,8 @@ export interface AnnouncementBannerProps {
   message: string;
   /** Short message for mobile (optional, defaults to message) */
   mobileMessage?: string;
-  /** Visual variant/color scheme */
   variant?: BannerVariant;
-  /** Whether the banner can be dismissed */
   dismissible?: boolean;
-  /** Optional link */
   link?: {
     href: string;
     label: string;
@@ -30,11 +28,17 @@ export interface AnnouncementBannerProps {
   icon?: React.ReactNode;
 }
 
+/** Schrift immer mit ≥ 4,5:1 (WCAG 1.4.3); die Art nennt das Etikett. */
 const variantStyles: Record<BannerVariant, string> = {
-  info: "bg-[#faa619] text-white",
-  warning: "bg-amber-500 text-white",
-  success: "bg-green-600 text-white",
-  maintenance: "bg-slate-700 text-white",
+  info: "bg-primary text-ink",
+  warning: "bg-ink text-paper dark:bg-night-text dark:text-night",
+  maintenance: "bg-ink text-paper dark:bg-night-text dark:text-night",
+};
+
+const badgeTone: Record<BannerVariant, TagTone> = {
+  info: "ink",
+  warning: "orange",
+  maintenance: "orange",
 };
 
 function useBannerVisibility(id: string) {
@@ -156,9 +160,9 @@ export function AnnouncementBanner({
         <div className="flex flex-1 items-center justify-center gap-2 text-sm font-medium sm:justify-start">
           {icon && <span className="shrink-0">{icon}</span>}
           {badge && (
-            <span className="shrink-0 rounded bg-white/20 px-2 py-0.5 text-xs font-bold tracking-wide uppercase">
+            <Tag tone={badgeTone[variant]} className="shrink-0">
               {badge}
-            </span>
+            </Tag>
           )}
           <span className="hidden sm:inline">{message}</span>
           <span className="sm:hidden">{mobileMessage ?? message}</span>
@@ -175,7 +179,7 @@ export function AnnouncementBanner({
         {dismissible && (
           <button
             onClick={dismiss}
-            className="ml-4 shrink-0 rounded-full p-1 transition-colors hover:bg-white/20 focus:ring-2 focus:ring-white/50 focus:outline-none"
+            className="ml-4 inline-flex h-11 w-11 shrink-0 items-center justify-center transition-colors hover:bg-current/15 focus-visible:outline-2 focus-visible:outline-current"
             aria-label="Banner schließen"
           >
             <XIcon className="h-4 w-4" />
@@ -185,7 +189,7 @@ export function AnnouncementBanner({
 
       {/* Swipe indicator for mobile */}
       {dismissible && (
-        <div className="absolute top-1/2 right-2 -translate-y-1/2 text-white/50 sm:hidden">
+        <div className="absolute top-1/2 right-2 -translate-y-1/2 opacity-50 sm:hidden">
           <ArrowRightIcon className="h-4 w-4" />
         </div>
       )}
@@ -194,11 +198,8 @@ export function AnnouncementBanner({
 }
 
 /**
- * Fragt zur Laufzeit ab, ob dieses Deployment eine Vorab-Umgebung ist.
- *
- * Bewusst nicht als Prop aus dem Root-Layout: /dashboard & Co. werden statisch
- * vorgerendert, dort wäre `APP_ENV` auf den Build-Zeit-Wert eingefroren und das
- * Banner erschiene auch auf der öffentlichen Seite.
+ * Fragt zur Laufzeit, ob dies eine Vorab-Umgebung ist. Kein Prop aus dem
+ * Layout: Statisch vorgerenderte Seiten frieren `APP_ENV` zur Build-Zeit ein.
  */
 function useIsPreRelease() {
   const [isPreRelease, setIsPreRelease] = useState(false);

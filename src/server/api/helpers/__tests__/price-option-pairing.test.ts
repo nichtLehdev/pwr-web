@@ -10,10 +10,8 @@ const stored = [
 
 describe("price option pairing", () => {
   it("keeps duplicate labels apart by id", () => {
-    // Der gemeldete Fall: zwei Kategorien heißen gleich, haben aber
-    // verschiedene Preise. Ein Label-Treffer darf den id-Treffer nicht
-    // überholen — sonst meldet der Guard eine Preisänderung, die niemand
-    // vorgenommen hat.
+    // Gleiche Labels, verschiedene Preise: Ein Label-Treffer darf den id-Treffer
+    // nicht überholen, sonst meldet der Guard eine Preisänderung.
     const inputs = stored.map((option) => ({ ...option }));
     const pairing = pairPriceOptions(inputs, stored);
 

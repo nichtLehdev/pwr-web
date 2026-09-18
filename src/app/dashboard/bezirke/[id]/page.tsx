@@ -9,7 +9,9 @@ import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 import { DashboardPage } from "@/app/_components/dashboard";
+import { Tag } from "@/app/_components/programmheft/tag";
 import { MusicIcon, PencilIcon, ArrowLeftIcon, UserIcon } from "lucide-react";
+import { formatBerlin } from "@/lib/berlin-time";
 
 export default function BezirkDetailPage() {
   const router = useRouter();
@@ -61,8 +63,8 @@ export default function BezirkDetailPage() {
 
   if (sessionLoading || profileLoading || bezirkLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
@@ -73,14 +75,14 @@ export default function BezirkDetailPage() {
 
   if (!bezirk) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <h1 className="dark:text-dark-text text-xl font-semibold text-gray-900">
+          <h1 className="text-ink dark:text-night-text text-xl font-semibold">
             Bezirk nicht gefunden
           </h1>
           <Link
             href="/dashboard/bezirke"
-            className="text-primary mt-4 inline-block hover:underline"
+            className="link-ink mt-4 inline-block"
           >
             Zurück zur Übersicht
           </Link>
@@ -101,7 +103,7 @@ export default function BezirkDetailPage() {
       actions={
         <Link
           href={`/dashboard/bezirke/${bezirkId}/edit`}
-          className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
+          className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-night-text dark:text-night dark:hover:bg-primary dark:hover:text-ink inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm font-semibold transition-colors"
         >
           <PencilIcon className="h-4 w-4" />
           Obleute bearbeiten
@@ -109,10 +111,11 @@ export default function BezirkDetailPage() {
       }
       maxWidth="7xl"
     >
-      {/* District Badge */}
       <div className="mb-6 flex items-center gap-4">
         <span
-          className="flex h-16 w-16 items-center justify-center rounded-full text-2xl font-bold text-white"
+          // Tinte auf Bezirksfarbe nur hier: 24px fett ist WCAG-Grosstext
+          // (Schwelle 3:1), bei Kleintext reicht der Kontrast nicht ueberall.
+          className="text-ink flex h-16 w-16 items-center justify-center text-2xl font-bold"
           style={{
             backgroundColor: `var(--color-district-${bezirk.number})`,
           }}
@@ -121,47 +124,45 @@ export default function BezirkDetailPage() {
         </span>
       </div>
 
-      {/* Statistics */}
       {stats && (
         <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-            <div className="text-primary text-2xl font-bold">
+          <div className="border-rule dark:border-night-rule border p-4">
+            <div className="text-primary-ink dark:text-primary text-2xl font-bold">
               {stats.totalEnsembles}
             </div>
-            <div className="dark:text-dark-muted text-sm text-gray-600">
+            <div className="text-dark dark:text-night-muted text-sm">
               Ensembles
             </div>
           </div>
-          <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-            <div className="text-primary text-2xl font-bold">
+          <div className="border-rule dark:border-night-rule border p-4">
+            <div className="text-primary-ink dark:text-primary text-2xl font-bold">
               {stats.upcomingEvents}
             </div>
-            <div className="dark:text-dark-muted text-sm text-gray-600">
+            <div className="text-dark dark:text-night-muted text-sm">
               Kommende Termine
             </div>
           </div>
-          <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-            <div className="text-primary text-2xl font-bold">
+          <div className="border-rule dark:border-night-rule border p-4">
+            <div className="text-primary-ink dark:text-primary text-2xl font-bold">
               {stats.activeCourses}
             </div>
-            <div className="dark:text-dark-muted text-sm text-gray-600">
+            <div className="text-dark dark:text-night-muted text-sm">
               Aktive Kurse
             </div>
           </div>
-          <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-            <div className="text-primary text-2xl font-bold">
+          <div className="border-rule dark:border-night-rule border p-4">
+            <div className="text-primary-ink dark:text-primary text-2xl font-bold">
               {stats.totalObleute}
             </div>
-            <div className="dark:text-dark-muted text-sm text-gray-600">
+            <div className="text-dark dark:text-night-muted text-sm">
               Obleute
             </div>
           </div>
         </div>
       )}
 
-      {/* Obleute */}
-      <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-        <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+      <div className="border-rule dark:border-night-rule mb-6 border p-6">
+        <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
           Bezirksobleute
         </h2>
         {bezirk.obleute.length > 0 ? (
@@ -169,7 +170,7 @@ export default function BezirkDetailPage() {
             {bezirk.obleute.map((person) => (
               <div
                 key={person.id}
-                className="dark:border-dark-border flex items-start gap-4 rounded-lg border border-gray-100 p-4"
+                className="border-rule dark:border-night-rule flex items-start gap-4 border p-4"
               >
                 {person.image?.url ? (
                   <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full">
@@ -181,29 +182,29 @@ export default function BezirkDetailPage() {
                     />
                   </div>
                 ) : (
-                  <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500">
+                  <div className="bg-rule/25 text-dark dark:bg-night-raised dark:text-night-muted flex h-14 w-14 shrink-0 items-center justify-center rounded-full">
                     <UserIcon className="h-7 w-7" />
                   </div>
                 )}
                 <div className="min-w-0 flex-1 space-y-1">
-                  <p className="dark:text-dark-text font-medium text-gray-900">
+                  <p className="text-ink dark:text-night-text font-medium">
                     {person.name}
                   </p>
-                  <p className="dark:text-dark-muted text-sm text-gray-500">
+                  <p className="text-dark dark:text-night-muted text-sm">
                     {person.roleName}
                     {!person.userId && (
-                      <span className="ml-2 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 dark:bg-gray-700 dark:text-gray-300">
+                      <Tag tone="inverse" className="ml-2">
                         ohne Benutzerkonto
-                      </span>
+                      </Tag>
                     )}
                   </p>
                   {person.email && (
-                    <p className="dark:text-dark-muted text-sm text-gray-500">
+                    <p className="text-dark dark:text-night-muted text-sm">
                       {person.email}
                     </p>
                   )}
                   {person.address && (
-                    <p className="dark:text-dark-muted mt-2 text-sm text-gray-500">
+                    <p className="text-dark dark:text-night-muted mt-2 text-sm">
                       {person.address}
                     </p>
                   )}
@@ -212,26 +213,25 @@ export default function BezirkDetailPage() {
             ))}
           </div>
         ) : (
-          <p className="dark:text-dark-muted text-gray-500 italic">
+          <p className="text-dark dark:text-night-muted italic">
             Keine Bezirksobleute zugewiesen
           </p>
         )}
       </div>
 
-      {/* Ensembles */}
       {bezirk.ensembles && bezirk.ensembles.length > 0 && (
-        <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+        <div className="border-rule dark:border-night-rule mb-6 border p-6">
+          <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
             Ensembles ({bezirk.ensembles.length})
           </h2>
           <div className="grid gap-3 sm:grid-cols-2">
             {bezirk.ensembles.map((ensemble) => (
               <div
                 key={ensemble.id}
-                className="dark:border-dark-border flex items-center gap-3 rounded-lg border border-gray-100 p-3"
+                className="border-rule dark:border-night-rule flex items-center gap-3 border p-3"
               >
                 {ensemble.image?.url ? (
-                  <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded">
+                  <div className="relative h-10 w-10 shrink-0 overflow-hidden">
                     <Image
                       src={ensemble.image.url}
                       alt={ensemble.name}
@@ -240,16 +240,16 @@ export default function BezirkDetailPage() {
                     />
                   </div>
                 ) : (
-                  <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-10 w-10 shrink-0 items-center justify-center rounded bg-gray-100 text-gray-500">
+                  <div className="bg-rule/25 text-dark dark:bg-night-raised dark:text-night-muted flex h-10 w-10 shrink-0 items-center justify-center">
                     <MusicIcon className="h-5 w-5" />
                   </div>
                 )}
                 <div>
-                  <p className="dark:text-dark-text font-medium text-gray-900">
+                  <p className="text-ink dark:text-night-text font-medium">
                     {ensemble.name}
                   </p>
                   {(ensemble.conductorName || ensemble.conductor) && (
-                    <p className="dark:text-dark-muted text-sm text-gray-500">
+                    <p className="text-dark dark:text-night-muted text-sm">
                       Leitung:{" "}
                       {ensemble.conductorName ||
                         ensemble.conductor?.displayName}
@@ -262,32 +262,28 @@ export default function BezirkDetailPage() {
         </div>
       )}
 
-      {/* Upcoming Events */}
       {bezirk.events && bezirk.events.length > 0 && (
-        <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+        <div className="border-rule dark:border-night-rule mb-6 border p-6">
+          <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
             Kommende Termine
           </h2>
           <div className="space-y-3">
             {bezirk.events.slice(0, 5).map((event) => (
               <div
                 key={event.id}
-                className="dark:border-dark-border flex items-center gap-3 rounded-lg border border-gray-100 p-3"
+                className="border-rule dark:border-night-rule flex items-center gap-3 border p-3"
               >
-                <div className="text-primary shrink-0 text-center">
+                <div className="text-primary-ink dark:text-primary shrink-0 text-center">
                   <div className="text-sm font-medium">
-                    {new Date(event.eventDate).toLocaleDateString("de-DE", {
-                      day: "2-digit",
-                      month: "short",
-                    })}
+                    {formatBerlin(event.eventDate, "tagMonatKurz")}
                   </div>
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="dark:text-dark-text truncate font-medium text-gray-900">
+                  <p className="text-ink dark:text-night-text truncate font-medium">
                     {event.title}
                   </p>
                   {event.location && (
-                    <p className="dark:text-dark-muted truncate text-sm text-gray-500">
+                    <p className="text-dark dark:text-night-muted truncate text-sm">
                       {event.location.name}, {event.location.city}
                     </p>
                   )}
@@ -298,56 +294,50 @@ export default function BezirkDetailPage() {
         </div>
       )}
 
-      {/* Metadata */}
-      <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-        <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+      <div className="border-rule dark:border-night-rule border p-6">
+        <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
           Details
         </h2>
         <dl className="grid gap-4 sm:grid-cols-2">
           <div>
-            <dt className="dark:text-dark-muted text-sm text-gray-500">
+            <dt className="text-dark dark:text-night-muted text-sm">
               Bezirksnummer
             </dt>
-            <dd className="dark:text-dark-text font-medium text-gray-900">
+            <dd className="text-ink dark:text-night-text font-medium">
               {bezirk.number}
             </dd>
           </div>
           <div>
-            <dt className="dark:text-dark-muted text-sm text-gray-500">
+            <dt className="text-dark dark:text-night-muted text-sm">
               Vollständiger Name
             </dt>
-            <dd className="dark:text-dark-text font-medium text-gray-900">
+            <dd className="text-ink dark:text-night-text font-medium">
               {bezirk.name}
             </dd>
           </div>
           <div>
-            <dt className="dark:text-dark-muted text-sm text-gray-500">
+            <dt className="text-dark dark:text-night-muted text-sm">
               Kurzname
             </dt>
-            <dd className="dark:text-dark-text font-medium text-gray-900">
+            <dd className="text-ink dark:text-night-text font-medium">
               {bezirk.shortName}
             </dd>
           </div>
           <div>
-            <dt className="dark:text-dark-muted text-sm text-gray-500">
+            <dt className="text-dark dark:text-night-muted text-sm">
               Erstellt am
             </dt>
-            <dd className="dark:text-dark-text font-medium text-gray-900">
-              {new Date(bezirk.createdAt).toLocaleDateString("de-DE", {
-                day: "2-digit",
-                month: "long",
-                year: "numeric",
-              })}
+            <dd className="text-ink dark:text-night-text font-medium">
+              {formatBerlin(bezirk.createdAt, "datumLangZweistellig")}
             </dd>
           </div>
         </dl>
       </div>
 
-      {/* Actions */}
       <div className="mt-6 flex flex-wrap gap-3">
         <Link
           href="/dashboard/bezirke"
-          className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+          className="border-ink dark:border-night-text text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised inline-flex min-h-11 items-center gap-2 border px-4 py-2 transition-colors"
         >
           <ArrowLeftIcon className="h-4 w-4" />
           Zurück zur Übersicht

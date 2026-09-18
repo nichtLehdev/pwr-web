@@ -14,9 +14,9 @@ import {
   Star,
   X,
   Search,
-  ChevronRight,
   Frown,
 } from "lucide-react";
+import { formatBerlin } from "@/lib/berlin-time";
 
 interface SearchModalProps {
   isOpen: boolean;
@@ -33,29 +33,24 @@ const typeLabels: Record<SearchResultType, string> = {
   auswahlchor: "Auswahlchor",
 };
 
+/** Blankes Glyph in Tinte; die Art steht zusätzlich als Wort in der Metazeile. */
 const typeIcons: Record<SearchResultType, React.ReactNode> = {
-  post: <FileText className="h-5 w-5" />,
-  event: <Calendar className="h-5 w-5" />,
-  download: <Download className="h-5 w-5" />,
-  course: <GraduationCap className="h-5 w-5" />,
-  page: <Home className="h-5 w-5" />,
-  ensemble: <Music className="h-5 w-5" />,
-  auswahlchor: <Star className="h-5 w-5" />,
+  post: <FileText className="h-4 w-4 shrink-0" aria-hidden />,
+  event: <Calendar className="h-4 w-4 shrink-0" aria-hidden />,
+  download: <Download className="h-4 w-4 shrink-0" aria-hidden />,
+  course: <GraduationCap className="h-4 w-4 shrink-0" aria-hidden />,
+  page: <Home className="h-4 w-4 shrink-0" aria-hidden />,
+  ensemble: <Music className="h-4 w-4 shrink-0" aria-hidden />,
+  auswahlchor: <Star className="h-4 w-4 shrink-0" aria-hidden />,
 };
 
-const typeColors: Record<SearchResultType, string> = {
-  post: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  event: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  download:
-    "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-  course:
-    "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
-  page: "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300",
-  ensemble:
-    "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-  auswahlchor:
-    "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-};
+/** Kleiner Kopf über einer Ergebnisgruppe. */
+const GROUP_HEAD =
+  "semi-condensed text-dark dark:text-night-muted px-4 pt-4 pb-2 text-sm font-semibold";
+
+/** Taste in der Fußzeile: eckig, Haarlinie, Ziffernbreite. */
+const KEY_CAP =
+  "border-rule dark:border-night-rule text-dark dark:text-night-muted border px-1.5 py-0.5 font-mono text-[10px]";
 
 function SearchResultItem({
   result,
@@ -72,49 +67,31 @@ function SearchResultItem({
   onClick: () => void;
 }) {
   return (
-    <button
-      onClick={onClick}
-      className="dark:hover:bg-dark-background-secondary flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-50"
-    >
-      {/* Type Icon */}
-      <div
-        className={`mt-0.5 shrink-0 rounded-lg p-2 ${typeColors[result.type]}`}
+    <li className="fill-row border-rule dark:border-night-rule border-b">
+      <button
+        onClick={onClick}
+        className="block w-full px-4 py-3 text-left"
+        type="button"
       >
-        {typeIcons[result.type]}
-      </div>
-
-      {/* Content */}
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <span className="text-dark dark:text-dark-text line-clamp-1 font-medium">
-            {result.title}
-          </span>
-        </div>
+        <span className="semi-condensed text-ink dark:text-night-text line-clamp-1 block text-base font-semibold">
+          {result.title}
+        </span>
         {result.description && (
-          <p className="dark:text-dark-muted mt-0.5 line-clamp-1 text-sm text-gray-500">
+          <span className="text-dark dark:text-night-muted mt-0.5 line-clamp-1 block text-sm">
             {result.description}
-          </p>
+          </span>
         )}
-        <div className="mt-1 flex items-center gap-2 text-xs text-gray-400">
-          <span>{typeLabels[result.type]}</span>
+        <span className="text-dark dark:text-night-muted mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+          <span className="inline-flex items-center gap-1.5">
+            {typeIcons[result.type]}
+            {typeLabels[result.type]}
+          </span>
           {result.date && (
-            <>
-              <span>•</span>
-              <span>
-                {new Date(result.date).toLocaleDateString("de-DE", {
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
-                })}
-              </span>
-            </>
+            <span>{formatBerlin(result.date, "datumMonatKurz")}</span>
           )}
-        </div>
-      </div>
-
-      {/* Arrow */}
-      <ChevronRight className="mt-2 h-4 w-4 shrink-0 text-gray-300 dark:text-gray-600" />
-    </button>
+        </span>
+      </button>
+    </li>
   );
 }
 
@@ -185,164 +162,140 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
 
   if (!isOpen) return null;
 
+  const pages = data?.results.filter((r) => r.type === "page") ?? [];
+  const contents = data?.results.filter((r) => r.type !== "page") ?? [];
+
   return (
     <div className="fixed inset-0 z-100 flex items-start justify-center pt-[15vh]">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={handleClose}
-      />
+      <div className="bg-ink/55 absolute inset-0" onClick={handleClose} />
 
-      {/* Modal */}
-      <div className="dark:bg-dark-surface dark:border-dark-border relative z-10 mx-4 w-full max-w-2xl overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl">
-        {/* Search Input */}
-        <div className="dark:border-dark-border flex items-center border-b border-gray-200 px-4">
-          <Search className="h-5 w-5 shrink-0 text-gray-400" />
+      <div className="border-ink bg-paper dark:border-night-rule dark:bg-night-raised relative z-10 mx-4 w-full max-w-2xl border-2">
+        <div className="border-rule dark:border-night-rule has-[.suchfeld:focus-visible]:border-ink dark:has-[.suchfeld:focus-visible]:border-night-text flex items-center gap-3 border-b-2 px-4">
+          <Search
+            className="text-dark dark:text-night-muted h-5 w-5 shrink-0"
+            aria-hidden
+          />
           <input
             ref={inputRef}
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Suche nach Terminen, Beiträgen, Downloads..."
-            className="dark:bg-dark-surface text-dark dark:text-dark-text w-full border-0 px-4 py-4 text-lg placeholder-gray-400 outline-none focus:ring-0"
+            placeholder="Suche nach Terminen, Beiträgen, Downloads…"
+            aria-label="Suchbegriff"
+            className="suchfeld text-ink dark:text-night-text placeholder:text-dark dark:placeholder:text-night-muted w-full bg-transparent py-4 text-lg outline-none"
           />
           {query && (
             <button
               onClick={() => setQuery("")}
-              className="dark:hover:bg-dark-border shrink-0 rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+              className="text-ink hover:bg-ink hover:text-paper dark:text-night-text dark:hover:bg-night-text dark:hover:text-night inline-flex h-9 w-9 shrink-0 items-center justify-center transition-colors"
+              type="button"
             >
-              <X className="h-5 w-5" />
+              <X className="h-5 w-5" aria-hidden />
+              <span className="sr-only">Suche zurücksetzen</span>
             </button>
           )}
-          <div className="dark:border-dark-border ml-2 shrink-0 rounded border border-gray-300 px-2 py-1 text-xs text-gray-400">
-            ESC
-          </div>
+          <span className={`${KEY_CAP} shrink-0`}>ESC</span>
         </div>
 
-        {/* Results */}
         <div className="max-h-[60vh] overflow-y-auto">
           {query.length < 2 ? (
-            <div className="px-6 py-8 text-center">
-              <div className="dark:text-dark-muted text-gray-500">
-                <Search className="mx-auto mb-3 h-12 w-12 text-gray-300 dark:text-gray-600" />
-                <p className="text-sm">Mindestens 2 Zeichen eingeben</p>
-              </div>
-            </div>
+            <p className="text-dark dark:text-night-muted px-6 py-10 text-center text-sm">
+              Mindestens 2 Zeichen eingeben
+            </p>
           ) : isLoading ? (
-            <div className="flex items-center justify-center px-6 py-8">
-              <div className="border-primary h-6 w-6 animate-spin rounded-full border-b-2" />
-            </div>
+            <p className="text-dark dark:text-night-muted px-6 py-10 text-center text-sm">
+              Suche läuft …
+            </p>
           ) : data?.results.length === 0 ? (
-            <div className="px-6 py-8 text-center">
-              <div className="dark:text-dark-muted text-gray-500">
-                <Frown className="mx-auto mb-3 h-12 w-12 text-gray-300 dark:text-gray-600" />
-                <p className="text-sm">
-                  Keine Ergebnisse für &quot;{query}&quot;
-                </p>
-                <button
-                  onClick={() =>
-                    handleResultClick(
-                      `/suche?q=${encodeURIComponent(debouncedQuery)}`,
-                    )
-                  }
-                  className="text-primary mt-3 text-sm font-medium hover:underline"
-                >
-                  Auf der Suchseite suchen
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="py-2">
-              {/* Link to the full results page */}
+            <div className="px-6 py-10 text-center">
+              <Frown
+                className="text-dark dark:text-night-muted mx-auto mb-3 h-8 w-8"
+                aria-hidden
+              />
+              <p className="text-dark dark:text-night-muted text-sm">
+                Keine Ergebnisse für &quot;{query}&quot;
+              </p>
               <button
                 onClick={() =>
                   handleResultClick(
                     `/suche?q=${encodeURIComponent(debouncedQuery)}`,
                   )
                 }
-                className="text-primary hover:bg-primary/5 flex w-full items-center gap-2 px-4 py-2 text-sm font-medium"
+                className="link-ink mt-4 inline-flex min-h-11 items-center text-sm"
+                type="button"
               >
-                <Search className="h-4 w-4" />
-                Alle Ergebnisse für &quot;{debouncedQuery}&quot; anzeigen
+                Auf der Suchseite suchen
               </button>
+            </div>
+          ) : (
+            <div>
+              <ul className="border-ink dark:border-night-text border-b-2">
+                <li className="fill-row">
+                  <button
+                    onClick={() =>
+                      handleResultClick(
+                        `/suche?q=${encodeURIComponent(debouncedQuery)}`,
+                      )
+                    }
+                    className="semi-condensed text-ink dark:text-night-text flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-semibold"
+                    type="button"
+                  >
+                    <Search className="h-4 w-4 shrink-0" aria-hidden />
+                    Alle Ergebnisse für &quot;{debouncedQuery}&quot; anzeigen
+                  </button>
+                </li>
+              </ul>
 
-              {/* Pages Section - always first */}
-              {(data?.results.filter((r) => r.type === "page").length ?? 0) >
-                0 && (
+              {pages.length > 0 && (
                 <>
-                  <div className="dark:text-dark-muted px-4 py-2 text-xs font-semibold tracking-wide text-gray-500 uppercase">
-                    Seiten
-                  </div>
-                  {data?.results
-                    .filter((r) => r.type === "page")
-                    .map((result) => (
+                  <p className={GROUP_HEAD}>Seiten</p>
+                  <ul className="border-ink dark:border-night-text border-t-2">
+                    {pages.map((result) => (
                       <SearchResultItem
                         key={`${result.type}-${result.id}`}
                         result={result}
                         onClick={() => handleResultClick(result.url)}
                       />
                     ))}
+                  </ul>
                 </>
               )}
 
-              {/* Divider if we have both pages and other content */}
-              {(data?.results.filter((r) => r.type === "page").length ?? 0) >
-                0 &&
-                (data?.results.filter((r) => r.type !== "page").length ?? 0) >
-                  0 && (
-                  <div className="dark:border-dark-border my-2 border-t border-gray-200" />
-                )}
-
-              {/* Other Content Section */}
-              {(data?.results.filter((r) => r.type !== "page").length ?? 0) >
-                0 && (
+              {contents.length > 0 && (
                 <>
-                  <div className="dark:text-dark-muted px-4 py-2 text-xs font-semibold tracking-wide text-gray-500 uppercase">
-                    Inhalte
-                  </div>
-                  {data?.results
-                    .filter((r) => r.type !== "page")
-                    .map((result) => (
+                  <p className={GROUP_HEAD}>Inhalte</p>
+                  <ul className="border-ink dark:border-night-text border-t-2">
+                    {contents.map((result) => (
                       <SearchResultItem
                         key={`${result.type}-${result.id}`}
                         result={result}
                         onClick={() => handleResultClick(result.url)}
                       />
                     ))}
+                  </ul>
                 </>
               )}
             </div>
           )}
         </div>
 
-        {/* Footer */}
-        <div className="dark:border-dark-border dark:bg-dark-background-secondary flex items-center justify-between border-t border-gray-200 bg-gray-50 px-4 py-3 text-xs text-gray-500 dark:text-gray-400">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1">
-              <kbd className="dark:border-dark-border dark:bg-dark-surface rounded border border-gray-300 bg-white px-1.5 py-0.5 font-mono text-[10px]">
-                ↑
-              </kbd>
-              <kbd className="dark:border-dark-border dark:bg-dark-surface rounded border border-gray-300 bg-white px-1.5 py-0.5 font-mono text-[10px]">
-                ↓
-              </kbd>
+        <div className="border-rule dark:border-night-rule text-dark dark:text-night-muted flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-t px-4 py-3 text-xs">
+          <span className="flex items-center gap-4">
+            <span className="flex items-center gap-1">
+              <kbd className={KEY_CAP}>↑</kbd>
+              <kbd className={KEY_CAP}>↓</kbd>
               <span className="ml-1">Navigieren</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <kbd className="dark:border-dark-border dark:bg-dark-surface rounded border border-gray-300 bg-white px-1.5 py-0.5 font-mono text-[10px]">
-                ↵
-              </kbd>
+            </span>
+            <span className="flex items-center gap-1">
+              <kbd className={KEY_CAP}>↵</kbd>
               <span className="ml-1">Öffnen</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-1">
-            <kbd className="dark:border-dark-border dark:bg-dark-surface rounded border border-gray-300 bg-white px-1.5 py-0.5 font-mono text-[10px]">
-              ⌘
-            </kbd>
-            <kbd className="dark:border-dark-border dark:bg-dark-surface rounded border border-gray-300 bg-white px-1.5 py-0.5 font-mono text-[10px]">
-              K
-            </kbd>
+            </span>
+          </span>
+          <span className="flex items-center gap-1">
+            <kbd className={KEY_CAP}>⌘</kbd>
+            <kbd className={KEY_CAP}>K</kbd>
             <span className="ml-1">Suche öffnen</span>
-          </div>
+          </span>
         </div>
       </div>
     </div>

@@ -1,10 +1,8 @@
 import Link from "next/link";
 import { getDistrictColor } from "@/lib/district-color";
 import type { ContentStatus, PostCategory } from "~/generated/prisma/client";
-import {
-  CONTENT_STATUS_BADGE_CLASSES,
-  CONTENT_STATUS_LABELS,
-} from "./content-status";
+import { Tag } from "@/app/_components/programmheft/tag";
+import { ContentStatusBadge } from "./content-status";
 import {
   CalendarIcon,
   CheckCircleIcon,
@@ -15,6 +13,7 @@ import {
   TagIcon,
   UserIcon,
 } from "lucide-react";
+import { formatBerlin } from "@/lib/berlin-time";
 
 interface DashboardPostCardProps {
   id: string;
@@ -37,35 +36,12 @@ interface DashboardPostCardProps {
   reviewDate?: Date | null;
 }
 
-const categoryConfig: Record<
-  PostCategory,
-  { label: string; bgColor: string; textColor: string }
-> = {
-  MAGAZIN: {
-    label: "Magazin",
-    bgColor: "bg-indigo-100 dark:bg-indigo-900/30",
-    textColor: "text-indigo-800 dark:text-indigo-300",
-  },
-  EVENT: {
-    label: "Event",
-    bgColor: "bg-purple-100 dark:bg-purple-900/30",
-    textColor: "text-purple-800 dark:text-purple-300",
-  },
-  AUSBILDUNG: {
-    label: "Ausbildung",
-    bgColor: "bg-blue-100 dark:bg-blue-900/30",
-    textColor: "text-blue-800 dark:text-blue-300",
-  },
-  BEZIRKE: {
-    label: "Bezirke",
-    bgColor: "bg-teal-100 dark:bg-teal-900/30",
-    textColor: "text-teal-800 dark:text-teal-300",
-  },
-  ANDERE: {
-    label: "Andere",
-    bgColor: "bg-gray-100 dark:bg-gray-800",
-    textColor: "text-gray-700 dark:text-gray-300",
-  },
+const categoryLabels: Record<PostCategory, string> = {
+  MAGAZIN: "Magazin",
+  EVENT: "Event",
+  AUSBILDUNG: "Ausbildung",
+  BEZIRKE: "Bezirke",
+  ANDERE: "Andere",
 };
 
 export default function DashboardPostCard({
@@ -83,33 +59,26 @@ export default function DashboardPostCard({
   reviewDate,
 }: DashboardPostCardProps) {
   const districtColor = getDistrictColor(district);
-  const statusClasses = CONTENT_STATUS_BADGE_CLASSES[status];
-  const categoryInfo = categoryConfig[category];
   const metaIconClass =
-    "mt-0.5 h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500";
+    "text-dark dark:text-night-muted mt-0.5 h-4 w-4 shrink-0";
 
   return (
-    <div className="dark:border-dark-border dark:bg-dark-surface relative flex h-full flex-col rounded-lg border border-gray-200/80 bg-white p-4 pb-5 shadow-sm transition-shadow hover:shadow-md dark:shadow-none">
-      {/* Top Row: Status & Pinned */}
+    // Karte statt Kasten mit Rundung und Schatten — siehe DashboardCourseCard.
+    <div className="border-rule dark:border-night-rule bg-paper dark:bg-night relative flex h-full flex-col border p-4 pb-5">
       <div className="mb-2.5 flex flex-wrap items-start justify-between gap-x-3 gap-y-1.5">
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1.5">
-          {/* Status Badge */}
-          <span
-            className={`inline-flex max-w-full shrink-0 items-center rounded-md px-2 py-1 text-xs font-medium ${statusClasses}`}
-          >
-            {CONTENT_STATUS_LABELS[status]}
-          </span>
+          <ContentStatusBadge status={status} className="shrink-0" />
 
-          {/* Pinned Badge */}
           {pinned && (
-            <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
-              <PinIcon className="h-3 w-3 text-amber-800 dark:text-amber-300" />
+            // Orange, sonst gleicht „Gepinnt" hell dem gefüllten „Veröffentlicht" daneben.
+            <Tag tone="orange" className="gap-1">
+              <PinIcon className="h-3 w-3" />
               Gepinnt
-            </span>
+            </Tag>
           )}
         </div>
         <span
-          className="inline-flex shrink-0 items-center gap-1.5 text-xs leading-none font-medium whitespace-nowrap text-gray-700 dark:text-gray-300"
+          className="text-ink dark:text-night-text inline-flex shrink-0 items-center gap-1.5 text-xs leading-none font-medium whitespace-nowrap"
           title={district ? `Bezirk ${district}` : "Übergreifend"}
         >
           <span
@@ -123,88 +92,63 @@ export default function DashboardPostCard({
         </span>
       </div>
 
-      {/* Title */}
-      <h3 className="text-dark dark:text-dark-text mb-3.5 line-clamp-2 text-base leading-snug font-semibold tracking-tight sm:text-[1.0625rem]">
+      <h3 className="semi-condensed text-ink dark:text-night-text mb-3.5 line-clamp-2 text-base leading-snug font-semibold sm:text-[1.0625rem]">
         {title}
       </h3>
 
-      {/* Excerpt */}
       {excerpt && (
-        <p className="mb-3 line-clamp-2 text-sm leading-snug text-gray-600 dark:text-gray-400">
+        <p className="text-dark dark:text-night-muted mb-3 line-clamp-2 text-sm leading-snug">
           {excerpt}
         </p>
       )}
 
-      {/* Meta Info */}
-      <div className="mb-3 space-y-1.5 text-sm leading-snug text-gray-600 dark:text-gray-400">
-        {/* Published Date */}
+      <div className="text-dark dark:text-night-muted mb-3 space-y-1.5 text-sm leading-snug">
         {publishedAt && (
           <div className="flex items-center gap-2">
             <CalendarIcon className={metaIconClass} />
             <span>
               Veröffentlicht:{" "}
-              {new Date(publishedAt).toLocaleDateString("de-DE", {
-                day: "2-digit",
-                month: "short",
-                year: "numeric",
-              })}
+              {formatBerlin(publishedAt, "datumMonatKurzZweistellig")}
             </span>
           </div>
         )}
 
         <div className="flex items-center gap-2">
           <TagIcon className={metaIconClass} />
-          <span>{categoryInfo.label}</span>
+          <span>{categoryLabels[category]}</span>
         </div>
 
-        {/* Created By */}
         {createdBy && (
           <div className="flex items-center gap-2">
             <UserIcon className={metaIconClass} />
             <span className="truncate">
               {createdBy.displayName || "Unbekannt"}
               {createdAt && (
-                <span className="text-gray-400 dark:text-gray-500">
-                  {" "}
-                  •{" "}
-                  {new Date(createdAt).toLocaleDateString("de-DE", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "2-digit",
-                  })}
-                </span>
+                <span> • {formatBerlin(createdAt, "datumKurz")}</span>
               )}
             </span>
           </div>
         )}
 
-        {/* Reviewer */}
         {reviewer && (
           <div className="flex items-center gap-2">
             <CheckCircleIcon className={metaIconClass} />
             <span className="truncate">
               {reviewer.displayName || "Unbekannt"}
               {reviewDate && (
-                <span className="text-gray-400 dark:text-gray-500">
-                  {" "}
-                  •{" "}
-                  {new Date(reviewDate).toLocaleDateString("de-DE", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "2-digit",
-                  })}
-                </span>
+                <span> • {formatBerlin(reviewDate, "datumKurz")}</span>
               )}
             </span>
           </div>
         )}
       </div>
 
-      {/* Actions */}
-      <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-gray-100 pt-3.5 dark:border-gray-700/60">
+      <div className="border-rule dark:border-night-rule mt-auto flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t pt-3.5">
         <Link
           href={`/dashboard/posts/${id}`}
-          className="text-primary hover:text-primary-dark inline-flex items-center gap-1 text-sm font-medium whitespace-nowrap transition-colors"
+          // Orange als Textfarbe fällt auf Papier unter AA — Messing-Tinte
+          // trägt denselben Akzent (nachts darf Orange selbst stehen).
+          className="text-primary-ink dark:text-primary inline-flex min-h-11 items-center gap-1 text-sm font-medium whitespace-nowrap hover:underline"
         >
           <EyeIcon className="h-3.5 w-3.5" />
           Ansehen
@@ -212,7 +156,7 @@ export default function DashboardPostCard({
 
         <Link
           href={`/dashboard/posts/${id}/edit`}
-          className="inline-flex items-center gap-1 text-sm whitespace-nowrap text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+          className="text-dark dark:text-night-muted hover:text-ink dark:hover:text-night-text inline-flex min-h-11 items-center gap-1 text-sm whitespace-nowrap transition-colors"
         >
           <PencilIcon className="h-3.5 w-3.5" />
           Bearbeiten
@@ -220,9 +164,11 @@ export default function DashboardPostCard({
 
         <Link
           href={`/aktuelles/${id}`}
-          className="hover:text-primary dark:hover:text-primary ml-auto inline-flex items-center text-gray-500 transition-colors dark:text-gray-500"
+          className="text-dark dark:text-night-muted hover:text-primary-ink dark:hover:text-primary ml-auto inline-flex min-h-11 min-w-11 items-center justify-center transition-colors"
           target="_blank"
           rel="noopener noreferrer"
+          title="Öffentlicher Beitrag"
+          aria-label="Öffentlichen Beitrag öffnen"
         >
           <ExternalLinkIcon className="h-3.5 w-3.5" />
         </Link>

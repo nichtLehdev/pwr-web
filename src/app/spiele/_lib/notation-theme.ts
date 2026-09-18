@@ -1,7 +1,6 @@
 /**
- * Farben für die VexFlow-Notation — zentral statt in jedem Renderer hart codiert.
- * Dunkle Werte folgen den Design-Tokens aus `globals.css` (`--color-dark-text*`);
- * helle Notation bleibt nahezu schwarz (Druckbild), wofür es keinen Token gibt.
+ * Farben für die VexFlow-Notation aus den Tokens in `globals.css`. Die Rückfallwerte greifen nur
+ * beim Server-Rendern (kein `getComputedStyle`) und müssen zu den Tokens passen.
  */
 
 export type NotationColors = {
@@ -23,12 +22,13 @@ function cssToken(name: string, fallback: string): string {
 
 export function notationColors(dark: boolean): NotationColors {
   if (dark) {
-    const text = cssToken("--color-dark-text", "#e4e6eb");
+    const text = cssToken("--color-night-text", "#ecebe8");
     return {
       note: text,
       stave: text,
-      barline: cssToken("--color-dark-text-secondary", "#b0b3ba"),
+      barline: cssToken("--color-night-muted", "#a6a8ad"),
     };
   }
-  return { note: "#171717", stave: "#171717", barline: "#1a1a1a" };
+  const ink = cssToken("--color-ink", "#1c1d1f");
+  return { note: ink, stave: ink, barline: ink };
 }

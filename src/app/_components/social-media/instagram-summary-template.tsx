@@ -1,5 +1,6 @@
 import { getDistrictColor } from "@/lib/district-color";
 import { MapPinIcon } from "lucide-react";
+import { berlinParts, formatBerlin } from "@/lib/berlin-time";
 
 interface Event {
   id: string;
@@ -61,7 +62,6 @@ export default function InstagramSummaryTemplate({
         <div className="absolute bottom-0 -left-10 h-40 w-40 rounded-full bg-white/10" />
         <div className="absolute top-32 right-32 h-24 w-24 rounded-full bg-white/20" />
 
-        {/* Content */}
         <div className="relative z-10 flex h-full flex-col items-center justify-center px-12 text-center text-white">
           <h1 className="mb-3 text-7xl font-black tracking-tight">
             {monthName}
@@ -102,14 +102,13 @@ export default function InstagramSummaryTemplate({
                   style={{ backgroundColor: districtColor }}
                 >
                   <div className="text-3xl font-black">
-                    {new Date(event.eventDate).getDate()}
+                    {berlinParts(event.eventDate).day}
                   </div>
                   <div className="text-sm font-semibold uppercase">
-                    {new Date(event.eventDate)
-                      .toLocaleDateString("de-DE", {
-                        month: "short",
-                      })
-                      .replace(".", "")}
+                    {formatBerlin(event.eventDate, "monatKurz").replace(
+                      ".",
+                      "",
+                    )}
                   </div>
                 </div>
                 <div className="min-w-0 flex-1">

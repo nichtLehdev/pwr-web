@@ -8,9 +8,7 @@ export const createQueryClient = () =>
   new QueryClient({
     defaultOptions: {
       queries: {
-        // Mostly-static content site: 5 min staleness beats refiring every
-        // mounted query on each tab focus. Dashboard views that need fresher
-        // data can override per-query.
+        // Mostly static content; views that need fresher data override per query.
         staleTime: 5 * 60 * 1000,
         refetchOnWindowFocus: false,
       },

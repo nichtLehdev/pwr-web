@@ -8,8 +8,8 @@ const EnsembleMap = dynamic(
     ssr: false,
     loading: () => (
       <div className="mt-4 space-y-2">
-        <div className="dark:border-dark-border dark:bg-dark-background-secondary h-[300px] w-full overflow-hidden rounded-lg border border-gray-200 bg-gray-100">
-          <div className="flex h-full items-center justify-center text-gray-500 dark:text-gray-400">
+        <div className="border-rule bg-rule/25 dark:border-night-rule dark:bg-night-raised h-[300px] w-full overflow-hidden border">
+          <div className="text-dark dark:text-night-muted flex h-full items-center justify-center">
             Karte wird geladen...
           </div>
         </div>

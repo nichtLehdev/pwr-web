@@ -14,11 +14,18 @@ import type {
 import type { Bezirk } from "~/generated/prisma/client";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
+import { cn } from "@/lib/utils";
 import PublicPage from "../general/public-page";
 import { useBanner } from "../ui/banner-context";
-import EventCard from "./event-card";
-import CourseCard from "./course-card";
-import { COURSE_TYPE_MAP, EVENT_CATEGORY_MAP } from "@/lib/termine-labels";
+import {
+  courseEntry,
+  eventEntry,
+  type ProgrammeEntry,
+} from "@/app/_components/programmheft/programme-data";
+import { ProgrammeList } from "@/app/_components/programmheft/programme";
+import { isRegistrationOpen } from "@/app/_components/programmheft/programme-data";
+import { useStickyTop } from "@/lib/use-sticky-top";
+import { useTitelVorbei } from "@/lib/use-titel-vorbei";
 import CalendarView from "./calendar/calendar-view";
 import DesktopCalendarView from "./calendar/desktop-calendar-view";
 import {
@@ -30,16 +37,17 @@ import {
 } from "lucide-react";
 import { ListIcon, Calendar } from "lucide-react";
 import FeedConfigModal from "../feeds/feed-config-modal";
+import {
+  berlinDayKey,
+  formatBerlin,
+  startOfBerlinDay,
+} from "@/lib/berlin-time";
 
 type ViewMode = "list" | "calendar";
 
 const VIEW_MODES: ViewMode[] = ["list", "calendar"];
 
-/**
- * Monatsüberschriften an oder aus. Ohne sie fließt das Kartenraster
- * durchgehend, statt nach jedem Monat umzubrechen — bei wenigen Terminen je
- * Monat steht sonst mehr Überschrift als Inhalt auf der Seite.
- */
+/** Monatsüberschriften an oder aus; bei wenigen Terminen je Monat stünde sonst mehr Überschrift als Inhalt. */
 type MonthGrouping = "on" | "off";
 
 function isMonthGrouping(value: string): value is MonthGrouping {
@@ -51,14 +59,24 @@ function isViewMode(value: string | null): value is ViewMode {
 }
 type FilterType = "all" | "events" | "courses";
 
-/**
- * Monatsüberschrift zum Auf- und Zuklappen.
- *
- * Bewusst nur Typografie und eine Haarlinie statt einer Kachel mit grauer
- * Kopfzeile: die Termine darunter sind in beiden Ansichten selbst schon Karten
- * oder Zeilen, und eine Box um Boxen legt eine Verschachtelung nahe, die es
- * inhaltlich nicht gibt.
- */
+const TYPE_OPTIONS: { value: FilterType; label: string }[] = [
+  { value: "all", label: "Alle" },
+  { value: "events", label: "Termine" },
+  { value: "courses", label: "Lehrgänge" },
+];
+
+/** 44px-Quadrat, das sich wie eine Icon-Schaltfläche verhält — ausgewählt bleibt sie dauerhaft in Tinte gefüllt. */
+const TOGGLE_BUTTON =
+  "flex h-11 w-11 items-center justify-center transition-colors";
+const TOGGLE_ACTIVE = "bg-ink text-paper dark:bg-night-text dark:text-night";
+/** Kontrollkästchen im Programmheft: eckig, Haarlinie, gefüllt statt Haken. */
+const CHECKBOX =
+  "border-ink checked:bg-ink dark:border-night-text dark:checked:bg-night-text bg-paper dark:bg-night h-5 w-5 shrink-0 cursor-pointer appearance-none border-2";
+
+const TOGGLE_INACTIVE =
+  "text-ink hover:bg-ink hover:text-paper dark:text-night-text dark:hover:bg-night-text dark:hover:text-night";
+
+/** Monatsüberschrift zum Auf- und Zuklappen; bewusst ohne Box, die eine Verschachtelung nahelegen würde. */
 function MonthHeading({
   label,
   count,
@@ -75,16 +93,16 @@ function MonthHeading({
       type="button"
       onClick={onToggle}
       aria-expanded={expanded}
-      className="group dark:border-dark-border flex w-full items-baseline gap-3 border-b border-gray-200 py-2 text-left transition-colors"
+      className="border-ink dark:border-night-text group flex w-full items-baseline gap-3 border-b-2 py-3 text-left transition-colors"
     >
-      <h2 className="text-dark dark:text-dark-text group-hover:text-primary text-lg font-bold transition-colors md:text-xl">
+      <h2 className="condensed text-ink dark:text-night-text text-[1.75rem] leading-none font-extrabold">
         {label}
       </h2>
-      <span className="text-sm text-gray-500 dark:text-gray-400">
+      <span className="semi-condensed text-dark dark:text-night-muted text-sm font-semibold">
         {count} {count === 1 ? "Termin" : "Termine"}
       </span>
       <ChevronDownIcon
-        className={`ml-auto h-5 w-5 shrink-0 self-center text-gray-400 transition-transform dark:text-gray-500 ${
+        className={`text-dark dark:text-night-muted ml-auto h-5 w-5 shrink-0 self-center transition-transform ${
           expanded ? "" : "-rotate-90"
         }`}
         aria-hidden
@@ -106,24 +124,12 @@ export default function EventsClient({
 }: EventsClientProps) {
   const { data: session } = useSession();
   const { bannerHeight } = useBanner();
-  const [filterBarTop, setFilterBarTop] = useState(112);
+  const stickyTop = useStickyTop(bannerHeight);
+  const { marke, vorbei } = useTitelVorbei(stickyTop);
 
   const { data: profile } = api.users.getMyProfile.useQuery(undefined, {
     enabled: !!session?.user,
   });
-
-  useEffect(() => {
-    const updateFilterBarTop = () => {
-      // Original values were top-28 (112px) mobile and md:top-36 (144px) desktop
-      // We add bannerHeight to these original values
-      const baseTop = window.innerWidth >= 768 ? 144 : 112;
-      setFilterBarTop(baseTop);
-    };
-
-    updateFilterBarTop();
-    window.addEventListener("resize", updateFilterBarTop);
-    return () => window.removeEventListener("resize", updateFilterBarTop);
-  }, []);
 
   const userDefaultView = useMemo((): ViewMode => {
     if (profile?.preferences) {
@@ -191,8 +197,12 @@ export default function EventsClient({
   const [selectedDistrict, setSelectedDistrict] = useState<string>(
     params.get("district") || "all",
   );
-  const [selectedCategory, setSelectedCategory] = useState<string>(
-    params.get("category") || "all",
+  /**
+   * `?anmeldung=offen` — die Startseite zeigt nur einen Lehrgang mit offener
+   * Anmeldung und verweist für die übrigen hierher.
+   */
+  const [nurOffeneAnmeldung, setNurOffeneAnmeldung] = useState(
+    params.get("anmeldung") === "offen",
   );
   const [monthGrouping, setMonthGrouping] = useStoredPreference<MonthGrouping>(
     "termineMonthGrouping",
@@ -203,11 +213,9 @@ export default function EventsClient({
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [icalModalOpen, setIcalModalOpen] = useState(false);
 
-  const now = useMemo(() => {
-    const date = new Date();
-    date.setHours(0, 0, 0, 0);
-    return date;
-  }, []);
+  // Heute 00:00 in Berlin — „heute" und „vorbei" meinen den deutschen
+  // Kalendertag, auch beim ersten Rendern auf dem Server (UTC).
+  const now = useMemo(() => startOfBerlinDay(new Date()), []);
 
   const allItems = useMemo<CalendarItem[]>(
     () => [
@@ -226,6 +234,14 @@ export default function EventsClient({
         if (filterType === "events" && item.type !== "event") return false;
         if (filterType === "courses" && item.type !== "course") return false;
 
+        // Termine nehmen keine Anmeldungen entgegen; übrig bleiben Angebote mit laufender Anmeldung.
+        if (
+          nurOffeneAnmeldung &&
+          (item.type !== "course" || !isRegistrationOpen(item, now))
+        ) {
+          return false;
+        }
+
         if (selectedDistrict !== "all") {
           if (selectedDistrict === "Bezirksübergreifend") {
             if (item.bezirk !== null) return false;
@@ -238,32 +254,18 @@ export default function EventsClient({
           }
         }
 
-        if (selectedCategory !== "all") {
-          if (item.type === "event") {
-            const enumValue = EVENT_CATEGORY_MAP[selectedCategory];
-            if (enumValue && item.category !== enumValue) return false;
-          } else {
-            const courseTypeEnum = COURSE_TYPE_MAP[selectedCategory];
-
-            if (courseTypeEnum && item.courseType !== courseTypeEnum) {
-              return false;
-            }
-          }
-        }
-
         return true;
       });
     },
-    [filterType, selectedDistrict, selectedCategory],
+    [filterType, selectedDistrict, nurOffeneAnmeldung, now],
   );
 
   const futureItems = useMemo(() => {
     return allItems.filter((item) => {
-      const itemDate = new Date(
+      const itemDay = startOfBerlinDay(
         item.type === "event" ? item.eventDate : item.endDate,
       );
-      itemDate.setHours(0, 0, 0, 0);
-      return itemDate >= now;
+      return itemDay >= now;
     });
   }, [allItems, now]);
 
@@ -291,13 +293,9 @@ export default function EventsClient({
         const date = new Date(
           item.type === "event" ? item.eventDate : item.startDate,
         );
-        const monthKey = `${date.getFullYear()}-${String(
-          date.getMonth() + 1,
-        ).padStart(2, "0")}`;
-        const monthLabel = date.toLocaleDateString("de-DE", {
-          year: "numeric",
-          month: "long",
-        });
+        // „2026-10" — Monat in Berliner Zeit, wie die Überschrift darüber.
+        const monthKey = berlinDayKey(date).slice(0, 7);
+        const monthLabel = formatBerlin(date, "monatJahr");
 
         if (!acc[monthKey]) {
           acc[monthKey] = { label: monthLabel, items: [] };
@@ -311,11 +309,10 @@ export default function EventsClient({
 
   const pastItems = useMemo(() => {
     const past = allItems.filter((item) => {
-      const itemDate = new Date(
+      const itemDay = startOfBerlinDay(
         item.type === "event" ? item.eventDate : item.endDate,
       );
-      itemDate.setHours(0, 0, 0, 0);
-      return itemDate < now;
+      return itemDay < now;
     });
 
     return applyFilters(past).sort((a, b) => {
@@ -345,41 +342,25 @@ export default function EventsClient({
 
   const [pastEventsExpanded, setPastEventsExpanded] = useState(false);
 
-  /** Ein Kartenraster — mit oder ohne Monatsüberschrift darüber. */
-  const renderItemGroup = (items: CalendarItem[], keyPrefix: string) => {
-    return (
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
-        {items.map((item) =>
-          item.type === "event" ? (
-            <EventCard
-              key={`${keyPrefix}-event-${item.id}`}
-              id={item.id}
-              slug={item.slug}
-              title={item.title}
-              date={item.eventDate}
-              duration={item.duration}
-              location={item.location?.city || ""}
-              category={item.category}
-              district={item.bezirk?.number}
-              openToParticipants={item.openToParticipants}
-              cancelled={item.cancelled}
-            />
-          ) : (
-            <CourseCard
-              key={`${keyPrefix}-course-${item.id}`}
-              id={item.id}
-              title={item.title}
-              startDate={item.startDate}
-              endDate={item.endDate}
-              location={item.location?.city || ""}
-              courseType={item.courseType}
-              district={item.bezirk?.number}
-            />
-          ),
-        )}
-      </div>
-    );
-  };
+  /** Termin oder Kurs als Programmzeile; das Mitmachangebot steht mangels eigenem Platz als Statuszeile. */
+  const toProgrammeEntry = useCallback(
+    (item: CalendarItem): ProgrammeEntry => {
+      if (item.type === "event") {
+        const entry = eventEntry(item);
+        if (!item.cancelled && item.openToParticipants) {
+          entry.status = { text: "Mitspielen möglich!", tone: "muted" };
+        }
+        return entry;
+      }
+      return courseEntry(item, now);
+    },
+    [now],
+  );
+
+  /** Programm als Tabellensatz — wahlweise nach Monaten gruppiert. */
+  const renderItemGroup = (items: CalendarItem[]) => (
+    <ProgrammeList entries={items.map(toProgrammeEntry)} now={now} />
+  );
 
   const districtSelectOptions = [
     "all",
@@ -389,175 +370,175 @@ export default function EventsClient({
       .map((b) => `Bezirk ${b.number} (${b.name})`),
   ];
 
-  const eventCategories = ["Konzert", "Gottesdienst", "Probe", "Andere"];
-  const courseCategories = [
-    "Lehrgang",
-    "Freizeit",
-    "Workshop",
-    "Komponistenportrait",
-    "Veranstaltung",
-    "Andere",
-  ];
+  const hasActiveFilters =
+    filterType !== "all" || selectedDistrict !== "all" || nurOffeneAnmeldung;
+
+  const resetFilters = () => {
+    setFilterType("all");
+    setSelectedDistrict("all");
+    setNurOffeneAnmeldung(false);
+  };
+
+  // `min-h-12`: so hoch wie die Umschalter daneben samt 2px-Rahmen.
+  const selectFieldClass =
+    "rounded-none! border-ink! dark:border-night-text! text-ink! dark:text-night-text! bg-paper! dark:bg-night! min-h-12 w-full border-2! px-3 py-2 text-sm";
 
   return (
     <PublicPage
       title="Termine"
-      color="primary"
       breadcrumbs={[{ label: "Start", href: "/" }, { label: "Termine" }]}
       description={<p>Alle Konzerte, Gottesdienste und Lehrgänge</p>}
+      // Die Filterleiste dieser Seite trägt den Kolumnentitel bereits.
+      stickyTitle={false}
     >
-      <div className="bg-background dark:bg-dark-background min-h-screen">
-        {/* Filter & View Toggle */}
+      {/* Marke für „Titel vorbei“: steht genau hinter dem Seitenkopf. */}
+      <div ref={marke} aria-hidden className="h-px" />
+      <div className="bg-paper dark:bg-night">
         <section
-          className="dark:border-dark-border dark:bg-dark-surface sticky z-20 border-b border-gray-200 bg-white shadow-sm"
-          style={{
-            top: `${bannerHeight + filterBarTop}px`,
-          }}
+          className="border-rule dark:border-night-rule bg-paper dark:bg-night sticky z-20 border-b"
+          style={{ top: `${stickyTop}px` }}
         >
-          <div className="container mx-auto px-4 py-3">
-            {/* Mobile: Compact Row */}
+          <div className="sheet py-3">
             <div className="flex items-center justify-between gap-2">
-              {/* Left: View Toggle */}
-              <div className="flex gap-1">
-                <button
-                  onClick={() => handleSetViewMode("list")}
-                  className={`cursor-pointer rounded-lg p-2 transition-colors ${
-                    effectiveViewMode === "list"
-                      ? "bg-primary text-white"
-                      : "text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-background bg-gray-100 hover:bg-gray-200"
-                  }`}
-                  aria-label="Kartenansicht"
-                  title="Kartenansicht"
+              <div className="flex items-center gap-4">
+                {/* Kolumnentitel erst, wenn der große Titel aus dem Bild ist; wächst aus Breite null.
+                    `-mr-4` schluckt eingeklappt den `gap-4` der Zeile. */}
+                <p
+                  aria-hidden={!vorbei}
+                  className={cn(
+                    "condensed text-ink dark:text-night-text hidden overflow-hidden text-xl leading-none font-bold whitespace-nowrap transition-[max-width,opacity,margin] duration-200 motion-reduce:transition-none lg:block",
+                    vorbei ? "max-w-48 opacity-100" : "-mr-4 max-w-0 opacity-0",
+                  )}
                 >
-                  <ListIcon className="h-5 w-5" />
-                </button>
-                <button
-                  onClick={() => handleSetViewMode("calendar")}
-                  className={`cursor-pointer rounded-lg p-2 transition-colors ${
-                    effectiveViewMode === "calendar"
-                      ? "bg-primary text-white"
-                      : "text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-background bg-gray-100 hover:bg-gray-200"
-                  }`}
-                  aria-label="Kalenderansicht"
-                  title="Kalenderansicht"
-                >
-                  <CalendarIcon className="h-5 w-5" />
-                </button>
+                  Termine
+                </p>
+                <div className="border-ink dark:border-night-text flex border-2">
+                  <button
+                    onClick={() => handleSetViewMode("list")}
+                    className={cn(
+                      TOGGLE_BUTTON,
+                      effectiveViewMode === "list"
+                        ? TOGGLE_ACTIVE
+                        : TOGGLE_INACTIVE,
+                    )}
+                    aria-pressed={effectiveViewMode === "list"}
+                    aria-label="Listenansicht"
+                    title="Listenansicht"
+                  >
+                    <ListIcon className="h-5 w-5" aria-hidden />
+                  </button>
+                  <button
+                    onClick={() => handleSetViewMode("calendar")}
+                    className={cn(
+                      "border-ink dark:border-night-text border-l-2",
+                      TOGGLE_BUTTON,
+                      effectiveViewMode === "calendar"
+                        ? TOGGLE_ACTIVE
+                        : TOGGLE_INACTIVE,
+                    )}
+                    aria-pressed={effectiveViewMode === "calendar"}
+                    aria-label="Kalenderansicht"
+                    title="Kalenderansicht"
+                  >
+                    <CalendarIcon className="h-5 w-5" aria-hidden />
+                  </button>
+                </div>
               </div>
 
-              {/* Center: Active Filters Count */}
               <div className="flex-1 text-center">
-                <span className="text-sm text-gray-600 dark:text-gray-400">
+                <span className="text-dark dark:text-night-muted text-sm">
                   {sortedItems.length}{" "}
                   {sortedItems.length === 1 ? "Termin" : "Termine"}
-                  {(filterType !== "all" ||
-                    selectedDistrict !== "all" ||
-                    selectedCategory !== "all") && (
-                    <span className="text-primary ml-1 font-semibold">
+                  {hasActiveFilters && (
+                    <span className="text-primary-ink dark:text-primary ml-1 font-semibold">
                       (gefiltert)
                     </span>
                   )}
                 </span>
               </div>
 
-              {/* Right: iCal Feed & Filter Toggle Button */}
-              <div className="flex gap-1">
+              <div className="flex items-center gap-2">
                 <button
                   onClick={() => setIcalModalOpen(true)}
-                  className="text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-background flex items-center gap-2 rounded-lg bg-gray-100 px-3 py-2 text-sm font-semibold transition-colors hover:bg-gray-200"
+                  className="semi-condensed border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night inline-flex h-10 items-center gap-2 border-2 px-3 text-sm font-semibold transition-colors"
                   aria-label="iCal Feed"
                   title="Kalender-Feed abonnieren"
                 >
-                  <Calendar className="h-4 w-4" />
+                  <Calendar className="h-4 w-4" aria-hidden />
                   <span className="hidden sm:inline">iCal</span>
                 </button>
-                {!filtersOpen &&
-                  (filterType !== "all" ||
-                    selectedDistrict !== "all" ||
-                    selectedCategory !== "all") && (
-                    <button
-                      onClick={() => {
-                        setFilterType("all");
-                        setSelectedDistrict("all");
-                        setSelectedCategory("all");
-                      }}
-                      aria-label="Filter zurücksetzen"
-                    >
-                      <FunnelXIcon className="h-5 w-5 text-gray-400 transition-colors hover:text-gray-600" />
-                    </button>
-                  )}
+                {!filtersOpen && hasActiveFilters && (
+                  <button
+                    onClick={resetFilters}
+                    className={cn(TOGGLE_BUTTON, TOGGLE_INACTIVE)}
+                    aria-label="Filter zurücksetzen"
+                    title="Filter zurücksetzen"
+                  >
+                    <FunnelXIcon className="h-5 w-5" aria-hidden />
+                  </button>
+                )}
                 <button
                   onClick={() => setFiltersOpen(!filtersOpen)}
-                  className={`relative cursor-pointer rounded-lg p-2 transition-colors ${
-                    filtersOpen
-                      ? "bg-primary text-white"
-                      : "text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-background bg-gray-100 hover:bg-gray-200"
-                  }`}
+                  className={cn(
+                    TOGGLE_BUTTON,
+                    filtersOpen ? TOGGLE_ACTIVE : TOGGLE_INACTIVE,
+                  )}
+                  aria-expanded={filtersOpen}
                   aria-label="Filter öffnen"
                 >
-                  <FunnelIcon className="h-4 w-4" />
-                  {/* Active Filter Badge */}
-                  {(filterType !== "all" ||
-                    selectedDistrict !== "all" ||
-                    selectedCategory !== "all") && (
-                    <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-white bg-red-500"></span>
-                  )}
+                  <FunnelIcon className="h-5 w-5" aria-hidden />
                 </button>
               </div>
             </div>
 
-            {/* Collapsible Filter Panel */}
             {filtersOpen && (
-              <div className="animate-in slide-in-from-top-2 dark:border-dark-border mt-3 space-y-3 border-t border-gray-200 pt-4">
-                {/* Type Filter */}
-                <div>
-                  <label className="mb-2 block text-xs font-semibold text-gray-700 dark:text-gray-300">
-                    Typ
-                  </label>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setFilterType("all")}
-                      className={`flex-1 rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
-                        filterType === "all"
-                          ? "bg-dark dark:bg-dark-text dark:text-dark-background text-white"
-                          : "text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-background bg-gray-100 hover:bg-gray-200"
-                      }`}
-                    >
-                      Alle
-                    </button>
-                    <button
-                      onClick={() => setFilterType("events")}
-                      className={`flex-1 rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
-                        filterType === "events"
-                          ? "bg-dark dark:bg-dark-text dark:text-dark-background text-white"
-                          : "text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-background bg-gray-100 hover:bg-gray-200"
-                      }`}
-                    >
-                      Termine
-                    </button>
-                    <button
-                      onClick={() => setFilterType("courses")}
-                      className={`flex-1 rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
-                        filterType === "courses"
-                          ? "bg-dark dark:bg-dark-text dark:text-dark-background text-white"
-                          : "text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-background bg-gray-100 hover:bg-gray-200"
-                      }`}
-                    >
-                      Lehrgänge
-                    </button>
-                  </div>
-                </div>
-
-                {/* District & Category */}
-                <div className="grid grid-cols-2 gap-3">
+              /* Die Darstellung trifft keine Auswahl, nur Gliederung — deshalb per Haarlinie abgesetzt. */
+              <div className="border-rule dark:border-night-rule mt-3 border-t pt-4">
+                <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="mb-2 block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                    <span
+                      id="termine-typ-label"
+                      className="semi-condensed text-dark dark:text-night-muted mb-2 block text-sm font-semibold"
+                    >
+                      Typ
+                    </span>
+                    <div
+                      role="group"
+                      aria-labelledby="termine-typ-label"
+                      className="border-ink dark:border-night-text flex border-2"
+                    >
+                      {TYPE_OPTIONS.map((option, index) => (
+                        <button
+                          key={option.value}
+                          onClick={() => setFilterType(option.value)}
+                          aria-pressed={filterType === option.value}
+                          className={cn(
+                            "semi-condensed min-h-11 flex-1 px-3 text-sm font-semibold transition-colors",
+                            index > 0 &&
+                              "border-ink dark:border-night-text border-l-2",
+                            filterType === option.value
+                              ? TOGGLE_ACTIVE
+                              : TOGGLE_INACTIVE,
+                          )}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="termine-bezirk"
+                      className="semi-condensed text-dark dark:text-night-muted mb-2 block text-sm font-semibold"
+                    >
                       Bezirk
                     </label>
                     <Select
+                      id="termine-bezirk"
                       value={selectedDistrict}
                       onChange={(e) => setSelectedDistrict(e.target.value)}
-                      className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-transparent focus:ring-2"
+                      className={selectFieldClass}
                     >
                       <option value="all">Alle Termine</option>
                       {districtSelectOptions.slice(1).map((district) => (
@@ -567,178 +548,109 @@ export default function EventsClient({
                       ))}
                     </Select>
                   </div>
-
-                  <div>
-                    <label className="mb-2 block text-xs font-semibold text-gray-700 dark:text-gray-300">
-                      Kategorie
-                    </label>
-                    <Select
-                      value={selectedCategory}
-                      onChange={(e) => setSelectedCategory(e.target.value)}
-                      className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-transparent focus:ring-2"
-                    >
-                      <option value="all">Alle</option>
-                      {filterType !== "courses" && (
-                        <optgroup label="Events">
-                          {eventCategories.map((cat) => (
-                            <option key={cat} value={cat}>
-                              {cat}
-                            </option>
-                          ))}
-                        </optgroup>
-                      )}
-                      {filterType !== "events" && (
-                        <>
-                          <optgroup label="Lehrgänge">
-                            {courseCategories.map((cat) => (
-                              <option key={cat} value={cat}>
-                                {cat}
-                              </option>
-                            ))}
-                          </optgroup>
-                        </>
-                      )}
-                    </Select>
-                  </div>
                 </div>
 
-                {/* Darstellung */}
-                <div>
-                  <label className="mb-2 block text-xs font-semibold text-gray-700 dark:text-gray-300">
-                    Darstellung
+                <div className="border-rule dark:border-night-rule mt-4 flex flex-wrap items-center gap-x-8 gap-y-1 border-t pt-2">
+                  <label className="flex min-h-11 cursor-pointer items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={nurOffeneAnmeldung}
+                      onChange={(e) => setNurOffeneAnmeldung(e.target.checked)}
+                      className={CHECKBOX}
+                    />
+                    <span className="semi-condensed text-ink dark:text-night-text text-sm font-semibold">
+                      Nur Angebote mit offener Anmeldung
+                    </span>
                   </label>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setMonthGrouping(groupByMonth ? "off" : "on")
-                    }
-                    aria-pressed={groupByMonth}
-                    className="text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-background flex w-full items-center justify-between gap-3 rounded-lg bg-gray-100 px-3 py-2 text-sm font-semibold transition-colors hover:bg-gray-200"
-                  >
-                    <span className="flex items-center gap-2">
-                      <CalendarRangeIcon className="h-4 w-4 text-gray-400" />
+
+                  <label className="flex min-h-11 cursor-pointer items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={groupByMonth}
+                      onChange={(e) =>
+                        setMonthGrouping(e.target.checked ? "on" : "off")
+                      }
+                      className={CHECKBOX}
+                    />
+                    <span className="semi-condensed text-ink dark:text-night-text flex items-center gap-2 text-sm font-semibold">
+                      <CalendarRangeIcon
+                        className="text-dark dark:text-night-muted h-4 w-4"
+                        aria-hidden
+                      />
                       Nach Monaten gruppieren
                     </span>
-                    <span
-                      className={`relative inline-flex h-5 w-9 shrink-0 rounded-full transition-colors ${
-                        groupByMonth
-                          ? "bg-primary"
-                          : "bg-gray-300 dark:bg-gray-600"
-                      }`}
-                    >
-                      {/* `left-0.5` plus ganze Schritte: eine halbe
-                          Abstandseinheit gibt es in der Skala nicht, und die
-                          Klasse fiele wirkungslos aus — der Knopf bliebe
-                          stehen. */}
-                      <span
-                        className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white transition-transform ${
-                          groupByMonth ? "translate-x-4" : "translate-x-0"
-                        }`}
-                      />
-                    </span>
-                  </button>
-                </div>
+                  </label>
 
-                {/* Reset Button */}
-                {(filterType !== "all" ||
-                  selectedDistrict !== "all" ||
-                  selectedCategory !== "all") && (
-                  <button
-                    onClick={() => {
-                      setFilterType("all");
-                      setSelectedDistrict("all");
-                      setSelectedCategory("all");
-                    }}
-                    className="text-primary hover:text-primary-dark w-full px-3 py-2 text-sm font-semibold transition-colors"
-                  >
-                    Filter zurücksetzen
-                  </button>
-                )}
+                  {hasActiveFilters && (
+                    <button
+                      onClick={resetFilters}
+                      className="link-ink ml-auto min-h-11 text-sm"
+                    >
+                      Filter zurücksetzen
+                    </button>
+                  )}
+                </div>
               </div>
             )}
           </div>
         </section>
 
-        {/* Content */}
-        <section className="py-6 md:py-12">
-          <div className="container mx-auto px-4">
-            {effectiveViewMode === "list" ? (
-              /* Kartenraster, wahlweise nach Monaten gruppiert */
-              <div className="space-y-6 md:space-y-8">
-                {/* Upcoming Events — ohne Monatsgruppierung fließen alle
-                    Termine durch dasselbe Raster, statt nach jedem Monat
-                    umzubrechen. */}
-                {groupByMonth
-                  ? Object.entries(groupedByMonth).map(
-                      ([monthKey, { label, items }]) => (
-                        <div key={monthKey}>
-                          <MonthHeading
-                            label={label}
-                            count={items.length}
-                            expanded={isMonthExpanded(monthKey)}
-                            onToggle={() => toggleMonth(monthKey)}
-                          />
-                          {isMonthExpanded(monthKey) && (
-                            <div className="pt-4">
-                              {renderItemGroup(items, monthKey)}
-                            </div>
-                          )}
-                        </div>
-                      ),
-                    )
-                  : sortedItems.length > 0
-                    ? renderItemGroup(sortedItems, "upcoming")
-                    : null}
-
-                {sortedItems.length === 0 && (
-                  <div className="py-8 text-center md:py-12">
-                    <p className="text-base text-gray-600 md:text-lg dark:text-gray-400">
-                      Keine kommenden Termine gefunden.
-                    </p>
-                  </div>
-                )}
-
-                {/* Past Events Section — ohne Monatsgruppierung: die
-                    Vergangenheit ist ein Nachschlagewerk, keine Planung. Wer
-                    hier aufklappt, sucht einen bestimmten Termin und liest die
-                    Liste von neu nach alt durch. */}
-                {pastItems.length > 0 && (
-                  <div className="mt-10 md:mt-14">
-                    <MonthHeading
-                      label="Vergangene Termine"
-                      count={pastItems.length}
-                      expanded={pastEventsExpanded}
-                      onToggle={() =>
-                        setPastEventsExpanded(!pastEventsExpanded)
-                      }
-                    />
-                    {pastEventsExpanded && (
-                      <div className="pt-4">
-                        {renderItemGroup(pastItems, "past")}
+        <section className="sheet py-8 md:py-12">
+          {effectiveViewMode === "list" ? (
+            <div className="space-y-10 md:space-y-14">
+              {groupByMonth
+                ? Object.entries(groupedByMonth).map(
+                    ([monthKey, { label, items }]) => (
+                      <div key={monthKey}>
+                        <MonthHeading
+                          label={label}
+                          count={items.length}
+                          expanded={isMonthExpanded(monthKey)}
+                          onToggle={() => toggleMonth(monthKey)}
+                        />
+                        {isMonthExpanded(monthKey) && renderItemGroup(items)}
                       </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            ) : (
-              /* Calendar View */
-              <>
-                {/* Mobile Calendar */}
-                <div className="lg:hidden">
-                  <CalendarView items={calendarItems} />
-                </div>
+                    ),
+                  )
+                : sortedItems.length > 0
+                  ? renderItemGroup(sortedItems)
+                  : null}
 
-                {/* Desktop Calendar */}
-                <div className="hidden lg:block">
-                  <DesktopCalendarView items={calendarItems} />
+              {sortedItems.length === 0 && (
+                <div className="py-8 text-center md:py-12">
+                  <p className="text-dark dark:text-night-muted text-base md:text-lg">
+                    Keine kommenden Termine gefunden.
+                  </p>
                 </div>
-              </>
-            )}
-          </div>
+              )}
+
+              {/* Vergangenes bewusst ohne Monatsgruppierung: Nachschlagewerk, keine Planung. */}
+              {pastItems.length > 0 && (
+                <div>
+                  <MonthHeading
+                    label="Vergangene Termine"
+                    count={pastItems.length}
+                    expanded={pastEventsExpanded}
+                    onToggle={() => setPastEventsExpanded(!pastEventsExpanded)}
+                  />
+                  {pastEventsExpanded && renderItemGroup(pastItems)}
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              <div className="lg:hidden">
+                <CalendarView items={calendarItems} />
+              </div>
+
+              <div className="hidden lg:block">
+                <DesktopCalendarView items={calendarItems} />
+              </div>
+            </>
+          )}
         </section>
       </div>
 
-      {/* iCal Feed Modal */}
       <FeedConfigModal
         isOpen={icalModalOpen}
         onClose={() => setIcalModalOpen(false)}

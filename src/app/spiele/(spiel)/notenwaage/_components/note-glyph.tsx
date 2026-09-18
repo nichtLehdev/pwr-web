@@ -125,7 +125,8 @@ export function NoteGlyph({ id, className }: Props) {
         (svg as SVGSVGElement).style.position = "relative";
         (svg as SVGSVGElement).style.left = "50%";
         (svg as SVGSVGElement).style.overflow = "visible";
-        (svg as SVGSVGElement).style.transform = "translate(-50%, -22px)";
+        // Prozentual statt in Pixeln, damit die Note in jeder Größe in ihrem Kästchen bleibt.
+        (svg as SVGSVGElement).style.transform = "translate(-50%, -55%)";
         svg
           .querySelectorAll(".vf-stave path, .vf-stave line, .vf-stave rect")
           .forEach((n) => {

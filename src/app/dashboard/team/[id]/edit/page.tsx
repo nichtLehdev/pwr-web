@@ -1,5 +1,5 @@
 "use client";
-import { Select } from "@/app/_components/ui";
+import { Input, Label, Select, Textarea } from "@/app/_components/ui";
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
@@ -23,8 +23,6 @@ import {
   type PersonDetails,
 } from "@/app/_components/dashboard";
 import { Plus, TrashIcon } from "lucide-react";
-
-// Dashboard access is now controlled by permissions
 
 const CONTACT_TYPE_OPTIONS: { value: ContactType | ""; label: string }[] = [
   { value: "", label: "Kein Bereich" },
@@ -207,8 +205,8 @@ export default function EditTeamPage() {
 
   if (sessionLoading || profileLoading || memberLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
@@ -219,14 +217,14 @@ export default function EditTeamPage() {
 
   if (!member) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <h1 className="dark:text-dark-text text-xl font-semibold text-gray-900">
+          <h1 className="text-ink dark:text-night-text text-xl font-semibold">
             Teammitglied nicht gefunden
           </h1>
           <Link
             href="/dashboard/team"
-            className="text-primary mt-4 inline-block hover:underline"
+            className="text-primary-ink dark:text-primary mt-4 inline-block hover:underline"
           >
             Zurück zur Übersicht
           </Link>
@@ -249,14 +247,12 @@ export default function EditTeamPage() {
       ]}
       maxWidth="7xl"
     >
-      {/* Error Message */}
       {error && (
-        <div className="mb-6 rounded-lg bg-red-50 p-4 text-red-700 dark:bg-red-900/20 dark:text-red-400">
+        <div className="mb-6 border-l-4 border-red-600 bg-red-50 p-4 text-red-700 dark:border-red-400 dark:bg-red-900/20 dark:text-red-400">
           {error}
         </div>
       )}
 
-      {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-8">
         <UserLinkField
           userId={userId}
@@ -280,36 +276,29 @@ export default function EditTeamPage() {
           hasLinkedUser={!!userId}
         />
 
-        {/* Role & Contact Type */}
-        <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+        <section className="border-rule dark:border-night-rule dark:bg-night-raised bg-paper border p-6">
+          <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
             Rolle & Bereich
           </h2>
           <div className="space-y-4">
             <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Rolle
-              </label>
-              <input
+              <Label>Rolle</Label>
+              <Input
                 type="text"
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
                 placeholder="z.B. Webentwickler, Sachbearbeiter..."
                 maxLength={100}
-                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Bereich
-              </label>
+              <Label>Bereich</Label>
               <Select
                 value={contactType}
                 onChange={(e) =>
                   setContactType(e.target.value as ContactType | "")
                 }
-                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
               >
                 {CONTACT_TYPE_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -320,16 +309,13 @@ export default function EditTeamPage() {
             </div>
 
             <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Reihenfolge
-              </label>
-              <input
+              <Label>Reihenfolge</Label>
+              <Input
                 type="number"
                 value={sortOrder}
                 onChange={(e) => setSortOrder(parseInt(e.target.value) || 0)}
-                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
               />
-              <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+              <p className="text-dark dark:text-night-muted mt-1 text-xs">
                 Tipp: Die Reihenfolge lässt sich auch direkt in der Liste per
                 Pfeiltasten ändern.
               </p>
@@ -337,34 +323,32 @@ export default function EditTeamPage() {
           </div>
         </section>
 
-        {/* Responsibilities */}
-        <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+        <section className="border-rule dark:border-night-rule dark:bg-night-raised bg-paper border p-6">
+          <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
             Aufgaben & Verantwortlichkeiten
           </h2>
-          <p className="dark:text-dark-muted mb-3 text-sm text-gray-600">
+          <p className="text-dark dark:text-night-muted mb-3 text-sm">
             Eine Aufgabe pro Zeile
           </p>
-          <textarea
+          <Textarea
             value={responsibilitiesText}
             onChange={(e) => setResponsibilitiesText(e.target.value)}
             rows={5}
             placeholder="Webseite pflegen&#10;Newsletter erstellen&#10;Anmeldungen bearbeiten"
             maxLength={1000}
-            className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 font-mono text-sm text-gray-900 focus:ring-1 focus:outline-none"
+            className="font-mono"
           />
         </section>
 
-        {/* Socials */}
-        <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+        <section className="border-rule dark:border-night-rule dark:bg-night-raised bg-paper border p-6">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
+            <h2 className="condensed text-ink dark:text-night-text text-lg font-bold">
               Social Media Links
             </h2>
             <button
               type="button"
               onClick={addSocialLink}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+              className="bg-rule/60 text-ink hover:bg-rule dark:bg-night-rule dark:text-night-text dark:hover:bg-night-muted dark:hover:text-night semi-condensed inline-flex min-h-11 items-center gap-1.5 px-3 py-1.5 text-sm font-semibold transition-colors"
             >
               <Plus className="h-4 w-4" />
               Link hinzufügen
@@ -372,7 +356,7 @@ export default function EditTeamPage() {
           </div>
 
           {socials.length === 0 ? (
-            <p className="dark:text-dark-muted py-4 text-center text-sm text-gray-500">
+            <p className="text-dark dark:text-night-muted py-4 text-center text-sm">
               Keine Social Media Links vorhanden.
             </p>
           ) : (
@@ -380,18 +364,17 @@ export default function EditTeamPage() {
               {socials.map((social, index) => (
                 <div
                   key={index}
-                  className="dark:border-dark-border flex flex-col gap-3 rounded-lg border border-gray-200 bg-gray-50 p-4 sm:flex-row sm:items-start dark:bg-gray-800/50"
+                  className="border-rule dark:border-night-rule bg-rule/25 dark:bg-night-raised flex flex-col gap-3 border p-4 sm:flex-row sm:items-start"
                 >
-                  {/* Type Selector with Icon Preview */}
                   <div className="sm:w-48">
-                    <label className="dark:text-dark-muted mb-1 block text-xs font-medium text-gray-500">
+                    <label className="text-dark dark:text-night-muted mb-1 block text-xs font-medium">
                       Typ
                     </label>
                     <div className="flex items-center gap-2">
-                      <div className="dark:bg-dark-background-secondary dark:border-dark-border flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 bg-white">
+                      <div className="border-rule dark:border-night-rule bg-paper dark:bg-night flex h-9 w-9 items-center justify-center border">
                         <SocialIcon
                           type={social.type}
-                          className="h-5 w-5 text-gray-600 dark:text-gray-400"
+                          className="text-dark dark:text-night-muted h-5 w-5"
                         />
                       </div>
                       <Select
@@ -399,7 +382,7 @@ export default function EditTeamPage() {
                         onChange={(e) =>
                           updateSocialLink(index, "type", e.target.value)
                         }
-                        className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:ring-1 focus:outline-none"
+                        className="flex-1"
                       >
                         {SOCIAL_TYPE_OPTIONS.map((option) => (
                           <option key={option.value} value={option.value}>
@@ -410,44 +393,39 @@ export default function EditTeamPage() {
                     </div>
                   </div>
 
-                  {/* URL Input */}
                   <div className="flex-1">
-                    <label className="dark:text-dark-muted mb-1 block text-xs font-medium text-gray-500">
+                    <label className="text-dark dark:text-night-muted mb-1 block text-xs font-medium">
                       URL
                     </label>
-                    <input
+                    <Input
                       type="url"
                       value={social.url}
                       onChange={(e) =>
                         updateSocialLink(index, "url", e.target.value)
                       }
                       placeholder="https://..."
-                      className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:ring-1 focus:outline-none"
                     />
                   </div>
 
-                  {/* Label Input */}
                   <div className="sm:w-40">
-                    <label className="dark:text-dark-muted mb-1 block text-xs font-medium text-gray-500">
+                    <label className="text-dark dark:text-night-muted mb-1 block text-xs font-medium">
                       Anzeigename
                     </label>
-                    <input
+                    <Input
                       type="text"
                       value={social.label || ""}
                       onChange={(e) =>
                         updateSocialLink(index, "label", e.target.value)
                       }
                       placeholder="@username"
-                      className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:ring-1 focus:outline-none"
                     />
                   </div>
 
-                  {/* Delete Button */}
                   <div className="flex items-end sm:pb-0.5">
                     <button
                       type="button"
                       onClick={() => removeSocialLink(index)}
-                      className="rounded-lg p-2 text-red-500 transition-colors hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-900/20"
+                      className="p-2 text-red-600 transition-colors hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
                       title="Entfernen"
                     >
                       <TrashIcon className="h-5 w-5" />
@@ -459,18 +437,17 @@ export default function EditTeamPage() {
           )}
         </section>
 
-        {/* Actions */}
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
           <Link
             href={`/dashboard/team/${memberId}`}
-            className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-6 py-2.5 text-center font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night semi-condensed inline-flex min-h-11 items-center justify-center border-2 px-6 py-2.5 text-center font-semibold transition-colors"
           >
             Abbrechen
           </Link>
           <button
             type="submit"
             disabled={isSubmitting || updateMutation.isPending}
-            className="bg-primary hover:bg-primary/90 rounded-lg px-6 py-2.5 font-medium text-white transition-colors disabled:opacity-50"
+            className="bg-ink text-paper hover:bg-dark dark:bg-night-text dark:text-night dark:hover:bg-night-muted semi-condensed inline-flex min-h-11 items-center justify-center px-6 py-2.5 font-semibold transition-colors disabled:opacity-50"
           >
             {isSubmitting || updateMutation.isPending
               ? "Wird gespeichert..."

@@ -3,14 +3,12 @@ import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { permissionProcedure } from "../middleware/permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 import { resolveUserPermissionsCached } from "../helpers/permissions";
+import { berlinDate, berlinDayKey, berlinParts } from "@/lib/berlin-time";
 
 const statsProcedure = permissionProcedure(PERMISSIONS.STATS_VIEW);
 
 export const statsRouter = createTRPCRouter({
-  /**
-   * Record a page or section view. "none" is legacy (no record).
-   * "anonymous" = without userId; "anonymous_and_user" = with userId when provided.
-   */
+  /** "none" records nothing; only "anonymous_and_user" stores the session user id. */
   recordView: publicProcedure
     .input(
       z.object({
@@ -22,9 +20,8 @@ export const statsRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       if (input.consent === "none") return { ok: true };
-      // The attributed user id always comes from the session — a
-      // caller-supplied id would let anyone forge analytics rows for another
-      // user (which also end up in that user's GDPR export).
+      // User id only from the session: a caller-supplied id could forge rows for another
+      // user, which would also end up in their GDPR export.
       await ctx.db.pageView.create({
         data: {
           path: input.path,
@@ -38,9 +35,6 @@ export const statsRouter = createTRPCRouter({
       return { ok: true };
     }),
 
-  /**
-   * Get aggregated stats. Only allowed usernames/emails can call this.
-   */
   getStats: statsProcedure
     .input(
       z
@@ -68,14 +62,11 @@ export const statsRouter = createTRPCRouter({
             }
           : {};
 
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      thirtyDaysAgo.setHours(0, 0, 0, 0);
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      sevenDaysAgo.setHours(0, 0, 0, 0);
-      const startOfToday = new Date();
-      startOfToday.setHours(0, 0, 0, 0);
+      // Tage in Berliner Zeit, nicht in der UTC-Zeit des Servers.
+      const today = berlinParts(new Date());
+      const thirtyDaysAgo = berlinDate(today.year, today.month, today.day - 30);
+      const sevenDaysAgo = berlinDate(today.year, today.month, today.day - 7);
+      const startOfToday = berlinDate(today.year, today.month, today.day);
 
       const wherePath =
         pathPeriod === "today"
@@ -123,10 +114,7 @@ export const statsRouter = createTRPCRouter({
           select: { createdAt: true },
           orderBy: { createdAt: "asc" },
         }),
-        // Bounded: per-day details only ever need the last 30 days, and the
-        // per-path breakdown needs older rows only for pathPeriod "overall".
-        // A hard take-cap keeps this from degrading forever as the table
-        // grows (newest rows win).
+        // Last 30 days unless pathPeriod is "overall"; the take-cap bounds growth (newest rows win).
         ctx.db.pageView.findMany({
           where: {
             ...where,
@@ -155,24 +143,19 @@ export const statsRouter = createTRPCRouter({
         }),
       ]);
 
-      // Use local date (same as startOfToday / viewsToday) so chart "today" matches the summary card
-      const toLocalDateString = (d: Date) => {
-        const y = d.getFullYear();
-        const m = String(d.getMonth() + 1).padStart(2, "0");
-        const day = String(d.getDate()).padStart(2, "0");
-        return `${y}-${m}-${day}`;
-      };
+      // Berliner Kalendertag wie bei startOfToday / viewsToday, damit „heute"
+      // im Verlauf und in der Kachel derselbe Tag ist.
       const byDay: Record<string, number> = {};
       for (const v of recentViews) {
-        const key = toLocalDateString(v.createdAt);
+        const key = berlinDayKey(v.createdAt);
         byDay[key] = (byDay[key] ?? 0) + 1;
       }
       // Last 30 days ending with today (same “today” as viewsToday)
       const recentDays: { date: string; count: number }[] = [];
       for (let i = 0; i < 30; i++) {
-        const d = new Date(startOfToday);
-        d.setDate(d.getDate() - (29 - i));
-        const dateStr = toLocalDateString(d);
+        const dateStr = berlinDayKey(
+          berlinDate(today.year, today.month, today.day - (29 - i)),
+        );
         recentDays.push({ date: dateStr, count: byDay[dateStr] ?? 0 });
       }
 
@@ -242,7 +225,7 @@ export const statsRouter = createTRPCRouter({
       >();
       for (const v of viewsWithUserId) {
         if (!v.userId || !v.user || v.createdAt < thirtyDaysAgo) continue;
-        const dateKey = toLocalDateString(v.createdAt);
+        const dateKey = berlinDayKey(v.createdAt);
         const u = v.user;
         const displayName =
           u.displayName ??
@@ -293,13 +276,9 @@ export const statsRouter = createTRPCRouter({
       };
     }),
 
-  /**
-   * Site-wide content and user counts (for stats dashboard). Same allowlist as getStats.
-   */
   getSiteStats: statsProcedure.query(async ({ ctx }) => {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    thirtyDaysAgo.setHours(0, 0, 0, 0);
+    const today = berlinParts(new Date());
+    const thirtyDaysAgo = berlinDate(today.year, today.month, today.day - 30);
 
     const [
       eventsCount,
@@ -347,10 +326,7 @@ export const statsRouter = createTRPCRouter({
     };
   }),
 
-  /**
-   * Get page views that are associated with a user (consent: anonymous_and_user).
-   * Returns which users visited which pages with counts. Same allowlist as getStats.
-   */
+  /** Views with a user attached (consent anonymous_and_user), counted per user and page. */
   getViewsByUser: statsProcedure
     .input(
       z
@@ -393,8 +369,7 @@ export const statsRouter = createTRPCRouter({
           },
         },
         orderBy: { createdAt: "desc" },
-        // Hard cap so this endpoint cannot degrade without bound as the
-        // table grows; newest rows win.
+        // Hard cap against unbounded growth; newest rows win.
         take: 100_000,
       });
 
@@ -456,9 +431,6 @@ export const statsRouter = createTRPCRouter({
       return { rows };
     }),
 
-  /**
-   * Check whether the current user is allowed to view stats (for UI redirect).
-   */
   canViewStats: protectedProcedure.query(async ({ ctx }) => {
     const perms = await resolveUserPermissionsCached(
       ctx.session.user.id,

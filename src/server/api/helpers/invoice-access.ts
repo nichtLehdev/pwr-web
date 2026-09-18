@@ -12,19 +12,14 @@ export type CourseAccessRecord = {
 };
 
 export type InvoiceAccess = {
-  /** May create, edit and publish invoices for this course. */
   canManage: boolean;
   /** Holds invoices.generate, i.e. may work on any course's invoices. */
   hasGlobalGrant: boolean;
 };
 
 /**
- * Who may invoice a course: its organizers (creator or ORGANIZER collaborator)
- * and holders of invoices.generate (LPW/Admin). Plain STAFF collaborators can
- * see participants but deliberately cannot issue money documents.
- *
- * `courses.enable_invoicing` is not accepted here — deciding *that* a course is
- * billed and *doing* the billing are separate jobs by design.
+ * Who may invoice a course: organizers (creator or ORGANIZER) and holders of invoices.generate.
+ * STAFF collaborators and `courses.enable_invoicing` deliberately do not suffice.
  */
 export async function resolveInvoiceAccess(
   db: PrismaClient,
@@ -48,13 +43,8 @@ export async function resolveInvoiceAccess(
 }
 
 /**
- * Ob an einer Rechnung eine Zahlung verbucht werden darf: die Kursverwaltung
- * selbst darf es, sonst braucht es das globale Kassenrecht.
- *
- * Diese Datei ist die einzige Stelle, an der die Regel steht. Guard und
- * Oberfläche fragen dieselbe Funktion — sonst driften beide auseinander und es
- * entsteht genau der Fall, den niemand meldet: ein Knopf, der 403 wirft, oder
- * eine Berechtigung ohne Knopf.
+ * Ob eine Zahlung verbucht werden darf: Kursverwaltung oder globales Kassenrecht.
+ * Guard und Oberfläche fragen beide diese Funktion, damit sie nicht auseinanderdriften.
  */
 export async function canBookInvoicePayments(
   access: InvoiceAccess,
@@ -89,12 +79,8 @@ export async function userCanBookInvoicePayments(
 }
 
 /**
- * Welche der übergebenen Kurse die Person abrechnen darf — dieselbe Regel wie
- * {@link resolveInvoiceAccess}, nur für eine ganze Liste auf einmal.
- *
- * Das Rechnungsarchiv zeigt Rechnungen aus vielen Kursen nebeneinander und muss
- * pro Zeile wissen, ob der Sprung in die Kursrechnungen offensteht. Einzeln
- * aufgelöst wäre das eine Collaborator-Abfrage pro Zeile.
+ * {@link resolveInvoiceAccess} für eine ganze Kursliste auf einmal, statt einer
+ * Collaborator-Abfrage pro Zeile im Rechnungsarchiv.
  */
 export async function manageableCourseIds(
   db: PrismaClient,

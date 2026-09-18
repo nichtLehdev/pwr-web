@@ -1,13 +1,18 @@
+import { Text } from "@react-email/components";
 import {
-  Html,
-  Head,
-  Body,
-  Container,
-  Section,
-  Text,
-  Hr,
-} from "@react-email/components";
-import { ManageRegistrationCta } from "./manage-registration-cta";
+  EmailLayout,
+  Regel,
+  abschnittskopf,
+  farben,
+  grundtext,
+  kleintext,
+} from "./email-layout";
+import { emailText, textZeile } from "./email-text";
+import {
+  ManageRegistrationCta,
+  manageRegistrationCtaText,
+} from "./manage-registration-cta";
+import { formatBerlin } from "@/lib/berlin-time";
 
 interface SiblingDiscountApprovedProps {
   registrantFirstName: string;
@@ -24,6 +29,60 @@ interface SiblingDiscountApprovedProps {
   manageUrl?: string;
 }
 
+function formatDate(date: Date) {
+  return formatBerlin(date, "datumZweistellig");
+}
+
+function formatPrice(price: number) {
+  return new Intl.NumberFormat("de-DE", {
+    style: "currency",
+    currency: "EUR",
+  }).format(price);
+}
+
+function teilnehmerWert(count: number) {
+  return `${count} ${count === 1 ? "Person" : "Personen"}`;
+}
+
+/** Eine Angabe als Zeile im Tabellensatz — das HTML-Pendant zu textZeile. */
+function Werttabelle({
+  zeilen,
+}: {
+  zeilen: { label: string; wert: string }[];
+}) {
+  return (
+    <table
+      role="presentation"
+      width="100%"
+      cellPadding={0}
+      cellSpacing={0}
+      style={werttabelle}
+    >
+      <tbody>
+        {zeilen.map((zeile, i) => {
+          const letzte = i === zeilen.length - 1;
+          return (
+            <tr key={zeile.label}>
+              <td
+                style={
+                  letzte
+                    ? werttabelleBeschriftungLetzte
+                    : werttabelleBeschriftung
+                }
+              >
+                {zeile.label}
+              </td>
+              <td style={letzte ? werttabelleWertLetzte : werttabelleWert}>
+                {zeile.wert}
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+}
+
 export function SiblingDiscountApproved({
   registrantFirstName,
   registrantLastName,
@@ -37,241 +96,155 @@ export function SiblingDiscountApproved({
   registrationId,
   manageUrl,
 }: SiblingDiscountApprovedProps) {
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat("de-DE", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    }).format(date);
-  };
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("de-DE", {
-      style: "currency",
-      currency: "EUR",
-    }).format(price);
-  };
-
   return (
-    <Html lang="de">
-      <Head />
-      <Body style={main}>
-        <Container style={container}>
-          <Section style={header}>
-            <Text style={logoText}>Posaunenwerk Rheinland</Text>
-            <Text style={tagline}>
-              Posaunenwerk der Evangelischen Kirche im Rheinland
-            </Text>
-          </Section>
+    <EmailLayout preview="Geschwisterkindrabatt genehmigt">
+      <Text style={abschnittskopf}>Geschwisterkindrabatt genehmigt</Text>
 
-          <Section style={content}>
-            <Text style={heading}>Geschwisterkindrabatt genehmigt</Text>
+      <Text style={grundtext}>
+        Hallo {registrantFirstName} {registrantLastName},
+      </Text>
 
-            <Text style={paragraph}>
-              Hallo {registrantFirstName} {registrantLastName},
-            </Text>
+      <Text style={grundtext}>
+        wir freuen uns, dir mitteilen zu können, dass dein Antrag auf
+        Geschwisterkindrabatt für die folgende Anmeldung genehmigt wurde:
+      </Text>
 
-            <Text style={paragraph}>
-              wir freuen uns, dir mitteilen zu können, dass dein Antrag auf
-              Geschwisterkindrabatt für die folgende Anmeldung genehmigt wurde:
-            </Text>
+      <Text style={kursname}>{courseTitle}</Text>
+      <Werttabelle
+        zeilen={[
+          { label: "Start", wert: formatDate(startDate) },
+          { label: "Ende", wert: formatDate(endDate) },
+          { label: "Teilnehmer", wert: teilnehmerWert(participantsCount) },
+        ]}
+      />
 
-            <Section style={courseInfo}>
-              <Text style={courseTitleStyle}>{courseTitle}</Text>
-              <Text style={courseDetail}>
-                <strong>Start:</strong> {formatDate(startDate)}
-              </Text>
-              <Text style={courseDetail}>
-                <strong>Ende:</strong> {formatDate(endDate)}
-              </Text>
-              <Text style={courseDetail}>
-                <strong>Teilnehmer:</strong> {participantsCount}{" "}
-                {participantsCount === 1 ? "Person" : "Personen"}
-              </Text>
-            </Section>
+      <Regel />
 
-            <Section style={priceInfo}>
-              <Text style={priceTitle}>Preisübersicht</Text>
-              <Text style={priceDetail}>
-                <strong>Ursprünglicher Gesamtbetrag:</strong>{" "}
-                {formatPrice(originalTotalPrice)}
-              </Text>
-              <Text style={priceDetailDiscount}>
-                <strong>Geschwisterkindrabatt (20% pro weiteres Kind):</strong>{" "}
-                -{formatPrice(discountAmount)}
-              </Text>
-              <Hr style={priceHr} />
-              <Text style={priceTotal}>
-                <strong>Gesamtbetrag:</strong> {formatPrice(finalTotalPrice)}
-              </Text>
-            </Section>
+      <Text style={abschnittskopf}>Preisübersicht</Text>
+      <Werttabelle
+        zeilen={[
+          {
+            label: "Ursprünglicher Gesamtbetrag",
+            wert: formatPrice(originalTotalPrice),
+          },
+          {
+            label: "Geschwisterkindrabatt (20% pro weiteres Kind)",
+            wert: `-${formatPrice(discountAmount)}`,
+          },
+        ]}
+      />
+      <Regel stark />
+      <Text style={gesamtzeile}>
+        Gesamtbetrag: {formatPrice(finalTotalPrice)}
+      </Text>
 
-            <Hr style={hr} />
+      <Regel />
 
-            <Text style={paragraph}>
-              Deine Anmeldung wurde bestätigt. Du erhältst in Kürze weitere
-              Informationen zum Kurs per E-Mail.
-            </Text>
+      <Text style={grundtext}>
+        Deine Anmeldung wurde bestätigt. Du erhältst in Kürze weitere
+        Informationen zum Kurs per E-Mail.
+      </Text>
 
-            <ManageRegistrationCta manageUrl={manageUrl} />
+      <ManageRegistrationCta manageUrl={manageUrl} />
 
-            <Text style={paragraph}>
-              Deine Anmelde-ID: <strong>{registrationId}</strong>
-            </Text>
+      <Text style={grundtext}>
+        Deine Anmelde-ID: <strong>{registrationId}</strong>
+      </Text>
 
-            <Text style={paragraph}>
-              Bei Fragen kannst du dich gerne an uns wenden.
-            </Text>
-          </Section>
-
-          <Section style={footerSection}>
-            <Text style={footerText}>
-              Posaunenwerk der Evangelischen Kirche im Rheinland
-            </Text>
-          </Section>
-        </Container>
-      </Body>
-    </Html>
+      <Text style={grundtext}>
+        Bei Fragen kannst du dich gerne an uns wenden.
+      </Text>
+    </EmailLayout>
   );
 }
 
-const main = {
-  backgroundColor: "#f5f5f5",
-  fontFamily:
-    '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Ubuntu,sans-serif',
+/** Nur-Text-Fassung — gleicher Wortlaut, ohne Auszeichnung. */
+export function siblingDiscountApprovedText({
+  registrantFirstName,
+  registrantLastName,
+  courseTitle,
+  startDate,
+  endDate,
+  originalTotalPrice,
+  discountAmount,
+  finalTotalPrice,
+  participantsCount,
+  registrationId,
+  manageUrl,
+}: SiblingDiscountApprovedProps): string {
+  return emailText([
+    "GESCHWISTERKINDRABATT GENEHMIGT",
+    "",
+    `Hallo ${registrantFirstName} ${registrantLastName},`,
+    "",
+    "wir freuen uns, dir mitteilen zu können, dass dein Antrag auf Geschwisterkindrabatt für die folgende Anmeldung genehmigt wurde:",
+    "",
+    courseTitle,
+    textZeile("Start", formatDate(startDate)),
+    textZeile("Ende", formatDate(endDate)),
+    textZeile("Teilnehmer", teilnehmerWert(participantsCount)),
+    "",
+    "PREISÜBERSICHT",
+    textZeile("Ursprünglicher Gesamtbetrag", formatPrice(originalTotalPrice)),
+    textZeile(
+      "Geschwisterkindrabatt (20% pro weiteres Kind)",
+      `-${formatPrice(discountAmount)}`,
+    ),
+    textZeile("Gesamtbetrag", formatPrice(finalTotalPrice)),
+    "",
+    "Deine Anmeldung wurde bestätigt. Du erhältst in Kürze weitere Informationen zum Kurs per E-Mail.",
+    "",
+    ...manageRegistrationCtaText({ manageUrl }),
+    manageUrl ? "" : null,
+    `Deine Anmelde-ID: ${registrationId}`,
+    "",
+    "Bei Fragen kannst du dich gerne an uns wenden.",
+  ]);
+}
+
+const kursname = {
+  ...grundtext,
+  fontWeight: "bold" as const,
+  fontSize: "17px",
+  margin: "0 0 10px 0",
 };
 
-const container = {
-  backgroundColor: "#ffffff",
-  margin: "0 auto",
-  padding: "0",
-  marginBottom: "64px",
-  maxWidth: "600px",
-  borderRadius: "8px",
-  boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+const gesamtzeile = {
+  ...grundtext,
+  fontWeight: "bold" as const,
+  fontSize: "17px",
+  margin: "14px 0 0 0",
 };
 
-const header = {
-  backgroundColor: "#faa619",
-  padding: "32px 24px",
-  textAlign: "center" as const,
-  borderRadius: "8px 8px 0 0",
+const werttabelle = {
+  width: "100%",
+  borderCollapse: "collapse" as const,
+  margin: "0 0 20px 0",
 };
 
-const logoText = {
-  color: "#ffffff",
-  fontSize: "28px",
-  fontWeight: "bold",
-  margin: "0 0 8px 0",
-  letterSpacing: "0.5px",
+const werttabelleBeschriftung = {
+  ...kleintext,
+  width: "220px",
+  padding: "7px 12px 7px 0",
+  borderBottom: `1px solid ${farben.rule}`,
+  verticalAlign: "top" as const,
+  margin: 0,
 };
 
-const tagline = {
-  color: "#ffffff",
-  fontSize: "12px",
-  fontWeight: "normal",
-  margin: "0",
-  opacity: 0.95,
-  letterSpacing: "0.3px",
+const werttabelleBeschriftungLetzte = {
+  ...werttabelleBeschriftung,
+  borderBottom: "none",
 };
 
-const content = {
-  padding: "32px 24px",
+const werttabelleWert = {
+  ...grundtext,
+  fontSize: "15px",
+  padding: "7px 0",
+  borderBottom: `1px solid ${farben.rule}`,
+  margin: 0,
 };
 
-const heading = {
-  fontSize: "24px",
-  fontWeight: "bold",
-  color: "#58595b",
-  marginBottom: "24px",
-};
-
-const paragraph = {
-  fontSize: "16px",
-  lineHeight: "26px",
-  color: "#58595b",
-  marginBottom: "16px",
-};
-
-const courseInfo = {
-  backgroundColor: "#f9fafb",
-  padding: "20px",
-  borderRadius: "8px",
-  margin: "24px 0",
-  border: "1px solid #e5e7eb",
-};
-
-const courseTitleStyle = {
-  fontSize: "20px",
-  fontWeight: "bold",
-  color: "#58595b",
-  marginBottom: "16px",
-};
-
-const courseDetail = {
-  fontSize: "16px",
-  lineHeight: "24px",
-  color: "#58595b",
-  marginBottom: "8px",
-};
-
-const priceInfo = {
-  backgroundColor: "#f0fdf4",
-  padding: "20px",
-  borderRadius: "8px",
-  margin: "24px 0",
-  border: "2px solid #86efac",
-};
-
-const priceTitle = {
-  fontSize: "18px",
-  fontWeight: "bold",
-  color: "#166534",
-  marginBottom: "16px",
-};
-
-const priceDetail = {
-  fontSize: "16px",
-  lineHeight: "24px",
-  color: "#58595b",
-  marginBottom: "8px",
-};
-
-const priceDetailDiscount = {
-  fontSize: "16px",
-  lineHeight: "24px",
-  color: "#16a34a",
-  marginBottom: "8px",
-  fontWeight: "600",
-};
-
-const priceHr = {
-  borderColor: "#86efac",
-  margin: "16px 0",
-};
-
-const priceTotal = {
-  fontSize: "18px",
-  lineHeight: "28px",
-  color: "#166534",
-  fontWeight: "bold",
-  marginTop: "8px",
-};
-
-const hr = {
-  borderColor: "#e5e7eb",
-  margin: "32px 0",
-};
-
-const footerSection = {
-  padding: "24px",
-  backgroundColor: "#f9fafb",
-  textAlign: "center" as const,
-  borderRadius: "0 0 8px 8px",
-};
-
-const footerText = {
-  fontSize: "12px",
-  color: "#9ca3af",
-  margin: "0",
+const werttabelleWertLetzte = {
+  ...werttabelleWert,
+  borderBottom: "none",
 };

@@ -8,7 +8,10 @@ import {
 import { permissionProcedure } from "../middleware/permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 import { sendEmail } from "@/server/email/send-email";
-import { generateNewsletterHtml } from "@/server/email/templates/newsletter-html";
+import {
+  generateNewsletterHtml,
+  generateNewsletterText,
+} from "@/server/email/templates/newsletter-html";
 import { maskEmail } from "@/lib/mask-email";
 import { getBaseUrl } from "@/server/utils/get-base-url";
 import { ContentStatus, type Prisma } from "~/generated/prisma/client";
@@ -18,10 +21,21 @@ import { searchAddresses } from "@/server/utils/address-search";
 import { clientKeyFromHeaders, rateLimit } from "@/server/utils/rate-limit";
 import { createUnsubscribeToken } from "@/server/utils/unsubscribe-token";
 import { eventPath, postPath } from "@/lib/slug";
+import { markdownToSingleLine } from "@/lib/markdown-to-plain-text";
 
 import { createLogger } from "@/server/utils/logger";
+import { formatBerlin } from "@/lib/berlin-time";
 
 const log = createLogger("Utils");
+
+/**
+ * Anriss als Klartext: Ein Schnitt mitten in Markdown-Auszeichnung würde den
+ * restlichen Newsletter-Entwurf verschieben.
+ */
+function kurzerAnriss(markdown: string, maxLength = 200): string {
+  const text = markdownToSingleLine(markdown);
+  return text.length > maxLength ? `${text.slice(0, maxLength)}…` : text;
+}
 
 marked.use({
   gfm: true,
@@ -284,11 +298,7 @@ export const locationsRouter = createTRPCRouter({
       return locations;
     }),
 
-  /**
-   * Type-ahead address lookup for the location forms. Permission-gated (only
-   * dashboard users create locations) and throttled on top, so a stuck input
-   * can't hammer Photon on our behalf.
-   */
+  /** Permission-gated and throttled, so a stuck input can't hammer Photon on our behalf. */
   searchAddress: permissionProcedure(PERMISSIONS.ORGANIZATION_MANAGE_LOCATIONS)
     .use(async ({ ctx, next }) => {
       const key = `trpc:locations.searchAddress:${clientKeyFromHeaders(
@@ -327,16 +337,8 @@ export const locationsRouter = createTRPCRouter({
 });
 
 export const newsletterRouter = createTRPCRouter({
-  // NOTE: subscribing goes exclusively through POST /api/newsletter/subscribe,
-  // which creates the row unconfirmed and mails the double-opt-in link. A
-  // tRPC variant used to exist here and marked new subscribers active
-  // immediately — a way around the confirmation, and a way to sign up
-  // addresses you do not own.
-
-  // NOTE: unsubscribing goes exclusively through POST
-  // /api/newsletter/unsubscribe, which verifies the signed token from the
-  // newsletter link. A token-less tRPC variant used to exist here and let
-  // anyone unsubscribe arbitrary addresses.
+  // No subscribe/unsubscribe here: only /api/newsletter/* enforces the double
+  // opt-in and the signed unsubscribe token.
 
   getSubscribers: permissionProcedure(PERMISSIONS.NEWSLETTER_MANAGE)
     .input(
@@ -344,11 +346,7 @@ export const newsletterRouter = createTRPCRouter({
         page: z.number().min(1).default(1),
         limit: z.number().min(1).max(250).default(50),
         isActive: z.boolean().optional(),
-        /**
-         * Set filter over the three states the list shows. `confirmed` is what
-         * a newsletter actually reaches; `pending` signed up but never clicked
-         * the confirmation link.
-         */
+        /** `confirmed` is what a newsletter reaches; `pending` never clicked the confirmation link. */
         status: z
           .array(z.enum(["confirmed", "pending", "inactive"]))
           .optional(),
@@ -482,11 +480,8 @@ export const newsletterRouter = createTRPCRouter({
       };
 
       /**
-       * One-click unsubscribe (RFC 8058). Gmail and Yahoo expect it from bulk
-       * senders, but the reason to want it is narrower: an unsubscribe button
-       * in the client's own chrome is what stops people reaching for "mark as
-       * spam" instead, and it is the complaint rate — not the volume — that
-       * costs a sending domain its reputation.
+       * One-click unsubscribe (RFC 8058): expected by Gmail/Yahoo, and it keeps
+       * people from hitting "mark as spam", which costs domain reputation.
        */
       const unsubscribeHeaders = (oneClickUrl: string) => ({
         "List-Unsubscribe": `<${oneClickUrl}>`,
@@ -515,6 +510,7 @@ export const newsletterRouter = createTRPCRouter({
           to: input.testEmail,
           subject: `[TEST] ${input.subject}`,
           html: emailHtml,
+          text: generateNewsletterText({ unsubscribeUrl: links.page }),
           headers: unsubscribeHeaders(links.oneClick),
         });
 
@@ -541,9 +537,8 @@ export const newsletterRouter = createTRPCRouter({
       let successCount = 0;
       let errorCount = 0;
 
-      // Send in bounded-concurrency batches: a strictly sequential loop over
-      // hundreds of subscribers at SMTP latency runs into request timeouts,
-      // while unbounded Promise.all would hammer the SMTP server.
+      // Bounded batches: sequential sends hit request timeouts, unbounded
+      // Promise.all would hammer the SMTP server.
       const BATCH_SIZE = 10;
       for (let i = 0; i < subscribers.length; i += BATCH_SIZE) {
         const batch = subscribers.slice(i, i + BATCH_SIZE);
@@ -560,6 +555,10 @@ export const newsletterRouter = createTRPCRouter({
               to: subscriber.email,
               subject: input.subject,
               html: emailHtml,
+              text: generateNewsletterText({
+                unsubscribeUrl: links.page,
+                subscriberName: subscriber.name || undefined,
+              }),
               headers: unsubscribeHeaders(links.oneClick),
             });
           }),
@@ -669,14 +668,10 @@ export const newsletterRouter = createTRPCRouter({
               ctx.headers ? { headers: ctx.headers } : undefined,
             )}${eventPath(event)}`;
             const eventDate = new Date(event.eventDate);
-            const formattedDate = eventDate.toLocaleDateString("de-DE", {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-            });
+            const formattedDate = formatBerlin(
+              eventDate,
+              "datumMitWochentagUhrzeit",
+            );
             const locationText = event.location
               ? `${event.location.name || ""} ${event.location.city || ""}`.trim()
               : event.districtName || "";
@@ -686,9 +681,7 @@ export const newsletterRouter = createTRPCRouter({
                 locationText ? `**Ort:** ${locationText}\n\n` : ""
               }${
                 event.description
-                  ? `${event.description.substring(0, 200)}${
-                      event.description.length > 200 ? "..." : ""
-                    }\n\n`
+                  ? `${kurzerAnriss(event.description)}\n\n`
                   : ""
               }[Mehr erfahren →](${eventUrl})\n\n`,
             );

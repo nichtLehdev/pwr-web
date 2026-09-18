@@ -1,10 +1,12 @@
 "use client";
 
+import { useId } from "react";
 import { Tags } from "lucide-react";
 import { Select } from "@/app/_components/ui";
 import { cn } from "@/lib/utils";
 import { FIELD_SELECT_SIZE } from "./field-styles";
 import { priceOptionDisplayLabel } from "@/lib/course-price-options";
+import { formatEuro } from "@/lib/invoice-document";
 import {
   ageOnDate,
   isAgeWithinPriceOption,
@@ -32,26 +34,17 @@ type ParticipantPriceOptionFieldProps = {
   placeholderOption?: boolean;
   isOptionDisabled?: (optionId: string) => boolean;
   getOptionSuffix?: (optionId: string) => string;
-  /**
-   * Geburtsdatum des Teilnehmers und der Stichtag (erster Kurstag), an dem die
-   * Altersgrenzen gemessen werden. Fehlt eines von beiden, bleiben alle
-   * Kategorien wählbar — ohne Geburtsdatum gibt es nichts zu prüfen.
-   */
+  /** Mit dem Stichtag (erster Kurstag) für die Altersgrenzen; fehlt eines, bleibt alles wählbar. */
   birthDate?: Date | string | null;
   ageReferenceDate?: Date | string | null;
-  /**
-   * Nur für das Kursteam: Kategorien außerhalb der Altersgrenze bleiben
-   * wählbar, der Hinweis darunter sagt trotzdem, dass die Grenze gerade
-   * übergangen wird.
-   */
+  /** Nur Kursteam: Kategorien außerhalb der Altersgrenze bleiben wählbar, mit Hinweis. */
   allowAgeMismatch?: boolean;
-  /**
-   * Die Kategorie, in der dieser Teilnehmer bereits angemeldet ist: sie bleibt
-   * wählbar, auch wenn ihre Altersgrenze inzwischen enger gezogen wurde.
-   */
+  /** Bereits gebuchte Kategorie bleibt wählbar, auch wenn ihre Altersgrenze enger gezogen wurde. */
   ageExemptOptionId?: string | null;
   className?: string;
   labelClassName?: string;
+  /** Sammelmeldung außerhalb des Felds, per `aria-describedby` verknüpft. */
+  errorDescriptionId?: string;
 };
 
 export function ParticipantPriceOptionField({
@@ -67,11 +60,15 @@ export function ParticipantPriceOptionField({
   allowAgeMismatch = false,
   ageExemptOptionId,
   className,
-  labelClassName = "text-dark dark:text-dark-text mb-1 block text-sm font-medium",
+  labelClassName = "text-ink dark:text-night-text mb-1 block text-sm font-semibold",
+  errorDescriptionId,
 }: ParticipantPriceOptionFieldProps) {
+  const uid = useId();
   if (priceOptions.length === 0) {
     return null;
   }
+  const selectId = `${uid}-preisoption`;
+  const noteId = `${uid}-hinweis`;
 
   const selected = priceOptions.find((option) => option.id === value);
   const age = ageReferenceDate ? ageOnDate(birthDate, ageReferenceDate) : null;
@@ -96,10 +93,8 @@ export function ParticipantPriceOptionField({
     (isOptionDisabled?.(option.id) ?? false) ||
     (!allowAgeMismatch && !ageFits(option));
 
-  // Wählbares nach oben — ausgebucht oder außerhalb der Altersgrenze steht
-  // hinten. Bei vielen Kategorien scrollt man sonst an gesperrten Einträgen
-  // vorbei, um die zwei zu finden, die überhaupt in Frage kommen. Innerhalb
-  // der beiden Gruppen bleibt die Reihenfolge des Kurses erhalten.
+  // Wählbares nach oben, Gesperrtes nach hinten; innerhalb beider Gruppen bleibt
+  // die Reihenfolge des Kurses.
   const orderedOptions = [
     ...priceOptions.filter((option) => !isDisabled(option)),
     ...priceOptions.filter(isDisabled),
@@ -107,14 +102,17 @@ export function ParticipantPriceOptionField({
 
   return (
     <div className={cn("md:col-span-2", className)}>
-      <label className={labelClassName}>Preisoption *</label>
+      {/* `htmlFor` auf den Auslöser, sonst hat die Liste keinen Namen (axe: button-name). */}
+      <label htmlFor={selectId} className={labelClassName}>
+        Preisoption<span aria-hidden> *</span>
+      </label>
       <div className="flex items-center gap-2.5 sm:gap-3">
         <div
           className={cn(
-            "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg sm:h-10 sm:w-10",
+            "flex h-9 w-9 shrink-0 items-center justify-center sm:h-10 sm:w-10",
             error || ageMismatchIsError
               ? "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300"
-              : "bg-primary/15 text-primary dark:bg-primary/25",
+              : "bg-rule dark:bg-night-rule text-ink dark:text-night-text",
           )}
           aria-hidden
         >
@@ -122,10 +120,24 @@ export function ParticipantPriceOptionField({
         </div>
         <div className="min-w-0 flex-1">
           <Select
+            id={selectId}
             value={value}
             onChange={(e) => onChange(e.target.value)}
+            required
+            aria-invalid={error || ageMismatchIsError || undefined}
+            aria-describedby={
+              [
+                ageMismatch || noOptionForAge || selected?.description
+                  ? noteId
+                  : null,
+                error ? errorDescriptionId : null,
+              ]
+                .filter(Boolean)
+                .join(" ") || undefined
+            }
             error={error || ageMismatchIsError}
             fieldSize={FIELD_SELECT_SIZE}
+            className="border-ink! dark:border-night-text! text-ink! dark:text-night-text! bg-paper! dark:bg-night! rounded-none!"
           >
             {placeholderOption ? <option value="">Bitte wählen</option> : null}
             {orderedOptions.map((option) => {
@@ -135,10 +147,8 @@ export function ParticipantPriceOptionField({
                   key={option.id}
                   value={option.id}
                   disabled={isDisabled(option)}
-                  // Price (and availability) as trailing text, so a long option
-                  // name truncates on narrow screens without taking the price
-                  // with it.
-                  data-trailing={`${option.price.toFixed(2)} €${
+                  // Trailing text, so a long name truncates without taking the price with it.
+                  data-trailing={`${formatEuro(option.price)}${
                     getOptionSuffix?.(option.id) ?? ""
                   }`}
                 >
@@ -150,12 +160,13 @@ export function ParticipantPriceOptionField({
           </Select>
           {ageMismatch ? (
             <p
+              id={noteId}
               role="alert"
               className={cn(
                 "mt-1.5 text-sm",
                 ageMismatchIsError
                   ? "text-red-700 dark:text-red-400"
-                  : "text-amber-700 dark:text-amber-400",
+                  : "text-primary-ink dark:text-primary",
               )}
             >
               {ageMismatch}
@@ -165,6 +176,7 @@ export function ParticipantPriceOptionField({
             </p>
           ) : noOptionForAge ? (
             <p
+              id={noteId}
               role="alert"
               className="mt-1.5 text-sm text-red-700 dark:text-red-400"
             >
@@ -173,7 +185,10 @@ export function ParticipantPriceOptionField({
               Kursteam.
             </p>
           ) : selected?.description ? (
-            <p className="mt-1.5 text-sm text-gray-600 dark:text-gray-400">
+            <p
+              id={noteId}
+              className="text-dark dark:text-night-muted mt-1.5 text-sm"
+            >
               {selected.description}
             </p>
           ) : null}

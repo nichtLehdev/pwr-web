@@ -1,5 +1,5 @@
 "use client";
-import { Select } from "@/app/_components/ui";
+import { Input, Label, Select } from "@/app/_components/ui";
 
 import { useSession } from "@/lib/auth";
 import { useToast } from "@/app/_components/ui/toast";
@@ -18,6 +18,7 @@ import {
   emptyPersonDetails,
   type PersonDetails,
 } from "@/app/_components/dashboard";
+import { Tag } from "@/app/_components/programmheft/tag";
 import { InfoIcon, PlusIcon } from "lucide-react";
 import { getErrorMessage } from "@/lib/utils";
 import { PosaunenwartRoleType } from "~/generated/prisma/enums";
@@ -211,8 +212,8 @@ export default function DashboardPosaunenwarteEditPage() {
 
   if (isPending || profileLoading || memberLoading || bezirkeLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
@@ -223,15 +224,15 @@ export default function DashboardPosaunenwarteEditPage() {
 
   if (!member) {
     return (
-      <main className="dark:bg-dark-background min-h-screen bg-gray-50">
+      <main className="bg-paper dark:bg-night min-h-screen">
         <div className="container mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-          <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-12 text-center shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-xl font-semibold text-gray-900">
+          <div className="border-rule dark:border-night-rule dark:bg-night-raised bg-paper border p-12 text-center">
+            <h2 className="text-ink dark:text-night-text mb-4 text-xl font-semibold">
               Posaunenwart nicht gefunden
             </h2>
             <Link
               href="/dashboard/posaunenwarte"
-              className="text-primary hover:text-primary/80"
+              className="text-primary-ink dark:text-primary hover:underline"
             >
               Zurück zur Übersicht
             </Link>
@@ -262,12 +263,11 @@ export default function DashboardPosaunenwarteEditPage() {
       maxWidth="7xl"
     >
       {formError && (
-        <div className="mb-6 rounded-lg bg-red-50 p-4 text-red-700 dark:bg-red-900/20 dark:text-red-400">
+        <div className="mb-6 border-l-4 border-red-600 bg-red-50 p-4 text-red-700 dark:border-red-400 dark:bg-red-900/20 dark:text-red-400">
           {formError}
         </div>
       )}
 
-      {/* Form: Posaunenwart-Daten */}
       <form onSubmit={handleSubmitForm} className="space-y-8">
         <PersonDetailsFields
           value={person}
@@ -277,21 +277,18 @@ export default function DashboardPosaunenwarteEditPage() {
           hasLinkedUser={!!userId}
         />
 
-        <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+        <section className="border-rule dark:border-night-rule dark:bg-night-raised bg-paper border p-6">
+          <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
             Rolle
           </h2>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Art
-              </label>
+              <Label>Art</Label>
               <Select
                 value={roleType}
                 onChange={(e) =>
                   setRoleType(e.target.value as PosaunenwartRoleType)
                 }
-                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
               >
                 {ROLE_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -301,34 +298,28 @@ export default function DashboardPosaunenwarteEditPage() {
               </Select>
             </div>
             <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Bezeichnung
-              </label>
-              <input
+              <Label>Bezeichnung</Label>
+              <Input
                 type="text"
                 value={roleLabel}
                 onChange={(e) => setRoleLabel(e.target.value)}
                 placeholder="z.B. Landesposaunenwart"
                 maxLength={100}
-                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
               />
-              <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+              <p className="text-dark dark:text-night-muted mt-1 text-xs">
                 Erscheint als Badge auf der öffentlichen Seite.
               </p>
             </div>
             <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Reihenfolge
-              </label>
-              <input
+              <Label>Reihenfolge</Label>
+              <Input
                 type="number"
                 value={sortOrder}
                 onChange={(e) =>
                   setSortOrder(parseInt(e.target.value, 10) || 0)
                 }
-                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
               />
-              <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+              <p className="text-dark dark:text-night-muted mt-1 text-xs">
                 Tipp: Die Reihenfolge lässt sich auch direkt in der Liste per
                 Pfeiltasten ändern.
               </p>
@@ -354,7 +345,7 @@ export default function DashboardPosaunenwarteEditPage() {
           <button
             type="submit"
             disabled={isSubmitting || updateMutation.isPending}
-            className="bg-primary hover:bg-primary/90 rounded-lg px-6 py-2.5 font-medium text-white transition-colors disabled:opacity-50"
+            className="bg-ink text-paper hover:bg-dark dark:bg-night-text dark:text-night dark:hover:bg-night-muted semi-condensed inline-flex min-h-11 items-center justify-center px-6 py-2.5 font-semibold transition-colors disabled:opacity-50"
           >
             {isSubmitting || updateMutation.isPending
               ? "Wird gespeichert..."
@@ -362,21 +353,20 @@ export default function DashboardPosaunenwarteEditPage() {
           </button>
           <Link
             href={`/dashboard/posaunenwarte/${id}`}
-            className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-6 py-2.5 text-center font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night semi-condensed inline-flex min-h-11 items-center justify-center border-2 px-6 py-2.5 text-center font-semibold transition-colors"
           >
             Abbrechen
           </Link>
         </div>
       </form>
 
-      {/* Bezirke section */}
-      <div className="dark:border-dark-border mt-10 border-t border-gray-200 pt-10">
-        <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+      <div className="border-rule dark:border-night-rule mt-10 border-t pt-10">
+        <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
           Zuständige Bezirke
         </h2>
 
         {error && (
-          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
+          <div className="mb-6 border-l-4 border-red-600 bg-red-50 p-4 dark:border-red-400 dark:bg-red-900/20">
             <div className="flex gap-3">
               <AlertTriangleIcon className="h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />
               <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
@@ -385,7 +375,7 @@ export default function DashboardPosaunenwarteEditPage() {
         )}
 
         {isLPW && (
-          <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
+          <div className="mb-6 border-l-4 border-blue-600 bg-blue-50 p-4 dark:border-blue-400 dark:bg-blue-900/20">
             <div className="flex gap-3">
               <InfoIcon className="h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400" />
               <div className="text-sm text-blue-800 dark:text-blue-300">
@@ -400,20 +390,20 @@ export default function DashboardPosaunenwarteEditPage() {
           </div>
         )}
 
-        <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="border-rule dark:border-night-rule dark:bg-night-raised bg-paper mb-6 border p-6">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="dark:text-dark-text text-base font-semibold text-gray-900">
+            <h3 className="condensed text-ink dark:text-night-text text-base font-bold">
               Zugewiesene Bezirke
             </h3>
-            <span className="dark:bg-dark-background-secondary dark:text-dark-muted rounded-full bg-gray-100 px-2.5 py-0.5 text-sm font-medium text-gray-600">
+            <Tag tone="inverse">
               {assignedBezirke.length} Bezirk
               {assignedBezirke.length !== 1 ? "e" : ""}
-            </span>
+            </Tag>
           </div>
 
           {assignedBezirke.length === 0 ? (
-            <div className="dark:border-dark-border dark:bg-dark-background-secondary rounded-lg border border-gray-100 bg-gray-50 p-6 text-center">
-              <p className="dark:text-dark-muted text-sm text-gray-600">
+            <div className="border-rule dark:border-night-rule bg-rule/25 dark:bg-night-raised border p-6 text-center">
+              <p className="text-dark dark:text-night-muted text-sm">
                 Keine Bezirke zugewiesen. Wähle unten Bezirke aus, um sie
                 hinzuzufügen.
               </p>
@@ -423,20 +413,20 @@ export default function DashboardPosaunenwarteEditPage() {
               {assignedBezirke.map((bezirk) => (
                 <div
                   key={bezirk.id}
-                  className="dark:border-dark-border flex items-center justify-between rounded-lg border border-gray-200 bg-white p-3 dark:bg-gray-800"
+                  className="border-rule dark:border-night-rule bg-paper dark:bg-night flex items-center justify-between border p-3"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="dark:bg-dark-background-secondary flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100">
-                      <span className="dark:text-dark-text font-semibold text-gray-700">
+                    <div className="bg-rule/25 dark:bg-night-raised flex h-10 w-10 items-center justify-center">
+                      <span className="text-ink dark:text-night-text font-semibold">
                         {bezirk.number}
                       </span>
                     </div>
                     <div>
-                      <p className="dark:text-dark-text text-sm font-medium text-gray-900">
+                      <p className="text-ink dark:text-night-text text-sm font-medium">
                         Bezirk {bezirk.number}
                       </p>
                       {bezirk.name && (
-                        <p className="dark:text-dark-muted text-xs text-gray-500">
+                        <p className="text-dark dark:text-night-muted text-xs">
                           {bezirk.shortName || bezirk.name}
                         </p>
                       )}
@@ -446,7 +436,7 @@ export default function DashboardPosaunenwarteEditPage() {
                     type="button"
                     onClick={() => void handleRemoveBezirk(bezirk.id)}
                     disabled={saving}
-                    className="rounded p-1.5 text-red-500 transition-colors hover:bg-red-50 hover:text-red-700 disabled:opacity-50 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                    className="p-1.5 text-red-600 transition-colors hover:bg-red-50 hover:text-red-700 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-900/20"
                     title="Bezirk entfernen"
                   >
                     <TrashIcon className="h-4 w-4" />
@@ -457,19 +447,17 @@ export default function DashboardPosaunenwarteEditPage() {
           )}
         </div>
 
-        <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="border-rule dark:border-night-rule dark:bg-night-raised bg-paper border p-6">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="dark:text-dark-text text-base font-semibold text-gray-900">
+            <h3 className="condensed text-ink dark:text-night-text text-base font-bold">
               Verfügbare Bezirke
             </h3>
-            <span className="dark:bg-dark-background-secondary dark:text-dark-muted rounded-full bg-gray-100 px-2.5 py-0.5 text-sm font-medium text-gray-600">
-              {availableBezirke.length} verfügbar
-            </span>
+            <Tag tone="inverse">{availableBezirke.length} verfügbar</Tag>
           </div>
 
           {availableBezirke.length === 0 ? (
-            <div className="dark:border-dark-border dark:bg-dark-background-secondary rounded-lg border border-gray-100 bg-gray-50 p-6 text-center">
-              <p className="dark:text-dark-muted text-sm text-gray-600">
+            <div className="border-rule dark:border-night-rule bg-rule/25 dark:bg-night-raised border p-6 text-center">
+              <p className="text-dark dark:text-night-muted text-sm">
                 Alle Bezirke wurden bereits zugewiesen.
               </p>
             </div>
@@ -481,24 +469,24 @@ export default function DashboardPosaunenwarteEditPage() {
                   type="button"
                   onClick={() => void handleAddBezirk(bezirk.id)}
                   disabled={saving}
-                  className="dark:border-dark-border flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 text-left transition-colors hover:border-green-300 hover:bg-green-50 disabled:opacity-50 dark:bg-gray-800 dark:hover:border-green-600 dark:hover:bg-green-900/20"
+                  className="border-rule dark:border-night-rule bg-paper dark:bg-night hover:border-primary hover:bg-primary/5 dark:hover:bg-primary/10 flex items-center gap-3 border p-3 text-left transition-colors disabled:opacity-50"
                 >
-                  <div className="dark:bg-dark-background-secondary flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100">
-                    <span className="dark:text-dark-text font-semibold text-gray-700">
+                  <div className="bg-rule/25 dark:bg-night-raised flex h-10 w-10 items-center justify-center">
+                    <span className="text-ink dark:text-night-text font-semibold">
                       {bezirk.number}
                     </span>
                   </div>
                   <div className="flex-1">
-                    <p className="dark:text-dark-text text-sm font-medium text-gray-900">
+                    <p className="text-ink dark:text-night-text text-sm font-medium">
                       Bezirk {bezirk.number}
                     </p>
                     {bezirk.name && (
-                      <p className="dark:text-dark-muted text-xs text-gray-500">
+                      <p className="text-dark dark:text-night-muted text-xs">
                         {bezirk.shortName || bezirk.name}
                       </p>
                     )}
                   </div>
-                  <PlusIcon className="h-5 w-5 text-green-500" />
+                  <PlusIcon className="text-primary-ink dark:text-primary h-5 w-5" />
                 </button>
               ))}
             </div>
@@ -508,14 +496,14 @@ export default function DashboardPosaunenwarteEditPage() {
         <div className="mt-6 flex flex-wrap gap-3">
           <Link
             href={`/dashboard/posaunenwarte/${id}`}
-            className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
+            className="bg-ink text-paper hover:bg-dark dark:bg-night-text dark:text-night dark:hover:bg-night-muted semi-condensed inline-flex min-h-11 items-center gap-2 px-4 py-2 font-semibold transition-colors"
           >
             <ArrowLeftIcon className="h-4 w-4" />
             Zur Detailansicht
           </Link>
           <Link
             href="/dashboard/posaunenwarte"
-            className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night semi-condensed inline-flex min-h-11 items-center gap-2 border-2 px-4 py-2 font-semibold transition-colors"
           >
             Zur Übersicht
           </Link>

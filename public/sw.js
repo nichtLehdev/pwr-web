@@ -1,16 +1,7 @@
 /**
- * Service Worker — Offline-Unterstützung, primär für die Spiele unter /spiele.
- *
- * Strategien:
- * - Dokumente (Navigationen) & RSC-Flight-Requests: network-first → Cache →
- *   /offline. Online-Nutzer sehen nach einem Deploy immer frisches HTML.
- * - /_next/static & Icons: cache-first (Inhalte sind content-gehasht und
- *   unveränderlich), mit LRU-Begrenzung.
- * - /api, /uploads: niemals cachen (personalisiert bzw. dynamisch).
- *
- * Entwicklung: registriert wird nur im Production-Build. Hängt lokal trotzdem
- * ein alter SW fest → in Chrome unter chrome://serviceworker-internals
- * deregistrieren.
+ * Offline-Unterstützung, primär für /spiele. Dokumente & RSC: network-first → Cache → /offline
+ * (nach Deploy frisches HTML); /_next/static & Icons: cache-first mit LRU; /api, /uploads: nie.
+ * Nur im Production-Build registriert; alten SW lokal über chrome://serviceworker-internals entfernen.
  */
 
 const VERSION = "v1";

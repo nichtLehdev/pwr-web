@@ -16,6 +16,7 @@ import type {
   SortingState,
 } from "@tanstack/react-table";
 import { ShieldIcon } from "lucide-react";
+import { formatBerlin } from "@/lib/berlin-time";
 
 type AuditEntry = RouterOutputs["audit"]["list"]["entries"][number];
 
@@ -32,14 +33,7 @@ type SortableColumn = keyof typeof SORTABLE_COLUMNS;
 const column = createDataTableColumnHelper<AuditEntry>();
 
 function formatDateTime(date: Date | string) {
-  return new Intl.DateTimeFormat("de-DE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  }).format(new Date(date));
+  return formatBerlin(date, "datumUhrzeitSekunden");
 }
 
 /** Reads one set filter out of the table's filter state. */
@@ -52,9 +46,8 @@ export default function AuditLogPage() {
   const { hasPermission, isLoading: permissionsLoading } = usePermissions();
   const canView = hasPermission(PERMISSIONS.AUDIT_VIEW);
 
-  // Das Audit-Log wächst unbegrenzt und wird deshalb serverseitig geblättert;
-  // Sortierung, Spaltenfilter und Suche sind darum Abfrageparameter — sonst
-  // würden sie nur die gerade geladenen 50 Zeilen betreffen.
+  // Serverseitig geblättert (das Log wächst unbegrenzt), daher sind Sortierung,
+  // Filter und Suche Abfrageparameter statt nur auf die geladene Seite zu wirken.
   const [sorting, setSorting] = useState<SortingState>([
     { id: "createdAt", desc: true },
   ]);
@@ -122,7 +115,7 @@ export default function AuditLogPage() {
             })),
           },
           cell: ({ getValue }) => (
-            <span className="dark:bg-dark-background inline-block rounded bg-gray-100 px-2 py-0.5 font-mono text-xs text-gray-800 dark:text-gray-200">
+            <span className="bg-rule/25 dark:bg-night-raised text-ink dark:text-night-text inline-block px-2 py-0.5 font-mono text-xs">
               {getValue()}
             </span>
           ),
@@ -141,7 +134,7 @@ export default function AuditLogPage() {
             <>
               {row.original.entityType}
               {row.original.entityId ? (
-                <span className="block font-mono text-xs break-all text-gray-400 dark:text-gray-500">
+                <span className="text-dark dark:text-night-muted block font-mono text-xs break-all">
                   {row.original.entityId}
                 </span>
               ) : null}
@@ -154,7 +147,7 @@ export default function AuditLogPage() {
           meta: { label: "Details", cellClassName: "max-w-md" },
           cell: ({ row }) =>
             row.original.details ? (
-              <pre className="font-mono text-xs break-all whitespace-pre-wrap text-gray-600 dark:text-gray-400">
+              <pre className="text-dark dark:text-night-muted font-mono text-xs break-all whitespace-pre-wrap">
                 {JSON.stringify(row.original.details, null, 1)}
               </pre>
             ) : (
@@ -168,7 +161,7 @@ export default function AuditLogPage() {
   if (!permissionsLoading && !canView) {
     return (
       <DashboardPage title="Audit-Log">
-        <p className="text-gray-600 dark:text-gray-400">
+        <p className="text-dark dark:text-night-muted">
           Du hast keine Berechtigung, diese Seite zu sehen.
         </p>
       </DashboardPage>
@@ -189,7 +182,7 @@ export default function AuditLogPage() {
         searchPlaceholder="Akteur-E-Mail, Aktion oder Objekt-ID…"
         pageSizeOptions={[50, 100, 250]}
         emptyState={
-          <span className="flex flex-col items-center gap-2 text-gray-500 dark:text-gray-400">
+          <span className="text-dark dark:text-night-muted flex flex-col items-center gap-2">
             <ShieldIcon className="h-8 w-8" />
             Keine Einträge gefunden.
           </span>
@@ -197,30 +190,30 @@ export default function AuditLogPage() {
         renderMobileRow={(entry) => (
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-              <span className="dark:bg-dark-background inline-block rounded bg-gray-100 px-2 py-0.5 font-mono text-xs break-all text-gray-800 dark:text-gray-200">
+              <span className="bg-rule/25 dark:bg-night-raised text-ink dark:text-night-text inline-block px-2 py-0.5 font-mono text-xs break-all">
                 {entry.action}
               </span>
-              <time className="text-xs text-gray-500 tabular-nums dark:text-gray-400">
+              <time className="text-dark dark:text-night-muted text-xs tabular-nums">
                 {formatDateTime(entry.createdAt)}
               </time>
             </div>
-            <p className="dark:text-dark-text text-sm break-all text-gray-900">
+            <p className="text-ink dark:text-night-text text-sm break-all">
               {entry.actorEmail ?? entry.actorId ?? "System"}
             </p>
-            <p className="text-xs text-gray-600 dark:text-gray-400">
+            <p className="text-dark dark:text-night-muted text-xs">
               {entry.entityType}
               {entry.entityId ? (
-                <span className="block font-mono break-all text-gray-400 dark:text-gray-500">
+                <span className="block font-mono break-all">
                   {entry.entityId}
                 </span>
               ) : null}
             </p>
             {entry.details ? (
               <details>
-                <summary className="text-primary cursor-pointer text-xs font-medium">
+                <summary className="text-primary-ink dark:text-primary cursor-pointer text-xs font-medium">
                   Details
                 </summary>
-                <pre className="mt-1 font-mono text-xs break-all whitespace-pre-wrap text-gray-600 dark:text-gray-400">
+                <pre className="text-dark dark:text-night-muted mt-1 font-mono text-xs break-all whitespace-pre-wrap">
                   {JSON.stringify(entry.details, null, 1)}
                 </pre>
               </details>

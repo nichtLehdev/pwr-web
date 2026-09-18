@@ -1,15 +1,6 @@
 /**
- * Placeholders an organizer can drop into a course mail, e.g.
- * `Hallo {{anmelder.vorname}}, du hast {{teilnehmer.namen}} angemeldet.`
- *
- * Tokens are namespaced (`anmelder.`, `teilnehmer.`, `anmeldung.`, `kurs.`,
- * `rechnung.`) because the flat names could not say whose data they meant:
- * `{{name}}` was the registering person while `{{teilnehmer}}` were the people
- * signed up, and `{{betrag}}` and `{{rechnungsbetrag}}` looked interchangeable.
- *
- * Shared between the dashboard (chip list, client-side validation) and the
- * send mutation (substitution), so the two can never disagree about which
- * tokens exist.
+ * Placeholders for course mails, e.g. `Hallo {{anmelder.vorname}}`. Namespaced so each token says
+ * whose data it means. Shared by dashboard and send mutation so both agree on which tokens exist.
  */
 
 export interface CourseMailPlaceholder {
@@ -127,9 +118,8 @@ export const COURSE_MAIL_PLACEHOLDERS: CourseMailPlaceholder[] =
   COURSE_MAIL_PLACEHOLDER_GROUPS.flatMap((group) => group.placeholders);
 
 /**
- * The flat tokens this feature shipped with. Kept working — but no longer
- * offered — so drafts and archived mails written before the rename still
- * resolve instead of mailing a literal `{{vorname}}`.
+ * Old flat tokens, no longer offered but still resolved so older drafts and archived
+ * mails don't send a literal `{{vorname}}`.
  */
 export const COURSE_MAIL_PLACEHOLDER_ALIASES: Record<string, string> = {
   vorname: "anmelder.vorname",
@@ -169,10 +159,7 @@ function resolveToken(rawToken: string): string | null {
   return COURSE_MAIL_PLACEHOLDER_ALIASES[token] ?? null;
 }
 
-/**
- * Tokens used in the text that we cannot fill. Returned so the composer can
- * refuse to send rather than mailing a literal `{{teilnehmerX}}` to everyone.
- */
+/** Unfillable tokens, so the composer can refuse to send a literal `{{teilnehmerX}}`. */
 export function findUnknownPlaceholders(text: string): string[] {
   const unknown = new Set<string>();
   for (const match of text.matchAll(PLACEHOLDER_PATTERN)) {
@@ -190,11 +177,8 @@ function escapeHtmlValue(value: string): string {
 }
 
 /**
- * Replace every known placeholder with the recipient's value.
- *
- * Substitution happens *after* the message body was rendered and sanitized,
- * so `escapeHtml` is what keeps a registrant named `<script>` from becoming
- * markup. Unknown tokens are left untouched — callers reject them up front.
+ * Runs *after* the body was rendered and sanitized, so `escapeHtml` is what keeps a registrant
+ * named `<script>` from becoming markup. Unknown tokens stay untouched.
  */
 export function applyPlaceholders(
   text: string,

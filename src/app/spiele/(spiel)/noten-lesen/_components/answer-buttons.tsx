@@ -14,7 +14,7 @@ export type AnswerButtonsProps = {
   onPick: (label: string) => void;
   /** Während der Sperre: getippte Antwort (rot bei Fehler markiert). */
   pickedLabel?: string | null;
-  /** Während der Sperre: richtige Antwort (grün markiert). */
+  /** Während der Sperre: richtige Antwort (in Tinte markiert). */
   correctLabel?: string | null;
 };
 
@@ -59,27 +59,23 @@ export function AnswerButtons({
               type="button"
               disabled={disabled}
               onClick={() => onPick(label)}
+              /* Höhe wächst mit dem Fenster, fällt aber nie unter 44 px. */
               className={cn(
-                "relative flex min-h-[3.25rem] w-full items-center justify-center gap-1.5 rounded-lg border px-2 py-2 transition active:scale-[0.99]",
+                "relative flex min-h-[clamp(2.75rem,7dvh,4rem)] w-full items-center justify-center gap-1.5 border px-2 py-2 transition active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100",
                 GAME_FOCUS_RING,
                 marked ? "disabled:opacity-100" : "disabled:opacity-40",
+                /* Richtig ist Tinte, nicht Grün (keine Farbe des Hefts). */
                 isCorrect &&
-                  "border-emerald-600 bg-emerald-500/15 text-emerald-900 dark:border-emerald-400 dark:bg-emerald-500/15 dark:text-emerald-200",
+                  "border-ink bg-ink text-paper dark:border-night-text dark:bg-night-text dark:text-night",
                 isPickedWrong &&
-                  "border-rose-600 bg-rose-500/10 text-rose-900 dark:border-rose-400 dark:bg-rose-500/15 dark:text-rose-200",
+                  "border-red-700 bg-red-700/10 text-red-800 dark:border-red-500 dark:bg-red-500/15 dark:text-red-200",
                 !marked &&
-                  "border-dark-border/60 text-dark bg-white/90 shadow-sm",
-                !marked &&
-                  "dark:border-dark-border dark:bg-dark-surface dark:text-dark-text",
-                !marked &&
-                  "hover:border-primary/45 dark:hover:border-primary/40",
+                  "border-rule text-ink hover:border-ink dark:border-night-rule dark:text-night-text dark:hover:border-night-text bg-transparent",
               )}
             >
               {/* Ziffern-Badge nur wo auch Tastenkürzel gelten (md+, wie der Hinweis). */}
               <span
-                className={cn(
-                  "bg-primary/12 text-primary dark:bg-primary/20 dark:text-primary-light absolute top-1 left-1 hidden h-5 min-w-5 items-center justify-center rounded-lg px-0.5 text-[10px] font-bold tabular-nums md:flex",
-                )}
+                className="on-orange bg-primary text-ink absolute top-1 left-1 hidden h-5 min-w-5 items-center justify-center px-0.5 text-[10px] font-bold tabular-nums md:flex"
                 aria-hidden
               >
                 {n}
@@ -106,7 +102,7 @@ export function AnswerButtons({
       {hints.length > 0 && (
         <p
           id={hintId}
-          className="text-dark dark:text-dark-text-muted hidden px-0.5 text-center text-xs leading-snug font-medium md:block"
+          className="text-dark dark:text-night-muted hidden px-0.5 text-center text-xs leading-snug font-medium md:block"
         >
           {hints[0]}
         </p>

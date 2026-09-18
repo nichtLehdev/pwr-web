@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import { Input, Label, Textarea, Select } from "@/app/_components/ui";
 import type { SelectProps } from "@/app/_components/ui/select";
 import {
@@ -9,6 +10,13 @@ import {
   type CourseCustomFieldRule,
 } from "@/lib/course-custom-fields";
 import { cn } from "@/lib/utils";
+import { Checkbox } from "@/app/_components/programmheft/field";
+
+/** Überschreibt die `ui/`-Inputs per `!`, weil `cn` widersprüchliche Utilities nicht entfernt. */
+const CUSTOM_FIELD_INPUT_CLASS =
+  "rounded-none! border-2! border-rule dark:border-night-rule bg-paper! dark:bg-night! text-ink! dark:text-night-text! shadow-none! focus:border-ink! dark:focus:border-night-text! focus:ring-0!";
+const CUSTOM_FIELD_LABEL_CLASS =
+  "text-ink! dark:text-night-text! mb-1! block! text-sm! font-semibold!";
 
 function asCustomFieldsRecord(value: unknown): Record<string, unknown> {
   if (value && typeof value === "object" && !Array.isArray(value)) {
@@ -61,6 +69,8 @@ type ParticipantCustomFieldsProps = {
   selectFieldSize?: SelectProps["fieldSize"];
   /** Background/border wrapper for CHECKBOX and MULTISELECT boxes (step 2 tints sibling groups green). */
   choiceContainerClassName?: string;
+  /** Sammelmeldung außerhalb der Felder, per `aria-describedby` verknüpft. */
+  errorDescriptionId?: string;
 };
 
 export function ParticipantCustomFields({
@@ -68,11 +78,13 @@ export function ParticipantCustomFields({
   customFields,
   onChange,
   invalidFieldNames = [],
-  labelClassName = "text-dark dark:text-dark-text mb-1 block text-sm font-medium",
-  inputClassName = "focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none",
+  labelClassName = CUSTOM_FIELD_LABEL_CLASS,
+  inputClassName = CUSTOM_FIELD_INPUT_CLASS,
   selectFieldSize,
-  choiceContainerClassName = "dark:bg-dark-background-secondary bg-white",
+  choiceContainerClassName = "bg-paper dark:bg-night",
+  errorDescriptionId,
 }: ParticipantCustomFieldsProps) {
+  const uid = useId();
   if (fields.length === 0) {
     return null;
   }
@@ -85,18 +97,52 @@ export function ParticipantCustomFields({
 
   return (
     <>
-      {fields.map((field) => {
+      {fields.map((field, index) => {
         const isInvalid = invalidFieldNames.includes(field.fieldName);
         const fieldValue = getCustomFieldValue(customFields, field.fieldName);
         const optionValues = parseSelectOptionValues(field.options);
+        // Nach Position statt Feldname: Namen dürfen Leerzeichen enthalten.
+        const controlId = `${uid}-${index}`;
+        const labelId = `${controlId}-label`;
+        const helpId = `${controlId}-hilfe`;
+        const showsHelp = !!field.helpText && field.fieldType !== "CHECKBOX";
+        // Beschriftung und Fehlerzustand für das einzelne Feld; Kästchen-
+        // gruppen tragen sie als Gruppe (siehe unten).
+        const describedBy =
+          [showsHelp ? helpId : null, isInvalid ? errorDescriptionId : null]
+            .filter(Boolean)
+            .join(" ") || undefined;
+        const controlA11y = {
+          id: controlId,
+          required: field.isRequired,
+          "aria-invalid": isInvalid || undefined,
+          "aria-describedby": describedBy,
+        };
+        const isGroup =
+          field.fieldType === "CHECKBOX" ||
+          (field.fieldType === "MULTISELECT" && optionValues.length > 0);
 
         return (
           <div key={field.fieldName} className="md:col-span-2">
-            <Label className={labelClassName} required={field.isRequired}>
+            {/* Eigenes stummes Sternchen: `Label` sagt sonst englisch „required“ an. */}
+            <Label
+              id={labelId}
+              htmlFor={isGroup ? undefined : controlId}
+              className={labelClassName}
+            >
               {field.fieldName}
+              {field.isRequired ? (
+                <span
+                  aria-hidden
+                  className="ml-1 text-red-600 dark:text-red-400"
+                >
+                  *
+                </span>
+              ) : null}
             </Label>
             {field.fieldType === "SELECT" && optionValues.length > 0 ? (
               <Select
+                {...controlA11y}
                 value={fieldValue != null ? String(fieldValue) : ""}
                 onChange={(e) => setField(field.fieldName, e.target.value)}
                 error={isInvalid}
@@ -112,77 +158,84 @@ export function ParticipantCustomFields({
               </Select>
             ) : field.fieldType === "MULTISELECT" && optionValues.length > 0 ? (
               <div
+                role="group"
+                aria-labelledby={labelId}
+                aria-describedby={describedBy}
+                data-invalid={isInvalid || undefined}
                 className={cn(
-                  "space-y-2 rounded-lg border px-3 py-2.5",
+                  "space-y-2 border-2 px-3 py-2.5",
                   isInvalid
-                    ? "border-red-500 dark:border-red-500"
-                    : "dark:border-dark-border border-gray-300",
+                    ? "border-red-700 dark:border-red-400"
+                    : "border-rule dark:border-night-rule",
                   choiceContainerClassName,
                 )}
               >
-                {optionValues.map((opt) => {
+                {optionValues.map((opt, optIndex) => {
                   const selected = asStringArray(fieldValue);
                   const checked = selected.includes(opt);
                   return (
-                    <label
+                    <Checkbox
                       key={opt}
-                      className="flex cursor-pointer items-start gap-2.5 text-sm"
+                      id={`${controlId}-${optIndex}`}
+                      checked={checked}
+                      onChange={(e) => {
+                        const next = e.target.checked
+                          ? [...selected, opt]
+                          : selected.filter((v) => v !== opt);
+                        // Course option order keeps values stable for export.
+                        setField(
+                          field.fieldName,
+                          optionValues.filter((o) => next.includes(o)),
+                        );
+                      }}
+                      className="min-h-0"
                     >
-                      <input
-                        type="checkbox"
-                        className="text-primary focus:ring-primary mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300"
-                        checked={checked}
-                        onChange={(e) => {
-                          const next = e.target.checked
-                            ? [...selected, opt]
-                            : selected.filter((v) => v !== opt);
-                          // Course option order keeps values stable for export.
-                          setField(
-                            field.fieldName,
-                            optionValues.filter((o) => next.includes(o)),
-                          );
-                        }}
-                      />
-                      <span className="text-dark dark:text-dark-text leading-snug">
-                        {opt}
-                      </span>
-                    </label>
+                      <span className="text-sm leading-snug">{opt}</span>
+                    </Checkbox>
                   );
                 })}
               </div>
             ) : field.fieldType === "CHECKBOX" ? (
-              <label
+              <div
+                role="group"
+                aria-labelledby={labelId}
+                aria-describedby={describedBy}
+                data-invalid={isInvalid || undefined}
                 className={cn(
-                  "flex cursor-pointer items-start gap-2.5 rounded-lg border px-3 py-2.5 text-sm",
+                  "border-2 px-3 py-2.5",
                   isInvalid
-                    ? "border-red-500 dark:border-red-500"
-                    : "dark:border-dark-border border-gray-300",
+                    ? "border-red-700 dark:border-red-400"
+                    : "border-rule dark:border-night-rule",
                   choiceContainerClassName,
                 )}
               >
-                <input
-                  type="checkbox"
-                  className="text-primary focus:ring-primary mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300"
+                <Checkbox
+                  id={`${controlId}-checkbox`}
+                  required={field.isRequired}
                   checked={fieldValue === true || fieldValue === "true"}
                   onChange={(e) => setField(field.fieldName, e.target.checked)}
-                />
-                <span className="text-dark dark:text-dark-text leading-snug">
-                  {field.helpText?.trim() ? field.helpText : "Ja, trifft zu"}
-                </span>
-              </label>
+                  className="min-h-0"
+                >
+                  <span className="text-sm leading-snug">
+                    {field.helpText?.trim() ? field.helpText : "Ja, trifft zu"}
+                  </span>
+                </Checkbox>
+              </div>
             ) : field.fieldType === "TEXTAREA" ? (
               <Textarea
+                {...controlA11y}
                 value={fieldValue != null ? String(fieldValue) : ""}
                 onChange={(e) => setField(field.fieldName, e.target.value)}
                 rows={3}
                 className={cn(
                   inputClassName,
-                  isInvalid && "border-red-500 dark:border-red-500",
+                  isInvalid && "border-red-700! dark:border-red-400!",
                 )}
                 placeholder={field.helpText ?? ""}
               />
             ) : (
               <Input
+                {...controlA11y}
                 type={inputTypeFor(String(field.fieldType))}
                 value={fieldValue != null ? String(fieldValue) : ""}
                 onChange={(e) => setField(field.fieldName, e.target.value)}
@@ -191,7 +244,7 @@ export function ParticipantCustomFields({
                 step={field.fieldType === "YEAR" ? 1 : undefined}
                 className={cn(
                   inputClassName,
-                  isInvalid && "border-red-500 dark:border-red-500",
+                  isInvalid && "border-red-700! dark:border-red-400!",
                 )}
                 placeholder={
                   field.fieldType === "YEAR"
@@ -200,8 +253,11 @@ export function ParticipantCustomFields({
                 }
               />
             )}
-            {field.helpText && field.fieldType !== "CHECKBOX" ? (
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            {showsHelp ? (
+              <p
+                id={helpId}
+                className="text-dark dark:text-night-muted mt-1 text-xs"
+              >
                 {field.helpText}
               </p>
             ) : null}

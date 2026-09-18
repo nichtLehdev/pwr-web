@@ -44,9 +44,8 @@ export function rateLimitResponse() {
 }
 
 /**
- * Best-effort client identifier for rate limiting. x-forwarded-for is only
- * trustworthy when the reverse proxy overwrites it — which the bundled
- * nginx/traefik setups do. Falls back to a shared bucket when absent.
+ * x-forwarded-for is only trustworthy because the bundled reverse proxies
+ * overwrite it. Falls back to a shared bucket when absent.
  */
 export function clientKeyFromHeaders(headers: Headers): string {
   const forwarded = headers.get("x-forwarded-for");

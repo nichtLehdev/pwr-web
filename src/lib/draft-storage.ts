@@ -1,17 +1,6 @@
 /**
- * Speicher für lokale Formular-Entwürfe (Autosave im Dashboard).
- *
- * Jeder Entwurf liegt als versionierter Umschlag im localStorage:
- * `{ v, savedAt, data }`. Dadurch lassen sich Entwürfe aus einer älteren
- * Formularversion und veraltete Entwürfe erkennen und wegwerfen, statt sie
- * blind in die Felder zu schreiben.
- *
- * Die Schlüssel sind pro Benutzer getrennt (`pwr.draft.v1:<userId>:<name>`),
- * damit auf gemeinsam genutzten Rechnern nicht der Entwurf des vorherigen
- * Benutzers wiederhergestellt wird.
- *
- * Alle Zugriffe sind abgesichert — ohne Storage (Privatmodus, volles
- * Kontingent) passiert einfach nichts; `writeDraft` meldet das per Rückgabe.
+ * Formular-Entwürfe als versionierter Umschlag `{ v, savedAt, data }` im localStorage.
+ * Schlüssel pro Benutzer, damit geteilte Rechner keinen fremden Entwurf wiederherstellen.
  */
 
 const PREFIX = "pwr.draft.v1";
@@ -75,10 +64,7 @@ function parseEnvelope(raw: string | null): DraftEnvelope | null {
   }
 }
 
-/**
- * Liest einen Entwurf. Unlesbare, versionsfremde und abgelaufene Einträge
- * werden dabei gleich entfernt.
- */
+/** Unlesbare, versionsfremde und abgelaufene Einträge werden dabei entfernt. */
 export function readDraft<T>(
   key: string,
   { version, maxAgeMs = DRAFT_MAX_AGE_MS, now = Date.now() }: ReadOptions,
@@ -109,11 +95,8 @@ export function readDraft<T>(
 }
 
 /**
- * Schreibt einen Entwurf.
- *
- * @returns `false`, wenn nicht gespeichert werden konnte (Kontingent voll,
- * Privatmodus). Die Oberfläche muss das anzeigen — sonst hält der Benutzer
- * seine Eingaben für gesichert, obwohl nichts geschrieben wird.
+ * `false`, wenn nicht gespeichert werden konnte (Kontingent, Privatmodus) — die
+ * Oberfläche muss das anzeigen, sonst hält der Benutzer seine Eingaben für gesichert.
  */
 export function writeDraft(
   key: string,
@@ -150,15 +133,7 @@ function isLegacyKey(key: string): boolean {
   return LEGACY_KEY_PATTERNS.some((pattern) => pattern.test(key));
 }
 
-/**
- * Räumt den localStorage auf: abgelaufene und versionsfremde Entwürfe sowie
- * die Schlüssel des alten Autosave-Formats.
- *
- * Ohne das bleibt für jeden je bearbeiteten Beitrag, Termin und Kurs dauerhaft
- * ein Eintrag liegen — auch für längst gelöschte Inhalte.
- *
- * @returns Anzahl der entfernten Einträge.
- */
+/** Entfernt abgelaufene, versionsfremde und Alt-Format-Entwürfe; liefert deren Anzahl. */
 export function sweepDrafts({
   version,
   maxAgeMs = DRAFT_MAX_AGE_MS,
@@ -213,20 +188,9 @@ export type DraftWriteState = {
 };
 
 /**
- * Entscheidet, was mit dem aktuellen Formularstand geschehen soll.
- *
- * Steckt bewusst hier statt im Hook, damit die drei Regeln prüfbar sind, die
- * jeweils einen echten Fehler abgedeckt haben:
- *
- * 1. Solange über einen gefundenen Entwurf noch nicht entschieden ist, wird
- *    nicht geschrieben — sonst überschreibt der aktuelle Formularstand genau
- *    den Entwurf, der noch angeboten wird.
- * 2. Nach `clear()` (Absenden, Abbrechen) wird der unveränderte Stand nicht
- *    erneut gespeichert — sonst legt der Re-Render direkt danach den gerade
- *    gelöschten Entwurf wieder an. Erst eine echte Änderung nimmt das
- *    Speichern wieder auf.
- * 3. Ist das Formular wieder im Ausgangszustand, wird der Entwurf entfernt
- *    statt gespeichert — es gibt nichts wiederherzustellen.
+ * 1. Solange ein gefundener Entwurf angeboten wird, nicht schreiben (er würde überschrieben).
+ * 2. Nach `clear()` den unveränderten Stand nicht wieder anlegen; erst eine Änderung speichert.
+ * 3. Im Ausgangszustand den Entwurf entfernen statt speichern.
  */
 export function decideDraftWrite({
   next,

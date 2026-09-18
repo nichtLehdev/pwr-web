@@ -14,6 +14,16 @@ import { DashboardPage } from "@/app/_components/dashboard";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import DownloadPickerModal from "@/app/_components/editor/download-picker-modal";
 import { ImageIcon, MusicIcon, SaveIcon, XIcon } from "lucide-react";
+import {
+  Button,
+  Card,
+  CardContent,
+  Checkbox,
+  Input,
+  Label,
+  Textarea,
+} from "@/app/_components/ui";
+import { berlinParts } from "@/lib/berlin-time";
 
 export default function EditBlaeserheftPage() {
   const router = useRouter();
@@ -41,7 +51,7 @@ export default function EditBlaeserheftPage() {
 
   const [title, setTitle] = useState("");
   const [subtitle, setSubtitle] = useState("");
-  const [year, setYear] = useState(new Date().getFullYear());
+  const [year, setYear] = useState(() => berlinParts(new Date()).year);
   const [description, setDescription] = useState("");
   const [chapters, setChapters] = useState("");
   const [highlights, setHighlights] = useState("");
@@ -69,7 +79,7 @@ export default function EditBlaeserheftPage() {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setTitle(heft.title || "");
       setSubtitle(heft.subtitle || "");
-      setYear(heft.year || new Date().getFullYear());
+      setYear(heft.year || berlinParts(new Date()).year);
       setDescription(heft.description || "");
       setChapters(
         typeof heft.chapters === "string"
@@ -166,8 +176,8 @@ export default function EditBlaeserheftPage() {
 
   if (sessionLoading || profileLoading || heftLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
@@ -178,14 +188,14 @@ export default function EditBlaeserheftPage() {
 
   if (!heft) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <h1 className="dark:text-dark-text text-xl font-semibold text-gray-900">
+          <h1 className="text-ink dark:text-night-text text-xl font-semibold">
             Bläserheft nicht gefunden
           </h1>
           <Link
             href="/dashboard/blaeserhefte"
-            className="text-primary mt-4 inline-block hover:underline"
+            className="link-ink mt-4 inline-block"
           >
             Zurück zur Übersicht
           </Link>
@@ -207,341 +217,295 @@ export default function EditBlaeserheftPage() {
         ]}
         maxWidth="7xl"
       >
-        {/* Error */}
         {error && (
-          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
+          <div className="mb-6 border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
             <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
           </div>
         )}
 
-        {/* Form */}
         <form onSubmit={handleSubmit}>
-          <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            {/* Basic Info */}
-            <div className="grid gap-6 md:grid-cols-2">
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Titel *
-                </label>
-                <input
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  required
-                  maxLength={200}
-                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                  placeholder="z.B. Bläserheft 2024"
-                />
+          <Card>
+            <CardContent className="space-y-6">
+              <div className="grid gap-6 md:grid-cols-2">
+                <div>
+                  <Label required>Titel</Label>
+                  <Input
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    required
+                    maxLength={200}
+                    placeholder="z.B. Bläserheft 2024"
+                  />
+                </div>
+                <div>
+                  <Label required>Untertitel</Label>
+                  <Input
+                    type="text"
+                    value={subtitle}
+                    onChange={(e) => setSubtitle(e.target.value)}
+                    required
+                    maxLength={200}
+                    placeholder="z.B. Heft 75"
+                  />
+                </div>
               </div>
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Untertitel *
-                </label>
-                <input
-                  type="text"
-                  value={subtitle}
-                  onChange={(e) => setSubtitle(e.target.value)}
-                  required
-                  maxLength={200}
-                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                  placeholder="z.B. Heft 75"
-                />
-              </div>
-            </div>
 
-            <div className="grid gap-6 md:grid-cols-2">
+              <div className="grid gap-6 md:grid-cols-2">
+                <div>
+                  <Label required>Jahr</Label>
+                  <Input
+                    type="number"
+                    value={year}
+                    onChange={(e) => setYear(parseInt(e.target.value) || 0)}
+                    required
+                    min={1900}
+                    max={2100}
+                  />
+                </div>
+                <div>
+                  <Label>Sortierung</Label>
+                  <Input
+                    type="number"
+                    value={sortOrder}
+                    onChange={(e) =>
+                      setSortOrder(parseInt(e.target.value) || 0)
+                    }
+                  />
+                </div>
+              </div>
+
               <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Jahr *
-                </label>
-                <input
-                  type="number"
-                  value={year}
-                  onChange={(e) => setYear(parseInt(e.target.value) || 0)}
+                <Label required>Beschreibung</Label>
+                <Textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
                   required
-                  min={1900}
-                  max={2100}
-                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                  maxLength={5000}
+                  rows={4}
+                  placeholder="Beschreibung des Bläserhefts..."
                 />
               </div>
+
               <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Sortierung
-                </label>
-                <input
-                  type="number"
-                  value={sortOrder}
-                  onChange={(e) => setSortOrder(parseInt(e.target.value) || 0)}
-                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                />
+                <Label required>Titelbild</Label>
+                <div className="flex items-start gap-4">
+                  {selectedImageUrl ? (
+                    <div className="border-rule dark:border-night-rule relative h-24 w-20 shrink-0 overflow-hidden border">
+                      <Image
+                        src={selectedImageUrl}
+                        alt={selectedImageAlt || "Titelbild"}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="border-rule dark:border-night-rule bg-rule/25 text-dark dark:bg-night-raised dark:text-night-muted flex h-24 w-20 shrink-0 items-center justify-center border">
+                      <ImageIcon className="h-8 w-8" />
+                    </div>
+                  )}
+                  <Button
+                    type="button"
+                    onClick={() => setIsMediaPickerOpen(true)}
+                    variant="outline"
+                    size="sm"
+                  >
+                    Bild auswählen
+                  </Button>
+                </div>
               </div>
-            </div>
 
-            <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Beschreibung *
-              </label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                required
-                maxLength={5000}
-                rows={4}
-                className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                placeholder="Beschreibung des Bläserhefts..."
-              />
-            </div>
+              <div className="grid gap-6 md:grid-cols-2">
+                <div>
+                  <Label>Kapitel (eine pro Zeile)</Label>
+                  <Textarea
+                    value={chapters}
+                    onChange={(e) => setChapters(e.target.value)}
+                    rows={5}
+                    placeholder="Kapitel 1&#10;Kapitel 2&#10;..."
+                  />
+                </div>
+                <div>
+                  <Label>Highlights (eines pro Zeile)</Label>
+                  <Textarea
+                    value={highlights}
+                    onChange={(e) => setHighlights(e.target.value)}
+                    rows={5}
+                    placeholder="Highlight 1&#10;Highlight 2&#10;..."
+                  />
+                </div>
+              </div>
 
-            {/* Image Selection */}
-            <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Titelbild *
-              </label>
-              <div className="flex items-start gap-4">
-                {selectedImageUrl ? (
-                  <div className="relative h-24 w-20 shrink-0 overflow-hidden rounded-lg border">
-                    <Image
-                      src={selectedImageUrl}
-                      alt={selectedImageAlt || "Titelbild"}
-                      fill
-                      className="object-cover"
+              <div>
+                <Label>Hörprobe</Label>
+                <div className="flex items-center gap-4">
+                  {audioSample ? (
+                    <div className="bg-rule/25 dark:bg-night-raised flex flex-1 items-center gap-3 px-3 py-2">
+                      <MusicIcon className="h-5 w-5 shrink-0" />
+                      <span className="text-ink dark:text-night-text min-w-0 flex-1 truncate text-sm">
+                        {audioSample.split("/").pop() || audioSample}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setAudioSample("")}
+                        className="text-dark dark:text-night-muted shrink-0 hover:text-red-600"
+                      >
+                        <XIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="text-dark dark:text-night-muted text-sm">
+                      Keine Hörprobe ausgewählt
+                    </span>
+                  )}
+                  <Button
+                    type="button"
+                    onClick={() => setIsDownloadPickerOpen(true)}
+                    variant="outline"
+                    size="sm"
+                    className="shrink-0"
+                  >
+                    {audioSample ? "Ändern" : "Auswählen"}
+                  </Button>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="condensed text-ink dark:text-night-text mb-3 text-lg font-bold">
+                  Preise (in Euro)
+                </h3>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <div>
+                    <Label>Bläserheft</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={priceBlaeserheft}
+                      onChange={(e) =>
+                        setPriceBlaeserheft(
+                          e.target.value === ""
+                            ? ""
+                            : parseFloat(e.target.value),
+                        )
+                      }
+                      placeholder="0.00"
                     />
                   </div>
-                ) : (
-                  <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-24 w-20 shrink-0 items-center justify-center rounded-lg border bg-gray-100 text-gray-400">
-                    <ImageIcon className="h-8 w-8" />
+                  <div>
+                    <Label>Beiheft</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={priceBeiheft}
+                      onChange={(e) =>
+                        setPriceBeiheft(
+                          e.target.value === ""
+                            ? ""
+                            : parseFloat(e.target.value),
+                        )
+                      }
+                      placeholder="0.00"
+                    />
                   </div>
-                )}
-                <button
-                  type="button"
-                  onClick={() => setIsMediaPickerOpen(true)}
-                  className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-3 py-2 text-sm transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
-                >
-                  Bild auswählen
-                </button>
+                  <div>
+                    <Label>Trompetenstimmen</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={priceTrompeten}
+                      onChange={(e) =>
+                        setPriceTrompeten(
+                          e.target.value === ""
+                            ? ""
+                            : parseFloat(e.target.value),
+                        )
+                      }
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div>
+                    <Label>CD</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={priceCd}
+                      onChange={(e) =>
+                        setPriceCd(
+                          e.target.value === ""
+                            ? ""
+                            : parseFloat(e.target.value),
+                        )
+                      }
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
               </div>
-            </div>
 
-            {/* Chapters and Highlights */}
-            <div className="grid gap-6 md:grid-cols-2">
               <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Kapitel (eine pro Zeile)
-                </label>
-                <textarea
-                  value={chapters}
-                  onChange={(e) => setChapters(e.target.value)}
-                  rows={5}
-                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                  placeholder="Kapitel 1&#10;Kapitel 2&#10;..."
-                />
-              </div>
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Highlights (eines pro Zeile)
-                </label>
-                <textarea
-                  value={highlights}
-                  onChange={(e) => setHighlights(e.target.value)}
-                  rows={5}
-                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                  placeholder="Highlight 1&#10;Highlight 2&#10;..."
-                />
-              </div>
-            </div>
-
-            {/* Audio Sample */}
-            <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Hörprobe
-              </label>
-              <div className="flex items-center gap-4">
-                {audioSample ? (
-                  <div className="dark:bg-dark-background-secondary flex flex-1 items-center gap-3 rounded-lg bg-gray-100 px-3 py-2">
-                    <MusicIcon className="h-5 w-5 shrink-0" />
-                    <span className="dark:text-dark-text min-w-0 flex-1 truncate text-sm text-gray-700">
-                      {audioSample.split("/").pop() || audioSample}
+                <h3 className="condensed text-ink dark:text-night-text mb-3 text-lg font-bold">
+                  Verfügbarkeit
+                </h3>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <label className="flex items-center gap-2">
+                    <Checkbox
+                      checked={availableBlaeserheft}
+                      onChange={(e) =>
+                        setAvailableBlaeserheft(e.target.checked)
+                      }
+                    />
+                    <span className="text-ink dark:text-night-text text-sm">
+                      Bläserheft
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => setAudioSample("")}
-                      className="dark:text-dark-muted shrink-0 text-gray-400 hover:text-red-500"
-                    >
-                      <XIcon className="h-4 w-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <span className="dark:text-dark-muted text-sm text-gray-500">
-                    Keine Hörprobe ausgewählt
-                  </span>
-                )}
-                <button
-                  type="button"
-                  onClick={() => setIsDownloadPickerOpen(true)}
-                  className="dark:border-dark-border dark:text-dark-text shrink-0 rounded-lg border border-gray-300 px-3 py-2 text-sm transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
-                >
-                  {audioSample ? "Ändern" : "Auswählen"}
-                </button>
-              </div>
-            </div>
-
-            {/* Prices */}
-            <div>
-              <h3 className="dark:text-dark-text mb-3 text-lg font-medium text-gray-900">
-                Preise (in Euro)
-              </h3>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <div>
-                  <label className="dark:text-dark-muted mb-1 block text-sm text-gray-600">
-                    Bläserheft
                   </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={priceBlaeserheft}
-                    onChange={(e) =>
-                      setPriceBlaeserheft(
-                        e.target.value === "" ? "" : parseFloat(e.target.value),
-                      )
-                    }
-                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                    placeholder="0.00"
-                  />
-                </div>
-                <div>
-                  <label className="dark:text-dark-muted mb-1 block text-sm text-gray-600">
-                    Beiheft
+                  <label className="flex items-center gap-2">
+                    <Checkbox
+                      checked={availableBeiheft}
+                      onChange={(e) => setAvailableBeiheft(e.target.checked)}
+                    />
+                    <span className="text-ink dark:text-night-text text-sm">
+                      Beiheft
+                    </span>
                   </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={priceBeiheft}
-                    onChange={(e) =>
-                      setPriceBeiheft(
-                        e.target.value === "" ? "" : parseFloat(e.target.value),
-                      )
-                    }
-                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                    placeholder="0.00"
-                  />
-                </div>
-                <div>
-                  <label className="dark:text-dark-muted mb-1 block text-sm text-gray-600">
-                    Trompetenstimmen
+                  <label className="flex items-center gap-2">
+                    <Checkbox
+                      checked={availableTrompeten}
+                      onChange={(e) => setAvailableTrompeten(e.target.checked)}
+                    />
+                    <span className="text-ink dark:text-night-text text-sm">
+                      Trompetenstimmen
+                    </span>
                   </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={priceTrompeten}
-                    onChange={(e) =>
-                      setPriceTrompeten(
-                        e.target.value === "" ? "" : parseFloat(e.target.value),
-                      )
-                    }
-                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                    placeholder="0.00"
-                  />
-                </div>
-                <div>
-                  <label className="dark:text-dark-muted mb-1 block text-sm text-gray-600">
-                    CD
+                  <label className="flex items-center gap-2">
+                    <Checkbox
+                      checked={availableCd}
+                      onChange={(e) => setAvailableCd(e.target.checked)}
+                    />
+                    <span className="text-ink dark:text-night-text text-sm">
+                      CD
+                    </span>
                   </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={priceCd}
-                    onChange={(e) =>
-                      setPriceCd(
-                        e.target.value === "" ? "" : parseFloat(e.target.value),
-                      )
-                    }
-                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                    placeholder="0.00"
-                  />
                 </div>
               </div>
-            </div>
+            </CardContent>
+          </Card>
 
-            {/* Availability */}
-            <div>
-              <h3 className="dark:text-dark-text mb-3 text-lg font-medium text-gray-900">
-                Verfügbarkeit
-              </h3>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={availableBlaeserheft}
-                    onChange={(e) => setAvailableBlaeserheft(e.target.checked)}
-                    className="text-primary h-4 w-4 rounded border-gray-300 focus:ring-blue-500"
-                  />
-                  <span className="dark:text-dark-text text-sm text-gray-700">
-                    Bläserheft
-                  </span>
-                </label>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={availableBeiheft}
-                    onChange={(e) => setAvailableBeiheft(e.target.checked)}
-                    className="text-primary h-4 w-4 rounded border-gray-300 focus:ring-blue-500"
-                  />
-                  <span className="dark:text-dark-text text-sm text-gray-700">
-                    Beiheft
-                  </span>
-                </label>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={availableTrompeten}
-                    onChange={(e) => setAvailableTrompeten(e.target.checked)}
-                    className="text-primary h-4 w-4 rounded border-gray-300 focus:ring-blue-500"
-                  />
-                  <span className="dark:text-dark-text text-sm text-gray-700">
-                    Trompetenstimmen
-                  </span>
-                </label>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={availableCd}
-                    onChange={(e) => setAvailableCd(e.target.checked)}
-                    className="text-primary h-4 w-4 rounded border-gray-300 focus:ring-blue-500"
-                  />
-                  <span className="dark:text-dark-text text-sm text-gray-700">
-                    CD
-                  </span>
-                </label>
-              </div>
-            </div>
-          </div>
-
-          {/* Actions */}
           <div className="mt-6 flex flex-wrap gap-3">
-            <button
+            <Button
               type="submit"
               disabled={isSubmitting}
-              className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors disabled:opacity-50"
+              isLoading={isSubmitting}
             >
-              {isSubmitting ? (
-                <>
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  Speichern...
-                </>
-              ) : (
-                <>
-                  <SaveIcon className="h-4 w-4" />
-                  Speichern
-                </>
-              )}
-            </button>
+              <SaveIcon className="h-4 w-4" />
+              Speichern
+            </Button>
             <Link
               href={`/dashboard/blaeserhefte/${heftId}`}
-              className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="border-ink dark:border-night-text text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised inline-flex min-h-11 items-center gap-2 border px-4 py-2 transition-colors"
             >
               Abbrechen
             </Link>

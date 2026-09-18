@@ -1,387 +1,322 @@
 "use client";
 
+import { useId, type InputHTMLAttributes } from "react";
 import type { RegistrationData } from "./types";
 import { fieldClass } from "./field-styles";
+import { EMAIL_HINT, type FormProblem } from "./utils";
 import { isPlausibleEmail } from "@/lib/email-address";
-
-const EMAIL_HINT =
-  "Bitte eine gültige E-Mail-Adresse eingeben, z. B. max@example.com";
+import { Checkbox } from "@/app/_components/programmheft/field";
+import { Heading } from "@/app/_components/programmheft/section-head";
 
 interface Step1RegistrantInfoProps {
   registrationData: RegistrationData;
   setRegistrationData: React.Dispatch<React.SetStateAction<RegistrationData>>;
-  /**
-   * Team members recording a registration on someone's behalf often only have
-   * a name and an e-mail, so phone and address are optional for them.
-   */
+  /** Staff often only has name and e-mail, so phone and address are optional. */
   staffMode?: boolean;
+  /** Sprungziel für den Fokus beim Wechsel in diesen Schritt. */
+  headingId: string;
+  /** Erst nach einem Klick auf „Weiter“ übergeben, damit ein frisches Formular nicht schon rot ist. */
+  problems?: readonly FormProblem[];
+}
+
+type RegistrantTextKey = Extract<
+  keyof RegistrationData,
+  | "registrantFirstName"
+  | "registrantLastName"
+  | "registrantEmail"
+  | "registrantPhone"
+  | "registrantStreet"
+  | "registrantZipCode"
+  | "registrantCity"
+  | "billingCompany"
+  | "billingFirstName"
+  | "billingLastName"
+  | "billingStreet"
+  | "billingZipCode"
+  | "billingCity"
+  | "billingEmail"
+>;
+
+/** Beschriftung, Feld und Meldung als ein Stück, verknüpft über `htmlFor` und `id`. */
+function RegistrantField({
+  id,
+  field,
+  label,
+  required = false,
+  showRequiredMark = required,
+  error,
+  hint,
+  className,
+  inputClassName,
+  ...inputProps
+}: {
+  id: string;
+  /** Schlüssel, unter dem „Weiter“ das Feld bei einem Fehler anspringt. */
+  field: string;
+  label: string;
+  required?: boolean;
+  /** Das Sternchen ist nur Optik; `required` folgt der echten Regel. */
+  showRequiredMark?: boolean;
+  error?: string;
+  hint?: string;
+  className?: string;
+  inputClassName: string;
+} & Omit<InputHTMLAttributes<HTMLInputElement>, "id" | "className">) {
+  const errorId = `${id}-fehler`;
+  const hintId = `${id}-hinweis`;
+  return (
+    <div className={className}>
+      <label
+        htmlFor={id}
+        className="text-ink dark:text-night-text mb-1 block text-sm font-semibold"
+      >
+        {label}
+        {/* Das Sternchen sieht man; vorgelesen wird „Pflichtfeld“. */}
+        {showRequiredMark ? <span aria-hidden> *</span> : null}
+      </label>
+      <input
+        id={id}
+        data-focus-key={field}
+        required={required}
+        aria-required={required || undefined}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? errorId : hint ? hintId : undefined}
+        className={inputClassName}
+        {...inputProps}
+      />
+      {error ? (
+        <p
+          id={errorId}
+          className="mt-1 text-sm font-medium text-red-700 dark:text-red-400"
+        >
+          {error}
+        </p>
+      ) : hint ? (
+        <p id={hintId} className="text-dark dark:text-night-muted mt-1 text-xs">
+          {hint}
+        </p>
+      ) : null}
+    </div>
+  );
 }
 
 export function Step1RegistrantInfo({
   registrationData,
   setRegistrationData,
   staffMode = false,
+  headingId,
+  problems = [],
 }: Step1RegistrantInfoProps) {
-  const contactRequiredMark = staffMode ? "" : " *";
-  const inputClass = fieldClass({
-    className: "dark:bg-dark-background-secondary bg-white",
-  });
-  const invalidInputClass = fieldClass({
-    error: true,
-    className: "dark:bg-dark-background-secondary bg-white",
-  });
+  const uid = useId();
+  const inputClass = fieldClass();
+  const invalidInputClass = fieldClass({ error: true });
 
   // Erst meckern, wenn etwas dasteht: ein noch leeres Pflichtfeld ist kein
-  // Fehler, sondern unausgefüllt — dafür bleibt der Weiter-Button gesperrt.
+  // Fehler, sondern unausgefüllt — das meldet erst „Weiter“.
   const emailInvalid =
     registrationData.registrantEmail.length > 0 &&
     !isPlausibleEmail(registrationData.registrantEmail);
   const billingEmailInvalid =
     !!registrationData.billingEmail &&
     !isPlausibleEmail(registrationData.billingEmail);
+
+  const errorFor = (field: string) =>
+    problems.find((p) => p.field === field)?.message;
+
+  const addressRequired = !staffMode && !registrationData.useSeparateBilling;
+
+  /** Gemeinsame Verdrahtung eines Textfelds von `registrationData`. */
+  const bind = (key: RegistrantTextKey, error?: string) => ({
+    id: `${uid}-${key}`,
+    field: key,
+    value: (registrationData[key] as string | undefined) ?? "",
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+      setRegistrationData({
+        ...registrationData,
+        [key]: e.target.value,
+      }),
+    error,
+    inputClassName: error ? invalidInputClass : inputClass,
+  });
+
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-dark dark:text-dark-text mb-4 text-xl font-bold">
+        <Heading
+          as="h3"
+          size="list"
+          id={headingId}
+          tabIndex={-1}
+          className="text-[1.375rem]"
+        >
           {staffMode ? "Kontaktdaten des Anmelders" : "Ihre Kontaktdaten"}
-        </h3>
-        <p className="mb-6 text-sm text-gray-600 dark:text-gray-400">
+        </Heading>
+        <p className="text-dark dark:text-night-muted mt-2 mb-6 text-sm">
           {staffMode
             ? "Der Anmelder erhält Bestätigung und weitere Informationen an diese E-Mail-Adresse. Adresse und Telefon können nachgetragen werden, für Rechnungen sind sie nötig."
             : "Als Anmelder erhalten Sie die Bestätigung und alle weiteren Informationen per E-Mail."}
         </p>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div>
-            <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
-              Vorname *
-            </label>
-            <input
-              type="text"
-              value={registrationData.registrantFirstName}
-              onChange={(e) =>
-                setRegistrationData({
-                  ...registrationData,
-                  registrantFirstName: e.target.value,
-                })
-              }
-              maxLength={100}
-              required
-              className={inputClass}
-              placeholder="Max"
-            />
-          </div>
+          <RegistrantField
+            {...bind("registrantFirstName", errorFor("registrantFirstName"))}
+            label="Vorname"
+            required
+            type="text"
+            maxLength={100}
+            placeholder="Max"
+          />
 
-          <div>
-            <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
-              Nachname *
-            </label>
-            <input
-              type="text"
-              value={registrationData.registrantLastName}
-              onChange={(e) =>
-                setRegistrationData({
-                  ...registrationData,
-                  registrantLastName: e.target.value,
-                })
-              }
-              maxLength={100}
-              required
-              className={inputClass}
-              placeholder="Mustermann"
-            />
-          </div>
+          <RegistrantField
+            {...bind("registrantLastName", errorFor("registrantLastName"))}
+            label="Nachname"
+            required
+            type="text"
+            maxLength={100}
+            placeholder="Mustermann"
+          />
 
-          <div>
-            <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
-              E-Mail *
-            </label>
-            <input
-              type="email"
-              value={registrationData.registrantEmail}
-              onChange={(e) =>
-                setRegistrationData({
-                  ...registrationData,
-                  registrantEmail: e.target.value,
-                })
-              }
-              required
-              aria-invalid={emailInvalid}
-              aria-describedby={
-                emailInvalid ? "registrant-email-error" : undefined
-              }
-              className={emailInvalid ? invalidInputClass : inputClass}
-              placeholder="max@example.com"
-            />
-            {emailInvalid && (
-              <p
-                id="registrant-email-error"
-                className="mt-1 text-sm font-medium text-red-600 dark:text-red-400"
-              >
-                {EMAIL_HINT}
-              </p>
+          <RegistrantField
+            {...bind(
+              "registrantEmail",
+              errorFor("registrantEmail") ??
+                (emailInvalid ? EMAIL_HINT : undefined),
             )}
-          </div>
+            label="E-Mail"
+            required
+            type="email"
+            placeholder="max@example.com"
+          />
 
-          <div>
-            <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
-              Telefon{contactRequiredMark}
-            </label>
-            <input
-              type="tel"
-              value={registrationData.registrantPhone}
-              onChange={(e) =>
-                setRegistrationData({
-                  ...registrationData,
-                  registrantPhone: e.target.value,
-                })
-              }
-              maxLength={50}
-              required={!staffMode}
-              className={inputClass}
-              placeholder="0211 123456"
-            />
-          </div>
-          <div className="md:col-span-2">
-            <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
-              Straße und Hausnummer{contactRequiredMark}
-            </label>
-            <input
-              type="text"
-              value={registrationData.registrantStreet}
-              onChange={(e) =>
-                setRegistrationData({
-                  ...registrationData,
-                  registrantStreet: e.target.value,
-                })
-              }
-              maxLength={200}
-              className={inputClass}
-              placeholder="Musterstraße 1"
-              required={!staffMode && !registrationData.useSeparateBilling}
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
-              PLZ{contactRequiredMark}
-            </label>
-            <input
-              type="text"
-              value={registrationData.registrantZipCode}
-              onChange={(e) =>
-                setRegistrationData({
-                  ...registrationData,
-                  registrantZipCode: e.target.value,
-                })
-              }
-              maxLength={20}
-              className={inputClass}
-              placeholder="12345"
-              required={!staffMode && !registrationData.useSeparateBilling}
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
-              Ort{contactRequiredMark}
-            </label>
-            <input
-              type="text"
-              value={registrationData.registrantCity}
-              onChange={(e) =>
-                setRegistrationData({
-                  ...registrationData,
-                  registrantCity: e.target.value,
-                })
-              }
-              maxLength={100}
-              className={inputClass}
-              placeholder="Düsseldorf"
-              required={!staffMode && !registrationData.useSeparateBilling}
-            />
-          </div>
+          <RegistrantField
+            {...bind("registrantPhone", errorFor("registrantPhone"))}
+            label="Telefon"
+            required={!staffMode}
+            type="tel"
+            maxLength={50}
+            placeholder="0211 123456"
+          />
+
+          <RegistrantField
+            {...bind("registrantStreet", errorFor("registrantStreet"))}
+            className="md:col-span-2"
+            label="Straße und Hausnummer"
+            required={addressRequired}
+            showRequiredMark={!staffMode}
+            type="text"
+            maxLength={200}
+            placeholder="Musterstraße 1"
+          />
+          <RegistrantField
+            {...bind("registrantZipCode", errorFor("registrantZipCode"))}
+            label="PLZ"
+            required={addressRequired}
+            showRequiredMark={!staffMode}
+            type="text"
+            maxLength={20}
+            placeholder="12345"
+          />
+          <RegistrantField
+            {...bind("registrantCity", errorFor("registrantCity"))}
+            label="Ort"
+            required={addressRequired}
+            showRequiredMark={!staffMode}
+            type="text"
+            maxLength={100}
+            placeholder="Düsseldorf"
+          />
         </div>
 
-        {/* Billing Address Section */}
-        <div className="dark:border-dark-border mt-8 border-t border-gray-200 pt-8">
-          <h3 className="text-dark dark:text-dark-text mb-4 text-lg font-bold">
+        <div className="border-rule dark:border-night-rule mt-8 border-t pt-8">
+          <Heading as="h3" size="list" className="mb-4 text-[1.375rem]">
             Rechnungsadresse
-          </h3>
+          </Heading>
 
-          <div className="mb-4">
-            <label className="dark:bg-dark-background-secondary dark:hover:bg-dark-background flex cursor-pointer items-center gap-3 rounded-lg bg-gray-50 p-4 transition-colors hover:bg-gray-100">
-              <input
-                type="checkbox"
-                checked={registrationData.useSeparateBilling}
-                onChange={(e) =>
-                  setRegistrationData({
-                    ...registrationData,
-                    useSeparateBilling: e.target.checked,
-                  })
-                }
-                className="text-primary focus:ring-primary h-5 w-5 rounded"
-              />
-              <div>
-                <span className="text-dark dark:text-dark-text font-semibold">
-                  Abweichende Rechnungsadresse
-                </span>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  z.B. für Kirchengemeinde oder Institution
-                </p>
-              </div>
-            </label>
-          </div>
+          <Checkbox
+            id={`${uid}-useSeparateBilling`}
+            checked={!!registrationData.useSeparateBilling}
+            onChange={(e) =>
+              setRegistrationData({
+                ...registrationData,
+                useSeparateBilling: e.target.checked,
+              })
+            }
+          >
+            <span className="text-ink dark:text-night-text font-semibold">
+              Abweichende Rechnungsadresse
+            </span>
+            <span className="text-dark dark:text-night-muted mt-0.5 block text-sm">
+              z.B. für Kirchengemeinde oder Institution
+            </span>
+          </Checkbox>
 
           {registrationData.useSeparateBilling && (
             <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div className="md:col-span-2">
-                <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Firma / Institution / Kirchengemeinde
-                </label>
-                <input
-                  type="text"
-                  value={registrationData.billingCompany}
-                  onChange={(e) =>
-                    setRegistrationData({
-                      ...registrationData,
-                      billingCompany: e.target.value,
-                    })
-                  }
-                  maxLength={200}
-                  className={inputClass}
-                  placeholder="Evangelische Kirchengemeinde Düsseldorf"
-                />
-              </div>
+              <RegistrantField
+                {...bind("billingCompany")}
+                className="md:col-span-2"
+                label="Firma / Institution / Kirchengemeinde"
+                type="text"
+                maxLength={200}
+                placeholder="Evangelische Kirchengemeinde Düsseldorf"
+              />
 
-              <div>
-                <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Vorname
-                </label>
-                <input
-                  type="text"
-                  value={registrationData.billingFirstName}
-                  onChange={(e) =>
-                    setRegistrationData({
-                      ...registrationData,
-                      billingFirstName: e.target.value,
-                    })
-                  }
-                  maxLength={100}
-                  className={inputClass}
-                  placeholder="Max"
-                />
-              </div>
+              <RegistrantField
+                {...bind("billingFirstName")}
+                label="Vorname"
+                type="text"
+                maxLength={100}
+                placeholder="Max"
+              />
 
-              <div>
-                <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Nachname
-                </label>
-                <input
-                  type="text"
-                  value={registrationData.billingLastName}
-                  onChange={(e) =>
-                    setRegistrationData({
-                      ...registrationData,
-                      billingLastName: e.target.value,
-                    })
-                  }
-                  maxLength={100}
-                  className={inputClass}
-                  placeholder="Mustermann"
-                />
-              </div>
+              <RegistrantField
+                {...bind("billingLastName")}
+                label="Nachname"
+                type="text"
+                maxLength={100}
+                placeholder="Mustermann"
+              />
 
-              <div className="md:col-span-2">
-                <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Straße und Hausnummer *
-                </label>
-                <input
-                  type="text"
-                  value={registrationData.billingStreet}
-                  onChange={(e) =>
-                    setRegistrationData({
-                      ...registrationData,
-                      billingStreet: e.target.value,
-                    })
-                  }
-                  maxLength={200}
-                  className={inputClass}
-                  placeholder="Musterstraße 123"
-                />
-              </div>
+              <RegistrantField
+                {...bind("billingStreet", errorFor("billingStreet"))}
+                className="md:col-span-2"
+                label="Straße und Hausnummer"
+                required
+                type="text"
+                maxLength={200}
+                placeholder="Musterstraße 123"
+              />
 
-              <div>
-                <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  PLZ *
-                </label>
-                <input
-                  type="text"
-                  value={registrationData.billingZipCode}
-                  onChange={(e) =>
-                    setRegistrationData({
-                      ...registrationData,
-                      billingZipCode: e.target.value,
-                    })
-                  }
-                  maxLength={20}
-                  className={inputClass}
-                  placeholder="40210"
-                />
-              </div>
+              <RegistrantField
+                {...bind("billingZipCode", errorFor("billingZipCode"))}
+                label="PLZ"
+                required
+                type="text"
+                maxLength={20}
+                placeholder="40210"
+              />
 
-              <div>
-                <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Stadt *
-                </label>
-                <input
-                  type="text"
-                  value={registrationData.billingCity}
-                  onChange={(e) =>
-                    setRegistrationData({
-                      ...registrationData,
-                      billingCity: e.target.value,
-                    })
-                  }
-                  maxLength={100}
-                  className={inputClass}
-                  placeholder="Düsseldorf"
-                />
-              </div>
+              <RegistrantField
+                {...bind("billingCity", errorFor("billingCity"))}
+                label="Stadt"
+                required
+                type="text"
+                maxLength={100}
+                placeholder="Düsseldorf"
+              />
 
-              <div className="md:col-span-2">
-                <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  E-Mail für Rechnung
-                </label>
-                <input
-                  type="email"
-                  value={registrationData.billingEmail}
-                  onChange={(e) =>
-                    setRegistrationData({
-                      ...registrationData,
-                      billingEmail: e.target.value,
-                    })
-                  }
-                  aria-invalid={billingEmailInvalid}
-                  aria-describedby={
-                    billingEmailInvalid ? "billing-email-error" : undefined
-                  }
-                  className={
-                    billingEmailInvalid ? invalidInputClass : inputClass
-                  }
-                  placeholder="rechnung@gemeinde.de"
-                />
-                {billingEmailInvalid ? (
-                  <p
-                    id="billing-email-error"
-                    className="mt-1 text-sm font-medium text-red-600 dark:text-red-400"
-                  >
-                    {EMAIL_HINT}
-                  </p>
-                ) : (
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    Falls abweichend von Ihrer E-Mail-Adresse
-                  </p>
+              <RegistrantField
+                {...bind(
+                  "billingEmail",
+                  errorFor("billingEmail") ??
+                    (billingEmailInvalid ? EMAIL_HINT : undefined),
                 )}
-              </div>
+                className="md:col-span-2"
+                label="E-Mail für Rechnung"
+                type="email"
+                placeholder="rechnung@gemeinde.de"
+                hint="Falls abweichend von Ihrer E-Mail-Adresse"
+              />
             </div>
           )}
         </div>

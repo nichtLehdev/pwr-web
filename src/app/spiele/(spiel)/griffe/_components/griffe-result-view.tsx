@@ -49,41 +49,41 @@ export function GriffeResultView({
     .slice(0, 8);
 
   return (
-    <div className="dark:border-dark-border/80 space-y-5 border-t border-gray-200/90 pt-5 md:space-y-6 md:pt-6">
+    <div className="border-rule dark:border-night-rule space-y-[clamp(0.75rem,2.4dvh,1.5rem)] border-t pt-[clamp(0.75rem,2.4dvh,1.5rem)]">
       <div className="text-center">
         {percent >= 75 ? (
           <Trophy
-            className="text-primary mx-auto h-12 w-12 stroke-[1.35] md:h-16 md:w-16"
+            className="text-primary-ink dark:text-primary mx-auto h-[clamp(2.5rem,6dvh,4rem)] w-[clamp(2.5rem,6dvh,4rem)] stroke-[1.35]"
             aria-hidden
           />
         ) : (
           <PartyPopper
-            className="text-primary mx-auto h-12 w-12 stroke-[1.35] md:h-16 md:w-16"
+            className="text-primary-ink dark:text-primary mx-auto h-[clamp(2.5rem,6dvh,4rem)] w-[clamp(2.5rem,6dvh,4rem)] stroke-[1.35]"
             aria-hidden
           />
         )}
-        <p className="text-dark dark:text-dark-text mt-3 text-lg font-bold md:text-xl">
+        <p className="text-ink dark:text-night-text mt-[clamp(0.5rem,1.6dvh,0.75rem)] text-[clamp(1rem,2.4dvh,1.25rem)] font-bold">
           {cheer(percent)}
         </p>
-        <p className="text-primary dark:text-primary-light mt-2 text-4xl font-bold tabular-nums md:text-5xl">
+        <p className="text-primary-ink dark:text-primary mt-1 text-[clamp(2rem,6dvh,3rem)] leading-tight font-bold tabular-nums">
           {result.correct}/{result.total}
         </p>
-        <p className="text-dark dark:text-dark-text-secondary mt-2 text-sm font-medium">
+        <p className="text-dark dark:text-night-muted mt-2 text-sm font-medium">
           {percent}% richtig · Beste Serie in der Runde:{" "}
           {result.bestStreakRound}
         </p>
       </div>
 
       {topMissed.length > 0 && (
-        <div className="border-dark-border/50 dark:border-dark-border dark:bg-dark-surface/40 rounded-lg border bg-white/50 p-4">
-          <p className="text-dark dark:text-dark-text mb-2 text-sm font-bold">
+        <div className="border-rule bg-rule/25 dark:border-night-rule dark:bg-night-raised border p-[clamp(0.75rem,2dvh,1rem)]">
+          <p className="text-ink dark:text-night-text mb-2 text-sm font-bold">
             Am häufigsten daneben
           </p>
-          <ul className="text-dark dark:text-dark-text-secondary space-y-1.5 text-sm">
+          <ul className="text-ink dark:text-night-text space-y-[clamp(0.25rem,0.8dvh,0.375rem)] text-sm">
             {topMissed.map((row) => (
               <li
                 key={row.key}
-                className="border-dark-border/30 dark:border-dark-border/40 flex justify-between gap-3 border-b pb-1 last:border-0"
+                className="border-rule dark:border-night-rule flex justify-between gap-3 border-b pb-1 last:border-0"
               >
                 <span className="font-semibold">{row.label}</span>
                 <span className="font-bold tabular-nums">{row.count}×</span>

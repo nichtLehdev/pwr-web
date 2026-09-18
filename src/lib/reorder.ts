@@ -1,7 +1,3 @@
-/**
- * Helpers for reordering list items via their numeric sort field.
- */
-
 export interface ReorderableItem {
   id: string;
   sortOrder: number;
@@ -13,15 +9,8 @@ export interface ReorderUpdate {
 }
 
 /**
- * Computes the sortOrder updates needed to move the item at `index` one
- * position up or down within `items` (which must be in display order).
- *
- * If the list is strictly ordered by sortOrder (no duplicates), only the two
- * affected items are swapped. Otherwise (duplicate or unordered sort values)
- * the whole list is reassigned sequential values so subsequent moves are
- * stable.
- *
- * Returns `null` when the move is not possible (out of bounds).
+ * `items` must be in display order. Swaps two sortOrders if strictly ordered, otherwise
+ * renumbers the whole list so later moves are stable. `null` when out of bounds.
  */
 export function computeReorderUpdates(
   items: readonly ReorderableItem[],
@@ -49,8 +38,6 @@ export function computeReorderUpdates(
     ];
   }
 
-  // Fallback: duplicate or unordered sort values – reassign sequential
-  // values for the whole list with the requested swap applied.
   const reordered = [...items];
   reordered[index] = neighbor;
   reordered[targetIndex] = current;

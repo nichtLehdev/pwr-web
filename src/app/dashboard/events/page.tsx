@@ -50,8 +50,8 @@ export default function DashboardEventsPage() {
 
   if (isPending || profileLoading) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="dark:bg-night bg-paper flex min-h-screen items-center justify-center">
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
@@ -59,8 +59,6 @@ export default function DashboardEventsPage() {
   if (!session || !profile || !hasDashboardAccess) {
     return null;
   }
-
-  // User permissions are checked via hasDashboardAccess
 
   return (
     <DashboardPage
@@ -75,14 +73,14 @@ export default function DashboardEventsPage() {
           <button
             type="button"
             onClick={() => setShowSocialMediaModal(true)}
-            className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-surface inline-flex items-center gap-2 rounded-lg border border-gray-200/90 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
+            className="border-ink dark:border-night-text dark:bg-night dark:text-night-text text-ink bg-paper hover:bg-rule/25 dark:hover:bg-night-raised inline-flex min-h-11 items-center gap-2 border px-4 py-2.5 text-sm font-semibold transition-colors"
           >
             <InstagramIcon className="h-4 w-4" />
             Instagram Posts
           </button>
           <Link
             href="/dashboard/events/new"
-            className="bg-primary hover:bg-primary-dark inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors"
+            className="bg-primary hover:bg-primary-dark text-ink inline-flex min-h-11 items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-colors"
           >
             <Plus className="h-4 w-4" />
             Neuer Termin
@@ -92,7 +90,6 @@ export default function DashboardEventsPage() {
     >
       <DashboardEventsList />
 
-      {/* Social Media Export Modal */}
       <SocialMediaExportModal
         isOpen={showSocialMediaModal}
         onClose={() => setShowSocialMediaModal(false)}

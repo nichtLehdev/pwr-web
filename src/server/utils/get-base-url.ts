@@ -3,10 +3,8 @@ import { createLogger } from "@/server/utils/logger";
 const log = createLogger("getBaseUrl");
 
 /**
- * Get the base URL for the application.
- * Uses environment variables only -- never trusts request headers, which can
- * be forged and lead to host-header-injection attacks (e.g. poisoned password
- * reset links).
+ * Environment variables only, never request headers: those can be forged
+ * (host-header injection, poisoned password reset links).
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function getBaseUrl(request?: {

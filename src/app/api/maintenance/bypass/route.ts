@@ -2,11 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { MAINTENANCE_BYPASS_COOKIE, MAINTENANCE_PATH } from "@/lib/maintenance";
 
 /**
- * Freischaltlink: /api/maintenance/bypass?token=<MAINTENANCE_BYPASS_TOKEN>
- *
- * Setzt ein Cookie, das die echte Seite auch ohne Anmeldung sichtbar macht —
- * aber nur zum Ansehen, Schreibzugriffe bleiben gesperrt. `?token=aus` löscht
- * es wieder.
+ * Freischaltlink `?token=<MAINTENANCE_BYPASS_TOKEN>`: Cookie zeigt die Seite
+ * ohne Anmeldung, nur lesend. `?token=aus` löscht es.
  */
 export function GET(request: NextRequest) {
   const expected = process.env.MAINTENANCE_BYPASS_TOKEN?.trim();

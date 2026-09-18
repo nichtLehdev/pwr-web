@@ -5,19 +5,17 @@ import {
   type InvoicePaymentInput,
   type InvoicePaymentState,
 } from "@/lib/invoice-payment";
+import { Tag, type TagTone } from "@/app/_components/programmheft/tag";
 
-const badgeClasses: Record<InvoicePaymentState, string> = {
-  NOT_APPLICABLE: "",
-  OPEN: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
-  PARTIAL: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
-  PAID: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
+// Gefüllt ist, was noch Geld will (OPEN orange, PARTIAL Tinte); PAID tritt als
+// umrandetes Etikett zurück.
+const TONE: Record<Exclude<InvoicePaymentState, "NOT_APPLICABLE">, TagTone> = {
+  OPEN: "orange",
+  PARTIAL: "ink",
+  PAID: "muted",
 };
 
-/**
- * Zahlungsstand einer Rechnung. Rendert nichts für Entwürfe und Stornos — an
- * denen gibt es keinen Zahlungsstand, und ein „Offen"-Badge am Entwurf würde
- * eine Forderung suggerieren, die noch gar nicht gestellt wurde.
- */
+/** Zahlungsstand einer Rechnung; nichts für Entwürfe und Stornos, die keine Forderung sind. */
 export function InvoicePaymentBadge({
   invoice,
   className = "",
@@ -29,18 +27,15 @@ export function InvoicePaymentBadge({
   if (state === "NOT_APPLICABLE") return null;
 
   return (
-    <span
-      className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${badgeClasses[state]} ${className}`}
-    >
+    <Tag tone={TONE[state]} className={className}>
       {invoicePaymentStateLabels[state]}
-    </span>
+    </Tag>
   );
 }
 
 /**
- * Zahlungsstand einer Anmeldung über alle ihre Rechnungen. Ohne ausgestellte
- * Rechnung steht hier bewusst „Keine Rechnung" und nicht „Offen": es besteht
- * noch keine Forderung, die offen sein könnte.
+ * Zahlungsstand einer Anmeldung über alle Rechnungen. Ohne Rechnung bewusst „Keine Rechnung“,
+ * nicht „Offen“: es besteht noch keine Forderung.
  */
 export function RegistrationPaymentBadge({
   invoices,
@@ -52,16 +47,13 @@ export function RegistrationPaymentBadge({
   const state = registrationPaymentState(invoices);
 
   return (
-    <span
-      className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-        state === "NOT_APPLICABLE"
-          ? "bg-gray-100 text-gray-600 dark:bg-gray-700/40 dark:text-gray-300"
-          : badgeClasses[state]
-      } ${className}`}
+    <Tag
+      tone={state === "NOT_APPLICABLE" ? "muted" : TONE[state]}
+      className={className}
     >
       {state === "NOT_APPLICABLE"
         ? "Keine Rechnung"
         : invoicePaymentStateLabels[state]}
-    </span>
+    </Tag>
   );
 }

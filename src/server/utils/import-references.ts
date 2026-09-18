@@ -1,21 +1,13 @@
 import type { PrismaClient } from "~/generated/prisma/client";
 
 /**
- * Resolves the foreign keys an export carries between environments.
- *
- * An export is written on one database and imported into another, where the
- * same Bezirk, Chor or Standort has a different UUID. Passing the raw id
- * through therefore fails the foreign key — which is exactly what an events
- * import from staging into production ran into.
- *
- * Each reference is resolved in three steps: keep the id when the target
- * database happens to know it (so a same-environment re-import is unchanged),
- * otherwise look the row up by something that means the same in both
- * databases, otherwise drop the reference and record it.
+ * Foreign keys differ between environments. Each reference: keep the id if the
+ * target knows it, else match on an environment-independent key, else drop and
+ * record it.
  */
 type Db = Pick<
   PrismaClient,
-  "bezirk" | "ensemble" | "auswahlChor" | "location" | "user"
+  "bezirk" | "ensemble" | "auswahlChor" | "location" | "user" | "download"
 >;
 
 export type UnresolvedReference = {
@@ -49,10 +41,7 @@ export function createReferenceResolver(db: Db) {
   }
 
   return {
-    /**
-     * Bezirke are seeded from a fixed list, so the number is the same in every
-     * environment even though the id is not.
-     */
+    /** Bezirke are seeded from a fixed list, so the number is stable across environments. */
     async bezirkId(
       rawId: unknown,
       bezirk: unknown,
@@ -152,9 +141,8 @@ export function createReferenceResolver(db: Db) {
     },
 
     /**
-     * Accounts are not part of an export, so a linked person is matched by
-     * e-mail and otherwise dropped — the free-text name on the record keeps
-     * the information either way.
+     * Accounts are not exported: match by e-mail, otherwise drop (the free-text
+     * name on the record keeps the information).
      */
     async userId(
       rawId: unknown,
@@ -186,6 +174,46 @@ export function createReferenceResolver(db: Db) {
       });
     },
 
+    /**
+     * Dateien haben einen eigenen Export: vorhandene Datei über id, Ablageort
+     * oder Titel suchen; sonst Verknüpfung weglassen, nie leer anlegen.
+     */
+    async downloadId(
+      rawId: unknown,
+      fileUrl: unknown,
+      title: unknown,
+      subject: string,
+    ): Promise<string | null> {
+      const id = text(rawId);
+      const url = text(fileUrl);
+      const name = text(title);
+      if (!id && !url && !name) return null;
+
+      return memo(`download:${id ?? url ?? name}`, async () => {
+        if (id) {
+          const byId = await db.download.findUnique({
+            where: { id },
+            select: { id: true },
+          });
+          if (byId) return byId.id;
+        }
+
+        const match = await db.download.findFirst({
+          where: {
+            OR: [
+              ...(url ? [{ fileUrl: url }] : []),
+              ...(name ? [{ title: name }] : []),
+            ],
+          },
+          select: { id: true },
+        });
+        if (match) return match.id;
+
+        record(subject, "downloadId", name ?? url ?? id ?? "");
+        return null;
+      });
+    },
+
     /** True when the target database already knows this Standort id. */
     async knownLocationId(rawId: unknown): Promise<string | null> {
       const id = text(rawId);
@@ -198,6 +226,11 @@ export function createReferenceResolver(db: Db) {
         });
         return row?.id ?? null;
       });
+    },
+
+    /** Sonstiges, das nicht übernommen wurde, für denselben Bericht (z.B. eine verworfene Anzahlung). */
+    note(subject: string, field: string, value: string) {
+      record(subject, field, value);
     },
 
     unresolved,

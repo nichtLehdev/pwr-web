@@ -24,11 +24,7 @@ import {
 import { PERMISSIONS, type PermissionKey } from "@/lib/permissions";
 
 /**
- * Shared navigation model for the admin dashboard.
- *
- * Single source of truth for the home card grid (src/app/dashboard/page.tsx)
- * and the persistent sidebar (dashboard-sidebar.tsx) — groups, items, hrefs,
- * icons and permission conditions live here so the two never drift.
+ * Navigation model shared by the dashboard home grid and the sidebar, so the two never drift.
  */
 
 export interface DashboardNavContext {
@@ -310,12 +306,7 @@ export const DASHBOARD_NAV_GROUPS: DashboardNavGroup[] = [
   },
 ];
 
-/**
- * Groups filtered down to the items the current user may see.
- * Groups without any permitted item are dropped entirely — this matches the
- * previous per-section conditions on the dashboard home page exactly (each
- * section was gated on the OR of its items' conditions).
- */
+/** Groups filtered to the items the user may see; groups without any permitted item are dropped. */
 export function getVisibleNavGroups(
   ctx: DashboardNavContext,
 ): DashboardNavGroup[] {
