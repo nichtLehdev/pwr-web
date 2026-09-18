@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type ReactNode } from "react";
+import { useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { ZoomIn } from "lucide-react";
 import ImageLightbox from "@/app/_components/general/image-lightbox";
 import { zoomLabel } from "@/lib/image-zoom";
@@ -15,6 +15,8 @@ export interface ZoomableImageProps {
   creator?: string | null;
   /** Klassen des Rahmens, ohne Anzeige-Klasse: `block` setzt die Komponente selbst. */
   className?: string;
+  /** Inline-Stil des Rahmens, etwa ein Seitenverhältnis aus Bildmaßen. */
+  style?: CSSProperties;
   /** Lupe in der Ecke bei Hover und Fokus; `false` für kleine oder runde Bildfelder (Personenfotos). */
   hint?: boolean;
   /** Das Bild selbst (`next/image` mit `fill` o. ä.). */
@@ -31,6 +33,7 @@ export default function ZoomableImage({
   copyright,
   creator,
   className,
+  style,
   hint = true,
   children,
 }: ZoomableImageProps) {
@@ -46,6 +49,7 @@ export default function ZoomableImage({
         aria-haspopup="dialog"
         aria-label={zoomLabel(alt)}
         className={cn("group relative block cursor-zoom-in", className)}
+        style={style}
       >
         {children}
         {hint ? (

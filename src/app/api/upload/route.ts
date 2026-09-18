@@ -3,6 +3,7 @@ import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import { auth } from "@/server/better-auth";
 import { UPLOADS_ROOT } from "@/server/utils/uploads-dir";
+import { readImageDimensions } from "@/server/utils/image-dimensions";
 import {
   MEDIA_UPLOAD_MAX_BYTES,
   MEDIA_UPLOAD_MIME_TYPES,
@@ -222,6 +223,11 @@ export async function POST(request: Request) {
     const filePath = join(uploadDir, filename);
     await writeFile(/* turbopackIgnore: true */ filePath, buffer);
 
+    // Damit Titelbilder im Hochformat ungeschnitten gezeigt werden können.
+    const dimensions = file.type.startsWith("image/")
+      ? await readImageDimensions(buffer)
+      : null;
+
     const url = `/api/uploads/${folder}/${filename}`;
     const path = url; // path is the same as url for uploaded files
 
@@ -233,12 +239,16 @@ export async function POST(request: Request) {
       size: buffer.length,
       mimeType: file.type,
       extension,
+      width: dimensions?.width,
+      height: dimensions?.height,
 
       file: {
         filename,
         url,
         size: buffer.length,
         mimeType: file.type,
+        width: dimensions?.width,
+        height: dimensions?.height,
       },
     });
   } catch (error) {

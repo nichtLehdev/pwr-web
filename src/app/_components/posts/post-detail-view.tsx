@@ -14,6 +14,8 @@ import { WayList, WayRow } from "@/app/_components/programmheft/way-list";
 import { NewsColumns } from "@/app/_components/programmheft/news";
 import ImageLightbox from "@/app/_components/general/image-lightbox";
 import ZoomableImage from "@/app/_components/general/zoomable-image";
+import { isPortrait, naturalAspectStyle } from "@/lib/image-orientation";
+import { cn } from "@/lib/utils";
 import MediaCredit from "@/app/_components/general/media-credit";
 import PublicShareButton from "@/app/_components/general/public-share-button";
 import { DOWNLOAD_FILE_TYPE_LABELS } from "@/lib/download-file-types";
@@ -57,7 +59,9 @@ function CoverFallback() {
 
 /** Bildfeld des Titelbilds; mit Bild als Vergrößern-Button, ohne als Fläche. */
 const COVER_FRAME =
-  "bg-ink dark:bg-night-raised relative aspect-[2/1] w-full overflow-hidden sm:aspect-[3/2]";
+  "bg-ink dark:bg-night-raised relative w-full overflow-hidden";
+/** Querformat-Schnitt; Hochformate bekommen stattdessen ihr eigenes Seitenverhältnis. */
+const COVER_ASPECT = "aspect-[2/1] sm:aspect-[3/2]";
 
 interface PostDetailViewProps {
   post: PostWithRelations;
@@ -143,6 +147,7 @@ export default function PostDetailView({
     post.coverImagePositionX != null && post.coverImagePositionY != null
       ? `${post.coverImagePositionX}% ${post.coverImagePositionY}%`
       : undefined;
+  const portrait = isPortrait(post.coverImage);
 
   const displayUser = post.author || (post.authorName ? null : post.createdBy);
   const displayName =
@@ -284,27 +289,39 @@ export default function PostDetailView({
           <div className="mx-auto max-w-[65ch] after:clear-both after:block after:content-['']">
             {/* Mobil steht das Bild darüber, flacher geschnitten, damit der
                 erste Absatz im Bild bleibt. */}
-            <figure className="mb-5 w-full sm:float-right sm:mb-2 sm:ml-8 sm:w-3/5">
+            <figure
+              className={cn(
+                "mb-5 sm:float-right sm:mb-2 sm:ml-8",
+                portrait ? "mx-auto w-2/3 sm:w-2/5" : "w-full sm:w-3/5",
+              )}
+            >
               {post.coverImage?.url ? (
                 <ZoomableImage
                   src={post.coverImage.url}
                   alt={post.coverImage.alt || post.title}
                   copyright={post.coverImage.copyright}
                   creator={post.coverImage.creator}
-                  className={COVER_FRAME}
+                  className={cn(COVER_FRAME, !portrait && COVER_ASPECT)}
+                  style={
+                    portrait ? naturalAspectStyle(post.coverImage) : undefined
+                  }
                 >
                   <Image
                     src={post.coverImage.url}
                     alt={post.coverImage.alt || post.title}
                     fill
                     priority
-                    sizes="(min-width: 40rem) 23rem, 100vw"
+                    sizes={
+                      portrait
+                        ? "(min-width: 40rem) 16rem, 66vw"
+                        : "(min-width: 40rem) 23rem, 100vw"
+                    }
                     className="object-cover"
                     style={{ objectPosition: position }}
                   />
                 </ZoomableImage>
               ) : (
-                <div className={COVER_FRAME}>
+                <div className={cn(COVER_FRAME, COVER_ASPECT)}>
                   <CoverFallback />
                 </div>
               )}

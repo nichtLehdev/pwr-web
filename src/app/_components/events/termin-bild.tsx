@@ -3,14 +3,19 @@ import type { Media } from "~/generated/prisma/client";
 import MediaCredit from "@/app/_components/general/media-credit";
 import ZoomableImage from "@/app/_components/general/zoomable-image";
 import { Heading } from "@/app/_components/programmheft/section-head";
+import { isPortrait, naturalAspectStyle } from "@/lib/image-orientation";
 import { cn } from "@/lib/utils";
 import "@/styles/beschreibung.css";
 
-type TerminMedia = Pick<Media, "url" | "alt" | "copyright" | "creator">;
+type TerminMedia = Pick<
+  Media,
+  "url" | "alt" | "copyright" | "creator" | "width" | "height"
+>;
 
 /**
  * Beschreibung mit Titelbild, das der Text umfließt (ab `sm` rechts, halbe Spaltenbreite).
  * Auf dem Handy folgt das Bild dem Text, weil der hohe Seitenkopf ihn sonst unter die Kante schiebt.
+ * Hochformate bleiben ungeschnitten und werden dafür schmaler gesetzt.
  */
 export function TerminBeschreibung({
   image,
@@ -25,6 +30,7 @@ export function TerminBeschreibung({
 }) {
   if (!html && !image) return null;
   const alt = image ? image.alt || fallbackAlt : "";
+  const portrait = isPortrait(image);
 
   return (
     <div>
@@ -39,10 +45,11 @@ export function TerminBeschreibung({
         {image ? (
           <figure
             className={cn(
-              "w-full",
+              portrait ? "w-2/3 self-center sm:w-2/5" : "w-full",
               html
-                ? "order-last mt-5 sm:order-none sm:float-right sm:mt-0 sm:mb-2 sm:ml-8 sm:w-1/2"
-                : "sm:w-3/5",
+                ? "order-last mt-5 sm:order-none sm:float-right sm:mt-0 sm:mb-2 sm:ml-8"
+                : null,
+              !portrait && (html ? "sm:w-1/2" : "sm:w-3/5"),
             )}
           >
             <ZoomableImage
@@ -50,14 +57,22 @@ export function TerminBeschreibung({
               alt={alt}
               copyright={image.copyright}
               creator={image.creator}
-              className="bg-ink dark:bg-night-raised aspect-[2/1] w-full overflow-hidden sm:aspect-[3/2]"
+              className={cn(
+                "bg-ink dark:bg-night-raised w-full overflow-hidden",
+                !portrait && "aspect-[2/1] sm:aspect-[3/2]",
+              )}
+              style={portrait ? naturalAspectStyle(image) : undefined}
             >
               <Image
                 src={image.url}
                 alt={alt}
                 fill
                 preload
-                sizes="(min-width: 64rem) 34rem, (min-width: 40rem) 60vw, 100vw"
+                sizes={
+                  portrait
+                    ? "(min-width: 64rem) 22rem, (min-width: 40rem) 40vw, 66vw"
+                    : "(min-width: 64rem) 34rem, (min-width: 40rem) 60vw, 100vw"
+                }
                 className="object-cover"
               />
             </ZoomableImage>
