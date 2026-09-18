@@ -23,6 +23,7 @@ import type {
   SortingState,
 } from "@tanstack/react-table";
 import { DownloadIcon, ReceiptTextIcon } from "lucide-react";
+import { berlinParts } from "@/lib/berlin-time";
 
 /** Gefüllte Werkbank-Schaltfläche, wie auf den Formularseiten des Hefts. */
 const BTN_PRIMARY =
@@ -50,7 +51,7 @@ const STATUS_OPTIONS = [
 
 /** Invoice years to offer in the date filter: the current one and the four before. */
 function recentYears(): number[] {
-  const current = new Date().getFullYear();
+  const current = berlinParts(new Date()).year;
   return [0, 1, 2, 3, 4].map((offset) => current - offset);
 }
 

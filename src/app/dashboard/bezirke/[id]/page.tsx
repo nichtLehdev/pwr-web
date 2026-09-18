@@ -11,6 +11,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { DashboardPage } from "@/app/_components/dashboard";
 import { Tag } from "@/app/_components/programmheft/tag";
 import { MusicIcon, PencilIcon, ArrowLeftIcon, UserIcon } from "lucide-react";
+import { formatBerlin } from "@/lib/berlin-time";
 
 export default function BezirkDetailPage() {
   const router = useRouter();
@@ -283,10 +284,7 @@ export default function BezirkDetailPage() {
               >
                 <div className="text-primary-ink dark:text-primary shrink-0 text-center">
                   <div className="text-sm font-medium">
-                    {new Date(event.eventDate).toLocaleDateString("de-DE", {
-                      day: "2-digit",
-                      month: "short",
-                    })}
+                    {formatBerlin(event.eventDate, "tagMonatKurz")}
                   </div>
                 </div>
                 <div className="min-w-0 flex-1">
@@ -340,11 +338,7 @@ export default function BezirkDetailPage() {
               Erstellt am
             </dt>
             <dd className="text-ink dark:text-night-text font-medium">
-              {new Date(bezirk.createdAt).toLocaleDateString("de-DE", {
-                day: "2-digit",
-                month: "long",
-                year: "numeric",
-              })}
+              {formatBerlin(bezirk.createdAt, "datumLangZweistellig")}
             </dd>
           </div>
         </dl>

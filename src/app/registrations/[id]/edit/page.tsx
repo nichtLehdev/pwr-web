@@ -51,6 +51,7 @@ import {
   fieldControlClasses,
 } from "@/app/_components/programmheft/field";
 import { ValueTable } from "@/app/_components/programmheft/value-table";
+import { formatBerlin } from "@/lib/berlin-time";
 
 interface Participant {
   id: string;
@@ -323,11 +324,7 @@ export default function EditRegistrationPage() {
     downPaymentForPriceOption(registration.course, optionId) > 0;
 
   const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString("de-DE", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
+    return formatBerlin(date, "datumZweistellig");
   };
 
   const activeParticipants = participants.filter((p) => !p.isDeleted);

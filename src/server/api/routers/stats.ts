@@ -3,6 +3,7 @@ import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { permissionProcedure } from "../middleware/permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 import { resolveUserPermissionsCached } from "../helpers/permissions";
+import { berlinDate, berlinDayKey, berlinParts } from "@/lib/berlin-time";
 
 const statsProcedure = permissionProcedure(PERMISSIONS.STATS_VIEW);
 
@@ -68,14 +69,13 @@ export const statsRouter = createTRPCRouter({
             }
           : {};
 
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      thirtyDaysAgo.setHours(0, 0, 0, 0);
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      sevenDaysAgo.setHours(0, 0, 0, 0);
-      const startOfToday = new Date();
-      startOfToday.setHours(0, 0, 0, 0);
+      // Tage in Berliner Zeit: Der Server läuft in UTC, „heute" begann dort
+      // um 2 Uhr nachts, und der Tagesverlauf ordnete Aufrufe zwischen
+      // Mitternacht und 2 Uhr dem Vortag zu.
+      const today = berlinParts(new Date());
+      const thirtyDaysAgo = berlinDate(today.year, today.month, today.day - 30);
+      const sevenDaysAgo = berlinDate(today.year, today.month, today.day - 7);
+      const startOfToday = berlinDate(today.year, today.month, today.day);
 
       const wherePath =
         pathPeriod === "today"
@@ -155,24 +155,19 @@ export const statsRouter = createTRPCRouter({
         }),
       ]);
 
-      // Use local date (same as startOfToday / viewsToday) so chart "today" matches the summary card
-      const toLocalDateString = (d: Date) => {
-        const y = d.getFullYear();
-        const m = String(d.getMonth() + 1).padStart(2, "0");
-        const day = String(d.getDate()).padStart(2, "0");
-        return `${y}-${m}-${day}`;
-      };
+      // Berliner Kalendertag wie bei startOfToday / viewsToday, damit „heute"
+      // im Verlauf und in der Kachel derselbe Tag ist.
       const byDay: Record<string, number> = {};
       for (const v of recentViews) {
-        const key = toLocalDateString(v.createdAt);
+        const key = berlinDayKey(v.createdAt);
         byDay[key] = (byDay[key] ?? 0) + 1;
       }
       // Last 30 days ending with today (same “today” as viewsToday)
       const recentDays: { date: string; count: number }[] = [];
       for (let i = 0; i < 30; i++) {
-        const d = new Date(startOfToday);
-        d.setDate(d.getDate() - (29 - i));
-        const dateStr = toLocalDateString(d);
+        const dateStr = berlinDayKey(
+          berlinDate(today.year, today.month, today.day - (29 - i)),
+        );
         recentDays.push({ date: dateStr, count: byDay[dateStr] ?? 0 });
       }
 
@@ -242,7 +237,7 @@ export const statsRouter = createTRPCRouter({
       >();
       for (const v of viewsWithUserId) {
         if (!v.userId || !v.user || v.createdAt < thirtyDaysAgo) continue;
-        const dateKey = toLocalDateString(v.createdAt);
+        const dateKey = berlinDayKey(v.createdAt);
         const u = v.user;
         const displayName =
           u.displayName ??
@@ -297,9 +292,8 @@ export const statsRouter = createTRPCRouter({
    * Site-wide content and user counts (for stats dashboard). Same allowlist as getStats.
    */
   getSiteStats: statsProcedure.query(async ({ ctx }) => {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    thirtyDaysAgo.setHours(0, 0, 0, 0);
+    const today = berlinParts(new Date());
+    const thirtyDaysAgo = berlinDate(today.year, today.month, today.day - 30);
 
     const [
       eventsCount,

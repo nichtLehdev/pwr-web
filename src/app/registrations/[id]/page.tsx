@@ -41,6 +41,7 @@ import { Tag, type TagTone } from "@/app/_components/programmheft/tag";
 import { ValueTable } from "@/app/_components/programmheft/value-table";
 import { formatEuro } from "@/lib/invoice-document";
 import { cn } from "@/lib/utils";
+import { formatBerlin } from "@/lib/berlin-time";
 
 /**
  * Schaltflächen-Stimmen des Programmhefts, lokal wiederholt wie auf den
@@ -190,21 +191,11 @@ export default function ViewRegistrationPage() {
   };
 
   const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString("de-DE", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
+    return formatBerlin(date, "datumZweistellig");
   };
 
   const formatDateTime = (date: Date) => {
-    return new Date(date).toLocaleDateString("de-DE", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    return formatBerlin(date, "datumUhrzeit");
   };
 
   if (sessionLoading || registrationLoading) {
@@ -627,13 +618,9 @@ export default function ViewRegistrationPage() {
                       Rechnungsdatum
                     </span>
                     <span className="text-ink dark:text-night-text">
-                      {new Date(registration.invoiceDate).toLocaleDateString(
-                        "de-DE",
-                        {
-                          day: "2-digit",
-                          month: "2-digit",
-                          year: "numeric",
-                        },
+                      {formatBerlin(
+                        registration.invoiceDate,
+                        "datumZweistellig",
                       )}
                     </span>
                   </div>
@@ -655,10 +642,7 @@ export default function ViewRegistrationPage() {
                         </p>
                         {invoice.dueDate && (
                           <p className="text-dark dark:text-night-muted text-xs">
-                            zahlbar bis{" "}
-                            {new Date(invoice.dueDate).toLocaleDateString(
-                              "de-DE",
-                            )}
+                            zahlbar bis {formatBerlin(invoice.dueDate)}
                           </p>
                         )}
                       </div>

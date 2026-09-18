@@ -2,14 +2,12 @@ import Link from "next/link";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { BezirkLabel } from "./bezirk-label";
 import type { ProgrammeEntry, ProgrammeRegistration } from "./programme-data";
+import { berlinFormatter, berlinParts } from "@/lib/berlin-time";
 
-const MONTH = new Intl.DateTimeFormat("de-DE", { month: "short" });
-const FULL_DATE = new Intl.DateTimeFormat("de-DE", {
-  weekday: "long",
-  day: "numeric",
-  month: "long",
-  year: "numeric",
-});
+// Tag, Monat und Jahr in Berliner Zeit — die Zeile rendert zuerst auf dem
+// Server in UTC, und ein Termin um 00:30 stand dort am Vortag.
+const MONTH = berlinFormatter("monatKurz");
+const FULL_DATE = berlinFormatter("datumMitWochentag");
 
 /**
  * Datumsfeld. Bei offener Anmeldung steht das Datum auf einer kleinen orangen
@@ -25,7 +23,8 @@ export function DateSlot({
   now: Date;
   marked: boolean;
 }) {
-  const sameYear = date.getFullYear() === now.getFullYear();
+  const { year, day } = berlinParts(date);
+  const sameYear = year === berlinParts(now).year;
   return (
     <div
       aria-hidden
@@ -38,7 +37,7 @@ export function DateSlot({
           marked ? "text-ink" : "text-ink dark:text-night-text"
         }`}
       >
-        {String(date.getDate()).padStart(2, "0")}
+        {String(day).padStart(2, "0")}
       </span>
       <span
         className={`semi-condensed mt-1 text-sm font-semibold tracking-[0.06em] uppercase ${
@@ -46,7 +45,7 @@ export function DateSlot({
         }`}
       >
         {MONTH.format(date).replace(".", "")}
-        {sameYear ? "" : ` ${date.getFullYear()}`}
+        {sameYear ? "" : ` ${year}`}
       </span>
     </div>
   );

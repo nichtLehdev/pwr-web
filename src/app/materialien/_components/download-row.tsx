@@ -3,6 +3,7 @@ import { SmartLink } from "@/app/_components/programmheft/link";
 import { Tag } from "@/app/_components/programmheft/tag";
 import type { RouterOutputs } from "@/trpc/react";
 import { downloadFormatCode } from "@/lib/download-file-types";
+import { formatBerlin } from "@/lib/berlin-time";
 
 export type DownloadItem =
   RouterOutputs["materials"]["getDownloads"]["downloads"][number];
@@ -21,7 +22,7 @@ export function DownloadRow({ download }: { download: DownloadItem }) {
   // Formatkürzel statt Enum-Wert: Ein Flyer steht als „PNG“ da, nicht als
   // „IMAGE“ — und so kündigt ihn auch der Screenreader-Hinweis an.
   const fileType = downloadFormatCode(download);
-  const date = download.createdAt.toLocaleDateString("de-DE");
+  const date = formatBerlin(download.createdAt);
 
   return (
     <li className="fill-row border-rule dark:border-night-rule border-b">

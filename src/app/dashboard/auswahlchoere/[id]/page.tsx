@@ -11,6 +11,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { DashboardPage } from "@/app/_components/dashboard";
 import { Tag } from "@/app/_components/programmheft/tag";
 import { Music, Edit, UserIcon, ArrowLeftIcon } from "lucide-react";
+import { formatBerlin } from "@/lib/berlin-time";
 
 export default function AuswahlchorDetailPage() {
   const router = useRouter();
@@ -285,10 +286,7 @@ export default function AuswahlchorDetailPage() {
                 ) : (
                   <div className="text-primary-ink dark:text-primary shrink-0 text-center">
                     <div className="text-sm font-medium">
-                      {new Date(event.eventDate).toLocaleDateString("de-DE", {
-                        day: "2-digit",
-                        month: "short",
-                      })}
+                      {formatBerlin(event.eventDate, "tagMonatKurz")}
                     </div>
                   </div>
                 )}
@@ -319,11 +317,7 @@ export default function AuswahlchorDetailPage() {
               Erstellt am
             </dt>
             <dd className="text-ink dark:text-night-text font-medium">
-              {new Date(auswahlchor.createdAt).toLocaleDateString("de-DE", {
-                day: "2-digit",
-                month: "long",
-                year: "numeric",
-              })}
+              {formatBerlin(auswahlchor.createdAt, "datumLangZweistellig")}
             </dd>
           </div>
           <div>
@@ -331,11 +325,7 @@ export default function AuswahlchorDetailPage() {
               Zuletzt aktualisiert
             </dt>
             <dd className="text-ink dark:text-night-text font-medium">
-              {new Date(auswahlchor.updatedAt).toLocaleDateString("de-DE", {
-                day: "2-digit",
-                month: "long",
-                year: "numeric",
-              })}
+              {formatBerlin(auswahlchor.updatedAt, "datumLangZweistellig")}
             </dd>
           </div>
         </dl>

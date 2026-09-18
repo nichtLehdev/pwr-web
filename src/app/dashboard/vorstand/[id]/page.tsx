@@ -11,6 +11,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { DashboardPage } from "@/app/_components/dashboard";
 import { ArrowLeftIcon, Edit, Trash2 } from "lucide-react";
+import { formatBerlin } from "@/lib/berlin-time";
 
 export default function VorstandDetailPage() {
   const router = useRouter();
@@ -264,11 +265,7 @@ export default function VorstandDetailPage() {
                 Erstellt am
               </dt>
               <dd className="text-ink dark:text-night-text mt-1">
-                {new Date(member.createdAt).toLocaleDateString("de-DE", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                })}
+                {formatBerlin(member.createdAt, "datumZweistellig")}
               </dd>
             </div>
             <div>
@@ -276,11 +273,7 @@ export default function VorstandDetailPage() {
                 Zuletzt aktualisiert
               </dt>
               <dd className="text-ink dark:text-night-text mt-1">
-                {new Date(member.updatedAt).toLocaleDateString("de-DE", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                })}
+                {formatBerlin(member.updatedAt, "datumZweistellig")}
               </dd>
             </div>
           </dl>

@@ -13,6 +13,7 @@ import {
   TagIcon,
   UserIcon,
 } from "lucide-react";
+import { formatBerlin } from "@/lib/berlin-time";
 
 interface DashboardPostCardProps {
   id: string;
@@ -114,11 +115,7 @@ export default function DashboardPostCard({
             <CalendarIcon className={metaIconClass} />
             <span>
               Veröffentlicht:{" "}
-              {new Date(publishedAt).toLocaleDateString("de-DE", {
-                day: "2-digit",
-                month: "short",
-                year: "numeric",
-              })}
+              {formatBerlin(publishedAt, "datumMonatKurzZweistellig")}
             </span>
           </div>
         )}
@@ -135,15 +132,7 @@ export default function DashboardPostCard({
             <span className="truncate">
               {createdBy.displayName || "Unbekannt"}
               {createdAt && (
-                <span>
-                  {" "}
-                  •{" "}
-                  {new Date(createdAt).toLocaleDateString("de-DE", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "2-digit",
-                  })}
-                </span>
+                <span> • {formatBerlin(createdAt, "datumKurz")}</span>
               )}
             </span>
           </div>
@@ -156,15 +145,7 @@ export default function DashboardPostCard({
             <span className="truncate">
               {reviewer.displayName || "Unbekannt"}
               {reviewDate && (
-                <span>
-                  {" "}
-                  •{" "}
-                  {new Date(reviewDate).toLocaleDateString("de-DE", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "2-digit",
-                  })}
-                </span>
+                <span> • {formatBerlin(reviewDate, "datumKurz")}</span>
               )}
             </span>
           </div>

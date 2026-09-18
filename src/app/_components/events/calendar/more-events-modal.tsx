@@ -11,6 +11,7 @@ import {
 } from "@/app/_components/ui/scrollable-modal";
 import { BezirkLabel } from "@/app/_components/programmheft/bezirk-label";
 import { Tag } from "@/app/_components/programmheft/tag";
+import { formatBerlin } from "@/lib/berlin-time";
 
 interface MoreEventsModalProps {
   day: number;
@@ -48,11 +49,7 @@ export default function MoreEventsModal({
               id="more-events-title"
               className="condensed text-ink dark:text-night-text text-lg font-extrabold"
             >
-              Events am {day}.{" "}
-              {currentMonth.toLocaleDateString("de-DE", {
-                month: "long",
-                year: "numeric",
-              })}
+              Events am {day}. {formatBerlin(currentMonth, "monatJahr")}
             </h3>
             <button
               onClick={onClose}
@@ -105,16 +102,13 @@ export default function MoreEventsModal({
                     <div className="text-dark dark:text-night-muted text-sm">
                       {isCourse ? (
                         <>
-                          {item.date.toLocaleDateString("de-DE")} -{" "}
-                          {item.endDate?.toLocaleDateString("de-DE")}
+                          {formatBerlin(item.date)} -{" "}
+                          {item.endDate && formatBerlin(item.endDate)}
                           <span className="ml-2">Lehrgang</span>
                         </>
                       ) : (
                         <>
-                          {item.date.toLocaleTimeString("de-DE", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
+                          {formatBerlin(item.date, "uhrzeit")}
                           <span className="ml-2">
                             {item.type === "event" && item.category}
                           </span>

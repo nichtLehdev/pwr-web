@@ -10,6 +10,7 @@ import {
 } from "@react-email/components";
 import { DownPaymentSection } from "./down-payment-section";
 import type { DownPaymentMailInfo } from "../down-payment";
+import { formatBerlin } from "@/lib/berlin-time";
 
 export interface SplitPartMailInfo {
   registrationId: string;
@@ -51,11 +52,7 @@ export function CourseRegistrationSplit({
   discountPending,
 }: CourseRegistrationSplitProps) {
   const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat("de-DE", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    }).format(date);
+    return formatBerlin(date, "datumZweistellig");
   };
 
   const formatPrice = (price: number) => {

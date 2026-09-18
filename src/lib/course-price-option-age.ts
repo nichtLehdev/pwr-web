@@ -5,6 +5,7 @@
  * Anmeldeformular, Bearbeiten-Seite und Server teilen sich diese Funktionen,
  * damit das Formular keine Auswahl anbietet, die der Server danach ablehnt.
  */
+import { berlinParts } from "./berlin-time";
 
 /** Vollendete Jahre, die eine Kategorie fordern darf. */
 export const MIN_PRICE_OPTION_AGE = 0;
@@ -45,12 +46,14 @@ export function ageOnDate(
     return null;
   }
 
-  let age = reference.getFullYear() - born.getFullYear();
-  const monthsApart = reference.getMonth() - born.getMonth();
-  if (
-    monthsApart < 0 ||
-    (monthsApart === 0 && reference.getDate() < born.getDate())
-  ) {
+  // Beide Tage als deutscher Kalendertag. Mit `getFullYear()` & Co. rechnete
+  // der Server (UTC) für einen Kurs ab 00:00 mit dem Vortag und lehnte eine
+  // Kategorie ab, die das Formular im Browser gerade angeboten hatte.
+  // Geburtsdaten stehen als UTC-Mitternacht und bleiben in Berlin ihr Tag.
+  const b = berlinParts(born);
+  const r = berlinParts(reference);
+  let age = r.year - b.year;
+  if (r.month < b.month || (r.month === b.month && r.day < b.day)) {
     age--;
   }
   return age >= 0 && age <= MAX_PRICE_OPTION_AGE ? age : null;

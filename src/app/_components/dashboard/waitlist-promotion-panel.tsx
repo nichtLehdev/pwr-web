@@ -11,6 +11,7 @@ import {
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
 import { PROMOTION_OFFER_DAYS, promotionHaltText } from "@/lib/waitlist-offer";
+import { formatBerlin } from "@/lib/berlin-time";
 
 type PromotionSummary = RouterOutputs["registrations"]["promoteWaitlist"];
 
@@ -21,13 +22,7 @@ const BTN_OUTLINE =
   "border-rule dark:border-night-rule text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised inline-flex min-h-11 items-center justify-center gap-2 border px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50";
 
 const formatDateTime = (date: Date) =>
-  `${new Date(date).toLocaleString("de-DE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  })} Uhr`;
+  `${formatBerlin(date, "datumUhrzeit")} Uhr`;
 
 function seatsLabel(free: number): string {
   if (!Number.isFinite(free)) return "Plätze frei (unbegrenzt)";

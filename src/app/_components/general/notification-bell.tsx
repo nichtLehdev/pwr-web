@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/trpc/react";
 import { BellIcon, CheckCheckIcon } from "lucide-react";
+import { formatBerlin } from "@/lib/berlin-time";
 
 /** Gleiche Bausteine wie die Navigation, in der die Glocke steht. */
 const ICON_BUTTON =
@@ -21,11 +22,7 @@ function formatRelativeTime(date: Date | string): string {
   const days = Math.floor(hours / 24);
   if (days === 1) return "gestern";
   if (days < 7) return `vor ${days} Tagen`;
-  return new Intl.DateTimeFormat("de-DE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  }).format(new Date(date));
+  return formatBerlin(date, "datumZweistellig");
 }
 
 /**

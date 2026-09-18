@@ -29,6 +29,7 @@ import {
 } from "@/lib/course-mail-placeholders";
 
 import { createLogger } from "@/server/utils/logger";
+import { formatBerlin } from "@/lib/berlin-time";
 
 const log = createLogger("Course Mail");
 
@@ -160,12 +161,7 @@ async function resolveRecipients(
   return [...byEmail.values()];
 }
 
-const formatDate = (date: Date) =>
-  new Intl.DateTimeFormat("de-DE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  }).format(date);
+const formatDate = (date: Date) => formatBerlin(date, "datumZweistellig");
 
 const formatAmount = (amount: number) =>
   new Intl.NumberFormat("de-DE", {

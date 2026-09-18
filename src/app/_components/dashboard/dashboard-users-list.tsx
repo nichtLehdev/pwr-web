@@ -18,6 +18,7 @@ import {
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
 import { Tag } from "@/app/_components/programmheft/tag";
+import { formatBerlin } from "@/lib/berlin-time";
 
 type ListedUser = RouterOutputs["users"]["list"]["users"][number];
 
@@ -209,8 +210,7 @@ export default function DashboardUsersList() {
           header: "Erstellt",
           enableColumnFilter: false,
           meta: { cellClassName: "whitespace-nowrap" },
-          cell: ({ getValue }) =>
-            new Date(getValue()).toLocaleDateString("de-DE"),
+          cell: ({ getValue }) => formatBerlin(new Date(getValue())),
         }),
         column.accessor((user) => user.lastLoginAt, {
           id: "lastLoginAt",
@@ -219,7 +219,7 @@ export default function DashboardUsersList() {
           meta: { cellClassName: "whitespace-nowrap" },
           cell: ({ getValue }) => {
             const value = getValue();
-            return value ? new Date(value).toLocaleDateString("de-DE") : "–";
+            return value ? formatBerlin(value) : "–";
           },
         }),
         column.display({

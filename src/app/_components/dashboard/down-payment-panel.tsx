@@ -21,6 +21,7 @@ import {
   type DownPaymentState,
   type DownPaymentStatusValue,
 } from "@/lib/course-down-payment";
+import { formatBerlin } from "@/lib/berlin-time";
 
 // Nur vier Etikett-Töne stehen zur Verfügung (siehe Tag-Komponente) — sieben
 // Anzahlungs-Zustände lassen sich darauf nicht eins-zu-eins abbilden. Offen
@@ -173,7 +174,7 @@ export function DownPaymentPanel({
               <dd className="text-ink dark:text-night-text">
                 {formatEuro(received)}
                 {registration.downPaymentPaidAt &&
-                  ` am ${new Date(registration.downPaymentPaidAt).toLocaleDateString("de-DE")}`}
+                  ` am ${formatBerlin(registration.downPaymentPaidAt)}`}
               </dd>
             </div>
           )}

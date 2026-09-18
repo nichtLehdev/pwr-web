@@ -10,6 +10,7 @@ import {
   knopf,
 } from "./email-layout";
 import { emailText, textLink, textZeile } from "./email-text";
+import { formatBerlin } from "@/lib/berlin-time";
 
 export interface RegistrationAccessLinkEntry {
   courseTitle: string;
@@ -26,11 +27,7 @@ interface RegistrationAccessLinksProps {
 }
 
 function formatDate(date: Date) {
-  return new Intl.DateTimeFormat("de-DE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  }).format(date);
+  return formatBerlin(date, "datumZweistellig");
 }
 
 function teilnehmerWert(count: number) {

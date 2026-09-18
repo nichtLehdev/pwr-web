@@ -5,6 +5,7 @@ import { useState } from "react";
 import { DownloadIcon, UploadIcon } from "lucide-react";
 import { usePermissions } from "@/lib/use-permissions";
 import { PERMISSIONS } from "@/lib/permissions";
+import { berlinDayKey } from "@/lib/berlin-time";
 
 type ContentType =
   | "posts"
@@ -54,7 +55,7 @@ export default function ExportImportSection() {
       a.href = url;
 
       const contentDisposition = response.headers.get("Content-Disposition");
-      let filename = `${type}-export-${new Date().toISOString().split("T")[0]}.zip`;
+      let filename = `${type}-export-${berlinDayKey(new Date())}.zip`;
       if (contentDisposition) {
         const filenameMatch = contentDisposition.match(/filename="(.+)"/);
         if (filenameMatch) {

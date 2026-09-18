@@ -53,6 +53,7 @@ import {
 } from "@/app/_components/ui/scrollable-modal";
 import { Tag, type TagTone } from "@/app/_components/programmheft/tag";
 import { cn } from "@/lib/utils";
+import { formatBerlin } from "@/lib/berlin-time";
 
 type DashboardPostsListProps = Record<string, never>;
 
@@ -438,7 +439,7 @@ export default function DashboardPostsList({}: DashboardPostsListProps) {
         meta: { cellClassName: "whitespace-nowrap tabular-nums" },
         cell: ({ getValue }) => {
           const value = getValue();
-          return value ? new Date(value).toLocaleDateString("de-DE") : "–";
+          return value ? formatBerlin(value) : "–";
         },
       }),
       column.accessor((post) => post.createdBy?.displayName ?? "", {
@@ -453,8 +454,7 @@ export default function DashboardPostsList({}: DashboardPostsListProps) {
         header: "Erstellt am",
         enableColumnFilter: false,
         meta: { cellClassName: "whitespace-nowrap tabular-nums" },
-        cell: ({ getValue }) =>
-          new Date(getValue()).toLocaleDateString("de-DE"),
+        cell: ({ getValue }) => formatBerlin(new Date(getValue())),
       }),
       column.display({
         id: "actions",

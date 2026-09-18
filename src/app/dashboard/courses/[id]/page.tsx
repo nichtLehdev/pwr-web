@@ -48,6 +48,7 @@ import { RegistrationPaymentBadge } from "@/app/_components/dashboard/invoice-pa
 import { participantPriceOptionLabel } from "@/lib/course-price-options";
 import { priceOptionAgeLabel } from "@/lib/course-price-option-age";
 import { Tag, type TagTone } from "@/app/_components/programmheft/tag";
+import { formatBerlin } from "@/lib/berlin-time";
 
 const courseTypeLabels: Record<CourseType, string> = {
   LEHRGANG: "Lehrgang",
@@ -263,18 +264,8 @@ export default function CourseDetailPage() {
 
   const startDate = new Date(course.startDate);
   const endDate = new Date(course.endDate);
-  const formattedStartDate = startDate.toLocaleDateString("de-DE", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-  const formattedEndDate = endDate.toLocaleDateString("de-DE", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  const formattedStartDate = formatBerlin(startDate, "datumMitWochentag");
+  const formattedEndDate = formatBerlin(endDate, "datumMitWochentag");
 
   const handleApprove = () => {
     approveMutation.mutate({
@@ -307,7 +298,7 @@ export default function CourseDetailPage() {
     course.registrationOpen &&
     course.registrationOpensAt &&
     new Date(course.registrationOpensAt) > new Date()
-      ? `Öffnet ${new Date(course.registrationOpensAt).toLocaleDateString("de-DE", { day: "2-digit", month: "short" })}`
+      ? `Öffnet ${formatBerlin(course.registrationOpensAt, "tagMonatKurz")}`
       : course.registrationOpen
         ? "Anmeldung offen"
         : "Anmeldung geschlossen";
@@ -429,24 +420,8 @@ export default function CourseDetailPage() {
               Anmeldung öffnet ab
             </dt>
             <dd className="dark:text-night-text text-ink mt-1">
-              {new Date(course.registrationOpensAt).toLocaleDateString(
-                "de-DE",
-                {
-                  weekday: "long",
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                },
-              )}{" "}
-              um{" "}
-              {new Date(course.registrationOpensAt).toLocaleTimeString(
-                "de-DE",
-                {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                },
-              )}{" "}
-              Uhr
+              {formatBerlin(course.registrationOpensAt, "datumMitWochentag")} um{" "}
+              {formatBerlin(course.registrationOpensAt, "uhrzeit")} Uhr
             </dd>
           </div>
         )}
@@ -456,9 +431,7 @@ export default function CourseDetailPage() {
               Anmeldeschluss
             </dt>
             <dd className="dark:text-night-text text-ink mt-1">
-              {new Date(course.registrationDeadline).toLocaleDateString(
-                "de-DE",
-              )}
+              {formatBerlin(course.registrationDeadline)}
             </dd>
           </div>
         )}
@@ -524,11 +497,7 @@ export default function CourseDetailPage() {
         course.registrationOpensAt &&
         new Date(course.registrationOpensAt) > new Date() ? (
           <Tag tone="orange">
-            Öffnet{" "}
-            {new Date(course.registrationOpensAt).toLocaleDateString("de-DE", {
-              day: "2-digit",
-              month: "short",
-            })}
+            Öffnet {formatBerlin(course.registrationOpensAt, "tagMonatKurz")}
           </Tag>
         ) : course.registrationOpen ? (
           <Tag tone="inverse">Anmeldung offen</Tag>
@@ -672,9 +641,7 @@ export default function CourseDetailPage() {
                 {course.reviewer && (
                   <p className="mt-2 text-sm text-red-600 dark:text-red-500">
                     Abgelehnt von {course.reviewer.displayName} am{" "}
-                    {course.reviewDate
-                      ? new Date(course.reviewDate).toLocaleDateString("de-DE")
-                      : ""}
+                    {course.reviewDate ? formatBerlin(course.reviewDate) : ""}
                   </p>
                 )}
               </section>
@@ -950,7 +917,7 @@ export default function CourseDetailPage() {
                     Erstellt am
                   </dt>
                   <dd className="dark:text-night-text text-ink mt-1">
-                    {new Date(course.createdAt).toLocaleDateString("de-DE")}
+                    {formatBerlin(course.createdAt)}
                   </dd>
                 </div>
                 {course.reviewer && (
@@ -969,7 +936,7 @@ export default function CourseDetailPage() {
                       Geprüft am
                     </dt>
                     <dd className="dark:text-night-text text-ink mt-1">
-                      {new Date(course.reviewDate).toLocaleDateString("de-DE")}
+                      {formatBerlin(course.reviewDate)}
                     </dd>
                   </div>
                 )}
@@ -1156,10 +1123,7 @@ export default function CourseDetailPage() {
                     {/* Registration Meta */}
                     <div className="dark:border-night-rule border-rule mt-3 flex items-center justify-between border-t pt-3 text-sm">
                       <span className="text-dark dark:text-night-muted">
-                        Angemeldet am{" "}
-                        {new Date(registration.createdAt).toLocaleDateString(
-                          "de-DE",
-                        )}
+                        Angemeldet am {formatBerlin(registration.createdAt)}
                       </span>
                       <span className="dark:text-night-text text-ink font-medium">
                         {registration.totalPrice.toFixed(2)} €

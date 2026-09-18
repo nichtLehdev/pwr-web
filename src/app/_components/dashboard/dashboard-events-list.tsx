@@ -53,6 +53,7 @@ import {
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
 import { Tag, type TagTone } from "@/app/_components/programmheft/tag";
+import { formatBerlin } from "@/lib/berlin-time";
 
 type DashboardEventsListProps = Record<string, never>;
 
@@ -406,11 +407,7 @@ export default function DashboardEventsList({}: DashboardEventsListProps) {
         enableColumnFilter: false,
         meta: { cellClassName: "whitespace-nowrap tabular-nums" },
         cell: ({ getValue }) =>
-          new Date(getValue()).toLocaleDateString("de-DE", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-          }),
+          formatBerlin(new Date(getValue()), "datumZweistellig"),
       }),
       column.accessor((event) => event.location?.city ?? "", {
         id: "location",
@@ -475,8 +472,7 @@ export default function DashboardEventsList({}: DashboardEventsListProps) {
         header: "Erstellt am",
         enableColumnFilter: false,
         meta: { cellClassName: "whitespace-nowrap tabular-nums" },
-        cell: ({ getValue }) =>
-          new Date(getValue()).toLocaleDateString("de-DE"),
+        cell: ({ getValue }) => formatBerlin(new Date(getValue())),
       }),
       column.display({
         id: "actions",
