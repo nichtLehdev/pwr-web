@@ -13,6 +13,9 @@ import { Check, Copy, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/react";
 import { useSession } from "@/lib/auth";
+import { Button } from "@/app/_components/ui/button";
+import { fieldControlClasses } from "@/app/_components/programmheft/field";
+import { GAME_FOCUS_RING } from "../_lib/focus-ring";
 import type { ClefKind } from "../(spiel)/noten-lesen/_lib/types";
 import {
   CLEF_LABELS,
@@ -29,6 +32,10 @@ import { NoteSetEditor } from "./note-set-editor";
  * Öffentliche Notenset-Bibliothek als Vollbild-Overlay: durchsuchen, filtern,
  * verwenden, teilen — und (angemeldet) eigene Sets erstellen, bearbeiten und
  * löschen. Der Editor läuft im selben Overlay.
+ *
+ * Gestaltung im Programmheft: Papier statt Weiß, Haarlinien statt Rundungen
+ * und Schatten, gewählte Filter als oranges Druckfeld. Das Overlay öffnet sich
+ * mitten aus dem Setup der Spiele — die Naht dorthin soll nicht auffallen.
  */
 
 export type NoteSetUsability =
@@ -51,19 +58,35 @@ type ViewState =
 
 type SortOrder = "newest" | "popular";
 
-/** Kleine Filter-Chips (Schlüssel, Sortierung) im Kachel-Stil der Spiele. */
+/**
+ * Filter- und Sortier-Chip wie die Auswahlkacheln der Spiele: gewählt ist ein
+ * Druckfeld (Orange als Fläche, Tinte als Schrift), sonst eine Haarlinie.
+ * Mindestens 44 px hoch — vorher waren es rund 30.
+ */
 function filterChipClass(active: boolean): string {
   return cn(
-    "rounded-lg border px-3 py-1.5 text-xs font-bold transition-colors active:scale-[0.99]",
-    "text-dark dark:text-dark-text",
+    "inline-flex min-h-11 items-center border px-3 text-xs font-bold transition-colors active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100",
+    GAME_FOCUS_RING,
     active
-      ? "border-primary bg-amber-50/90 dark:bg-amber-950/30"
-      : "border-dark-border/50 hover:border-primary/40 dark:border-dark-border dark:hover:border-primary/35",
+      ? "on-orange border-ink bg-primary text-ink"
+      : "border-rule text-ink hover:border-ink dark:border-night-rule dark:text-night-text dark:hover:border-night-text",
   );
 }
 
-const SECONDARY_BUTTON_CLASS =
-  "border-dark-border/50 dark:border-dark-border text-dark dark:text-dark-text hover:border-primary/40 dark:hover:border-primary/35 inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-bold transition-colors disabled:opacity-50";
+/** Zweitaktion: Haarlinie, die beim Zeigen zur Tinte wird. */
+const SECONDARY_BUTTON_CLASS = cn(
+  "border-rule text-ink hover:border-ink dark:border-night-rule dark:text-night-text dark:hover:border-night-text inline-flex min-h-11 items-center gap-1.5 border px-4 text-xs font-bold transition-colors active:scale-[0.99] disabled:opacity-50 motion-reduce:transition-none motion-reduce:active:scale-100",
+  GAME_FOCUS_RING,
+);
+
+/**
+ * Löschen bleibt rot — die einzige Signalfarbe, die das Heft behält. Umrandet
+ * öffnet die Rückfrage, gefüllt (Button-Variante „danger") bestätigt sie.
+ */
+const DANGER_BUTTON_CLASS = cn(
+  "hover:text-paper dark:hover:text-night inline-flex min-h-11 items-center gap-1.5 border border-red-700 px-4 text-xs font-bold text-red-700 transition-colors hover:bg-red-700 disabled:opacity-50 motion-reduce:transition-none dark:border-red-400 dark:text-red-400 dark:hover:bg-red-400",
+  GAME_FOCUS_RING,
+);
 
 /** Erste ~10 Notenlabels als Vorschau, sortiert; Rest als „…". */
 function pitchPreview(set: NoteSetSummary): string {
@@ -218,19 +241,21 @@ function NoteSetLibraryPanel({
       }}
       role="presentation"
     >
+      {/* Papier mit Tintenrahmen statt weißer Karte mit Schatten — dieselbe
+          Hülle, die der Teilnehmerbogen im Anmeldeformular schon trägt. */}
       <div
         ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className="dark:bg-dark-surface dark:border-dark-border flex h-[100dvh] w-full max-w-3xl flex-col overflow-hidden bg-white shadow-xl outline-none sm:h-auto sm:max-h-[90vh] sm:rounded-lg sm:border sm:border-gray-200"
+        className="bg-paper dark:bg-night sm:border-ink dark:sm:border-night-text flex h-[100dvh] w-full max-w-3xl flex-col overflow-hidden outline-none sm:h-auto sm:max-h-[90vh] sm:border-2"
       >
         {/* Kopfzeile */}
-        <div className="dark:border-dark-border flex shrink-0 items-center justify-between gap-3 border-b border-gray-200 px-4 py-3 sm:px-6">
+        <div className="border-ink dark:border-night-text flex shrink-0 items-center justify-between gap-3 border-b-2 px-4 py-3 sm:px-6">
           <h2
             id={titleId}
-            className="text-dark dark:text-dark-text text-lg font-bold"
+            className="condensed text-ink dark:text-night-text text-base font-extrabold sm:text-lg"
           >
             {title}
           </h2>
@@ -238,7 +263,10 @@ function NoteSetLibraryPanel({
             type="button"
             onClick={onClose}
             aria-label="Schließen"
-            className="text-dark dark:text-dark-text hover:bg-background-secondary/80 dark:hover:bg-dark-background/50 rounded-lg p-2 transition-colors"
+            className={cn(
+              "text-ink hover:bg-ink hover:text-paper dark:text-night-text dark:hover:bg-night-text dark:hover:text-night -mr-2 flex h-11 w-11 shrink-0 items-center justify-center transition-colors motion-reduce:transition-none",
+              GAME_FOCUS_RING,
+            )}
           >
             <X className="h-5 w-5" aria-hidden />
           </button>
@@ -255,7 +283,7 @@ function NoteSetLibraryPanel({
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Nach Name suchen …"
                 aria-label="Notensets nach Name durchsuchen"
-                className="border-dark-border/50 dark:border-dark-border dark:bg-dark-background dark:text-dark-text focus:border-primary w-full rounded-lg border bg-white px-3 py-2.5 text-sm outline-none"
+                className={cn(fieldControlClasses, "text-sm", GAME_FOCUS_RING)}
               />
 
               {/* Filter und Sortierung */}
@@ -287,7 +315,7 @@ function NoteSetLibraryPanel({
                     ))}
                   </div>
                 ) : (
-                  <span className="text-dark dark:text-dark-text-muted text-xs">
+                  <span className="text-dark dark:text-night-muted text-xs">
                     {clef ? CLEF_LABELS[clef] : ""}
                   </span>
                 )}
@@ -317,29 +345,33 @@ function NoteSetLibraryPanel({
 
               {/* Liste */}
               {listQuery.isPending ? (
-                <div className="text-dark dark:text-dark-text-muted flex items-center justify-center gap-2 py-10 text-sm">
-                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                <div className="text-dark dark:text-night-muted flex items-center justify-center gap-2 py-10 text-sm">
+                  <Loader2
+                    className="h-4 w-4 motion-safe:animate-spin"
+                    aria-hidden
+                  />
                   Notensets werden geladen …
                 </div>
               ) : listQuery.isError ? (
                 <div className="py-10 text-center">
-                  <p className="text-dark dark:text-dark-text-muted text-sm">
+                  <p className="text-dark dark:text-night-muted text-sm">
                     Notensets konnten nicht geladen werden.
                   </p>
-                  <button
+                  <Button
                     type="button"
+                    variant="outline"
+                    className="mt-3 min-h-11 text-sm"
                     onClick={() => void listQuery.refetch()}
-                    className={cn(SECONDARY_BUTTON_CLASS, "mt-3")}
                   >
                     Erneut versuchen
-                  </button>
+                  </Button>
                 </div>
               ) : sets.length === 0 ? (
                 <div className="py-10 text-center">
-                  <p className="text-dark dark:text-dark-text text-sm font-bold">
+                  <p className="text-ink dark:text-night-text text-sm font-bold">
                     Keine Notensets gefunden.
                   </p>
-                  <p className="text-dark dark:text-dark-text-muted mt-1 text-xs">
+                  <p className="text-dark dark:text-night-muted mt-1 text-xs">
                     Passe Suche oder Filter an — oder erstelle das erste Set.
                   </p>
                 </div>
@@ -358,44 +390,46 @@ function NoteSetLibraryPanel({
                     return (
                       <li
                         key={set.id}
-                        className="border-dark-border/50 dark:border-dark-border rounded-lg border p-3 sm:p-4"
+                        className="border-rule dark:border-night-rule border p-3 sm:p-4"
                       >
                         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                          <span className="text-dark dark:text-dark-text font-bold">
+                          <span className="text-ink dark:text-night-text font-bold">
                             {set.name}
                           </span>
-                          <span className="bg-primary/12 text-primary dark:bg-primary/20 dark:text-primary-light rounded-lg px-1.5 py-0.5 text-[10px] font-bold">
+                          <span className="on-orange bg-primary text-ink px-1.5 py-0.5 text-[10px] font-bold">
                             {CLEF_LABELS[set.clef]}
                           </span>
-                          <span className="text-dark dark:text-dark-text-muted text-xs">
+                          <span className="text-dark dark:text-night-muted text-xs">
                             {noteCount}
                           </span>
                         </div>
-                        <p className="text-dark dark:text-dark-text-muted mt-0.5 text-xs">
+                        <p className="text-dark dark:text-night-muted mt-0.5 text-xs">
                           von {noteSetCreatorLabel(set)} · {set.timesUsed}×
                           gespielt
                         </p>
                         {set.description && (
-                          <p className="text-dark dark:text-dark-text-muted mt-1 line-clamp-2 text-xs leading-snug">
+                          <p className="text-dark dark:text-night-muted mt-1 line-clamp-2 text-xs leading-snug">
                             {set.description}
                           </p>
                         )}
-                        <p className="text-dark dark:text-dark-text mt-1.5 text-xs tabular-nums">
+                        <p className="text-ink dark:text-night-text mt-1.5 text-xs tabular-nums">
                           {pitchPreview(set)}
                         </p>
                         {!use.usable && (
-                          <p className="mt-1.5 text-xs font-bold text-red-600 dark:text-red-400">
+                          <p className="mt-1.5 text-xs font-bold text-red-700 dark:text-red-400">
                             {use.reason}
                           </p>
                         )}
 
                         {confirmDeleteId === set.id ? (
                           <div className="mt-3 flex flex-wrap items-center gap-2">
-                            <span className="text-dark dark:text-dark-text text-xs font-bold">
+                            <span className="text-ink dark:text-night-text text-xs font-bold">
                               Set wirklich löschen?
                             </span>
-                            <button
+                            <Button
                               type="button"
+                              variant="danger"
+                              className="min-h-11 gap-1.5 text-xs"
                               onClick={() =>
                                 removeMutation.mutate(
                                   { id: set.id },
@@ -405,16 +439,15 @@ function NoteSetLibraryPanel({
                                 )
                               }
                               disabled={deleting}
-                              className="inline-flex items-center gap-1.5 rounded-lg border border-red-300 px-3 py-2 text-xs font-bold text-red-600 transition-colors hover:border-red-500 disabled:opacity-50 dark:border-red-900 dark:text-red-400"
                             >
                               {deleting && (
                                 <Loader2
-                                  className="h-3.5 w-3.5 animate-spin"
+                                  className="h-3.5 w-3.5 motion-safe:animate-spin"
                                   aria-hidden
                                 />
                               )}
                               Ja, löschen
-                            </button>
+                            </Button>
                             <button
                               type="button"
                               onClick={() => setConfirmDeleteId(null)}
@@ -425,24 +458,29 @@ function NoteSetLibraryPanel({
                             </button>
                             {removeMutation.isError &&
                               confirmDeleteId === set.id && (
-                                <span className="text-xs text-red-600 dark:text-red-400">
+                                <span className="text-xs text-red-700 dark:text-red-400">
                                   Löschen fehlgeschlagen.
                                 </span>
                               )}
                           </div>
                         ) : (
                           <div className="mt-3 flex flex-wrap items-center gap-2">
-                            <button
+                            {/* Vorlese-Name nennt das Set, nicht nur die
+                                Handlung: „Verwenden" stand vorher viermal
+                                gleichlautend in der Liste. */}
+                            <Button
                               type="button"
+                              className="min-h-11 text-xs"
+                              aria-label={`${set.name} verwenden`}
                               onClick={() => handleUse(set)}
                               disabled={!use.usable}
-                              className="bg-primary hover:bg-primary-light dark:hover:bg-primary-dark rounded-lg px-3.5 py-2 text-xs font-bold text-white transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               Verwenden
-                            </button>
+                            </Button>
                             <button
                               type="button"
                               onClick={() => handleCopyLink(set)}
+                              aria-label={`Link zu ${set.name} kopieren`}
                               className={SECONDARY_BUTTON_CLASS}
                             >
                               {copiedId === set.id ? (
@@ -462,6 +500,7 @@ function NoteSetLibraryPanel({
                                 <button
                                   type="button"
                                   onClick={() => setView({ kind: "edit", set })}
+                                  aria-label={`${set.name} bearbeiten`}
                                   className={SECONDARY_BUTTON_CLASS}
                                 >
                                   <Pencil className="h-3.5 w-3.5" aria-hidden />
@@ -470,7 +509,8 @@ function NoteSetLibraryPanel({
                                 <button
                                   type="button"
                                   onClick={() => setConfirmDeleteId(set.id)}
-                                  className="inline-flex items-center gap-1.5 rounded-lg border border-red-300 px-3 py-2 text-xs font-bold text-red-600 transition-colors hover:border-red-500 dark:border-red-900 dark:text-red-400"
+                                  aria-label={`${set.name} löschen`}
+                                  className={DANGER_BUTTON_CLASS}
                                 >
                                   <Trash2 className="h-3.5 w-3.5" aria-hidden />
                                   Löschen
@@ -498,24 +538,21 @@ function NoteSetLibraryPanel({
 
         {/* Fußzeile nur in der Listenansicht — der Editor bringt seine eigene Leiste mit. */}
         {view.kind === "list" && (
-          <div className="dark:border-dark-border shrink-0 border-t border-gray-200 p-4 sm:px-6">
+          <div className="border-ink dark:border-night-text shrink-0 border-t-2 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <button
+              <Button
                 type="button"
+                className="min-h-11 gap-2 text-sm"
                 onClick={() => setView({ kind: "create" })}
                 disabled={!loggedIn}
-                className="bg-primary hover:bg-primary-light dark:hover:bg-primary-dark inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-bold text-white transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Plus className="h-4 w-4" aria-hidden />
                 Neues Set erstellen
-              </button>
+              </Button>
               {!loggedIn && !session.isPending && (
-                <p className="text-dark dark:text-dark-text-muted text-xs">
+                <p className="text-dark dark:text-night-muted text-xs">
                   Zum Veröffentlichen bitte{" "}
-                  <Link
-                    href="/login"
-                    className="text-primary dark:text-primary-light font-bold underline"
-                  >
+                  <Link href="/login" className="link-ink">
                     anmelden
                   </Link>
                   .
