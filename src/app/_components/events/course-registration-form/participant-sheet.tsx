@@ -16,6 +16,10 @@ interface ParticipantSheetProps {
   children: React.ReactNode;
 }
 
+/** Was im Fenster per Tabulator erreichbar ist. */
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 /**
  * Editing surface for a single participant: full-screen on phones, a centred
  * dialog from `sm:` up.
@@ -69,6 +73,29 @@ export function ParticipantSheet({
           if (e.key === "Escape") {
             e.stopPropagation();
             onClose();
+            return;
+          }
+          // Der Tabulator bleibt im Fenster: `aria-modal` sperrt nur den
+          // Lesecursor, nicht die Tastatur — hinter dem Abdunkeln lag sonst
+          // das halbe Formular in der Tab-Reihenfolge.
+          if (e.key === "Tab" && containerRef.current) {
+            const focusables = Array.from(
+              containerRef.current.querySelectorAll<HTMLElement>(FOCUSABLE),
+            ).filter((el) => el.getClientRects().length > 0);
+            const first = focusables[0];
+            const last = focusables[focusables.length - 1];
+            if (!first || !last) return;
+            const active = document.activeElement;
+            if (
+              e.shiftKey &&
+              (active === first || active === containerRef.current)
+            ) {
+              e.preventDefault();
+              last.focus();
+            } else if (!e.shiftKey && active === last) {
+              e.preventDefault();
+              first.focus();
+            }
           }
         }}
         className="bg-paper dark:bg-night sm:border-ink dark:sm:border-night-text flex h-[100dvh] w-full flex-col outline-none sm:h-auto sm:max-h-[90vh] sm:max-w-2xl sm:border-2"

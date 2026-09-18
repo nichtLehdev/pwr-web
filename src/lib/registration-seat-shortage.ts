@@ -63,3 +63,33 @@ export function registrationSeatShortage({
 
   return null;
 }
+
+/**
+ * Ob eine Preiskategorie für eine weitere Person dieser Anmeldung ausgebucht
+ * ist. Wie auf dem Server (`findFullPriceTier`) zählen nur Kategorien mit
+ * eigenem Limit; unbegrenzte teilen sich die Plätze des Kurses, und dessen
+ * Warteliste greift ohnehin. Die übrigen Personen derselben Anmeldung in
+ * dieser Kategorie belegen die Restplätze schon — mit einem freien Platz ist
+ * sie für die zweite Person voll.
+ */
+export function isPriceOptionFullFor({
+  priceOptionId,
+  otherParticipantPriceOptionIds,
+  priceOptions,
+  capacityByPriceOption,
+}: {
+  priceOptionId: string;
+  /** Preiskategorien der anderen Personen dieser Anmeldung. */
+  otherParticipantPriceOptionIds: ReadonlyArray<string | null | undefined>;
+  priceOptions: ReadonlyArray<{ id: string; maxParticipants: number | null }>;
+  capacityByPriceOption: Readonly<Record<string, number>> | null | undefined;
+}): boolean {
+  const option = priceOptions.find((po) => po.id === priceOptionId);
+  if (option?.maxParticipants == null) return false;
+  const free = capacityByPriceOption?.[option.id];
+  if (free == null) return false;
+  const taken = otherParticipantPriceOptionIds.filter(
+    (id) => id === option.id,
+  ).length;
+  return taken >= free;
+}
