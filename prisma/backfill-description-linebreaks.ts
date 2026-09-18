@@ -1,126 +1,22 @@
 /**
  * Harte Zeilenumbrüche aus Beschreibungen von Terminen und Kursen entfernen.
  *
- * Hintergrund: Beschreibungen werden seit #311 als Markdown angezeigt, und
- * jeder einzelne Zeilenumbruch bleibt dabei ein Umbruch (`breaks: true`) —
- * anders als vorher, wo alle Umbrüche verschwanden und der Text als ein Block
- * ohne Absätze stand. Das ist für gewollte Umbrüche richtig („Leitung: …“ /
- * „Zielgruppe: …“, gemessen 9 von 16 Umbrüchen im Bestand). Die übrigen 7
- * stammen aus der Eingabe: Die Redaktion hat im Textfeld von Hand umbrochen,
- * mitten im Satz. Die stehen jetzt sichtbar im Satz und gehören aus den Daten
- * heraus, nicht in eine Sonderregel der Anzeige.
+ * Die Regel steht in `src/lib/description-linebreaks.ts` (mit Tests). Sie ist
+ * wiederholbar: Der erste Lauf glättet die alten, im Textfeld von Hand
+ * umbrochenen Texte, jeder weitere findet nichts mehr, und was der Editor
+ * speichert, bleibt unberührt. Deshalb hängt das Skript wie die anderen
+ * Backfills am Startbefehl in deploy/stack.yaml — auf mittwald lassen sich im
+ * laufenden Container keine Skripte ausführen.
  *
- * Die Regel fügt zwei Zeilen nur zusammen, wenn der Satz erkennbar weiterläuft:
- * Die nächste Zeile beginnt klein, oder die vorige endet auf ein Funktionswort
- * („und“, „den“, „mit“, „ihren“ …). Endet eine Zeile mit Satzzeichen, beginnt
- * die nächste eine Aufzählung oder steht sie für sich („… und Team“ /
- * „Zielgruppe: …“), bleibt der Umbruch.
- *
- * Standard ist ein Probelauf. Erst `--apply` schreibt, und dann einzeln in
- * einer Transaktion, damit ein Fehler nichts halb Geschriebenes hinterlässt.
- *
- *   pnpm exec tsx prisma/backfill-description-linebreaks.ts
- *   pnpm exec tsx prisma/backfill-description-linebreaks.ts --apply
+ * Aufruf:  npx tsx prisma/backfill-description-linebreaks.ts
+ *          npx tsx prisma/backfill-description-linebreaks.ts --dry-run
  */
 import "dotenv/config";
 import { db } from "@/server/db";
-
-/**
- * Wörter, nach denen ein Satz weiterläuft, auch wenn das nächste Wort groß
- * beginnt — im Deutschen sind das die Artikel, Präpositionen, Konjunktionen
- * und Pronomen vor einem Substantiv („nach den \n Sommerferien“).
- */
-const FUNKTIONSWOERTER = new Set([
-  "aber",
-  "als",
-  "am",
-  "an",
-  "auf",
-  "aus",
-  "bei",
-  "beim",
-  "bis",
-  "das",
-  "dem",
-  "den",
-  "der",
-  "des",
-  "die",
-  "durch",
-  "ein",
-  "eine",
-  "einem",
-  "einen",
-  "einer",
-  "eines",
-  "für",
-  "gegen",
-  "ihr",
-  "ihre",
-  "ihrem",
-  "ihren",
-  "ihrer",
-  "im",
-  "in",
-  "mit",
-  "nach",
-  "oder",
-  "ohne",
-  "pro",
-  "seine",
-  "seinem",
-  "seinen",
-  "seiner",
-  "sowie",
-  "über",
-  "um",
-  "und",
-  "unser",
-  "unsere",
-  "unserem",
-  "unseren",
-  "unserer",
-  "unter",
-  "vom",
-  "von",
-  "vor",
-  "während",
-  "zu",
-  "zum",
-  "zur",
-]);
-
-const SATZENDE = /[.!?:;)\]"»“]\s*$/;
-const LISTENANFANG = /^\s*([-*+>#]|\d+[.)])\s/;
-
-/** Läuft der Satz von `vorige` in `naechste` weiter? */
-function laeuftWeiter(vorige: string, naechste: string): boolean {
-  if (!vorige.trim() || !naechste.trim()) return false;
-  if (SATZENDE.test(vorige)) return false;
-  if (LISTENANFANG.test(naechste) || LISTENANFANG.test(vorige)) return false;
-  // Zwei Leerzeichen am Zeilenende sind in Markdown ein ausdrücklicher Umbruch.
-  if (/ {2}$/.test(vorige)) return false;
-  if (/^[a-zäöüß]/.test(naechste.trimStart())) return true;
-  const letztesWort = vorige.trim().split(/\s+/).pop() ?? "";
-  return FUNKTIONSWOERTER.has(letztesWort.toLowerCase());
-}
-
-export function entwirreHarteUmbrueche(text: string): string {
-  const zeilen = text.split("\n");
-  const raus: string[] = [];
-  for (const zeile of zeilen) {
-    const vorige = raus[raus.length - 1];
-    if (vorige !== undefined && laeuftWeiter(vorige, zeile)) {
-      raus[raus.length - 1] = `${vorige.trimEnd()} ${zeile.trimStart()}`;
-    } else {
-      raus.push(zeile);
-    }
-  }
-  return raus.join("\n");
-}
+import { entwirreHarteUmbrueche } from "@/lib/description-linebreaks";
 
 async function main() {
-  const schreiben = process.argv.includes("--apply");
+  const schreiben = !process.argv.includes("--dry-run");
 
   const events = await db.event.findMany({
     where: { description: { contains: "\n" } },
@@ -164,9 +60,7 @@ async function main() {
 
   console.log(
     `\n${geaendert} von ${events.length + courses.length} Beschreibungen mit Umbrüchen betroffen — ${
-      schreiben
-        ? "geschrieben"
-        : "Probelauf, nichts geschrieben (--apply schreibt)"
+      schreiben ? "geschrieben" : "Probelauf, nichts geschrieben"
     }`,
   );
 }
