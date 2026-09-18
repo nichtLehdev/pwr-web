@@ -57,22 +57,15 @@ function ChorFindenContent() {
   const [currentPage, setCurrentPage] = useState(1);
   const CHOIRS_PER_PAGE = 12;
 
-  // Touch devices have no hover, so tapping a marker fires the same
-  // synthetic mouseenter+click sequence as a mouse click - there's no way
-  // to "preview" the tooltip before navigating. On coarse pointers, the
-  // first tap on a marker shows its tooltip instead of navigating; a
-  // second tap (or the link inside the tooltip) navigates. Read lazily so
-  // this only runs once and is safe during SSR (no window).
+  // Touch has no hover: on coarse pointers the first tap on a marker shows its
+  // tooltip, a second tap (or the tooltip link) navigates. Lazy for SSR safety.
   const [isCoarsePointer] = useState(
     () =>
       typeof window !== "undefined" &&
       window.matchMedia("(pointer: coarse)").matches,
   );
 
-  // Only meaningful on mouse devices (no continuous pointer on touch).
-  // Used to position the district tooltip near the cursor instead of a
-  // fixed point, since districts are large/irregular shapes and jumping
-  // the tooltip to a generic center point on every hover looks jarring.
+  // Mouse only: the district tooltip follows the cursor, since districts are large, irregular shapes.
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
@@ -138,8 +131,7 @@ function ChorFindenContent() {
     [ensembleMarkers, selectedBezirk],
   );
 
-  // Reference cities for the zoomed-in view: two real, well-known cities
-  // within the selected Bezirk, used as visual orientation points.
+  // Two well-known cities in the selected Bezirk as orientation points when zoomed in.
   const referenceCities = useMemo(() => {
     if (selectedBezirk === null) return [];
     const cities = BEZIRK_REFERENCE_CITIES[selectedBezirk];
@@ -151,10 +143,7 @@ function ChorFindenContent() {
     }));
   }, [selectedBezirk]);
 
-  // Marker/label sizes are proportional to the visible viewBox width so
-  // they look the same on screen whether a small or large district is
-  // zoomed into - a fixed SVG-unit size would look huge on a small
-  // district and tiny on a large one.
+  // Sizes scale with the visible viewBox so they look the same for small and large districts.
   const visibleViewBoxRect = getVisibleViewBoxRect(selectedBezirk);
   const visibleViewBoxWidth = visibleViewBoxRect.width;
   const referenceCityMarkerSize = visibleViewBoxWidth * 0.03;
@@ -163,12 +152,8 @@ function ChorFindenContent() {
   const zoomedEnsembleRadius = visibleViewBoxWidth * 0.015;
   const zoomedEnsembleHoverRadius = visibleViewBoxWidth * 0.022;
 
-  // Converts an SVG-space point into pixels relative to the map container,
-  // for positioning tooltips. Anchored to the data point itself (marker or
-  // district center) rather than the cursor, since touch devices don't
-  // have a meaningful cursor position to track via mousemove. Reads
-  // mapContainerSize (state, kept in sync via ResizeObserver) instead of
-  // the ref directly, since ref reads aren't allowed during render.
+  // SVG point → container pixels for tooltips. Uses mapContainerSize state (kept in
+  // sync via ResizeObserver) because ref reads aren't allowed during render.
   const svgPointToContainerPixels = (svgX: number, svgY: number) => {
     if (!mapContainerSize) return { x: 0, y: 0 };
     return {
@@ -181,10 +166,7 @@ function ChorFindenContent() {
     };
   };
 
-  // Inverse of svgPointToContainerPixels - used to size an invisible touch
-  // target in real screen pixels regardless of zoom level, since the
-  // visible marker (a few SVG units) can render as just 2-3 screen pixels
-  // at full map zoom, far below a tappable size.
+  // Sizes the touch target in screen pixels: at full zoom a marker renders as only 2-3 px.
   const pixelsToSvgUnits = (px: number) => {
     if (!mapContainerSize || mapContainerSize.width === 0) return 0;
     return (px * visibleViewBoxWidth) / mapContainerSize.width;
@@ -197,8 +179,7 @@ function ChorFindenContent() {
   const bezirkPathStyle = (bezirkNumber: number) => ({
     opacity:
       selectedBezirk !== null && selectedBezirk !== bezirkNumber ? 0.1 : 1,
-    // Die Fläche ist über .bezirk-path standardmäßig ein Tonwert (45 %); der
-    // ausgewählte Bezirk hebt sich davon in voller Sättigung ab.
+    // .bezirk-path setzt einen Tonwert (45 %); der ausgewählte Bezirk steht in voller Sättigung.
     fillOpacity: selectedBezirk === bezirkNumber ? 1 : undefined,
     pointerEvents: (selectedBezirk !== null && selectedBezirk !== bezirkNumber
       ? "none"
@@ -375,7 +356,6 @@ function ChorFindenContent() {
         </p>
       }
     >
-      {/* Persönliche Beratung */}
       <section
         aria-labelledby="beratung-heading"
         className="bg-paper dark:bg-night py-16 md:py-24"
@@ -399,7 +379,6 @@ function ChorFindenContent() {
         </div>
       </section>
 
-      {/* Chor-Liste mit Filter */}
       <section
         aria-labelledby="choere-heading"
         className="bg-paper dark:bg-night border-ink dark:border-night-rule border-t-2 py-16 md:py-24"
@@ -444,14 +423,12 @@ function ChorFindenContent() {
               viewMode === "list" && "lg:grid lg:grid-cols-12 lg:gap-10",
             )}
           >
-            {/* Left Column: Filters + map */}
             <div
               className={cn(
                 "space-y-8",
                 viewMode === "list" && "lg:col-span-4",
               )}
             >
-              {/* Filter */}
               <div
                 className={
                   viewMode === "map"
@@ -459,7 +436,6 @@ function ChorFindenContent() {
                     : "space-y-6"
                 }
               >
-                {/* Bezirk-Filter */}
                 <div className={viewMode === "map" ? "w-56" : undefined}>
                   <FieldLabel htmlFor="district">Bezirk</FieldLabel>
                   <div className="relative">
@@ -496,7 +472,6 @@ function ChorFindenContent() {
                   </div>
                 </div>
 
-                {/* Stadt/PLZ-Suche */}
                 <div className={viewMode === "map" ? "w-64" : undefined}>
                   <FieldLabel htmlFor="search">Suche</FieldLabel>
                   <div className="border-rule dark:border-night-rule focus-within:border-ink dark:focus-within:border-night-text bg-paper dark:bg-night flex min-h-11 items-center gap-2 border-2 px-3 transition-colors">
@@ -518,7 +493,6 @@ function ChorFindenContent() {
                   </div>
                 </div>
 
-                {/* Results count */}
                 <div
                   className={
                     viewMode === "map"
@@ -543,7 +517,6 @@ function ChorFindenContent() {
                   )}
                 </div>
 
-                {/* Pagination info */}
                 {viewMode === "list" &&
                   filteredChoirs.length > CHOIRS_PER_PAGE && (
                     <p className="border-rule dark:border-night-rule text-dark dark:text-night-muted w-full border-t pt-3 text-sm">
@@ -554,7 +527,6 @@ function ChorFindenContent() {
                   )}
               </div>
 
-              {/* Karte */}
               <div className={viewMode === "map" ? "block" : "hidden lg:block"}>
                 <Panel>
                   <h3 className="condensed text-ink dark:text-night-text text-[1.5rem] leading-tight font-bold">
@@ -845,12 +817,8 @@ function ChorFindenContent() {
                       />
                       <g id="Reference-Cities">
                         {referenceCities.map((ref) => {
-                          // Flip the label to whichever side has more room -
-                          // a marker sitting near the zoomed viewBox's edge
-                          // (e.g. Königswinter near Bonn's eastern border)
-                          // can otherwise leave almost no space on its
-                          // default (right) side, forcing ugly
-                          // character-by-character wrapping.
+                          // Flip the label to the side with more room, otherwise a marker
+                          // near the viewBox edge wraps it character by character.
                           const spaceRight =
                             visibleViewBoxRect.x +
                             visibleViewBoxRect.width -
@@ -915,9 +883,7 @@ function ChorFindenContent() {
                       <g id="Ensemble-Markers">
                         {visibleEnsembleMarkers.map((marker) =>
                           selectedBezirk === null ? (
-                            // Zoomed out: markers are too small/dense to
-                            // usefully click or hover, so render them as
-                            // plain, non-interactive dots.
+                            // Zoomed out: markers are too dense to click, so plain dots.
                             <circle
                               key={marker.id}
                               cx={marker.x}
@@ -949,10 +915,7 @@ function ChorFindenContent() {
                                 !isCoarsePointer && setHoveredEnsembleId(null)
                               }
                             >
-                              {/* Invisible, generously-sized hit target -
-                                  the visible circle below can render as
-                                  just a couple of screen pixels at full
-                                  map zoom, far too small to reliably tap. */}
+                              {/* Invisible hit target: the visible circle can be just a few px. */}
                               <circle
                                 cx={marker.x}
                                 cy={marker.y}
@@ -978,12 +941,7 @@ function ChorFindenContent() {
                         )}
                       </g>
                     </svg>
-                    {/* Tooltip - on touch, anchored to the district's
-                        bounding-box center (no continuous pointer to
-                        track); on mouse, follows the cursor like a normal
-                        hover tooltip, since districts are large/irregular
-                        shapes and jumping to a fixed center on every hover
-                        looks jarring. */}
+                    {/* On touch anchored to the district's center (no cursor to track). */}
                     {hoveredBezirk &&
                       !hoveredEnsembleId &&
                       (() => {
@@ -1048,9 +1006,6 @@ function ChorFindenContent() {
                             <p className="semi-condensed font-semibold">
                               {marker.name}
                             </p>
-                            {/* Only needed on touch, where the marker itself
-                                is too small to reliably re-tap; on desktop
-                                the marker is already directly clickable. */}
                             {isCoarsePointer && (
                               <Link
                                 href={ensemblePath(marker)}
@@ -1068,7 +1023,6 @@ function ChorFindenContent() {
               </div>
             </div>
 
-            {/* Right Column: Choir List */}
             {viewMode === "list" && (
               <div className="mt-10 lg:col-span-8 lg:mt-0">
                 {ensembles.isLoading && <LoadingSpinner text="Lade Chöre" />}
@@ -1089,7 +1043,6 @@ function ChorFindenContent() {
                       ))}
                     </ul>
 
-                    {/* Pagination */}
                     {/* eslint-disable-next-line react-hooks/static-components */}
                     <Pagination
                       totalPages={totalPages}

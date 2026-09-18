@@ -2,12 +2,7 @@ import { createSignedToken, verifySignedToken } from "./signed-token";
 
 const PURPOSE = "newsletter-confirm";
 
-/**
- * Double opt-in: the link proves the person who typed the address into the
- * form can also read that mailbox. Short-lived on purpose — an unconfirmed
- * subscription is not a standing invitation, and anyone can simply sign up
- * again to get a fresh link.
- */
+/** Double opt-in link, short-lived on purpose: signing up again yields a fresh one. */
 const TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 export function createNewsletterConfirmToken(email: string): string {

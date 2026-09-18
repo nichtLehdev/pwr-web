@@ -3,14 +3,8 @@
 import { useEffect, useState } from "react";
 
 /**
- * Abstand, in dem eine klebende Leiste unter der Navigation einrastet.
- *
- * Vorher stand dort eine feste Zahl (112 px mobil, 144 px ab 768 px) — die
- * Höhe der alten Kopfzeile samt Kontextleiste. Die Navigation ist heute 64
- * bzw. 80 px hoch, also blieb darüber eine Lücke, durch die die Seite
- * hindurchlief. Gemessen wird deshalb die Navigation selbst; ändert sie ihre
- * Höhe (Breakpoint, Banner, eingeblendete Notch), rechnet der
- * ResizeObserver nach.
+ * Misst die Navigation statt einer festen Zahl; ändert sie ihre Höhe (Breakpoint,
+ * Banner, Notch), rechnet der ResizeObserver nach.
  */
 export function useStickyTop(bannerHeight = 0): number {
   const [navHeight, setNavHeight] = useState(0);

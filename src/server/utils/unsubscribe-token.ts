@@ -9,10 +9,7 @@ const PURPOSE = "newsletter-unsubscribe";
 /** Newsletter links live in inboxes for a long time — 1 year of validity. */
 const TOKEN_TTL_MS = 365 * 24 * 60 * 60 * 1000;
 
-/**
- * Token format: "<expiryEpochMs>.<hmac(purpose|email|expiry)>" — scoped to
- * its purpose and expiring, so a leaked link is not a forever-credential.
- */
+/** Scoped and expiring, so a leaked link is not a forever-credential. */
 export function createUnsubscribeToken(email: string): string {
   return createSignedToken(PURPOSE, email.toLowerCase(), TOKEN_TTL_MS);
 }

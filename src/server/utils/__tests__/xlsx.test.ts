@@ -31,9 +31,7 @@ describe("buildXlsxBuffer date cells", () => {
       { name: "Jonas", geburtsdatum: new Date("2010-06-15T00:00:00Z") },
     ]);
 
-    // Excel liest Formatcodes ohne Rücksicht auf Groß- und Kleinschreibung,
-    // Apples Tabellendarstellung nicht: dort ist `DD` der Tag im Jahr und
-    // `YYYY` das wochenbasierte Jahr — aus dem 15.06.2010 wurde "166.06.2010".
+    // Apple liest `DD` als Tag im Jahr und `YYYY` als wochenbasiertes Jahr.
     expect(cell!.numFmt).toBe("dd.mm.yyyy");
     expect(cell!.numFmt).not.toMatch(/[DY]/);
   });

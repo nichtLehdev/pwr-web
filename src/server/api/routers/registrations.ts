@@ -33,8 +33,7 @@ import {
 
 function collaboratorsForViewer(userId: string | null) {
   return {
-    // Magic-link callers have no account and can never be course staff, but
-    // the include still needs a filter it can run — one that matches nothing.
+    // Magic-link callers have no account: a filter that matches nothing.
     where: { userId: userId ?? "" },
     select: { role: true },
   } as const;
@@ -47,10 +46,8 @@ function viewerIsCourseTeamMember(
 }
 
 /**
- * Anmeldungen eines Kurses verwalten (Warteliste nachrücken lassen, ihre
- * Übersicht sehen) — dieselbe Regel wie `updateStatus`: Kursersteller, jedes
- * Kursteam-Mitglied oder das Recht `courses.manage_registrations`. Den Kurs
- * mit `collaborators: collaboratorsForViewer(…)` laden.
+ * Wie `updateStatus`: Kursersteller, Kursteam oder `courses.manage_registrations`.
+ * Den Kurs mit `collaborators: collaboratorsForViewer(…)` laden.
  */
 async function assertMayManageCourseRegistrations(
   ctx: {
@@ -160,9 +157,8 @@ type CreatedRegistration = {
 };
 
 /**
- * Confirmation mail for a freshly created registration — the same message for
- * public sign-ups and for entries the course team records on someone's behalf.
- * Never throws: a failed mail must not undo a stored registration.
+ * Same mail for public and staff-recorded registrations. Never throws: a failed mail
+ * must not undo a stored registration.
  */
 async function sendRegistrationCreatedEmail(args: {
   registration: CreatedRegistration;
@@ -488,10 +484,8 @@ export const registrationsRouter = createTRPCRouter({
           }),
         ),
         /**
-         * Reichen die Plätze nicht für alle: die Teilnehmer (Index in
-         * `participants`), die die freien Plätze bekommen. Die übrigen kommen
-         * als eigene, verknüpfte Anmeldung auf die Warteliste. Ohne Angabe
-         * wartet die ganze Anmeldung.
+         * Indizes der Teilnehmer, die die freien Plätze bekommen; die übrigen warten als
+         * verknüpfte Anmeldung. Ohne Angabe wartet die ganze Anmeldung.
          */
         confirmedParticipantIndexes: z.array(z.number().int()).optional(),
       }),
@@ -561,9 +555,8 @@ export const registrationsRouter = createTRPCRouter({
       const { participants: participantsWithPriceOptions } =
         prepareParticipantsForCourse(participantsInput, course);
 
-      // Die Anzahlung wird bei der Anmeldung festgehalten. Betrag, Bankdaten
-      // und Erstattungshinweis muss die Anmeldung ausdrücklich bestätigen —
-      // bei einer Aufteilung für beide Teile zugleich.
+      // Betrag, Bankdaten und Erstattungshinweis der Anzahlung muss die Anmeldung
+      // ausdrücklich bestätigen, bei einer Aufteilung für beide Teile zugleich.
       const downPaymentAmount = registrationDownPayment(
         course,
         participantsWithPriceOptions,
@@ -586,25 +579,19 @@ export const registrationsRouter = createTRPCRouter({
         inputPaymentMethod,
       );
 
-      // Capacity check and insert run in one SERIALIZABLE transaction so two
-      // concurrent registrations cannot both take the last seat. The sibling
-      // discount is priced per part there, over all participants.
+      // One SERIALIZABLE transaction so two registrations cannot both take the last seat.
+      // The sibling discount is priced per part there, over all participants.
       const parts = await runSerializable(ctx.db, async (tx) => {
         const currentParticipantsCount = await countConfirmedParticipants(
           tx,
           input.courseId,
         );
-        // Wer schon wartet, geht vor: Eine neue Anmeldung bekommt nur Plätze,
-        // die keine wartende nutzen könnte — sonst überholte sie die
-        // Wartenden, bis das Team nachrücken lässt. Ohne Warteliste am Kurs
-        // sind das die tatsächlich freien Plätze.
+        // Wer schon wartet, geht vor: neue Anmeldungen bekommen nur Plätze, die keine Wartende nutzen könnte.
         const seatsForNew = await loadSeatsForNewRegistrations(tx, course);
         const newParticipants = participantsWithPriceOptions.length;
 
-        // Kurs zuerst, dann die Preiskategorien. Eine ausgebuchte Kategorie
-        // gilt wie ein voller Kurs: mit Warteliste kommt die Anmeldung
-        // darauf, ohne wird sie abgelehnt — sie scheiterte sonst trotz
-        // Warteliste.
+        // Eine ausgebuchte Kategorie gilt wie ein voller Kurs: mit Warteliste kommt die
+        // Anmeldung darauf, ohne wird sie abgelehnt.
         const shortage = registrationSeatShortage({
           participantPriceOptionIds: participantsWithPriceOptions.map(
             (participant) => participant.priceOptionId,
@@ -640,11 +627,8 @@ export const registrationsRouter = createTRPCRouter({
           status = RegistrationStatus.WAITLIST;
         }
 
-        // Aufgeteilt wird nur, wenn die Anmeldenden es gewählt haben und
-        // nicht ohnehin alle Platz haben. Passt ihre Auswahl inzwischen
-        // nicht mehr, entscheiden sie neu: still anders aufzuteilen hieße,
-        // an ihrer Stelle zu bestimmen, wer mitfährt. Aufgeteilt wird nur in
-        // Plätze, die keiner wartenden Anmeldung zustehen.
+        // Aufgeteilt nur auf Wunsch und nur in Plätze ohne Anspruch Wartender. Passt die Auswahl
+        // nicht mehr, entscheiden die Anmeldenden neu, statt dass still anders aufgeteilt wird.
         const confirmedIndexes =
           status === RegistrationStatus.WAITLIST ? seatSelection : null;
         if (confirmedIndexes) {
@@ -744,16 +728,8 @@ export const registrationsRouter = createTRPCRouter({
     }),
 
   /**
-   * Staff-side registration entry: lets the course team (creator, course
-   * collaborators) and holders of courses.manage_registrations record an
-   * anmeldung that never went through the public form — paper forms, phone
-   * calls, late sign-ups after the deadline.
-   *
-   * Deliberately skips the public gates (registration open, opening date,
-   * deadline). Everything else stays identical to the public flow: prices,
-   * sibling discount, custom-field validation and seat capacity. Confirming
-   * more participants than the course has seats needs an explicit
-   * `allowOverbooking`, so a full course is never silently overbooked.
+   * Skips the public gates (open, opening date, deadline) but keeps pricing, custom fields and
+   * capacity; overbooking needs an explicit `allowOverbooking`.
    */
   createByStaff: protectedProcedure
     .input(
@@ -801,11 +777,7 @@ export const registrationsRouter = createTRPCRouter({
         sendConfirmationEmail: z.boolean().default(true),
         /** Anzahlung lag der Anmeldung schon bei (z. B. Papierformular mit Überweisung). */
         downPaymentAlreadyPaid: z.boolean().default(false),
-        /**
-         * Wie bei `create`: die Teilnehmer, die die freien Plätze bekommen,
-         * während die übrigen als verknüpfte Anmeldung warten. Nur ohne
-         * ausdrücklichen Status.
-         */
+        /** Wie bei `create`, nur ohne ausdrücklichen Status. */
         confirmedParticipantIndexes: z.array(z.number().int()).optional(),
       }),
     )
@@ -867,9 +839,7 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      // Die Altersgrenzen einer Kategorie gelten für Anmeldende; das Kursteam
-      // darf sie im Einzelfall übergehen — es kennt die Ausnahme, die es
-      // gerade einträgt.
+      // Das Kursteam darf Altersgrenzen im Einzelfall übergehen.
       const { participants: participantsWithPriceOptions } =
         prepareParticipantsForCourse(participantsInput, course, {
           allowAgeMismatch: true,
@@ -911,12 +881,8 @@ export const registrationsRouter = createTRPCRouter({
           additionsByOptionId,
         );
 
-        // "Automatisch" behandelt eine ausgebuchte Preiskategorie wie einen
-        // vollen Kurs, genau wie die öffentliche Anmeldung — und nutzt wie
-        // sie nur Plätze, die keiner wartenden Anmeldung zustehen. Ein
-        // ausdrücklich gewählter Status ist die Entscheidung des Teams und
-        // darf alle freien Plätze nutzen, etwa wenn es zwei Anmeldungen zu
-        // einer zusammenführt.
+        // "Automatisch" folgt den Regeln der öffentlichen Anmeldung (Vorrang Wartender);
+        // ein ausdrücklich gewählter Status darf alle freien Plätze nutzen.
         const seatsForNew = requestedStatus
           ? undefined
           : await loadSeatsForNewRegistrations(tx, course);
@@ -946,9 +912,7 @@ export const registrationsRouter = createTRPCRouter({
           });
         }
 
-        // The overbooking acknowledgement covers per-price-option caps too:
-        // staff who knowingly exceed the course capacity should not be
-        // stopped by a tier limit right afterwards.
+        // The overbooking acknowledgement covers per-price-option caps too.
         if (
           status === RegistrationStatus.CONFIRMED &&
           fullOption &&
@@ -989,10 +953,8 @@ export const registrationsRouter = createTRPCRouter({
             course,
             part.participants,
           );
-          // Das Team bestätigt die Hinweise im Namen der Anmeldung (wie die
-          // Teilnahmebedingungen) und kann eine schon eingegangene Anzahlung
-          // gleich mit verbuchen — aufgeteilt beim bestätigten Teil, dem
-          // einzigen, bei dem sie schon fällig ist.
+          // Das Team bestätigt die Hinweise im Namen der Anmeldung und kann eine eingegangene
+          // Anzahlung gleich verbuchen, bei Aufteilung am bestätigten Teil.
           const downPaymentBooked =
             Boolean(partDownPayment) &&
             downPaymentAlreadyPaid &&
@@ -1101,11 +1063,8 @@ export const registrationsRouter = createTRPCRouter({
     }),
 
   /**
-   * "I signed up without an account and lost the link." Mails a fresh magic
-   * link for every anmeldung on that address whose course has not ended yet.
-   *
-   * Always reports success: whether an address has registrations here is not
-   * something an anonymous caller gets to probe for.
+   * Mails fresh magic links for the address's registrations of courses not yet ended.
+   * Always reports success, so anonymous callers cannot probe addresses.
    */
   requestAccessLink: rateLimitedPublicProcedure(
     "registrations.requestAccessLink",
@@ -1235,9 +1194,8 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      // A registration record contains the registrant's contact and billing
-      // data plus participants' birth dates — only the registrant themselves
-      // (signed in, or through a magic link) or course staff may read it.
+      // Contact, billing data and birth dates: only the registrant (signed in or via magic link)
+      // or course staff may read it.
       const isOwner = isRegistrationOwner(ctx, registration, input.accessToken);
       const userId = viewerId(ctx);
       const isCreator =
@@ -1254,10 +1212,8 @@ export const registrationsRouter = createTRPCRouter({
               ctx.permissionCache,
             );
 
-      // Über einen Geschwisterkindrabatt entscheidet, wer die Berechtigung
-      // dafür hat — kursübergreifend. Dann muss er die Anmeldung auch lesen
-      // dürfen, sonst führt die Freigabe-Warteschlange ins Leere. Ausgeweitet
-      // wird dabei nichts: nur Anmeldungen, die einen Rabatt tragen.
+      // Wer kursübergreifend über Geschwisterkindrabatte entscheidet, darf Anmeldungen mit Rabatt
+      // lesen, sonst führt die Freigabe-Warteschlange ins Leere.
       const canReviewSiblingDiscount =
         userId === null ||
         isOwner ||
@@ -1285,9 +1241,7 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      // Die übrigen Teile einer aufgeteilten Anmeldung. Sie gehören derselben
-      // Anmeldung an, also sieht sie, wer diesen Teil sehen darf; wer über
-      // einen Zugangslink kommt, bekommt die Links zu den anderen Teilen mit.
+      // Die übrigen Teile sieht, wer diesen sehen darf; über einen Zugangslink kommen die Links dazu mit.
       const groupParts = registration.registrationGroupId
         ? await ctx.db.courseRegistration.findMany({
             where: {
@@ -1397,9 +1351,7 @@ export const registrationsRouter = createTRPCRouter({
         !isCancelled &&
         (isStaff || (isOwner && registrantMayCancelDownPayment(registration)));
 
-      // Zahlungen folgen nicht der Anmeldungs-, sondern der Rechnungsregel —
-      // deshalb dieselbe Funktion, die auch die Mutation durchsetzt, statt die
-      // Rechte hier noch einmal von Hand nachzubauen.
+      // Zahlungen folgen der Rechnungsregel; dieselbe Funktion, die auch die Mutation durchsetzt.
       const canBookPayments = await userCanBookInvoicePayments(
         ctx.db,
         ctx.session.user.id,
@@ -1428,15 +1380,8 @@ export const registrationsRouter = createTRPCRouter({
     }),
 
   /**
-   * Cross-course registration overview for administrators: every
-   * registration, filterable by registrant, status, payment, and course —
-   * the "who owes money / who registered" view that per-course participant
-   * pages can't answer.
-   *
-   * Zwei Zugänge: mit courses.manage_registrations die volle Liste, mit
+   * Cross-course overview. Mit courses.manage_registrations die volle Liste, mit
    * registrations.manage_sibling_discount nur die nach Rabattstatus gefilterte.
-   * Über genau diese Anmeldungen entscheidet die Rabattberechtigung ohnehin —
-   * ohne den Zugang bliebe die Freigabe-Warteschlange für sie unauffindbar.
    */
   getAllAdmin: permissionProcedureAny([
     PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
@@ -1464,9 +1409,7 @@ export const registrationsRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
-      // Die Rabattberechtigung öffnet nur die Anmeldungen, über die sie
-      // entscheidet: die mit einem Rabatt. NONE zählt ausdrücklich nicht dazu —
-      // danach zu filtern wäre die ganze Tabelle minus einer Handvoll Zeilen.
+      // Die Rabattberechtigung öffnet nur Anmeldungen mit Rabatt; NONE zählt ausdrücklich nicht dazu.
       const discountStatuses = input.siblingDiscountStatus?.length
         ? input.siblingDiscountStatus
         : undefined;
@@ -1571,8 +1514,7 @@ export const registrationsRouter = createTRPCRouter({
             },
             _count: { select: { participants: true } },
           },
-          // Zweites Kriterium, damit das Blättern bei gleichen Werten stabil
-          // bleibt und keine Zeile zweimal auf verschiedenen Seiten auftaucht.
+          // Mit zweitem Kriterium, damit das Blättern bei gleichen Werten stabil bleibt.
           orderBy: registrationOrderBy(input.sortBy, input.sortOrder),
           skip: (input.page - 1) * input.limit,
           take: input.limit,
@@ -1817,12 +1759,9 @@ export const registrationsRouter = createTRPCRouter({
         originalTotalPrice: undiscountedTotalPrice,
       } = prepareParticipantsForCourse(participantsInput, course, {
         allowAgeMismatch: (participant) =>
-          // Das Kursteam darf eine Kategorie entgegen ihrer Altersgrenze
-          // vergeben, wie bei `createByStaff`.
+          // Das Kursteam darf Altersgrenzen übergehen, wie bei `createByStaff`.
           isStaff ||
-          // Und wer in einer Kategorie schon angemeldet ist, bleibt es: wurde
-          // die Grenze nachträglich enger gezogen, ließe sich die Anmeldung
-          // sonst nicht einmal mehr in einem anderen Feld ändern.
+          // Bereits Gebuchte bleiben in ihrer Kategorie, auch wenn die Grenze später enger wurde.
           (participant.id != null &&
             bookedPriceOptionId.get(participant.id) ===
               participant.priceOptionId),
@@ -1834,9 +1773,7 @@ export const registrationsRouter = createTRPCRouter({
       let siblingDiscountStatus = registration.siblingDiscountStatus;
 
       if (input.siblingDiscountApplied && course.allowSiblingDiscount) {
-        // Bei einer aufgeteilten Anmeldung zählen die Geschwister in den
-        // anderen, nicht stornierten Teilen mit — sonst verlöre ein Teil beim
-        // Bearbeiten seinen Rabatt, nur weil das ältere Geschwister wartet.
+        // Geschwister in den anderen, nicht stornierten Teilen zählen beim Rabatt mit.
         const otherPartParticipants = registration.registrationGroupId
           ? await ctx.db.participant.findMany({
               where: {
@@ -1883,10 +1820,8 @@ export const registrationsRouter = createTRPCRouter({
         originalTotalPrice = 0;
       }
 
-      // Anzahlung: Anmeldende dürfen die Teilnehmerzahl (und, wenn der Betrag
-      // an der Kategorie hängt, die Kategorien) nicht selbst ändern. Das
-      // Kursteam darf — der Betrag wird dann neu berechnet, ein bereits
-      // eingegangener Betrag bleibt als solcher festgehalten.
+      // Mit Anzahlung ändert nur das Kursteam Teilnehmerzahl (bzw. Kategorien, wenn der Betrag
+      // daran hängt); der Betrag wird neu berechnet, ein eingegangener bleibt festgehalten.
       if (!isStaff) {
         const violation = registrantEditViolation({
           course,
@@ -1922,18 +1857,12 @@ export const registrationsRouter = createTRPCRouter({
               ),
             };
 
-      // Plätze belegt nur eine bestätigte Anmeldung — und die muss beim
-      // Bearbeiten in den Kurs passen, ob er eine Warteliste hat oder nicht.
-      // Mit Warteliste wurde das bisher übersprungen: eine bestätigte
-      // Anmeldung konnte Teilnehmer hinzufügen und den Kurs überbuchen. Eine
-      // Anmeldung auf der Warteliste belegt nichts; ihre Plätze prüft erst das
-      // Nachrücken.
+      // Nur eine bestätigte Anmeldung belegt Plätze und muss beim Bearbeiten in den Kurs passen,
+      // auch mit Warteliste; wartende prüft erst das Nachrücken.
       const holdsSeats =
         registration.registrationStatus === RegistrationStatus.CONFIRMED;
 
-      // Geprüft wird nur, was die Änderung dazu belegt: in einem bewusst
-      // überbuchten Kurs soll sich trotzdem die Telefonnummer ändern oder ein
-      // Teilnehmer abmelden lassen.
+      // Nur Hinzukommendes wird geprüft, damit sich auch ein bewusst überbuchter Kurs bearbeiten lässt.
       const bookedByOptionId: Record<string, number> = {};
       for (const participant of registration.participants) {
         const optionId = resolveParticipantPriceOption(
@@ -1945,9 +1874,7 @@ export const registrationsRouter = createTRPCRouter({
         }
       }
 
-      // Capacity checks and the delete-and-rewrite of participants run in one
-      // SERIALIZABLE transaction: no overbooking through concurrent edits, and
-      // no half-rewritten participant list if anything fails midway.
+      // One SERIALIZABLE transaction: no overbooking through concurrent edits, no half-rewritten participants.
       const updatedRegistration = await runSerializable(ctx.db, async (tx) => {
         if (
           holdsSeats &&
@@ -2000,11 +1927,8 @@ export const registrationsRouter = createTRPCRouter({
             id,
           );
 
-          // Die Warteliste geht vor: Anmeldende dürfen ihre bestätigte
-          // Anmeldung nicht auf Plätze vergrößern, die Wartende nutzen
-          // könnten — gemessen an denselben freien Plätzen, die eine neue
-          // Anmeldung bekäme. Das Kursteam darf es; es baut etwa zwei
-          // Anmeldungen zu einer um, damit der Geschwisterrabatt greift.
+          // Die Warteliste geht vor: Anmeldende dürfen nicht auf Plätze vergrößern, die Wartende
+          // nutzen könnten; das Kursteam darf es (etwa beim Zusammenführen).
           const added =
             participantsWithPriceOptions.length -
             registration.participants.length;
@@ -2186,9 +2110,7 @@ export const registrationsRouter = createTRPCRouter({
             });
           }
 
-          // Auch die Preiskategorien: eine volle Kategorie hat keinen Platz,
-          // selbst wenn der Kurs noch welche hat. Gezählt wird nach id wie in
-          // allen übrigen Prüfungen — Altbestand über ein eindeutiges Label.
+          // Eine volle Kategorie hat keinen Platz, selbst wenn der Kurs noch welche hat.
           const additionsByOptionId: Record<string, number> = {};
           for (const participant of registration.participants) {
             const optionId = resolveParticipantPriceOption(
@@ -2259,10 +2181,7 @@ export const registrationsRouter = createTRPCRouter({
         }
       }
 
-      // Herabstufen macht Plätze frei, aber niemand rückt automatisch nach:
-      // Oft ist es nur ein Zwischenschritt des Teams (versehentlich
-      // gestrichen, zwei Anmeldungen werden zusammengeführt). Die Plätze
-      // gehören der Warteliste, bis das Team sie nachrücken lässt.
+      // Herabstufen lässt niemanden automatisch nachrücken: oft nur ein Zwischenschritt des Teams.
 
       void logAudit(ctx.db, {
         actorId: ctx.session.user.id,
@@ -2279,10 +2198,8 @@ export const registrationsRouter = createTRPCRouter({
       return updatedRegistration;
     }),
 
-  // Cancellation requires a session: every UI path (own registrations,
-  // dashboard) is login-gated, and an anonymous branch keyed only on the
-  // registrant e-mail would let anyone with a leaked registration id cancel
-  // it (the e-mail used to be readable from the same record).
+  // Session or magic link only: a branch keyed on the registrant e-mail would let anyone
+  // with a leaked registration id cancel it.
   cancel: publicProcedure
     .input(
       z.object({
@@ -2384,18 +2301,12 @@ export const registrationsRouter = createTRPCRouter({
         }
       }
 
-      // Eine Stornierung macht Plätze frei, aber niemand rückt automatisch
-      // nach — sie gehören der Warteliste, bis das Team sie nachrücken lässt
-      // (eine versehentliche Stornierung soll sich zurücknehmen lassen).
+      // Kein automatisches Nachrücken, damit sich eine versehentliche Stornierung zurücknehmen lässt.
 
       return updated;
     }),
 
-  /**
-   * Nachrück-Angebot annehmen: die gewählten Teilnehmer rücken nach, die
-   * übrigen warten weiter. Antworten dürfen die Anmeldenden (auch über den
-   * Zugangslink) und das Kursteam.
-   */
+  /** Antworten dürfen die Anmeldenden (auch per Zugangslink) und das Kursteam. */
   acceptPromotionOffer: publicProcedure
     .input(
       z.object({
@@ -2413,11 +2324,7 @@ export const registrationsRouter = createTRPCRouter({
       });
     }),
 
-  /**
-   * Nachrück-Angebot ablehnen: die Anmeldung behält ihren Platz auf der
-   * Warteliste. Die Plätze bekommen die Nächsten, sobald das Kursteam die
-   * Warteliste nachrücken lässt.
-   */
+  /** Die Anmeldung behält ihren Wartelistenplatz; die Plätze gehen erst beim nächsten Nachrücken weiter. */
   declinePromotionOffer: publicProcedure
     .input(z.object({ id: z.string(), accessToken: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
@@ -2430,10 +2337,8 @@ export const registrationsRouter = createTRPCRouter({
     }),
 
   /**
-   * Stand der Warteliste für das Kursteam: die tatsächlich freien Plätze (die
-   * Öffentlichkeit sieht nur die, die keine Wartende nutzen könnte), wer
-   * wartet und ob ein Angebot läuft. Grundlage für den Knopf „Warteliste nachrücken lassen“ und
-   * für Formulare, in denen das Team freie Plätze bewusst vergibt.
+   * Für das Kursteam: tatsächlich freie Plätze (öffentlich nur die ohne Anspruch Wartender),
+   * wer wartet und ob ein Angebot läuft.
    */
   getWaitlistOverview: protectedProcedure
     .input(z.object({ courseId: z.string() }))
@@ -2524,12 +2429,8 @@ export const registrationsRouter = createTRPCRouter({
     }),
 
   /**
-   * „Warteliste nachrücken lassen“: der einzige Weg, auf dem noch jemand
-   * nachrückt (Entscheidung vom 18.09.2026 — freie Plätze sind oft nur ein
-   * Zwischenstand des Teams). Bestätigt, wer ganz passt, macht der ersten
-   * teilweise Passenden ein Angebot und verschickt die Mails. Die Antwort sagt
-   * auch, warum niemand (mehr) nachrücken konnte — etwa weil die Anmeldung
-   * vorn in keinen freien Platz passt und die Warteliste dort anhält.
+   * Der einzige Weg, auf dem jemand nachrückt (freie Plätze sind oft nur ein Zwischenstand des
+   * Teams). Die Antwort sagt auch, warum niemand (mehr) nachrücken konnte.
    */
   promoteWaitlist: protectedProcedure
     .input(z.object({ courseId: z.string() }))
@@ -2599,10 +2500,8 @@ export const registrationsRouter = createTRPCRouter({
     }),
 
   /**
-   * Anzahlung einer Anmeldung verbuchen: eingegangen, zurückgenommen, oder —
-   * nach einer Stornierung — erstattet bzw. einbehalten. Es gilt dieselbe
-   * Rechteregel wie für Zahlungen an Rechnungen (Kursorganisation oder
-   * registrations.mark_paid), siehe helpers/invoice-access.
+   * Eingegangen, zurückgenommen oder nach Stornierung erstattet/einbehalten. Rechteregel wie bei
+   * Rechnungszahlungen, siehe helpers/invoice-access.
    */
   setDownPaymentStatus: protectedProcedure
     .input(
@@ -2736,9 +2635,7 @@ export const registrationsRouter = createTRPCRouter({
   delete: permissionProcedure(PERMISSIONS.COURSES_MANAGE_REGISTRATIONS)
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      // Auch Löschen lässt niemanden nachrücken: Das Team löscht etwa eine
-      // Anmeldung, die es mit einer anderen zusammengeführt hat. Freie
-      // Plätze vergibt es selbst per `promoteWaitlist`.
+      // Auch Löschen lässt niemanden nachrücken; freie Plätze vergibt das Team per `promoteWaitlist`.
       const deleted = await ctx.db.courseRegistration.delete({
         where: { id: input.id },
         select: { courseId: true },
@@ -2823,10 +2720,8 @@ export const registrationsRouter = createTRPCRouter({
       );
       const totalRevenue = confirmed.reduce((sum, r) => sum + r.totalPrice, 0);
 
-      // Zahlung hängt jetzt an der Rechnung: "bezahlt" heißt, dass jede
-      // ausgestellte Rechnung dieser Anmeldung beglichen ist. Anmeldungen ohne
-      // ausgestellte Rechnung zählen weder als bezahlt noch als offen — für sie
-      // gibt es schlicht nichts zu verbuchen.
+      // "Bezahlt" heißt: jede ausgestellte Rechnung ist beglichen. Ohne ausgestellte Rechnung
+      // zählt eine Anmeldung weder als bezahlt noch als offen.
       const withInvoices = confirmed.map((r) => ({
         registration: r,
         published: r.invoices.filter(
@@ -2896,13 +2791,8 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      // Approving the discount must not change the registration status: a
-      // waitlisted registration stays waitlisted (promotion goes through
-      // updateStatus, which re-checks capacity) and a cancelled one stays
-      // cancelled. The previous behavior force-set CONFIRMED here, which
-      // could overbook a full course.
-      // Aufgeteilt gilt die Entscheidung für alle Teile, über die der Rabatt
-      // berechnet wurde — mit einer Mail über die Summe.
+      // Approving must not change the registration status: forcing CONFIRMED could overbook.
+      // Aufgeteilt gilt die Entscheidung für alle Teile, mit einer Mail über die Summe.
       const parts = await siblingDiscountParts(
         ctx.db,
         registration,
@@ -3046,12 +2936,8 @@ export const registrationsRouter = createTRPCRouter({
     }),
 
   /**
-   * Den Geschwisterkindrabatt nachträglich auf eine bestehende Anmeldung
-   * anwenden — für die Fälle, in denen beim Anmelden niemand daran gedacht hat.
-   *
-   * Wer den Rabatt verwalten darf, gewährt ihn damit zugleich (APPROVED). Wer
-   * nur den Kurs verantwortet, stößt ihn an; er landet dann wie ein beantragter
-   * Rabatt in der Prüfung (PENDING).
+   * Nachträglich anwenden. Mit Rabattrecht zugleich genehmigt (APPROVED), als bloß
+   * Kursverantwortlicher nur angestoßen (PENDING).
    */
   applySiblingDiscount: protectedProcedure
     .input(z.object({ registrationId: z.string() }))
@@ -3159,9 +3045,7 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      // Grundlage ist der aktuell vereinbarte Preis, nicht eine Neuberechnung
-      // aus den Preiskategorien: die können sich seit der Anmeldung geändert
-      // haben, der zugesagte Betrag nicht.
+      // Grundlage ist der zugesagte Preis, nicht eine Neuberechnung aus inzwischen geänderten Kategorien.
       const originalTotalPrice = registration.totalPrice;
       const status = canDecide
         ? SiblingDiscountStatus.APPROVED
@@ -3243,14 +3127,7 @@ export const registrationsRouter = createTRPCRouter({
       return updated;
     }),
 
-  /**
-   * Den Geschwisterkindrabatt einer Anmeldung wieder entfernen — die Rücknahme
-   * zu applySiblingDiscount und zur Genehmigung.
-   *
-   * Nicht gedacht für die Ablehnung eines beantragten Rabatts: dafür gibt es
-   * rejectSiblingDiscount, das den Antrag begründet beantwortet. Hier geht es um
-   * den versehentlich gewährten Rabatt.
-   */
+  /** Nimmt einen versehentlich gewährten Rabatt zurück; beantragte lehnt rejectSiblingDiscount ab. */
   removeSiblingDiscount: protectedProcedure
     .input(z.object({ registrationId: z.string() }))
     .mutation(async ({ ctx, input }) => {
@@ -3356,9 +3233,7 @@ export const registrationsRouter = createTRPCRouter({
         },
       });
 
-      // Nur ein bereits gewährter Rabatt war dem Anmelder zugesagt — wird der
-      // zurückgenommen, ändert sich sein Preis und er muss es erfahren. Ein
-      // anhängiger Antrag war noch keine Zusage.
+      // Nur ein gewährter Rabatt war zugesagt; wird er zurückgenommen, muss der Anmelder es erfahren.
       if (previousStatus === SiblingDiscountStatus.APPROVED) {
         const emailService = await getEmailService();
         if (emailService.isEmailConfigured()) {
@@ -3423,9 +3298,8 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      // Aufgeteilt gilt die Zusage zum vollen Preis für alle abgelehnten
-      // Teile. Der Status bleibt, wie er ist: früher wurde hier „bestätigt“
-      // erzwungen, womit eine wartende Anmeldung den Kurs überbucht hätte.
+      // Aufgeteilt gilt der volle Preis für alle abgelehnten Teile. Der Status bleibt, sonst
+      // könnte eine wartende Anmeldung den Kurs überbuchen.
       const parts = await siblingDiscountParts(
         ctx.db,
         registration,

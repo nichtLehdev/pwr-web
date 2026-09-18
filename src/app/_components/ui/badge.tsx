@@ -15,9 +15,8 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
 
 const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
   ({ className, variant = "default", size = "md", ...props }, ref) => {
-    // Rechteckig und gefuellt wie die `Tag`-Komponente des Hefts, nicht als
-    // runde Pille. Die Toene sind auf Kontrast korrigiert: Weiss auf Orange
-    // (1,99:1) und Weiss auf Gelb fielen beide durch — dort steht jetzt Tinte.
+    // Rechteckig wie `Tag`. Auf Orange und Gelb steht Tinte, Weiss verfehlt
+    // dort den Kontrast.
     const baseStyles =
       "semi-condensed inline-flex items-center font-semibold leading-none";
 

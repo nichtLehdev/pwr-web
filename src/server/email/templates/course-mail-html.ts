@@ -2,21 +2,12 @@ import { emailBaseUrl, farben, schrift } from "./email-layout";
 import { emailText, textLink } from "./email-text";
 import { formatBerlin } from "@/lib/berlin-time";
 
-/**
- * `schrift` enthält Schriftnamen in doppelten Anführungszeichen (für
- * React-Inline-Styles unproblematisch). In einem HTML-`style="…"`-Attribut
- * würden sie die Anführung vorzeitig schließen und alles Folgende
- * verschlucken — deshalb hier auf einfache umgesetzt.
- */
+/** Doppelte Anführungszeichen aus `schrift` würden das `style="…"`-Attribut vorzeitig schließen. */
 const htmlSchrift = schrift.replace(/"/g, "'");
 
 /**
- * Mail an organizer writes to the registrants of a course.
- *
- * Built as an HTML string rather than a react-email component for the same
- * reason as the newsletter: the body is author-provided HTML that has to be
- * injected verbatim. Callers MUST pass body HTML that already went through
- * sanitizeHtml().
+ * HTML string, not react-email: the author's body is injected verbatim.
+ * Callers MUST pass body HTML that already went through sanitizeHtml().
  */
 
 function escapeHtml(value: string): string {
@@ -142,11 +133,7 @@ export function generateCourseMailHtml({
 </html>`;
 }
 
-/**
- * Nur-Text-Fassung. Der Rumpf ist vom Autor verfasstes HTML und lässt sich
- * nicht verlustfrei in Text verwandeln — daher nur Kursangaben, Anrede,
- * Kontakthinweis und Kurslink, ohne den eigentlichen Inhalt.
- */
+/** Ohne den Rumpf: Autoren-HTML lässt sich nicht verlustfrei in Text verwandeln. */
 export function generateCourseMailText({
   courseTitle,
   courseStartDate,

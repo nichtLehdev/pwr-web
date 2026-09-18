@@ -136,11 +136,7 @@ function parseStoredCustomSet(raw: unknown): StoredCustomSet | null {
   };
 }
 
-/**
- * Einstellungen als ein JSON-Blob; migriert den alten Instrument-Key
- * (inkl. dessen trumpet_bb → trumpet_c Migration). Alte Blobs ohne
- * `customSet`/"custom" bleiben gültig.
- */
+/** Ein JSON-Blob; migriert den alten Instrument-Key (inkl. trumpet_bb → trumpet_c). */
 function readStoredSettings(): Partial<StoredSettings> {
   if (typeof window === "undefined") return {};
   try {
@@ -268,9 +264,8 @@ export function NoteReadingGame() {
   useEffect(() => {
     const stored = readStoredSettings();
 
-    /* Deep-Link `?set=CODE` bewusst ohne useSearchParams lesen (keine
-     * Suspense-Boundary nötig); Param sofort entfernen, damit ein Reload
-     * die Aktivierung nicht erneut auslöst. */
+    /* `?set=CODE` ohne useSearchParams (keine Suspense-Boundary nötig); sofort
+     * entfernen, damit ein Reload die Aktivierung nicht wiederholt. */
     let pending: PendingCustomSet | null = null;
     try {
       const params = new URLSearchParams(window.location.search);
@@ -395,8 +390,7 @@ export function NoteReadingGame() {
     recordUseMutate,
   ]);
 
-  /* VexFlow-Chunk + Notenfonts schon im Setup laden, damit die erste
-   * Quiz-Frage nicht 1–3 s ihres Zeitbudgets ans Chunk-Laden verliert. */
+  /* VexFlow und Notenfonts schon im Setup laden, damit die erste Quiz-Frage keine Zeit verliert. */
   useEffect(() => {
     if (phase !== "setup") return;
     void import("./staff-display").then((m) => m.preloadStaffFonts());
@@ -572,8 +566,7 @@ export function NoteReadingGame() {
         return;
       }
       const left = Math.max(0, (d - performance.now()) / 1000);
-      /* State nur setzen, wenn sich die angezeigte Zehntelsekunde ändert —
-       * sonst rendert der ganze Baum mit 60 fps. */
+      /* Nur bei geänderter Zehntelsekunde setzen, sonst rendert der Baum mit 60 fps. */
       const tenth = Math.ceil(left * 10);
       if (tenth !== lastShownTenthRef.current) {
         lastShownTenthRef.current = tenth;
@@ -765,8 +758,6 @@ export function NoteReadingGame() {
     mode === "learn" ? "Lernen" : mode === "quiz" ? "Quiz" : "Endlos";
 
   return (
-    /* Abstände nach Fensterhöhe: auf 650 px Höhe rücken sie zusammen, auf
-     * 1000 px atmen sie. */
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-[clamp(0.625rem,1.8dvh,1.5rem)]">
       <GameStepIndicator
         steps={["Setup", "Spielen", "Auswertung"]}
@@ -809,8 +800,7 @@ export function NoteReadingGame() {
         </div>
       )}
 
-      {/* Hauptaktion ins Dock der Hülle: auf kurzen Fenstern stand sie vorher
-       * unter dem langen Setup und war nur nach Scrollen erreichbar. */}
+      {/* Hauptaktion im Dock, sonst liegt sie auf kurzen Fenstern unter dem Setup. */}
       {phase === "setup" && !libraryOpen && (
         <GameDock>
           <Button
@@ -826,9 +816,6 @@ export function NoteReadingGame() {
 
       {phase === "play" && pitch && (
         <div className="flex flex-col gap-[clamp(0.5rem,1.6dvh,1.25rem)]">
-          {/* Eine Bedienung statt zweier: der Chip nennt die Einstellung und
-           * öffnet sie auch. Der Textlink „Zurück zum Setup“ rechts daneben
-           * führte zum selben Ziel und konkurrierte nur mit ihm. */}
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
@@ -897,8 +884,6 @@ export function NoteReadingGame() {
             </div>
           )}
 
-          {/* Punktestand in den Slot der Hülle statt in einen eigenen Kasten
-           * darunter — das war eine zweite Statusleiste unter der echten. */}
           <GameBarSlot>
             <ScoreBar
               mode={mode}
@@ -919,8 +904,7 @@ export function NoteReadingGame() {
               flash={flash}
               /* Höhe nach Fensterhöhe — die Notenschrift wächst mit. */
               className="h-[clamp(9.5rem,40dvh,28rem)]"
-              /* Positionsbeschreibung statt Tonname — das Standard-Label
-               * würde die Antwort verraten. */
+              /* Positionsbeschreibung statt Tonname, sonst verrät das Label die Antwort. */
               ariaLabel={`Notensystem — ${describeWrittenNote(pitch, clef)}`}
             />
             {/* Nicht nur Farbe: Icon + Text zum Flash (Farbenblindheit). */}
@@ -995,10 +979,8 @@ export function NoteReadingGame() {
         </div>
       )}
 
-      {/* „Weiter“ gehört zur Hauptaktion und steht deshalb im Dock. Es bleibt
-       * auch vor der Antwort stehen (gesperrt), damit der Inhalt darüber beim
-       * Erscheinen nicht springt — dann aber als ruhige Fläche statt als
-       * halbdurchsichtiger Hauptknopf, der im Nachtdruck ein heller Balken war. */}
+      {/* „Weiter“ steht auch vor der Antwort (gesperrt), damit der Inhalt beim
+       * Erscheinen nicht springt. */}
       {phase === "play" && pitch && mode === "learn" && !libraryOpen && (
         <GameDock>
           <Button

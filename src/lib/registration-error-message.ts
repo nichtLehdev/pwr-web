@@ -1,11 +1,6 @@
 /**
- * Lesbare Fassung einer fehlgeschlagenen Anmeldung.
- *
- * Schlägt die Eingabeprüfung serverseitig fehl, serialisiert tRPC die
- * Zod-Issues als JSON-Array in `message`. Das ist für Anmelder:innen unlesbar,
- * weshalb die Oberfläche es durch einen allgemeinen Satz ersetzt hat — der
- * aber nicht sagt, was falsch war. Ein erneuter Versuch scheitert dann genauso,
- * und niemand erfährt, an welchem Feld es liegt.
+ * tRPC liefert Zod-Fehler als JSON-Array in `message`. Statt eines allgemeinen Satzes
+ * nennen wir die betroffenen Felder, sonst scheitert jeder neue Versuch genauso.
  */
 
 /** Feldnamen aus dem Server-Schema, wie sie im Formular heißen. */
@@ -55,10 +50,8 @@ function labelForPath(path: unknown): string | null {
 }
 
 /**
- * @param raw `error.message` der fehlgeschlagenen Mutation.
- * @returns Die Meldung des Servers, wenn sie für Menschen geschrieben ist
- *   (Kurs voll, Frist abgelaufen, doppelte Anmeldung); sonst die betroffenen
- *   Felder; sonst der allgemeine Satz.
+ * Für Menschen geschriebene Servermeldungen unverändert; sonst die betroffenen
+ * Felder; sonst der allgemeine Satz.
  */
 export function registrationErrorMessage(raw: string | undefined): string {
   const message = raw?.trim();

@@ -287,19 +287,14 @@ export default function CourseDetailView({
     >
       <div className="sheet py-10 md:py-14">
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-3">
-          {/* Main Content */}
           <div className="space-y-10 lg:col-span-2">
-            {/* Beschreibung mit Kursbild zuerst: Termin und Ort stehen schon
-                im Seitenkopf. Das Bild bleibt in der Hauptspalte statt in der
-                Randspalte — dort hätte es „Jetzt anmelden“ nach unten
-                gedrückt. Aufbau siehe `TerminBeschreibung`. */}
+            {/* Bild in der Hauptspalte, in der Randspalte drückte es „Jetzt anmelden“ nach unten. */}
             <TerminBeschreibung
               image={course.image}
               fallbackAlt={course.title}
               html={renderDescriptionHtml(course.description)}
             />
 
-            {/* Date & Time */}
             <div>
               <Heading as="h2" size="list" rule>
                 Termin
@@ -345,7 +340,6 @@ export default function CourseDetailView({
               </button>
             </div>
 
-            {/* Location */}
             {course.location && (
               <div>
                 <Heading as="h2" size="list" rule>
@@ -376,14 +370,12 @@ export default function CourseDetailView({
               </div>
             )}
 
-            {/* Prerequisites */}
             {course.prerequisites && (
               <Note tone="important" title="Voraussetzungen" titleAs="h3">
                 <p>{course.prerequisites}</p>
               </Note>
             )}
 
-            {/* What to Bring */}
             {course.whatToBring && (
               <div>
                 <Heading as="h2" size="list" rule>
@@ -423,13 +415,8 @@ export default function CourseDetailView({
             )}
           </div>
 
-          {/* Randspalte läuft mit, während die lange Hauptspalte vorbeizieht.
-              `sticky-below-nav` statt `lg:top-24` wie in der Termin-Ansicht:
-              Mit den heutigen Daten ist die Randspalte so hoch wie ihre
-              Spalte und klebt deshalb nie — die 96px wären aber dieselbe
-              Überdeckung, sobald ein Kurs längeren Text bekommt. */}
+          {/* `sticky-below-nav` statt `lg:top-24`: rechnet Banner- und Navigationshöhe zur Laufzeit. */}
           <div className="sticky-below-nav space-y-8 lg:sticky lg:self-start">
-            {/* Registration CTA */}
             {canRegister && (
               <Panel labelledBy="anmeldung-heading">
                 <Heading as="h3" id="anmeldung-heading" size="list">
@@ -494,7 +481,6 @@ export default function CourseDetailView({
               </Panel>
             )}
 
-            {/* Registration Closed Notice */}
             {!canRegister && !isPast && (
               <Panel labelledBy="anmeldung-geschlossen-heading">
                 <Heading as="h3" id="anmeldung-geschlossen-heading" size="list">
@@ -521,7 +507,6 @@ export default function CourseDetailView({
               </Panel>
             )}
 
-            {/* Price Info */}
             {!isExternal || course.priceInfo ? (
               <div>
                 <Heading as="h3" size="list" rule>
@@ -598,8 +583,7 @@ export default function CourseDetailView({
                         />
                         {formatAcceptedCoursePaymentMethods(course)}
                       </p>
-                      {/* Vor dem Klick auf „Jetzt anmelden“: dass und wie die
-                          Anzahlung fällig wird, und ob sie erstattet wird. */}
+                      {/* Schon vor „Jetzt anmelden“: ob und wie eine Anzahlung fällig wird. */}
                       {courseHasDownPayment(course) && (
                         <Note tone="info" className="mt-3">
                           <p>
@@ -621,7 +605,6 @@ export default function CourseDetailView({
               </div>
             ) : null}
 
-            {/* Back to Overview */}
             <Link href="/termine" className={OUTLINE_BUTTON}>
               ← Zurück zur Übersicht
             </Link>

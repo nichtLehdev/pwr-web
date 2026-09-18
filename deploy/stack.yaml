@@ -40,9 +40,8 @@ services:
       # Öffentliche Seite: blendet u. a. das Beta-Banner aus.
       APP_ENV: "production"
       NEXT_TELEMETRY_DISABLED: "1"
-      # Log-Ausführlichkeit: debug | info | warn | error | silent.
-      # "warn" hält das tRPC-Rauschen aus dem Container-Log, damit Fehler
-      # lesbar bleiben. Zum Debuggen eines Live-Problems auf "debug" setzen.
+      # debug | info | warn | error | silent. "warn" hält das tRPC-Rauschen aus dem Log;
+      # für ein Live-Problem auf "debug" setzen.
       LOG_LEVEL: "warn"
       NEXT_PUBLIC_APP_URL: "{{ .Env.APP_URL }}"
       BETTER_AUTH_SECRET: "{{ .Env.BETTER_AUTH_SECRET }}"
@@ -54,9 +53,8 @@ services:
       SMTP_PASSWORD: "{{ .Env.SMTP_PASSWORD }}"
       SMTP_FROM: "{{ .Env.SMTP_FROM }}"
       CRON_SECRET: "{{ .Env.CRON_SECRET }}"
-      # Wartungsmodus. Leer = aus; der Alltagsschalter sitzt im Dashboard.
-      # Auf "true" setzen, um die Seite unabhaengig von der Datenbank zu
-      # schliessen (Deployment-Fenster) — greift auch waehrend einer Migration.
+      # Leer = aus (Alltagsschalter im Dashboard). "true" schließt die Seite unabhängig
+      # von der Datenbank, auch während einer Migration.
       MAINTENANCE_MODE: "{{ .Env.MAINTENANCE_MODE }}"
       MAINTENANCE_BYPASS_TOKEN: "{{ .Env.MAINTENANCE_BYPASS_TOKEN }}"
       ADMIN_EMAIL: "{{ .Env.ADMIN_EMAIL }}"

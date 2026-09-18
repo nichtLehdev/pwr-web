@@ -35,10 +35,8 @@ function currentBerlinMonth(): CalendarMonth {
 }
 
 /**
- * Tage, Monat und „heute" in Berliner Zeit: Der Kalender rendert zuerst auf
- * dem Server (UTC), und mit `new Date(y, m, d)` & Co. stand ein Termin um
- * 00:30 dort am Vortag. `selectedDate` ist deshalb immer 00:00 Uhr Berliner
- * Zeit des gewählten Tages.
+ * Tage, Monat und „heute" in Berliner Zeit, weil zuerst auf dem Server (UTC) gerendert wird.
+ * `selectedDate` ist immer 00:00 Uhr Berliner Zeit des gewählten Tages.
  */
 export default function CalendarView({ items }: CalendarViewProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(() =>
@@ -48,11 +46,7 @@ export default function CalendarView({ items }: CalendarViewProps) {
     useState<CalendarMonth>(currentBerlinMonth);
   const calendarNow = useMemo(() => startOfBerlinDay(new Date()), []);
 
-  /**
-   * Termin oder Kurs als Programmzeile. `eventEntry`/`courseEntry` stammen aus
-   * dem Programmheft-Baustein; das Mitmachangebot hat dort keinen eigenen
-   * Platz, deshalb steht es hier als Statuszeile.
-   */
+  /** Termin oder Kurs als Programmzeile; das Mitmachangebot steht mangels eigenem Platz als Statuszeile. */
   const toProgrammeEntry = (item: CalendarItem): ProgrammeEntry => {
     if (item.type === "event") {
       const entry = eventEntry(item);
@@ -170,9 +164,7 @@ export default function CalendarView({ items }: CalendarViewProps) {
 
   return (
     <div className="space-y-6">
-      {/* Mobile Kalender (< lg) */}
       <div className="lg:hidden">
-        {/* Kalender Header */}
         <div className="border-ink dark:border-night-text bg-paper dark:bg-night border-2 p-4">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="condensed text-ink dark:text-night-text text-xl font-extrabold">
@@ -202,7 +194,6 @@ export default function CalendarView({ items }: CalendarViewProps) {
             </div>
           </div>
 
-          {/* Wochentage */}
           <div className="mb-2 grid grid-cols-7 gap-1">
             {weekDays.map((day) => (
               <div
@@ -214,14 +205,12 @@ export default function CalendarView({ items }: CalendarViewProps) {
             ))}
           </div>
 
-          {/* Tage */}
           <div className="grid grid-cols-7 gap-1">
             {/* Leere Zellen für Tage vor dem 1. */}
             {Array.from({ length: startingDayOfWeek }).map((_, i) => (
               <div key={`empty-${i}`} className="aspect-square" />
             ))}
 
-            {/* Tage des Monats */}
             {Array.from({ length: daysInMonth }).map((_, i) => {
               const day = i + 1;
               const events = getEventsForDay(day);
@@ -240,14 +229,8 @@ export default function CalendarView({ items }: CalendarViewProps) {
                 <button
                   key={day}
                   onClick={() => setSelectedDate(berlinDate(year, month, day))}
-                  /*
-                   * Die Schriftfarbe steht in jedem Zweig, nicht als Grundwert
-                   * davor: `cn` und die Klassenliste entscheiden nichts, es
-                   * gilt die Reihenfolge im Stylesheet. Ein vorangestelltes
-                   * `dark:text-night-text` gewann deshalb gegen das
-                   * `dark:text-night` des ausgewählten Tages — im Nachtdruck
-                   * stand die helle Ziffer auf der hellen Fläche.
-                   */
+                  /* Schriftfarbe in jedem Zweig, nicht als Grundwert: es gilt die Reihenfolge im
+                     Stylesheet, ein vorangestelltes `dark:text-night-text` gewann sonst. */
                   className={`relative flex aspect-square flex-col items-center justify-center transition-colors ${
                     selected
                       ? "bg-ink text-paper dark:bg-night-text dark:text-night font-bold"
@@ -258,7 +241,6 @@ export default function CalendarView({ items }: CalendarViewProps) {
                           : "text-ink dark:text-night-text hover:bg-rule/20 dark:hover:bg-night-rule/20"
                   }`}
                 >
-                  {/* Cancelled Indicator oben links */}
                   {hasCancelledEvent && (
                     <div
                       className={`absolute top-0.5 left-0.5 flex h-3 w-3 items-center justify-center ${
@@ -270,7 +252,6 @@ export default function CalendarView({ items }: CalendarViewProps) {
                     </div>
                   )}
 
-                  {/* Mitmachangebot-Indicator oben rechts */}
                   {hasOpenToParticipants && (
                     <div
                       className={`absolute top-0.5 right-0.5 h-2 w-2 ${
@@ -318,7 +299,6 @@ export default function CalendarView({ items }: CalendarViewProps) {
             })}
           </div>
 
-          {/* Legende */}
           <div className="border-rule dark:border-night-rule mt-4 border-t pt-4">
             <div className="text-dark dark:text-night-muted flex flex-wrap gap-4 text-xs">
               <div className="flex items-center gap-2">
@@ -339,7 +319,6 @@ export default function CalendarView({ items }: CalendarViewProps) {
           </div>
         </div>
       </div>
-      {/* Ende Mobile Kalender */}
 
       {/* Termine für den ausgewählten Tag - nur Mobile */}
       <div className="lg:hidden">
@@ -363,7 +342,6 @@ export default function CalendarView({ items }: CalendarViewProps) {
           </p>
         )}
 
-        {/* Nächste Termine */}
         {upcomingItems.length > 0 && (
           <div className="mt-8">
             <Heading as="h4" size="list" className="text-[1.375rem]">

@@ -144,8 +144,7 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
         )}
         <PublicShareButton
           title={event.title}
-          /* Geteilt wird Klartext: Die Beschreibung ist Markdown, und in einer
-             Kurznachricht stünden sonst Sternchen und Klammern. */
+          /* Klartext: die Beschreibung ist Markdown, sonst stünden Sternchen in der Nachricht. */
           text={
             event.motto ||
             markdownToSingleLine(event.description ?? "") ||
@@ -187,9 +186,7 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
     >
       <div className="sheet py-10 md:py-14">
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-3">
-          {/* Main Content */}
           <div className="space-y-10 lg:col-span-2">
-            {/* Cancelled Warning */}
             {event.cancelled && (
               <Note
                 tone="error"
@@ -202,16 +199,12 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
               </Note>
             )}
 
-            {/* Beschreibung mit Titelbild zuerst: Datum und Ort stehen schon
-                im Seitenkopf, die Abschnitte darunter sind zum Nachschlagen
-                (Kalender, Navigation). Aufbau siehe `TerminBeschreibung`. */}
             <TerminBeschreibung
               image={event.coverImage}
               fallbackAlt={event.title}
               html={renderDescriptionHtml(event.description)}
             />
 
-            {/* Date & Time */}
             <div>
               <Heading as="h2" size="list" rule>
                 Datum &amp; Uhrzeit
@@ -244,7 +237,6 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
               </button>
             </div>
 
-            {/* Location */}
             {event.location && (
               <div>
                 <Heading as="h2" size="list" rule>
@@ -275,7 +267,6 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
               </div>
             )}
 
-            {/* Performing Ensemble */}
             {event.performingEnsembleType && (
               <div>
                 <Heading as="h2" size="list" rule>
@@ -352,15 +343,12 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
               </div>
             )}
 
-            {/* Downloads */}
             {event.downloads && event.downloads.length > 0 && (
               <div>
                 <Heading as="h2" size="list" rule>
                   Downloads
                 </Heading>
-                {/* Bilder (Flyer) zuerst und mit Vorschau: Sie sind das, was
-                    man am Termin sucht, und ein Dateiname sagt über einen
-                    Flyer nichts. Die übrigen Dateien folgen als Wegzeilen. */}
+                {/* Bilder (Flyer) zuerst und mit Vorschau, die übrigen Dateien als Wegzeilen. */}
                 <WayList className="mt-4" rule={false}>
                   {event.downloads
                     .filter((ed) => isPreviewableImageDownload(ed.download))
@@ -387,14 +375,8 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
             )}
           </div>
 
-          {/* Randspalte läuft mit, während die lange Hauptspalte vorbeizieht.
-              `sticky-below-nav` statt `lg:top-24`: Die feste Zahl ergab 96px,
-              die Navigation endet aber bei 120px — hier nachgemessen −24px,
-              die Spalte lief also unter dem Streifen hindurch (1440px wie
-              1024px, Spielraum 657 bzw. 697). Die Klasse rechnet Banner- und
-              Navigationshöhe zur Laufzeit aus. Siehe Ensemble-Detailseite. */}
+          {/* `sticky-below-nav` statt `lg:top-24`: rechnet Banner- und Navigationshöhe zur Laufzeit. */}
           <div className="sticky-below-nav space-y-8 lg:sticky lg:self-start">
-            {/* Mitmachangebot */}
             {event.openToParticipants && (
               <div className="border-rule dark:border-night-rule border-t pt-6">
                 <Tag tone="orange">
@@ -413,7 +395,6 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
               </div>
             )}
 
-            {/* Ticket Info */}
             {!event.isFree && event.priceOptions && (
               <div>
                 <Heading as="h3" size="list" rule>
@@ -446,7 +427,6 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
 
             {event.isFree && <Tag>Eintritt frei</Tag>}
 
-            {/* Back to Overview */}
             <Link href="/termine" className={OUTLINE_BUTTON}>
               ← Zurück zur Übersicht
             </Link>

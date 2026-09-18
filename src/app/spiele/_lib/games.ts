@@ -6,11 +6,8 @@ export type GameDefinition = {
   slug: GameId;
   /** Kurzer Titel für die Spiel-Leiste und Metadata. */
   title: string;
-  /** Titel der Karte auf der Übersichtsseite. */
   cardTitle: string;
-  /** Beschreibung auf der Übersichtskarte. */
   cardDescription: string;
-  /** SEO-/Metadata-Beschreibung. */
   metaDescription: string;
   /** Zusätzliche Begriffe für die Seiten-Suche. */
   searchKeywords: readonly string[];

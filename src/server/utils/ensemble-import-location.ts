@@ -7,19 +7,12 @@ import {
   type ImportLocation,
 } from "@/server/utils/ensemble-import";
 
-/**
- * The slice of the Prisma client the resolver needs. Passed in rather than
- * imported so this module stays usable from scripts and tests.
- */
+/** Passed in rather than imported so this module stays usable from scripts and tests. */
 type LocationStore = Pick<PrismaClient, "location">;
 
 /**
- * Resolves the `location` blocks of one import run: an address that already
- * exists is reused, everything else is created once and geocoded.
- *
- * Stateful per run on purpose. Two chors rehearsing at the same address must
- * not race into duplicate Locations, and Nominatim allows one lookup per
- * second — both only hold if the run resolves its addresses in sequence.
+ * Reuses existing addresses, creates and geocodes the rest. Stateful per run and
+ * sequential: avoids duplicate Locations and respects Nominatim's 1 request/s.
  */
 export function createLocationResolver(db: LocationStore) {
   const cache = new Map<string, string>();
@@ -58,8 +51,7 @@ export function createLocationResolver(db: LocationStore) {
       return existing.id;
     }
 
-    // Nominatim's budget is one request per second, so every lookup after the
-    // first waits its turn.
+    // Nominatim allows one request per second.
     if (geocodeCalls > 0) await delay(1100);
     geocodeCalls += 1;
     const { latitude, longitude } = await geocodeAddress({

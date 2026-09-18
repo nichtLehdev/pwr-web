@@ -24,8 +24,6 @@ import {
 } from "@/app/_components/dashboard";
 import { Plus, TrashIcon } from "lucide-react";
 
-// Dashboard access is now controlled by permissions
-
 const CONTACT_TYPE_OPTIONS: { value: ContactType | ""; label: string }[] = [
   { value: "", label: "Kein Bereich" },
   { value: ContactType.GESCHAEFTSSTELLE, label: "Geschäftsstelle" },
@@ -249,14 +247,12 @@ export default function EditTeamPage() {
       ]}
       maxWidth="7xl"
     >
-      {/* Error Message */}
       {error && (
         <div className="mb-6 border-l-4 border-red-600 bg-red-50 p-4 text-red-700 dark:border-red-400 dark:bg-red-900/20 dark:text-red-400">
           {error}
         </div>
       )}
 
-      {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-8">
         <UserLinkField
           userId={userId}
@@ -280,7 +276,6 @@ export default function EditTeamPage() {
           hasLinkedUser={!!userId}
         />
 
-        {/* Role & Contact Type */}
         <section className="border-rule dark:border-night-rule dark:bg-night-raised bg-paper border p-6">
           <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
             Rolle & Bereich
@@ -328,7 +323,6 @@ export default function EditTeamPage() {
           </div>
         </section>
 
-        {/* Responsibilities */}
         <section className="border-rule dark:border-night-rule dark:bg-night-raised bg-paper border p-6">
           <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
             Aufgaben & Verantwortlichkeiten
@@ -346,7 +340,6 @@ export default function EditTeamPage() {
           />
         </section>
 
-        {/* Socials */}
         <section className="border-rule dark:border-night-rule dark:bg-night-raised bg-paper border p-6">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="condensed text-ink dark:text-night-text text-lg font-bold">
@@ -373,7 +366,6 @@ export default function EditTeamPage() {
                   key={index}
                   className="border-rule dark:border-night-rule bg-rule/25 dark:bg-night-raised flex flex-col gap-3 border p-4 sm:flex-row sm:items-start"
                 >
-                  {/* Type Selector with Icon Preview */}
                   <div className="sm:w-48">
                     <label className="text-dark dark:text-night-muted mb-1 block text-xs font-medium">
                       Typ
@@ -401,7 +393,6 @@ export default function EditTeamPage() {
                     </div>
                   </div>
 
-                  {/* URL Input */}
                   <div className="flex-1">
                     <label className="text-dark dark:text-night-muted mb-1 block text-xs font-medium">
                       URL
@@ -416,7 +407,6 @@ export default function EditTeamPage() {
                     />
                   </div>
 
-                  {/* Label Input */}
                   <div className="sm:w-40">
                     <label className="text-dark dark:text-night-muted mb-1 block text-xs font-medium">
                       Anzeigename
@@ -431,7 +421,6 @@ export default function EditTeamPage() {
                     />
                   </div>
 
-                  {/* Delete Button */}
                   <div className="flex items-end sm:pb-0.5">
                     <button
                       type="button"
@@ -448,7 +437,6 @@ export default function EditTeamPage() {
           )}
         </section>
 
-        {/* Actions */}
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
           <Link
             href={`/dashboard/team/${memberId}`}

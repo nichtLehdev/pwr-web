@@ -2,10 +2,8 @@ import { describe, expect, it } from "@jest/globals";
 import { entwirreHarteUmbrueche } from "@/lib/description-linebreaks";
 
 /**
- * Die Regel läuft bei jedem Start des App-Containers (deploy/stack.yaml).
- * Sie muss deshalb die alten, von Hand umbrochenen Texte glätten, darf aber
- * nichts anfassen, was der Editor speichert — und ein zweiter Lauf darf nichts
- * mehr ändern.
+ * Läuft bei jedem Container-Start: glättet alte Texte, lässt Editor-Ausgaben in Ruhe
+ * und ändert beim zweiten Lauf nichts mehr.
  */
 describe("entwirreHarteUmbrueche", () => {
   it("fügt Umbrüche mitten im Satz zusammen (echte Beispiele)", () => {

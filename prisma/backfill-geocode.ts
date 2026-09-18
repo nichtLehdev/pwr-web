@@ -1,9 +1,5 @@
 /**
- * Backfill Script: Geocode Locations Missing Coordinates
- *
- * Finds all Location rows without latitude/longitude and geocodes them via
- * Nominatim, respecting its 1 request/second rate limit.
- *
+ * Geocodes Locations without coordinates via Nominatim (max. 1 request/second).
  * Usage: npx tsx prisma/backfill-geocode.ts
  */
 import "dotenv/config";

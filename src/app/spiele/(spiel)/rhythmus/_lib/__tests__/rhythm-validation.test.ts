@@ -146,9 +146,7 @@ describe("rhythmIsWellFormed", () => {
   });
 
   it("accepts a 3/4 bar", () => {
-    // Note: dotted values ("qd") cannot be validated here — VexFlow's
-    // Dot.buildAndAttach requires a DOM document, so headless Node rejects
-    // any rhythm containing them. Plain values cover the 3/4 path.
+    // Dotted values ("qd") can't be validated headless: VexFlow's Dot.buildAndAttach needs a DOM.
     const rhythm = makeRhythm(
       [note("h", 1000), note("8", 250), note("8", 250)],
       { numerator: 3, denominator: 4 },

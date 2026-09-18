@@ -21,10 +21,8 @@ interface PageHeadProps {
 }
 
 /**
- * Bausteine für Meta-Zeilen im kompakten Seitenkopf (Kurs, Termin,
- * Anmeldung, Ensemble): Art, Dauer und Bezirk als halbschmaler Text, Zeilen
- * mit Haarlinie, Icons und Trenner in Schiefer. Umrandet sind nur Aktionen
- * wie „Bearbeiten“ und „Teilen“ — Etiketten sehen nie wie Schaltflächen aus.
+ * Bausteine für Meta-Zeilen im kompakten Seitenkopf. Umrandet sind nur
+ * Aktionen; Etiketten sehen nie wie Schaltflächen aus.
  */
 export const headMeta = {
   line: "border-rule dark:border-night-rule flex flex-col gap-2 border-t pt-3 text-[0.9375rem] sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-1 sm:gap-y-2",
@@ -40,14 +38,8 @@ export const headMeta = {
 const LONG_TITLE = 44;
 
 /**
- * Seitenkopf einer Innenseite: auf Papier gesetzt, mit Brotkrumen, großem
- * schmal-fettem Titel und Satzstrich, abgeschlossen von einem vollbreiten
- * 2px-Strich wie zwischen den Abschnitten.
- *
- * Ein Leitsatz (genau ein Absatz) steht ab 64rem rechts neben dem Titel,
- * unten bündig, in der Lead-Stimme; kompakte Köpfe setzen ihre Meta-Spalte
- * dort oben bündig. Ein längerer Vorspann steht in ruhiger Zeilenlänge unter
- * dem Titel, statt die schmale Spalte zu füllen.
+ * Seitenkopf einer Innenseite. Ein Leitsatz (genau ein `<p>`) steht ab 64rem
+ * neben dem Titel, ein längerer Vorspann darunter.
  */
 export function PageHead({
   title,

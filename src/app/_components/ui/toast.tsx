@@ -117,11 +117,8 @@ function ToastItem({
     ToastType,
     { bg: string; icon: React.ReactNode; border: string }
   > = {
-    // Auf Papier statt in einer pastelligen Blase: Die Bedeutung tragen Rand
-    // und Icon, nicht eine getönte Fläche. Die Farbwerte sind auf Kontrast
-    // gezogen (green-500/red-500/amber-500 auf Weiss waren zu schwach), und
-    // „info“ nimmt Tinte — Orange erreicht als Icon-Farbe auf hellem Grund
-    // den Kontrast nicht.
+    // Bedeutung tragen Rand und Icon. Farben auf Kontrast gewählt; „info“ in
+    // Tinte, weil Orange auf hellem Grund den Kontrast nicht erreicht.
     success: {
       bg: "bg-paper dark:bg-night-raised",
       border: "border-green-700 dark:border-green-400",

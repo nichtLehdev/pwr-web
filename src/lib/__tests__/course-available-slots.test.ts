@@ -48,9 +48,7 @@ describe("getCourseCapacitySummary", () => {
   });
 
   it("keeps two tiers with the same label apart", () => {
-    // Der gemeldete Prod-Fall: gleiche Bezeichnung, unterschiedliche
-    // Beschreibung, Preis und Limit. Vor der Umstellung überschrieb der
-    // zweite Eintrag den ersten und beide zeigten dieselbe Restplatzzahl.
+    // Gleiche Bezeichnung, unterschiedliche Beschreibung, Preis und Limit: getrennte Restplätze.
     const summary = getCourseCapacitySummary({
       maxParticipants: 116,
       priceOptions: [

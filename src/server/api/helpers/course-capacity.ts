@@ -23,14 +23,9 @@ export type CapacityCourse = {
 };
 
 /**
- * Canonical total seat capacity of a course. Returns Infinity for genuinely
- * unlimited courses.
- *
- * - Course-level maxParticipants always caps, when set (a stored 0 means 0,
- *   not unlimited).
- * - If every price tier has its own limit, the sum of tier limits also caps.
- * - A course with no course-level limit and at least one unlimited tier (or
- *   no tiers at all) is unlimited.
+ * Total seat capacity. Course-level maxParticipants always caps (0 means 0); if every
+ * tier has a limit, their sum caps too. Infinity only without a course limit and with
+ * an unlimited tier or no tiers at all.
  */
 export function computeCourseCapacity(course: CapacityCourse): number {
   const limitedTiers = course.priceOptions.filter(
@@ -56,11 +51,7 @@ export function computeCourseCapacity(course: CapacityCourse): number {
   return Infinity;
 }
 
-/**
- * Number of participants currently occupying seats. Only CONFIRMED
- * registrations consume capacity — waitlisted, cancelled, and
- * pending-discount registrations do not.
- */
+/** Only CONFIRMED registrations occupy seats (not waitlisted, cancelled or pending-discount). */
 export async function countConfirmedParticipants(
   db: Db | Tx,
   courseId: string,
@@ -85,11 +76,7 @@ type TierPriceOption = {
   maxParticipants: number | null;
 };
 
-/**
- * Teilnehmer einer Anmeldung, wie der Vorrang der Warteliste sie braucht. In
- * Eingangsreihenfolge laden (`orderBy: { createdAt: "asc" }`), damit die
- * Reservierung nicht von der Datenbank abhängt.
- */
+/** In Eingangsreihenfolge laden (`createdAt: "asc"`), sonst hängt die Reservierung von der DB ab. */
 type WaitingParticipants = {
   participants: ReadonlyArray<{
     priceOptionId: string | null;
@@ -98,13 +85,8 @@ type WaitingParticipants = {
 };
 
 /**
- * Was die Wartenden eines Kurses an Plätzen bräuchten — Preiskategorie je
- * Teilnehmer, in Eingangsreihenfolge —, als Eingabe für den Vorrang der
- * Warteliste (`@/lib/waitlist-priority`).
- *
- * Ein Kurs ohne Warteliste hat keine Wartenden, auch wenn aus der Zeit davor
- * noch Anmeldungen so stehen: Das Team kann sie dort nicht nachrücken lassen,
- * und sie sollen neue Anmeldungen nicht für immer aussperren.
+ * Preiskategorie je wartendem Teilnehmer, als Eingabe für `@/lib/waitlist-priority`.
+ * Ohne aktivierte Warteliste zählen WAITLIST-Anmeldungen nicht, sonst sperren sie neue für immer aus.
  */
 export function waitlistSeatRequests(
   course: {
@@ -122,12 +104,7 @@ export function waitlistSeatRequests(
   );
 }
 
-/**
- * Anmeldungen, die eine öffentliche Platzübersicht braucht: die bestätigten
- * zum Zählen, die wartenden für ihren Vorrang. Nur Status und Kategorien —
- * eine Anmeldung trägt Kontakt- und Rechnungsdaten, die eine öffentliche
- * Abfrage nie laden soll.
- */
+/** Für die öffentliche Platzübersicht: nur Status und Kategorien, nie Kontakt- oder Rechnungsdaten. */
 export const seatRegistrationsQuery = {
   where: {
     registrationStatus: {
@@ -145,10 +122,8 @@ export const seatRegistrationsQuery = {
 } satisfies Prisma.CourseRegistrationFindManyArgs;
 
 /**
- * Freie Plätze, wie neue Anmeldungen sie sehen — ohne die, die Wartende
- * nutzen könnten —, aus einem Kurs, dessen Anmeldungen mit
- * {@link seatRegistrationsQuery} geladen sind. Grundlage für Kursseite,
- * Kursliste und Anmeldeformular.
+ * Freie Plätze für neue Anmeldungen, ohne die, die Wartende nutzen könnten.
+ * Erwartet mit {@link seatRegistrationsQuery} geladene Anmeldungen.
  */
 export function seatSummaryForPublic(course: {
   maxParticipants: number | null;
@@ -182,9 +157,8 @@ export function seatSummaryForPublic(course: {
 }
 
 /**
- * Freie Plätze für neue Anmeldungen: die tatsächlichen
- * ({@link loadSeatAvailability}) ohne die, die Wartende nutzen könnten. Das
- * Team vergibt weiterhin aus den tatsächlichen.
+ * {@link loadSeatAvailability} ohne die Plätze, die Wartende nutzen könnten.
+ * Das Team vergibt weiterhin aus den tatsächlichen.
  */
 export async function loadSeatsForNewRegistrations(
   db: Db | Tx,
@@ -221,16 +195,9 @@ export function priceTierFullMessage(option: { label: string }): string {
 }
 
 /**
- * Die erste Preiskategorie, in die die neuen Teilnehmer nicht mehr passen —
- * `null`, wenn alle passen. Gezählt werden nur bestätigte Anmeldungen.
- *
- * Zählt über `priceOptionId`, nicht über das Label: ein Kurs darf zwei
- * Kategorien mit demselben Namen führen, und über das Label wurde die eine
- * gegen das Limit der anderen geprüft — mal zu streng, mal zu lasch.
- *
- * Teilnehmer aus der Zeit vor der id-Migration werden mitgezählt, sofern ihr
- * Label im Kurs eindeutig ist; bei Duplikaten sind sie nicht zuzuordnen und
- * bleiben außen vor (die Kurs-Gesamtkapazität greift weiterhin).
+ * Erste Preiskategorie, in die die neuen Teilnehmer nicht mehr passen, sonst `null`.
+ * Zählt über `priceOptionId`, da Labels doppelt vorkommen dürfen; Teilnehmer ohne id
+ * nur bei eindeutigem Label.
  */
 export async function findFullPriceTier(
   db: Db | Tx,
@@ -289,9 +256,8 @@ async function countConfirmedInPriceOption(
 }
 
 /**
- * Freie Plätze eines Kurses nach denselben Regeln wie die Prüfungen beim
- * Bestätigen: Kurskapazität minus Bestätigte, dazu die Restplätze jeder
- * begrenzten Kategorie — nach id, nicht nach Label. Grundlage fürs Nachrücken.
+ * Freie Plätze nach denselben Regeln wie die Prüfungen beim Bestätigen (Kategorien nach id,
+ * nicht nach Label). Grundlage fürs Nachrücken.
  */
 export async function loadSeatAvailability(
   db: Db | Tx,
@@ -341,9 +307,8 @@ export async function assertPriceTierCapacity(
 }
 
 /**
- * Prüft beim Aufteilen, ob die für die freien Plätze gewählten Teilnehmer
- * noch in Kurs und Preiskategorien passen. Die Plätze stammen vom Laden der
- * Seite und können inzwischen vergeben sein.
+ * Prüft beim Aufteilen, ob die gewählten Teilnehmer noch passen: die Plätze stammen vom
+ * Laden der Seite und können inzwischen vergeben sein.
  */
 export async function assertSeatSelectionFits(
   db: Db | Tx,
@@ -361,12 +326,10 @@ export async function assertSeatSelectionFits(
     };
     participants: ReadonlyArray<{ priceOptionId: string }>;
     selection: readonly number[];
-    /** Bereits bestätigte Teilnehmer des Kurses. */
     confirmedCount: number;
     /**
-     * Bei einer *neuen* Anmeldung die Plätze, die ihr nach dem Vorrang der
-     * Warteliste zustehen ({@link loadSeatsForNewRegistrations}). Beim
-     * Annehmen eines Nachrück-Angebots fehlt es — dort ist die Wartende dran.
+     * Nur bei neuen Anmeldungen ({@link loadSeatsForNewRegistrations}); fehlt beim
+     * Annehmen eines Nachrück-Angebots, dort ist die Wartende dran.
      */
     seatsForNewRegistrations?: SeatAvailability;
   },
@@ -421,9 +384,8 @@ const SERIALIZATION_FAILURE = "P2034";
 const MAX_RETRIES = 3;
 
 /**
- * Run `fn` in a SERIALIZABLE transaction, retrying on serialization
- * failures. This is what makes capacity-check-then-insert safe against
- * concurrent registrations for the last seat.
+ * SERIALIZABLE with retries on serialization failures: makes capacity-check-then-insert
+ * safe against concurrent registrations for the last seat.
  */
 export async function runSerializable<T>(
   db: Db,

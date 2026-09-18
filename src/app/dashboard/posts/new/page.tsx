@@ -46,8 +46,6 @@ const categoryLabels: Record<PostCategory, string> = {
   ANDERE: "Andere",
 };
 
-// Dashboard access is now controlled by permissions
-
 export default function NewPostPage() {
   const router = useRouter();
   const toast = useToast();
@@ -63,10 +61,8 @@ export default function NewPostPage() {
   const hasCreatePermission = hasPermission(PERMISSIONS.POSTS_CREATE);
   const isHigherRole = hasApprovePermission;
   const scopedBezirkIds = profile?.bezirkScopes?.map((s) => s.bezirkId) ?? [];
-  // Zuständigkeit statt Zugehörigkeit: `profile.bezirkId` sagt, wo jemand im
-  // Werk verortet ist (und trägt öffentlich ein Amt), nicht wofür er schreiben
-  // darf. Beides zu vermischen hieße, für eine einzelne Ausnahme ein Amt zu
-  // vergeben.
+  // Zuständigkeit (bezirkScopes), nicht Zugehörigkeit (`profile.bezirkId`, trägt
+  // öffentlich ein Amt) entscheidet, wofür jemand schreiben darf.
   const { lockedBezirkId, hasNoDistrict, selectableBezirkIds } =
     districtFieldState(isHigherRole, scopedBezirkIds);
 
@@ -230,8 +226,7 @@ export default function NewPostPage() {
 
   useEffect(() => {
     if (!profileLoading && profile && !hasRedirected.current) {
-      // Nicht nur "irgendein Dashboard-Recht": ohne das Anlage-Recht lehnt der
-      // Server ab, das Formular soll gar nicht erst aufgehen.
+      // Ohne das Anlage-Recht lehnt der Server ab; das Formular soll gar nicht erst aufgehen.
       if (!hasDashboardAccess || !hasCreatePermission) {
         hasRedirected.current = true;
         router.push("/dashboard");
@@ -329,20 +324,17 @@ export default function NewPostPage() {
         storageFailed={storageFailed}
       />
 
-      {/* Error Message */}
       {error && (
         <div className="mb-6 border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
           <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
         </div>
       )}
 
-      {/* Form */}
       <form onSubmit={handleSubmit}>
         <DashboardSectionedFormLayout
           navItems={NEW_POST_NAV_ITEMS}
           contentClassName="space-y-0"
         >
-          {/* Basic Information */}
           <section
             id="post-form-basic"
             className="dashboard-form-scroll-anchor"
@@ -402,7 +394,6 @@ export default function NewPostPage() {
             </div>
           </section>
 
-          {/* Cover Image */}
           <section
             id="post-form-media"
             className="dashboard-form-scroll-anchor border-rule dark:border-night-rule border-t pt-10"
@@ -481,7 +472,6 @@ export default function NewPostPage() {
             </div>
           </section>
 
-          {/* Content */}
           <section
             id="post-form-content"
             className="dashboard-form-scroll-anchor border-rule dark:border-night-rule border-t pt-10"
@@ -509,7 +499,6 @@ export default function NewPostPage() {
             </div>
           </section>
 
-          {/* District */}
           <section
             id="post-form-district"
             className="dashboard-form-scroll-anchor border-rule dark:border-night-rule border-t pt-10"
@@ -543,8 +532,6 @@ export default function NewPostPage() {
                   </p>
                 </div>
               ) : hasNoDistrict ? (
-                // Hinweis statt Alarm: Tinte auf Papier an einer Haarlinie
-                // statt gelbem Kasten.
                 <div className="border-ink dark:border-night-text border-l-2 py-1 pl-4">
                   <p className="text-dark dark:text-night-muted text-sm">
                     <strong>Hinweis:</strong> Du bist keinem Bezirk zugeordnet.
@@ -574,7 +561,6 @@ export default function NewPostPage() {
             </div>
           </section>
 
-          {/* Author */}
           <section
             id="post-form-author"
             className="dashboard-form-scroll-anchor border-rule dark:border-night-rule border-t pt-10"
@@ -620,7 +606,6 @@ export default function NewPostPage() {
                   )}
                 </div>
 
-                {/* User Dropdown */}
                 {showAuthorDropdown &&
                   authorSearch &&
                   filteredUsers &&
@@ -679,7 +664,6 @@ export default function NewPostPage() {
             </div>
           </section>
 
-          {/* Options for users with approve permission */}
           {hasApprovePermission && (
             <section className="border-rule dark:border-night-rule border-t pt-10">
               <h2 className="text-ink dark:text-night-text mb-4 text-lg font-semibold">
@@ -701,7 +685,6 @@ export default function NewPostPage() {
             </section>
           )}
 
-          {/* Submit Options */}
           <section
             id="post-form-publish"
             className="dashboard-form-scroll-anchor border-rule dark:border-night-rule border-t pt-10"
@@ -712,7 +695,6 @@ export default function NewPostPage() {
               description="Speichern, einreichen oder direkt veröffentlichen."
             />
             <div className="space-y-4">
-              {/* Status selection for higher roles */}
               {isHigherRole ? (
                 <div className="space-y-3">
                   <label className="flex cursor-pointer items-start gap-3">
@@ -812,7 +794,6 @@ export default function NewPostPage() {
             </div>
           </section>
 
-          {/* Actions */}
           <div className="border-rule dark:border-night-rule mt-10 flex flex-col gap-3 border-t pt-6 sm:flex-row sm:justify-end">
             <Link
               href="/dashboard/posts"
@@ -837,7 +818,6 @@ export default function NewPostPage() {
         </DashboardSectionedFormLayout>
       </form>
 
-      {/* Media Picker Modal */}
       <MediaPickerModal
         isOpen={showMediaPicker}
         onClose={() => setShowMediaPicker(false)}
@@ -850,7 +830,6 @@ export default function NewPostPage() {
         }}
       />
 
-      {/* Image Position Editor */}
       {showImagePositionEditor && coverImageUrl && (
         <ImagePositionEditor
           imageUrl={coverImageUrl}

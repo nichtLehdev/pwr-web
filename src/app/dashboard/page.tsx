@@ -114,10 +114,8 @@ export default function DashboardPageRoute() {
     { page: 1, limit: 1, registrationStatus: [RegistrationStatus.WAITLIST] },
     { enabled: ready && canManageRegistrations },
   );
-  // Geschwisterrabatte gehören in dieselbe Freigabe-Warteschlange wie Kurse,
-  // Termine und Beiträge — und zwar für alle, die darüber entscheiden dürfen.
-  // Die Abfrage ist auf den Rabattstatus eingegrenzt; genau dafür lässt
-  // getAllAdmin auch die reine Rabattberechtigung zu.
+  // Auf den Rabattstatus eingegrenzt: nur dafür lässt getAllAdmin auch die reine
+  // Rabattberechtigung zu.
   const { data: pendingDiscounts } = api.registrations.getAllAdmin.useQuery(
     {
       page: 1,
@@ -235,7 +233,6 @@ export default function DashboardPageRoute() {
       )}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        {/* Review queue */}
         {showReviewTile && (
           <OverviewTile
             title="Wartet auf Freigabe"
@@ -285,7 +282,6 @@ export default function DashboardPageRoute() {
           </OverviewTile>
         )}
 
-        {/* Upcoming courses */}
         {showCoursesTile && (
           <OverviewTile
             title="Kommende Kurse"
@@ -324,7 +320,6 @@ export default function DashboardPageRoute() {
           </OverviewTile>
         )}
 
-        {/* Latest registrations */}
         {showRegistrationsTile && (
           <OverviewTile
             title="Neueste Anmeldungen"
@@ -395,7 +390,6 @@ export default function DashboardPageRoute() {
           </OverviewTile>
         )}
 
-        {/* Newsletter */}
         {showNewsletterTile && (
           <OverviewTile
             title="Newsletter"
@@ -424,7 +418,6 @@ export default function DashboardPageRoute() {
         )}
       </div>
 
-      {/* Quick Links */}
       <section className="border-rule dark:border-night-rule mt-6 border">
         <div className="border-rule dark:border-night-rule border-b px-4 py-3 sm:px-6">
           <h2 className="condensed text-ink dark:text-night-text text-lg font-bold">

@@ -7,9 +7,8 @@ import {
 import { downPaymentQrAttachment } from "./down-payment";
 
 /**
- * Eine Mail für beide Teile einer aufgeteilten Anmeldung. Der GiroCode gehört
- * zur Anzahlung des bestätigten Teils — der wartende zahlt erst nach der
- * Platzbestätigung.
+ * Der GiroCode gehört zur Anzahlung des bestätigten Teils; der wartende zahlt
+ * erst nach der Platzbestätigung.
  */
 export async function sendCourseRegistrationSplitEmail(params: {
   email: string;

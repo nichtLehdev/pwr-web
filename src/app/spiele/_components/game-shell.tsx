@@ -10,9 +10,8 @@ import { GameShellProvider } from "./game-shell-context";
 import { StatsSyncRunner } from "./stats-sync-runner";
 
 /**
- * Gemeinsame Vollbild-Hülle aller Spiele: schlanke Kopfleiste (zurück, Titel,
- * Status-Slot), scrollender Inhalt und unteres Aktions-Dock — als 100dvh-Grid,
- * damit nichts abgeschnitten wird und ausschließlich der Inhalt scrollt.
+ * Vollbild-Hülle aller Spiele (Kopfleiste, Inhalt, Aktions-Dock) als 100dvh-Grid,
+ * damit nichts abgeschnitten wird und nur der Inhalt scrollt.
  */
 export function GameShell({ children }: { children: ReactNode }) {
   const segment = useSelectedLayoutSegment();
@@ -30,8 +29,6 @@ export function GameShell({ children }: { children: ReactNode }) {
   return (
     <GameShellProvider value={ctx}>
       <StatsSyncRunner />
-      {/* Papier statt Farbverlauf: Der Creme-Blau-Verlauf war das deutlichste
-          Fremdsignal im ganzen Bereich. Das Raster bleibt unveraendert. */}
       <div className="programm font-programm bg-paper text-ink dark:bg-night dark:text-night-text grid h-dvh grid-rows-[auto_minmax(0,1fr)_auto] overflow-x-hidden pr-[env(safe-area-inset-right,0px)] pl-[env(safe-area-inset-left,0px)]">
         <header className="border-rule dark:border-night-rule bg-paper dark:bg-night z-20 border-b pt-[env(safe-area-inset-top,0px)]">
           <div className="mx-auto flex h-12 w-full max-w-5xl items-center gap-2 px-3 md:px-5">
@@ -64,11 +61,7 @@ export function GameShell({ children }: { children: ReactNode }) {
             scrollLocked ? "overflow-hidden" : "overflow-y-auto",
           )}
         >
-          {/* `m-auto` statt `justify-center`: Zentriert, solange Platz ist,
-              schneidet aber bei hohem Inhalt nicht den oberen Rand ab — genau
-              das passiert mit justify-center in kleinen Fenstern. Gemessen
-              standen die Spiele vorher im oberen Drittel, darunter 300-400px
-              Leere. */}
+          {/* `m-auto` statt `justify-center`: zentriert, ohne bei hohem Inhalt den oberen Rand abzuschneiden. */}
           <div className="m-auto w-full">{children}</div>
         </main>
 

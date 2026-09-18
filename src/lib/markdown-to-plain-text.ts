@@ -1,10 +1,4 @@
-/**
- * HTML-Entitäten, die in gespeichertem Markdown vorkommen können.
- *
- * Der Editor schreibt sie nicht selbst, aber importierte und von Hand
- * eingefügte Texte tragen sie; in der Anzeige werden sie zu Zeichen. Ohne
- * diese Auflösung stünde „Bläser &amp; Chor" im Kalender statt „Bläser & Chor".
- */
+/** Entitäten aus importierten oder eingefügten Texten; die Anzeige macht Zeichen daraus. */
 const ENTITIES: Record<string, string> = {
   "&amp;": "&",
   "&lt;": "<",
@@ -15,18 +9,12 @@ const ENTITIES: Record<string, string> = {
   "&nbsp;": " ",
 };
 
-/**
- * Ablage für maskierte Satzzeichen im privaten Unicode-Bereich (U+E000 ff.).
- * Alle maskierbaren Zeichen sind ASCII, landen also zwischen U+E020 und
- * U+E07F und kollidieren mit nichts, was in einer Beschreibung stehen kann.
- */
+/** Maskierte ASCII-Satzzeichen landen im privaten Unicode-Bereich (U+E020–U+E07F). */
 const MASKIERT_AB = 0xe000;
 
 /**
- * Wendet eine Ersetzung an, bis sich nichts mehr ändert. Ein einzelner
- * Durchgang reicht beim Entfernen von Tags nicht: Aus `<<b>script>` macht er
- * `<script>` — das Entfernen selbst setzt ein neues Tag zusammen (CodeQL:
- * „Incomplete multi-character sanitization").
+ * Bis sich nichts mehr ändert: Ein Durchgang macht aus `<<b>script>` wieder
+ * `<script>` (CodeQL: „Incomplete multi-character sanitization").
  */
 function bisStabil(text: string, muster: RegExp, ersatz = ""): string {
   let vorher: string;
@@ -40,33 +28,16 @@ function bisStabil(text: string, muster: RegExp, ersatz = ""): string {
 /** Skript- und Stilblöcke samt Inhalt. */
 const SKRIPT_ODER_STIL = /<(script|style)\b[\s\S]*?<\/\1\s*>/gi;
 
-/**
- * Nur echte Tags, nicht jedes spitze Klammerpaar: „Kinder <10 Jahre" und
- * „a < b" sind Text und werden in der Anzeige auch als Text dargestellt.
- */
+/** Nur echte Tags, nicht jedes spitze Klammerpaar: „Kinder <10 Jahre" ist Text. */
 const TAG = /<\/?[a-zA-Z][^<>]*>/g;
 
 /** Alle bekannten Entitäten in einem Muster — für eine einzige Auflösung. */
 const ENTITY = /&(?:amp|lt|gt|quot|#39|apos|nbsp);/g;
 
 /**
- * Wandelt Markdown in Klartext um.
- *
- * Für alles, was keine Auszeichnung darstellen kann: iCal-Feed, Seiten- und
- * Social-Media-Metadaten, Suchtreffer, E-Mail-Entwürfe, Vorlagen. Die
- * Syntaxzeichen werden direkt aus dem Quelltext entfernt, statt erst HTML zu
- * erzeugen und es wieder abzuräumen — so entsteht nie HTML, das jemand
- * filtern müsste, und der Helfer bleibt ohne Markdown-Bibliothek im
- * Browser-Bündel.
- *
- * Absätze und Zeilenumbrüche bleiben erhalten, weil die Beschreibungen mit
- * `breaks: true` dargestellt werden: Was dort ein Umbruch ist, ist hier eine
- * neue Zeile. Wer eine einzeilige Fassung braucht (Metadaten), faltet die
- * Zeilen anschließend selbst zusammen — siehe `plainTextExcerpt`.
- *
- * Die Reihenfolge der Ersetzungen ist bewusst: Bilder vor Links (sonst bleibt
- * vom `![alt](url)` ein einzelnes „!" stehen), Codeblöcke vor Inline-Code,
- * Hervorhebungen vor den Maskierungen (`\*` soll ein Sternchen bleiben).
+ * Entfernt die Syntax direkt, statt HTML zu erzeugen. Umbrüche bleiben (die Anzeige
+ * nutzt `breaks: true`). Reihenfolge bewusst: Bilder vor Links, Codeblöcke vor
+ * Inline-Code, Hervorhebungen vor den Maskierungen.
  */
 export function markdownToPlainText(markdown: string): string {
   if (!markdown) return "";
@@ -76,36 +47,26 @@ export function markdownToPlainText(markdown: string): string {
   // Codeblöcke ganz weg — ihr Inhalt ist kein Fließtext.
   text = text.replace(/```[\s\S]*?```/g, "");
 
-  // Maskierte Satzzeichen zuerst aus dem Weg räumen: Turndown schreibt jedes
-  // Zeichen, das Markdown deuten würde, mit Rückstrich — aus der Zeile „1.
-  // Tag: Anreise" wird beim Speichern „1\. Tag: Anreise". Blieben sie stehen,
-  // hielten die Regeln weiter unten „\*Hinweis\*" für eine Hervorhebung und
-  // ließen die Rückstriche übrig. Deshalb wandern sie so lange in den
-  // privaten Unicode-Bereich, dass keine Regel sie mehr sieht.
+  // Turndown maskiert Satzzeichen („1\. Tag“). Sie parken im privaten
+  // Unicode-Bereich, damit die Regeln unten sie nicht als Syntax deuten.
   text = text.replace(/\\([\\`*_{}[\]()#+\-.!>~|])/g, (_treffer, zeichen) =>
     String.fromCharCode(MASKIERT_AB + (zeichen as string).charCodeAt(0)),
   );
 
-  // Skript- und Stilblöcke samt Inhalt: Der steht nie im Fließtext. Ohne
-  // diese Zeile bliebe von `<script>alert(1)</script>` das „alert(1)" im
-  // Kalendereintrag stehen — gemessen. Gefährlich ist das nicht (Klartext
-  // wird nirgends ausgeführt), nur falsch.
+  // Samt Inhalt, sonst bliebe von `<script>alert(1)</script>` „alert(1)" stehen.
   text = bisStabil(text, SKRIPT_ODER_STIL);
 
-  // Sonst nur echte Tags entfernen (siehe `TAG`). Die frühere Fassung
-  // löschte pauschal `<` und `>` und machte aus `<u>Wort</u>` „uWort/u".
+  // Sonst nur echte Tags entfernen (siehe `TAG`).
   text = bisStabil(text, TAG);
 
-  // Das Ziel darf ein Klammerpaar enthalten (`javascript:alert(1)`, aber auch
-  // Wikipedia-Adressen mit Klammern) — eine Ebene reicht dafür. Vorher blieb
-  // von `[Klick](javascript:alert(1))` ein „Klick)" übrig.
+  // Das Ziel darf eine Ebene Klammern enthalten (`javascript:alert(1)`,
+  // Wikipedia-Adressen).
   const ZIEL = /\((?:[^()]|\([^()]*\))*\)/.source;
   text = text.replace(new RegExp(`!\\[([^\\]]*)\\]${ZIEL}`, "g"), "$1");
   text = text.replace(new RegExp(`\\[([^\\]]+)\\]${ZIEL}`, "g"), "$1");
 
-  // Zeilenanfänge: Überschrift, Zitat, Aufzählung, Trennlinie. Die Nummern
-  // nummerierter Listen bleiben stehen — ohne sie verlöre „1. Anreise, 2.
-  // Probe" seine Ordnung.
+  // Zeilenanfänge: Überschrift, Zitat, Trennlinie, Aufzählung. Listennummern
+  // bleiben stehen, sonst verlöre „1. Anreise, 2. Probe" seine Ordnung.
   text = text.replace(/^ {0,3}#{1,6}\s+/gm, "");
   text = text.replace(/^ {0,3}>\s?/gm, "");
   text = text.replace(/^ {0,3}([-*_])(?:[ \t]*\1){2,}[ \t]*$/gm, "");
@@ -114,10 +75,8 @@ export function markdownToPlainText(markdown: string): string {
 
   text = text.replace(/(\*\*\*|___)([^\n]+?)\1/g, "$2");
   text = text.replace(/(\*\*|__)([^\n]+?)\1/g, "$2");
-  // Sternchen zeichnen auch innerhalb eines Wortes aus (so stellt Markdown
-  // „Bläser*innen und Jungbläser*innen" kursiv), Unterstriche nicht — deshalb
-  // fordert die zweite Regel eine Wortgrenze. Ohne sie verlöre „Kosten
-  // 50_60_70" seine Unterstriche, obwohl die Anzeige sie behält.
+  // Sternchen zeichnen auch innerhalb eines Wortes aus, Unterstriche nicht —
+  // deshalb fordert die zweite Regel eine Wortgrenze.
   text = text.replace(/\*([^*\n]+)\*/g, "$1");
   text = text.replace(/(^|[^\w\\])_([^_\n]+)_(?![\w])/gm, "$1$2");
   text = text.replace(/~~([^~\n]+)~~/g, "$1");
@@ -132,9 +91,8 @@ export function markdownToPlainText(markdown: string): string {
   // erst „&lt;" und dann „<" — doppelt entschlüsselt.
   text = text.replace(ENTITY, (entity) => ENTITIES[entity] ?? entity);
 
-  // Aufgelöste Entitäten können Tags ergeben („&lt;script&gt;" → „<script>").
-  // Klartext wird zwar nirgends ausgeführt, aber er soll von sich aus sicher
-  // sein, egal wo ihn jemand später einsetzt — also noch einmal abräumen.
+  // Aufgelöste Entitäten können Tags ergeben („&lt;script&gt;"); Klartext soll
+  // von sich aus sicher sein, egal wo er später landet.
   text = bisStabil(bisStabil(text, SKRIPT_ODER_STIL), TAG);
 
   text = text.replace(/[ \t]+$/gm, "");

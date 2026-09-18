@@ -1,23 +1,9 @@
 import { z } from "zod";
 
 /**
- * Two house formats for phone numbers, both "grouping half, one space,
- * rest of the digits":
- *
- *   national      "0176 22994781"   (DIN 5008)
- *   international "+49 176 22994781"
- *
- * Which one applies depends on who the number belongs to. Organisational
- * contacts — chors, team, Vorstand, Bezirk, Posaunenwarte — are German
- * throughout and read better nationally. Numbers people enter about
- * themselves (their account, a course registration) can be foreign, so those
- * always carry the country code.
- *
- * The split between area code and subscriber number cannot be derived from
- * the digits alone (German area codes run from three to five digits, and
- * mobile prefixes from four to five), so it is taken from wherever the author
- * put the separator. Input without any separator is therefore left unsplit
- * rather than guessed at.
+ * National ("0176 22994781", DIN 5008) for organisational contacts, international for
+ * numbers people enter about themselves (may be foreign). The area-code split can't be
+ * derived from the digits, so it follows the author's separator; without one, no split.
  */
 
 /** Whatever an author may have typed between the two halves. */
@@ -27,10 +13,8 @@ const SEPARATOR = "[\\s./-]";
 const DEFAULT_COUNTRY = "49";
 
 /**
- * Strips what spreadsheet exports smuggle in around the actual number:
- * non-breaking spaces, the invisible bidi marks Excel wraps "+49 …" in, and
- * the parentheses of the "(0173) 59 33 710" style — the area code is already
- * delimited by the separator that follows it.
+ * Strips what spreadsheet exports smuggle in: non-breaking spaces, Excel's bidi
+ * marks around "+49 …" and the parentheses of "(0173) 59 33 710".
  */
 function clean(value: string): string {
   return value
@@ -59,8 +43,7 @@ export function formatPhoneNumber(value: string): string {
   let national = cleaned;
 
   if (cleaned.startsWith("+49")) {
-    // Checked before the generic branch: with no space after the code,
-    // "+49171/…" would otherwise read as country code 491.
+    // Before the generic branch, or "+49171/…" reads as country code 491.
     // A German number is written the German way, not as +49.
     national = `0${cleaned.slice(3).replace(new RegExp(`^${SEPARATOR}*`), "")}`;
   } else {
@@ -85,12 +68,8 @@ export function formatPhoneNumber(value: string): string {
 }
 
 /**
- * Always carries a country code, for numbers whose owner may live abroad.
- *
- * A leading 0 is read as the German trunk prefix and "00" as the
- * international one. A foreign number written without a separator keeps its
- * digits untouched: where the country code ends is not decidable, and a wrong
- * split is worse than an unsplit number.
+ * Always carries a country code. A foreign number without separator stays
+ * unsplit: where its country code ends is not decidable.
  */
 export function formatPhoneNumberInternational(value: string): string {
   const cleaned = clean(value);
@@ -124,8 +103,7 @@ export function formatPhoneNumberInternational(value: string): string {
   const split = splitAtSeparator(rest);
   if (!split) {
     const digits = rest.replace(/\D/g, "");
-    // Nothing numeric to work with. Returning "+49" here would turn junk into
-    // something that reads like a real number, so the value is left alone.
+    // Nothing numeric: "+49" would make junk look like a real number.
     if (!digits) return cleaned;
     return `+${country} ${digits}`;
   }
@@ -153,10 +131,7 @@ export function formatPhoneNumberInternationalOrNull(
 /** What the routers have always accepted; kept as the single definition. */
 export const PHONE_PATTERN = /^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/;
 
-/**
- * For organisational contacts. Validates as before and normalises on the way
- * in, so the stored value never depends on how the author typed it.
- */
+/** For organisational contacts; validates and normalises on the way in. */
 export const phoneSchema = z
   .string()
   .max(50)
@@ -171,11 +146,8 @@ export const internationalPhoneSchema = z
   .transform(formatPhoneNumberInternational);
 
 /**
- * Normalises without validating, for the organisational forms that never
- * checked the pattern. Adding the regex there would start rejecting entries
- * that have always been accepted — "0211 12345 (mobil)" and the like — so
- * these only get the formatting. formatPhoneNumber passes anything it cannot
- * parse straight through.
+ * Normalises without validating: these forms never checked the pattern, and entries
+ * like "0211 12345 (mobil)" must stay accepted.
  */
 export const lenientPhoneSchema = z
   .string()

@@ -18,12 +18,7 @@ const CATEGORY_LABEL: Record<NonNullable<HistoryEvent["category"]>, string> = {
   PARTNERSHIP: "Partnerschaft",
 };
 
-/**
- * Zeitleiste als Tabellensatz: Jahr als Tabellenziffer im festen Slot,
- * Haarlinien zwischen den Ereignissen — wie die Programmzeile, nur ohne
- * Bezirksmarke. Kategorien sind ein neutrales Etikett, nie eine Bezirksfarbe
- * (die ist ausschließlich Bezirken vorbehalten).
- */
+/** Zeitleiste als Tabellensatz. Kategorien sind ein neutrales Etikett, nie eine Bezirksfarbe. */
 export default function HistoryTimeline({ events }: HistoryTimelineProps) {
   if (events.length === 0) {
     return (

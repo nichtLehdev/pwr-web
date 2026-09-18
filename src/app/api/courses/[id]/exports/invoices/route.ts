@@ -7,11 +7,8 @@ import { attachmentHeaders } from "@/server/utils/xlsx";
 import { InvoiceStatus } from "~/generated/prisma/client";
 
 /**
- * Rechnungsübersicht eines Kurses als .xlsx.
- *
- * Dieselbe Zugriffsregel wie `invoices.listForCourse`: nur wer den Kurs
- * abrechnen darf, bekommt die Liste — sie führt Namen, E-Mail-Adressen und
- * Beträge aller Anmeldungen zusammen.
+ * Rechnungsübersicht eines Kurses als .xlsx. Zugriff wie
+ * `invoices.listForCourse`, denn die Liste enthält personenbezogene Daten.
  */
 export async function GET(
   request: NextRequest,

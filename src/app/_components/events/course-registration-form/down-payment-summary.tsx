@@ -24,34 +24,22 @@ interface DownPaymentSummaryProps {
   totalPrice: number;
   isWaitlist: boolean;
   /**
-   * Aufgeteilte Anmeldung: `amount` und `totalPrice` gelten dann für die
-   * bestätigten Teilnehmer, dies ist die Anzahlung der wartenden — fällig erst
-   * mit deren Platzbestätigung.
+   * Aufgeteilt: `amount`/`totalPrice` gelten den Bestätigten, dies ist die Anzahlung der
+   * Wartenden — fällig erst mit deren Platzbestätigung.
    */
   waitlistAmount?: number | null;
-  /**
-   * Die Bestätigung der Hinweise — nur bei der öffentlichen Anmeldung. Erfasst
-   * das Kursteam, gilt sie mit dessen Zustimmungs-Häkchen als gegeben.
-   */
+  /** Nur öffentlich; beim Kursteam gilt sie mit dessen Zustimmungs-Häkchen als gegeben. */
   acknowledgement?: {
     checked: boolean;
     onChange: (checked: boolean) => void;
     /** Meldung am Kästchen, wenn „Verbindlich anmelden“ ohne Haken scheitert. */
     problem?: string;
   };
-  /**
-   * Die Anmeldung erscheint unter „Meine Anmeldungen“: angemeldet und mit der
-   * E-Mail-Adresse des Kontos angemeldet — nur danach sucht diese Seite.
-   */
+  /** „Meine Anmeldungen“ sucht nur nach der E-Mail-Adresse des Kontos. */
   listedInMyRegistrations: boolean;
 }
 
-/**
- * Anzahlung im letzten Schritt: Preisaufteilung, Überweisungsdaten mit
- * GiroCode und der Erstattungshinweis, den die Anmeldung bestätigen muss.
- * Dieselben Angaben gehen mit der Bestätigungsmail noch einmal hinaus — der
- * Hinweis darauf erspart das Abschreiben der Bankdaten vor dem Absenden.
- */
+/** Anzahlung im letzten Schritt: Preisaufteilung, Überweisungsdaten mit GiroCode, Erstattungshinweis. */
 export function DownPaymentSummary({
   course,
   registrationData,

@@ -6,9 +6,8 @@ import {
 } from "../holidays";
 import { berlinDate, berlinDayKey, formatBerlin } from "../berlin-time";
 
-// Der Kalender vergleicht und formatiert in Berliner Zeit. Feiertage kommen
-// deshalb als 00:00 Uhr Berliner Zeit zurück — ein lokales Mitternachtsdatum
-// läge in einer Zone östlich von Berlin dort noch auf dem Vortag.
+// Feiertage kommen als 00:00 Berliner Zeit zurück; eine lokale Mitternacht läge
+// in einer Zone östlich von Berlin auf dem Vortag.
 describe("Feiertage", () => {
   const byName = (year: number, name: string) =>
     getGermanPublicHolidays(year).find((holiday) => holiday.name === name);

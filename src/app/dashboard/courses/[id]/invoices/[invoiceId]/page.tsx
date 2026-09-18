@@ -122,9 +122,8 @@ export default function InvoiceEditorPage() {
   const canManage = invoice?.canManage ?? false;
   const isEditable = invoice?.status === InvoiceStatus.DRAFT && canManage;
 
-  // Eine Anzahlung, die erst nach dem Anlegen des Entwurfs verbucht wurde,
-  // fehlt in dessen Positionen: der Entwurf ist eine Kopie der Anmeldung, kein
-  // Spiegel. Stornierte Dokumente fordern nichts mehr.
+  // Eine nach dem Entwurf verbuchte Anzahlung fehlt in dessen Positionen (Kopie,
+  // kein Spiegel). Stornierte Dokumente fordern nichts mehr.
   const receivedDownPayment = invoice?.registration
     ? downPaymentCredit(invoice.registration)
     : 0;
@@ -383,7 +382,6 @@ export default function InvoiceEditorPage() {
         </Link>
       }
     >
-      {/* Status strip */}
       <div className="border-rule dark:border-night-rule mb-6 flex flex-wrap items-center justify-between gap-4 border p-4">
         <div className="flex flex-wrap items-center gap-3">
           <InvoiceStatusBadge status={invoice.status} />
@@ -545,7 +543,6 @@ export default function InvoiceEditorPage() {
       )}
 
       <fieldset disabled={!isEditable} className="space-y-6">
-        {/* Recipient */}
         <section className="border-rule dark:border-night-rule border p-6">
           <h2 className="dark:text-night-text text-ink mb-4 text-lg font-semibold">
             Rechnungsempfänger
@@ -653,7 +650,6 @@ export default function InvoiceEditorPage() {
           </div>
         </section>
 
-        {/* Line items */}
         <section className="border-rule dark:border-night-rule border p-6">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
             <div>
@@ -678,8 +674,7 @@ export default function InvoiceEditorPage() {
           </div>
 
           {missingDownPaymentCredit && (
-            // Hinweis statt Alarm: Tinte auf Papier an einer Haarlinie statt
-            // bernsteinfarbenem Kasten.
+            // Hinweis, kein Alarm: bewusst ohne Signalfarbe.
             <div className="border-ink dark:border-night-text mb-4 flex flex-wrap items-center justify-between gap-3 border-l-2 py-2 pl-4">
               <p className="text-dark dark:text-night-muted text-sm">
                 Für diese Anmeldung ist eine Anzahlung von{" "}
@@ -839,7 +834,6 @@ export default function InvoiceEditorPage() {
           </div>
         </section>
 
-        {/* Texts and dates */}
         <section className="border-rule dark:border-night-rule border p-6">
           <h2 className="dark:text-night-text text-ink mb-4 text-lg font-semibold">
             Zahlungsziel & Texte
@@ -910,7 +904,6 @@ export default function InvoiceEditorPage() {
         </section>
       </fieldset>
 
-      {/* Publish confirmation */}
       {publishOpen && (
         <ScrollableModal>
           <ScrollableModalCard maxW="md">
@@ -1119,7 +1112,6 @@ export default function InvoiceEditorPage() {
         </ScrollableModal>
       )}
 
-      {/* Storno */}
       {cancelOpen && (
         <ScrollableModal>
           <ScrollableModalCard maxW="md">

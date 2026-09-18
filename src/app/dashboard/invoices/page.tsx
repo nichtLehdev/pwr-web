@@ -68,7 +68,6 @@ function recipientName(invoice: ArchiveInvoice): string {
   );
 }
 
-/** Reads one set filter out of the table's filter state. */
 function setFilter(filters: ColumnFiltersState, id: string): string[] {
   const value = filters.find((filter) => filter.id === id)?.value;
   return Array.isArray(value) ? (value as string[]) : [];
@@ -79,9 +78,8 @@ export default function InvoiceArchivePage() {
   const { hasPermission, isLoading: permissionsLoading } = usePermissions();
   const canView = hasPermission("invoices.view" as PermissionKey);
 
-  // The archive is paged on the server, so sorting, the set filters and the
-  // search term are query input rather than something the table does locally —
-  // otherwise each of them would only ever see the 25 rows already fetched.
+  // Paged on the server: sorting, filters and search are query input, otherwise
+  // they would only ever see the 25 rows already fetched.
   const [sorting, setSorting] = useState<SortingState>([
     { id: "invoiceDate", desc: true },
   ]);
@@ -179,9 +177,7 @@ export default function InvoiceArchivePage() {
           },
           cell: ({ row }) => {
             const course = row.original.course;
-            // Kurs-Organisator:innen springen von hier direkt in die
-            // Rechnungsliste des Kurses; wer den Kurs nicht abrechnen darf,
-            // bekommt weiterhin nur den Titel — die Seite wäre für sie gesperrt.
+            // Nur wer den Kurs abrechnen darf, bekommt den Link — sonst wäre die Seite gesperrt.
             return manageableCourses.has(course.id) ? (
               <Link
                 href={`/dashboard/courses/${course.id}/invoices`}
@@ -301,8 +297,6 @@ export default function InvoiceArchivePage() {
     );
   }
 
-  // Genau ein Kurs ausgewählt und abrechenbar: dann ist der Sprung in dessen
-  // Rechnungsliste die wahrscheinlichste nächste Handlung.
   const selectedCourse =
     courseFilter.length === 1
       ? courses?.find((course) => course.id === courseFilter[0])
@@ -324,7 +318,6 @@ export default function InvoiceArchivePage() {
         ) : undefined
       }
     >
-      {/* Summary */}
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="bg-rule/25 dark:bg-night-raised p-4">
           <p className="text-dark dark:text-night-muted text-xs">

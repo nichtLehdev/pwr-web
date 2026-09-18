@@ -1,16 +1,6 @@
 /**
- * Converts real-world lat/lon coordinates into coordinates on the
- * hand-drawn Bezirke SVG map (viewBox 0 0 1523 2428, see
- * src/app/mitmachen/chor-finden/page.tsx).
- *
- * The artwork has no embedded geo-projection, so a 2D affine transform is
- * fit from three reference points: the map's northmost, southmost and
- * westmost outline points, matched against their real-world coordinates.
- * Validated against ~8 uninvolved reference cities (Köln, Bonn, Aachen,
- * Düsseldorf, Kleve, Krefeld, Wuppertal) landing inside their correct
- * Bezirk, and against Wetzlar (~6km off) for the Bezirk 10 exclave -
- * accurate enough that no rotation/skew correction or extra calibration
- * points are needed.
+ * Converts lat/lon into coordinates on the hand-drawn Bezirke SVG map (viewBox 0 0 1523 2428).
+ * The artwork has no geo-projection, so an affine transform is fit from three outline points.
  */
 
 export const BEZIRKE_MAP_VIEWBOX = { width: 1523, height: 2428 };
@@ -76,9 +66,7 @@ function solveAffineCoefficients(
 const [a, b, c] = solveAffineCoefficients(CALIBRATION_POINTS, "svgX");
 const [d, e, f] = solveAffineCoefficients(CALIBRATION_POINTS, "svgY");
 
-// Small residual registration error left over after the affine fit
-// (hand-drawn artwork isn't perfectly true to scale everywhere). Dialed in
-// visually against known ensemble locations via an on-page calibration tool.
+// Residual error of the hand-drawn artwork after the affine fit, dialed in visually.
 const EMPIRICAL_OFFSET_X = -21;
 const EMPIRICAL_OFFSET_Y = 25;
 

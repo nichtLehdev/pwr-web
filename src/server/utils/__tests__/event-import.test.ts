@@ -69,8 +69,6 @@ describe("readEventContent", () => {
   });
 
   it("liest die Ensemble-Art unter dem Namen, den der Export schreibt", () => {
-    // Der Import las früher `ensembleType`; der Export schrieb schon immer
-    // `performingEnsembleType`, weshalb die Art nie ankam.
     expect(readEventContent(exportedEvent()).performingEnsembleType).toBe(
       "ENSEMBLE",
     );

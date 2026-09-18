@@ -22,16 +22,12 @@ type Props = {
 };
 
 /*
- * Höhen wachsen mit dem Fenster, statt fest zu stehen: Bei 1000px Fensterhöhe
- * war unter dem Inhalt fast ein Drittel der Zeile leer. `calc(… dvh - …px)`
- * bildet die Fensterhöhe abzüglich der festen Zeilen (Kopf, Aufgabe, Dock) ab
- * — eine reine dvh-Quote kann das nicht, weil der feste Anteil bei 650px fast
- * die ganze Zeile frisst.
+ * `calc(… dvh - …px)` = Fensterhöhe minus feste Zeilen (Kopf, Aufgabe, Dock); eine reine
+ * dvh-Quote passt nicht, weil der feste Anteil bei flachen Fenstern fast alles frisst.
  */
 const REIHE_HOEHE =
   "min-h-[max(76px,min(calc(14dvh_-_8px),130px))] md:min-h-[max(76px,min(calc(13dvh_-_13px),150px))]";
-// Die Noten wachsen mit der Schale: Sonst lagen in einer 180px hohen Schale
-// weiterhin 36px kleine Zeichen, und die gewonnene Fläche blieb leer.
+// Die Noten wachsen mit der Schale.
 const GLYPH_GROSS =
   "h-[max(24px,min(calc(4.5dvh_-_10px),40px))] w-[max(24px,min(calc(4.5dvh_-_10px),40px))] md:h-[max(28px,min(calc(8dvh_-_30px),56px))] md:w-[max(28px,min(calc(8dvh_-_30px),56px))]";
 const GLYPH_KLEIN =

@@ -18,10 +18,8 @@ describe("isPlausibleEmail", () => {
   });
 
   it("weist Adressen mit Leerzeichen ab", () => {
-    // Rand-Leerzeichen kommen über `input[type=email]` gar nicht erst an — die
-    // schneidet der Browser ab. Die Funktion prüft sie trotzdem, weil sie auch
-    // aus anderen Quellen aufgerufen werden kann; das Leerzeichen mitten drin
-    // ist der Fall, der wirklich durchkommt.
+    // Rand-Leerzeichen schneidet `input[type=email]` ab, die Funktion hat aber auch andere Aufrufer;
+    // das Leerzeichen mitten drin ist der Fall, der wirklich durchkommt.
     expect(isPlausibleEmail(" max@example.com")).toBe(false);
     expect(isPlausibleEmail("max@example.com ")).toBe(false);
     expect(isPlausibleEmail("max mustermann@example.com")).toBe(false);

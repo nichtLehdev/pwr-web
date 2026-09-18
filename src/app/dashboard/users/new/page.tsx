@@ -313,7 +313,6 @@ export default function NewUserPage() {
       ]}
       maxWidth="7xl"
     >
-      {/* Info Box */}
       <div className="border-primary-ink dark:border-primary bg-rule/25 dark:bg-night-raised mb-6 border-l-4 p-4">
         <div className="flex items-start gap-3">
           <Info className="text-primary-ink dark:text-primary mt-0.5 h-5 w-5 shrink-0" />
@@ -329,16 +328,13 @@ export default function NewUserPage() {
         </div>
       </div>
 
-      {/* Error Message */}
       {error && (
         <div className="mb-6 border-l-4 border-red-600 bg-red-50 p-4 text-red-700 dark:border-red-400 dark:bg-red-900/20 dark:text-red-400">
           {error}
         </div>
       )}
 
-      {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Basic Info */}
         <Card>
           <CardHeader>
             <CardTitle>Grundinformationen</CardTitle>
@@ -469,7 +465,6 @@ export default function NewUserPage() {
           </CardContent>
         </Card>
 
-        {/* Address */}
         <Card>
           <CardHeader>
             <CardTitle>Adresse</CardTitle>
@@ -514,7 +509,6 @@ export default function NewUserPage() {
           </CardContent>
         </Card>
 
-        {/* Bezirkszugehörigkeit */}
         <Card>
           <CardHeader>
             <CardTitle>Bezirkszugehörigkeit</CardTitle>
@@ -555,7 +549,6 @@ export default function NewUserPage() {
           </CardContent>
         </Card>
 
-        {/* Actions */}
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
           <Link
             href="/dashboard/users"

@@ -14,9 +14,8 @@ import { DashboardPage } from "@/app/_components/dashboard";
 import { Note } from "@/app/_components/programmheft/note";
 
 /**
- * Dashboard-only registration entry. The public form refuses sign-ups once
- * registration is closed or the deadline has passed; organizers still need to
- * add the late phone call or the paper form, and this page is that path.
+ * Staff entry for registrations by phone or paper, also after the public form
+ * has closed or the deadline has passed.
  */
 export default function NewCourseRegistrationPage() {
   const router = useRouter();
@@ -33,10 +32,8 @@ export default function NewCourseRegistrationPage() {
       { enabled: !!courseId && !!session?.user },
     );
 
-  // Die tatsächlichen Plätze, nicht die öffentlichen: Die Öffentlichkeit sieht
-  // nur die, die keine Wartende nutzen könnte, das Team darf mit „Bestätigt“
-  // aber alle bewusst vergeben. Ohne Berechtigung antwortet der Server mit
-  // FORBIDDEN — dann greift die Seite unten ohnehin.
+  // Die tatsächlichen Plätze, nicht die öffentlichen: Das Team darf mit
+  // „Bestätigt“ auch die für Wartende reservierten bewusst vergeben.
   const { data: overview } = api.registrations.getWaitlistOverview.useQuery(
     { courseId },
     { enabled: !!courseId && !!session?.user, retry: false, staleTime: 0 },
@@ -128,9 +125,8 @@ export default function NewCourseRegistrationPage() {
   const deadlinePassed = isRegistrationDeadlinePassed(
     course.registrationDeadline,
   );
-  // Nur wenn Wartende freie Plätze für sich reservieren, weicht
-  // „Automatisch“ von dem ab, was das Formular aus den tatsächlichen Plätzen
-  // ankündigt.
+  // Nur wenn Wartende Plätze reservieren, weicht „Automatisch“ von der
+  // Ankündigung des Formulars ab.
   const reservedForWaitlist = overview
     ? overview.seats.availableSlots -
       overview.seatsForNewRegistrations.availableSlots
@@ -141,9 +137,6 @@ export default function NewCourseRegistrationPage() {
     reservedForWaitlist > 0;
 
   return (
-    // Die geteilte Hülle statt eines handgebauten Rahmens: Sie liefert
-    // Brotkrumen, Titel und Satzspiegel, die hier zuvor als fünfzig Zeilen
-    // eigenes JSX standen. Jede Geschwisterseite nutzt sie bereits.
     <DashboardPage
       title="Neue Anmeldung"
       description={course.title}
@@ -157,9 +150,7 @@ export default function NewCourseRegistrationPage() {
       ]}
     >
       {(deadlinePassed || !course.registrationOpen) && (
-        // Eckig auf Haarlinie statt blauem Kasten: Der Hinweis erklärt eine
-        // Ausnahme, er warnt nicht — eine eigene Signalfarbe braucht er
-        // dafür nicht.
+        // Hinweis, kein Alarm: bewusst ohne Signalfarbe.
         <div className="border-ink dark:border-night-text mb-6 border-l-2 py-1 pl-4">
           <p className="text-dark dark:text-night-muted text-sm">
             {deadlinePassed
@@ -171,9 +162,8 @@ export default function NewCourseRegistrationPage() {
       )}
 
       {waitlistFirst && (
-        // Das Formular kennt den Vorrang der Warteliste nicht und kündigt
-        // „Automatisch“ aus den tatsächlichen Plätzen an; der Server gibt
-        // Neuen nur die übrigen. Der Hinweis sagt es vorher.
+        // Die Warteliste hat Vorrang: Der Server gibt Neuen nur die übrigen
+        // Plätze, das Formular weiß davon nichts.
         <Note tone="important" className="mb-6">
           <p>
             {reservedForWaitlist === 1

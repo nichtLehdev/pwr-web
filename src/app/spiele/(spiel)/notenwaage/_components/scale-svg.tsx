@@ -7,11 +7,7 @@ type Props = {
   balancedFlash?: boolean;
   /** Anzahl noch unbelegter Felder rechts — Gleichgewicht allein reicht nicht. */
   openSlots?: number;
-  /**
-   * Nur als Bild (Setup-Schirm): ohne Statuszeile und für Vorleseprogramme
-   * unsichtbar — eine zweite `aria-live`-Zone ohne Spielstand wäre dort bloß
-   * Lärm.
-   */
+  /** Nur als Bild (Setup): ohne Statuszeile und `aria-live`, für Vorleseprogramme unsichtbar. */
   decorative?: boolean;
 };
 
@@ -35,11 +31,6 @@ export function ScaleSVG({
     <div
       aria-hidden={decorative || undefined}
       className={cn(
-        // Papier statt Verlauf, Haarlinie statt Rundung: Die Waage steht auf
-        // dem Blatt, sie liegt nicht in einer eigenen Schale.
-        // Spalte statt überlagerter Bildunterschrift: Die Zeile lag vorher
-        // absolut über der Zeichnung und schnitt bei flachen Fenstern mitten
-        // durch den Waagefuß. Jetzt teilen sich Bild und Zeile die Höhe.
         "border-rule dark:border-night-rule text-ink dark:text-night-text flex h-full w-full flex-col overflow-hidden border",
         // Gleichgewicht wird mit Tinte quittiert, nicht mit Gruen.
         balancedFlash && "ring-ink dark:ring-night-text ring-[3px] ring-inset",
@@ -73,9 +64,7 @@ export function ScaleSVG({
 
         <g
           transform={`rotate(${tilt} 300 120)`}
-          // Nur die Bewegung ist abschaltbar, nicht der Ausschlag: Bei
-          // reduzierter Bewegung springt der Balken sofort in seine Lage,
-          // das Ergebnis bleibt also ablesbar — es schwingt nur nicht mehr.
+          // Bei reduzierter Bewegung springt der Balken sofort in seine Lage, statt zu schwingen.
           className="motion-safe:[transition:transform_300ms_cubic-bezier(0.22,1,0.36,1)]"
         >
           <line

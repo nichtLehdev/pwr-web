@@ -126,9 +126,7 @@ describe("formatPhoneNumberInternational", () => {
   });
 
   it("leaves input without any digits alone instead of making it +49", () => {
-    // Old registration rows hold junk like this; turning it into "+49" would
-    // read as a real number. Whitespace and brackets still get cleaned, so the
-    // point of the assertion is that no country code is invented.
+    // Old rows hold junk like this; an invented "+49" would read as a real number.
     expect(formatPhoneNumberInternational("bbbbbbb")).toBe("bbbbbbb");
     expect(formatPhoneNumberInternational('console.log("aaaa");  ')).toBe(
       'console.log "aaaa" ;',

@@ -26,17 +26,11 @@ marked.use({
   breaks: true,
 });
 
-/**
- * Converts markdown content to HTML.
- * The database stores markdown, but we return HTML to the client.
- */
+/** The database stores markdown; clients get HTML. */
 async function markdownToHtml(markdown: string): Promise<string> {
   return await marked.parse(markdown);
 }
 
-/**
- * Adds contentHtml field to a post by converting markdown content to HTML.
- */
 async function addContentHtml<T extends { content: string }>(
   post: T,
 ): Promise<T & { contentHtml: string }> {
@@ -48,11 +42,7 @@ async function addContentHtml<T extends { content: string }>(
 
 const MEDIA_URL_PATTERN = /\/api\/uploads\/(?:media|profiles)\/[^\s"'<>)\]]+/;
 
-/**
- * Enriches post content HTML with media credits: finds img tags whose src
- * points to our media, looks up copyright/creator, and wraps them in figure
- * with a figcaption credit (and adds data-copyright, data-creator for the lightbox).
- */
+/** Wraps images of our media in a figure with copyright/creator credit (plus data attributes for the lightbox). */
 async function enrichContentHtmlWithMediaCredits(
   html: string,
   db: {
@@ -187,9 +177,7 @@ export const postsRouter = createTRPCRouter({
         ctx.db.post.count({ where }),
       ]);
 
-      // No markdown->HTML conversion for lists: only detail views (getById)
-      // render contentHtml; parsing every full article per list request was
-      // pure overhead.
+      // Lists skip markdown->HTML: only getById renders contentHtml.
       const posts = rawPosts;
 
       return {
@@ -199,10 +187,7 @@ export const postsRouter = createTRPCRouter({
       };
     }),
 
-  /**
-   * Accepts either the UUID or the slug. Public links use the slug; the
-   * dashboard and links shared before slugs existed still pass a UUID.
-   */
+  /** Accepts UUID or slug; the dashboard and older shared links still pass a UUID. */
   getById: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
@@ -398,9 +383,7 @@ export const postsRouter = createTRPCRouter({
         ctx.db.post.count({ where }),
       ]);
 
-      // No markdown->HTML conversion for lists: only detail views (getById)
-      // render contentHtml; parsing every full article per list request was
-      // pure overhead.
+      // Lists skip markdown->HTML: only getById renders contentHtml.
       const posts = rawPosts;
 
       return {
@@ -418,10 +401,8 @@ export const postsRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
-      // PENDING is the review marker itself — a separate pendingReview
-      // column never existed in the schema.
-      // Freigeben ist bewusst nicht bezirksgebunden: wer POSTS_APPROVE hat
-      // (Admin, LPW, RPW), prüft für das ganze Werk.
+      // PENDING is the review marker itself; there is no pendingReview column.
+      // Freigeben ist bewusst nicht bezirksgebunden: POSTS_APPROVE prüft für das ganze Werk.
       const where: { status: ContentStatus } = {
         status: ContentStatus.PENDING,
       };
@@ -441,9 +422,7 @@ export const postsRouter = createTRPCRouter({
         ctx.db.post.count({ where }),
       ]);
 
-      // No markdown->HTML conversion for lists: only detail views (getById)
-      // render contentHtml; parsing every full article per list request was
-      // pure overhead.
+      // Lists skip markdown->HTML: only getById renders contentHtml.
       const posts = rawPosts;
 
       return {

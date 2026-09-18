@@ -85,9 +85,6 @@ jobs:
           SKIP_ENV_VALIDATION: 1
           NODE_ENV: production
           NEXT_TELEMETRY_DISABLED: 1
-          # Add other non-secret env vars needed for build
-          # BETTER_AUTH_SECRET: dummy-secret-for-build
-          # BETTER_AUTH_URL: http://localhost:3000
 
       - name: Check build output
         run: |

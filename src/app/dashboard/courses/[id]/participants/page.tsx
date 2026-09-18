@@ -95,8 +95,6 @@ const siblingDiscountStatusTones: Record<SiblingDiscountStatus, TagTone> = {
   REJECTED: "ink",
 };
 
-// Dashboard access is now controlled by permissions
-
 type ExportFormat = "csv" | "excel" | "json";
 
 function escapeCSVValue(value: string): string {
@@ -357,11 +355,7 @@ export default function CourseParticipantsPage() {
     [registrationsData, statusFilter, paymentFilter, searchQuery],
   );
 
-  /**
-   * Die Teilnehmer-Ansicht zeigt eine Zeile je Teilnehmer:in — die Anmeldung
-   * bleibt an der Zeile hängen, damit Status, Anmelder:in und der Link zur
-   * Anmeldung als eigene Spalten sortierbar und filterbar sind.
-   */
+  /** Eine Zeile je Teilnehmer:in, mit der Anmeldung dran für sortierbare Spalten. */
   const participantRows = useMemo<ParticipantRow[]>(
     () =>
       filteredRegistrations.flatMap((registration) =>
@@ -570,9 +564,8 @@ export default function CourseParticipantsPage() {
     isOwner || hasViewParticipantsPermission || hasCourseTeamAccess;
 
   const canCreateInvoices = hasApprovePermission || hasCourseTeamAccess;
-  // Same rule as registrations.createByStaff / updateMyRegistration server-side:
-  // the course team and registration managers may add and edit registrations
-  // regardless of the public deadline.
+  // Same rule as registrations.createByStaff server-side: team and managers
+  // may add and edit registrations regardless of the deadline.
   const canManageRegistrations =
     isOwner || hasCourseTeamAccess || hasManageRegistrationsPermission;
 
@@ -660,9 +653,8 @@ export default function CourseParticipantsPage() {
     ) ?? false;
 
   /**
-   * Excel entsteht auf dem Server: exceljs gehört nicht ins Browser-Bundle,
-   * und derselbe Baustein schreibt die Liste, die nach Anmeldeschluss per
-   * E-Mail herausgeht. Mitgeschickt wird nur die gefilterte Auswahl.
+   * Excel entsteht auf dem Server (exceljs gehört nicht ins Browser-Bundle);
+   * mitgeschickt wird nur die gefilterte Auswahl.
    */
   const handleXlsxExport = async () => {
     setExportingXlsx(true);
@@ -788,7 +780,6 @@ export default function CourseParticipantsPage() {
   return (
     <main className="programm font-programm dark:bg-night dark:text-night-text bg-paper text-ink min-h-screen">
       <div className="container mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Breadcrumb */}
         <nav aria-label="Brotkrumen" className="mb-4">
           <ol className="semi-condensed text-dark dark:text-night-muted -ml-1 flex flex-wrap items-center text-sm font-semibold">
             <li>
@@ -835,7 +826,6 @@ export default function CourseParticipantsPage() {
           </ol>
         </nav>
 
-        {/* Header */}
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="condensed dark:text-night-text text-ink text-2xl leading-tight font-bold sm:text-[1.75rem]">
@@ -857,7 +847,6 @@ export default function CourseParticipantsPage() {
                 Anmeldung hinzufügen
               </Link>
             )}
-            {/* Mail all registrants */}
             {canMailRegistrants && (
               <Link
                 href={`/dashboard/courses/${courseId}/mail`}
@@ -867,7 +856,6 @@ export default function CourseParticipantsPage() {
                 Anschreiben
               </Link>
             )}
-            {/* Export Button */}
             <div className="relative" ref={exportMenuRef}>
               <button
                 onClick={() => setShowExportMenu(!showExportMenu)}
@@ -919,8 +907,7 @@ export default function CourseParticipantsPage() {
                 </div>
               )}
             </div>
-            {/* Back Button — redundant on phones: the breadcrumb above already
-                links to the course, so this only cost a second row of buttons. */}
+            {/* Hidden on phones: the breadcrumb already links to the course. */}
             <Link
               href={`/dashboard/courses/${courseId}`}
               className="border-rule dark:border-night-rule text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised hidden min-h-11 items-center gap-2 border px-4 py-2 text-sm font-medium transition-colors sm:inline-flex"
@@ -931,7 +918,6 @@ export default function CourseParticipantsPage() {
           </div>
         </div>
 
-        {/* Stats */}
         <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <div className="bg-rule/25 dark:bg-night-raised p-4">
             <div className="dark:text-night-text text-ink text-2xl font-bold">
@@ -975,8 +961,7 @@ export default function CourseParticipantsPage() {
           </div>
         </div>
 
-        {/* Warteliste: freie Plätze, Wartende und der Knopf zum Nachrücken —
-            automatisch rückt niemand mehr nach. */}
+        {/* Nachrücken nur per Knopf, nie automatisch. */}
         {canManageRegistrations && (
           <WaitlistPromotionPanel
             courseId={courseId}
@@ -986,7 +971,6 @@ export default function CourseParticipantsPage() {
           />
         )}
 
-        {/* View Mode Toggle & Filters */}
         <div className="border-rule dark:border-night-rule mb-6 border p-4">
           <div className="dark:border-night-rule border-rule mb-4 flex flex-wrap items-center justify-between gap-4 border-b pb-4">
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
@@ -1022,7 +1006,6 @@ export default function CourseParticipantsPage() {
                 </button>
               </div>
             </div>
-            {/* Custom Fields Toggle */}
             {course.customFields && course.customFields.length > 0 && (
               <label className="flex cursor-pointer items-center gap-2">
                 <input
@@ -1038,7 +1021,6 @@ export default function CourseParticipantsPage() {
             )}
           </div>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-            {/* Search */}
             <div className="flex-1">
               <div className="relative">
                 <SearchIcon className="text-dark dark:text-night-muted absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
@@ -1052,7 +1034,6 @@ export default function CourseParticipantsPage() {
               </div>
             </div>
 
-            {/* Status Filter */}
             <div className="flex items-center gap-2">
               <label className="dark:text-night-text text-ink text-sm font-medium">
                 Status:
@@ -1074,7 +1055,6 @@ export default function CourseParticipantsPage() {
               </Select>
             </div>
 
-            {/* Payment Filter */}
             <div className="flex items-center gap-2">
               <label className="dark:text-night-text text-ink text-sm font-medium">
                 Zahlung:
@@ -1103,7 +1083,6 @@ export default function CourseParticipantsPage() {
           </div>
         </div>
 
-        {/* Content based on view mode */}
         <div className="border-rule dark:border-night-rule border">
           {registrationsLoading ? (
             <div className="flex items-center justify-center py-12">
@@ -1124,9 +1103,7 @@ export default function CourseParticipantsPage() {
               </p>
             </div>
           ) : viewMode === "participants" ? (
-            /* Participants Table View — eine Zeile je Teilnehmer:in, quer über
-               alle Anmeldungen, mit Sortierung und Spaltenfiltern. Die Suche
-               bleibt oben in der Leiste: sie gilt für beide Ansichten. */
+            /* Suche bleibt oben in der Leiste, sie gilt für beide Ansichten. */
             <DataTable
               data={participantRows}
               columns={participantColumns}
@@ -1139,9 +1116,7 @@ export default function CourseParticipantsPage() {
               className="p-4 sm:p-6"
             />
           ) : (
-            /* Registrations List View */
             <div>
-              {/* Selection toolbar */}
               <div className="dark:border-night-rule dark:bg-night-raised bg-rule/25 flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3 sm:px-6">
                 <label className="dark:text-night-text text-ink flex min-h-11 cursor-pointer items-center gap-2 text-sm font-medium">
                   <input
@@ -1199,7 +1174,6 @@ export default function CourseParticipantsPage() {
               <div className="dark:divide-night-rule divide-rule divide-y">
                 {filteredRegistrations.map((registration) => (
                   <div key={registration.id} className="p-4 sm:p-6">
-                    {/* Registration Header */}
                     <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
                       <div className="flex items-start gap-3">
                         <input
@@ -1304,7 +1278,6 @@ export default function CourseParticipantsPage() {
                       </div>
                     </div>
 
-                    {/* Participants Table */}
                     {registration.participants.length > 0 && (
                       <div className="dark:border-night-rule border-rule overflow-x-auto border">
                         <table className="dark:divide-night-rule divide-rule w-full divide-y">
@@ -1325,7 +1298,6 @@ export default function CourseParticipantsPage() {
                               <th className="text-dark dark:text-night-muted px-4 py-3 text-left text-xs font-medium tracking-wider uppercase">
                                 Preiskategorie
                               </th>
-                              {/* Custom Fields Headers */}
                               {showCustomFields &&
                                 course.customFields?.map((field) => (
                                   <th
@@ -1358,7 +1330,6 @@ export default function CourseParticipantsPage() {
                                     course.priceOptions,
                                   ) || "–"}
                                 </td>
-                                {/* Custom Fields Values */}
                                 {showCustomFields &&
                                   course.customFields?.map((field) => (
                                     <td
@@ -1378,7 +1349,6 @@ export default function CourseParticipantsPage() {
                       </div>
                     )}
 
-                    {/* Registration Footer */}
                     <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-sm">
                       <span className="text-dark dark:text-night-muted">
                         Angemeldet am{" "}
@@ -1399,7 +1369,6 @@ export default function CourseParticipantsPage() {
                       </div>
                     </div>
 
-                    {/* Notes */}
                     {registration.notes && (
                       <div className="dark:bg-night-raised bg-rule/25 mt-3 p-3">
                         <p className="text-dark dark:text-night-muted text-sm">
@@ -1415,7 +1384,6 @@ export default function CourseParticipantsPage() {
           )}
         </div>
 
-        {/* Results count */}
         {filteredRegistrations.length > 0 && (
           <div className="text-dark dark:text-night-muted mt-4 text-center text-sm">
             {filteredRegistrations.length} von{" "}

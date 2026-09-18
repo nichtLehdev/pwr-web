@@ -1,22 +1,15 @@
 /**
- * Core System Permissions
- *
- * These permissions are hardcoded and seeded into the database as system permissions.
- * They represent the core functionality of the application and cannot be deleted/modified via UI.
- *
- * Permission keys follow the pattern: {resource}.{action}
- * Examples: events.create, posts.approve, users.manage
+ * System permissions, seeded into the database and not editable via UI.
+ * Keys follow `{resource}.{action}`.
  */
 
 export const PERMISSIONS = {
-  // Events
   EVENTS_CREATE: "events.create",
   EVENTS_EDIT: "events.edit",
   EVENTS_DELETE: "events.delete",
   EVENTS_APPROVE: "events.approve",
   EVENTS_VIEW: "events.view",
 
-  // Courses
   COURSES_CREATE: "courses.create",
   COURSES_EDIT: "courses.edit",
   COURSES_DELETE: "courses.delete",
@@ -29,33 +22,28 @@ export const PERMISSIONS = {
   REGISTRATIONS_MANAGE_SIBLING_DISCOUNT:
     "registrations.manage_sibling_discount",
 
-  // Posts
   POSTS_CREATE: "posts.create",
   POSTS_EDIT: "posts.edit",
   POSTS_DELETE: "posts.delete",
   POSTS_APPROVE: "posts.approve",
   POSTS_VIEW: "posts.view",
 
-  // Users
   USERS_MANAGE: "users.manage",
   USERS_VIEW: "users.view",
   USERS_EDIT_ROLES: "users.edit_roles",
 
-  // Media
   MEDIA_UPLOAD: "media.upload",
   MEDIA_EDIT: "media.edit",
   MEDIA_DELETE: "media.delete",
   MEDIA_APPROVE: "media.approve",
   MEDIA_VIEW: "media.view",
 
-  // Downloads
   DOWNLOADS_UPLOAD: "downloads.upload",
   DOWNLOADS_EDIT: "downloads.edit",
   DOWNLOADS_DELETE: "downloads.delete",
   DOWNLOADS_APPROVE: "downloads.approve",
   DOWNLOADS_VIEW: "downloads.view",
 
-  // Organization
   ORGANIZATION_MANAGE_TEAM: "organization.manage_team",
   ORGANIZATION_MANAGE_VORSTAND: "organization.manage_vorstand",
   ORGANIZATION_MANAGE_POSAUNENRAT: "organization.manage_posaunenrat",
@@ -66,56 +54,42 @@ export const PERMISSIONS = {
   ORGANIZATION_MANAGE_BEZIRKE: "organization.manage_bezirke",
   ORGANIZATION_MANAGE_LOCATIONS: "organization.manage_locations",
 
-  // Homepage
   HOMEPAGE_MANAGE: "homepage.manage",
 
-  // Newsletter
   NEWSLETTER_MANAGE: "newsletter.manage",
   NEWSLETTER_SEND: "newsletter.send",
 
-  // Statistics
   STATS_VIEW: "stats.view",
 
-  // Data Export/Import
   DATA_EXPORT: "data.export",
   DATA_IMPORT: "data.import",
 
-  // Invoices/Billing
   INVOICES_GENERATE: "invoices.generate",
   INVOICES_VIEW: "invoices.view",
   INVOICES_MANAGE: "invoices.manage",
 
-  // System Administration
   SYSTEM_MANAGE: "system.manage",
   SYSTEM_VIEW_LOGS: "system.view_logs",
   SYSTEM_BACKUP: "system.backup",
 
-  // Email Management
   EMAIL_MANAGE_TEMPLATES: "email.manage_templates",
   EMAIL_MANAGE_SETTINGS: "email.manage_settings",
 
-  // Ensembles & Auswahlchoere
   ENSEMBLES_DELETE: "ensembles.delete",
   AUSWAHLCHOERE_DELETE: "auswahlchoere.delete",
 
-  // Advanced User Management
   USERS_MANAGE_2FA: "users.manage_2fa",
   USERS_IMPERSONATE: "users.impersonate",
 
-  // Content Moderation
   CONTENT_BULK_MODERATE: "content.bulk_moderate",
   CONTENT_ARCHIVE: "content.archive",
 
-  // Permissions Management (meta-permission)
   PERMISSIONS_MANAGE: "permissions.manage",
 
-  // Audit Log
   AUDIT_VIEW: "audit.view",
 
-  // Organization History
   ORGANIZATION_MANAGE_HISTORY: "organization.manage_history",
 
-  // Bläserhefte
   DOWNLOADS_MANAGE_BLAESERHEFTE: "downloads.manage_blaeserhefte",
 } as const;
 
@@ -133,17 +107,13 @@ export const permissionKeySchema = z
     message: "Invalid permission key",
   });
 
-/**
- * Permission definitions for seeding
- * These are used to create system permissions in the database
- */
+/** Seed data for the system permissions. */
 export const PERMISSION_DEFINITIONS: Array<{
   key: PermissionKey;
   name: string;
   description: string;
   category: string;
 }> = [
-  // Events
   {
     key: PERMISSIONS.EVENTS_CREATE,
     name: "Events erstellen",
@@ -175,7 +145,6 @@ export const PERMISSION_DEFINITIONS: Array<{
     category: "events",
   },
 
-  // Courses
   {
     key: PERMISSIONS.COURSES_CREATE,
     name: "Kurse erstellen",
@@ -241,7 +210,6 @@ export const PERMISSION_DEFINITIONS: Array<{
     category: "courses",
   },
 
-  // Posts
   {
     key: PERMISSIONS.POSTS_CREATE,
     name: "Beiträge erstellen",
@@ -273,7 +241,6 @@ export const PERMISSION_DEFINITIONS: Array<{
     category: "posts",
   },
 
-  // Users
   {
     key: PERMISSIONS.USERS_MANAGE,
     name: "Benutzer verwalten",
@@ -293,7 +260,6 @@ export const PERMISSION_DEFINITIONS: Array<{
     category: "users",
   },
 
-  // Media
   {
     key: PERMISSIONS.MEDIA_UPLOAD,
     name: "Medien hochladen",
@@ -325,7 +291,6 @@ export const PERMISSION_DEFINITIONS: Array<{
     category: "media",
   },
 
-  // Downloads
   {
     key: PERMISSIONS.DOWNLOADS_UPLOAD,
     name: "Downloads hochladen",
@@ -357,7 +322,6 @@ export const PERMISSION_DEFINITIONS: Array<{
     category: "downloads",
   },
 
-  // Organization
   {
     key: PERMISSIONS.ORGANIZATION_MANAGE_TEAM,
     name: "Team verwalten",
@@ -413,7 +377,6 @@ export const PERMISSION_DEFINITIONS: Array<{
     category: "organization",
   },
 
-  // Homepage
   {
     key: PERMISSIONS.HOMEPAGE_MANAGE,
     name: "Homepage verwalten",
@@ -421,7 +384,6 @@ export const PERMISSION_DEFINITIONS: Array<{
     category: "homepage",
   },
 
-  // Newsletter
   {
     key: PERMISSIONS.NEWSLETTER_MANAGE,
     name: "Newsletter verwalten",
@@ -435,7 +397,6 @@ export const PERMISSION_DEFINITIONS: Array<{
     category: "newsletter",
   },
 
-  // Statistics
   {
     key: PERMISSIONS.STATS_VIEW,
     name: "Statistiken ansehen",
@@ -443,7 +404,6 @@ export const PERMISSION_DEFINITIONS: Array<{
     category: "stats",
   },
 
-  // Data Export/Import
   {
     key: PERMISSIONS.DATA_EXPORT,
     name: "Daten exportieren",
@@ -457,7 +417,6 @@ export const PERMISSION_DEFINITIONS: Array<{
     category: "data",
   },
 
-  // Invoices/Billing
   {
     key: PERMISSIONS.INVOICES_GENERATE,
     name: "Rechnungen erstellen",
@@ -479,7 +438,6 @@ export const PERMISSION_DEFINITIONS: Array<{
     category: "invoices",
   },
 
-  // System Administration
   {
     key: PERMISSIONS.SYSTEM_MANAGE,
     name: "System verwalten",
@@ -499,7 +457,6 @@ export const PERMISSION_DEFINITIONS: Array<{
     category: "system",
   },
 
-  // Email Management
   {
     key: PERMISSIONS.EMAIL_MANAGE_TEMPLATES,
     name: "E-Mail-Vorlagen verwalten",
@@ -513,7 +470,6 @@ export const PERMISSION_DEFINITIONS: Array<{
     category: "email",
   },
 
-  // Ensembles & Auswahlchoere
   {
     key: PERMISSIONS.ENSEMBLES_DELETE,
     name: "Ensembles löschen",
@@ -527,7 +483,6 @@ export const PERMISSION_DEFINITIONS: Array<{
     category: "auswahlchoere",
   },
 
-  // Advanced User Management
   {
     key: PERMISSIONS.USERS_MANAGE_2FA,
     name: "2FA für Benutzer verwalten",
@@ -542,7 +497,6 @@ export const PERMISSION_DEFINITIONS: Array<{
     category: "users",
   },
 
-  // Content Moderation
   {
     key: PERMISSIONS.CONTENT_BULK_MODERATE,
     name: "Inhalte massenweise moderieren",
@@ -557,7 +511,6 @@ export const PERMISSION_DEFINITIONS: Array<{
     category: "content",
   },
 
-  // Permissions Management
   {
     key: PERMISSIONS.PERMISSIONS_MANAGE,
     name: "Berechtigungen verwalten",
@@ -572,7 +525,6 @@ export const PERMISSION_DEFINITIONS: Array<{
     category: "system",
   },
 
-  // Organization History
   {
     key: PERMISSIONS.ORGANIZATION_MANAGE_HISTORY,
     name: "Historie verwalten",
@@ -580,7 +532,6 @@ export const PERMISSION_DEFINITIONS: Array<{
     category: "organization",
   },
 
-  // Bläserhefte
   {
     key: PERMISSIONS.DOWNLOADS_MANAGE_BLAESERHEFTE,
     name: "Bläserhefte verwalten",

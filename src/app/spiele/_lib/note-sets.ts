@@ -10,9 +10,8 @@ import {
 } from "../(spiel)/noten-lesen/_lib/pitch";
 
 /**
- * Gemeinsames Client-Modell für Notensets aus der öffentlichen Bibliothek.
- * Ein Set = benannte Liste geschriebener Tonhöhen in einem Schlüssel; jedes
- * Spiel entscheidet selbst, ob und wie es das Set spielen kann.
+ * Client-Modell für Notensets: benannte Liste geschriebener Tonhöhen in einem Schlüssel.
+ * Jedes Spiel entscheidet selbst, ob es das Set spielen kann.
  */
 
 export type NoteSetSummary = {
@@ -50,11 +49,7 @@ export const NOTE_SET_CLEF_MIDI_BOUNDS: Record<
 
 const LETTERS: GermanLetter[] = ["C", "D", "E", "F", "G", "A", "H"];
 
-/**
- * Alle wählbaren Schreibweisen im Schlüsselbereich, gruppiert nach Oktave.
- * Jede Schreibweise (Es4, E4, Eis4 …) ist ein eigener Eintrag — genau die
- * Granularität, mit der Sets gebaut werden.
- */
+/** Wählbare Schreibweisen nach Oktave; jede (Es4, E4, Eis4 …) ist ein eigener Eintrag. */
 export function selectablePitchesByOctave(
   clef: ClefKind,
 ): { octave: number; pitches: WrittenPitch[] }[] {
@@ -143,11 +138,7 @@ export type NoteSetRow = {
   creator: { displayName: string | null; username: string | null } | null;
 };
 
-/**
- * tRPC-Zeile defensiv ins Client-Modell überführen.
- * Liefert null bei kaputten Daten (unbekannter Schlüssel, leere Notenliste),
- * damit die UI solche Zeilen still überspringen kann.
- */
+/** null bei kaputten Daten (unbekannter Schlüssel, leere Notenliste); die UI überspringt sie. */
 export function toNoteSetSummary(row: NoteSetRow): NoteSetSummary | null {
   if (!isValidClef(row.clef)) return null;
   const pitches = parseNoteSetPitches(row.pitches);

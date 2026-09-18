@@ -13,10 +13,7 @@ type DashboardFormMediaSplitProps = {
   mainColumnClassName?: string;
 };
 
-/**
- * Two-column layout: main fields + sticky aside (e.g. Titelbild) on large screens.
- * Shared rhythm for dashboard “Inhalt”-style splits; reuse on media-heavy edit forms.
- */
+/** Main fields plus sticky aside (e.g. Titelbild) on large screens. */
 export function DashboardFormMediaSplit({
   main,
   aside,

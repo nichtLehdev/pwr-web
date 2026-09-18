@@ -28,12 +28,7 @@ export function ParticipantLibraryPopup({
         className="fixed inset-0 z-100 bg-black/20 sm:hidden"
         onClick={onClose}
       />
-      {/* Popup */}
-      {/* Centred on a phone, anchored under its button from sm: up. It used to
-          be placed with an inline `top: headerHeight + 80px` kept in sync by a
-          resize listener — a measurement of the form header, which on the page
-          layout scrolls away and so said nothing about where the popup should
-          sit. */}
+      {/* Centred on a phone, anchored under its button from sm: up. */}
       <div
         className="border-ink dark:border-night-text bg-paper dark:bg-night fixed top-1/2 left-1/2 z-101 w-80 max-w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 border-2 sm:absolute sm:top-full sm:right-0 sm:left-auto sm:z-[102] sm:mt-1 sm:max-w-md sm:translate-x-0 sm:translate-y-0"
         onMouseDown={(e) => e.stopPropagation()}

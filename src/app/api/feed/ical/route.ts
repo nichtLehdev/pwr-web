@@ -9,9 +9,6 @@ import { createLogger } from "@/server/utils/logger";
 
 const log = createLogger("Feed");
 
-/**
- * Escapes special characters for iCal format
- */
 function escapeIcalText(text: string): string {
   return text
     .replace(/\\/g, "\\\\")
@@ -21,9 +18,7 @@ function escapeIcalText(text: string): string {
     .replace(/\r/g, "");
 }
 
-/**
- * Formats a date for iCal (YYYYMMDDTHHMMSSZ format in UTC)
- */
+/** YYYYMMDDTHHMMSSZ in UTC. */
 function formatIcalDate(date: Date): string {
   const year = date.getUTCFullYear();
   const month = String(date.getUTCMonth() + 1).padStart(2, "0");
@@ -34,9 +29,6 @@ function formatIcalDate(date: Date): string {
   return `${year}${month}${day}T${hours}${minutes}${seconds}Z`;
 }
 
-/**
- * Generates a unique ID for an event
- */
 function generateEventUid(eventId: string, baseUrl: string): string {
   const hostname = new URL(baseUrl).hostname;
   return `${eventId}@${hostname}`;
@@ -152,9 +144,7 @@ export async function GET(request: NextRequest) {
 
           const descriptionParts: string[] = [];
           if (event.description) {
-            // Klartext: Die Beschreibung ist Markdown, ein Kalender stellt
-            // nichts davon dar. Ohne diese Umwandlung stünden Sternchen,
-            // Raute und Linkklammern im Termin.
+            // Klartext: Kalender stellen kein Markdown dar.
             descriptionParts.push(markdownToPlainText(event.description));
           }
           if (event.motto) {
@@ -173,11 +163,8 @@ export async function GET(request: NextRequest) {
             descriptionParts.push(`Preis: ${event.priceInfo}`);
           }
           descriptionParts.push(`\nMehr Informationen: ${eventUrl}`);
-          // Echter Umbruch: Das iCal-Escapen erledigt `escapeIcalText`, das
-          // aus einem Umbruch die Folge Rückstrich-n macht. Vorher stand hier
-          // schon ein Rückstrich-n im Text, dessen Rückstrich dieselbe
-          // Funktion anschließend verdoppelte — im Kalender war die Folge
-          // daraufhin sichtbar, statt eine Zeile zu umbrechen.
+          // Echter Umbruch, kein `\n`: `escapeIcalText` escapt ihn selbst und
+          // würde einen vorab escapten Rückstrich verdoppeln.
           const description = descriptionParts.join("\n");
 
           let summary = event.title;

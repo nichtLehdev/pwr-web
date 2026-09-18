@@ -56,10 +56,8 @@ const maxSizeByFolder: Record<string, number> = {
   "course-mail": 10 * 1024 * 1024,
 };
 
-// `null` steht für ein beliebiges Byte. WebP und WAV sind beide RIFF-Container
-// und unterscheiden sich erst ab Byte 8 („WEBP“ bzw. „WAVE“, davor die
-// Länge). Mit nur „RIFF“ als Signatur käme jede WAV-Datei als image/webp
-// durch den Ordner `downloads`, der seit #309 beides annimmt.
+// `null` = beliebiges Byte. WebP und WAV sind beide RIFF und unterscheiden sich
+// erst ab Byte 8; mit nur „RIFF“ käme jede WAV als image/webp durch.
 const RIFF_ANY_SIZE = [0x52, 0x49, 0x46, 0x46, null, null, null, null];
 
 const magicBytes: Record<string, (number | null)[][]> = {
@@ -119,9 +117,8 @@ function validateMagicBytes(buffer: Buffer, claimedType: string): boolean {
   );
 }
 
-// The stored extension must come from the validated MIME type, never from the
-// client-supplied filename — otherwise a file validated as image/jpeg can be
-// stored (and later served) as .svg or .html.
+// Extension from the validated MIME type, never the client filename, or an
+// image/jpeg could be stored and served as .svg or .html.
 const mimeToExt: Record<string, string> = {
   "image/jpeg": "jpg",
   "image/jpg": "jpg",

@@ -158,7 +158,6 @@ export default function DashboardPosaunenwarteDetailPage() {
       }
       maxWidth="7xl"
     >
-      {/* Avatar and Role Badge */}
       <div className="mb-6 flex items-center gap-4">
         {member.profileImage?.url ? (
           <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full">
@@ -181,7 +180,6 @@ export default function DashboardPosaunenwarteDetailPage() {
         )}
       </div>
 
-      {/* Contact Info Card */}
       <div className="border-rule dark:border-night-rule dark:bg-night-raised bg-paper mb-6 border p-6">
         <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
           Kontaktinformationen
@@ -244,7 +242,6 @@ export default function DashboardPosaunenwarteDetailPage() {
         </dl>
       </div>
 
-      {/* Bezirk Responsibilities */}
       <div className="border-rule dark:border-night-rule dark:bg-night-raised bg-paper border p-6">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="condensed text-ink dark:text-night-text text-lg font-bold">
@@ -322,7 +319,6 @@ export default function DashboardPosaunenwarteDetailPage() {
         )}
       </div>
 
-      {/* Actions */}
       <div className="mt-6 flex flex-wrap gap-3">
         <Link
           href="/dashboard/posaunenwarte"

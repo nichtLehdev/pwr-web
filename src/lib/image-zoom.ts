@@ -17,9 +17,8 @@ export function zoomLabel(alt: string | null | undefined): string {
 }
 
 /**
- * Rechteck, das ein Bild mit `object-fit: contain` in seinem Element
- * tatsächlich einnimmt — mittig, auf die engere Seite skaliert. `null`, solange
- * die Vorlagengröße unbekannt ist (Bild noch nicht geladen).
+ * Rechteck, das ein Bild mit `object-fit: contain` tatsächlich einnimmt;
+ * `null`, solange die Vorlagengröße unbekannt ist (Bild noch nicht geladen).
  */
 export function containedRect(
   box: Box,

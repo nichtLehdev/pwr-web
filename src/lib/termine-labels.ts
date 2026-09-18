@@ -1,10 +1,6 @@
 /**
- * Beschriftungen der Termin-Kategorien für die öffentliche Terminseite.
- *
- * Die Filterleiste arbeitet mit den Klartexten und übersetzt sie in die
- * Datenbankwerte, die Listen gehen den umgekehrten Weg. Beide Richtungen aus
- * derselben Tabelle abzuleiten hält sie zusammen — sonst heißt `OTHER` im
- * Filter "Andere" und in der Liste "Other".
+ * Filter (Klartext → DB-Wert) und Listen (umgekehrt) aus derselben Tabelle, damit
+ * `OTHER` nicht im Filter "Andere" und in der Liste "Other" heißt.
  */
 export const EVENT_CATEGORY_MAP: Record<string, string> = {
   Konzert: "KONZERT",

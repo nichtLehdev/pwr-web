@@ -28,8 +28,7 @@ jobs:
         with:
           node-version: "22"
 
-      # Ohne `version` liest die Action das `packageManager`-Feld aus
-      # package.json — dieselbe Quelle, die auch pnpm selbst verwendet.
+      # Ohne `version` liest die Action `packageManager` aus package.json.
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
 
@@ -61,11 +60,8 @@ jobs:
         env:
           DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy
 
-  # `prisma validate` prüft nur, ob das Schema in sich stimmig ist. Es sagt
-  # nichts darüber, ob die Migrationen auf einer leeren Datenbank überhaupt
-  # durchlaufen — und genau das passiert beim Deploy auf mittwald. Schlägt es
-  # dort fehl, startet die App nicht (30 Versuche, dann Abbruch). Dieser Job
-  # zieht den Fehlschlag in die PR vor.
+  # `prisma validate` prüft nicht, ob die Migrationen auf leerer Datenbank laufen;
+  # scheitern sie beim Deploy auf mittwald, startet die App nicht.
   migrate-deploy:
     name: Migrations & Drift
     runs-on: ubuntu-latest
@@ -118,15 +114,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # Der eigentliche Test: alle Migrationen auf einer jungfräulichen
-      # Datenbank, so wie beim ersten Start auf einem neuen Server.
+      # Alle Migrationen auf leerer Datenbank, wie beim ersten Start auf neuem Server.
       - name: Apply all migrations from scratch
         run: pnpm prisma migrate deploy
 
-      # Fängt den Fall ab, dass jemand schema.prisma ändert und die passende
-      # Migration vergisst: die Datenbank läuft dann auseinander mit dem
-      # Client, den `prisma generate` erzeugt. --exit-code liefert 2, wenn ein
-      # Unterschied bleibt.
+      # Fängt eine vergessene Migration zu einer schema.prisma-Änderung ab;
+      # --exit-code liefert 2 bei Unterschied.
       - name: Check for schema drift
         run: >-
           pnpm prisma migrate diff
@@ -134,17 +127,14 @@ jobs:
           --to-schema prisma/schema.prisma
           --exit-code
 
-      # Beide Skripte laufen bei jedem Produktions-Deploy automatisch und sind
-      # dort bewusst "non-fatal" — ein Fehler würde also still durchgehen.
-      # Hier dürfen sie scheitern.
+      # Beim Deploy sind beide Skripte "non-fatal"; hier sollen Fehler auffallen.
       - name: Run post-migration setup
         run: pnpm tsx prisma/post-migration-setup.ts
 
       - name: Run slug backfill
         run: pnpm tsx prisma/backfill-slugs.ts
 
-      # Wiederholbarkeit ist die Eigenschaft, auf die sich die Deploy-Skripte
-      # verlassen: Sie laufen bei *jedem* Start, nicht nur beim ersten.
+      # Die Deploy-Skripte laufen bei *jedem* Start, müssen also wiederholbar sein.
       - name: Re-run setup and backfill (idempotency)
         run: |
           pnpm tsx prisma/post-migration-setup.ts

@@ -9,9 +9,6 @@ import { createLogger } from "@/server/utils/logger";
 
 const log = createLogger("Feed");
 
-/**
- * Escapes XML special characters
- */
 function escapeXml(unsafe: string): string {
   return unsafe
     .replace(/&/g, "&amp;")
@@ -21,9 +18,7 @@ function escapeXml(unsafe: string): string {
     .replace(/'/g, "&apos;");
 }
 
-/**
- * Formats a date for RSS (RFC 822 format)
- */
+/** RFC 822. */
 function formatRssDate(date: Date): string {
   return date.toUTCString();
 }

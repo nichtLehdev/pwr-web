@@ -13,10 +13,7 @@ export type NewsPost = RouterOutputs["posts"]["getAll"]["posts"][number];
 // Berliner Zeit: rendert auf dem Server, und der läuft in UTC.
 const DATE = berlinFormatter("datumLangZweistellig");
 
-/**
- * Beiträge ohne (oder mit kaputtem) Titelbild zeigen das Logo auf der
- * dunklen Bildfläche — so bleiben die Spalten gleich hoch aufgebaut.
- */
+/** Logo statt fehlendem oder kaputtem Titelbild, damit die Spalten gleich aufgebaut bleiben. */
 function LogoFallback() {
   return (
     <div className="flex h-full w-full items-center justify-center px-10">
@@ -54,9 +51,8 @@ export function NewsColumn({
 
   return (
     <article className="group flex h-full flex-col">
-      {/* `shrink-0`: Ohne das staucht die Flex-Spalte das Bildfeld, sobald
-          Titel oder Auszug länger werden — dann stehen die Überschriften der
-          Spalten nicht mehr auf einer Linie. */}
+      {/* `shrink-0`: Sonst staucht langer Text das Bildfeld, und die
+          Überschriften der Spalten stehen nicht mehr auf einer Linie. */}
       <div className="bg-ink dark:bg-night-raised relative mb-5 aspect-[3/2] shrink-0 overflow-hidden">
         <ImageWithFallback
           src={post.coverImage?.url}
@@ -140,13 +136,8 @@ export function NewsColumns({
   }
 
   return (
-    // Jede Spalte bekommt denselben Innenabstand auf beiden Seiten, das Raster
-    // wird um die Hälfte des Zwischenraums nach außen gezogen. Zwei Gründe:
-    // Hingen die Abstände am laufenden Index, wären die mittleren Spalten
-    // schmaler, ihre Bildfelder niedriger und die Überschriften stünden nicht
-    // mehr auf einer Linie. Und läge der Abstand nur links, säße die
-    // Haarlinie bündig an der vorigen Spalte statt zwischen beiden — gemessen
-    // 0px zur linken und 41px zur rechten Spalte.
+    // Gleicher Innenabstand beidseits jeder Spalte, Raster um den halben Abstand
+    // nach außen gezogen: So bleiben alle Spalten gleich breit und die Haarlinie mittig.
     <ul className="grid lg:-mx-5 lg:grid-cols-3">
       {posts.map((post, i) => (
         <li

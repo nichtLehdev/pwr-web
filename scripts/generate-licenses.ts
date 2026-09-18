@@ -1,17 +1,7 @@
 /**
- * Regenerates src/lib/licenses.generated.ts from the packages we depend on
- * directly, i.e. the ones listed in our own package.json.
- *
- * The licence page used to be a hand-maintained list in the Impressum. It named
- * 15 packages while 45 were shipping — a list that goes stale silently is worse
- * than none, so it is derived now and runs as part of `pnpm build`.
- *
- * Each package's own copyright line comes along: MIT, ISC and BSD all require
- * the notice to travel with the software, and that notice differs per package
- * while the licence body does not.
- *
- * Fails soft on purpose: a build must not break because `pnpm licenses` could
- * not run. The previously generated (and committed) file then stays in place.
+ * Regenerates src/lib/licenses.generated.ts from our direct dependencies on every `pnpm build`.
+ * Keeps each package's copyright line: MIT, ISC and BSD require the notice to travel along.
+ * Fails soft: a build must not break because `pnpm licenses` failed; the committed file stays.
  */
 import { execFileSync } from "child_process";
 import { readdirSync, readFileSync, statSync, writeFileSync } from "fs";
@@ -46,11 +36,7 @@ function directDependencies(): Set<string> {
   return new Set(Object.keys(pkg.dependencies ?? {}));
 }
 
-/**
- * The copyright line out of a package's own LICENSE file. Apache-2.0 packages
- * usually ship the bare licence with no such line — null is the right answer
- * there, not a fabricated notice.
- */
+/** Copyright line from the package's LICENSE; null (never a made-up notice) for bare Apache-2.0. */
 function copyrightNotice(packagePath: string | undefined): string | null {
   if (!packagePath) return null;
   try {

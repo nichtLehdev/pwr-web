@@ -127,24 +127,20 @@ export default function NewLocationPage() {
       ]}
       maxWidth="7xl"
     >
-      {/* Error */}
       {error && (
         <div className="mb-6 border-l-4 border-red-600 bg-red-50 p-4 text-red-700 dark:border-red-400 dark:bg-red-900/20 dark:text-red-400">
           {error}
         </div>
       )}
 
-      {/* Form */}
       <form onSubmit={handleSubmit}>
         <div className="space-y-6">
-          {/* Basic Information */}
           <Card>
             <CardHeader>
               <CardTitle>Grundinformationen</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                {/* Address search */}
                 <AddressAutocomplete
                   onSelect={(suggestion) => {
                     if (suggestion.name) setName(suggestion.name);
@@ -157,7 +153,6 @@ export default function NewLocationPage() {
                   }}
                 />
 
-                {/* Name */}
                 <div>
                   <Label>Name</Label>
                   <Input
@@ -173,7 +168,6 @@ export default function NewLocationPage() {
                   </p>
                 </div>
 
-                {/* City */}
                 <div>
                   <Label required>Stadt</Label>
                   <Input
@@ -187,7 +181,6 @@ export default function NewLocationPage() {
                   />
                 </div>
 
-                {/* Country */}
                 <div>
                   <Label>Land</Label>
                   <Input
@@ -200,7 +193,6 @@ export default function NewLocationPage() {
                   />
                 </div>
 
-                {/* Street */}
                 <div>
                   <Label>Straße</Label>
                   <Input
@@ -213,7 +205,6 @@ export default function NewLocationPage() {
                   />
                 </div>
 
-                {/* Zip Code */}
                 <div>
                   <Label>Postleitzahl</Label>
                   <Input
@@ -226,7 +217,6 @@ export default function NewLocationPage() {
                   />
                 </div>
 
-                {/* Additional Info */}
                 <div>
                   <Label>Zusätzliche Informationen</Label>
                   <Textarea
@@ -244,14 +234,12 @@ export default function NewLocationPage() {
             </CardContent>
           </Card>
 
-          {/* Coordinates */}
           <Card>
             <CardHeader>
               <CardTitle>Koordinaten (für Kartenanzeige)</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                {/* Latitude */}
                 <div>
                   <Label>Breitengrad (Latitude)</Label>
                   <Input
@@ -266,7 +254,6 @@ export default function NewLocationPage() {
                   </p>
                 </div>
 
-                {/* Longitude */}
                 <div>
                   <Label>Längengrad (Longitude)</Label>
                   <Input
@@ -284,7 +271,6 @@ export default function NewLocationPage() {
             </CardContent>
           </Card>
 
-          {/* Actions */}
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
             <Button
               type="submit"

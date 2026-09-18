@@ -29,11 +29,8 @@ import { formatBerlin } from "@/lib/berlin-time";
 const log = createLogger("Utils");
 
 /**
- * Anriss einer Termin-Beschreibung für den Newsletter-Entwurf.
- *
- * Klartext, obwohl der Entwurf selbst Markdown ist: Der Anriss wird auf 200
- * Zeichen gekürzt, und ein Schnitt mitten in `[Text](URL)` oder hinter einem
- * einzelnen `**` hätte die Auszeichnung des restlichen Entwurfs verschoben.
+ * Anriss als Klartext: Ein Schnitt mitten in Markdown-Auszeichnung würde den
+ * restlichen Newsletter-Entwurf verschieben.
  */
 function kurzerAnriss(markdown: string, maxLength = 200): string {
   const text = markdownToSingleLine(markdown);
@@ -301,11 +298,7 @@ export const locationsRouter = createTRPCRouter({
       return locations;
     }),
 
-  /**
-   * Type-ahead address lookup for the location forms. Permission-gated (only
-   * dashboard users create locations) and throttled on top, so a stuck input
-   * can't hammer Photon on our behalf.
-   */
+  /** Permission-gated and throttled, so a stuck input can't hammer Photon on our behalf. */
   searchAddress: permissionProcedure(PERMISSIONS.ORGANIZATION_MANAGE_LOCATIONS)
     .use(async ({ ctx, next }) => {
       const key = `trpc:locations.searchAddress:${clientKeyFromHeaders(
@@ -344,16 +337,8 @@ export const locationsRouter = createTRPCRouter({
 });
 
 export const newsletterRouter = createTRPCRouter({
-  // NOTE: subscribing goes exclusively through POST /api/newsletter/subscribe,
-  // which creates the row unconfirmed and mails the double-opt-in link. A
-  // tRPC variant used to exist here and marked new subscribers active
-  // immediately — a way around the confirmation, and a way to sign up
-  // addresses you do not own.
-
-  // NOTE: unsubscribing goes exclusively through POST
-  // /api/newsletter/unsubscribe, which verifies the signed token from the
-  // newsletter link. A token-less tRPC variant used to exist here and let
-  // anyone unsubscribe arbitrary addresses.
+  // No subscribe/unsubscribe here: only /api/newsletter/* enforces the double
+  // opt-in and the signed unsubscribe token.
 
   getSubscribers: permissionProcedure(PERMISSIONS.NEWSLETTER_MANAGE)
     .input(
@@ -361,11 +346,7 @@ export const newsletterRouter = createTRPCRouter({
         page: z.number().min(1).default(1),
         limit: z.number().min(1).max(250).default(50),
         isActive: z.boolean().optional(),
-        /**
-         * Set filter over the three states the list shows. `confirmed` is what
-         * a newsletter actually reaches; `pending` signed up but never clicked
-         * the confirmation link.
-         */
+        /** `confirmed` is what a newsletter reaches; `pending` never clicked the confirmation link. */
         status: z
           .array(z.enum(["confirmed", "pending", "inactive"]))
           .optional(),
@@ -499,11 +480,8 @@ export const newsletterRouter = createTRPCRouter({
       };
 
       /**
-       * One-click unsubscribe (RFC 8058). Gmail and Yahoo expect it from bulk
-       * senders, but the reason to want it is narrower: an unsubscribe button
-       * in the client's own chrome is what stops people reaching for "mark as
-       * spam" instead, and it is the complaint rate — not the volume — that
-       * costs a sending domain its reputation.
+       * One-click unsubscribe (RFC 8058): expected by Gmail/Yahoo, and it keeps
+       * people from hitting "mark as spam", which costs domain reputation.
        */
       const unsubscribeHeaders = (oneClickUrl: string) => ({
         "List-Unsubscribe": `<${oneClickUrl}>`,
@@ -559,9 +537,8 @@ export const newsletterRouter = createTRPCRouter({
       let successCount = 0;
       let errorCount = 0;
 
-      // Send in bounded-concurrency batches: a strictly sequential loop over
-      // hundreds of subscribers at SMTP latency runs into request timeouts,
-      // while unbounded Promise.all would hammer the SMTP server.
+      // Bounded batches: sequential sends hit request timeouts, unbounded
+      // Promise.all would hammer the SMTP server.
       const BATCH_SIZE = 10;
       for (let i = 0; i < subscribers.length; i += BATCH_SIZE) {
         const batch = subscribers.slice(i, i + BATCH_SIZE);

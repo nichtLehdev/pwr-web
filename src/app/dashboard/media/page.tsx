@@ -63,11 +63,7 @@ const SORTABLE_COLUMNS = {
 
 type SortableColumn = keyof typeof SORTABLE_COLUMNS;
 
-/**
- * Schnellfilter der Redaktion. Die zwei „fehlt noch“-Filter laufen auf dem
- * Server, damit sie über den gesamten Bestand greifen und nicht nur über die
- * gerade geladene Seite.
- */
+/** Schnellfilter der Redaktion; laufen auf dem Server, damit sie den ganzen Bestand erfassen. */
 type QuickFilter = "all" | "pending" | "missingAlt" | "missingCopyright";
 
 const QUICK_FILTERS: { value: QuickFilter; label: string }[] = [
@@ -78,16 +74,8 @@ const QUICK_FILTERS: { value: QuickFilter; label: string }[] = [
 ];
 
 /**
- * Spiegelt die Zuordnung aus `content-status.tsx` — derselbe Status muss
- * überall gleich aussehen. `Tag` hat inzwischen einen fünften, umrandeten
- * Ton (`muted`) für genau diesen Fall: Entwurf und Archiviert sind reine
- * Ablagezustände ohne Handlungsbedarf und standen bisher gefüllt, also so
- * laut wie „Veröffentlicht".
- *
- * Gefüllt heißt „das musst du sehen", umrandet „das ist nur der Stand".
- *
- * Dass diese Tabelle hier überhaupt doppelt steht, bleibt ein offener Punkt —
- * richtig wäre `ContentStatusBadge` aus `content-status.tsx`.
+ * Spiegelt die Zuordnung aus `content-status.tsx` — derselbe Status muss überall gleich aussehen.
+ * TODO: durch `ContentStatusBadge` aus `content-status.tsx` ersetzen.
  */
 const STATUS_TONE: Record<ContentStatus, TagTone> = {
   DRAFT: "muted",
@@ -141,11 +129,7 @@ export default function DashboardMediaPage() {
   const canDelete = hasPermission(PERMISSIONS.MEDIA_DELETE) || canApprove;
   const canEdit = hasPermission(PERMISSIONS.MEDIA_EDIT) || canApprove;
 
-  /**
-   * Status- und „fehlt noch“-Filter gehen als Abfrageparameter mit. Früher
-   * filterte die Seite die geladenen Zeilen im Browser — bei 20 Zeilen pro
-   * Seite blieb „Ausstehend“ dann leer, obwohl auf Seite 3 welche lagen.
-   */
+  // Filter gehen als Abfrageparameter mit, sonst sähen sie nur die geladene Seite.
   const statusArgument = useMemo(() => {
     if (quickFilter === "pending") return [ContentStatus.PENDING];
     if (statusFilter) return [statusFilter];
@@ -230,8 +214,7 @@ export default function DashboardMediaPage() {
     onError: (error) => toast.error(error.message),
   });
 
-  // Zuschnitt direkt aus der Übersicht (Kachel oder Tabellenzeile). Im
-  // Bearbeiten-Dialog steckt derselbe Hook, dort aber über dem Formular.
+  // Zuschnitt direkt aus der Übersicht (Kachel oder Tabellenzeile).
   const { replace: replaceFile } = useReplaceMediaFile(() => {
     invalidate();
     setRecropId(null);
@@ -519,9 +502,7 @@ export default function DashboardMediaPage() {
           </div>
         )}
 
-        {/* Filterleiste. Die Auswahlfelder tragen eine feste Breite: als reine
-            `w-full`-Elemente in einer Flex-Zeile drängten sie das Suchfeld auf
-            34 Pixel zusammen. */}
+        {/* Auswahlfelder mit fester Breite: als `w-full` drücken sie das Suchfeld zusammen. */}
         <div className="border-rule dark:border-night-rule mb-4 space-y-3 border p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <input
@@ -594,10 +575,7 @@ export default function DashboardMediaPage() {
             </div>
           </div>
 
-          {/* Register statt Kästen: dieselbe Eins-aus-N-Wahl wie der
-              Statusfilter der öffentlichen Anmeldungsseite, mit derselben
-              Optik — Unterstrich statt gefüllter Pille. aria-pressed bleibt,
-              denn hier wird gefiltert, nicht navigiert. */}
+          {/* aria-pressed statt aria-current: Hier wird gefiltert, nicht navigiert. */}
           <div
             role="group"
             aria-label="Schnellfilter"
@@ -625,8 +603,6 @@ export default function DashboardMediaPage() {
           </div>
         </div>
 
-        {/* Sammelaktionen. Erscheint nur mit Auswahl, damit die Leiste sonst
-            keinen Platz kostet. */}
         {selectedIds.size > 0 && (
           <div className="border-rule dark:border-night-rule mb-4 flex flex-wrap items-center gap-3 border p-3">
             <span className="text-ink dark:text-night-text text-sm font-medium">

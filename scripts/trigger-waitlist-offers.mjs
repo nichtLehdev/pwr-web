@@ -1,15 +1,5 @@
-// =============================================================================
-// Trigger for the waitlist-offers cron route (from inside the app container)
-// =============================================================================
-//
-// Used by the mStudio cron job targeting the "app" stack service:
-//   command: node /app/scripts/trigger-waitlist-offers.mjs
-//
-// Calls the app's own /api/cron/waitlist-offers route on localhost using
-// CRON_SECRET from the container environment. Exits non-zero on any failure
-// so mStudio's execution history and failure alerting reflect real outcomes.
-//
-// =============================================================================
+// Runs inside the app container as mStudio cron job: node /app/scripts/trigger-waitlist-offers.mjs
+// Exits non-zero on failure so mStudio's history and alerting reflect real outcomes.
 
 const secret = process.env.CRON_SECRET;
 if (!secret) {

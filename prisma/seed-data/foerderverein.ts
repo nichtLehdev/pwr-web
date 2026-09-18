@@ -1,7 +1,4 @@
 export const foerdervereinData = [
-  // ============================================================================
-  // VORSTAND (Board Members)
-  // ============================================================================
   {
     username: null, // Create user if this person needs login access
     name: "Stefan Schmelting",

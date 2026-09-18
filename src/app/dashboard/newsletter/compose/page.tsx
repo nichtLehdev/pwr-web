@@ -44,15 +44,11 @@ export default function DashboardNewsletterComposePage() {
   const [includeEvents, setIncludeEvents] = useState(true);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showGenerateConfirm, setShowGenerateConfirm] = useState(false);
-  // Test send and real send share one mutation — track which one is in
-  // flight so the "An X Abonnenten senden" button doesn't show a spinner
-  // during a test send.
+  // Test and real send share one mutation; track which one is in flight for the spinner.
   const [sendMode, setSendMode] = useState<"test" | "all" | null>(null);
   const [editor, setEditor] = useState<Editor | null>(null);
 
-  // A reload or mis-click used to throw away the whole newsletter text.
-  // The data object must be referentially stable, otherwise the save is
-  // rescheduled on every render.
+  // Must be referentially stable, otherwise the autosave is rescheduled on every render.
   const autosaveData = useMemo(
     () => ({ subject, content }),
     [subject, content],
@@ -114,9 +110,7 @@ export default function DashboardNewsletterComposePage() {
         );
         clear();
         setSubject("");
-        // Der Editor übernimmt `content` nur beim ersten Befüllen — ohne das
-        // hier bliebe der versendete Newsletter sichtbar stehen und käme bei
-        // der nächsten Eingabe als „ungespeicherte Änderung“ zurück.
+        // Der Editor übernimmt `content` nur beim ersten Befüllen, daher explizit leeren.
         editor?.commands.clearContent();
         setContent("");
         setTestEmail("");
@@ -245,7 +239,6 @@ export default function DashboardNewsletterComposePage() {
       />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Main Editor */}
         <div className="lg:col-span-2">
           <div className="border-rule dark:border-night-rule border p-6">
             <div className="mb-6">
@@ -310,9 +303,7 @@ export default function DashboardNewsletterComposePage() {
           </div>
         </div>
 
-        {/* Sidebar */}
         <div className="space-y-6">
-          {/* Generate Newsletter */}
           <div className="border-rule dark:border-night-rule border p-6">
             <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
               Newsletter generieren
@@ -377,7 +368,6 @@ export default function DashboardNewsletterComposePage() {
             </button>
           </div>
 
-          {/* Test Email */}
           <div className="border-rule dark:border-night-rule border p-6">
             <h2
               id="test-email-heading"
@@ -399,7 +389,6 @@ export default function DashboardNewsletterComposePage() {
             />
           </div>
 
-          {/* Statistics */}
           {statistics && (
             <div className="border-rule dark:border-night-rule border p-6">
               <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
@@ -428,7 +417,6 @@ export default function DashboardNewsletterComposePage() {
         </div>
       </div>
 
-      {/* Generate-overwrite confirmation */}
       {showGenerateConfirm && (
         <ScrollableModal onBackdropClick={() => setShowGenerateConfirm(false)}>
           <ScrollableModalCard maxW="md">
@@ -461,7 +449,6 @@ export default function DashboardNewsletterComposePage() {
         </ScrollableModal>
       )}
 
-      {/* Confirmation Modal */}
       {showConfirmModal && (
         <ScrollableModal onBackdropClick={() => setShowConfirmModal(false)}>
           <ScrollableModalCard maxW="md">

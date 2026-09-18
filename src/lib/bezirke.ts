@@ -1,11 +1,6 @@
 /**
- * The 13 Bezirke (districts) of the Posaunenwerk Rheinland.
- *
- * Hardcoded like the permissions (src/lib/permissions.ts): the districts
- * essentially never change and have no management UI. The list is synced
- * into the database by prisma/post-migration-setup.ts (upsert by the
- * unique `number`), which runs automatically on every app start in the
- * mittwald stack.
+ * The 13 Bezirke of the Posaunenwerk Rheinland, hardcoded (no management UI). Synced into the
+ * database by prisma/post-migration-setup.ts (upsert by `number`) on every app start.
  */
 export const BEZIRKE: ReadonlyArray<{
   number: number;

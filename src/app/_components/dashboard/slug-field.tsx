@@ -13,10 +13,7 @@ import {
 interface SlugFieldProps {
   value: string;
   onChange: (value: string) => void;
-  /**
-   * What the server derives from the title when the field is left empty.
-   * Shown as the placeholder so the URL is visible before anyone types.
-   */
+  /** What the server derives from the title when left empty; shown as placeholder. */
   autoSlug: string;
   /** Public path the slug hangs off, e.g. "/termine/event/". */
   basePath: string;
@@ -26,12 +23,8 @@ interface SlugFieldProps {
 }
 
 /**
- * The URL part of a Termin, Kurs, Beitrag or Chor.
- *
- * Optional everywhere: left empty it stays derived from the title, which is
- * what most authors want. Typing in it is the deliberate act that the
- * mint-once rule in content-slug.ts carves out — so when it is an edit, the
- * field says plainly what renaming costs.
+ * URL part of a Termin, Kurs, Beitrag or Chor; empty means derived from the title. Typing here
+ * is the exception to the mint-once rule in content-slug.ts, so edits say what renaming costs.
  */
 export default function SlugField({
   value,

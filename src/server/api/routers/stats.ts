@@ -8,10 +8,7 @@ import { berlinDate, berlinDayKey, berlinParts } from "@/lib/berlin-time";
 const statsProcedure = permissionProcedure(PERMISSIONS.STATS_VIEW);
 
 export const statsRouter = createTRPCRouter({
-  /**
-   * Record a page or section view. "none" is legacy (no record).
-   * "anonymous" = without userId; "anonymous_and_user" = with userId when provided.
-   */
+  /** "none" records nothing; only "anonymous_and_user" stores the session user id. */
   recordView: publicProcedure
     .input(
       z.object({
@@ -23,9 +20,8 @@ export const statsRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       if (input.consent === "none") return { ok: true };
-      // The attributed user id always comes from the session — a
-      // caller-supplied id would let anyone forge analytics rows for another
-      // user (which also end up in that user's GDPR export).
+      // User id only from the session: a caller-supplied id could forge rows for another
+      // user, which would also end up in their GDPR export.
       await ctx.db.pageView.create({
         data: {
           path: input.path,
@@ -39,9 +35,6 @@ export const statsRouter = createTRPCRouter({
       return { ok: true };
     }),
 
-  /**
-   * Get aggregated stats. Only allowed usernames/emails can call this.
-   */
   getStats: statsProcedure
     .input(
       z
@@ -69,9 +62,7 @@ export const statsRouter = createTRPCRouter({
             }
           : {};
 
-      // Tage in Berliner Zeit: Der Server läuft in UTC, „heute" begann dort
-      // um 2 Uhr nachts, und der Tagesverlauf ordnete Aufrufe zwischen
-      // Mitternacht und 2 Uhr dem Vortag zu.
+      // Tage in Berliner Zeit, nicht in der UTC-Zeit des Servers.
       const today = berlinParts(new Date());
       const thirtyDaysAgo = berlinDate(today.year, today.month, today.day - 30);
       const sevenDaysAgo = berlinDate(today.year, today.month, today.day - 7);
@@ -123,10 +114,7 @@ export const statsRouter = createTRPCRouter({
           select: { createdAt: true },
           orderBy: { createdAt: "asc" },
         }),
-        // Bounded: per-day details only ever need the last 30 days, and the
-        // per-path breakdown needs older rows only for pathPeriod "overall".
-        // A hard take-cap keeps this from degrading forever as the table
-        // grows (newest rows win).
+        // Last 30 days unless pathPeriod is "overall"; the take-cap bounds growth (newest rows win).
         ctx.db.pageView.findMany({
           where: {
             ...where,
@@ -288,9 +276,6 @@ export const statsRouter = createTRPCRouter({
       };
     }),
 
-  /**
-   * Site-wide content and user counts (for stats dashboard). Same allowlist as getStats.
-   */
   getSiteStats: statsProcedure.query(async ({ ctx }) => {
     const today = berlinParts(new Date());
     const thirtyDaysAgo = berlinDate(today.year, today.month, today.day - 30);
@@ -341,10 +326,7 @@ export const statsRouter = createTRPCRouter({
     };
   }),
 
-  /**
-   * Get page views that are associated with a user (consent: anonymous_and_user).
-   * Returns which users visited which pages with counts. Same allowlist as getStats.
-   */
+  /** Views with a user attached (consent anonymous_and_user), counted per user and page. */
   getViewsByUser: statsProcedure
     .input(
       z
@@ -387,8 +369,7 @@ export const statsRouter = createTRPCRouter({
           },
         },
         orderBy: { createdAt: "desc" },
-        // Hard cap so this endpoint cannot degrade without bound as the
-        // table grows; newest rows win.
+        // Hard cap against unbounded growth; newest rows win.
         take: 100_000,
       });
 
@@ -450,9 +431,6 @@ export const statsRouter = createTRPCRouter({
       return { rows };
     }),
 
-  /**
-   * Check whether the current user is allowed to view stats (for UI redirect).
-   */
   canViewStats: protectedProcedure.query(async ({ ctx }) => {
     const perms = await resolveUserPermissionsCached(
       ctx.session.user.id,

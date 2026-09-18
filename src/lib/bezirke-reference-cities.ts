@@ -1,13 +1,6 @@
 /**
- * Real, well-known cities per Bezirk, used as orientation reference points
- * on the zoomed-in district map. Normally two: selected by checking actual
- * public population figures against the hand-drawn Bezirk boundary
- * geometry (a point-in-polygon test against the SVG path data, not just
- * the district name) and taking the two largest matches. Two border cases
- * (Wesel, Königswinter) geometrically matched two adjacent districts;
- * assigned to the one with the weaker existing coverage. Bezirk 10 gets a
- * third (Wetzlar) since its main two cities are both in the main shape,
- * leaving its small exclave with no reference point of its own.
+ * The two largest cities per Bezirk (point-in-polygon against the SVG geometry) as orientation
+ * on the zoomed map. Bezirk 10 gets a third (Wetzlar) so its exclave has a reference point.
  */
 export interface BezirkReferenceCity {
   name: string;

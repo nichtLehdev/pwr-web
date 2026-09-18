@@ -1,8 +1,3 @@
-/**
- * German Public Holidays Utility
- * Calculates German public holidays based on Easter date
- */
-
 import {
   CloudIcon,
   CrossIcon,
@@ -110,10 +105,10 @@ const icons = {
 export interface Holiday {
   name: string;
   date: Date;
-  isNationwide: boolean; // Some holidays are state-specific
+  isNationwide: boolean;
   icon: React.ReactNode;
   states?: string[]; // German states where this holiday is valid (if not nationwide)
-  description?: string; // Short description of the holiday
+  description?: string;
   isLegalHoliday?: boolean; // False for religious/observance days that aren't legal holidays
 }
 
@@ -140,12 +135,8 @@ function getEasterSunday(year: number): Date {
 }
 
 /**
- * Gets all German public holidays for a given year.
- *
- * Gerechnet wird mit lokalen Datumswerten; zurück kommt jeder Feiertag als
- * 00:00 Uhr Berliner Zeit. Der Kalender vergleicht und formatiert in Berliner
- * Zeit — ein lokales Mitternachtsdatum läge in einer Zone östlich von Berlin
- * dort noch auf dem Vortag.
+ * Jeder Feiertag als 00:00 Uhr Berliner Zeit; ein lokales Mitternachtsdatum
+ * läge östlich von Berlin dort noch auf dem Vortag.
  */
 export function getGermanPublicHolidays(year: number): Holiday[] {
   return computeGermanPublicHolidays(year).map((holiday) => ({
@@ -409,9 +400,6 @@ function computeGermanPublicHolidays(year: number): Holiday[] {
   return holidays;
 }
 
-/**
- * Checks if a given date is a German public holiday
- */
 export function isGermanPublicHoliday(date: Date): Holiday | null {
   const holidays = getGermanPublicHolidays(berlinParts(date).year);
   return (
@@ -419,9 +407,6 @@ export function isGermanPublicHoliday(date: Date): Holiday | null {
   );
 }
 
-/**
- * Gets holidays for a specific month
- */
 export function getHolidaysForMonth(year: number, month: number): Holiday[] {
   const holidays = getGermanPublicHolidays(year);
   // `month` wie bei `getMonth()` ab 0.

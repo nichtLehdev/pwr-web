@@ -64,10 +64,7 @@ interface Step3SummaryProps {
   };
   /** Sprungziel für den Fokus beim Wechsel in diesen Schritt. */
   headingId: string;
-  /**
-   * Was vor dem Absenden noch fehlt — erst nach einem Klick auf „Verbindlich
-   * anmelden“ übergeben, dann am jeweiligen Feld gemeldet.
-   */
+  /** Erst nach einem Klick auf „Verbindlich anmelden“ übergeben. */
   problems?: readonly FormProblem[];
   /** Set when the course team records the registration itself. */
   staff?: {
@@ -107,10 +104,7 @@ function FieldProblem({ id, children }: { id: string; children: string }) {
   );
 }
 
-/**
- * Kontrollkästchen mit Text, Trefferfläche über die ganze Beschriftung und
- * mindestens 44px hoch — das Kästchen selbst bleibt optisch klein.
- */
+/** Trefferfläche über die ganze Beschriftung, mindestens 44px hoch. */
 const CONSENT_LABEL_CLASS = "flex min-h-11 cursor-pointer items-start gap-3";
 
 export function Step3Summary({
@@ -195,7 +189,6 @@ export function Step3Summary({
         Zusammenfassung
       </Heading>
 
-      {/* Course Info */}
       <div>
         <GroupHeading>Lehrgang</GroupHeading>
         <p className="text-ink dark:text-night-text mt-2 text-lg font-semibold">
@@ -211,7 +204,6 @@ export function Step3Summary({
         )}
       </div>
 
-      {/* Registrant Info */}
       <div className="border-rule dark:border-night-rule border-t pt-8">
         <GroupHeading>Anmelder</GroupHeading>
         <p className="text-ink dark:text-night-text mt-2 font-semibold">
@@ -226,7 +218,6 @@ export function Step3Summary({
         </p>
       </div>
 
-      {/* Billing Address */}
       {registrationData.useSeparateBilling && (
         <div className="border-rule dark:border-night-rule border-t pt-8">
           <GroupHeading>Rechnungsadresse</GroupHeading>
@@ -258,7 +249,6 @@ export function Step3Summary({
         </div>
       )}
 
-      {/* Participants List */}
       <div className="border-rule dark:border-night-rule border-t pt-8">
         <GroupHeading>
           Teilnehmer ({registrationData.participants.length})
@@ -421,7 +411,6 @@ export function Step3Summary({
         </div>
       )}
 
-      {/* Price Breakdown */}
       <div className="border-rule dark:border-night-rule border-t pt-8">
         {registrationData.siblingDiscountApplied &&
         course.allowSiblingDiscount &&
@@ -526,7 +515,6 @@ export function Step3Summary({
           </div>
         </>
       ) : (
-        /* Terms */
         <div>
           <label className={CONSENT_LABEL_CLASS}>
             <input

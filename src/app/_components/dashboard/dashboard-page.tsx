@@ -10,15 +10,12 @@ export interface BreadcrumbItem {
 }
 
 interface DashboardPageProps {
-  /** Page title */
   title: string;
-  /** Optional page description/subtitle */
   description?: string;
   /** Breadcrumb items (defaults to Dashboard + current page) */
   breadcrumbs?: BreadcrumbItem[];
   /** Action buttons to display in the header (e.g., "New" buttons) */
   actions?: ReactNode;
-  /** Page content */
   children: ReactNode;
   /** Optional custom max width (defaults to max-w-7xl) */
   maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "4xl" | "6xl" | "7xl" | "full";
@@ -37,21 +34,8 @@ const maxWidthClasses = {
 };
 
 /**
- * Hülle jeder Dashboard-Seite.
- *
- * Das Dashboard ist eine Werkbank, kein Heftaufschlag. Es bleibt an die
- * öffentliche Gestaltung angelehnt — Archivo, Tinte auf Papier, eckige Ecken,
- * Haarlinien statt Kästen mit Schatten — übernimmt aber bewusst NICHT deren
- * redaktionelle Mittel: kein Display-Titel mit `clamp`, kein Satzstrich unter
- * der Überschrift, keine zeremonielle 2px-Eröffnungslinie und nicht den
- * großzügigen Abschnittsrhythmus. Auf 82 Arbeitsseiten kostet jede dieser
- * Gesten bei jedem Aufruf Arbeitsfläche, die für Tabellen und Formulare
- * gebraucht wird.
- *
- * `programm` bleibt trotzdem stehen: Die Klasse setzt ausschließlich
- * Markierungs- und Cursorfarbe, den Select-Reset und den 3px-Fokusring — also
- * Infrastruktur, kein Layout. Ohne sie verlören alle Eingabefelder im
- * Dashboard ihre sichtbare Fokusmarkierung.
+ * Hülle jeder Dashboard-Seite: öffentliche Grammatik, aber bewusst ohne redaktionelle Gesten,
+ * die Arbeitsfläche kosten. `programm` bleibt: ohne die Klasse fehlt allen Feldern der Fokusring.
  */
 export default function DashboardPage({
   title,
@@ -61,7 +45,6 @@ export default function DashboardPage({
   children,
   maxWidth = "7xl",
 }: DashboardPageProps) {
-  // Default breadcrumbs: Dashboard + current page
   const defaultBreadcrumbs: BreadcrumbItem[] = [
     { label: "Dashboard", href: "/dashboard" },
     { label: title },
@@ -77,10 +60,7 @@ export default function DashboardPage({
       <header className="border-rule dark:border-night-rule border-b">
         <div className={cn(rahmen, "pt-3 pb-4")}>
           <nav aria-label="Brotkrumen">
-            {/* Umbricht statt überzulaufen: Tiefe Pfade (Kurs → Teilnehmer →
-                Anmeldung) liefen auf Telefonen über den Rand, und
-                `overflow-x: clip` am <html> schnitt die letzten Krumen ohne
-                Scrollmöglichkeit ab. */}
+            {/* Umbricht, weil `overflow-x: clip` am <html> tiefe Pfade auf Telefonen abschneidet. */}
             <ol className="semi-condensed text-dark dark:text-night-muted -ml-1 flex flex-wrap items-center text-sm font-semibold">
               {finalBreadcrumbs.map((item, index) => {
                 const current = index === finalBreadcrumbs.length - 1;
@@ -114,17 +94,10 @@ export default function DashboardPage({
             </ol>
           </nav>
 
-          {/* `sm:flex-wrap`: Ohne Umbruch muss der Titel das ganze Defizit
-              tragen, weil er `min-w-0` hat und die Knopfgruppe `shrink-0`.
-              Gemessen bei vier Aktionen und 1024px: Der Titel fiel auf 0px
-              Breite und 350px Höhe — er rendert dann buchstabenweise
-              untereinander. Mit Umbruch rutschen die Knöpfe in eine eigene
-              Zeile, statt die Überschrift zu zerquetschen. */}
+          {/* `sm:flex-wrap`: sonst quetschen viele Aktionen den Titel (`min-w-0`) auf null Breite. */}
           <div className="mt-1 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
             <div className="min-w-0">
-              {/* Lange deutsche Komposita („Berechtigungsverwaltung“) sind ein
-                  einzelnes unteilbares Wort, breiter als ein 375px-Fenster —
-                  deshalb Silbentrennung (lang="de" am <html>). */}
+              {/* Lange Komposita sind breiter als ein Telefon, daher Silbentrennung (lang="de" am <html>). */}
               <h1 className="condensed text-ink dark:text-night-text text-2xl leading-tight font-bold break-words hyphens-auto sm:text-[1.75rem]">
                 {title}
               </h1>
@@ -135,9 +108,7 @@ export default function DashboardPage({
               )}
             </div>
             {actions && (
-              // Ohne `shrink-0` darf die Gruppe schmaler werden — erst dadurch
-              // greift ihr eigenes `flex-wrap` und die Knöpfe brechen um,
-              // statt in einer starren Zeile stehenzubleiben.
+              // Ohne `shrink-0`, damit das eigene `flex-wrap` der Gruppe greift.
               <div className="flex flex-wrap gap-2">{actions}</div>
             )}
           </div>

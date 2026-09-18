@@ -5,20 +5,14 @@ import { Camera } from "lucide-react";
 interface MediaCreditProps {
   copyright?: string | null;
   creator?: string | null;
-  /**
-   * `light`: auf Nachtgrund (Lightbox). Früher lag der Nachweis mit
-   * Textschatten über dem Foto; im Programmheft steht er unter dem Bild.
-   */
+  /** `light`: auf Nachtgrund (Lightbox). */
   variant?: "default" | "light";
   /** Optional: show a small camera icon next to the photographer/creator */
   showCreatorIcon?: boolean;
   className?: string;
 }
 
-/**
- * Displays copyright and creator (photographer) for media when set.
- * Use below or overlay on images wherever media is displayed.
- */
+/** Copyright and creator (photographer) of a medium, when set. */
 export default function MediaCredit({
   copyright,
   creator,

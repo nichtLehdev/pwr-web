@@ -20,13 +20,7 @@ import {
   type MediaItem,
 } from "./media-shared";
 
-/**
- * Eine Aktion in der Fußzeile der Kachel.
- *
- * Die Schaltflächen lagen früher als schwebende Leiste über dem Bild und waren
- * am Desktop bis zum Hover unsichtbar — man musste wissen, dass es sie gibt.
- * Jetzt stehen sie in einer eigenen Zeile unter den Angaben, immer sichtbar.
- */
+/** Eine Aktion in der Fußzeile der Kachel, immer sichtbar statt erst bei Hover. */
 function CardAction({
   label,
   icon: Icon,
@@ -138,9 +132,7 @@ export function MediaGrid({
                 className="absolute top-2 left-9"
               />
 
-              {/* Ohne Alt-Text ist das Bild für Screenreader stumm — in einer
-                  Übersicht, in der genau das gepflegt wird, gehört der Hinweis
-                  auf die Kachel und nicht in ein Untermenü. */}
+              {/* Fehlender Alt-Text direkt auf der Kachel, denn genau das wird hier gepflegt. */}
               {isImage && !item.alt && (
                 <span
                   className="text-paper dark:text-night absolute right-2 bottom-2 bg-amber-700 px-1.5 py-0.5 text-[10px] font-semibold dark:bg-amber-400"

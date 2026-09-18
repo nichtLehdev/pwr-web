@@ -24,19 +24,14 @@ import { answerLabelForPitch } from "../_lib/pitch";
 import { writtenPitchToVexNoteKeyAndAccidental } from "../_lib/vex-pitch-key";
 
 /**
- * Logischer Zeichenblock: Notenzeile plus Luft für Schlüssel und Hilfslinien.
- * Alles unten rechnet in diesen logischen Einheiten; der Kontext skaliert sie
- * anschließend auf die tatsächliche Kastenhöhe. Vorher war die Zeichenfläche
- * an die Pixelhöhe gebunden — die Notenzeile blieb rund 37 px hoch, egal wie
- * viel Platz der Kasten hatte.
+ * Logischer Zeichenblock (Notenzeile plus Luft für Schlüssel und Hilfslinien); der
+ * Kontext skaliert diese Einheiten auf die tatsächliche Kastenhöhe.
  */
 const LOGICAL_BLOCK_H = 120;
 
 /**
- * VexFlow legt über und unter die fünf Linien von sich aus je vier
- * Linienabstände für Hilfslinien (`space_above_staff_ln`, 4 × 10 Einheiten).
- * Der Block beginnt deshalb bei 0 — ein eigener Vorschub kam oben zu den 40
- * Einheiten hinzu und drückte die Notenzeile sichtbar nach unten.
+ * 0, weil VexFlow selbst vier Linienabstände über den Linien freihält
+ * (`space_above_staff_ln`); ein eigener Vorschub käme noch hinzu.
  */
 const LOGICAL_STAVE_Y = 0;
 
@@ -117,11 +112,7 @@ export type StaffDisplayProps = {
   flash?: StaffFlash;
   /** Trägt die Höhe des Kastens (das Spiel gibt eine clamp()-Formel mit). */
   className?: string;
-  /**
-   * Optionales Label statt des Standard-Labels (das den Tonnamen nennt).
-   * Beim Noten-Lesen würde der Standard die Antwort verraten — dort wird die
-   * Positionsbeschreibung übergeben. Griffe nutzt weiter den Standard.
-   */
+  /** Ersetzt das Standard-Label, das den Tonnamen nennt — beim Noten-Lesen verriete es die Antwort. */
   ariaLabel?: string;
 };
 
@@ -174,8 +165,7 @@ export function StaffDisplay({
     withCompactMetrics(compactMetrics, () => {
       const marginX = compact ? 8 : 14;
       const baseInner = logicalW - marginX * 2;
-      /* Breite deckeln: über die volle Breite entstehen sonst lange leere
-       * Notenlinien. Gedeckelt und zentriert (rein visuell). */
+      /* Breite deckeln, sonst entstehen lange leere Notenlinien. */
       const staveWidth = Math.min(MAX_STAVE_WIDTH, Math.max(150, baseInner));
       /* Block mittig setzen, wenn die Höhe mehr hergibt als er braucht. */
       const staveY =
@@ -205,9 +195,8 @@ export function StaffDisplay({
         stave.addKeySignature(staffAccidentalLayout.keySpec);
       }
 
-      /* Immer Kopfposition ohne eingebettetes #/b und Vorzeichen direkt am
-       * Notenkopf setzen. So ist das Vorzeichen am Zielton immer eindeutig
-       * sichtbar (auch bei Tonartdarstellung am System). */
+      /* Vorzeichen immer direkt am Notenkopf, damit es auch bei Tonart am System
+       * eindeutig sichtbar ist. */
       const { vexKey } = writtenPitchToVexNoteKeyAndAccidental(pitch);
       const accidental = accidentalForPitchInLayout(
         pitch,
@@ -238,15 +227,8 @@ export function StaffDisplay({
 
       styleNoteAndAccidentals(note, colors.note);
 
-      /* Die Farbe muss an den Kontext, nicht an den Stave: `stave.setStyle()`
-       * allein erreicht weder die Notenlinien noch den Schlüssel noch die
-       * Taktstriche — die sind eigene StaveModifier mit eigenem Stil und
-       * fielen auf den Kontext-Standard zurück, also reines Schwarz. Im
-       * Nachtdruck stand dadurch ein schwarzer Violinschlüssel auf #141517
-       * (rund 1,05:1), ausgerechnet in einem Notenlesespiel.
-       *
-       * Bedingungslos, nicht nur nachts: Hell ist der Kontext-Standard
-       * ebenfalls reines Schwarz statt der Tinte #1c1d1f. */
+      /* Farbe an den Kontext, nicht an den Stave: `stave.setStyle()` erreicht Linien,
+       * Schlüssel und Taktstriche nicht (eigene StaveModifier), sie blieben schwarz. */
       ctx.setFillStyle(colors.stave);
       ctx.setStrokeStyle(colors.stave);
 
@@ -274,7 +256,7 @@ export function StaffDisplay({
     const ro = new ResizeObserver(() => {
       const width = Math.round(el.clientWidth);
       const height = Math.round(el.clientHeight);
-      /* Auch auf Höhe hören: die Notengröße hängt jetzt daran. */
+      /* Auch auf Höhe hören: Die Notengröße hängt daran. */
       if (width === lastWidth && height === lastHeight) return;
       lastWidth = width;
       lastHeight = height;
@@ -298,8 +280,7 @@ export function StaffDisplay({
         /* Richtig ist ein Druckfeld, falsch bleibt Rot — kein Grün. */
         flash === "correct" &&
           "border-ink dark:border-night-text bg-primary/15",
-        /* Die Fläche ist jetzt gross — die Tönung bleibt deshalb zurückhaltend,
-         * Rand und Marke oben rechts tragen das Signal. */
+        /* Große Fläche: zurückhaltende Tönung, Rand und Marke tragen das Signal. */
         flash === "wrong" && "border-red-700 bg-red-700/5 dark:bg-red-500/10",
         flash === "none" &&
           "border-rule dark:border-night-rule dark:bg-night-raised bg-rule/25",

@@ -3,11 +3,8 @@ import { createSignedToken, verifySignedToken } from "./signed-token";
 const PURPOSE = "registration-access";
 
 /**
- * Magic links let people without an account manage the anmeldung they made
- * through the public form. Courses are announced months ahead, so the link has
- * to outlive the gap between anmeldung and kursbeginn — but not forever, and
- * the edit deadline (registration deadline / course start) still gates every
- * write regardless of how long the token itself is valid.
+ * Courses are announced months ahead, so the link must outlive that gap. Every
+ * write is still gated by the edit deadline, regardless of token validity.
  */
 const TOKEN_TTL_MS = 180 * 24 * 60 * 60 * 1000;
 
@@ -16,11 +13,8 @@ function subject(registrationId: string, email: string): string {
 }
 
 /**
- * Token format: "<expiryEpochMs>.<hmac(purpose|registrationId|email|expiry)>".
- *
- * Binding the signature to the registrant's e-mail means a link only ever
- * works for the address it was sent to: changing the address on a
- * registration silently invalidates links mailed to the previous one.
+ * Signature is bound to the e-mail: changing the address invalidates links
+ * mailed to the previous one.
  */
 export function createRegistrationAccessToken(
   registrationId: string,

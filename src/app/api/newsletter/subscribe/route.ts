@@ -11,15 +11,8 @@ import { createLogger } from "@/server/utils/logger";
 const log = createLogger("Newsletter");
 
 /**
- * Newsletter sign-up, step one of two.
- *
- * Nothing is ever sent to an address on the strength of this request alone:
- * the row is created unconfirmed and only a click on the mailed link makes it
- * a recipient. That keeps anyone from signing up an address they do not own.
- *
- * The response never says whether the address was already on the list —
- * "we sent you a mail" either way, so the endpoint cannot be used to test
- * which addresses subscribe to us.
+ * Double opt-in, step one: the row stays unconfirmed until the mailed link is
+ * clicked. The response never reveals whether the address was already listed.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -98,9 +91,8 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Sent in every case — including to someone already subscribed, whose
-    // click simply confirms again. Staying silent there would leak, through
-    // the missing mail, that the address is on the list.
+    // Sent even to existing subscribers: a missing mail would reveal that the
+    // address is on the list.
     const confirmUrl = `${getBaseUrl()}/newsletter/bestaetigen?email=${encodeURIComponent(
       email,
     )}&token=${createNewsletterConfirmToken(email)}`;

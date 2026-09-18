@@ -3,14 +3,7 @@ import type { ReactNode } from "react";
 import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-/**
- * Köpfe sprechen schmal-extrafett, nie in gesperrten Versalien (Condensed
- * Head Rule). Vier Größen aus dem Heft:
- * - `close`: Schlussabschnitt
- * - `headline`: Abschnittskopf („Aktuelles“)
- * - `programme`: Kopf einer Programmspalte
- * - `list`: Kopf einer Register- oder Unterliste
- */
+/** Kopfgrößen aus dem Heft; nie in gesperrten Versalien (Condensed Head Rule). */
 export type HeadingSize = "close" | "headline" | "programme" | "list";
 
 const SIZE: Record<HeadingSize, string> = {
@@ -27,7 +20,6 @@ const RULE_PADDING: Record<HeadingSize, string> = {
   list: "pb-2",
 };
 
-/** 2px-Tintenstrich unter Köpfen. */
 const HEAD_RULE = "border-ink dark:border-night-text border-b-2";
 
 interface HeadingProps {
@@ -36,10 +28,7 @@ interface HeadingProps {
   size?: HeadingSize;
   /** 2px-Tintenstrich unter dem Kopf. */
   rule?: boolean;
-  /**
-   * `-1` macht den Kopf zum Sprungziel für den Fokus, etwa beim Wechsel
-   * zwischen Formularschritten, ohne ihn in die Tab-Reihenfolge zu nehmen.
-   */
+  /** `-1`: Fokus-Sprungziel, etwa beim Formularschritt, ohne Tab-Halt. */
   tabIndex?: number;
   className?: string;
   children: ReactNode;

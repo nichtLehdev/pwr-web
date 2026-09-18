@@ -58,12 +58,7 @@ const MITGLIED_VORTEILE: Point[] = [
   },
 ];
 
-/**
- * Förderverein-Seite: die einzige Seite, auf der die blaue Druckfläche für
- * den eigenen Werbeabschnitt „Mitglied werden“ steht (One Field Rule); der
- * Schlussaufruf bleibt wie überall orange. Anrede „Sie“ wie auf den übrigen
- * Über-uns-Seiten.
- */
+/** Anrede „Sie“ wie auf den übrigen Über-uns-Seiten. */
 export default async function FoerdervereinPage() {
   const foerdervereinMembers = await api.organization.getFoerderverein();
   const boardMembers = foerdervereinMembers.filter(
@@ -89,11 +84,7 @@ export default async function FoerdervereinPage() {
         </p>
       }
     >
-      {/* Was wir tun */}
-      {/* Kein `flush="top"`: Diese Seite war die einzige ohne oberes Polster am
-          ersten Abschnitt — gemessen 85px zwischen Titel und erster
-          Überschrift, während /mitmachen, /materialien und /kontakt
-          übereinstimmend bei 181px liegen. */}
+      {/* Kein `flush="top"`: oberes Polster wie auf den übrigen Seiten. */}
       <PageSection labelledBy="was-wir-tun-heading">
         <Split
           head={<Heading id="was-wir-tun-heading">Was wir tun</Heading>}
@@ -145,7 +136,6 @@ export default async function FoerdervereinPage() {
         </Split>
       </PageSection>
 
-      {/* Weitere Unterstützungsmöglichkeiten */}
       <PageSection labelledBy="unterstuetzung-heading" rule>
         <Split
           head={
@@ -229,7 +219,6 @@ export default async function FoerdervereinPage() {
         </Split>
       </PageSection>
 
-      {/* Vorstand */}
       <PageSection labelledBy="vorstand-heading" rule>
         <Split
           side="right"

@@ -1,11 +1,7 @@
 /** Slug length cap — long enough to stay readable, short enough for a URL bar. */
 export const MAX_SLUG_LENGTH = 80;
 
-/**
- * German umlauts are transliterated rather than stripped: NFD normalisation
- * alone turns "Jungbläser" into "jungblaser", which reads wrong and loses the
- * keyword people actually search for ("jungblaeser").
- */
+/** Transliterated, not stripped: NFD alone turns "Jungbläser" into "jungblaser". */
 const TRANSLITERATIONS: Array<[RegExp, string]> = [
   [/ä/g, "ae"],
   [/ö/g, "oe"],
@@ -14,12 +10,7 @@ const TRANSLITERATIONS: Array<[RegExp, string]> = [
   [/&/g, "-und-"],
 ];
 
-/**
- * Turns a title into a URL-safe slug.
- *
- * Returns an empty string when nothing usable survives (a title of only
- * punctuation or non-Latin script) — callers decide what to fall back to.
- */
+/** Empty string when nothing usable survives — callers decide on the fallback. */
 export function slugify(input: string): string {
   let text = input.toLowerCase();
 
@@ -45,10 +36,8 @@ export function slugify(input: string): string {
 }
 
 /**
- * Appends `-2`, `-3` … until the slug is free.
- *
- * `isTaken` is passed in rather than queried here so the caller controls which
- * table is checked and can exclude the row being updated from the check.
+ * Appends `-2`, `-3` … until free. `isTaken` is injected so the caller picks the
+ * table and can exclude the row being updated.
  */
 export async function uniqueSlug(
   base: string,
@@ -74,13 +63,8 @@ export async function uniqueSlug(
 const MIN_PLACE_TOKEN_LENGTH = 4;
 
 /**
- * Slug base for an ensemble, appending the town only when the name does not
- * already carry it.
- *
- * Most chöre are named after their town, so appending blindly yields
- * "posaunenchor-voerde-voerde". Overlap is checked per token rather than as a
- * substring because the town in the name is often only part of the location's
- * city: "Posaunenchor Orsoy" sits in "Rheinberg-Orsoy".
+ * Appends the town only if the name lacks it ("posaunenchor-voerde-voerde"). Checked
+ * per token, since "Posaunenchor Orsoy" sits in "Rheinberg-Orsoy".
  */
 export function ensembleSlugBase(
   name: string,
@@ -102,12 +86,8 @@ export function ensembleSlugBase(
 }
 
 /**
- * The year of a date as it falls in German local time.
- *
- * Pinned to Europe/Berlin rather than read off `getFullYear()`, which follows
- * whatever timezone the server runs in — UTC in the container. A Neujahrsblasen
- * at 00:30 on 1.1. is still 31.12. in UTC, and a slug reading
- * `neujahrsblasen-2026` for a 2027 Termin is worse than no year at all.
+ * Not `getFullYear()`: the server runs in UTC, where a Neujahrsblasen at 00:30
+ * on 1.1. still falls in the previous year.
  */
 function berlinYear(date: Date): string {
   return new Intl.DateTimeFormat("de-DE", {
@@ -117,14 +97,8 @@ function berlinYear(date: Date): string {
 }
 
 /**
- * Slug base for a dated entry (event or course), appending the year unless the
- * title already carries it.
- *
- * Termine repeat: "Adventskonzert" and "Jungbläserlehrgang" come round every
- * year. Without the year the second one lands on `adventskonzert-2`, which
- * tells a reader nothing — `adventskonzert-2026` tells them which one it is.
- * Titles like "Landesposaunentag 2026" already state it, so the year is only
- * added when it is not among the slug's tokens.
+ * Appends the year unless the title has it: recurring Termine become
+ * `adventskonzert-2026` instead of an uninformative `adventskonzert-2`.
  */
 export function datedSlugBase(title: string, date: Date): string {
   const titleSlug = slugify(title);
@@ -137,13 +111,7 @@ export function datedSlugBase(title: string, date: Date): string {
   return `${titleSlug}-${year}`;
 }
 
-/**
- * Public path for a post or ensemble, preferring the slug.
- *
- * Falls back to the UUID so a row created before `pnpm backfill:slugs` ran —
- * or imported straight into the database — still links somewhere valid; the
- * detail routes accept both.
- */
+/** Falls back to the UUID for rows without a slug; the detail routes accept both. */
 export function postPath(post: { id: string; slug?: string | null }): string {
   return `/aktuelles/${post.slug ?? post.id}`;
 }
@@ -174,12 +142,7 @@ export function courseRegistrationPath(course: {
   return `${coursePath(course)}/anmelden`;
 }
 
-/**
- * What is wrong with a slug someone typed, or `null` when it is usable.
- *
- * Shared by the dashboard form and the tRPC procedures so the browser and the
- * server never disagree about what counts as a valid slug.
- */
+/** Shared by dashboard form and tRPC, so browser and server agree on valid slugs. */
 export type SlugProblem = "empty" | "tooLong" | "format" | "uuidLike";
 
 export function slugProblem(value: string): SlugProblem | null {
@@ -201,11 +164,8 @@ export const SLUG_PROBLEM_MESSAGES: Record<SlugProblem, string> = {
 };
 
 /**
- * Cleans up a slug as it is being typed.
- *
- * Deliberately gentler than `slugify`: a trailing dash survives, because
- * stripping it would make "advents-" impossible to extend to
- * "advents-konzert" — the dash would vanish on every keystroke.
+ * For typing; gentler than `slugify`: a trailing dash survives, or "advents-"
+ * could never be extended to "advents-konzert".
  */
 export function normalizeSlugInput(value: string): string {
   let text = value.toLowerCase();

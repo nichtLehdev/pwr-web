@@ -1,11 +1,7 @@
 import { describe, expect, it } from "@jest/globals";
 import { readPostContent } from "../post-import";
 
-/**
- * Der Beitrags-Import schrieb bisher nur einen Teil der Felder zurück. Diese
- * Tests halten fest, was aus einem Export übernommen wird — und was bewusst
- * im Zielbestand neu entsteht.
- */
+/** Was aus einem Export übernommen wird und was im Zielbestand neu entsteht. */
 describe("readPostContent", () => {
   const vollstaendig = {
     id: "alte-id",

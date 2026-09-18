@@ -19,16 +19,8 @@ const config = {
   },
 
   experimental: {
-    /*
-     * Alle Anfragen laufen durch `src/proxy.ts`, und Next begrenzt sie dort
-     * standardmäßig auf 10 MB. Genau daran scheiterten Importe: Ein ZIP mit
-     * Medien ist schnell größer, und die Upload-Route erlaubt ohnehin 50 MB
-     * je Datei. Der Server liest den Rumpf komplett in den Speicher, deshalb
-     * 100 MB und nicht mehr.
-     *
-     * Achtung beim Ausrollen: Ein vorgelagerter Webserver (mittwald) hat eine
-     * eigene Grenze, die dazu passen muss.
-     */
+    // Sonst 10 MB durch `src/proxy.ts`, zu wenig für Medien-ZIPs; der Rumpf liegt ganz im
+    // Speicher. Die Grenze des vorgelagerten Webservers (mittwald) muss dazu passen.
     proxyClientMaxBodySize: "100mb",
     webpackMemoryOptimizations: true,
     optimizePackageImports: [

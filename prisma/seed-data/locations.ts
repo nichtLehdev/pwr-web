@@ -1,5 +1,4 @@
 export const locationsData = [
-  // Common venues across different cities
   {
     name: "Gemeindehaus Moers-Zentrum",
     street: "Kirchstraße 12",

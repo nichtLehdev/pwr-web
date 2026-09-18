@@ -14,11 +14,7 @@ import {
 import { buildXlsxBuffer, exportDateStamp } from "@/server/utils/xlsx";
 import { formatBerlin } from "@/lib/berlin-time";
 
-/**
- * Die fertigen Arbeitsmappen der Kursexporte — Dashboard-Download und
- * E-Mail-Anhang holen sie hier, damit die Organisation zweimal dieselbe Datei
- * bekommt und nicht zwei Listen vergleichen muss, die auseinanderdriften.
- */
+/** Dashboard-Download und E-Mail-Anhang nutzen dieselben Arbeitsmappen, damit nichts auseinanderdriftet. */
 
 export type CourseExportFile = { buffer: Buffer; filename: string };
 

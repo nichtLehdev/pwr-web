@@ -3,9 +3,8 @@ import type { ReactNode } from "react";
 import { ArrowRight, ArrowUpRight, Download, Mail } from "lucide-react";
 
 /**
- * Wohin ein Link führt, bestimmt Element, Ziel und Pfeil: interne Seiten per
- * Next-Link mit Pfeil, fremde Websites und Dateien in neuem Tab (mit Hinweis
- * für Screenreader), E-Mail und Telefon als einfacher Anker.
+ * Intern per Next-Link, extern und Dateien im neuen Tab (mit
+ * Screenreader-Hinweis), E-Mail und Telefon als einfacher Anker.
  */
 export type LinkKind = "internal" | "external" | "mail" | "download";
 

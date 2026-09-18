@@ -236,8 +236,6 @@ export default function ExportImportSection() {
               </div>
             )}
             {importSuccess && (
-              // Hinweis statt Alarm: Tinte auf Papier an einer Haarlinie
-              // statt grünem Kasten — die Meldung erklärt, sie warnt nicht.
               <div className="border-ink dark:border-night-text border-l-2 py-1 pl-4">
                 <p className="text-dark dark:text-night-muted text-sm">
                   {importSuccess}

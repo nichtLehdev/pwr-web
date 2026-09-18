@@ -265,11 +265,8 @@ export default async function EnsembleDetailPage({ params }: PageProps) {
           ]),
         ]}
       />
-      {/* Zwei Spalten wie bei Termin- und Kursseiten: Inhalt links, Kontakte
-          rechts, die Randspalte klebt beim Scrollen mit. */}
       <div className="sheet py-10 md:py-14">
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-3">
-          {/* Hauptspalte */}
           <div className="space-y-10 lg:col-span-2">
             {ensemble.description && (
               <div>
@@ -406,10 +403,7 @@ export default async function EnsembleDetailPage({ params }: PageProps) {
             )}
           </div>
 
-          {/* Randspalte */}
-          {/* `sticky-below-nav` statt `lg:top-24`: Die feste Zahl ergab 96px,
-              die Navigation endet mit Banner aber bei 120px — die Randspalte
-              rutschte dadurch 24px darunter. */}
+          {/* `sticky-below-nav` statt fester Zahl: Die Navigationshöhe ändert sich mit dem Banner. */}
           <div className="sticky-below-nav space-y-8 lg:sticky lg:self-start">
             {hasConductorCard && (
               <div>

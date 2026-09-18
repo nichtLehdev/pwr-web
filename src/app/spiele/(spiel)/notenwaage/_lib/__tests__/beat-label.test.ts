@@ -33,7 +33,7 @@ describe("unitsToBeatLabel", () => {
   });
 
   it("verwendet nie gerundete Dezimalzahlen", () => {
-    // Regression: 32tel (3 Einheiten) war zuvor "0.13 Schläge".
+    // 32tel (3 Einheiten) nicht als gerundete Dezimalzahl („0.13 Schläge“).
     for (const units of [3, 6, 9, 12, 18, 24, 36, 48]) {
       expect(unitsToBeatLabel(units)).not.toMatch(/\d\.\d/);
     }

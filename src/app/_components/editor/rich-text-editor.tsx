@@ -53,14 +53,8 @@ import {
 } from "lucide-react";
 
 /**
- * Umfang der Schreibfläche.
- *
- * - `voll`: Beitragseditor mit Bildern, Downloads, Tabellen, Ausrichtung.
- * - `beschreibung`: Beschreibungen von Terminen und Kursen. Sie stehen in
- *   einem Abschnitt einer Seite, deren Kopf schon eine h2 ist, und umfließen
- *   dort ein Bild — Überschriften beginnen deshalb bei h3, und Bilder,
- *   Downloads, Tabellen und Ausrichtung gibt es nicht. Ein zweiter Editor
- *   wäre dieselbe Datei mit weniger Knöpfen gewesen.
+ * `voll`: Beitragseditor mit Bildern, Downloads, Tabellen, Ausrichtung.
+ * `beschreibung`: Termine/Kurse unter einer h2 — Überschriften ab h3, ohne Bilder, Downloads, Tabellen, Ausrichtung.
  */
 export type RichTextVariant = "voll" | "beschreibung";
 
@@ -70,23 +64,11 @@ interface RichTextEditorProps {
   placeholder?: string;
   className?: string;
   variant?: RichTextVariant;
-  /**
-   * Beschriftung der Schreibfläche. Die Fläche ist kein `input`, ein `label`
-   * mit `htmlFor` greift daran nicht — ohne diese Angabe hätte das Feld für
-   * Screenreader keinen Namen.
-   */
+  /** Die Fläche ist kein `input`, ein `label` mit `htmlFor` greift nicht — sonst hat sie keinen Namen. */
   ariaLabel?: string;
-  /**
-   * Pflichtfeld. Ein `required` wie am `textarea` gibt es hier nicht; diese
-   * Angabe erhält wenigstens die Ansage („Erforderlich"). Geprüft wird beim
-   * Absenden im Formular, wie bisher.
-   */
+  /** Nur die Ansage „Erforderlich“; geprüft wird beim Absenden im Formular. */
   ariaRequired?: boolean;
-  /**
-   * Hands the TipTap instance to the caller once it exists, so surrounding UI
-   * can insert at the cursor (e.g. the placeholder chips in the course mail
-   * composer). Null while the editor is still initializing.
-   */
+  /** Lets surrounding UI insert at the cursor (e.g. mail placeholder chips). Null while initializing. */
   onEditorReady?: (editor: Editor | null) => void;
 }
 
@@ -111,20 +93,9 @@ turndownService.addRule("strikethrough", {
 });
 
 /**
- * Bilder mit Breiten- oder Ausrichtungsklasse als rohes HTML schreiben.
- *
- * Gespeichert wird Markdown (hier unten: getHTML -> turndown -> onChange), und
- * Markdown kennt keine Bildbreiten. `![alt](src)` verliert die Klasse beim
- * Speichern — gemessen: Nach dem Ziehen auf „halb" stand in der Datenbank nur
- * `![JuPo Plakat](/api/uploads/…)`, die Einstellung war weg.
- *
- * Dieselbe Lösung nutzt diese Datei bereits für Unterstreichung,
- * Durchstreichung und Tabellen: rohes HTML ausgeben, wo Markdown nicht
- * ausreicht. `marked` reicht es unverändert durch, und der Filter behält
- * `class` — beides nachgemessen.
- *
- * Bilder ohne Klasse bleiben bewusst Markdown, damit sich am Bestand nichts
- * ändert.
+ * Bilder mit Breiten- oder Ausrichtungsklasse als rohes HTML: gespeichert wird Markdown,
+ * das keine Klassen kennt; `marked` und der Filter lassen `class` durch.
+ * Bilder ohne Klasse bleiben bewusst Markdown, damit sich am Bestand nichts ändert.
  */
 turndownService.addRule("bildMitKlasse", {
   filter: (node) =>
@@ -491,7 +462,6 @@ function Toolbar({
 
   return (
     <div className="border-rule dark:border-night-rule bg-rule/25 dark:bg-night-raised sticky top-0 z-10 flex flex-wrap items-center gap-1 border-b p-2 backdrop-blur-sm">
-      {/* Text formatting */}
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBold().run()}
         isActive={isMarkActive("bold")}
@@ -527,8 +497,7 @@ function Toolbar({
 
       <ToolbarSeparator />
 
-      {/* Überschriften: Der Knopf zählt ab 1, die Stufe richtet sich nach der
-          Seite (siehe `kopfStufen`). */}
+      {/* Der Knopf zählt ab 1, die Stufe richtet sich nach `kopfStufen`. */}
       {kopfStufen.map((level, index) => (
         <ToolbarButton
           key={level}
@@ -548,7 +517,6 @@ function Toolbar({
 
       <ToolbarSeparator />
 
-      {/* Lists */}
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBulletList().run()}
         isActive={editor.isActive("bulletList")}
@@ -568,7 +536,6 @@ function Toolbar({
         <>
           <ToolbarSeparator />
 
-          {/* Text alignment */}
           <ToolbarButton
             onClick={() => editor.chain().focus().setTextAlign("left").run()}
             isActive={
@@ -598,7 +565,6 @@ function Toolbar({
 
           <ToolbarSeparator />
 
-          {/* Block elements */}
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleBlockquote().run()}
             isActive={editor.isActive("blockquote")}
@@ -661,21 +627,18 @@ function Toolbar({
         )}
       </div>
 
-      {/* Image - opens modal */}
       {voll && (
         <ToolbarButton onClick={onOpenMediaPicker} title="Bild einfügen">
           <ImageIcon className="h-4 w-4" />
         </ToolbarButton>
       )}
 
-      {/* Download - opens modal */}
       {voll && (
         <ToolbarButton onClick={onOpenDownloadPicker} title="Download einfügen">
           <FileText className="h-4 w-4" />
         </ToolbarButton>
       )}
 
-      {/* Table dropdown */}
       {voll && (
         <div className="relative">
           <ToolbarButton
@@ -729,7 +692,6 @@ function Toolbar({
 
       <ToolbarSeparator />
 
-      {/* Undo/Redo */}
       <ToolbarButton
         onClick={() => editor.chain().focus().undo().run()}
         disabled={!editor.can().undo()}
@@ -778,48 +740,32 @@ export default function RichTextEditor({
           levels: voll ? [2, 3, 4] : [3, 4],
         },
       }),
-      // Ohne eigene Klasse: Links gestaltet article-content.css — Brauntinte
-      // auf Papier, Druckorange im Nachtdruck, dauerhaft unterstrichen.
-      // Nachgemessen an einem Link ohne Klasse: 5,26:1 hell, 9,16:1 dunkel.
-      // Die alte Inline-Klasse war nicht nur wirkungslos, sie schrieb
-      // ausgerechnet `text-primary` in jeden gespeicherten Beitrag — Orange als
-      // Schriftfarbe auf Papier sind 1,99:1.
+      // Ohne eigene Klasse: Links gestaltet article-content.css. Eine Klasse hier
+      // würde in jeden gespeicherten Beitrag geschrieben.
       Link.configure({
         openOnClick: false,
       }),
       Placeholder.configure({
         placeholder,
       }),
-      // Alles Folgende schreibt Auszeichnung, die eine Beschreibung nicht
-      // kennt: Bilder, Ausrichtung, Unterstreichung und Tabellen. Die Knöpfe
-      // dazu fehlen in der schlanken Werkzeugleiste ohnehin; ohne die
-      // Erweiterungen kann auch eingefügter Text sie nicht mitbringen.
+      // Nur im Beitrag: ohne diese Erweiterungen bringt auch eingefügter Text
+      // Bilder, Ausrichtung, Unterstreichung und Tabellen nicht in eine Beschreibung.
       ...(voll
         ? [
-            // Statt des schlichten Image: Breite und Ausrichtung als Klassen,
-            // mit einrastenden Ziehgriffen. Die alte Klasse `max-w-full
-            // rounded-lg` entfaellt — Bilder gestaltet jetzt
-            // article-content.css, und Rundungen gibt es im Programmheft
-            // nicht.
+            // Breite und Ausrichtung als Klassen, mit einrastenden Ziehgriffen.
             ArtikelBild,
             Underline,
             TextAlign.configure({
               types: ["heading", "paragraph"],
               defaultAlignment: "left",
             }),
-            // Breite, Linienmodell und Abstand der Tabelle stehen ebenfalls im
-            // Stylesheet — die Klasse hier war doppelt gemoppelt. `resizable`
-            // bleibt: Das ist Verhalten, keine Gestaltung.
+            // Gestaltung steht im Stylesheet; `resizable` ist Verhalten.
             Table.configure({
               resizable: true,
             }),
             TableRow,
-            // Ohne eigene Klassen: Tabellenlinien und Kopfzeile bestimmt
-            // article-content.css — in der Schreibflaeche und im
-            // veroeffentlichten Beitrag gleichermassen, weil beide dieselbe
-            // Datei nutzen. Die Grautoene hier waren sichtbar wirkungslos (das
-            // Stylesheet ueberstimmt sie), schrieben sich aber als tote
-            // Klassen in jeden neuen Beitrag.
+            // Ohne eigene Klassen: sie würden in jeden Beitrag geschrieben;
+            // Tabellenlinien bestimmt article-content.css.
             TableCell,
             TableHeader,
           ]
@@ -829,9 +775,7 @@ export default function RichTextEditor({
     immediatelyRender: false,
     editorProps: {
       attributes: {
-        // Dieselbe Satzgestaltung wie in der Anzeige: Der Beitrag nutzt
-        // article-content.css, die Beschreibung beschreibung.css. Geschrieben
-        // wird, was später auf der Seite steht.
+        // Dieselbe Satzgestaltung wie in der Anzeige.
         class: voll
           ? "article-content p-4 min-h-[300px] focus:outline-none"
           : "beschreibung p-4 min-h-[180px] focus:outline-none",

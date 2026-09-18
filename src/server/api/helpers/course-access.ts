@@ -10,12 +10,8 @@ import { PERMISSIONS, type PermissionKey } from "@/lib/permissions";
 import { districtAllowed, districtScopeFor } from "@/lib/district-scope";
 
 /**
- * Wer für einen Bezirk zuständig ist, betreut dessen Kurse mit — auch die von
- * Kollegen.
- *
- * Die Zuständigkeit allein reicht dafür nicht: ohne `courses.create` bliebe der
- * Zuschnitt wirkungslos, und der Eintrag in `UserBezirkScope` würde still zur
- * Mitbearbeitung sämtlicher Kurse des Bezirks führen.
+ * Bezirkszuständige betreuen die Kurse ihres Bezirks mit, aber nur mit `courses.create`;
+ * sonst würde ein `UserBezirkScope`-Eintrag still zur Mitbearbeitung aller Bezirkskurse führen.
  */
 function scopedToCourseBezirk(
   perms: Set<PermissionKey>,
@@ -130,12 +126,8 @@ export async function courseCollaboratorRolesForUser(
 }
 
 /**
- * Wer den Geschwisterkindrabatt einer Anmeldung nachträglich gewähren darf.
- *
- * `canDecide` heißt: die eigene Berechtigung reicht aus, den Rabatt zugleich zu
- * genehmigen. Kursverantwortliche ohne dieses Recht dürfen ihn zwar für ihre
- * eigenen Kurse anstoßen, er geht dann aber wie ein beantragter Rabatt in die
- * Prüfung — sonst wäre die Prüfung durch die Hintertür abgeschafft.
+ * Wer den Geschwisterkindrabatt nachträglich gewähren darf. Ohne `canDecide` dürfen
+ * Kursverantwortliche ihn nur anstoßen; er geht dann wie ein beantragter Rabatt in die Prüfung.
  */
 export async function userCanManageSiblingDiscount(
   db: PrismaClient,

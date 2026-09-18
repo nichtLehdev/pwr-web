@@ -25,11 +25,7 @@ export type ValveDiagramProps = {
   className?: string;
 };
 
-/**
- * Ventilknöpfe bleiben rund — sie sind die Sache selbst, kein Kasten. Die
- * Größe hängt an der Fensterhöhe (und auf schmalen Geräten an der Breite),
- * damit das Griffbild den vorhandenen Platz nutzt statt bei 72px zu bleiben.
- */
+/** Ventilknöpfe bleiben rund; Größe folgt Fensterhöhe (schmal: Breite). */
 const VALVE_SIZE =
   "h-[clamp(60px,min(14dvh,18vw),150px)] w-[clamp(60px,min(14dvh,18vw),150px)]";
 

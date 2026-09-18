@@ -51,7 +51,7 @@ function BezirkeMap({ bezirke }: { bezirke: Bezirk[] }) {
     ? bezirke.find((b) => b.number === hoveredBezirk)
     : null;
 
-  // Helper function to get main obleute (not stellvertretend)
+  // Main obleute only (not stellvertretend)
   const getMainObleute = (bezirk: Bezirk) =>
     (bezirk.obleute ?? []).filter(
       (person) => !person.roleName.toLowerCase().includes("stell"),
@@ -272,8 +272,7 @@ function BezirkeMap({ bezirke }: { bezirke: Bezirk[] }) {
         </svg>
       </Panel>
       {/* Info-Spalte */}
-      {/* `sticky-below-nav` statt `lg:top-24` — siehe Ensemble-Detailseite:
-          96px fest gegen 120px tatsächliche Navigationshöhe. */}
+      {/* `sticky-below-nav` statt `lg:top-24`: die Navigation ist höher als 96px. */}
       <div className="sticky-below-nav w-full lg:sticky lg:w-1/3">
         <div className="border-ink dark:border-night-text border-t-2 pt-6">
           {currentBezirk ? (
@@ -348,7 +347,6 @@ export default function BezirkePage() {
         </div>
       ) : (
         <>
-          {/* Übersichtskarte */}
           <PageSection labelledBy="karte-heading">
             <Heading id="karte-heading" rule>
               Übersichtskarte der Bezirke
@@ -384,7 +382,6 @@ export default function BezirkePage() {
             </ul>
           </PageSection>
 
-          {/* Ansprechpartner-Hinweis */}
           <PageSection labelledBy="ansprechpartner-intro-heading" rule>
             <Split
               head={
@@ -400,9 +397,7 @@ export default function BezirkePage() {
                 einen Posaunenchor in Ihrem Bereich suchen oder Fragen zu den
                 besonderen Angeboten haben.
               </p>
-              {/* Rahmen statt Füllung: Der Schlussaufruf am Seitenende stellt
-                  dieselbe Bitte und ist der einzige orange Blickfang der
-                  Seite. Zweimal Orange nähme ihm seine Wirkung. */}
+              {/* Rahmen statt Füllung: Orange bleibt dem Schlussaufruf am Seitenende vorbehalten. */}
               <Note
                 tone="info"
                 title="Posaunenchor in der Nähe suchen"
@@ -413,7 +408,6 @@ export default function BezirkePage() {
             </Split>
           </PageSection>
 
-          {/* Bezirke-Verzeichnis */}
           <PageSection labelledBy="verzeichnis-heading" rule>
             <Split
               head={

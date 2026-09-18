@@ -1,10 +1,6 @@
 /**
- * Address search (type-ahead) via Photon — https://photon.komoot.io
- *
- * Photon is OSM-based like Nominatim, but is explicitly built for
- * search-as-you-type, which Nominatim's usage policy forbids. Save-time
- * geocoding still goes through Nominatim (see ./geocoding.ts); this module is
- * only for filling the location form while the user types.
+ * Type-ahead address search via Photon (https://photon.komoot.io): Nominatim's
+ * usage policy forbids search-as-you-type. Save-time geocoding: ./geocoding.ts.
  */
 import { createLogger } from "@/server/utils/logger";
 
@@ -20,9 +16,7 @@ const BIAS_SCALE = 0.4;
 const REQUEST_TIMEOUT_MS = 5000;
 
 export interface AddressSuggestion {
-  /** Stable key for React lists. */
   id: string;
-  /** Human-readable one-liner shown in the dropdown. */
   label: string;
   name: string | null;
   street: string | null;
@@ -33,7 +27,6 @@ export interface AddressSuggestion {
   longitude: number;
 }
 
-/** Photon feature properties we care about (everything is optional upstream). */
 interface PhotonProperties {
   osm_id?: number;
   osm_type?: string;
@@ -56,10 +49,7 @@ interface PhotonFeature {
   geometry?: { coordinates?: unknown };
 }
 
-/**
- * Photon `type` values where `name` is the place itself (a city, a postcode)
- * rather than a venue sitting at an address.
- */
+/** Photon `type` values where `name` is the place itself, not a venue. */
 const PLACE_TYPES = new Set(["city", "district", "locality", "county"]);
 
 function toSuggestion(feature: PhotonFeature): AddressSuggestion | null {
@@ -98,8 +88,7 @@ function toSuggestion(feature: PhotonFeature): AddressSuggestion | null {
     city = props.district ?? null;
   }
 
-  // Only a venue/POI name belongs in the location's `name` field — not the
-  // city or the postcode, which Photon also returns under `name`.
+  // Only a venue name belongs here; Photon also returns city/postcode under `name`.
   const name =
     props.type === "house" && props.name && props.name !== city
       ? props.name
@@ -136,12 +125,7 @@ function toSuggestion(feature: PhotonFeature): AddressSuggestion | null {
   };
 }
 
-/**
- * Look up address suggestions for a partial query.
- *
- * Returns an empty list rather than throwing: a failing autocomplete must not
- * block the user from typing the address by hand.
- */
+/** Never throws: a failing autocomplete must not block typing the address by hand. */
 export async function searchAddresses(
   query: string,
   limit = 5,
@@ -188,9 +172,7 @@ export async function searchAddresses(
       }
 
       seen.add(suggestion.label);
-      // A bare postcode matches other countries too (50679 also exists in
-      // Spain), so German hits come first — but stay reachable for the rare
-      // course abroad.
+      // Postcodes also match abroad, so German hits come first; foreign ones stay reachable.
       (feature.properties?.countrycode === "DE" ? german : abroad).push(
         suggestion,
       );

@@ -62,7 +62,6 @@ export default function InstagramSummaryTemplate({
         <div className="absolute bottom-0 -left-10 h-40 w-40 rounded-full bg-white/10" />
         <div className="absolute top-32 right-32 h-24 w-24 rounded-full bg-white/20" />
 
-        {/* Content */}
         <div className="relative z-10 flex h-full flex-col items-center justify-center px-12 text-center text-white">
           <h1 className="mb-3 text-7xl font-black tracking-tight">
             {monthName}

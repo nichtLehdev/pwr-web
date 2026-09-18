@@ -5,12 +5,7 @@ import {
   markdownToSingleLine,
 } from "@/lib/markdown-to-plain-text";
 
-/**
- * Beschreibungen von Terminen und Kursen werden als Markdown gespeichert und
- * an zwei Enden ausgewertet: als HTML in den Detailansichten und als Klartext
- * in Kalender, Metadaten, Suche und Vorlagen. Beide Enden müssen denselben
- * Text meinen — deshalb prüft der letzte Block sie gegeneinander.
- */
+/** Markdown wird als HTML und als Klartext ausgewertet; der letzte Block prüft beide gegeneinander. */
 
 const TEST_ENTITIES: Record<string, string> = {
   "&amp;": "&",
@@ -21,9 +16,8 @@ const TEST_ENTITIES: Record<string, string> = {
 };
 
 /**
- * Grobes Abräumen der Tags, nur für den Vergleich der beiden Enden. Tags bis
- * zur Ruhe, Entitäten in einem Durchgang — dieselben Regeln wie im Helfer,
- * sonst meldet CodeQL auch hier unvollständiges Abräumen.
+ * Nur für den Vergleich. Dieselben Regeln wie im Helfer (Tags bis zur Ruhe, Entitäten
+ * einmal), sonst meldet CodeQL auch hier unvollständiges Abräumen.
  */
 function htmlZuText(html: string): string {
   let text = html
@@ -187,11 +181,7 @@ describe("Klartext und Darstellung sagen dasselbe", () => {
   });
 });
 
-/**
- * CodeQL meldete, dass ein einzelner Durchgang Tags neu zusammensetzen kann
- * und Entitäten nach dem Abräumen wieder Tags ergeben. Klartext wird nirgends
- * ausgeführt, soll aber von sich aus frei von Tags sein.
- */
+/** Ein einzelner Durchgang kann Tags neu zusammensetzen (CodeQL); Klartext soll frei von Tags sein. */
 describe("markdownToPlainText — keine Tags im Ergebnis", () => {
   const ohneSkript = (eingabe: string) =>
     expect(markdownToPlainText(eingabe).toLowerCase()).not.toContain("<script");

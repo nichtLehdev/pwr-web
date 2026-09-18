@@ -1,16 +1,12 @@
 /**
- * Seed Script for Creating Admin User with Full Permissions
- *
- * This script creates/updates the admin user (lars.lehmann) and grants
- * all available permissions to them.
- *
+ * Creates or updates the admin user and grants all permissions directly.
  * Usage: npx tsx prisma/seed-user.ts
  */
 import "dotenv/config";
 import { db } from "@/server/db";
 import { PERMISSION_DEFINITIONS } from "@/lib/permissions";
 
-// Configuration - can be overridden via environment variables
+// Overridable via environment variables
 const ADMIN_EMAIL =
   process.env.ADMIN_EMAIL || "lars.lehmann@posaunenwerk-rheinland.de";
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "lars.lehmann";
@@ -20,13 +16,9 @@ async function main() {
   console.log("🌱 Starting user seed...");
 
   try {
-    // Permissions are now hardcoded in the codebase, no need to seed them
-
-    // Create or update the admin user
     console.log(`👤 Creating/updating user: ${ADMIN_USERNAME}...`);
     const user = await createOrUpdateUser();
 
-    // Grant all permissions to the user
     console.log("🔑 Granting all permissions to user...");
     await grantAllPermissions(user.id);
 
@@ -41,7 +33,6 @@ async function main() {
 }
 
 async function createOrUpdateUser() {
-  // Try to find existing user by email or username
   const existingUser =
     (await db.user.findUnique({
       where: { email: ADMIN_EMAIL },
@@ -52,7 +43,6 @@ async function createOrUpdateUser() {
 
   if (existingUser) {
     console.log(`  ✓ Found existing user: ${existingUser.email}`);
-    // Update user if needed
     const updated = await db.user.update({
       where: { id: existingUser.id },
       data: {
@@ -65,7 +55,6 @@ async function createOrUpdateUser() {
     return updated;
   }
 
-  // Create new user
   const newUser = await db.user.create({
     data: {
       email: ADMIN_EMAIL,
@@ -79,7 +68,6 @@ async function createOrUpdateUser() {
 }
 
 async function grantAllPermissions(userId: string) {
-  // Get all permission keys from hardcoded definitions
   const allPermissionKeys = PERMISSION_DEFINITIONS.map((p) => p.key);
 
   if (allPermissionKeys.length === 0) {
@@ -87,19 +75,16 @@ async function grantAllPermissions(userId: string) {
     return;
   }
 
-  // Remove existing permissions for this user (clean slate)
   await db.userPermission.deleteMany({
     where: { userId },
   });
 
-  // Grant all permissions
   const permissionGrants = allPermissionKeys.map((permissionKey) => ({
     userId,
     permissionKey,
     granted: true,
   }));
 
-  // Batch create all permission grants
   await db.userPermission.createMany({
     data: permissionGrants,
     skipDuplicates: true,
@@ -107,10 +92,6 @@ async function grantAllPermissions(userId: string) {
 
   console.log(`  ✓ Granted ${permissionGrants.length} permissions to user`);
 }
-
-// ============================================================================
-// RUN
-// ============================================================================
 
 main()
   .then(() => {

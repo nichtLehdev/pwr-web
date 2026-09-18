@@ -151,14 +151,12 @@ export default function NewFoerdervereinPage() {
       ]}
       maxWidth="7xl"
     >
-      {/* Error Message */}
       {error && (
         <div className="mb-6 border-l-4 border-red-600 bg-red-50 p-4 text-red-700 dark:border-red-400 dark:bg-red-900/20 dark:text-red-400">
           {error}
         </div>
       )}
 
-      {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-8">
         <UserLinkField
           userId={userId}
@@ -244,7 +242,6 @@ export default function NewFoerdervereinPage() {
           </div>
         </section>
 
-        {/* Actions */}
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
           <Link
             href="/dashboard/foerderverein"

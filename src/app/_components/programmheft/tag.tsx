@@ -2,19 +2,8 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * Etikett (öffentliche Variante von `ui/badge`) für Zustände: rechteckig,
- * gefüllt, halbschmal, ohne Versalien oder Sperrung. Umrandet sind im
- * Programmheft nur Aktionen; Art, Dauer oder Ort stehen als Meta-Text.
- * - `ink`: immer Tinte mit Papierschrift, z. B. auf Orange
- * - `inverse`: Tinte auf Papier, im Nachtdruck Nachtschrift auf Nachtgrund
- * - `orange`: Druckorange mit Tinte (z. B. „Nur Warteliste“)
- * - `cancelled`: beendete Zustände mit negativem Ausgang — „Abgesagt“,
- *   „Storniert“, „Abgelehnt“
- * - `muted`: nur umrandet, ohne Füllung. Für Zustände, die kein Gewicht
- *   verdienen (Entwurf, Archiviert). Im Dashboard trägt eine Liste viele
- *   Etiketten nebeneinander; wären alle gefüllt, hätte keines mehr Bedeutung.
- *
- * Gefüllt heißt: Das musst du sehen. Umrandet heißt: Das ist nur der Stand.
+ * Etikett für Zustände (öffentliche Variante von `ui/badge`). Gefüllt heißt:
+ * Das musst du sehen. `muted` (umrandet) ist nur der Stand, z. B. Entwurf.
  */
 export type TagTone = "ink" | "inverse" | "orange" | "cancelled" | "muted";
 
@@ -38,9 +27,8 @@ export function Tag({
 }) {
   return (
     <span
-      // Etiketten tragen ihre eigene Füllung. Die Zeilenfüllung in
-      // `.fill-row` färbt sonst auch ihre Schrift in Tinte — auf einem
-      // tintefarbenen Etikett wäre sie dann unlesbar.
+      // Nimmt das Etikett von `.fill-row` aus, das sonst seine Schrift in
+      // Tinte färbt (auf Tinte unlesbar).
       data-tag=""
       className={cn(
         "semi-condensed inline-flex min-h-6 items-center gap-1.5 px-2 text-sm leading-none font-semibold whitespace-nowrap",
