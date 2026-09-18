@@ -52,7 +52,6 @@ export default function NewFoerdervereinPage() {
   const [role, setRole] = useState<FoerdervereinRole>(
     FoerdervereinRole.MITGLIED,
   );
-  const [memberSince, setMemberSince] = useState("");
   const [description, setDescription] = useState("");
   const [sortOrder, setSortOrder] = useState(0);
   const [userId, setUserId] = useState<string | null>(null);
@@ -123,7 +122,6 @@ export default function NewFoerdervereinPage() {
       imageId: person.imageId || undefined,
       position: position.trim() || undefined,
       role,
-      memberSince: memberSince ? new Date(memberSince) : undefined,
       description: description.trim() || undefined,
       sortOrder,
       userId: userId || undefined,
@@ -219,17 +217,6 @@ export default function NewFoerdervereinPage() {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <Label>Mitglied seit</Label>
-                <Input
-                  type="date"
-                  value={memberSince}
-                  onChange={(e) => setMemberSince(e.target.value)}
-                  max={new Date().toISOString().split("T")[0]}
-                  title="Datum kann nicht in der Zukunft liegen"
-                />
-              </div>
-
               <div>
                 <Label>Reihenfolge</Label>
                 <Input
