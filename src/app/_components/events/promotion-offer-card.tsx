@@ -49,8 +49,9 @@ interface PromotionOfferCardProps {
 
 /**
  * Nachrück-Angebot auf der Detailseite: Es sind Plätze frei, aber nicht für
- * alle. Die Anmeldenden wählen, wer nachrückt — oder lehnen ab, dann gehen
- * die Plätze an die Nächsten und die Anmeldung behält ihren Platz.
+ * alle. Die Anmeldenden wählen, wer nachrückt — oder lehnen ab, dann behält
+ * die Anmeldung ihren Platz, und das Kursteam kann die Plätze den Nächsten
+ * anbieten (automatisch rückt seit dem 18.09.2026 niemand mehr nach).
  */
 export function PromotionOfferCard({
   registrationId,
@@ -115,7 +116,8 @@ export function PromotionOfferCard({
           Bis <strong>{formatDateTime(offer.expiresAt)} Uhr</strong> kannst du
           wählen, wer nachrückt. Die Gewählten sind dann bestätigt, die übrigen
           bleiben auf der Warteliste. Lehnst du ab oder verstreicht die Frist,
-          gehen die Plätze an die Nächsten – deine Anmeldung behält ihren Platz.
+          kann das Kursteam die Plätze den Nächsten anbieten – deine Anmeldung
+          behält ihren Platz.
         </p>
       </Note>
 
@@ -142,8 +144,8 @@ export function PromotionOfferCard({
       {confirmDecline ? (
         <div className="border-ink dark:border-night-text border-t-2 pt-4">
           <p className="text-ink dark:text-night-text">
-            Angebot wirklich ablehnen? Die freien Plätze gehen dann an die
-            Nächsten auf der Warteliste.
+            Angebot wirklich ablehnen? Das Kursteam kann die freien Plätze dann
+            den Nächsten auf der Warteliste anbieten.
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
             <button
