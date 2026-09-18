@@ -2023,6 +2023,16 @@ export const registrationsRouter = createTRPCRouter({
         });
       });
 
+      // Bearbeiten kann Plätze freigeben (weniger Teilnehmende, eine andere
+      // Preiskategorie) oder eine wartende Anmeldung so verkleinern, dass sie
+      // jetzt passt. Beides schiebt die Warteliste weiter, wie Stornieren,
+      // Statuswechsel und Löschen es tun. Ohne diesen Aufruf blieb ein frei
+      // gewordener Platz leer: gemessen 2 → 1 Teilnehmer im vollen Kurs, die
+      // Wartende stand weiter auf der Liste. Der Cron hilft dabei nicht — er
+      // sieht nur abgelaufene Angebote.
+      const promoted = await promoteFromWaitlist(ctx.db, registration.courseId);
+      await sendPromotionEmails(promoted);
+
       return updatedRegistration;
     }),
 
