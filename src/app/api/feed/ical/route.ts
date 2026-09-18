@@ -3,6 +3,7 @@ import { db } from "@/server/db";
 import { ContentStatus } from "~/generated/prisma/client";
 import { getBaseUrl } from "@/server/utils/get-base-url";
 import { coursePath, eventPath } from "@/lib/slug";
+import { markdownToPlainText } from "@/lib/markdown-to-plain-text";
 
 import { createLogger } from "@/server/utils/logger";
 
@@ -151,7 +152,10 @@ export async function GET(request: NextRequest) {
 
           const descriptionParts: string[] = [];
           if (event.description) {
-            descriptionParts.push(event.description);
+            // Klartext: Die Beschreibung ist Markdown, ein Kalender stellt
+            // nichts davon dar. Ohne diese Umwandlung stünden Sternchen,
+            // Raute und Linkklammern im Termin.
+            descriptionParts.push(markdownToPlainText(event.description));
           }
           if (event.motto) {
             descriptionParts.push(`Motto: ${event.motto}`);
@@ -169,7 +173,12 @@ export async function GET(request: NextRequest) {
             descriptionParts.push(`Preis: ${event.priceInfo}`);
           }
           descriptionParts.push(`\nMehr Informationen: ${eventUrl}`);
-          const description = descriptionParts.join("\\n");
+          // Echter Umbruch: Das iCal-Escapen erledigt `escapeIcalText`, das
+          // aus einem Umbruch die Folge Rückstrich-n macht. Vorher stand hier
+          // schon ein Rückstrich-n im Text, dessen Rückstrich dieselbe
+          // Funktion anschließend verdoppelte — im Kalender war die Folge
+          // daraufhin sichtbar, statt eine Zeile zu umbrechen.
+          const description = descriptionParts.join("\n");
 
           let summary = event.title;
           if (event.bezirk) {
@@ -273,7 +282,8 @@ END:VEVENT`;
 
           const descriptionParts: string[] = [];
           if (course.description) {
-            descriptionParts.push(course.description);
+            // Klartext, siehe Termine weiter oben.
+            descriptionParts.push(markdownToPlainText(course.description));
           }
           if (course.motto) {
             descriptionParts.push(`Motto: ${course.motto}`);
@@ -294,7 +304,7 @@ END:VEVENT`;
             descriptionParts.push(`Preis: ${course.priceInfo}`);
           }
           descriptionParts.push(`\nMehr Informationen: ${courseUrl}`);
-          const description = descriptionParts.join("\\n");
+          const description = descriptionParts.join("\n");
 
           let summary = course.title;
           if (course.bezirk) {

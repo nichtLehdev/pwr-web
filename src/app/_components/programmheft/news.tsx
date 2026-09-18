@@ -102,7 +102,7 @@ export function NewsColumn({
 }
 
 const COLUMN =
-  "border-rule dark:border-night-rule border-b py-8 lg:border-b-0 lg:py-10";
+  "border-rule dark:border-night-rule border-b py-8 lg:border-b-0 lg:px-5 lg:py-10";
 
 /** Beiträge als Druckspalten, ab 64rem mit 1px-Haarlinien getrennt. */
 export function NewsColumns({
@@ -119,12 +119,12 @@ export function NewsColumns({
       <div
         aria-busy="true"
         aria-label="Neuigkeiten werden geladen"
-        className="grid lg:-ml-10 lg:grid-cols-3"
+        className="grid lg:-mx-5 lg:grid-cols-3"
       >
         {[0, 1, 2].map((i) => (
           <div
             key={i}
-            className={`${COLUMN} flex flex-col gap-3 lg:pl-10 ${
+            className={`${COLUMN} flex flex-col gap-3 ${
               i > 0 ? "lg:border-l" : ""
             }`}
           >
@@ -142,16 +142,18 @@ export function NewsColumns({
   }
 
   return (
-    // Jede Spalte bekommt denselben linken Innenabstand, das Raster wird dafür
-    // um genau diesen Betrag nach links gezogen. Vorher hingen die Abstände am
-    // laufenden Index — die mittleren Spalten waren dadurch schmaler, ihre
-    // Bildfelder bei festem Seitenverhältnis niedriger und die Überschriften
-    // standen nicht mehr auf einer Linie.
-    <ul className="grid lg:-ml-10 lg:grid-cols-3">
+    // Jede Spalte bekommt denselben Innenabstand auf beiden Seiten, das Raster
+    // wird um die Hälfte des Zwischenraums nach außen gezogen. Zwei Gründe:
+    // Hingen die Abstände am laufenden Index, wären die mittleren Spalten
+    // schmaler, ihre Bildfelder niedriger und die Überschriften stünden nicht
+    // mehr auf einer Linie. Und läge der Abstand nur links, säße die
+    // Haarlinie bündig an der vorigen Spalte statt zwischen beiden — gemessen
+    // 0px zur linken und 41px zur rechten Spalte.
+    <ul className="grid lg:-mx-5 lg:grid-cols-3">
       {posts.map((post, i) => (
         <li
           key={post.id}
-          className={`stretch-item relative ${COLUMN} lg:pl-10 ${
+          className={`stretch-item relative ${COLUMN} ${
             i % 3 !== 0 ? "lg:border-l" : ""
           }`}
         >

@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import { Tags } from "lucide-react";
 import { Select } from "@/app/_components/ui";
 import { cn } from "@/lib/utils";
@@ -53,6 +54,11 @@ type ParticipantPriceOptionFieldProps = {
   ageExemptOptionId?: string | null;
   className?: string;
   labelClassName?: string;
+  /**
+   * Meldung außerhalb des Felds, die den Fehler erklärt (die Sammelmeldung im
+   * Teilnehmer-Fenster) — wird mit `aria-describedby` verknüpft.
+   */
+  errorDescriptionId?: string;
 };
 
 export function ParticipantPriceOptionField({
@@ -69,10 +75,14 @@ export function ParticipantPriceOptionField({
   ageExemptOptionId,
   className,
   labelClassName = "text-ink dark:text-night-text mb-1 block text-sm font-semibold",
+  errorDescriptionId,
 }: ParticipantPriceOptionFieldProps) {
+  const uid = useId();
   if (priceOptions.length === 0) {
     return null;
   }
+  const selectId = `${uid}-preisoption`;
+  const noteId = `${uid}-hinweis`;
 
   const selected = priceOptions.find((option) => option.id === value);
   const age = ageReferenceDate ? ageOnDate(birthDate, ageReferenceDate) : null;
@@ -108,7 +118,11 @@ export function ParticipantPriceOptionField({
 
   return (
     <div className={cn("md:col-span-2", className)}>
-      <label className={labelClassName}>Preisoption *</label>
+      {/* Mit `htmlFor` auf den Auslöser der Auswahlliste: vorher hatte die
+          Liste gar keinen Namen (axe: button-name). */}
+      <label htmlFor={selectId} className={labelClassName}>
+        Preisoption<span aria-hidden> *</span>
+      </label>
       <div className="flex items-center gap-2.5 sm:gap-3">
         <div
           className={cn(
@@ -123,8 +137,21 @@ export function ParticipantPriceOptionField({
         </div>
         <div className="min-w-0 flex-1">
           <Select
+            id={selectId}
             value={value}
             onChange={(e) => onChange(e.target.value)}
+            required
+            aria-invalid={error || ageMismatchIsError || undefined}
+            aria-describedby={
+              [
+                ageMismatch || noOptionForAge || selected?.description
+                  ? noteId
+                  : null,
+                error ? errorDescriptionId : null,
+              ]
+                .filter(Boolean)
+                .join(" ") || undefined
+            }
             error={error || ageMismatchIsError}
             fieldSize={FIELD_SELECT_SIZE}
             className="border-ink! dark:border-night-text! text-ink! dark:text-night-text! bg-paper! dark:bg-night! rounded-none!"
@@ -152,6 +179,7 @@ export function ParticipantPriceOptionField({
           </Select>
           {ageMismatch ? (
             <p
+              id={noteId}
               role="alert"
               className={cn(
                 "mt-1.5 text-sm",
@@ -167,6 +195,7 @@ export function ParticipantPriceOptionField({
             </p>
           ) : noOptionForAge ? (
             <p
+              id={noteId}
               role="alert"
               className="mt-1.5 text-sm text-red-700 dark:text-red-400"
             >
@@ -175,7 +204,10 @@ export function ParticipantPriceOptionField({
               Kursteam.
             </p>
           ) : selected?.description ? (
-            <p className="text-dark dark:text-night-muted mt-1.5 text-sm">
+            <p
+              id={noteId}
+              className="text-dark dark:text-night-muted mt-1.5 text-sm"
+            >
               {selected.description}
             </p>
           ) : null}

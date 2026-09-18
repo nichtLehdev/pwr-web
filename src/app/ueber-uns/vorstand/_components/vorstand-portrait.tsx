@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Mail, Phone } from "lucide-react";
 import type { Media } from "~/generated/prisma/client";
 import { cn } from "@/lib/utils";
+import ZoomableImage from "@/app/_components/general/zoomable-image";
 
 /** Textlink-Stimme wie bei `PersonContactRow`, wiederverwendet für Kontaktwege. */
 const LINK =
@@ -27,6 +28,10 @@ function PortraitFallback() {
     </div>
   );
 }
+
+/** Bildfeld 3:4; mit Foto als Vergrößern-Button, ohne als Fläche mit Logo. */
+const PORTRAIT_FRAME =
+  "bg-ink dark:bg-night-raised relative aspect-[3/4] w-full overflow-hidden";
 
 interface VorstandPortraitProps {
   name: string;
@@ -58,8 +63,14 @@ export function VorstandPortrait({
 
   return (
     <li className="flex flex-col">
-      <div className="bg-ink dark:bg-night-raised relative aspect-[3/4] w-full overflow-hidden">
-        {image ? (
+      {image ? (
+        <ZoomableImage
+          src={image.url}
+          alt={image.alt || name}
+          copyright={image.copyright}
+          creator={image.creator}
+          className={PORTRAIT_FRAME}
+        >
           <Image
             src={image.url}
             alt={image.alt || name}
@@ -67,10 +78,12 @@ export function VorstandPortrait({
             sizes="(min-width: 64rem) 30vw, (min-width: 40rem) 45vw, 90vw"
             className="object-cover"
           />
-        ) : (
+        </ZoomableImage>
+      ) : (
+        <div className={PORTRAIT_FRAME}>
           <PortraitFallback />
-        )}
-      </div>
+        </div>
+      )}
 
       <div className="border-rule dark:border-night-rule mt-4 border-t pt-4">
         <p className="condensed text-ink dark:text-night-text text-[1.375rem] leading-tight font-bold">

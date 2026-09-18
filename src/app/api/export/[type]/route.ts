@@ -6,6 +6,11 @@ import {
   collectMediaFromEntities,
 } from "@/server/utils/export-import";
 import type { Media } from "~/generated/prisma/client";
+import {
+  buildExportFilename,
+  findMissingIds,
+  parseExportSelection,
+} from "@/lib/export-selection";
 
 import { createLogger } from "@/server/utils/logger";
 
@@ -36,7 +41,31 @@ export async function GET(
     }
 
     const { type } = await params;
-    const date = new Date().toISOString().split("T")[0];
+    const date = new Date().toISOString().slice(0, 10);
+
+    // Optional: nur einzelne Einträge (`?ids=a,b`). Ohne Parameter bleibt es
+    // beim ganzen Bestand, genau wie vor der Auswahl.
+    const selection = parseExportSelection(
+      type,
+      request.nextUrl.searchParams.getAll("ids"),
+    );
+    if (!selection.ok) {
+      return NextResponse.json({ error: selection.error }, { status: 400 });
+    }
+    const selectedIds = selection.ids;
+    // `{}` filtert nichts — so bleibt die Abfrage des Gesamtexports unverändert.
+    const idFilter = selectedIds ? { id: { in: selectedIds } } : {};
+
+    /** 404 statt eines ZIP, dem still ein Teil der Auswahl fehlt. */
+    const missingSelection = (found: ReadonlyArray<{ id: string }>) => {
+      if (!selectedIds) return null;
+      const missingIds = findMissingIds(selectedIds, found);
+      if (missingIds.length === 0) return null;
+      return NextResponse.json(
+        { error: "Einträge nicht gefunden", missingIds },
+        { status: 404 },
+      );
+    };
 
     let jsonData: Record<string, unknown>;
     let mediaFiles: Array<{
@@ -51,9 +80,19 @@ export async function GET(
     switch (type) {
       case "posts": {
         const posts = await db.post.findMany({
+          where: idFilter,
           include: {
             coverImage: true,
             bezirk: true,
+            // Konten reisen nicht mit; die Adresse ist das Einzige, woran der
+            // Import dieselbe Person im Zielbestand wiedererkennt.
+            author: {
+              select: {
+                id: true,
+                displayName: true,
+                email: true,
+              },
+            },
             createdBy: {
               select: {
                 id: true,
@@ -72,9 +111,13 @@ export async function GET(
           orderBy: { createdAt: "desc" },
         });
 
+        const missingPosts = missingSelection(posts);
+        if (missingPosts) return missingPosts;
+
         jsonData = {
           posts: posts.map((post) => ({
             ...post,
+            authorEmail: post.author?.email,
             coverImageUrl: post.coverImage?.url,
             bezirkName: post.bezirk?.name,
             createdByEmail: post.createdBy?.email,
@@ -85,12 +128,13 @@ export async function GET(
         };
 
         mediaFiles = posts;
-        filename = `posts-export-${date}.zip`;
+        filename = buildExportFilename(type, date, selectedIds ? posts : null);
         break;
       }
 
       case "events": {
         const events = await db.event.findMany({
+          where: idFilter,
           include: {
             coverImage: true,
             location: true,
@@ -119,13 +163,31 @@ export async function GET(
                 image: true,
               },
             },
+            priceOptions: true,
+            // Die Datei selbst hat einen eigenen Export; hier reisen nur die
+            // Merkmale mit, an denen der Import sie wiederfindet.
+            downloads: {
+              include: {
+                download: {
+                  select: { id: true, title: true, fileUrl: true },
+                },
+              },
+            },
           },
           orderBy: { eventDate: "desc" },
         });
 
+        const missingEvents = missingSelection(events);
+        if (missingEvents) return missingEvents;
+
         jsonData = {
           events: events.map((event) => ({
             ...event,
+            downloads: event.downloads.map((link) => ({
+              downloadId: link.downloadId,
+              title: link.download.title,
+              fileUrl: link.download.fileUrl,
+            })),
             coverImageUrl: event.coverImage?.url,
             locationName: event.location?.name,
             bezirkName: event.bezirk?.name,
@@ -137,7 +199,7 @@ export async function GET(
         };
 
         mediaFiles = events;
-        filename = `events-export-${date}.zip`;
+        filename = buildExportFilename(type, date, selectedIds ? events : null);
         break;
       }
 
@@ -351,10 +413,27 @@ export async function GET(
       }
 
       case "courses": {
+        // Bewusst ohne Anmeldungen, Teilnehmende und Rechnungen: Das sind
+        // personenbezogene Daten, und ein Kurs soll sich weitergeben lassen,
+        // ohne sie mitzunehmen.
+        // Ebenfalls draußen bleibt das Kursteam mit Zugang (`collaborators`):
+        // Das sind Berechtigungen auf Konten dieses Bestands, kein Inhalt —
+        // über ein ZIP vergeben ließen sich damit stillschweigend Zugriffe
+        // einrichten. Öffentlich genannte Teammitglieder ohne Zugang
+        // (`guestTeamMembers`) stehen dagegen auf der Kursseite und wandern mit.
         const courses = await db.course.findMany({
+          where: idFilter,
           include: {
+            // Das Kursbild reist als Media-Zeile mit, genau wie das Titelbild
+            // eines Termins oder Beitrags — kein Sonderweg nötig.
+            image: true,
             location: true,
             bezirk: true,
+            // Preiskategorien, Anmeldefelder und das öffentlich genannte
+            // Kursteam gehören zum Kurs und fehlten bisher ganz.
+            priceOptions: { orderBy: { createdAt: "asc" } },
+            customFields: { orderBy: { sortOrder: "asc" } },
+            guestTeamMembers: { orderBy: { sortOrder: "asc" } },
             createdBy: {
               select: {
                 id: true,
@@ -373,9 +452,13 @@ export async function GET(
           orderBy: { startDate: "desc" },
         });
 
+        const missingCourses = missingSelection(courses);
+        if (missingCourses) return missingCourses;
+
         jsonData = {
           courses: courses.map((course) => ({
             ...course,
+            imageUrl: course.image?.url,
             locationName: course.location?.name,
             bezirkName: course.bezirk?.name,
             createdByEmail: course.createdBy?.email,
@@ -385,14 +468,13 @@ export async function GET(
           count: courses.length,
         };
 
-        const zipBuffer = await createExportZip(jsonData, [], "courses.json");
-
-        return new NextResponse(zipBuffer as unknown as BodyInit, {
-          headers: {
-            "Content-Type": "application/zip",
-            "Content-Disposition": `attachment; filename="courses-export-${date}.zip"`,
-          },
-        });
+        mediaFiles = courses;
+        filename = buildExportFilename(
+          type,
+          date,
+          selectedIds ? courses : null,
+        );
+        break;
       }
 
       default:

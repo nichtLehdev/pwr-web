@@ -2,6 +2,7 @@ import { Download } from "lucide-react";
 import { SmartLink } from "@/app/_components/programmheft/link";
 import { Tag } from "@/app/_components/programmheft/tag";
 import type { RouterOutputs } from "@/trpc/react";
+import { downloadFormatCode } from "@/lib/download-file-types";
 
 export type DownloadItem =
   RouterOutputs["materials"]["getDownloads"]["downloads"][number];
@@ -17,7 +18,9 @@ function formatFileSize(bytes: number): string {
  * erweitert um Dateimeta (Typ, Größe, Datum), Auszug und Tags.
  */
 export function DownloadRow({ download }: { download: DownloadItem }) {
-  const fileType = download.fileType.toUpperCase();
+  // Formatkürzel statt Enum-Wert: Ein Flyer steht als „PNG“ da, nicht als
+  // „IMAGE“ — und so kündigt ihn auch der Screenreader-Hinweis an.
+  const fileType = downloadFormatCode(download);
   const date = download.createdAt.toLocaleDateString("de-DE");
 
   return (

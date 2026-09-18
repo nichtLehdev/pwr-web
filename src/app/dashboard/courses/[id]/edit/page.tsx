@@ -46,6 +46,8 @@ import {
   NewLocationForm,
 } from "@/app/_components/dashboard";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
+import RichTextEditor from "@/app/_components/editor/rich-text-editor-lazy";
+import { MAX_DESCRIPTION_LENGTH } from "@/lib/description";
 import { datedSlugBase, slugify } from "@/lib/slug";
 import { useAutosave } from "@/lib/useAutosave";
 import { useBeforeUnload } from "@/lib/useBeforeUnload";
@@ -891,6 +893,17 @@ export default function EditCoursePage() {
       return;
     }
 
+    // Ohne `maxLength` am Textfeld muss die Länge hier geprüft
+    // werden: Sonst lehnte erst der Server ab, und zwar mit
+    // einer englischen Zod-Meldung.
+    if (description.length > MAX_DESCRIPTION_LENGTH) {
+      setError(
+        `Die Beschreibung ist zu lang (${description.length} von ${MAX_DESCRIPTION_LENGTH} Zeichen).`,
+      );
+      setIsSubmitting(false);
+      return;
+    }
+
     if (!startDate || !endDate) {
       setError("Bitte wähle Start- und Enddatum aus.");
       setIsSubmitting(false);
@@ -1294,22 +1307,25 @@ export default function EditCoursePage() {
                         </div>
 
                         <div>
-                          <label
-                            htmlFor="description"
-                            className="dark:text-night-text text-ink mb-2 block text-sm font-medium"
-                          >
+                          <label className="dark:text-night-text text-ink mb-2 block text-sm font-medium">
                             Beschreibung *
                           </label>
-                          <textarea
-                            id="description"
-                            value={description}
-                            onChange={(e) => setDescription(e.target.value)}
-                            rows={5}
-                            className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper text-ink w-full border px-4 py-2.5"
+                          {/* Markdown-Schreibfläche, siehe Termin anlegen. Das
+                              `required` des Textfelds gibt es hier nicht; die
+                              Pflicht prüft `handleSubmit` wie bisher, die
+                              Ansage übernimmt `ariaRequired`. */}
+                          <RichTextEditor
+                            variant="beschreibung"
+                            ariaLabel="Beschreibung"
+                            ariaRequired
+                            content={description}
+                            onChange={setDescription}
                             placeholder="Beschreibe den Kurs..."
-                            required
-                            maxLength={10000}
                           />
+                          <p className="text-dark dark:text-night-muted mt-2 text-xs">
+                            Überschriften, Listen, Links und Hervorhebungen sind
+                            möglich.
+                          </p>
                         </div>
 
                         <div className="grid gap-4 sm:grid-cols-2">

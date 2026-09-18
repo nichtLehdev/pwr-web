@@ -8,7 +8,7 @@ import {
 } from "~/generated/prisma/client";
 import { loadSeatAvailability } from "@/server/api/helpers/course-capacity";
 import {
-  promoteFromWaitlist,
+  closeExpiredPromotionOffers,
   sendPromotionEmails,
 } from "@/server/api/helpers/waitlist-promotion";
 import { resolveParticipantPriceOption } from "@/lib/course-price-options";
@@ -23,11 +23,9 @@ import { createLogger } from "@/server/utils/logger";
 const log = createLogger("Waitlist Offers");
 
 export type WaitlistOfferRunResult = {
-  /** Kurse, in denen ein abgelaufenes Angebot das Nachrücken angestoßen hat. */
+  /** Kurse, in denen abgelaufene Angebote geschlossen wurden. */
   courses: number;
   expired: number;
-  promoted: number;
-  offered: number;
   reminded: number;
   errors: Array<{ id: string; error: string }>;
 };
@@ -35,9 +33,10 @@ export type WaitlistOfferRunResult = {
 /**
  * Stündlicher Lauf für Nachrück-Angebote:
  *
- * 1. Abgelaufene Angebote: Nachrücken für den Kurs anstoßen — das schließt
- *    das Angebot, gibt die Plätze an die Nächsten weiter und verschickt die
- *    Mails.
+ * 1. Abgelaufene Angebote schließen und die Anmeldenden benachrichtigen. Die
+ *    Plätze gelten als weitergegeben, gehen aber an niemanden: Seit dem
+ *    18.09.2026 rückt nur nach, wer das Kursteam per Knopf nachrücken lässt —
+ *    auch hier nicht automatisch.
  * 2. Angebote mit höchstens noch zwei Tagen: das Kursteam einmal erinnern.
  */
 export async function processWaitlistPromotionOffers(
@@ -46,8 +45,6 @@ export async function processWaitlistPromotionOffers(
   const result: WaitlistOfferRunResult = {
     courses: 0,
     expired: 0,
-    promoted: 0,
-    offered: 0,
     reminded: 0,
     errors: [],
   };
@@ -64,14 +61,12 @@ export async function processWaitlistPromotionOffers(
 
   for (const { courseId } of expiredCourses) {
     try {
-      const run = await promoteFromWaitlist(db, courseId);
-      await sendPromotionEmails(run);
+      const expired = await closeExpiredPromotionOffers(db, courseId, now);
+      await sendPromotionEmails({ promoted: [], offered: [], expired });
       result.courses += 1;
-      result.expired += run.expired.length;
-      result.promoted += run.promoted.length;
-      result.offered += run.offered.length;
+      result.expired += expired.length;
     } catch (error) {
-      log.error(`Promotion run for course ${courseId} failed:`, error);
+      log.error(`Closing expired offers for course ${courseId} failed:`, error);
       result.errors.push({
         id: courseId,
         error: error instanceof Error ? error.message : String(error),

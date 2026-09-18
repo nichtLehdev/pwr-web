@@ -13,6 +13,16 @@ import {
   ScrollableModalBody,
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
+import {
+  DOWNLOAD_FILE_TYPE_ICONS,
+  DOWNLOAD_FILE_TYPE_LABELS,
+  DOWNLOAD_UPLOAD_ACCEPT,
+  DOWNLOAD_UPLOAD_FORMATS_LABEL,
+  DOWNLOAD_UPLOAD_MAX_BYTES,
+  DOWNLOAD_UPLOAD_MAX_LABEL,
+  downloadFileTypeForExtension,
+  downloadFormatCode,
+} from "@/lib/download-file-types";
 
 const categoryLabels: Record<DownloadCategory, string> = {
   BLECHBLATT: "Rheinisches Blechblatt",
@@ -20,22 +30,6 @@ const categoryLabels: Record<DownloadCategory, string> = {
   UEBUNGEN: "Übungen",
   FORMULARE: "Formulare",
   SONSTIGES: "Sonstiges",
-};
-
-const fileTypeLabels: Record<FileType, string> = {
-  PDF: "PDF",
-  DOCX: "Word",
-  XLSX: "Excel",
-  ZIP: "ZIP",
-  MP3: "Audio",
-};
-
-const fileTypeIcons: Record<FileType, string> = {
-  PDF: "📄",
-  DOCX: "📝",
-  XLSX: "📊",
-  ZIP: "📦",
-  MP3: "🎵",
 };
 
 /** Register-Reihe wie im Medien-Picker: Unterstreichung in Tinte statt Orange. */
@@ -134,8 +128,10 @@ export default function DownloadPickerModal({
 
   const processFile = useCallback(
     async (file: File) => {
-      if (file.size > 50 * 1024 * 1024) {
-        setUploadError("Die Datei ist zu groß. Maximal 50MB erlaubt.");
+      if (file.size > DOWNLOAD_UPLOAD_MAX_BYTES) {
+        setUploadError(
+          `Die Datei ist zu groß. Maximal ${DOWNLOAD_UPLOAD_MAX_LABEL} erlaubt.`,
+        );
         return;
       }
 
@@ -167,13 +163,9 @@ export default function DownloadPickerModal({
         setUploadedFileUrl(data.url);
         setUploadedFileSize(data.size);
 
-        const ext = data.extension.toLowerCase();
-        if (ext === "pdf") setNewFileType("PDF");
-        else if (["doc", "docx"].includes(ext)) setNewFileType("DOCX");
-        else if (["xls", "xlsx"].includes(ext)) setNewFileType("XLSX");
-        else if (ext === "zip") setNewFileType("ZIP");
-        else if (["mp3", "wav", "ogg"].includes(ext)) setNewFileType("MP3");
-        else setNewFileType("PDF");
+        setNewFileType(
+          downloadFileTypeForExtension(data.extension) ?? FileType.PDF,
+        );
 
         if (!newTitle) {
           setNewTitle(file.name.replace(/\.[^/.]+$/, ""));
@@ -243,10 +235,13 @@ export default function DownloadPickerModal({
 
   const handleInsert = () => {
     if (selectedDownload) {
+      // Der Editor schreibt den Typ sichtbar in den Linktext („… (PDF)“):
+      // Dort gehört das Format hin, nicht der Enum-Wert — sonst stünde bei
+      // einem Flyer „(IMAGE)“ im Beitrag.
       onSelect(
         selectedDownload.title,
         selectedDownload.fileUrl,
-        selectedDownload.fileType,
+        downloadFormatCode(selectedDownload),
         selectedDownload.id,
       );
       onClose();
@@ -363,7 +358,7 @@ export default function DownloadPickerModal({
                       )}
                     >
                       <span className="text-2xl">
-                        {fileTypeIcons[download.fileType]}
+                        {DOWNLOAD_FILE_TYPE_ICONS[download.fileType]}
                       </span>
                       <div className="min-w-0 flex-1">
                         <p className="text-ink dark:text-night-text truncate font-medium">
@@ -375,7 +370,9 @@ export default function DownloadPickerModal({
                           </p>
                         )}
                         <div className="text-dark dark:text-night-muted mt-1 flex items-center gap-2 text-xs">
-                          <span>{fileTypeLabels[download.fileType]}</span>
+                          <span>
+                            {DOWNLOAD_FILE_TYPE_LABELS[download.fileType]}
+                          </span>
                           <span>•</span>
                           <span>{categoryLabels[download.category]}</span>
                           {download.fileSize && (
@@ -404,7 +401,7 @@ export default function DownloadPickerModal({
                 {uploadedFileUrl ? (
                   <div className="border-rule dark:border-night-rule bg-rule/25 dark:bg-night-raised flex items-center gap-3 border p-4">
                     <span className="text-2xl">
-                      {fileTypeIcons[newFileType]}
+                      {DOWNLOAD_FILE_TYPE_ICONS[newFileType]}
                     </span>
                     <div className="flex-1">
                       <p className="text-ink dark:text-night-text font-medium">
@@ -412,7 +409,7 @@ export default function DownloadPickerModal({
                       </p>
                       <p className="text-dark dark:text-night-muted text-sm">
                         {formatFileSize(uploadedFileSize)} •{" "}
-                        {fileTypeLabels[newFileType]}
+                        {DOWNLOAD_FILE_TYPE_LABELS[newFileType]}
                       </p>
                     </div>
                     <button
@@ -465,7 +462,8 @@ export default function DownloadPickerModal({
                           Datei hierher ziehen oder klicken
                         </p>
                         <p className="text-dark dark:text-night-muted mt-1 text-sm">
-                          PDF, Word, Excel, ZIP, Audio und mehr bis zu 50MB
+                          {DOWNLOAD_UPLOAD_FORMATS_LABEL}, bis{" "}
+                          {DOWNLOAD_UPLOAD_MAX_LABEL}
                         </p>
                       </>
                     )}
@@ -474,6 +472,7 @@ export default function DownloadPickerModal({
                 <input
                   ref={fileInputRef}
                   type="file"
+                  accept={DOWNLOAD_UPLOAD_ACCEPT}
                   onChange={handleFileSelect}
                   className="hidden"
                 />
@@ -532,11 +531,13 @@ export default function DownloadPickerModal({
                     value={newFileType}
                     onChange={(e) => setNewFileType(e.target.value as FileType)}
                   >
-                    {Object.entries(fileTypeLabels).map(([value, label]) => (
-                      <option key={value} value={value}>
-                        {label}
-                      </option>
-                    ))}
+                    {Object.entries(DOWNLOAD_FILE_TYPE_LABELS).map(
+                      ([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ),
+                    )}
                   </Select>
                 </div>
               </div>
