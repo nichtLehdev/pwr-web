@@ -15,15 +15,7 @@ import { EditIcon } from "lucide-react";
 import { TrashIcon } from "lucide-react";
 import { ArrowLeftIcon } from "lucide-react";
 import { formatBerlin } from "@/lib/berlin-time";
-
-const FOERDERVEREIN_ROLE_LABELS: Record<string, string> = {
-  VORSITZENDER: "Vorsitzender",
-  STELLVERTRETER: "Stellvertreter",
-  SCHATZMEISTER: "Schatzmeister",
-  SCHRIFTFUEHRER: "Schriftführer",
-  BEISITZER: "Beisitzer",
-  MITGLIED: "Mitglied",
-};
+import { foerdervereinRoleLabel } from "@/lib/foerderverein";
 
 export default function FoerdervereinDetailPage() {
   const router = useRouter();
@@ -190,9 +182,7 @@ export default function FoerdervereinDetailPage() {
               {member.position}
             </span>
           )}
-          <Tag tone="inverse">
-            {FOERDERVEREIN_ROLE_LABELS[member.role] || member.role}
-          </Tag>
+          <Tag tone="inverse">{foerdervereinRoleLabel(member.role)}</Tag>
         </div>
       </div>
 

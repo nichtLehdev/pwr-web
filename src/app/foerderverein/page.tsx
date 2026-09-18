@@ -8,7 +8,7 @@ import { PointList, type Point } from "../_components/programmheft/point-list";
 import { Heading } from "../_components/programmheft/section-head";
 import { ValueTable } from "../_components/programmheft/value-table";
 import { WayList, WayRow } from "../_components/programmheft/way-list";
-import { capitalizeFirstLetter } from "@/lib/utils";
+import { FOERDERVEREIN_ROLE_LABELS } from "@/lib/foerderverein";
 import { buildPageMetadata } from "@/lib/seo";
 
 export const metadata = buildPageMetadata({
@@ -231,7 +231,7 @@ export default async function FoerdervereinPage() {
                 key={member.id}
                 image={member.person.image}
                 name={member.person.name ?? "Unbekannt"}
-                role={capitalizeFirstLetter(member.role)}
+                role={member.position ?? FOERDERVEREIN_ROLE_LABELS[member.role]}
                 email={member.person.email}
               />
             ))}
