@@ -1,7 +1,18 @@
 import { Prisma, RegistrationStatus } from "~/generated/prisma/client";
 import { TRPCError } from "@trpc/server";
 import type { db as database } from "@/server/db";
-import { SEAT_SELECTION_OUTDATED_MESSAGE } from "@/lib/registration-split";
+import {
+  SEAT_SELECTION_OUTDATED_MESSAGE,
+  type SeatAvailability,
+} from "@/lib/registration-split";
+import { registrationSeatShortage } from "@/lib/registration-seat-shortage";
+import { resolveParticipantPriceOption } from "@/lib/course-price-options";
+import {
+  seatsLeftForNewRegistrations,
+  seatSummaryForNewRegistrations,
+  WAITLIST_PRIORITY_SPLIT_MESSAGE,
+} from "@/lib/waitlist-priority";
+import { getCourseCapacitySummary } from "@/lib/course-available-slots";
 
 type Db = typeof database;
 type Tx = Prisma.TransactionClient;
@@ -73,6 +84,137 @@ type TierPriceOption = {
   label: string;
   maxParticipants: number | null;
 };
+
+/**
+ * Teilnehmer einer Anmeldung, wie der Vorrang der Warteliste sie braucht. In
+ * Eingangsreihenfolge laden (`orderBy: { createdAt: "asc" }`), damit die
+ * Reservierung nicht von der Datenbank abhängt.
+ */
+type WaitingParticipants = {
+  participants: ReadonlyArray<{
+    priceOptionId: string | null;
+    priceOption: string | null;
+  }>;
+};
+
+/**
+ * Was die Wartenden eines Kurses an Plätzen bräuchten — Preiskategorie je
+ * Teilnehmer, in Eingangsreihenfolge —, als Eingabe für den Vorrang der
+ * Warteliste (`@/lib/waitlist-priority`).
+ *
+ * Ein Kurs ohne Warteliste hat keine Wartenden, auch wenn aus der Zeit davor
+ * noch Anmeldungen so stehen: Das Team kann sie dort nicht nachrücken lassen,
+ * und sie sollen neue Anmeldungen nicht für immer aussperren.
+ */
+export function waitlistSeatRequests(
+  course: {
+    allowWaitingList: boolean | null;
+    priceOptions: ReadonlyArray<{ id: string; label: string }>;
+  },
+  waitlist: readonly WaitingParticipants[],
+): Array<Array<string | undefined>> {
+  if (!course.allowWaitingList) return [];
+  return waitlist.map((registration) =>
+    registration.participants.map(
+      (participant) =>
+        resolveParticipantPriceOption(participant, course.priceOptions)?.id,
+    ),
+  );
+}
+
+/**
+ * Anmeldungen, die eine öffentliche Platzübersicht braucht: die bestätigten
+ * zum Zählen, die wartenden für ihren Vorrang. Nur Status und Kategorien —
+ * eine Anmeldung trägt Kontakt- und Rechnungsdaten, die eine öffentliche
+ * Abfrage nie laden soll.
+ */
+export const seatRegistrationsQuery = {
+  where: {
+    registrationStatus: {
+      in: [RegistrationStatus.CONFIRMED, RegistrationStatus.WAITLIST],
+    },
+  },
+  orderBy: { createdAt: "asc" },
+  select: {
+    registrationStatus: true,
+    participants: {
+      orderBy: { createdAt: "asc" },
+      select: { priceOptionId: true, priceOption: true },
+    },
+  },
+} satisfies Prisma.CourseRegistrationFindManyArgs;
+
+/**
+ * Freie Plätze, wie neue Anmeldungen sie sehen — ohne die, die Wartende
+ * nutzen könnten —, aus einem Kurs, dessen Anmeldungen mit
+ * {@link seatRegistrationsQuery} geladen sind. Grundlage für Kursseite,
+ * Kursliste und Anmeldeformular.
+ */
+export function seatSummaryForPublic(course: {
+  maxParticipants: number | null;
+  allowWaitingList: boolean | null;
+  priceOptions: TierPriceOption[];
+  registrations: ReadonlyArray<
+    WaitingParticipants & { registrationStatus: RegistrationStatus }
+  >;
+}) {
+  const confirmed = course.registrations.filter(
+    (r) => r.registrationStatus === RegistrationStatus.CONFIRMED,
+  );
+  const waitlist = waitlistSeatRequests(
+    course,
+    course.registrations.filter(
+      (r) => r.registrationStatus === RegistrationStatus.WAITLIST,
+    ),
+  );
+  const summary = getCourseCapacitySummary({
+    maxParticipants: course.maxParticipants,
+    priceOptions: course.priceOptions,
+    registrations: confirmed.map((r) => ({
+      registrationStatus: r.registrationStatus,
+      participants: [...r.participants],
+    })),
+  });
+  return {
+    ...seatSummaryForNewRegistrations(summary, course.priceOptions, waitlist),
+    hasWaitingList: waitlist.length > 0,
+  };
+}
+
+/**
+ * Freie Plätze für neue Anmeldungen: die tatsächlichen
+ * ({@link loadSeatAvailability}) ohne die, die Wartende nutzen könnten. Das
+ * Team vergibt weiterhin aus den tatsächlichen.
+ */
+export async function loadSeatsForNewRegistrations(
+  db: Db | Tx,
+  course: {
+    id: string;
+    maxParticipants: number | null;
+    allowWaitingList: boolean | null;
+    priceOptions: TierPriceOption[];
+  },
+): Promise<Awaited<ReturnType<typeof loadSeatAvailability>>> {
+  const availability = await loadSeatAvailability(db, course);
+  if (!course.allowWaitingList) return availability;
+  const waitlist = await db.courseRegistration.findMany({
+    where: {
+      courseId: course.id,
+      registrationStatus: RegistrationStatus.WAITLIST,
+    },
+    orderBy: { createdAt: "asc" },
+    select: {
+      participants: {
+        orderBy: { createdAt: "asc" },
+        select: { priceOptionId: true, priceOption: true },
+      },
+    },
+  });
+  return seatsLeftForNewRegistrations(
+    availability,
+    waitlistSeatRequests(course, waitlist),
+  );
+}
 
 export function priceTierFullMessage(option: { label: string }): string {
   return `Die Preisoption "${option.label}" ist ausgebucht.`;
@@ -210,6 +352,7 @@ export async function assertSeatSelectionFits(
     participants,
     selection,
     confirmedCount,
+    seatsForNewRegistrations,
   }: {
     course: {
       id: string;
@@ -220,6 +363,12 @@ export async function assertSeatSelectionFits(
     selection: readonly number[];
     /** Bereits bestätigte Teilnehmer des Kurses. */
     confirmedCount: number;
+    /**
+     * Bei einer *neuen* Anmeldung die Plätze, die ihr nach dem Vorrang der
+     * Warteliste zustehen ({@link loadSeatsForNewRegistrations}). Beim
+     * Annehmen eines Nachrück-Angebots fehlt es — dort ist die Wartende dran.
+     */
+    seatsForNewRegistrations?: SeatAvailability;
   },
 ): Promise<void> {
   const outdated = () =>
@@ -248,6 +397,23 @@ export async function assertSeatSelectionFits(
     )
   ) {
     throw outdated();
+  }
+
+  // Die Plätze sind frei, stehen aber zum Teil Wartenden zu: eine eigene
+  // Meldung, weil „nicht mehr genug frei“ hier nicht stimmt.
+  if (
+    seatsForNewRegistrations &&
+    registrationSeatShortage({
+      participantPriceOptionIds: selection.map(
+        (index) => participants[index]?.priceOptionId,
+      ),
+      ...seatsForNewRegistrations,
+    })
+  ) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: WAITLIST_PRIORITY_SPLIT_MESSAGE,
+    });
   }
 }
 

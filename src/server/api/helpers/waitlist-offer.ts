@@ -23,11 +23,7 @@ import {
 import { userHasPermission } from "./permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 import { createNotification } from "./notifications";
-import {
-  CLEARED_PROMOTION_OFFER,
-  promoteFromWaitlist,
-  sendPromotionEmails,
-} from "./waitlist-promotion";
+import { CLEARED_PROMOTION_OFFER } from "./waitlist-promotion";
 import { downPaymentMailInfo } from "@/server/email/down-payment";
 import { resolveParticipantPriceOption } from "@/lib/course-price-options";
 import {
@@ -385,7 +381,8 @@ export async function acceptPromotionOffer(
       data: { registrationId: confirmed.id },
     });
 
-    // Weniger gewählt, als Plätze nutzbar waren: der Rest geht an die Nächsten.
+    // Weniger gewählt, als Plätze nutzbar waren: den Rest geben die übrigen
+    // Teilnehmer weiter — beim nächsten Nachrücken sind die Nächsten dran.
     const leftover = usableSeats(
       rest.map((p) => p.priceOptionId),
       withSeatsTaken(
@@ -451,16 +448,16 @@ export async function acceptPromotionOffer(
     url: `/dashboard/courses/${result.courseId}/participants/${result.confirmedRegistrationId}`,
   });
 
-  // Nicht alle Plätze genutzt? Dann gehen sie an die Nächsten.
-  const run = await promoteFromWaitlist(db, result.courseId);
-  await sendPromotionEmails(run);
-
+  // Nicht alle Plätze genutzt? Sie gelten als weitergegeben
+  // (`promotionOfferPassedSeats`), bleiben aber frei, bis das Kursteam die
+  // Warteliste nachrücken lässt — automatisch rückt niemand mehr nach.
   return result;
 }
 
 /**
- * Nachrück-Angebot ablehnen: die Anmeldung wartet weiter auf ihrem Platz, die
- * freien Plätze gehen an die Nächsten.
+ * Nachrück-Angebot ablehnen: die Anmeldung wartet weiter auf ihrem Platz. Die
+ * Plätze gelten als weitergegeben; an die Nächsten gehen sie erst, wenn das
+ * Kursteam die Warteliste nachrücken lässt.
  */
 export async function declinePromotionOffer(
   db: Db,
@@ -500,9 +497,6 @@ export async function declinePromotionOffer(
     body: `${registration.registrantFirstName} ${registration.registrantLastName} — bleibt mit ${registration.participants.length} Teilnehmern auf der Warteliste`,
     url: `/dashboard/courses/${registration.course.id}/participants/${registration.id}`,
   });
-
-  const run = await promoteFromWaitlist(db, registration.course.id);
-  await sendPromotionEmails(run);
 }
 
 /** Bestätigung für die nachgerückten Teilnehmer, mit fälliger Anzahlung. */

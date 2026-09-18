@@ -11,6 +11,7 @@ import { isRegistrationDeadlinePassed } from "@/lib/registration-deadline";
 import { isExternalCourse } from "@/lib/course-external";
 import CourseRegistrationForm from "@/app/_components/events/course-registration-form";
 import { DashboardPage } from "@/app/_components/dashboard";
+import { Note } from "@/app/_components/programmheft/note";
 
 /**
  * Dashboard-only registration entry. The public form refuses sign-ups once
@@ -32,10 +33,15 @@ export default function NewCourseRegistrationPage() {
       { enabled: !!courseId && !!session?.user },
     );
 
-  const { data: spots } = api.courses.getAvailableSlots.useQuery(
-    { id: courseId },
-    { enabled: !!courseId && !!session?.user },
+  // Die tatsächlichen Plätze, nicht die öffentlichen: Die Öffentlichkeit sieht
+  // nur die, die keine Wartende nutzen könnte, das Team darf mit „Bestätigt“
+  // aber alle bewusst vergeben. Ohne Berechtigung antwortet der Server mit
+  // FORBIDDEN — dann greift die Seite unten ohnehin.
+  const { data: overview } = api.registrations.getWaitlistOverview.useQuery(
+    { courseId },
+    { enabled: !!courseId && !!session?.user, retry: false, staleTime: 0 },
   );
+  const spots = overview?.seats;
 
   const participantsUrl = `/dashboard/courses/${courseId}/participants`;
 
@@ -122,6 +128,17 @@ export default function NewCourseRegistrationPage() {
   const deadlinePassed = isRegistrationDeadlinePassed(
     course.registrationDeadline,
   );
+  // Nur wenn Wartende freie Plätze für sich reservieren, weicht
+  // „Automatisch“ von dem ab, was das Formular aus den tatsächlichen Plätzen
+  // ankündigt.
+  const reservedForWaitlist = overview
+    ? overview.seats.availableSlots -
+      overview.seatsForNewRegistrations.availableSlots
+    : 0;
+  const waitlistFirst =
+    !!overview &&
+    Number.isFinite(reservedForWaitlist) &&
+    reservedForWaitlist > 0;
 
   return (
     // Die geteilte Hülle statt eines handgebauten Rahmens: Sie liefert
@@ -153,6 +170,23 @@ export default function NewCourseRegistrationPage() {
         </div>
       )}
 
+      {waitlistFirst && (
+        // Das Formular kennt den Vorrang der Warteliste nicht und kündigt
+        // „Automatisch“ aus den tatsächlichen Plätzen an; der Server gibt
+        // Neuen nur die übrigen. Der Hinweis sagt es vorher.
+        <Note tone="important" className="mb-6">
+          <p>
+            {reservedForWaitlist === 1
+              ? "1 der freien Plätze steht"
+              : `${reservedForWaitlist} der freien Plätze stehen`}{" "}
+            Anmeldungen auf der Warteliste zu. „Automatisch“ und „Aufteilen“
+            nutzen nur die übrigen – reichen sie nicht, kommt diese Anmeldung
+            auf die Warteliste. Mit dem Status „Bestätigt“ vergibst du auch die
+            vorbehaltenen Plätze.
+          </p>
+        </Note>
+      )}
+
       <CourseRegistrationForm
         staffMode
         course={course}
@@ -164,6 +198,9 @@ export default function NewCourseRegistrationPage() {
         onSuccess={() => {
           void utils.courses.getRegistrations.invalidate({ courseId });
           void utils.courses.getAvailableSlots.invalidate({ id: courseId });
+          void utils.registrations.getWaitlistOverview.invalidate({
+            courseId,
+          });
           router.push(participantsUrl);
         }}
       />
