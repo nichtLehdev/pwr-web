@@ -45,7 +45,7 @@ export function ParticipantLibraryPopup({
             </h4>
             <button
               onClick={onClose}
-              className="text-ink hover:bg-ink hover:text-paper dark:text-night-text dark:hover:bg-night-text dark:hover:text-night flex h-9 w-9 items-center justify-center transition-colors"
+              className="text-ink hover:bg-ink hover:text-paper dark:text-night-text dark:hover:bg-night-text dark:hover:text-night flex h-11 w-11 items-center justify-center transition-colors"
               aria-label="Schließen"
             >
               <X className="h-5 w-5" aria-hidden />

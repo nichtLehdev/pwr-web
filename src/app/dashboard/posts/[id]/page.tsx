@@ -12,6 +12,7 @@ import { ContentStatus, PostCategory } from "~/generated/prisma/enums";
 import "@/styles/article-content.css";
 import { useToast } from "@/app/_components/ui/toast";
 import { sanitizeHtml } from "@/lib/sanitize";
+import { DOWNLOAD_FILE_TYPE_ICONS } from "@/lib/download-file-types";
 import {
   Edit,
   Trash2,
@@ -23,7 +24,10 @@ import {
 } from "lucide-react";
 import {
   DashboardFormSectionLayout,
+  DashboardOverflowMenu,
   DashboardPage,
+  EntryExportButton,
+  useEntryExport,
 } from "@/app/_components/dashboard";
 import { Tag, type TagTone } from "@/app/_components/programmheft/tag";
 import { ArrowLeftIcon, EyeIcon } from "lucide-react";
@@ -123,6 +127,8 @@ export default function PostDetailPage() {
       setReviewNotes("");
     },
   });
+
+  const entryExport = useEntryExport("posts", postId);
 
   const deleteMutation = api.posts.delete.useMutation({
     onSuccess: () => {
@@ -250,7 +256,10 @@ export default function PostDetailPage() {
           { label: post.title },
         ]}
         actions={
-          <div className="flex flex-wrap gap-2">
+          // `w-full sm:w-auto`: Nur über die volle Breite kann `ml-auto` das
+          // „…“-Menü auf dem Telefon an den rechten Rand schieben — sein Panel
+          // ist rechts verankert.
+          <div className="flex w-full flex-wrap gap-2 sm:w-auto">
             {canEdit && (
               <Link
                 href={`/dashboard/posts/${postId}/edit`}
@@ -260,6 +269,9 @@ export default function PostDetailPage() {
                 Bearbeiten
               </Link>
             )}
+            {entryExport.canExport && (
+              <EntryExportButton exporter={entryExport} />
+            )}
             {canDelete && (
               <button
                 onClick={() => setShowDeleteModal(true)}
@@ -268,6 +280,15 @@ export default function PostDetailPage() {
                 <Trash2 className="h-4 w-4" />
                 Löschen
               </button>
+            )}
+            {/* Auf dem Telefon steht der Export im „…“-Menü (siehe
+                EntryExportButton); ab sm als Knopf vor „Löschen“, damit die
+                zerstörerische Aktion am Ende der Reihe bleibt. */}
+            {entryExport.canExport && (
+              <DashboardOverflowMenu
+                className="ml-auto sm:hidden"
+                items={[entryExport.menuItem]}
+              />
             )}
           </div>
         }
@@ -383,17 +404,7 @@ export default function PostDetailPage() {
                     >
                       <div className="flex items-center gap-3">
                         <span className="text-lg">
-                          {download.fileType === "PDF"
-                            ? "📄"
-                            : download.fileType === "DOCX"
-                              ? "📝"
-                              : download.fileType === "XLSX"
-                                ? "📊"
-                                : download.fileType === "ZIP"
-                                  ? "📦"
-                                  : download.fileType === "MP3"
-                                    ? "🎵"
-                                    : "📁"}
+                          {DOWNLOAD_FILE_TYPE_ICONS[download.fileType]}
                         </span>
                         <div>
                           <p className="text-ink dark:text-night-text text-sm font-medium">

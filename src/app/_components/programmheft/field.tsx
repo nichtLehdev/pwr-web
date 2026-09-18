@@ -86,6 +86,16 @@ export function FieldError({
  * Kontrollkästchen ohne Rundung: leeres Papier-Quadrat, angehakt füllt es
  * sich mit Tinte. Klickziel über das Label mindestens 44px hoch.
  */
+/**
+ * Einzelwahl im Programmheft, selbst gezeichnet wie das Kontrollkästchen: Der
+ * native Knopf erscheint in Safari im Nachtdruck als volle weiße Scheibe und
+ * sieht dann gewählt aus — bei zwei Knöpfen nebeneinander wirkten beide
+ * gewählt. Rund bleibt er, damit er als Einzelwahl erkennbar ist; der Punkt
+ * ist der Hintergrund innerhalb des Polsters.
+ */
+export const RADIO_INPUT_CLASS =
+  "border-ink checked:bg-ink dark:border-night-text dark:checked:bg-night-text h-5 w-5 shrink-0 cursor-pointer appearance-none rounded-full border-2 bg-clip-content p-[3px]";
+
 export function Checkbox({
   id,
   checked,

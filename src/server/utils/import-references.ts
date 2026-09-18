@@ -15,7 +15,7 @@ import type { PrismaClient } from "~/generated/prisma/client";
  */
 type Db = Pick<
   PrismaClient,
-  "bezirk" | "ensemble" | "auswahlChor" | "location" | "user"
+  "bezirk" | "ensemble" | "auswahlChor" | "location" | "user" | "download"
 >;
 
 export type UnresolvedReference = {
@@ -186,6 +186,50 @@ export function createReferenceResolver(db: Db) {
       });
     },
 
+    /**
+     * Dateien am Termin. Sie haben einen eigenen Export und werden hier nicht
+     * mitgeliefert, also wird die vorhandene Datei gesucht: über die id, sonst
+     * über den Ablageort (derselbe Pfad meint dieselbe Datei), sonst über den
+     * Titel. Findet sich nichts, bleibt die Verknüpfung weg und wird gemeldet —
+     * eine Datei aus dem Nichts anzulegen hieße, einen Eintrag ohne Datei
+     * dahinter zu erzeugen.
+     */
+    async downloadId(
+      rawId: unknown,
+      fileUrl: unknown,
+      title: unknown,
+      subject: string,
+    ): Promise<string | null> {
+      const id = text(rawId);
+      const url = text(fileUrl);
+      const name = text(title);
+      if (!id && !url && !name) return null;
+
+      return memo(`download:${id ?? url ?? name}`, async () => {
+        if (id) {
+          const byId = await db.download.findUnique({
+            where: { id },
+            select: { id: true },
+          });
+          if (byId) return byId.id;
+        }
+
+        const match = await db.download.findFirst({
+          where: {
+            OR: [
+              ...(url ? [{ fileUrl: url }] : []),
+              ...(name ? [{ title: name }] : []),
+            ],
+          },
+          select: { id: true },
+        });
+        if (match) return match.id;
+
+        record(subject, "downloadId", name ?? url ?? id ?? "");
+        return null;
+      });
+    },
+
     /** True when the target database already knows this Standort id. */
     async knownLocationId(rawId: unknown): Promise<string | null> {
       const id = text(rawId);
@@ -198,6 +242,15 @@ export function createReferenceResolver(db: Db) {
         });
         return row?.id ?? null;
       });
+    },
+
+    /**
+     * Etwas, das der Zielbestand nicht übernehmen konnte und das in denselben
+     * Bericht gehört wie ein nicht auflösbarer Verweis — etwa eine Anzahlung,
+     * deren Kursnummer hier schon vergeben war.
+     */
+    note(subject: string, field: string, value: string) {
+      record(subject, field, value);
     },
 
     unresolved,

@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import { Input, Label, Textarea, Select } from "@/app/_components/ui";
 import type { SelectProps } from "@/app/_components/ui/select";
 import {
@@ -72,6 +73,11 @@ type ParticipantCustomFieldsProps = {
   selectFieldSize?: SelectProps["fieldSize"];
   /** Background/border wrapper for CHECKBOX and MULTISELECT boxes (step 2 tints sibling groups green). */
   choiceContainerClassName?: string;
+  /**
+   * Meldung außerhalb der Felder, die fehlende Angaben nennt — markierte
+   * Felder werden mit ihr per `aria-describedby` verknüpft.
+   */
+  errorDescriptionId?: string;
 };
 
 export function ParticipantCustomFields({
@@ -83,7 +89,9 @@ export function ParticipantCustomFields({
   inputClassName = CUSTOM_FIELD_INPUT_CLASS,
   selectFieldSize,
   choiceContainerClassName = "bg-paper dark:bg-night",
+  errorDescriptionId,
 }: ParticipantCustomFieldsProps) {
+  const uid = useId();
   if (fields.length === 0) {
     return null;
   }
@@ -96,18 +104,53 @@ export function ParticipantCustomFields({
 
   return (
     <>
-      {fields.map((field) => {
+      {fields.map((field, index) => {
         const isInvalid = invalidFieldNames.includes(field.fieldName);
         const fieldValue = getCustomFieldValue(customFields, field.fieldName);
         const optionValues = parseSelectOptionValues(field.options);
+        // Nach Position statt Feldname: Namen dürfen Leerzeichen enthalten.
+        const controlId = `${uid}-${index}`;
+        const labelId = `${controlId}-label`;
+        const helpId = `${controlId}-hilfe`;
+        const showsHelp = !!field.helpText && field.fieldType !== "CHECKBOX";
+        // Beschriftung und Fehlerzustand für das einzelne Feld; Kästchen-
+        // gruppen tragen sie als Gruppe (siehe unten).
+        const describedBy =
+          [showsHelp ? helpId : null, isInvalid ? errorDescriptionId : null]
+            .filter(Boolean)
+            .join(" ") || undefined;
+        const controlA11y = {
+          id: controlId,
+          required: field.isRequired,
+          "aria-invalid": isInvalid || undefined,
+          "aria-describedby": describedBy,
+        };
+        const isGroup =
+          field.fieldType === "CHECKBOX" ||
+          (field.fieldType === "MULTISELECT" && optionValues.length > 0);
 
         return (
           <div key={field.fieldName} className="md:col-span-2">
-            <Label className={labelClassName} required={field.isRequired}>
+            {/* Sternchen hier selbst und stumm: `Label` sagt sonst englisch
+                „required“ an, und die Pflicht steht schon am Feld. */}
+            <Label
+              id={labelId}
+              htmlFor={isGroup ? undefined : controlId}
+              className={labelClassName}
+            >
               {field.fieldName}
+              {field.isRequired ? (
+                <span
+                  aria-hidden
+                  className="ml-1 text-red-600 dark:text-red-400"
+                >
+                  *
+                </span>
+              ) : null}
             </Label>
             {field.fieldType === "SELECT" && optionValues.length > 0 ? (
               <Select
+                {...controlA11y}
                 value={fieldValue != null ? String(fieldValue) : ""}
                 onChange={(e) => setField(field.fieldName, e.target.value)}
                 error={isInvalid}
@@ -123,6 +166,10 @@ export function ParticipantCustomFields({
               </Select>
             ) : field.fieldType === "MULTISELECT" && optionValues.length > 0 ? (
               <div
+                role="group"
+                aria-labelledby={labelId}
+                aria-describedby={describedBy}
+                data-invalid={isInvalid || undefined}
                 className={cn(
                   "space-y-2 border-2 px-3 py-2.5",
                   isInvalid
@@ -131,13 +178,13 @@ export function ParticipantCustomFields({
                   choiceContainerClassName,
                 )}
               >
-                {optionValues.map((opt) => {
+                {optionValues.map((opt, optIndex) => {
                   const selected = asStringArray(fieldValue);
                   const checked = selected.includes(opt);
                   return (
                     <Checkbox
                       key={opt}
-                      id={`${field.fieldName}-${opt}`}
+                      id={`${controlId}-${optIndex}`}
                       checked={checked}
                       onChange={(e) => {
                         const next = e.target.checked
@@ -158,6 +205,10 @@ export function ParticipantCustomFields({
               </div>
             ) : field.fieldType === "CHECKBOX" ? (
               <div
+                role="group"
+                aria-labelledby={labelId}
+                aria-describedby={describedBy}
+                data-invalid={isInvalid || undefined}
                 className={cn(
                   "border-2 px-3 py-2.5",
                   isInvalid
@@ -167,7 +218,8 @@ export function ParticipantCustomFields({
                 )}
               >
                 <Checkbox
-                  id={`${field.fieldName}-checkbox`}
+                  id={`${controlId}-checkbox`}
+                  required={field.isRequired}
                   checked={fieldValue === true || fieldValue === "true"}
                   onChange={(e) => setField(field.fieldName, e.target.checked)}
                   className="min-h-0"
@@ -179,6 +231,7 @@ export function ParticipantCustomFields({
               </div>
             ) : field.fieldType === "TEXTAREA" ? (
               <Textarea
+                {...controlA11y}
                 value={fieldValue != null ? String(fieldValue) : ""}
                 onChange={(e) => setField(field.fieldName, e.target.value)}
                 rows={3}
@@ -190,6 +243,7 @@ export function ParticipantCustomFields({
               />
             ) : (
               <Input
+                {...controlA11y}
                 type={inputTypeFor(String(field.fieldType))}
                 value={fieldValue != null ? String(fieldValue) : ""}
                 onChange={(e) => setField(field.fieldName, e.target.value)}
@@ -207,8 +261,11 @@ export function ParticipantCustomFields({
                 }
               />
             )}
-            {field.helpText && field.fieldType !== "CHECKBOX" ? (
-              <p className="text-dark dark:text-night-muted mt-1 text-xs">
+            {showsHelp ? (
+              <p
+                id={helpId}
+                className="text-dark dark:text-night-muted mt-1 text-xs"
+              >
                 {field.helpText}
               </p>
             ) : null}

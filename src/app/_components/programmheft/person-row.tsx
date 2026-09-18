@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Mail } from "lucide-react";
 import type { Media } from "~/generated/prisma/client";
 import { cn } from "@/lib/utils";
+import ZoomableImage from "@/app/_components/general/zoomable-image";
 
 const COLUMNS = {
   1: "",
@@ -53,7 +54,15 @@ export function PersonRow({ name, role, image, email }: PersonRowProps) {
   return (
     <li className="border-rule dark:border-night-rule flex items-start gap-4 border-b py-4">
       {image ? (
-        <div className="bg-rule dark:bg-night-rule relative h-14 w-14 shrink-0 overflow-hidden rounded-full">
+        // Vergrößerbar ohne Lupe: Bei 56px deckte sie das halbe Gesicht zu.
+        <ZoomableImage
+          src={image.url}
+          alt={image.alt || name}
+          copyright={image.copyright}
+          creator={image.creator}
+          hint={false}
+          className="bg-rule dark:bg-night-rule h-14 w-14 shrink-0 overflow-hidden rounded-full"
+        >
           <Image
             src={image.url}
             alt={image.alt || name}
@@ -61,7 +70,7 @@ export function PersonRow({ name, role, image, email }: PersonRowProps) {
             sizes="56px"
             className="object-cover"
           />
-        </div>
+        </ZoomableImage>
       ) : null}
       <div className="min-w-0">
         <p className="condensed text-ink dark:text-night-text text-[1.375rem] leading-tight font-bold">

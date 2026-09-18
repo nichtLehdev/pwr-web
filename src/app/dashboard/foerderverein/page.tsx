@@ -219,22 +219,6 @@ export default function DashboardFoerdervereinPage() {
             ),
           },
         ),
-        column.accessor((member) => member.memberSince, {
-          id: "memberSince",
-          header: "Mitglied seit",
-          sortFn: "datetime",
-          sortUndefined: "last",
-          meta: { filterVariant: "date", cellClassName: "whitespace-nowrap" },
-          cell: ({ getValue }) => {
-            const value = getValue();
-            return value
-              ? new Date(value).toLocaleDateString("de-DE", {
-                  year: "numeric",
-                  month: "long",
-                })
-              : "-";
-          },
-        }),
         column.accessor((member) => (member.user ? "Verknüpft" : "Manuell"), {
           id: "linked",
           header: "Verknüpfung",

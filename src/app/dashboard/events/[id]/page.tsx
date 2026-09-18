@@ -16,7 +16,10 @@ import {
 } from "~/generated/prisma/enums";
 import {
   DashboardFormSectionLayout,
+  DashboardOverflowMenu,
   DashboardPage,
+  EntryExportButton,
+  useEntryExport,
 } from "@/app/_components/dashboard";
 import { Tag, type TagTone } from "@/app/_components/programmheft/tag";
 import { ArrowLeftIcon, CheckIcon, Edit, Trash2, XIcon } from "lucide-react";
@@ -26,6 +29,8 @@ import {
   ScrollableModalBody,
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
+import { renderDescriptionHtml } from "@/lib/sanitize";
+import "@/styles/beschreibung.css";
 
 const categoryLabels: Record<EventCategory, string> = {
   KONZERT: "Konzert",
@@ -120,6 +125,8 @@ export default function EventDetailPage() {
     },
   });
 
+  const entryExport = useEntryExport("events", eventId);
+
   const deleteMutation = api.events.delete.useMutation({
     onSuccess: () => {
       toast.success("Termin erfolgreich gelöscht");
@@ -187,6 +194,7 @@ export default function EventDetailPage() {
     hour: "2-digit",
     minute: "2-digit",
   });
+  const beschreibungHtml = renderDescriptionHtml(event.description);
   const districtLabel = event.bezirk
     ? `Bezirk ${event.bezirk.number} - ${event.bezirk.shortName}`
     : event.districtName || "Übergreifend";
@@ -199,7 +207,7 @@ export default function EventDetailPage() {
       ? [{ href: "#event-detail-downloads", label: "Downloads" }]
       : []),
     { href: "#event-detail-info", label: "Details" },
-    ...(event.description
+    ...(beschreibungHtml
       ? [{ href: "#event-detail-description", label: "Beschreibung" }]
       : []),
     ...(event.location
@@ -263,7 +271,10 @@ export default function EventDetailPage() {
           { label: event.title },
         ]}
         actions={
-          <div className="flex flex-wrap gap-2">
+          // `w-full sm:w-auto`: Nur über die volle Breite kann `ml-auto` das
+          // „…“-Menü auf dem Telefon an den rechten Rand schieben — sein Panel
+          // ist rechts verankert.
+          <div className="flex w-full flex-wrap gap-2 sm:w-auto">
             {canEdit && (
               <Link
                 href={`/dashboard/events/${eventId}/edit`}
@@ -273,6 +284,9 @@ export default function EventDetailPage() {
                 Bearbeiten
               </Link>
             )}
+            {entryExport.canExport && (
+              <EntryExportButton exporter={entryExport} />
+            )}
             {canDelete && (
               <button
                 onClick={() => setShowDeleteModal(true)}
@@ -281,6 +295,15 @@ export default function EventDetailPage() {
                 <Trash2 className="h-4 w-4" />
                 Löschen
               </button>
+            )}
+            {/* Auf dem Telefon steht der Export im „…“-Menü (siehe
+                EntryExportButton); ab sm als Knopf vor „Löschen“, damit die
+                zerstörerische Aktion am Ende der Reihe bleibt. */}
+            {entryExport.canExport && (
+              <DashboardOverflowMenu
+                className="ml-auto sm:hidden"
+                items={[entryExport.menuItem]}
+              />
             )}
           </div>
         }
@@ -522,8 +545,11 @@ export default function EventDetailPage() {
               </dl>
             </section>
 
-            {/* Description */}
-            {event.description && (
+            {/* Beschreibung wie auf der öffentlichen Seite gesetzt: dieselbe
+                Markdown-Quelle, dieselbe Filterung, dasselbe Stylesheet. Vorher
+                stand hier der Rohtext, Auszeichnung wäre also als Markdown
+                sichtbar geworden. */}
+            {beschreibungHtml && (
               <section
                 id="event-detail-description"
                 className="dashboard-form-scroll-anchor border-rule dark:border-night-rule border-t pt-10"
@@ -531,9 +557,10 @@ export default function EventDetailPage() {
                 <h2 className="text-ink dark:text-night-text mb-4 text-lg font-semibold">
                   Beschreibung
                 </h2>
-                <p className="text-ink dark:text-night-muted whitespace-pre-wrap">
-                  {event.description}
-                </p>
+                <div
+                  className="beschreibung"
+                  dangerouslySetInnerHTML={{ __html: beschreibungHtml }}
+                />
               </section>
             )}
 

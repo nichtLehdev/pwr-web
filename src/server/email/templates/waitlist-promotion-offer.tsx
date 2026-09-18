@@ -152,9 +152,10 @@ export function WaitlistPromotionOffer({
           : ""}
       </Text>
       <Text style={paragraph}>
-        Möchtet ihr lieber gemeinsam warten, lehne das Angebot ab. Die Plätze
-        gehen dann an die Nächsten auf der Warteliste, und deine Anmeldung
-        behält ihren Platz. Das gilt ebenso, wenn die Frist verstreicht.
+        Möchtet ihr lieber gemeinsam warten, lehne das Angebot ab. Das Kursteam
+        kann die Plätze dann den Nächsten auf der Warteliste anbieten, und deine
+        Anmeldung behält ihren Platz. Das gilt ebenso, wenn die Frist
+        verstreicht.
       </Text>
 
       <Hr style={hr} />
@@ -187,8 +188,8 @@ export function WaitlistPromotionOfferExpired({
       </Text>
       <Text style={paragraph}>
         dein Angebot, für den Kurs <strong>{courseTitle}</strong> von der
-        Warteliste nachzurücken, ist abgelaufen. Die freien Plätze gehen an die
-        Nächsten auf der Warteliste.
+        Warteliste nachzurücken, ist abgelaufen. Das Kursteam kann die freien
+        Plätze nun den Nächsten auf der Warteliste anbieten.
       </Text>
       <Text style={paragraph}>
         Deine Anmeldung ({participantNames.join(", ")}) bleibt auf der
@@ -241,9 +242,10 @@ export function WaitlistPromotionOfferExpiringTeam({
       </Section>
 
       <Text style={paragraph}>
-        Bis dahin hält die Warteliste an. Antwortet niemand, gehen die Plätze
-        danach automatisch an die Nächsten. Ihr könnt nachfragen oder die
-        Anmeldung im Dashboard selbst bestätigen.
+        Bis dahin hält die Warteliste an. Antwortet niemand, wird das Angebot
+        geschlossen; die Plätze bleiben frei, bis ihr die Warteliste im
+        Dashboard nachrücken lasst – automatisch rückt niemand nach. Ihr könnt
+        nachfragen oder die Anmeldung im Dashboard selbst bestätigen.
       </Text>
 
       <Section style={buttonContainer}>
