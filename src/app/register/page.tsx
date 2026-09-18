@@ -148,15 +148,13 @@ export default function RegisterPage() {
     checkEmailQuery.data,
   ]);
 
-  // Erst meckern, wenn das Bestätigungsfeld angefasst wurde — sonst steht die
-  // Warnung schon nach dem ersten getippten Zeichen da.
+  // Erst warnen, wenn das Bestätigungsfeld angefasst wurde.
   const passwordsMatch = formData.password === formData.confirmPassword;
   const showMismatch =
     confirmTouched && formData.confirmPassword.length > 0 && !passwordsMatch;
 
-  // Der Absenden-Button bleibt gesperrt, solange das Formular garantiert
-  // scheitern würde. Laufende Verfügbarkeitsprüfungen sperren ihn nicht — nur
-  // ein bereits bekanntes "vergeben" tut das.
+  // Gesperrt nur, wenn das Formular garantiert scheitern würde: Laufende
+  // Verfügbarkeitsprüfungen sperren nicht, nur ein bekanntes "vergeben".
   const canSubmit =
     formData.firstName.trim().length > 0 &&
     formData.lastName.trim().length > 0 &&

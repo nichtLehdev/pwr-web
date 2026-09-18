@@ -40,14 +40,8 @@ function LegalNumbered({ items }: { items: React.ReactNode[] }) {
 }
 
 /**
- * Übernahme der Seite, die auf der alten Website unter dem irreführenden
- * Pfad /posaunenchor-finden-2/ lag (offenbar eine Kopie, deren Slug nie
- * angepasst wurde). Ein Redirect in next.config.js hält alte Links am Leben.
- *
- * Der Text ist bewusst wortgleich übernommen — er ist vom Vorstand so
- * veröffentlicht und beschreibt verbindliche Maßnahmen. Neu ist nur der
- * Sprungverweis zu den Vertrauenspersonen: wer Hilfe sucht, soll die
- * Kontaktdaten nicht erst erlesen müssen.
+ * Text bewusst wortgleich: vom Vorstand so veröffentlicht, beschreibt verbindliche Maßnahmen.
+ * Der alte Pfad /posaunenchor-finden-2/ leitet per Redirect in next.config.js hierher.
  */
 export default function PraeventionPage() {
   const vertrauenspersonen = [

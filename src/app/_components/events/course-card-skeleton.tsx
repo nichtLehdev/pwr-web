@@ -1,8 +1,4 @@
-/**
- * Lade-Platzhalter für `CourseCard` (nicht mehr im Einsatz, siehe dort) und
- * für `ProgrammeList`'s eigene Skeleton-Zeilen — als Fallback belassen,
- * solange `CourseCard` noch exportiert wird.
- */
+/** Lade-Platzhalter für `CourseCard`. */
 export default function CourseCardSkeleton() {
   return (
     <div

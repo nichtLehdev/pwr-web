@@ -1,18 +1,7 @@
 /**
- * Canonical sibling-discount rule, shared by the registration form,
- * registration create/update and the invoice generator so they always agree.
- *
- * - Participants are grouped by siblingGroupId.
- * - In each group with 2+ members, the oldest sibling pays full price; every
- *   further sibling gets 20% off their price, rounded to cents per person.
- *
- * There is no age limit: the Förderverein grants the discount to any set of
- * siblings booked together, adults included.
- *
- * Siblings are ordered by birth date ascending (tie: original array order), so
- * the result is deterministic regardless of input order. A participant without
- * a birth date has no place in that order and is therefore skipped — persisted
- * participants always have one, only a half-filled form does not.
+ * Shared by form, registration and invoices. Per siblingGroupId the oldest pays full price,
+ * every further sibling gets 20% off; no age limit (Förderverein rule). Ordered by birth
+ * date, ties by input order; participants without a birth date are skipped.
  */
 
 export const SIBLING_DISCOUNT_RATE = 0.2;
@@ -74,10 +63,8 @@ export function computeSiblingDiscounts(
 }
 
 /**
- * True when at least one sibling group is large enough to earn a discount —
- * the condition the "Geschwisterkindrabatt" checkbox is offered under. Asks
- * about group sizes, not about money, so a free price option in the group
- * doesn't make the option disappear.
+ * When the "Geschwisterkindrabatt" checkbox is offered. Counts group sizes, not money,
+ * so a free price option in the group doesn't hide it.
  */
 export function hasDiscountEligibleSiblingGroup<
   T extends Pick<SiblingDiscountParticipant, "birthDate" | "siblingGroupId">,

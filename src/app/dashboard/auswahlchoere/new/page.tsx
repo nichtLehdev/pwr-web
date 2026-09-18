@@ -200,14 +200,12 @@ export default function NewAuswahlchorPage() {
       ]}
       maxWidth="7xl"
     >
-      {/* Error */}
       {error && (
         <div className="mb-6 border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
           <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
         </div>
       )}
 
-      {/* Form */}
       <form onSubmit={handleSubmit}>
         <DashboardSectionedFormLayout
           navItems={AUSWAHLCHOR_FORM_NAV}
@@ -217,14 +215,12 @@ export default function NewAuswahlchorPage() {
             id="auswahlchor-form-grundlagen"
             className="dashboard-form-scroll-anchor space-y-6"
           >
-            {/* Basic Information */}
             <Card>
               <CardHeader>
                 <CardTitle>Grundinformationen</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
-                  {/* Name */}
                   <div>
                     <Label required>Name</Label>
                     <Input
@@ -237,7 +233,6 @@ export default function NewAuswahlchorPage() {
                     />
                   </div>
 
-                  {/* Slug */}
                   <div>
                     <Label required>Slug</Label>
                     <Input
@@ -258,7 +253,6 @@ export default function NewAuswahlchorPage() {
                     </p>
                   </div>
 
-                  {/* Subtitle */}
                   <div>
                     <Label required>Untertitel</Label>
                     <Input
@@ -271,7 +265,6 @@ export default function NewAuswahlchorPage() {
                     />
                   </div>
 
-                  {/* Founded */}
                   <div>
                     <Label required>Gegründet</Label>
                     <Input
@@ -284,7 +277,6 @@ export default function NewAuswahlchorPage() {
                     />
                   </div>
 
-                  {/* Members */}
                   <div>
                     <Label required>Mitglieder</Label>
                     <Input
@@ -297,7 +289,6 @@ export default function NewAuswahlchorPage() {
                     />
                   </div>
 
-                  {/* Description */}
                   <div>
                     <Label required>Beschreibung</Label>
                     <Textarea
@@ -313,7 +304,6 @@ export default function NewAuswahlchorPage() {
               </CardContent>
             </Card>
 
-            {/* Image */}
             <Card>
               <CardHeader>
                 <CardTitle>Bild</CardTitle>
@@ -368,7 +358,6 @@ export default function NewAuswahlchorPage() {
             </Card>
           </div>
 
-          {/* Styling */}
           <div
             id="auswahlchor-form-styling"
             className="border-rule dark:border-night-rule dashboard-form-scroll-anchor border-t pt-10"
@@ -378,7 +367,6 @@ export default function NewAuswahlchorPage() {
                 <CardTitle>Styling</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Color */}
                 <div>
                   <Label>Tailwind-Farbe</Label>
                   <Input
@@ -393,7 +381,6 @@ export default function NewAuswahlchorPage() {
                   </p>
                 </div>
 
-                {/* Color Hex */}
                 <div>
                   <Label>Hex-Farbe</Label>
                   <div className="flex items-center gap-3">
@@ -419,7 +406,6 @@ export default function NewAuswahlchorPage() {
             </Card>
           </div>
 
-          {/* People */}
           <div
             id="auswahlchor-form-personen"
             className="border-rule dark:border-night-rule dashboard-form-scroll-anchor border-t pt-10"
@@ -429,7 +415,6 @@ export default function NewAuswahlchorPage() {
                 <CardTitle>Personen</CardTitle>
               </CardHeader>
               <CardContent>
-                {/* Conductor */}
                 <div className="relative" data-dropdown>
                   <Label>Chorleitung</Label>
                   <div className="relative">
@@ -456,7 +441,6 @@ export default function NewAuswahlchorPage() {
                     )}
                   </div>
 
-                  {/* Conductor Dropdown */}
                   {showConductorDropdown && (
                     <div className="border-ink dark:border-night-text dark:bg-night-raised bg-paper absolute z-10 mt-1 w-full overflow-hidden border">
                       <div
@@ -503,7 +487,6 @@ export default function NewAuswahlchorPage() {
                     </div>
                   )}
 
-                  {/* Selected conductor indicator */}
                   {conductorId && (
                     <p className="text-dark dark:text-night-muted mt-2 text-sm">
                       ✓ Chorleitung verknüpft
@@ -514,7 +497,6 @@ export default function NewAuswahlchorPage() {
             </Card>
           </div>
 
-          {/* Settings */}
           <div
             id="auswahlchor-form-einstellungen"
             className="border-rule dark:border-night-rule dashboard-form-scroll-anchor border-t pt-10"
@@ -524,7 +506,6 @@ export default function NewAuswahlchorPage() {
                 <CardTitle>Einstellungen</CardTitle>
               </CardHeader>
               <CardContent>
-                {/* Show Application */}
                 <div className="flex items-center gap-2">
                   <Checkbox
                     id="showApplication"
@@ -539,7 +520,6 @@ export default function NewAuswahlchorPage() {
             </Card>
           </div>
 
-          {/* Actions */}
           <div className="border-rule dark:border-night-rule mt-16 flex flex-col gap-3 border-t pt-10 sm:flex-row sm:justify-end">
             <Button
               type="submit"
@@ -558,7 +538,6 @@ export default function NewAuswahlchorPage() {
         </DashboardSectionedFormLayout>
       </form>
 
-      {/* Media Picker Modal */}
       <MediaPickerModal
         isOpen={showMediaPicker}
         onClose={() => setShowMediaPicker(false)}

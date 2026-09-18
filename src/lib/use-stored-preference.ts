@@ -3,9 +3,8 @@
 import { useCallback, useSyncExternalStore } from "react";
 
 /**
- * Abonnenten gespeicherter Einstellungen. `localStorage` meldet Änderungen nur
- * an *andere* Tabs, nicht an den schreibenden — die Komponenten dieses Tabs
- * brauchen deshalb einen eigenen Verteiler.
+ * `localStorage` meldet Änderungen nur an *andere* Tabs — dieser Tab braucht
+ * deshalb einen eigenen Verteiler.
  */
 const listeners = new Set<() => void>();
 
@@ -19,15 +18,8 @@ function subscribe(onChange: () => void) {
 }
 
 /**
- * Eine Anzeigeeinstellung, die den Besuch überdauert.
- *
- * `useSyncExternalStore` statt eines Effekts: der Server kennt `localStorage`
- * nicht und liefert immer die Vorgabe, und React weiß dadurch selbst, dass die
- * erste Client-Ausgabe davon abweichen darf.
- *
- * `isValid` entscheidet, ob ein gespeicherter Wert noch zum heutigen Code
- * passt — sonst gilt die Vorgabe. Das fängt alte Werte ab, die es einmal gab
- * und heute nicht mehr gibt.
+ * `useSyncExternalStore` statt Effekt: der Server liefert die Vorgabe, und React weiß,
+ * dass die erste Client-Ausgabe abweichen darf. `isValid` verwirft veraltete Werte.
  */
 export function useStoredPreference<T extends string>(
   storageKey: string,

@@ -16,11 +16,8 @@ type Props = {
 };
 
 /*
- * Feld- und Notengröße folgen der Fensterhöhe (siehe note-pan.tsx). Der
- * Abstand zur Beschriftung ist genau die halbe Notengröße: Das VexFlow-SVG
- * ragt anteilig unter sein Kästchen (die Verschiebung in note-glyph.tsx ist
- * jetzt prozentual), also muss auch der Abstand mitwachsen — ein fester
- * `mt-5` saß bei großen Noten mitten im Notenhals.
+ * Größen folgen der Fensterhöhe (siehe note-pan.tsx). Abstand zur Beschriftung = halbe
+ * Notengröße, weil das VexFlow-SVG anteilig unter sein Kästchen ragt.
  */
 export const PALETTE_FELD =
   "min-h-[max(64px,min(calc(12dvh_-_14px),110px))] md:min-h-[max(72px,min(calc(28.3dvh_-_112px),190px))]";

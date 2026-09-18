@@ -1,12 +1,6 @@
 /**
- * Beschreibungen und Volltexte der Lizenzen, unter denen die direkt
- * eingebundenen Pakete stehen (siehe src/lib/licenses.generated.ts).
- *
- * Keys are the exact SPDX expressions as reported by npm/pnpm, so the licence
- * page can look an entry up without normalising anything. The Apache-2.0 text
- * is the verbatim file as shipped in the dependency tree; the short permissive
- * licences carry no per-package copyright line here — those are listed with
- * each package instead, which is what MIT, ISC and BSD actually require.
+ * Keys are the exact SPDX expressions npm/pnpm report. Copyright lines are listed per
+ * package (see licenses.generated.ts), which is what MIT, ISC and BSD require.
  */
 
 export interface LicenseInfo {

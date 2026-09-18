@@ -1,10 +1,4 @@
-/**
- * Browser-Download einer Server-Antwort.
- *
- * Den Dateinamen bestimmt der Server im `Content-Disposition`-Header — sonst
- * müsste jede aufrufende Seite die Namensbildung (Kurstitel säubern, Datum
- * anhängen) noch einmal nachbauen und dabei richtig treffen.
- */
+/** Browser-Download; den Dateinamen bestimmt der Server per `Content-Disposition`. */
 
 /** `filename*=UTF-8''…` bevorzugt, sonst der ASCII-`filename`. */
 export function filenameFromContentDisposition(
@@ -18,8 +12,7 @@ export function filenameFromContentDisposition(
     try {
       return decodeURIComponent(encoded[1]);
     } catch {
-      // Kaputt kodierter Header — dann lieber der Fallback als ein Name
-      // voller Prozentzeichen.
+      // Kaputt kodiert: lieber der Fallback als ein Name voller Prozentzeichen.
     }
   }
 

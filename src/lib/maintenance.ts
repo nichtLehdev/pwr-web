@@ -9,9 +9,8 @@ export const MAINTENANCE_DEFAULT_MESSAGE =
   "Wir arbeiten gerade an der Seite und sind in Kürze wieder für Sie da.";
 
 /**
- * Anmeldung und Dashboard müssen offen bleiben, sonst sperrt der
- * Wartungsmodus die Leute aus, die ihn wieder abschalten sollen. Unter
- * `/api/maintenance` liegt der Freischaltlink.
+ * Anmeldung und Dashboard bleiben offen, sonst sperrt der Wartungsmodus die aus,
+ * die ihn abschalten sollen. Unter `/api/maintenance` liegt der Freischaltlink.
  */
 export const MAINTENANCE_ALLOWED_PREFIXES = [
   MAINTENANCE_PATH,
@@ -57,10 +56,8 @@ export interface MaintenanceVerdict {
 }
 
 /**
- * Das voraussichtliche Ende für die Wartungsseite, in deutscher Ortszeit:
- * „Freitag, 2. Oktober 2026 um 23:59". Die Seite rendert auf dem Server, und
- * der läuft in UTC — ohne feste Zone stand dort 21:59, wo im Dashboard 23:59
- * eingetragen war. `null` ohne oder mit unbrauchbarem Wert.
+ * In deutscher Ortszeit, denn der Server rendert in UTC. `null` ohne oder mit
+ * unbrauchbarem Wert.
  */
 export function formatMaintenanceUntil(iso: string | null): string | null {
   if (!iso) return null;

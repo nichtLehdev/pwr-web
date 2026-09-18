@@ -3,8 +3,7 @@
 import { useEffect } from "react";
 
 /**
- * Registriert den Service Worker (public/sw.js) — nur im Production-Build,
- * damit Turbopack-Dev nicht von gecachten Antworten gestört wird.
+ * Registriert public/sw.js nur im Production-Build, sonst stört der Cache Turbopack-Dev.
  * Hängt lokal ein alter SW fest: chrome://serviceworker-internals → Unregister.
  */
 export function ServiceWorkerRegistration() {

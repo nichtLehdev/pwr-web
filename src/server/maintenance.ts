@@ -13,10 +13,8 @@ import { createLogger } from "@/server/utils/logger";
 const log = createLogger("Maintenance");
 
 /**
- * Harte Übersteuerung, unabhängig von der Datenbank — greift also auch
- * während einer Migration. Bewusst nicht in `src/env.js`: Der Wert wird zur
- * Anfragezeit gelesen, und dasselbe Image läuft auf Produktion und
- * Vorabversion.
+ * Greift ohne Datenbank, also auch während einer Migration. Nicht in `src/env.js`:
+ * zur Anfragezeit gelesen, dasselbe Image läuft auf Produktion und Vorabversion.
  */
 function envOverride(): boolean {
   const raw = process.env.MAINTENANCE_MODE?.trim().toLowerCase();
@@ -66,11 +64,7 @@ async function hasBypass(headers: Headers): Promise<boolean> {
   }
 }
 
-/**
- * Läuft im Proxy bei jedem Aufruf. Wartung aus kostet deshalb nur den
- * zwischengespeicherten Schalter; die Freischaltprüfung hängt an Sitzung und
- * Cookie und ist erst fällig, wenn die Seite ohnehin geschlossen ist.
- */
+/** Läuft im Proxy bei jedem Aufruf; die teure Freischaltprüfung erst bei aktiver Wartung. */
 export async function resolveMaintenance(
   headers: Headers,
 ): Promise<MaintenanceVerdict> {
@@ -97,10 +91,7 @@ export async function resolveMaintenance(
   };
 }
 
-/**
- * Nur der globale Schalter. Kurz zwischengespeichert, weil `stats.recordView`
- * als öffentliche Mutation bei jedem Seitenaufruf hier vorbeikommt.
- */
+/** Kurz zwischengespeichert: `stats.recordView` kommt bei jedem Seitenaufruf hier vorbei. */
 const ACTIVE_CACHE_TTL_MS = 5_000;
 let activeCache: { value: boolean; at: number } | null = null;
 

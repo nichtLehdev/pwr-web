@@ -3,9 +3,8 @@ import { getDistrictColor } from "@/lib/district-color";
 export type BezirkRef = { number: number; shortName?: string | null } | null;
 
 /**
- * Bezirksmarke: 10px-Quadrat in der Bezirksfarbe plus Text (District Marker
- * Rule). `full` nennt „Bezirk 02 · Name“ bzw. „Bezirksübergreifend“,
- * `short` nur „Bezirk 2“ und entfällt ohne Bezirk.
+ * Bezirksmarke. `full`: „Bezirk 02 · Name“ bzw. „Bezirksübergreifend“;
+ * `short`: nur „Bezirk 2“, entfällt ohne Bezirk.
  */
 export function BezirkLabel({
   bezirk,

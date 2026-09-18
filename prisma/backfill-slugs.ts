@@ -1,21 +1,7 @@
 /**
- * Backfill Script: Generate Slugs for Posts, Ensembles, Events and Courses
- *
- * Fills the `slug` columns added by 20260808000051_add_post_and_ensemble_slug
- * and 20260813120000_add_event_and_course_slug.
- * Rows that already have a slug are left alone, so the script is safe to rerun
- * and safe to run again after new content has been created.
- *
- * Ensemble slugs get the town appended when one is known: chor names like
- * "Posaunenchor der Friedenskirche" repeat across the Rheinland, and the town
- * is both the disambiguator and the term people actually search for.
- *
- * Event and course slugs get the year for the same reason — "Adventskonzert"
- * comes round every December.
- *
- * Duplicates and imports deliberately leave `slug` null (see posts.duplicate),
- * so this script is the thing that eventually names them.
- *
+ * Fills missing slugs on Posts, Ensembles, Events and Courses (safe to rerun). Duplicates and
+ * imports deliberately leave `slug` null. Ensembles get the town (chor names repeat), events
+ * and courses the year ("Adventskonzert" every December).
  * Usage: npx tsx prisma/backfill-slugs.ts
  */
 import "dotenv/config";

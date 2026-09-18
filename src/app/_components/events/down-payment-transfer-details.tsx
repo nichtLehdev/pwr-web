@@ -27,12 +27,7 @@ function PlainValue({
   );
 }
 
-/**
- * Zeilen der Überweisungsdaten für eine `ValueTable` — Bankverbindung, Betrag
- * und Verwendungszweck reihen sich in dieselbe Tabelle wie Anzahlung und
- * Restbetrag ein, statt eine zweite, abgesetzte Fläche zu bilden (ein
- * ruhiges Kassenzettel-Layout statt verschachtelter Warnkästen).
- */
+/** Überweisungsdaten als Zeilen derselben `ValueTable` wie Anzahlung und Restbetrag. */
 export function transferDetailRows(
   amount: number,
   reference: string,
@@ -64,11 +59,7 @@ interface DownPaymentQrFigureProps {
   reference: string;
 }
 
-/**
- * GiroCode zur Anzahlung — steht neben oder unter der `ValueTable`, die
- * `transferDetailRows` liefert. Im Anmeldeformular und auf der
- * Anmeldungsseite dieselbe Darstellung.
- */
+/** GiroCode zur Anzahlung, neben oder unter der `ValueTable` aus `transferDetailRows`. */
 export function DownPaymentQrFigure({
   amount,
   reference,

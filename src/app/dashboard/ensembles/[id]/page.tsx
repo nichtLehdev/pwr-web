@@ -106,7 +106,6 @@ export default function EnsembleDetailPage() {
       }
       maxWidth="7xl"
     >
-      {/* Ensemble Image and Status Badges */}
       <div className="mb-6 flex items-center gap-4">
         {ensemble.image?.url ? (
           <div className="border-rule dark:border-night-rule relative h-20 w-20 shrink-0 overflow-hidden border">
@@ -146,7 +145,6 @@ export default function EnsembleDetailPage() {
         </div>
       </div>
 
-      {/* Description */}
       {ensemble.description && (
         <div className="border-rule dark:border-night-rule mb-6 border p-6">
           <h2 className="condensed text-ink dark:text-night-text mb-3 text-lg font-bold">
@@ -158,9 +156,7 @@ export default function EnsembleDetailPage() {
         </div>
       )}
 
-      {/* Conductor & Representative */}
       <div className="mb-6 grid gap-6 sm:grid-cols-2">
-        {/* Conductor */}
         <div className="border-rule dark:border-night-rule border p-6">
           <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
             Chorleitung
@@ -244,7 +240,6 @@ export default function EnsembleDetailPage() {
           )}
         </div>
 
-        {/* Representative */}
         <div className="border-rule dark:border-night-rule border p-6">
           <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
             Ansprechpartner
@@ -326,13 +321,11 @@ export default function EnsembleDetailPage() {
         </div>
       </div>
 
-      {/* Rehearsal & Location */}
       <div className="border-rule dark:border-night-rule mb-6 border p-6">
         <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
           Probendetails
         </h2>
         <dl className="grid gap-4 sm:grid-cols-2">
-          {/* Rehearsal Schedules */}
           <div className="sm:col-span-2">
             <dt className="text-dark dark:text-night-muted mb-2 text-sm">
               Probenzeiten
@@ -397,7 +390,6 @@ export default function EnsembleDetailPage() {
         </dl>
       </div>
 
-      {/* Website & Social Media */}
       {(ensemble.contactWebsite || socialLinks.length > 0) && (
         <div className="border-rule dark:border-night-rule mb-6 border p-6">
           <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
@@ -431,7 +423,6 @@ export default function EnsembleDetailPage() {
         </div>
       )}
 
-      {/* Upcoming Events */}
       {ensemble.events && ensemble.events.length > 0 && (
         <div className="border-rule dark:border-night-rule mb-6 border p-6">
           <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
@@ -475,7 +466,6 @@ export default function EnsembleDetailPage() {
         </div>
       )}
 
-      {/* Metadata */}
       <div className="border-rule dark:border-night-rule border p-6">
         <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
           Details
@@ -500,7 +490,6 @@ export default function EnsembleDetailPage() {
         </dl>
       </div>
 
-      {/* Actions */}
       <div className="mt-6 flex flex-wrap gap-3">
         <Link
           href="/dashboard/ensembles"

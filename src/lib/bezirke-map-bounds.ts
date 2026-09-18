@@ -1,9 +1,6 @@
 /**
- * Bounding boxes (in the Bezirke SVG's own coordinate space, viewBox
- * 0 0 1523 2428) for each Bezirk, used to "zoom" the map to a single
- * district. Bezirk 10 ("Wied") is drawn as three disconnected shapes (a
- * main area plus two small exclaves reaching toward Wetzlar); its bounds
- * here cover all three so zooming doesn't cut the exclave off.
+ * Per-Bezirk bounding boxes in the SVG's coordinate space, for zooming to one district.
+ * Bezirk 10 covers all three of its shapes so zooming doesn't cut off the exclaves.
  */
 export interface BezirkMapBounds {
   minX: number;
@@ -74,12 +71,8 @@ export function getBezirkZoomViewBox(bezirkNumber: number): string {
 }
 
 /**
- * Width (in SVG user units) of the currently visible viewBox. Markers and
- * labels should size themselves proportionally to this so they look the
- * same on screen regardless of whether a small or large district is
- * zoomed into (a fixed unit size looks huge on a small district and tiny
- * on a large one, since the same screen width maps to far fewer or far
- * more SVG units).
+ * Width of the visible viewBox. Markers and labels scale with it so they look the same
+ * on screen for small and large districts.
  */
 export function getVisibleViewBoxWidth(bezirkNumber: number | null): number {
   return getVisibleViewBoxRect(bezirkNumber).width;

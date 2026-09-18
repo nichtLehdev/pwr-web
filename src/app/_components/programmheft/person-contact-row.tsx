@@ -25,13 +25,7 @@ interface PersonContactRowProps {
   className?: string;
 }
 
-/**
- * Personenzeile mit Telefon und Kurzporträt (Erweiterung von `PersonRow` für
- * Vorstand und Posaunenwarte, deren Daten zusätzlich Telefon und Bio führen).
- * Gleiche Stimme wie `PersonRow`: rundes Foto, Titel-Stimme für den Namen,
- * Body-Schiefer für Amt und Text, Textlinks mit Icon für Kontaktwege. Ohne
- * Foto entfällt der Bildblock ganz statt eines Platzhalters.
- */
+/** `PersonRow` mit Telefon und Kurzporträt, für Vorstand und Posaunenwarte. */
 export function PersonContactRow({
   name,
   role,
@@ -56,8 +50,7 @@ export function PersonContactRow({
       )}
     >
       {image ? (
-        // Ohne Lupe: Bei 56px deckte sie das halbe Gesicht zu, und im runden
-        // 112px-Foto schnitt der Kreis das Eckfeld zu einem Splitter an.
+        // Ohne Lupe: Im kleinen runden Foto deckt sie das Gesicht zu.
         <ZoomableImage
           src={image.url}
           alt={image.alt || name}

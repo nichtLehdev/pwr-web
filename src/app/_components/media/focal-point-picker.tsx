@@ -5,14 +5,7 @@ import ImageWithFallback from "@/app/_components/ui/image-with-fallback";
 import { Button, Input } from "@/app/_components/ui";
 import { CrosshairIcon } from "lucide-react";
 
-/**
- * Fokuspunkt eines Bildes setzen: der Punkt, der sichtbar bleibt, wenn das Bild
- * irgendwo als `object-cover` beschnitten wird (Kartenkopf, Karussell, Kachel).
- *
- * Die Spalten gab es schon, nur keinen Weg sie zu setzen — bis hierher blieb
- * als einziges Mittel, das Bild neu zuzuschneiden und damit das Original zu
- * verlieren. Der Fokuspunkt lässt die Datei in Ruhe.
- */
+/** Fokuspunkt: bleibt sichtbar, wenn das Bild als `object-cover` beschnitten wird; die Datei bleibt unverändert. */
 export function FocalPointPicker({
   url,
   alt,

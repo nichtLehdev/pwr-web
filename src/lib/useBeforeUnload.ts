@@ -4,14 +4,8 @@ import { useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 /**
- * The link a click actually landed on — the clicked element itself or one of
- * its ancestors.
- *
- * Ancestors ONLY. An earlier version also searched each ancestor's descendants
- * for any `a[href]`, which meant clicking a toolbar button, a checkbox or an
- * input anywhere on a page that contains a link at all resolved to that link —
- * so every click on an editor page raised the "unsaved changes" prompt even
- * though nothing was navigating.
+ * Ancestors ONLY: searching their descendants too made any click on a page
+ * containing a link raise the "unsaved changes" prompt.
  */
 export function findClickedLink(
   element: HTMLElement | null,
@@ -36,16 +30,9 @@ export function isIgnoredHref(link: HTMLAnchorElement, href: string): boolean {
 const DECISION_TTL_MS = 1500;
 
 /**
- * Hook to show a warning before leaving the page if there are unsaved changes.
- * Works for both actual page unloads (beforeunload) and Next.js client-side navigation.
+ * Warns on unload and on Next.js client navigation. Asks in the click phase only: a dialog
+ * on `pointerdown` swallows the `click` that `<Link>` navigates on.
  *
- * Asks in the click phase only. An earlier version also asked on `pointerdown`
- * and `mousedown`: the modal dialog swallowed the rest of the mouse gesture,
- * so the browser never delivered the `click` that Next.js `<Link>` navigates
- * on — confirming "leave" left you sitting on the page, with no way out other
- * than a full reload.
- *
- * @param enabled - Whether to show the warning (typically based on form dirty state)
  * @param message - Optional custom message (browsers may ignore this)
  */
 export function useBeforeUnload(enabled: boolean, message?: string) {
@@ -59,14 +46,8 @@ export function useBeforeUnload(enabled: boolean, message?: string) {
   );
   const currentPathRef = useRef(pathname);
   /**
-   * The answer already given for the navigation in flight. A single click on a
-   * `<Link>` reaches us twice — once as the DOM event, then again as the
-   * `router.push` Next.js makes from its own click handler — and both must
-   * share one answer instead of stacking two dialogs.
-   *
-   * Only "leave" is remembered: a refusal stops the navigation right there, so
-   * there is nothing left to ask about, and the next click deserves a fresh
-   * question.
+   * A `<Link>` click arrives twice (DOM event, then Next's `router.push`); both share
+   * one answer. Only "leave" is remembered — a refusal already stops the navigation.
    */
   const allowedNavigationRef = useRef<string | null>(null);
   const allowedResetRef = useRef<number | undefined>(undefined);
@@ -227,9 +208,7 @@ export function useBeforeUnload(enabled: boolean, message?: string) {
     handlerRef.current = beforeUnloadHandler;
     linkClickHandlerRef.current = linkClickHandler;
 
-    // Document-level capture only. Registering the same handler on window as
-    // well ran it twice for every event, since capture descends window →
-    // document before reaching the target.
+    // Document-level capture only; also registering on window runs it twice.
     window.addEventListener("beforeunload", beforeUnloadHandler);
     document.addEventListener("click", linkClickHandler, true);
 

@@ -1,7 +1,6 @@
 /**
- * Haptik: `navigator.vibrate` (Android u. a.) + Fallback für iOS Safari:
- * seit iOS 17.4 löst ein programmatischer Klick auf `<input type="checkbox" switch>`
- * kurzes System-Haptik aus (kein offizielles Vibration-API auf vielen iOS-Versionen).
+ * Haptik über `navigator.vibrate`; iOS Safari hat das nicht, dort löst ab 17.4 ein
+ * programmatischer Klick auf `<input type="checkbox" switch>` System-Haptik aus.
  * @see https://github.com/tijnjh/ios-haptics
  */
 
@@ -91,7 +90,6 @@ function vibrateWithFallback(pattern: number | number[]): void {
   }
 }
 
-/** Kurzes Feedback beim Tippen */
 export function hapticsTap(): void {
   vibrateWithFallback(12);
 }
@@ -102,13 +100,11 @@ export function hapticsCountdownBeat(isAccent: boolean): void {
   vibrateWithFallback(isAccent ? [14, 35, 10] : 10);
 }
 
-/** Metronom während des Spiels */
 export function hapticsMetronomeBeat(): void {
   if (!likelyTouchDevice() && !looksLikeIosTouchDevice()) return;
   vibrateWithFallback(6);
 }
 
-/** Tippphase beginnt */
 export function hapticsPlayingStart(): void {
   if (!likelyTouchDevice() && !looksLikeIosTouchDevice()) return;
   vibrateWithFallback([12, 30, 12]);

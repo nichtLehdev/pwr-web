@@ -30,16 +30,8 @@ const parseAge = (raw: string): number | undefined => {
 };
 
 /**
- * Mindest- und Höchstalter einer Preiskategorie.
- *
- * Beide Felder sind optional und einzeln nutzbar: „Kinder & Jugendliche“
- * braucht meist nur ein Höchstalter, „Erwachsene“ nur ein Mindestalter. Wo die
- * Grenze liegt, entscheidet der Kurs — im einen Haus ist man mit 18 erwachsen,
- * im anderen zählt man bis 26 zur Jugend.
- *
- * Ab der ersten Anmeldung gesperrt, genau wie Bezeichnung und Preis: die
- * Grenzen entscheiden, wer welchen Preis zahlt, und nachträglich verschoben
- * stünden Angemeldete in einer Kategorie, die ihnen nicht mehr zusteht.
+ * Mindest- und Höchstalter einer Preiskategorie, beide optional. Ab der ersten Anmeldung
+ * gesperrt: sonst stünden Angemeldete in einer Kategorie, die ihnen nicht mehr zusteht.
  */
 export function PriceOptionAgeLimits({
   option,

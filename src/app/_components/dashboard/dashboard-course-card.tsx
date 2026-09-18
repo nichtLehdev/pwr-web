@@ -95,11 +95,7 @@ export default function DashboardCourseCard({
     "text-dark dark:text-night-muted mt-0.5 h-4 w-4 shrink-0";
 
   return (
-    // Karte statt Kasten mit Rundung und Schatten: eine Haarlinie umschließt
-    // sie, wie es die Übersetzungstabelle für Karten/Tabellen vorsieht. Die
-    // Grammatik der öffentlichen Listen (Haarlinie, Tinte auf Papier) kommt
-    // mit, ihre großen Editorial-Maße (Programm-Zeilen, py-5 etc.) nicht —
-    // das Dashboard bleibt dicht.
+    // Haarlinie wie die öffentlichen Listen, aber ohne deren Editorial-Maße: das Dashboard bleibt dicht.
     <div className="border-rule dark:border-night-rule bg-paper dark:bg-night relative flex flex-col border p-4 pb-5">
       <div className="mb-2.5 flex flex-wrap items-start justify-between gap-x-3 gap-y-1.5">
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1.5">
@@ -113,10 +109,7 @@ export default function DashboardCourseCard({
           ) : isEffectivelyOpen ? (
             <Tag tone="ink">Anmeldung offen</Tag>
           ) : (
-            // Geschlossene Anmeldung verlangt nichts mehr — umrandet statt
-            // gefüllt. Gefüllt sahen „Anmeldung offen" und „Frist vorbei" im
-            // Hellmodus identisch aus (beide Tinte auf Papier), der Zustand
-            // war nur am Wort ablesbar.
+            // Geschlossene Anmeldung verlangt nichts mehr: umrandet, sonst gleicht sie hell „Anmeldung offen".
             <Tag tone="muted">
               {isDeadlinePassed ? "Frist vorbei" : "Anmeldung zu"}
             </Tag>

@@ -106,7 +106,6 @@ export default function LocationDetailPage() {
       }
       maxWidth="7xl"
     >
-      {/* Address */}
       <div className="border-rule dark:border-night-rule mb-6 border p-6">
         <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
           Adresse
@@ -139,7 +138,6 @@ export default function LocationDetailPage() {
         </dl>
       </div>
 
-      {/* Coordinates */}
       {(location.latitude || location.longitude) && (
         <div className="border-rule dark:border-night-rule mb-6 border p-6">
           <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
@@ -170,7 +168,6 @@ export default function LocationDetailPage() {
         </div>
       )}
 
-      {/* Usage */}
       <div className="border-rule dark:border-night-rule mb-6 border p-6">
         <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
           Verwendung
@@ -289,7 +286,6 @@ export default function LocationDetailPage() {
         </div>
       </div>
 
-      {/* Metadata */}
       <div className="border-rule dark:border-night-rule border p-6">
         <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
           Details
@@ -314,7 +310,6 @@ export default function LocationDetailPage() {
         </dl>
       </div>
 
-      {/* Actions */}
       <div className="mt-6 flex flex-wrap gap-3">
         <Link
           href="/dashboard/locations"

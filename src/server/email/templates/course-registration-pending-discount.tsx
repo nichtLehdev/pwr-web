@@ -165,8 +165,7 @@ export function courseRegistrationPendingDiscountText({
     ),
     "",
     "PREISÜBERSICHT",
-    // Lange Beschriftungen wie im HTML — textZeile richtet nur bis 18 Zeichen
-    // aus, das reicht hier nicht für ein trennendes Leerzeichen.
+    // Lange Beschriftungen bleiben Fließtext wie im HTML.
     `Ursprünglicher Gesamtbetrag: ${formatPrice(originalTotalPrice)}`,
     `Geschwisterkindrabatt (20% pro weiteres Kind): -${formatPrice(discountAmount)}`,
     `Gesamtbetrag (vorbehaltlich Genehmigung): ${formatPrice(finalTotalPrice)}`,

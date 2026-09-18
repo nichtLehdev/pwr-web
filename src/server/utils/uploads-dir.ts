@@ -1,24 +1,16 @@
 import { resolve, sep } from "path";
 
 /**
- * Root directory for uploaded files.
- *
- * Deliberately OUTSIDE of public/: Next serves public/ straight from the
- * filesystem, which would bypass the authorization checks in
- * /api/uploads/[...path] (private downloads, unapproved media).
- *
- * Docker mounts the uploads volume here; override with UPLOADS_DIR.
- * When migrating an existing setup, move public/uploads to ./uploads (the
- * Docker volume itself keeps its data — only the mount point changes).
+ * Deliberately OUTSIDE public/: Next serves public/ directly, bypassing the auth
+ * checks in /api/uploads/[...path]. Docker mounts the volume here (UPLOADS_DIR).
  */
 export const UPLOADS_ROOT = process.env.UPLOADS_DIR
   ? resolve(/* turbopackIgnore: true */ process.env.UPLOADS_DIR)
   : resolve(/* turbopackIgnore: true */ process.cwd(), "uploads");
 
 /**
- * Resolve a stored `/api/uploads/...` path to its on-disk location, refusing
- * anything that escapes the uploads directory. Returns null for paths that
- * are not managed uploads (e.g. external URLs).
+ * Refuses anything that escapes the uploads directory; null for paths that are
+ * not managed uploads (e.g. external URLs).
  */
 export function resolveUploadFsPath(storedPath: string): string | null {
   if (!storedPath.startsWith("/api/uploads/")) return null;

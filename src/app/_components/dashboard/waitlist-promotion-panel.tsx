@@ -36,10 +36,7 @@ const registrationsLabel = (count: number) =>
 const participantsLabel = (count: number) =>
   `${count} ${count === 1 ? "Teilnehmer" : "Teilnehmer"}`;
 
-/**
- * Was mit den freien Plätzen bis zum Knopfdruck geschieht: Die Wartenden
- * reservieren, was sie nutzen könnten, neue Anmeldungen bekommen den Rest.
- */
+/** Bis zum Knopfdruck reservieren die Wartenden, was sie nutzen könnten; Neue bekommen den Rest. */
 function reservationText(free: number, openToNew: number): string {
   const manual = "Automatisch rückt niemand nach – das löst du hier aus.";
   if (!Number.isFinite(free) || free <= 0) return manual;
@@ -51,16 +48,8 @@ function reservationText(free: number, openToNew: number): string {
 }
 
 /**
- * Warteliste auf der Teilnehmerseite eines Kurses: wie viele Plätze frei sind,
- * wer wartet, und der Knopf, der sie nachrücken lässt.
- *
- * Seit dem 18.09.2026 rückt niemand mehr automatisch nach — frei werdende
- * Plätze sind oft nur ein Zwischenstand des Teams (versehentlich gestrichen,
- * zwei Anmeldungen zusammengeführt). Bis zum Knopfdruck bleiben den Wartenden
- * die Plätze vorbehalten, die sie nutzen könnten; neue Anmeldungen bekommen
- * nur die übrigen (`@/lib/waitlist-priority`). Das Ergebnis bleibt stehen,
- * bis erneut nachgerückt wird, und sagt auch, warum niemand nachrücken
- * konnte — sonst bliebe etwa eine blockierte Warteliste unsichtbar.
+ * Niemand rückt automatisch nach: frei werdende Plätze sind oft nur ein Zwischenstand des
+ * Teams. Bis zum Knopfdruck haben Wartende Vorrang (`@/lib/waitlist-priority`).
  */
 export function WaitlistPromotionPanel({
   courseId,
@@ -95,9 +84,7 @@ export function WaitlistPromotionPanel({
     },
   });
 
-  // Der Dialog nimmt den Fokus auf, damit Screenreader Titel und Erklärung
-  // vorlesen; danach geht er ans Ergebnis — der Knopf kann dann fehlen, etwa
-  // wenn jetzt ein Angebot läuft.
+  // Fokus erst in den Dialog (wird vorgelesen), dann ans Ergebnis — der Knopf kann dann fehlen.
   useEffect(() => {
     if (confirming) dialogRef.current?.focus();
   }, [confirming]);

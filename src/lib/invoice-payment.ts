@@ -1,12 +1,6 @@
 /**
- * Zahlungsstand einer Rechnung — abgeleitet, nicht gespeichert.
- *
- * Gespeichert sind nur `paidAt` und optional `paidAmount`. Alles, was die
- * Oberfläche anzeigt ("offen", "teilweise bezahlt", "bezahlt"), wird hier aus
- * diesen beiden Feldern plus dem Dokumentstatus berechnet, damit Dashboard,
- * tRPC-Router und Exporte nicht jeweils eigene Regeln erfinden.
- *
- * Dependency-frei, damit Client und Server dieselbe Funktion benutzen können.
+ * Zahlungsstand, abgeleitet aus `paidAt`, `paidAmount` und Status statt gespeichert —
+ * eine Regel für Dashboard, Router und Exporte. Dependency-frei für Client und Server.
  */
 
 export type InvoicePaymentState =
@@ -35,12 +29,8 @@ const centsEqual = (a: number, b: number) =>
   Math.round(a * 100) === Math.round(b * 100);
 
 /**
- * Was als `paidAmount` an `markPaid` geht — `undefined` für den vollen Betrag.
- *
- * `paidAmount = null` heißt in der Datenbank bewusst "alles": wird der
- * Rechnungsbetrag später korrigiert, zieht der Zahlungsstand mit. Eine
- * ausgeschriebene Zahl täte das nicht und bliebe als veraltete Teilzahlung
- * stehen — deshalb wird der Normalfall gar nicht erst gespeichert.
+ * `undefined` für den vollen Betrag: `paidAmount = null` heißt „alles“ und zieht bei einer
+ * späteren Korrektur des Rechnungsbetrags mit, eine gespeicherte Zahl bliebe veraltet stehen.
  */
 export function bookedAmountFor(
   enteredAmount: number,
@@ -59,10 +49,7 @@ export function invoicePaymentState(
   return invoice.paidAmount > 0 ? "PARTIAL" : "OPEN";
 }
 
-/**
- * Noch offener Betrag. Entwürfe und Stornos sind per Definition 0 — sie dürfen
- * nicht in die Summe der offenen Posten einfließen.
- */
+/** Entwürfe und Stornos zählen 0, damit sie nicht in die offenen Posten fließen. */
 export function invoiceOpenAmount(invoice: InvoicePaymentInput): number {
   if (invoice.status !== "PUBLISHED") return 0;
   if (!invoice.paidAt) return invoice.totalAmount;
@@ -76,13 +63,7 @@ export function invoicePaidAmount(invoice: InvoicePaymentInput): number {
   return invoice.paidAmount ?? invoice.totalAmount;
 }
 
-/**
- * Zahlungsstand einer ganzen Anmeldung, aus ihren Rechnungen abgeleitet.
- *
- * `NOT_APPLICABLE` heißt hier "noch keine ausgestellte Rechnung" — weder
- * bezahlt noch offen, weil noch gar keine Forderung besteht. Das ist der
- * Normalfall bei Barzahlung und bei Kursen ohne Rechnungsstellung.
- */
+/** `NOT_APPLICABLE` heißt „noch keine ausgestellte Rechnung“ (Normalfall bei Barzahlung). */
 export function registrationPaymentState(
   invoices: InvoicePaymentInput[],
 ): InvoicePaymentState {
@@ -96,7 +77,6 @@ export function registrationPaymentState(
   return paid > 0 ? "PARTIAL" : "OPEN";
 }
 
-/** Offener Gesamtbetrag einer Anmeldung über alle ihre Rechnungen. */
 export function registrationOpenAmount(
   invoices: InvoicePaymentInput[],
 ): number {

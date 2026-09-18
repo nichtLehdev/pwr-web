@@ -11,9 +11,7 @@ type CourseCapacityCourse = {
   priceOptions: CapacityPriceOption[];
   registrations: Array<{
     registrationStatus: RegistrationStatus;
-    // Beide Felder sind Pflicht in der Abfrage: fehlte `priceOptionId`, fiele
-    // die Zählung stillschweigend auf den Label-Pfad zurück und die Duplikate
-    // liefen wieder in einen Topf.
+    // Beide Felder Pflicht: ohne `priceOptionId` fiele die Zählung still auf den Label-Pfad zurück.
     participants: Array<{
       priceOptionId: string | null;
       priceOption: string | null;
@@ -22,14 +20,8 @@ type CourseCapacityCourse = {
 };
 
 /**
- * Belegte Plätze einer Kategorie.
- *
- * Führend ist `priceOptionId`. Teilnehmer ohne id — Altbestand, dessen Label
- * beim Backfill nicht eindeutig aufzulösen war — werden nur dann über das
- * Label mitgezählt, wenn dieses Label im Kurs **einmalig** ist. Bei doppelten
- * Labels zählen sie zu keiner der beiden Kategorien: welche gemeint war, ist
- * nicht mehr feststellbar, und sie beiden zuzuschlagen würde die Restplätze
- * doppelt kürzen. In der Kurs-Gesamtkapazität stecken sie weiterhin.
+ * Belegte Plätze nach `priceOptionId`. Altbestand ohne id zählt nur bei im Kurs einmaligem Label;
+ * bei doppeltem Label zu keiner Kategorie (sonst doppelt gekürzt), aber weiter zur Gesamtkapazität.
  */
 function countParticipantsForPriceOption(
   course: CourseCapacityCourse,
@@ -50,12 +42,8 @@ function countParticipantsForPriceOption(
 }
 
 /**
- * Same capacity / free-slot rules as the former inline logic in
- * `courses.getAvailableSlots`.
- *
- * Free seats = sum of remaining capacity per price tier (limited tiers
- * individually; unlimited tiers share one pool), capped by course max minus
- * confirmed bookings.
+ * Free seats = sum of remaining capacity per price tier (unlimited tiers share one pool),
+ * capped by course max minus confirmed bookings.
  */
 export function getCourseCapacitySummary(course: CourseCapacityCourse) {
   const confirmedParticipants = course.registrations.reduce(
@@ -110,8 +98,7 @@ export function getCourseCapacitySummary(course: CourseCapacityCourse) {
     }
   }
 
-  // No course-level limit and no fully-limited tier set means the course is
-  // genuinely unlimited (previously this reported capacity 0 / "full").
+  // No course-level limit and no fully-limited tier set: the course is unlimited.
   const isUnlimited =
     course.maxParticipants == null &&
     (priceOptionsWithoutLimits.length > 0 || course.priceOptions.length === 0);

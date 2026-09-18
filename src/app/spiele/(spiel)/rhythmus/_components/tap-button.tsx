@@ -64,10 +64,7 @@ export function TapButton({
         type="button"
         disabled={disabled}
         className={cn(
-          /* Druckfläche statt Knopf: Orange trägt hier die Fläche, die Schrift
-             bleibt Tinte (weiß auf Orange wären 1,99:1). Die Höhe folgt dem
-             Fenster, damit auf niedrigen Bildschirmen nicht ein Drittel der
-             Seite Tippfläche ist. */
+          /* Schrift in Tinte, weiß auf Orange wären 1,99:1. Die Höhe folgt dem Fenster. */
           "semi-condensed flex min-h-[clamp(3.5rem,12dvh,6.5rem)] w-full touch-manipulation items-center justify-center border-2 text-xl font-bold transition select-none active:brightness-95 disabled:cursor-not-allowed sm:text-2xl",
           GAME_FOCUS_RING,
           disabled

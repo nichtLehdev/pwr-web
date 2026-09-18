@@ -6,16 +6,9 @@ import { useTitelVorbei } from "@/lib/use-titel-vorbei";
 import { cn } from "@/lib/utils";
 
 /**
- * Kolumnentitel: Sobald der große Seitentitel nach oben aus dem Bild gelaufen
- * ist, steht er als schmaler Streifen unter der Navigation — wie der
- * Kolumnentitel auf jeder Seite eines Hefts.
- *
- * Der Streifen schwebt (`fixed`) statt zu kleben: Ein klebender Streifen
- * belegt auch unsichtbar seinen Platz im Fluss, und beim Einblenden würde der
- * Inhalt darunter springen.
- *
- * Für Vorlesegeräte ist er ausgeblendet — der Titel steht bereits als `h1` am
- * Seitenanfang, und zweimal derselbe Text hilft dort niemandem.
+ * Kolumnentitel unter der Navigation, sobald der Seitentitel aus dem Bild ist.
+ * `fixed` statt `sticky`, sonst springt der Inhalt beim Einblenden;
+ * `aria-hidden`, weil der Titel schon als `h1` dasteht.
  */
 export function PageTitleBar({ title }: { title: string }) {
   const { bannerHeight } = useBanner();
@@ -33,9 +26,7 @@ export function PageTitleBar({ title }: { title: string }) {
         )}
         style={{ top: `${stickyTop}px` }}
       >
-        {/* Feste Höhe statt Polster um die Zeile: `PublicPage` rechnet mit
-            genau dieser Höhe (`--kolumnentitel-hoehe`), damit mitlaufende
-            Abschnittsköpfe unter dem Streifen stehen bleiben. */}
+        {/* Feste Höhe: `PublicPage` rechnet mit ihr (`--kolumnentitel-hoehe`). */}
         <div className="sheet flex h-11 items-center">
           <p className="condensed text-ink dark:text-night-text min-w-0 truncate text-xl leading-none font-bold">
             {title}

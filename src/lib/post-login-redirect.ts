@@ -1,10 +1,8 @@
 import { safeInternalPath } from "./safe-redirect";
 
 /**
- * One post-login routing rule for every flow (password login, OAuth
- * callback, 2FA verification): an explicit redirect target always wins;
- * the dashboard is only the fallback for permission-holders who didn't
- * ask to go anywhere specific.
+ * One rule for every login flow (password, OAuth, 2FA): an explicit redirect wins;
+ * the dashboard is only the fallback for permission-holders.
  */
 export function resolvePostLoginTarget(
   requestedRedirect: string | null | undefined,

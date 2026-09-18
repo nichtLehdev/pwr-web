@@ -11,9 +11,8 @@ import {
 import { formatAvailableSlots } from "../format-available-slots";
 import { berlinDate, berlinParts } from "../berlin-time";
 
-// Fristen gelten bis zum Ende ihres deutschen Kalendertages. Die Zeitpunkte
-// entstehen über `berlinDate`, damit die Tests in jeder Zeitzone dasselbe
-// prüfen — der Server läuft in UTC.
+// Fristen gelten bis zum Ende ihres deutschen Kalendertages. `berlinDate`, damit die Tests
+// in jeder Zeitzone dasselbe prüfen (der Server läuft in UTC).
 describe("registration deadline (whole-day inclusive)", () => {
   it("keeps a midnight-stored deadline open for its whole day", () => {
     const deadline = berlinDate(2026, 8, 10, 0, 0); // 10.08. 00:00 (legacy rows)
@@ -51,9 +50,7 @@ describe("registration deadline (whole-day inclusive)", () => {
   });
 });
 
-// Termine sind deutsche Ortszeit: Die Zeitpunkte entstehen deshalb über
-// `berlinDate` und nicht über `new Date(y, m, d)`, das der Zone der Maschine
-// folgt — der Server läuft in UTC, die Anzeige muss trotzdem Berlin zeigen.
+// `berlinDate` statt `new Date(y, m, d)`, das der Zone der Maschine folgt (Server: UTC).
 describe("date range formatting", () => {
   it("counts calendar days inclusively", () => {
     expect(
@@ -173,7 +170,7 @@ describe("formatAvailableSlots", () => {
     // 50-person course: 20% = 10
     expect(formatAvailableSlots(10, 50)).toBe("Noch 10 Plätze frei");
     expect(formatAvailableSlots(11, 50)).toBe("Plätze verfügbar");
-    // 8-person workshop: 20% of 8 → 2, no longer leaks counts from day one
+    // 8-person workshop: 20% of 8 → 2
     expect(formatAvailableSlots(3, 8)).toBe("Plätze verfügbar");
     expect(formatAvailableSlots(2, 8)).toBe("Noch 2 Plätze frei");
     expect(formatAvailableSlots(1, 8)).toBe("Noch 1 Platz frei");

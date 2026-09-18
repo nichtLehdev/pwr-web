@@ -1,13 +1,7 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-/**
- * Hinweis (öffentliche Variante von `ui/alert`). Kein farbiger Seitenstreifen
- * und keine Icon-Kreise, sondern Druckmittel:
- * - `info`: 2px-Tintenrahmen
- * - `important`: orange Druckfläche mit Tinte, z. B. für Fristen
- * - `error`: 2px-Rahmen und Kopf in Rot
- */
+/** Hinweis (öffentliche Variante von `ui/alert`); `important` z. B. für Fristen. */
 export type NoteTone = "info" | "important" | "error";
 
 const FRAME: Record<NoteTone, string> = {

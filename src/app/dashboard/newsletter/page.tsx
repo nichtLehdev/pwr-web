@@ -70,7 +70,6 @@ export default function DashboardNewsletterPage() {
         { label: "Newsletter" },
       ]}
     >
-      {/* Statistics */}
       {statistics && (
         <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div className="bg-rule/25 dark:bg-night-raised p-4">
@@ -100,7 +99,6 @@ export default function DashboardNewsletterPage() {
         </div>
       )}
 
-      {/* Actions */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Link
           href="/dashboard/newsletter/compose"

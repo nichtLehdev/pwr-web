@@ -26,9 +26,8 @@ const normalizeOrigin = (origin: string): string => {
 
 const isProduction = process.env.NODE_ENV === "production";
 
-// Origins are trusted exactly as configured — no automatic http:// variants
-// (those weaken the CSRF origin check), and dev/LAN origins only outside
-// production builds.
+// Trusted exactly as configured: no automatic http:// variants (weaken the
+// CSRF origin check), dev origins only outside production.
 const additionalOrigins = process.env.BETTER_AUTH_TRUSTED_ORIGINS
   ? process.env.BETTER_AUTH_TRUSTED_ORIGINS.split(",").map(normalizeOrigin)
   : [];
@@ -43,8 +42,8 @@ const trustedOrigins = [
   ...additionalOrigins,
   ...devOrigins,
 ]
-  .filter(Boolean) // Remove null/empty strings
-  .filter((origin, index, self) => self.indexOf(origin) === index); // Remove duplicates
+  .filter(Boolean)
+  .filter((origin, index, self) => self.indexOf(origin) === index);
 
 export const auth = betterAuth({
   baseURL: baseUrl,
@@ -53,7 +52,7 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: true, // Require email verification
+    requireEmailVerification: true,
     sendResetPassword: async ({
       user,
       url,
@@ -97,10 +96,8 @@ export const auth = betterAuth({
       }
     },
   },
-  // NOTE: e-mail verification is handled by the custom
-  // /api/auth/send-verification + /api/auth/verify-email-custom flow.
-  // (A previous `email: { sendVerificationEmail }` block here used a key
-  // better-auth does not recognize and was silently ignored.)
+  // E-mail verification runs through the custom /api/auth/send-verification
+  // + /api/auth/verify-email-custom flow, not better-auth.
   trustedOrigins,
   // Persist rate-limit counters in Postgres (rateLimit table) so login /
   // reset throttling survives restarts and works across instances.
@@ -123,12 +120,9 @@ export const auth = betterAuth({
       image: "profileImageId",
     },
     additionalFields: {
-      // Only fields the client passes at sign-up may be client-writable.
-      // Everything else is `input: false` so the better-auth endpoints
-      // (sign-up body, POST /api/auth/update-user) cannot set them — all
-      // legitimate profile/admin updates go through the tRPC users router.
-      // In particular bezirkId/districtRoleName gate course-edit access and
-      // must never be self-assignable.
+      // Only sign-up fields are client-writable; the rest is `input: false` so
+      // better-auth endpoints can't set them. bezirkId/districtRoleName gate
+      // course-edit access and must never be self-assignable.
       username: {
         type: "string",
         required: false,

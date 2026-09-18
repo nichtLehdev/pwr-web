@@ -15,10 +15,8 @@ interface PageProps {
 }
 
 /**
- * Metadata reads the post directly instead of going through `posts.getById`:
- * that procedure resolves permissions and renders markdown, none of which a
- * `<meta>` tag needs. Restricted to APPROVED so drafts previewed by reviewers
- * never leak their title into a link preview.
+ * Reads the post directly, `<meta>` needs no permission or markdown work.
+ * APPROVED only, so drafts previewed by reviewers never leak into link previews.
  */
 const getPostForMetadata = cache(async (identifier: string) =>
   db.post.findFirst({
@@ -66,9 +64,8 @@ export async function generateMetadata({
 }
 
 /**
- * Wraps the fetch so the redirect below can live outside a try/catch.
- * `permanentRedirect` signals by throwing, and a `catch { notFound() }` around
- * it would turn every canonical redirect into a 404.
+ * Keeps the redirect outside a try/catch: `permanentRedirect` throws, and a
+ * `catch { notFound() }` would turn every canonical redirect into a 404.
  */
 async function loadPost(identifier: string) {
   try {

@@ -20,19 +20,12 @@ overrides:
   'undici@>=7.0.0 <7.29.0': '~7.29.0'
   'ws@<8.19.1': '>=8.19.1'
   'postcss@<8.5.18': '>=8.5.18'
-  # Keep the ProseMirror core single-instance. @tiptap/pm resolved
-  # prosemirror-model 1.25.11 / prosemirror-view 1.42.2 while its siblings
-  # (prosemirror-commands, -state, -transform, -tables, …) stayed on 1.25.7 /
-  # 1.41.8. These packages do instanceof checks on each other's classes, so a
-  # second copy makes them fail: pressing Enter in the editor threw "Can not
-  # convert <> to a Fragment (looks like multiple versions of prosemirror-model
-  # were loaded)" and no new paragraph was inserted.
+  # Keep the ProseMirror core single-instance: its packages do instanceof checks
+  # on each other, so a second copy breaks the editor (e.g. Enter).
   'prosemirror-model': '^1.25.11'
   'prosemirror-view': '^1.42.2'
 
-  # Vulnerable transitive deps with no reachable parent bump; Dependabot
-  # reports these as "no update possible" on every security run because it
-  # can only touch direct dependencies.
+  # Vulnerable transitive deps with no reachable parent bump (Dependabot can't fix them).
   'js-yaml@<3.15.2': '~3.15.2'
   'js-yaml@>=4.0.0 <4.3.2': '~4.3.2'
   'dompurify@<3.4.13': '^3.4.13'

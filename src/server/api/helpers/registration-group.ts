@@ -11,9 +11,8 @@ type Db = typeof database;
 type GroupMember = { id: string; registrationGroupId: string | null };
 
 /**
- * Teilnehmer der übrigen, nicht stornierten Teile einer aufgeteilten
- * Anmeldung. Der Geschwisterkindrabatt wird über sie mitberechnet, damit ein
- * Teil ihn nicht verliert, nur weil das ältere Geschwister im anderen steht.
+ * Teilnehmer der übrigen, nicht stornierten Teile einer aufgeteilten Anmeldung; zählen beim
+ * Geschwisterkindrabatt mit, auch wenn das ältere Geschwister im anderen Teil steht.
  */
 export async function otherPartParticipants(
   db: Db | Prisma.TransactionClient,
@@ -39,10 +38,8 @@ export async function otherPartParticipants(
 }
 
 /**
- * Die Teile, über deren Rabatt gemeinsam entschieden wird: diese Anmeldung
- * und — ist sie aufgeteilt — die übrigen nicht stornierten Teile mit
- * demselben Rabattstatus. Berechnet wurde der Rabatt über alle Teile, also
- * wird er auch für alle genehmigt oder abgelehnt.
+ * Diese Anmeldung plus die übrigen nicht stornierten Teile mit demselben Rabattstatus:
+ * der Rabatt wurde über alle berechnet und wird für alle gemeinsam entschieden.
  */
 export async function siblingDiscountParts(
   db: Db,

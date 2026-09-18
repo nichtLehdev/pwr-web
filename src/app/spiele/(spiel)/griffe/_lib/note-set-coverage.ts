@@ -5,14 +5,8 @@ import { getRawFingeringEntry } from "./fingering-lookup";
 import { GRIFFE_INSTRUMENTS, type GriffeInstrumentId } from "./types";
 
 /**
- * Deckungsprüfung für Notensets aus der öffentlichen Bibliothek.
- *
- * Ein Set-Ton ist „spielbar", wenn das Spiel ihn für das gewählte Instrument
- * bewerten kann — also über denselben Lookup-Pfad wie die regulären Pools
- * (`getRawFingeringEntry`; für „Trompete in B — C-Stimme" ist der angezeigte
- * Ton Konzert, der Lookup verschiebt intern +2). Stimmt der Schlüssel des
- * Sets nicht mit dem Schlüssel des Instruments überein, ist nichts abgedeckt
- * (ein Violinschlüssel-Set ist auf der Posaune komplett unbrauchbar).
+ * Ein Set-Ton ist „spielbar“, wenn `getRawFingeringEntry` (wie bei den regulären Pools)
+ * einen Griff findet. Passt der Schlüssel des Sets nicht zum Instrument, ist nichts abgedeckt.
  */
 
 /** Minimale Set-Sicht, die für die Abdeckung nötig ist. */

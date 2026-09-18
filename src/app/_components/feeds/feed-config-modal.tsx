@@ -156,7 +156,6 @@ export default function FeedConfigModal({
         </ScrollableModalHeader>
 
         <ScrollableModalBody className="space-y-6">
-          {/* iCal Type Selection */}
           {feedType === "ical" && (
             <div>
               <Label>Typ auswählen</Label>
@@ -183,7 +182,6 @@ export default function FeedConfigModal({
             </div>
           )}
 
-          {/* District Selection */}
           <div>
             <div className="mb-3 flex items-center justify-between">
               <Label>Bezirke filtern (optional)</Label>
@@ -204,7 +202,6 @@ export default function FeedConfigModal({
                 </p>
               ) : (
                 <>
-                  {/* Bezirksübergreifend Option - First in list */}
                   <label className="text-ink hover:bg-rule/60 dark:text-night-text dark:hover:bg-night-rule flex cursor-pointer items-center gap-3 p-2 transition-colors">
                     <Checkbox
                       checked={bezirksuebergreifend}
@@ -215,7 +212,6 @@ export default function FeedConfigModal({
                     </span>
                   </label>
 
-                  {/* District options */}
                   {bezirke
                     .sort((a, b) => a.number - b.number)
                     .map((bezirk) => (
@@ -242,7 +238,6 @@ export default function FeedConfigModal({
             </p>
           </div>
 
-          {/* Feed URL */}
           <div>
             <Label>Feed-URL</Label>
             <div className="flex gap-2">

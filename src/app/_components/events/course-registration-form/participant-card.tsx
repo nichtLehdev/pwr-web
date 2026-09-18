@@ -35,22 +35,11 @@ interface ParticipantCardProps {
   /** Only offered to signed-in registrants, who have a participant library. */
   onSaveToLibrary?: () => void;
   saveToLibraryPending?: boolean;
-  /**
-   * Schlüssel (`data-focus-key`) des Bearbeiten-Knopfs, damit das Formular
-   * den Fokus nach dem Schließen des Fensters oder bei fehlenden Angaben
-   * hierher zurückholen kann.
-   */
+  /** `data-focus-key` des Bearbeiten-Knopfs, damit das Formular den Fokus hierher zurückholen kann. */
   focusKey?: string;
 }
 
-/**
- * Collapsed summary of one participant. Tapping it opens the full field set in
- * a sheet.
- *
- * The list of these is what a phone shows instead of every participant's form
- * at once: four participants are four rows rather than four screens, so the
- * step's own navigation stays reachable without scrolling past all of them.
- */
+/** Collapsed summary of one participant; tapping it opens the full field set in a sheet. */
 export function ParticipantCard({
   participant,
   index,
@@ -84,8 +73,7 @@ export function ParticipantCard({
     ? priceOptionDisplayLabel(priceOption, priceOptions)
     : (participant.priceOption?.trim() ?? null);
 
-  // Only the parts that are actually filled in, so a fresh participant shows a
-  // short hint instead of a line of separators with nothing between them.
+  // Only filled-in parts, so a fresh participant shows a hint instead of bare separators.
   const summaryParts = [
     age !== null ? `${age} Jahre` : null,
     participant.city?.trim() || null,
@@ -99,8 +87,7 @@ export function ParticipantCard({
     !!participant.birthDate;
 
   const hasActions = !!onSaveToLibrary || !!onRemove;
-  // Rechts Platz für die 44px-Knöpfe (6px Rand), damit der Name nicht
-  // darunter läuft.
+  // Rechts Platz für die 44px-Knöpfe, damit der Name nicht darunter läuft.
   const summaryLayout = cn(
     "flex w-full items-start gap-3 p-4 text-left",
     hasActions && (onSaveToLibrary ? "pr-24" : "pr-14"),
@@ -125,8 +112,7 @@ export function ParticipantCard({
           {fullName || `Teilnehmer ${index + 1}`}
         </span>
 
-        {/* Wraps rather than truncates: on a phone a single clipped line
-            turned "Trompete" into "Tro…", which is worse than a second row. */}
+        {/* Wraps rather than truncates: a clipped "Tro…" is worse than a second row. */}
         {summaryParts.length > 0 ? (
           <span className="text-dark dark:text-night-muted mt-0.5 line-clamp-2 block text-sm">
             {summaryParts.join(" · ")}
@@ -185,18 +171,14 @@ export function ParticipantCard({
         <div className={summaryLayout}>{summary}</div>
       )}
 
-      {/* Outside the button: nesting these would be invalid markup and would
-          swallow taps meant for the card. Pinned to the name's line so the
-          card has one right-hand cluster instead of three loose elements. */}
+      {/* Outside the button: nesting would be invalid markup and swallow taps meant for the card. */}
       {hasError ? (
         <span id={errorId} className="sr-only">
           {validationError}
         </span>
       ) : null}
 
-      {/* 44px Trefferfläche bei gleicher Symbolgröße; der Rand ist um die
-          Hälfte des Zuwachses kleiner, damit die Symbole dort bleiben, wo sie
-          waren. */}
+      {/* 44px Trefferfläche; der Rand ist um den halben Zuwachs kleiner, damit die Symbole bleiben. */}
       {hasActions ? (
         <div className="absolute top-1.5 right-1.5 flex items-center">
           {onSaveToLibrary ? (

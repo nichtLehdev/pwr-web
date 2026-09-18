@@ -1,15 +1,7 @@
 /**
- * Harte Zeilenumbrüche aus Beschreibungen von Terminen und Kursen entfernen.
- *
- * Die Regel steht in `src/lib/description-linebreaks.ts` (mit Tests). Sie ist
- * wiederholbar: Der erste Lauf glättet die alten, im Textfeld von Hand
- * umbrochenen Texte, jeder weitere findet nichts mehr, und was der Editor
- * speichert, bleibt unberührt. Deshalb hängt das Skript wie die anderen
- * Backfills am Startbefehl in deploy/stack.yaml — auf mittwald lassen sich im
- * laufenden Container keine Skripte ausführen.
- *
- * Aufruf:  npx tsx prisma/backfill-description-linebreaks.ts
- *          npx tsx prisma/backfill-description-linebreaks.ts --dry-run
+ * Entfernt harte Zeilenumbrüche aus Termin- und Kursbeschreibungen (Regel: src/lib/description-linebreaks.ts).
+ * Wiederholbar, läuft daher am Startbefehl in deploy/stack.yaml (auf mittwald keine Skripte im Container).
+ * Aufruf: npx tsx prisma/backfill-description-linebreaks.ts [--dry-run]
  */
 import "dotenv/config";
 import { db } from "@/server/db";

@@ -45,15 +45,7 @@ const STATUS_OPTIONS = [
   { value: "inactive", label: "Inaktiv" },
 ];
 
-/**
- * `Tag` kennt nur vier Töne. `ink` bleibt `bg-ink text-paper` auch im
- * Nachtdruck (siehe `tag.tsx`) und verschwindet dort fast auf dem fast
- * schwarzen Grund der Werkbank — geprüft an dieser Seite im Nachtdruck.
- * Bestätigt bekommt deshalb `inverse` (im Nachtdruck helles Etikett, wie bei
- * „Bestätigt" in „Meine Anmeldungen"), ausstehend `orange` (braucht
- * Aufmerksamkeit), inaktiv ebenfalls `inverse` (neutral, aber vom
- * Aufmerksamkeits-Ton unterscheidbar durch die Beschriftung selbst).
- */
+/** `inverse` statt `ink`: `ink` verschwindet im Nachtdruck fast auf dem dunklen Werkbank-Grund. */
 const SUBSCRIBER_STATUS_TONE: Record<
   "confirmed" | "pending" | "inactive",
   TagTone
@@ -71,7 +63,6 @@ function subscriberStatus(subscriber: Subscriber): string {
   return subscriber.confirmedAt ? "confirmed" : "pending";
 }
 
-/** Reads one set filter out of the table's filter state. */
 function setFilterValues(filters: ColumnFiltersState, id: string): string[] {
   const value = filters.find((filter) => filter.id === id)?.value;
   return Array.isArray(value) ? (value as string[]) : [];
@@ -80,9 +71,8 @@ function setFilterValues(filters: ColumnFiltersState, id: string): string[] {
 export default function DashboardNewsletterSubscribersPage() {
   const { data: session, isPending } = useSession();
   const hasRedirected = useRef(false);
-  // Die Abonnentenliste wächst unbegrenzt und wird deshalb serverseitig
-  // geblättert; Sortierung, Statusfilter und Suche sind darum Abfrageparameter
-  // — sonst würden sie nur die gerade geladene Seite betreffen.
+  // Serverseitig geblättert: Sortierung, Filter und Suche sind Abfrageparameter,
+  // sonst beträfen sie nur die geladene Seite.
   const [sorting, setSorting] = useState<SortingState>([
     { id: "subscribedAt", desc: true },
   ]);
@@ -134,8 +124,7 @@ export default function DashboardNewsletterSubscribersPage() {
   const toast = useToast();
 
   const deleteSubscriber = api.newsletter.deleteSubscriber.useMutation({
-    // Invalidate instead of reloading the page — a full reload threw away
-    // the current search text, filter and page on every single delete.
+    // Invalidate instead of reloading, so search, filter and page survive.
     onSuccess: () => {
       toast.success("Abonnent gelöscht");
       void utils.newsletter.getSubscribers.invalidate();
@@ -262,7 +251,6 @@ export default function DashboardNewsletterSubscribersPage() {
         </Link>
       }
     >
-      {/* Statistics */}
       {statistics && (
         <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="bg-rule/25 dark:bg-night-raised p-4">
@@ -294,7 +282,6 @@ export default function DashboardNewsletterSubscribersPage() {
         </div>
       )}
 
-      {/* Filters */}
       <DataTable
         data={subscribersData?.subscribers}
         columns={columns}

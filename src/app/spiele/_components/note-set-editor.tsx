@@ -22,14 +22,8 @@ import {
 } from "../_lib/note-sets";
 
 /**
- * Editor für ein öffentliches Notenset: Name, Beschreibung, Schlüssel und die
- * eigentliche Notenauswahl als Chip-Raster (eine Chip pro Schreibweise —
- * Es4 / E4 / Eis4 sind getrennte Einträge). Wird im Bibliotheks-Overlay
- * gerendert, funktioniert aber auch eigenständig in jedem Scroll-Container
- * (die Speicherleiste ist sticky zum nächstgelegenen Scroll-Vorfahren).
- *
- * Gestaltung wie die Setup-Kacheln der Spiele: gewählt ist ein oranges
- * Druckfeld mit Tintenschrift, nicht gewählt eine Haarlinie.
+ * Editor für ein öffentliches Notenset, eine Chip pro Schreibweise (Es4 / E4 / Eis4).
+ * Die Speicherleiste ist sticky zum nächsten Scroll-Vorfahren.
  */
 
 export type NoteSetEditorProps = {
@@ -234,7 +228,6 @@ export function NoteSetEditor({
   return (
     <div className="flex flex-col">
       <div className="space-y-5 p-4 sm:p-6">
-        {/* Name */}
         <div>
           <label
             htmlFor="note-set-name"
@@ -256,7 +249,6 @@ export function NoteSetEditor({
           </p>
         </div>
 
-        {/* Beschreibung */}
         <div>
           <label
             htmlFor="note-set-description"
@@ -353,9 +345,7 @@ export function NoteSetEditor({
                     )}
                   </p>
                   <div className="flex gap-2">
-                    {/* Vorlese-Name nennt die Oktave: „Stammtöne" und
-                        „Leeren" stehen je Oktave einmal und klangen sonst
-                        alle gleich. */}
+                    {/* Vorlese-Name nennt die Oktave, sonst klängen die Knöpfe je Oktave gleich. */}
                     <button
                       type="button"
                       onClick={() => addNaturals(pitches)}

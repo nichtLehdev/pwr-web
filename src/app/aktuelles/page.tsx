@@ -10,11 +10,8 @@ export const metadata = buildPageMetadata({
 });
 
 /**
- * Server wrapper: the list itself is client-side (filters, RSS modal), but the
- * posts are prefetched and awaited so the article headlines are in the initial
- * HTML rather than behind a spinner. Inputs mirror the client's queries
- * exactly — a differing input is a differing query key, and the prefetch would
- * be dead weight.
+ * Prefetches the posts so headlines are in the initial HTML. Inputs must match
+ * the client's queries exactly, or the query key differs and the prefetch is wasted.
  */
 export default async function AktuellesPage() {
   await Promise.all([

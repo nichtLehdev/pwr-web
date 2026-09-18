@@ -2,11 +2,7 @@
 
 import dynamic from "next/dynamic";
 
-/**
- * Lazy wrapper around the TipTap editor. TipTap + ProseMirror + turndown are
- * several hundred KB — import this instead of ./rich-text-editor so the
- * bundle only loads when an editor actually renders.
- */
+/** Import this instead of ./rich-text-editor: TipTap + ProseMirror + turndown are several hundred KB. */
 const RichTextEditor = dynamic(() => import("./rich-text-editor"), {
   ssr: false,
   loading: () => (

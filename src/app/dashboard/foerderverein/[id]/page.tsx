@@ -167,7 +167,6 @@ export default function FoerdervereinDetailPage() {
       }
       maxWidth="7xl"
     >
-      {/* Avatar and Role Badges */}
       <div className="mb-6 flex items-center gap-4">
         {imageUrl ? (
           <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full">
@@ -197,9 +196,7 @@ export default function FoerdervereinDetailPage() {
         </div>
       </div>
 
-      {/* Details */}
       <div className="space-y-6">
-        {/* Contact Info */}
         <section className="border-rule dark:border-night-rule dark:bg-night-raised bg-paper border p-6">
           <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
             Kontaktinformationen
@@ -259,7 +256,6 @@ export default function FoerdervereinDetailPage() {
           </dl>
         </section>
 
-        {/* Description / Bio */}
         {displayBio && (
           <section className="border-rule dark:border-night-rule dark:bg-night-raised bg-paper border p-6">
             <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
@@ -271,7 +267,6 @@ export default function FoerdervereinDetailPage() {
           </section>
         )}
 
-        {/* Meta Info */}
         <section className="border-rule dark:border-night-rule dark:bg-night-raised bg-paper border p-6">
           <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
             Weitere Informationen
@@ -305,7 +300,6 @@ export default function FoerdervereinDetailPage() {
         </section>
       </div>
 
-      {/* Back Link */}
       <div className="mt-8">
         <Link
           href="/dashboard/foerderverein"

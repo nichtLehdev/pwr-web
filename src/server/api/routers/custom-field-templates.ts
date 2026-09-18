@@ -33,10 +33,8 @@ const templateInputSchema = z
   );
 
 /**
- * Library of reusable registration fields. Templates start private to their
- * creator and become visible to everyone once a course containing the field is
- * approved (see promoteCustomFieldTemplatesForCourses). Adding a template to a
- * course copies its values, so template changes never touch existing courses.
+ * Templates start private (see promoteCustomFieldTemplatesForCourses). Adding one to a course
+ * copies its values, so template changes never touch existing courses.
  */
 export const customFieldTemplatesRouter = createTRPCRouter({
   getAll: protectedProcedure.query(async ({ ctx }) => {

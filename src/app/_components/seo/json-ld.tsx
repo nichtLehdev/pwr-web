@@ -1,11 +1,8 @@
 import type { JsonLdNode } from "@/lib/structured-data";
 
 /**
- * Renders one or more schema.org nodes as a `application/ld+json` block.
- *
- * `<` is escaped because the payload carries database content: a post title
- * containing `</script>` would otherwise close the tag and turn the rest of
- * the JSON into markup.
+ * Renders schema.org nodes as `application/ld+json`. `<` is escaped because a
+ * database value containing `</script>` would otherwise close the tag.
  */
 export default function JsonLd({ data }: { data: JsonLdNode | JsonLdNode[] }) {
   return (

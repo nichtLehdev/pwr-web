@@ -36,9 +36,8 @@ interface CourseRegistrationSplitProps {
 }
 
 /**
- * Eine Mail für beide Teile einer aufgeteilten Anmeldung: wer bestätigt ist,
- * wer wartet, und für jeden Teil Preis, Anzahlung und Link. Zwei getrennte
- * Mails hätten nebeneinander „bestätigt“ und „ausgebucht“ gemeldet.
+ * Eine Mail für beide Teile einer aufgeteilten Anmeldung; zwei getrennte hätten
+ * nebeneinander „bestätigt“ und „ausgebucht“ gemeldet.
  */
 export function CourseRegistrationSplit({
   registrantFirstName,

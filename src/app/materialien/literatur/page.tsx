@@ -91,9 +91,7 @@ export default async function LiteraturPage() {
       </PageSection>
 
       <PageSection labelledBy="hefte-heading" rule>
-        {/* Volle Satzbreite statt Kopfspalte: Jeder Eintrag bringt mit Cover
-            und Text schon zwei Spalten mit. In einem Split stünde daneben
-            eine dritte, ab der Überschrift dauerhaft leere Spalte. */}
+        {/* Volle Satzbreite statt Split: Jeder Eintrag bringt mit Cover und Text schon zwei Spalten mit. */}
         <Heading id="hefte-heading">Unsere Bläserhefte</Heading>
         <div className="mt-10">
           {blaesherhefte.map((heft, index) => (

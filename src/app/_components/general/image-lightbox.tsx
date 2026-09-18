@@ -13,9 +13,8 @@ export interface ImageLightboxProps {
   creator?: string | null;
   onClose: () => void;
   /**
-   * Bekommt beim Schließen den Fokus zurück. Ohne Angabe das Element, das
-   * beim Öffnen fokussiert war — Safari fokussiert angeklickte Buttons aber
-   * nicht, deshalb reicht `ZoomableImage` seinen Auslöser ausdrücklich durch.
+   * Bekommt beim Schließen den Fokus zurück; ohne Angabe das beim Öffnen fokussierte Element.
+   * Safari fokussiert angeklickte Buttons nicht, daher reicht `ZoomableImage` den Auslöser durch.
    */
   returnFocusRef?: RefObject<HTMLElement | null>;
 }
@@ -24,15 +23,8 @@ const FOCUSABLE =
   'button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])';
 
 /**
- * Leuchtkasten für ein einzelnes Bild: Nachtgrund, das ganze Bild ohne
- * Beschnitt (auch wenn es auf der Seite per Fokuspunkt gerahmt ist), darunter
- * Beschreibung und Bildnachweis auf einer Haarlinie.
- *
- * Natives `<dialog>` mit `showModal()`: Der Rest der Seite wird damit inert,
- * und der Dialog liegt in der obersten Ebene über Banner und Navigation, ohne
- * dass ein z-index gegen sie antreten muss. Den Tab-Kreis schließen wir
- * trotzdem selbst — Chromium ließe den Fokus sonst in die Browserleiste
- * wandern, und von dort wäre er nicht mehr „in der Lightbox“.
+ * Leuchtkasten für ein einzelnes Bild, ohne Beschnitt. Natives `<dialog>` mit `showModal()`
+ * macht den Rest inert; den Tab-Kreis schließen wir selbst, sonst wandert er in Chromium in die Browserleiste.
  */
 export default function ImageLightbox({
   src,
@@ -48,9 +40,8 @@ export default function ImageLightbox({
     width: number;
     height: number;
   } | null>(null);
-  // Einmal beim Einhängen festhalten, nicht im Effekt: Im StrictMode läuft
-  // der Effekt doppelt, und beim zweiten Mal stünde der Fokus schon auf dem
-  // Schließen-Knopf — dorthin ließe sich nach dem Schließen nicht zurück.
+  // Beim Einhängen festhalten, nicht im Effekt: im StrictMode läuft er doppelt,
+  // und beim zweiten Mal stünde der Fokus schon auf dem Schließen-Knopf.
   const [opener] = useState<HTMLElement | null>(() =>
     document.activeElement instanceof HTMLElement
       ? document.activeElement
@@ -72,9 +63,8 @@ export default function ImageLightbox({
     document.body.style.overflow = "hidden";
     document.body.classList.add("modal-open");
 
-    // Escape löst `cancel` aus; geschlossen wird über den Zustand des
-    // Aufrufers. `close` fängt den Fall, dass der Browser den Dialog ohne
-    // `cancel` schließt (Chromium beim wiederholten Escape ohne Nutzeraktion).
+    // Geschlossen wird über den Zustand des Aufrufers. `close` fängt Chromium ab, das
+    // beim wiederholten Escape ohne Nutzeraktion ohne `cancel` schließt.
     const handleCancel = (event: Event) => {
       event.preventDefault();
       onCloseRef.current();
@@ -91,10 +81,8 @@ export default function ImageLightbox({
     };
   }, []);
 
-  // Eigener Effekt mit stabilen Abhängigkeiten, damit er nur beim Aushängen
-  // greift.
-  // Passive Aufräumfunktionen laufen erst, wenn der Dialog aus dem DOM ist —
-  // vorher wäre der Auslöser noch inert und nähme keinen Fokus an.
+  // Eigener Effekt, damit er nur beim Aushängen greift: erst dann ist der
+  // Dialog aus dem DOM und der Auslöser nicht mehr inert.
   useEffect(() => {
     // Der Auslöser steht schon, wenn die Lightbox einhängt.
     const target = returnFocusRef?.current ?? opener;
@@ -123,10 +111,8 @@ export default function ImageLightbox({
     }
   };
 
-  // Ein Klick neben das Bild schließt, einer aufs Bild nicht — dort landet
-  // man auf dem Handy leicht beim Heranzoomen. Das `img` füllt mit
-  // `object-contain` die ganze Fläche, also zählt, ob der Klick in dem
-  // Rechteck liegt, das das Foto darin tatsächlich einnimmt.
+  // Nur ein Klick neben das Foto schließt. Das `img` füllt mit `object-contain`
+  // die ganze Fläche, also zählt das Rechteck, das das Foto tatsächlich einnimmt.
   const closeOnBackdrop = (event: React.MouseEvent<HTMLDivElement>) => {
     const target = event.target;
     if (target === event.currentTarget) {
@@ -172,12 +158,7 @@ export default function ImageLightbox({
           className="relative mx-4 mb-4 min-h-0 flex-1 sm:mx-14"
           onClick={closeOnBackdrop}
         >
-          {/* Größe: Personenfotos liegen teils nur in 285px Breite vor. In
-              natürlicher Größe wären sie in der Lightbox kleiner als im
-              3:4-Porträt der Vorstandsseite (gemessen 285×204 gegen
-              416×555), bildschirmfüllend dagegen 1077×771 und verwaschen.
-              Deshalb füllt das Bild die Fläche, aber höchstens bis zur
-              doppelten Vorlagengröße. */}
+          {/* Füllt die Fläche, aber höchstens bis zur doppelten Vorlagengröße — kleine Fotos verwaschen sonst. */}
           <div
             className="absolute inset-0 m-auto"
             style={

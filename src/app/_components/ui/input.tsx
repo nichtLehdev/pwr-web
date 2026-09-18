@@ -11,10 +11,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       <input
         type={type}
         className={cn(
-          // Eckig, Haarlinie in Tinte, kein Schatten. Kein `focus:outline-none`:
-          // Dieser Baustein steht auch ausserhalb von `.programm`, wo der
-          // globale 3px-Ring nicht greift — dort bleibt sonst gar keine
-          // Fokusmarkierung uebrig.
+          // Kein `focus:outline-none`: Ausserhalb von `.programm` greift der
+          // globale 3px-Ring nicht, dann bliebe keine Fokusmarkierung.
           "border-ink bg-paper text-ink block w-full border px-3 py-2 transition-colors",
           "dark:border-night-text dark:bg-night dark:text-night-text",
           error && "border-red-600 dark:border-red-400",

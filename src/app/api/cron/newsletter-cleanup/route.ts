@@ -7,14 +7,8 @@ const log = createLogger("Cron");
 export const dynamic = "force-dynamic";
 
 /**
- * Unbestätigte Newsletter-Anmeldungen sind nach kurzer Zeit nur noch Datenmüll:
- * der Bestätigungslink lebt 7 Tage, danach kann die Zeile nichts mehr werden.
- * Sie trägt aber weiter eine E-Mail-Adresse, für die nie eine Einwilligung
- * zustande kam — ohne Rechtsgrundlage und entgegen der Speicherbegrenzung
- * (Art. 5 Abs. 1 lit. e DSGVO).
- *
- * 30 Tage statt 7: genug Abstand zum Ablauf des Tokens, dass eine späte
- * Bestätigung nicht ins Leere läuft, und eine runde Zahl für die
+ * Unbestätigte Adressen ohne Einwilligung dürfen nicht bleiben (Art. 5 Abs. 1
+ * lit. e DSGVO). 30 statt 7 Token-Tage, als Abstand und runde Zahl für die
  * Datenschutzerklärung.
  */
 const UNCONFIRMED_MAX_AGE_DAYS = 30;
@@ -29,14 +23,8 @@ function authorizeCron(request: NextRequest): boolean {
 }
 
 /**
- * POST /api/cron/newsletter-cleanup
- *
- * Löscht Anmeldungen, die nie bestätigt wurden. Aktive Abonnent:innen und
- * abgemeldete Adressen (Sperrliste) bleiben unberührt.
- *
- * In Docker über einen Compose-Cron-Service, auf mittwald über einen
- * mStudio-Cronjob mit scripts/trigger-newsletter-cleanup.mjs.
- * Erfordert Authorization: Bearer <CRON_SECRET>.
+ * Löscht nie bestätigte Anmeldungen; die Sperrliste bleibt. Auf mittwald per
+ * mStudio-Cronjob (scripts/trigger-newsletter-cleanup.mjs), Bearer <CRON_SECRET>.
  */
 export async function POST(request: NextRequest) {
   if (!authorizeCron(request)) {

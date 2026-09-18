@@ -95,9 +95,8 @@ export default function DashboardBezirkePage() {
           enableColumnFilter: false,
           meta: { alwaysVisible: true, label: "Nummer" },
           cell: ({ row }) => (
-            // Quadrat neben Tinte statt Schrift auf der Bezirksfarbe: Alle
-            // dreizehn Farben sind zu hell für weisse Schrift (1,81:1 bis
-            // 4,47:1). Dasselbe Muster wie BezirkLabel und die Terminliste.
+            // Farbquadrat neben der Schrift wie in BezirkLabel: Die
+            // Bezirksfarben sind zu hell für Schrift darauf.
             <span className="inline-flex items-center gap-1.5">
               <span
                 className="h-2.5 w-2.5 shrink-0"

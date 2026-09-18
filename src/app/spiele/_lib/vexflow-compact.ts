@@ -17,9 +17,8 @@ export type CompactMetrics = {
 };
 
 /**
- * Führt `fn` mit global verkleinerten VexFlow-Metriken aus und stellt danach
- * den Ausgangszustand wieder her — `MetricsDefaults` ist globaler Zustand,
- * andere Renderer dürfen die Kompakt-Werte nicht erben.
+ * Führt `fn` mit verkleinerten VexFlow-Metriken aus und stellt sie danach zurück:
+ * `MetricsDefaults` ist global, andere Renderer dürfen die Werte nicht erben.
  */
 export function withCompactMetrics<T>(
   compact: CompactMetrics | null,

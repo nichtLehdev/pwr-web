@@ -46,9 +46,8 @@ export default function AuditLogPage() {
   const { hasPermission, isLoading: permissionsLoading } = usePermissions();
   const canView = hasPermission(PERMISSIONS.AUDIT_VIEW);
 
-  // Das Audit-Log wächst unbegrenzt und wird deshalb serverseitig geblättert;
-  // Sortierung, Spaltenfilter und Suche sind darum Abfrageparameter — sonst
-  // würden sie nur die gerade geladenen 50 Zeilen betreffen.
+  // Serverseitig geblättert (das Log wächst unbegrenzt), daher sind Sortierung,
+  // Filter und Suche Abfrageparameter statt nur auf die geladene Seite zu wirken.
   const [sorting, setSorting] = useState<SortingState>([
     { id: "createdAt", desc: true },
   ]);

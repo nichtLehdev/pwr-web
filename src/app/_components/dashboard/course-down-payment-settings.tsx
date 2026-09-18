@@ -53,9 +53,8 @@ const POLICIES: DownPaymentRefundPolicyValue[] = [
 ];
 
 /**
- * Anzahlung eines Kurses — geteilt von "Kurs anlegen" und "Kurs bearbeiten".
- * Die Prüfung beim Speichern übernimmt `validateDownPaymentSettings`; hier
- * stehen nur die Hinweise, die schon beim Ausfüllen helfen.
+ * Anzahlung eines Kurses für Anlegen und Bearbeiten. Geprüft wird beim Speichern
+ * (`validateDownPaymentSettings`); hier stehen nur Hinweise fürs Ausfüllen.
  */
 export function CourseDownPaymentSettings({
   mode,

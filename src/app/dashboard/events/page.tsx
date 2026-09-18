@@ -60,8 +60,6 @@ export default function DashboardEventsPage() {
     return null;
   }
 
-  // User permissions are checked via hasDashboardAccess
-
   return (
     <DashboardPage
       title="Termine verwalten"
@@ -92,7 +90,6 @@ export default function DashboardEventsPage() {
     >
       <DashboardEventsList />
 
-      {/* Social Media Export Modal */}
       <SocialMediaExportModal
         isOpen={showSocialMediaModal}
         onClose={() => setShowSocialMediaModal(false)}

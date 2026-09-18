@@ -18,10 +18,7 @@ function saveBlob(blob: Blob, filename: string) {
   URL.revokeObjectURL(objectUrl);
 }
 
-/**
- * Damit in einem ZIP nicht zwei Einträge „Probe.jpg“ heißen und einander
- * überschreiben — Medien dürfen denselben Namen tragen, Dateien im Archiv nicht.
- */
+/** Medien dürfen gleich heißen, Dateien im ZIP nicht — sie würden einander überschreiben. */
 function uniqueName(taken: Set<string>, wanted: string): string {
   if (!taken.has(wanted)) {
     taken.add(wanted);
@@ -38,12 +35,8 @@ function uniqueName(taken: Set<string>, wanted: string): string {
 }
 
 /**
- * Herunterladen einzelner Medien und ganzer Auswahlen.
- *
- * Eine Datei geht direkt über die Upload-Route — kein Umweg über den
- * Arbeitsspeicher. Mehrere werden im Browser zu einem ZIP gepackt: JSZip liegt
- * ohnehin im Bündel (Social-Media-Export), und der Server muss so nicht 200
- * Bilder gleichzeitig im RAM halten.
+ * Eine Datei direkt über die Upload-Route; mehrere werden im Browser gezippt,
+ * damit der Server nicht alle Bilder gleichzeitig im RAM hält.
  */
 export function useMediaDownload() {
   const toast = useToast();
@@ -70,8 +63,7 @@ export function useMediaDownload() {
       setIsBundling(true);
       setBundleProgress(0);
       try {
-        // Erst beim Klick geladen: JSZip ist ~100 kB, die niemand mitschleppen
-        // soll, der die Seite nur anschaut.
+        // Erst beim Klick geladen: JSZip ist ~100 kB.
         const { default: JSZip } = await import("jszip");
         const zip = new JSZip();
         const taken = new Set<string>();

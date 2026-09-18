@@ -66,10 +66,8 @@ let draftIdCounter = 0;
 const nextDraftId = () => `new-${draftIdPrefix}-${++draftIdCounter}`;
 
 /**
- * Editor for a course's registration fields, backed by the global field
- * library: fields can be pulled from the library and saved back to it.
- * Library entries are copied into the course, so the course keeps its own
- * version even if the library changes later.
+ * Editor for a course's registration fields, backed by the global field library.
+ * Library entries are copied, so later library changes don't affect the course.
  */
 export function CourseCustomFieldsEditor({
   fields,

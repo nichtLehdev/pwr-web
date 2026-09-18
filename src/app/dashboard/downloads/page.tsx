@@ -38,8 +38,6 @@ import {
   downloadFileTypeForExtension,
 } from "@/lib/download-file-types";
 
-// Dashboard access is now controlled by permissions
-
 type DashboardDownload =
   RouterOutputs["materials"]["getDownloads"]["downloads"][number];
 
@@ -54,16 +52,8 @@ const statusLabels: Record<ContentStatus, string> = {
 };
 
 /**
- * Spiegelt die Zuordnung aus `content-status.tsx` — derselbe Status muss
- * überall gleich aussehen. `Tag` hat inzwischen einen fünften, umrandeten
- * Ton (`muted`): Entwurf und Archiviert sind reine Ablagezustände ohne
- * Handlungsbedarf und standen bisher gefüllt, also so laut wie
- * „Veröffentlicht".
- *
- * Gefüllt heißt „das musst du sehen", umrandet „das ist nur der Stand".
- *
- * Dass diese Tabelle hier überhaupt doppelt steht, bleibt ein offener Punkt —
- * richtig wäre `ContentStatusBadge` aus `content-status.tsx`.
+ * Spiegelt `content-status.tsx`, derselbe Status muss überall gleich aussehen.
+ * TODO: durch `ContentStatusBadge` aus `content-status.tsx` ersetzen.
  */
 const statusTone: Record<ContentStatus, TagTone> = {
   DRAFT: "muted",
@@ -137,8 +127,7 @@ export default function DashboardDownloadsPage() {
 
   const utils = api.useUtils();
 
-  // Die ganze Liste auf einmal: Kategorie, Status und Suche sind jetzt Filter
-  // der Tabelle und müssen über alle Zeilen greifen, nicht nur über eine Seite.
+  // Die ganze Liste auf einmal, damit die Tabellenfilter über alle Zeilen greifen.
   const { data, isLoading } = api.materials.getDownloads.useQuery(
     { page: 1, limit: 100, includeAll: true },
     { enabled: !!profile },
@@ -293,8 +282,7 @@ export default function DashboardDownloadsPage() {
       setUploadedFileUrl(data.url);
       setUploadedFileSize(data.size);
 
-      // Dieselbe Endungstabelle wie im Download-Picker. Vorher blieb bei einer
-      // Endung ohne eigenen Zweig der Typ der vorigen Datei stehen.
+      // Dieselbe Endungstabelle wie im Download-Picker.
       setNewFileType(
         downloadFileTypeForExtension(data.extension) ?? FileType.PDF,
       );
@@ -533,7 +521,6 @@ export default function DashboardDownloadsPage() {
         />
       </DashboardPage>
 
-      {/* Upload Modal */}
       {showUploadModal && (
         <ScrollableModal>
           <ScrollableModalCard maxW="lg">
@@ -543,7 +530,6 @@ export default function DashboardDownloadsPage() {
               </h2>
 
               <div className="space-y-4">
-                {/* File Upload with Drag & Drop */}
                 <div>
                   <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
                     Datei
@@ -607,7 +593,6 @@ export default function DashboardDownloadsPage() {
                   </div>
                 </div>
 
-                {/* Title */}
                 <div>
                   <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
                     Titel *
@@ -620,7 +605,6 @@ export default function DashboardDownloadsPage() {
                   />
                 </div>
 
-                {/* Description */}
                 <div>
                   <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
                     Beschreibung
@@ -633,7 +617,6 @@ export default function DashboardDownloadsPage() {
                   />
                 </div>
 
-                {/* Category */}
                 <div>
                   <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
                     Kategorie
@@ -652,7 +635,6 @@ export default function DashboardDownloadsPage() {
                   </Select>
                 </div>
 
-                {/* Tags */}
                 <div>
                   <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
                     Tags
@@ -700,7 +682,6 @@ export default function DashboardDownloadsPage() {
         </ScrollableModal>
       )}
 
-      {/* Delete Confirmation Modal */}
       {showDeleteModal && (
         <ScrollableModal>
           <ScrollableModalCard maxW="md">
@@ -734,7 +715,6 @@ export default function DashboardDownloadsPage() {
         </ScrollableModal>
       )}
 
-      {/* Edit Modal */}
       {showEditModal && (
         <ScrollableModal>
           <ScrollableModalCard maxW="lg">
@@ -744,7 +724,6 @@ export default function DashboardDownloadsPage() {
               </h2>
 
               <div className="space-y-4">
-                {/* Title */}
                 <div>
                   <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
                     Titel *
@@ -757,7 +736,6 @@ export default function DashboardDownloadsPage() {
                   />
                 </div>
 
-                {/* Description */}
                 <div>
                   <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
                     Beschreibung
@@ -770,7 +748,6 @@ export default function DashboardDownloadsPage() {
                   />
                 </div>
 
-                {/* Category */}
                 <div>
                   <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
                     Kategorie
@@ -789,7 +766,6 @@ export default function DashboardDownloadsPage() {
                   </Select>
                 </div>
 
-                {/* Tags */}
                 <div>
                   <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
                     Tags
@@ -806,7 +782,6 @@ export default function DashboardDownloadsPage() {
                   </p>
                 </div>
 
-                {/* Public Toggle */}
                 <div className="flex items-center gap-3">
                   <input
                     type="checkbox"

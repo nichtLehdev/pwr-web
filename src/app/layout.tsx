@@ -22,11 +22,7 @@ import {
 
 const inter = Inter({ subsets: ["latin"] });
 
-/**
- * Programmheft-Schrift der öffentlichen Website. Die Breitenachse trägt beide
- * Stimmen einer Familie: schmal für Titel, Daten und Programmköpfe, normal für
- * Text. Nur als Variable geladen — das Dashboard bleibt bei Inter.
- */
+/** Programmheft-Schrift der öffentlichen Website; nur als Variable geladen, das Dashboard bleibt bei Inter. */
 const archivo = Archivo({
   subsets: ["latin", "latin-ext"],
   axes: ["wdth"],

@@ -6,9 +6,8 @@ import { api } from "@/trpc/react";
 import { cn } from "@/lib/utils";
 
 /**
- * Adressuche mit Vorschlägen während der Eingabe (Photon/OpenStreetMap).
- * Füllt Name, Straße, PLZ, Stadt und Koordinaten in einem Rutsch — die
- * Koordinaten sparen beim Speichern den Geocoding-Aufruf.
+ * Adresssuche mit Vorschlägen (Photon/OpenStreetMap). Liefert auch die Koordinaten,
+ * das spart beim Speichern den Geocoding-Aufruf.
  */
 
 export type AddressSuggestion = {
@@ -102,8 +101,7 @@ export function AddressAutocomplete({
     }
 
     if (event.key === "Enter") {
-      // Die Suche liegt innerhalb des Seitenformulars — Enter darf dieses
-      // niemals abschicken, sondern höchstens einen Vorschlag übernehmen.
+      // Die Suche liegt im Seitenformular: Enter darf es nie abschicken.
       event.preventDefault();
       const active = results[activeIndex];
       if (isOpen && active) {

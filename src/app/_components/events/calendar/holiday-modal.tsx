@@ -36,7 +36,6 @@ export default function HolidayModal({ holiday, onClose }: HolidayModalProps) {
         className="border-ink dark:border-night-text relative rounded-none! border-2 shadow-none!"
       >
         <ScrollableModalBody>
-          {/* Close button */}
           <button
             onClick={onClose}
             className="text-ink hover:bg-ink hover:text-paper dark:text-night-text dark:hover:bg-night-text dark:hover:text-night absolute top-3 right-3 flex h-9 w-9 items-center justify-center transition-colors"
@@ -45,10 +44,8 @@ export default function HolidayModal({ holiday, onClose }: HolidayModalProps) {
             <X className="h-5 w-5" aria-hidden />
           </button>
 
-          {/* Holiday Icon */}
           <div className="mb-4 flex items-center gap-3">
             <span className="text-primary-ink dark:text-primary">
-              {/* Scale up the icon */}
               <div className="scale-[2]">{holiday.icon}</div>
             </span>
             <h2 className="condensed text-ink dark:text-night-text ml-4 text-2xl font-extrabold">
@@ -56,14 +53,12 @@ export default function HolidayModal({ holiday, onClose }: HolidayModalProps) {
             </h2>
           </div>
 
-          {/* Date */}
           <div className="mb-4">
             <p className="text-dark dark:text-night-muted">
               {formatBerlin(holiday.date, "datumMitWochentag")}
             </p>
           </div>
 
-          {/* Description */}
           {holiday.description && (
             <div className="mb-4">
               <p className="text-ink dark:text-night-text text-sm">
@@ -72,7 +67,6 @@ export default function HolidayModal({ holiday, onClose }: HolidayModalProps) {
             </div>
           )}
 
-          {/* Validity */}
           <Note
             tone="info"
             title={

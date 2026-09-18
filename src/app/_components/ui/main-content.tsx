@@ -18,9 +18,8 @@ function canonicalNavBarHeightPx() {
 }
 
 /**
- * Navbar height aligned with `--nav-height` in Navigation (64 / 80 @ lg).
- * Exposed as numeric px so `--main-padding-top` resolves when inherited (sticky `top`,
- * `scroll-margin-top`) without relying on `var(--nav-height)` outside MainContent.
+ * Navbar height matching `--nav-height` (64 / 80 @ lg), in px so that the
+ * inherited `--main-padding-top` resolves without `var(--nav-height)`.
  */
 function useCanonicalNavBarHeightPx(): number {
   return useSyncExternalStore(
@@ -42,9 +41,7 @@ export function MainContent({ children }: MainContentProps) {
   return (
     <main
       id="inhalt"
-      // Sprungziel des Sprunglinks in AppChrome. Ohne tabIndex nimmt ein
-      // <main> keinen Fokus an — der Sprung scrollte dann zwar, ließe den
-      // Tabulator aber weiter oben in der Navigation stehen.
+      // Ziel des Sprunglinks: Ohne tabIndex nimmt <main> keinen Fokus an.
       tabIndex={-1}
       className="transition-[padding-top] duration-200 focus:outline-none"
       style={{

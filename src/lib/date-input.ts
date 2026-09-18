@@ -1,10 +1,6 @@
 /**
- * Helpers for <input type="date"> round-trips.
- *
- * Date-only strings ("2026-05-31") passed to `new Date()` parse as UTC
- * midnight, while datetime strings parse as local time — mixing the two
- * shifts dates by a day around midnight and made registration deadlines
- * expire ~22h early. Always convert through these helpers instead.
+ * Helpers for <input type="date">. Date-only strings parse as UTC midnight, datetime strings
+ * as local time — mixing them shifts dates by a day, so always convert through these.
  */
 
 /** Format a Date as yyyy-MM-dd in the local timezone (not UTC). */

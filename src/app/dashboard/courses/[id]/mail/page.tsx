@@ -172,9 +172,8 @@ function CourseMailPageContent() {
 
   const sendMail = api.courseMail.send.useMutation({
     onSuccess: (data, variables) => {
-      // Eine übersprungene Rechnung ist kein Versandfehler: die Nachricht ist
-      // raus, nur ohne das Dokument. Ohne Hinweis hier hielte man sie für
-      // zugestellt — der Server hat es sonst nur ins Log geschrieben.
+      // Übersprungene Rechnung: Die Nachricht ist raus, nur ohne Dokument;
+      // ohne Hinweis stünde das nur im Server-Log.
       if (data.skippedInvoices.length > 0) {
         toast.warning(
           `Nicht angehängt: ${data.skippedInvoices.join(", ")} — die E-Mail wurde ohne diese Rechnung(en) versendet.`,
@@ -196,10 +195,8 @@ function CourseMailPageContent() {
       }
       clear();
       setSubject("");
-      // Der Editor übernimmt `content` nur beim ersten Befüllen — ohne das
-      // hier bliebe die versendete Nachricht sichtbar stehen, und die
-      // nächste Eingabe darin hätte sie als „ungespeicherte Änderung“
-      // zurückgeholt.
+      // Der Editor übernimmt `content` nur beim ersten Befüllen, daher
+      // ausdrücklich leeren.
       editor?.commands.clearContent();
       setBody("");
       setAttachments([]);
@@ -509,7 +506,6 @@ function CourseMailPageContent() {
   return (
     <main className="programm font-programm dark:bg-night dark:text-night-text bg-paper text-ink min-h-screen">
       <div className="container mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Header */}
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="dark:text-night-text text-ink text-2xl font-bold sm:text-3xl">
@@ -553,7 +549,6 @@ function CourseMailPageContent() {
         />
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-          {/* Composer */}
           <div className="lg:col-span-2">
             <div className="dark:border-night-rule border-rule border p-6">
               <div className="mb-6">
@@ -610,7 +605,6 @@ function CourseMailPageContent() {
                 </div>
               )}
 
-              {/* Invoices */}
               {(invoiceAccess?.canManage ?? false) && (
                 <div className="dark:border-night-rule border-rule mb-6 border p-4">
                   <label className="dark:text-night-text text-ink flex cursor-pointer items-start gap-3 text-sm">
@@ -637,7 +631,6 @@ function CourseMailPageContent() {
                 </div>
               )}
 
-              {/* Attachments */}
               <div className="mb-6">
                 <label className="dark:text-night-text text-ink mb-2 block text-sm font-medium">
                   Anhänge
@@ -748,7 +741,6 @@ function CourseMailPageContent() {
             </div>
           </div>
 
-          {/* Sidebar */}
           <div className="space-y-6">
             <div className="dark:border-night-rule border-rule border p-6">
               <h2 className="dark:text-night-text text-ink mb-2 flex items-center gap-2 text-lg font-semibold">
@@ -987,8 +979,7 @@ function CourseMailPageContent() {
               {!previewMail.isPending && previewMail.data && (
                 <div className="space-y-4">
                   {previewMail.data.unknownPlaceholders.length > 0 && (
-                    // Hinweis statt Alarm: Tinte auf Papier an einer
-                    // Haarlinie statt bernsteinfarbenem Kasten.
+                    // Hinweis, kein Alarm: bewusst ohne Signalfarbe.
                     <div className="border-ink dark:border-night-text flex items-start gap-3 border-l-2 py-2 pl-4">
                       <AlertTriangleIcon className="dark:text-night-text text-ink mt-0.5 h-4 w-4 shrink-0" />
                       <p className="text-dark dark:text-night-muted text-sm">
@@ -1068,9 +1059,8 @@ function CourseMailPageContent() {
                       )}
                   </dl>
 
-                  {/* Sandboxed: the mail carries its own styles, and the body is
-                      author-provided HTML that has no business running scripts
-                      or reaching the dashboard around it. */}
+                  {/* Sandboxed: author-provided HTML must not run scripts or
+                      reach the dashboard around it. */}
                   <iframe
                     title="E-Mail-Vorschau"
                     srcDoc={previewMail.data.html}

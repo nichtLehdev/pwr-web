@@ -17,12 +17,7 @@ interface CompactEventCardProps {
   cancelled?: boolean;
 }
 
-/**
- * Kompakte Programmzeile für Kalenderagenda-Listen. Nicht mehr im Einsatz
- * seit die Kalenderansicht Termine über `ProgrammeRow`/`programme-data.ts`
- * rendert — hier nur für den Fall belassen, dass eine einzelne kompakte
- * Zeile ohne den vollen `ProgrammeEntry`-Datensatz gebraucht wird.
- */
+/** Kompakte Programmzeile ohne vollen `ProgrammeEntry`; der Kalender nutzt `ProgrammeRow`. */
 export default function CompactEventCard({
   id,
   slug,

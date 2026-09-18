@@ -88,8 +88,6 @@ export default function MaintenanceDashboardPage() {
       description="Schließt die öffentliche Seite für Besucher. Angemeldete Personen mit Dashboard-Zugriff arbeiten normal weiter."
     >
       {forced && (
-        // Hinweis statt Alarm: Tinte auf Papier an einer Haarlinie statt
-        // bernsteinfarbenem Kasten.
         <div className="border-ink dark:border-night-text mb-6 flex gap-3 border-l-2 py-2 pl-4">
           <AlertTriangle className="dark:text-night-text text-ink mt-0.5 h-5 w-5 shrink-0" />
           <div className="text-dark dark:text-night-muted text-sm">
@@ -111,9 +109,7 @@ export default function MaintenanceDashboardPage() {
             <p className="text-ink dark:text-night-text font-semibold">
               Aktueller Zustand
             </p>
-            {/* Folgenreiche Aktion, kein zurückgenommener Hinweis: aktive
-                Wartung ist ein Zustand, den man sehen muss, deshalb gefülltes
-                Orange statt eines zurückgenommenen Tons. */}
+            {/* Gefülltes Orange: Aktive Wartung ist ein Zustand, den man sehen muss. */}
             <Tag tone={enabled ? "orange" : "ink"} className="mt-1">
               {enabled
                 ? "Wartungsmodus aktiv — Besucher sehen die Wartungsseite"

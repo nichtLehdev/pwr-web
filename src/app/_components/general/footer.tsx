@@ -58,8 +58,7 @@ export default function Footer() {
   return (
     <footer className="programm on-ink font-programm bg-ink text-paper dark:bg-night-raised pb-[env(safe-area-inset-bottom,0px)]">
       <div className="sheet py-14 md:py-20">
-        {/* Ohne feste Umbrüche: wo der Vereinsname umbricht, hängt an der
-            Schriftgröße. */}
+        {/* Ohne feste Umbrüche: wo der Vereinsname umbricht, hängt an der Schriftgröße. */}
         <p className="condensed max-w-[22ch] text-[clamp(1.875rem,3.6vw,3rem)] leading-[0.98] font-extrabold text-balance">
           Posaunenwerk der Evangelischen Kirche im Rheinland e.V.
         </p>

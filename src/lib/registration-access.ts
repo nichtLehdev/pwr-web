@@ -3,10 +3,8 @@
 import { useSearchParams } from "next/navigation";
 
 /**
- * Magic-link credential taken from the URL. Present when someone opened their
- * anmeldung straight from an e-mail instead of signing in — the pages then run
- * in "guest mode": no session, no links into the account area, and every tRPC
- * call carries the token so the server can recognise the registrant.
+ * Magic-link token from the e-mail. With it the pages run in guest mode (no session,
+ * no account links) and every tRPC call carries the token.
  */
 export function useRegistrationAccessToken(): string | undefined {
   const searchParams = useSearchParams();

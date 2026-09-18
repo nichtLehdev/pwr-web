@@ -25,10 +25,8 @@ const NACH_MITTERNACHT_SOMMER = new Date("2026-10-01T22:30:00Z");
 const NACH_MITTERNACHT_WINTER = new Date("2026-12-31T23:15:00Z");
 
 describe("unabhängig von der Zeitzone der Maschine", () => {
-  // Jest läuft in der Zone des Rechners, und `process.env.TZ` lässt sich im
-  // Testlauf nicht mehr umstellen. Deshalb rechnet ein eigener Prozess je
-  // Zone dieselben Werte aus: UTC wie im Container, dazu eine Zone westlich
-  // (anderer Kalendertag) und eine weit östlich von Berlin.
+  // `process.env.TZ` lässt sich im Jest-Lauf nicht umstellen, daher rechnet je Zone ein
+  // eigener Prozess: UTC wie im Container, eine westlich und eine weit östlich von Berlin.
   const script = `
     import { formatBerlin, berlinParts, startOfBerlinDay, berlinDayKey } from ${JSON.stringify(
       path.join(__dirname, "..", "berlin-time.ts"),

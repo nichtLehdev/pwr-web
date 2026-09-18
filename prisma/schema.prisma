@@ -25,19 +25,14 @@ model User {
   profileImageId String?
   profileImage   Media?  @relation("UserProfileImage", fields: [profileImageId], references: [id], onDelete: SetNull)
 
-  // District Role (for users assigned to a district)
-  // If bezirkId is set, this field can contain the role name (e.g., "Bezirksobmann", "Bezirksobfrau")
+  // Only with bezirkId, e.g. "Bezirksobmann", "Bezirksobfrau"
   districtRoleName String?
 
-  // Bezirk association
-  // Users can be assigned to a district with a specific role name
   bezirkId String?
 
-  // Bio & Preferences
   bio         String?
   preferences Json?
 
-  // Relations
   accounts              Account[]
   sessions              Session[]
   twoFactor             TwoFactor?           @relation("UserTwoFactor")
@@ -58,7 +53,6 @@ model User {
   representedEnsembles  Ensemble[]           @relation("EnsembleRepresentative")
   conductedAuswahlChors AuswahlChor[]        @relation("AuswahlChorConductor")
 
-  // Organization membership relations
   bezirkPersons       BezirkPerson[]       @relation("BezirkPersonUser")
   teamMember          TeamMember?          @relation("TeamMemberUser")
   posaunenratMember   PosaunenratMember?   @relation("PosaunenratMemberUser")
@@ -78,7 +72,6 @@ model User {
 
   displayUsername String?
 
-  // Custom Roles & Permissions
   customRoles     UserRoleAssignment[]
   userPermissions UserPermission[]
   bezirkScopes    UserBezirkScope[]    @relation("UserBezirkScopes")
@@ -123,7 +116,6 @@ model GameResult {
   @@map("game_result")
 }
 
-// --------- Permission System Models ---------
 
 /**
  * Custom Role model for flexible role-based permissions
@@ -140,10 +132,8 @@ model Role {
   parentRole   Role?   @relation("RoleHierarchy", fields: [parentRoleId], references: [id], onDelete: SetNull)
   childRoles   Role[]  @relation("RoleHierarchy")
 
-  // Permissions assigned to this role
   permissions RolePermission[]
 
-  // Users assigned to this role
   users UserRoleAssignment[]
 
   createdAt DateTime @default(now())
@@ -284,7 +274,6 @@ model TwoFactor {
   @@map("twoFactor")
 }
 
-// --------- Enums ---------
 
 enum EventEnsembleType {
   AUSWAHLCHOR
@@ -464,7 +453,6 @@ enum ContentStatus {
   ARCHIVED // No longer active
 }
 
-// --------- Models ---------
 
 model Event {
   id          String  @id @default(uuid())
@@ -479,32 +467,26 @@ model Event {
   coverImageId String?
   coverImage   Media?  @relation("EventCoverImage", fields: [coverImageId], references: [id], onDelete: SetNull)
 
-  // Date & Time
   eventDate DateTime
   duration  Int?
   cancelled Boolean  @default(false)
 
-  // Location - use new Location model
   locationId String?
   location   Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
 
-  // Category & Classification
   category     EventCategory
   bezirkId     String?
   districtName String?
 
-  // Performance Details
   performingEnsembleType EventEnsembleType?
   ensembleId             String?
   auswahlChorId          String?
   performingEnsembleName String?
   leitung                String?
 
-  // Participation
   openToParticipants Boolean @default(false)
   participationInfo  String?
 
-  // Pricing
   isFree    Boolean @default(true)
   priceInfo String?
 
@@ -513,14 +495,12 @@ model Event {
   reviewNotes String?
   reviewDate  DateTime?
 
-  // Relations
   ensemble     Ensemble?          @relation(fields: [ensembleId], references: [id], onDelete: SetNull)
   auswahlChor  AuswahlChor?       @relation(fields: [auswahlChorId], references: [id], onDelete: SetNull)
   bezirk       Bezirk?            @relation(fields: [bezirkId], references: [id], onDelete: SetNull)
   priceOptions EventPriceOption[]
   downloads    EventDownload[]
 
-  // Meta
   createdById String?
   createdBy   User?     @relation("EventCreator", fields: [createdById], references: [id], onDelete: SetNull)
   reviewerId  String?
@@ -584,20 +564,16 @@ model Course {
   imageId String?
   image   Media?  @relation("CourseImage", fields: [imageId], references: [id], onDelete: SetNull)
 
-  // Dates
   startDate DateTime
   endDate   DateTime
 
-  // Location - use new Location model
   locationId String?
   location   Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
 
-  // Classification
   courseType     CourseType
   targetAudience TargetAudience?
   bezirkId       String?
 
-  // Registration
   registrationOpen             Boolean   @default(false)
   registrationOpensAt          DateTime? // When registrations become available (details visible before this)
   registrationDeadline         DateTime?
@@ -613,7 +589,6 @@ model Course {
   maxParticipants              Int? // optional hard cap
   allowWaitingList             Boolean   @default(false)
 
-  // Pricing
   isFree                Boolean @default(false)
   priceInfo             String?
   allowSiblingDiscount  Boolean @default(false) // Förderverein sibling discount (20% for siblings after first)
@@ -642,16 +617,13 @@ model Course {
   /** Eigener Erstattungshinweis bei DownPaymentRefundPolicy.CUSTOM. */
   downPaymentRefundText   String?
 
-  // Additional Info
   prerequisites String?
   whatToBring   String?
 
-  // Approval Workflow
   status      ContentStatus @default(PENDING)
   reviewNotes String?
   reviewDate  DateTime?
 
-  // Relations
   collaborators    CourseCollaborator[]
   guestTeamMembers CourseGuestTeamMember[]
   bezirk           Bezirk?                 @relation(fields: [bezirkId], references: [id], onDelete: SetNull)
@@ -661,7 +633,6 @@ model Course {
   mails            CourseMail[]
   invoices         Invoice[]
 
-  // Meta
   createdById String?
   createdBy   User?     @relation("CourseCreator", fields: [createdById], references: [id], onDelete: SetNull)
   reviewerId  String?
@@ -756,11 +727,8 @@ model CourseCustomField {
   @@index([courseId])
 }
 
-/// Global library of reusable registration field definitions. Adding a library
-/// field to a course copies it into CourseCustomField, so later template edits
-/// never affect existing courses. Templates start private to their creator and
-/// become visible to everyone (isGlobal) once a course containing the field is
-/// approved.
+/// Reusable registration fields, copied into CourseCustomField so template edits never affect courses.
+/// Private to the creator until a course containing the field is approved (isGlobal).
 model CourseCustomFieldTemplate {
   id String @id @default(uuid())
 
@@ -787,7 +755,6 @@ model CourseRegistration {
   courseId String
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
-  // Registrant Info
   registrantFirstName String
   registrantLastName  String
   registrantEmail     String
@@ -805,7 +772,6 @@ model CourseRegistration {
   billingCity         String?
   billingEmail        String?
 
-  // Payment & Status
   totalPrice         Float
   /**
    * Gewünschte Zahlungsweise (Bar / Rechnung), sofern der Kurs kostenpflichtig ist.
@@ -813,7 +779,6 @@ model CourseRegistration {
   paymentMethod      CoursePaymentMethod?
   registrationStatus RegistrationStatus   @default(CONFIRMED)
 
-  // Sibling Discount
   siblingDiscountApplied Boolean               @default(false)
   siblingDiscountStatus  SiblingDiscountStatus @default(NONE)
   originalTotalPrice     Float? // Price before discount
@@ -835,7 +800,6 @@ model CourseRegistration {
   /** Interner Vermerk (Kontoauszug, Absprache mit der Kasse zur Erstattung). */
   downPaymentNote       String?
 
-  // Invoice
   invoiceGenerated Boolean   @default(false)
   invoiceId        String?   @unique
   invoiceDate      DateTime?
@@ -863,12 +827,10 @@ model CourseRegistration {
    */
   promotionOfferPassedSeats    Int?
 
-  // Relations
   participants Participant[]
   invoices     Invoice[]
   registrant   User?         @relation(fields: [registrantId], references: [id], onDelete: SetNull)
 
-  // Meta
   notes     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -881,10 +843,8 @@ model CourseRegistration {
   @@index([promotionOfferExpiresAt])
 }
 
-/// One e-mail an organizer sent to the registrants of a course, archived so
-/// the team can still answer "was the info mail sent, and what did it say?".
-/// Recipient addresses are deliberately not stored — only how many were
-/// reached, so the archive doesn't duplicate registrant data.
+/// Archived e-mail from an organizer to a course's registrants. Recipient addresses are
+/// deliberately not stored, only the count, so registrant data isn't duplicated.
 model CourseMail {
   id       String @id @default(uuid())
   courseId String
@@ -925,27 +885,16 @@ model InvoiceCounter {
   value Int @default(0)
 }
 
-/// Fortlaufende Rechnungsnummer je Kursnummer, für Kurse mit gesetzter
-/// `Course.courseNumber`. Eigene Tabelle statt eines Zählers auf dem Kurs, weil
-/// der Zähler wie {@link InvoiceCounter} in der Ausstell-Transaktion gesperrt
-/// und bei einem Rollback mit zurückgedreht werden muss.
+/// Fortlaufende Rechnungsnummer je `Course.courseNumber`. Eigene Tabelle, weil der Zähler wie
+/// {@link InvoiceCounter} in der Ausstell-Transaktion gesperrt und beim Rollback zurückgedreht wird.
 model CourseInvoiceCounter {
   courseNumber String @id
   value        Int    @default(0)
 }
 
-/// Eine erstellte Rechnung zu einer Kursanmeldung.
-///
-/// Der Entwurf wird aus der Anmeldung vorbefüllt, ist danach aber ein
-/// eigenständiges Dokument: Empfänger und Positionen werden hier gespeichert
-/// und frei bearbeitet, damit Sonderfälle (Nachlass, bereits geleistete
-/// Anzahlung, Zuschuss) abgebildet werden können, ohne die Anmeldung zu
-/// verfälschen.
-///
-/// Ab `PUBLISHED` ist der Datensatz eingefroren: die Rechnungsnummer ist
-/// vergeben, das PDF liegt unter `pdfPath` und wird nie überschrieben.
-/// Korrekturen laufen über Storno (`CANCELLED`) plus Nachfolgerechnung, die
-/// über `replacesInvoiceId` auf die stornierte zurückzeigt.
+/// Rechnung zu einer Kursanmeldung; nach dem Vorbefüllen eigenständig editierbar (Nachlass, Anzahlung).
+/// Ab `PUBLISHED` eingefroren: Nummer vergeben, PDF nie überschrieben. Korrekturen per Storno
+/// (`CANCELLED`) plus Nachfolgerechnung, die über `replacesInvoiceId` zurückzeigt.
 model Invoice {
   id String @id @default(uuid())
 
@@ -1003,10 +952,8 @@ model Invoice {
   /// Wann die Rechnung zuletzt per Kursmail verschickt wurde.
   mailedAt    DateTime?
 
-  /// Zahlungseingang. `paidAt` ist die einzige Wahrheit darüber, ob eine
-  /// Rechnung beglichen ist — der Dokumentstatus (DRAFT/PUBLISHED/CANCELLED)
-  /// bleibt davon unberührt, weil eine bezahlte Rechnung weiterhin eine
-  /// ausgestellte Rechnung ist und §14 UStG das Dokument einfriert.
+  /// Einzige Wahrheit über den Zahlungseingang; der Dokumentstatus bleibt unberührt,
+  /// weil §14 UStG das ausgestellte Dokument einfriert.
   paidAt      DateTime?
   /// Tatsächlich eingegangener Betrag. Weicht bei Teilzahlung von
   /// `totalAmount` ab; null bedeutet "voller Betrag".
@@ -1096,11 +1043,9 @@ model Location {
   country        String? @default("Deutschland")
   additionalInfo String? // e.g., "Eingang über den Hinterhof"
 
-  // Coordinates for map display
   latitude  Float?
   longitude Float?
 
-  // Usage tracking
   events    Event[]
   courses   Course[]
   ensembles Ensemble[]
@@ -1124,13 +1069,11 @@ model Post {
   excerpt String?
   content String // Rich text/Markdown
 
-  // Media
   coverImageId        String?
   coverImage          Media?  @relation("PostCoverImage", fields: [coverImageId], references: [id], onDelete: SetNull)
   coverImagePositionX Float? // Focal point X position (0-100, percentage)
   coverImagePositionY Float? // Focal point Y position (0-100, percentage)
 
-  // Classification
   category PostCategory
   bezirkId String?
   bezirk   Bezirk?      @relation(fields: [bezirkId], references: [id], onDelete: SetNull)
@@ -1140,15 +1083,12 @@ model Post {
   author     User?   @relation("PostAuthor", fields: [authorId], references: [id], onDelete: SetNull)
   authorName String? // Custom author name if not linked to a user
 
-  // Pinning
   pinned Boolean @default(false)
 
-  // Approval Workflow
   status      ContentStatus @default(PENDING)
   reviewNotes String?
   reviewDate  DateTime?
 
-  // Meta
   createdById String?
   createdBy   User?     @relation("PostCreator", fields: [createdById], references: [id], onDelete: SetNull)
   reviewerId  String?
@@ -1173,31 +1113,24 @@ model Ensemble {
   name        String
   description String?
 
-  // External / federation identifier, e.g. "13-01" (Chor-Nr from the
-  // Posaunenwerk-wide registry). Unique when set; nullable for chors that
-  // don't have one yet.
+  // Chor-Nr from the Posaunenwerk-wide registry, e.g. "13-01"
   internalId String? @unique
 
-  // District
   bezirkId String?
   bezirk   Bezirk? @relation(fields: [bezirkId], references: [id], onDelete: SetNull)
 
-  // Image
   imageId String?
   image   Media?  @relation("EnsembleImage", fields: [imageId], references: [id], onDelete: SetNull)
 
-  // Location - new relation
   locationId String?
   location   Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
 
-  // Rehearsal schedules (multiple)
   rehearsalSchedules RehearsalSchedule[]
 
   // Legacy fields (deprecated - kept for migration)
   rehearsalDay  String? // e.g., "Montag", "Dienstag", etc.
   rehearsalTime String? // e.g., "19:30", "20:00-21:30"
 
-  // Ensemble-level contact
   contactWebsite String?
   /**
    * JSON array of social links, same shape as TeamMember.socials:
@@ -1221,10 +1154,8 @@ model Ensemble {
   representativeEmail String?
   representativePhone String?
 
-  // Status
   isActive Boolean @default(true)
 
-  // Relations
   events Event[]
 
   createdAt DateTime @default(now())
@@ -1254,22 +1185,18 @@ model AuswahlChor {
   slug     String @unique
   subtitle String
 
-  // Details
   founded     String
   members     String
   description String
 
-  // Styling
   color    String
   colorHex String
 
   imageId String?
   image   Media?  @relation("AuswahlChorImage", fields: [imageId], references: [id], onDelete: SetNull)
 
-  // Application
   showApplication Boolean @default(false)
 
-  // Relations
   conductorId String?
   conductor   User?   @relation("AuswahlChorConductor", fields: [conductorId], references: [id], onDelete: SetNull)
   events      Event[]
@@ -1286,7 +1213,6 @@ model Bezirk {
   name      String // "Bezirk 01 - Unterer Niederrhein"
   shortName String // "Unterer Niederrhein"
 
-  // Relations
   users                        User[]                       @relation("BezirkUsers")
   contentScopes                UserBezirkScope[]
   people                       BezirkPerson[] // Obleute & Stellvertretung shown publicly
@@ -1313,11 +1239,9 @@ model BezirkPerson {
   bezirkId String
   bezirk   Bezirk @relation(fields: [bezirkId], references: [id], onDelete: Cascade)
 
-  // Optional link to a User account
   userId String?
   user   User?   @relation("BezirkPersonUser", fields: [userId], references: [id], onDelete: SetNull)
 
-  // Custom person details
   name    String?
   email   String?
   phone   String?
@@ -1345,12 +1269,10 @@ model BezirkPerson {
 model Posaunenwart {
   id String @id @default(uuid())
 
-  // Optional link to User (like VorstandMember)
   userId String? @unique
   user   User?   @relation("PosaunenwartUser", fields: [userId], references: [id], onDelete: SetNull)
 
-  // Custom person details. Used as-is when no user is linked, and as an
-  // override for the linked user's data when both are present.
+  // Used as-is without a linked user, otherwise overrides the user's data.
   name      String?
   email     String?
   phone     String?
@@ -1421,8 +1343,7 @@ model PosaunenwartResponsibility {
 model TeamMember {
   id String @id @default(uuid())
 
-  // Custom person details. Used as-is when no user is linked, and as an
-  // override for the linked user's data when both are present.
+  // Used as-is without a linked user, otherwise overrides the user's data.
   name  String?
   email String?
   phone String?
@@ -1431,14 +1352,12 @@ model TeamMember {
   imageId String? @unique
   image   Media?  @relation("TeamMemberImage", fields: [imageId], references: [id], onDelete: SetNull)
 
-  // Team-specific info
   role             String? // "Landesposaunenwart", "Geschäftsführer", etc.
   responsibilities Json? // JSON array of responsibilities
   socials          Json? // JSON array of social links
   contactType      ContactType?
   sortOrder        Int          @default(0)
 
-  // Optional link to User (team members do not need an account)
   userId String? @unique
   user   User?   @relation("TeamMemberUser", fields: [userId], references: [id], onDelete: SetNull)
 
@@ -1456,13 +1375,11 @@ model VorstandMember {
   email String?
   phone String?
 
-  // Vorstand-specific info
   position    String // "Landesobmann", "Stellvertretender Landesobmann", etc.
   description String? @db.Text // Detailed role description
   color       String? // Tailwind color class for UI display
   sortOrder   Int     @default(0)
 
-  // Relations
   userId  String? @unique
   user    User?   @relation("VorstandMemberUser", fields: [userId], references: [id], onDelete: SetNull)
   imageId String? @unique
@@ -1477,8 +1394,7 @@ model VorstandMember {
 model PosaunenratMember {
   id String @id @default(uuid())
 
-  // Custom person details. Used as-is when no user is linked, and as an
-  // override for the linked user's data when both are present.
+  // Used as-is without a linked user, otherwise overrides the user's data.
   name    String?
   email   String?
   phone   String?
@@ -1486,11 +1402,9 @@ model PosaunenratMember {
   imageId String?
   image   Media?  @relation("PosaunenratMemberImage", fields: [imageId], references: [id], onDelete: SetNull)
 
-  // Posaunenrat-specific info
   role      PosaunenratRole
   sortOrder Int             @default(0)
 
-  // Optional link to User (some Posaunenrat members have accounts)
   userId String? @unique
   user   User?   @relation("PosaunenratMemberUser", fields: [userId], references: [id], onDelete: SetNull)
 
@@ -1504,8 +1418,7 @@ model PosaunenratMember {
 model FoerdervereinMember {
   id String @id @default(uuid())
 
-  // Custom person details. Used as-is when no user is linked, and as an
-  // override for the linked user's data when both are present.
+  // Used as-is without a linked user, otherwise overrides the user's data.
   name    String?
   email   String?
   phone   String?
@@ -1513,14 +1426,12 @@ model FoerdervereinMember {
   imageId String?
   image   Media?  @relation("FoerdervereinMemberImage", fields: [imageId], references: [id], onDelete: SetNull)
 
-  // Förderverein-specific info
   position    String? // "Vorsitzender", "Stellvertreter", "Schatzmeister", etc.
   role        FoerdervereinRole @default(MITGLIED)
   memberSince DateTime?
   description String?           @db.Text
   sortOrder   Int               @default(0)
 
-  // Optional link to User
   userId String? @unique
   user   User?   @relation("FoerdervereinMemberUser", fields: [userId], references: [id], onDelete: SetNull)
 
@@ -1542,7 +1453,6 @@ model HistoryEvent {
   image    Media?  @relation("HistoryEventImage", fields: [imageId], references: [id], onDelete: SetNull)
   imageAlt String?
 
-  // Sorting
   sortOrder Int @default(0)
 
   createdAt DateTime @default(now())
@@ -1557,24 +1467,19 @@ model Download {
   description String?
   category    DownloadCategory
 
-  // File Info
   fileUrl  String
   fileType FileType
   fileSize Int? // bytes (changed from string to int)
 
-  // Tags
   tags Json? // JSON array
 
-  // Visibility & Review
   isPublic    Boolean       @default(true)
   status      ContentStatus @default(PENDING)
   reviewNotes String?
 
-  // Uploaded by
   uploadedById String?
   uploadedBy   User?   @relation("DownloadUploadedBy", fields: [uploadedById], references: [id], onDelete: SetNull)
 
-  // Relations
   events EventDownload[]
 
   createdAt DateTime @default(now())
@@ -1593,7 +1498,6 @@ model Blaeserheft {
   year        Int
   description String
 
-  // Details
   chapters   Json? // JSON array
   highlights Json? // JSON array
 
@@ -1601,19 +1505,16 @@ model Blaeserheft {
   image       Media   @relation("BlaeserheftImage", fields: [imageId], references: [id], onDelete: Cascade)
   audioSample String?
 
-  // Prices
   priceBlaeserheft Float?
   priceBeiheft     Float?
   priceTrompeten   Float?
   priceCd          Float?
 
-  // Availability
   availableBlaeserheft Boolean @default(true)
   availableBeiheft     Boolean @default(true)
   availableTrompeten   Boolean @default(false)
   availableCd          Boolean @default(true)
 
-  // Sorting
   sortOrder Int @default(0)
 
   createdAt DateTime @default(now())
@@ -1625,18 +1526,15 @@ model Blaeserheft {
 model Media {
   id String @id @default(uuid())
 
-  // File Info
   name     String // Original filename
   filename String @unique // Stored filename (with timestamp/hash)
   url      String // Public URL to access file
   path     String // Storage path
 
-  // File Details
   mimeType  String // image/jpeg, application/pdf, etc.
   size      Int // Size in bytes
   extension String // jpg, png, pdf, etc.
 
-  // Image-specific (nullable for non-images)
   width  Int?
   height Int?
 
@@ -1644,23 +1542,19 @@ model Media {
   focalPointX Float?
   focalPointY Float?
 
-  // Metadata
   alt       String? // Alt text for images
   caption   String? // Caption/description
   title     String? // Title
   copyright String? // Optional copyright notice
   creator   String? // Optional photographer/creator name
 
-  // Organization
   folder String? // Folder path (e.g., "events/2025", "news")
   tags   Json? // JSON array of tags
 
-  // Usage tracking & Review
   isPublic    Boolean       @default(true)
   status      ContentStatus @default(APPROVED) // Default to APPROVED for backwards compatibility
   reviewNotes String?
 
-  // Relations - primary usages (kept explicit)
   usersProfile            User[]                 @relation("UserProfileImage")
   eventsCover             Event[]                @relation("EventCoverImage")
   postsCover              Post[]                 @relation("PostCoverImage")
@@ -1677,7 +1571,6 @@ model Media {
   courseImages            Course[]               @relation("CourseImage")
   homepageCarouselItems   HomepageCarouselItem[] @relation("HomepageCarouselMedia")
 
-  // Uploaded by
   uploadedById String?
   uploadedBy   User?   @relation("MediaUploadedBy", fields: [uploadedById], references: [id], onDelete: SetNull)
 
@@ -1691,10 +1584,8 @@ model Media {
   @@index([url])
 }
 
-/// Newsletter recipients. `isActive` says the address wants the newsletter;
-/// `confirmedAt` says the address proved it does (double opt-in). Both must
-/// hold before anything is sent — an unconfirmed row is only a pending
-/// sign-up, and anyone can create one for an address they do not own.
+/// Send only if `isActive` (wants it) and `confirmedAt` (double opt-in) both hold:
+/// anyone can create an unconfirmed row for an address they do not own.
 model NewsletterSubscriber {
   id       String  @id @default(uuid())
   email    String  @unique
@@ -1706,13 +1597,8 @@ model NewsletterSubscriber {
   subscribedAt   DateTime  @default(now())
   unsubscribedAt DateTime?
 
-  /// Nachweis der Einwilligung (Art. 7 Abs. 1 DSGVO): die IP-Adressen von
-  /// Anmeldung und Bestätigung sowie die Fassung des Einwilligungstextes, dem
-  /// zugestimmt wurde. Die Beweislast liegt beim Versender; ein blosses
-  /// `confirmedAt` belegt nur, dass irgendwer geklickt hat.
-  ///
-  /// Wird bei der Abmeldung geleert: ohne laufende Einwilligung gibt es nichts
-  /// mehr zu belegen, und die IP darf dann nicht weiter aufbewahrt werden.
+  /// Einwilligungsnachweis (Art. 7 Abs. 1 DSGVO): IPs von Anmeldung und Bestätigung plus
+  /// Fassung des Einwilligungstextes. Bei Abmeldung leeren, die IP darf nicht bleiben.
   signupIp       String?
   confirmIp      String?
   consentVersion String?
@@ -1775,9 +1661,8 @@ model PageView {
   @@map("page_view")
 }
 
-/// Storage for better-auth's built-in rate limiter (rateLimit.storage =
-/// "database"), so login/reset throttling survives restarts and works
-/// across multiple instances.
+/// better-auth rate limiter storage (rateLimit.storage = "database"), so throttling
+/// survives restarts and works across instances.
 model RateLimit {
   id          String  @id
   key         String?
@@ -1830,10 +1715,8 @@ model Notification {
   @@map("notification")
 }
 
-/// Public library of user-created note sets for the games under /spiele.
-/// A set is a named list of spelled written pitches in one clef; each game
-/// decides itself whether/how it can play the set (e.g. Griffe checks
-/// fingering coverage per instrument).
+/// User-created note sets (written pitches in one clef) for the games under /spiele.
+/// Each game decides whether it can play a set (e.g. Griffe checks fingering coverage).
 model GameNoteSet {
   id       String @id @default(uuid())
   /// Short URL-safe code used for deep links (?set=...), e.g. "k3f7x9q2".

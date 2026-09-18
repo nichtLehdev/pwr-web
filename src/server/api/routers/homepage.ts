@@ -5,9 +5,6 @@ import { userHasPermission } from "../helpers/permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 
 export const homepageRouter = createTRPCRouter({
-  /**
-   * Get all active carousel items for public homepage display
-   */
   getCarouselItems: publicProcedure.query(async ({ ctx }) => {
     const items = await ctx.db.homepageCarouselItem.findMany({
       where: {
@@ -19,15 +16,12 @@ export const homepageRouter = createTRPCRouter({
       orderBy: {
         sortOrder: "asc",
       },
-      take: 5, // Maximum 5 items
+      take: 5,
     });
 
     return items;
   }),
 
-  /**
-   * Get all carousel items for dashboard management
-   */
   getAll: protectedProcedure.query(async ({ ctx }) => {
     const canManageHomepage = await userHasPermission(
       ctx.session.user.id,
@@ -54,9 +48,6 @@ export const homepageRouter = createTRPCRouter({
     return items;
   }),
 
-  /**
-   * Create a new carousel item
-   */
   create: protectedProcedure
     .input(
       z.object({
@@ -81,7 +72,6 @@ export const homepageRouter = createTRPCRouter({
         });
       }
 
-      // Check if media exists
       const media = await ctx.db.media.findUnique({
         where: { id: input.mediaId },
       });
@@ -93,7 +83,6 @@ export const homepageRouter = createTRPCRouter({
         });
       }
 
-      // Check if we already have 5 items
       const count = await ctx.db.homepageCarouselItem.count();
       if (count >= 5) {
         throw new TRPCError({
@@ -118,9 +107,6 @@ export const homepageRouter = createTRPCRouter({
       return item;
     }),
 
-  /**
-   * Update a carousel item
-   */
   update: protectedProcedure
     .input(
       z.object({
@@ -157,7 +143,6 @@ export const homepageRouter = createTRPCRouter({
         });
       }
 
-      // If mediaId is being updated, verify it exists
       if (input.mediaId) {
         const media = await ctx.db.media.findUnique({
           where: { id: input.mediaId },
@@ -206,9 +191,6 @@ export const homepageRouter = createTRPCRouter({
       return item;
     }),
 
-  /**
-   * Delete a carousel item
-   */
   delete: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
@@ -243,9 +225,6 @@ export const homepageRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  /**
-   * Reorder carousel items
-   */
   reorder: protectedProcedure
     .input(
       z.object({
@@ -271,7 +250,6 @@ export const homepageRouter = createTRPCRouter({
         });
       }
 
-      // Update all items in a transaction
       await Promise.all(
         input.items.map((item) =>
           ctx.db.homepageCarouselItem.update({

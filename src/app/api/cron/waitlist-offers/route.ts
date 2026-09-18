@@ -18,18 +18,10 @@ function authorizeCron(request: NextRequest): boolean {
 }
 
 /**
- * POST /api/cron/waitlist-offers
- *
- * Schließt abgelaufene Nachrück-Angebote und erinnert das Kursteam an
- * Angebote, die in den nächsten zwei Tagen ablaufen. Die Plätze eines
- * geschlossenen Angebots bleiben frei, bis das Kursteam die Warteliste
- * nachrücken lässt — automatisch rückt seit dem 18.09.2026 niemand mehr nach.
- * Läuft auch ohne SMTP: das Schließen darf nicht am Mailversand hängen, sonst
- * hielte ein verfallenes Angebot die Warteliste weiter an.
- *
- * Auf mittwald über einen mStudio-Cronjob mit
- * scripts/trigger-waitlist-offers.mjs (Vorschlag: stündlich).
- * Erfordert Authorization: Bearer <CRON_SECRET>.
+ * Schließt abgelaufene Nachrück-Angebote und erinnert an bald ablaufende. Frei
+ * gewordene Plätze rücken nie automatisch nach, nur per Kursteam. Läuft auch
+ * ohne SMTP, sonst hielte ein verfallenes Angebot die Warteliste an.
+ * mStudio-Cronjob: scripts/trigger-waitlist-offers.mjs, Bearer <CRON_SECRET>.
  */
 export async function POST(request: NextRequest) {
   if (!authorizeCron(request)) {

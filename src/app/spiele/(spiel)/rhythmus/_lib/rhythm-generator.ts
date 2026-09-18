@@ -123,9 +123,8 @@ function partitionBar(
 }
 
 /**
- * Wenn `partitionBar` ausreißt: deterministisch mit korrekter Summe in Sechzehntel-Einheiten.
- * Niemals `vex: "w"` für Takte ≠ 4/4 — ganznote ist in VexFlow 16 Einheiten und zerstört
- * Takt/Formatter bei z. B. 3/4 (12 Einheiten) → fehlende/clipped Noten und Pausen.
+ * Deterministischer Ersatz, wenn `partitionBar` ausreißt. Niemals `vex: "w"` für Takte ≠ 4/4:
+ * die Ganze hat in VexFlow 16 Einheiten und zerstört z. B. bei 3/4 den Formatter.
  */
 function fallbackBarChunks(barUnits: number): Chunk[] {
   const out: Chunk[] = [];
@@ -409,8 +408,7 @@ export function generateRhythm(
 }
 
 /**
- * Einzählen: ein Takt im Metronom-Puls — Länge abhängig von Taktart und
- * Schwierigkeit (kurz für Einsteiger, bis zu einem Takt für Fortgeschrittene).
+ * Einzähl-Länge nach Taktart und Schwierigkeit (bis zu einem Takt).
  * Bei x/8-Taktarten ist der Puls die punktierte Viertel (6/8 → „1, 2“).
  */
 export function countInBeatsForRhythm(

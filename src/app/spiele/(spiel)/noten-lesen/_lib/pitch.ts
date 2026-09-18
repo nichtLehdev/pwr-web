@@ -32,10 +32,8 @@ function diatonicValue(letter: GermanLetter, octave: number): number {
 }
 
 /**
- * Half-line index from bottom staff line (diatonic steps from bottom-line pitch).
- * Signiert: negative Werte für Töne unterhalb der untersten Linie.
- * Anker = Tonhöhe der untersten Linie (VexFlow):
- * Treble: E4; Bass: G2; Alto: F3 (C4 auf Linie 3); Tenor: D3 (C4 auf Linie 4).
+ * Diatonische Halblinien ab der untersten Linie, negativ darunter. Anker der untersten Linie:
+ * Treble E4; Bass G2; Alto F3 (C4 auf Linie 3); Tenor D3 (C4 auf Linie 4).
  */
 export function staffHalfLineIndex(p: WrittenPitch, clef: ClefKind): number {
   let anchor: [GermanLetter, number];

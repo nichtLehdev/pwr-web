@@ -32,11 +32,7 @@ type UploadedFile = {
   height?: number;
 };
 
-/**
- * Eine Datei in der Warteschlange. `name` ist bearbeitbar, weil er später der
- * Medienname ist — der Dateiname aus der Kamera ("AG5Y9644.JPG") sagt niemandem
- * etwas.
- */
+/** Eine Datei in der Warteschlange; `name` wird der Medienname, daher bearbeitbar. */
 type QueueEntry = {
   id: string;
   name: string;
@@ -84,9 +80,7 @@ export function MediaUploadModal({ onClose }: { onClose: () => void }) {
         };
 
         if (!response.ok) {
-          // Die Route sagt genau, was nicht stimmt (Typ, Größe, Inhalt) —
-          // diese Meldung war bisher verloren und wurde zu einem pauschalen
-          // „Upload fehlgeschlagen“.
+          // Die Route sagt genau, was nicht stimmt (Typ, Größe, Inhalt).
           throw new Error(payload.error ?? "Upload fehlgeschlagen");
         }
 
@@ -299,8 +293,7 @@ export function MediaUploadModal({ onClose }: { onClose: () => void }) {
                   className="border-rule dark:border-night-rule flex items-center gap-3 border p-2"
                 >
                   <div className="bg-rule/25 dark:bg-night-raised relative h-12 w-12 shrink-0 overflow-hidden">
-                    {/* Lokale Vorschau aus dem Blob — next/image kann object
-                        URLs nicht optimieren, hier also bewusst ein <img>. */}
+                    {/* next/image kann object URLs nicht optimieren. */}
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={entry.previewUrl}

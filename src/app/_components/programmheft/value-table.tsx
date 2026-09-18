@@ -1,11 +1,7 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-/**
- * Beträge und Kennwerte im Tabellensatz: Bezeichnung links in Body, Wert
- * rechtsbündig in schmal-fetten Tabellenziffern, Haarlinien zwischen den
- * Zeilen, 2px-Tintenstrich darüber.
- */
+/** Beträge und Kennwerte im Tabellensatz. */
 export function ValueTable({
   rows,
   className,

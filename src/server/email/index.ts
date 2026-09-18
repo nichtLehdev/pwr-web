@@ -546,12 +546,8 @@ export async function sendContactMessageEmail(params: {
 }
 
 /**
- * Mail from a course organizer to a registrant.
- *
- * The From header stays on our own noreply address — putting the organizer's
- * address there would fail SPF/DKIM for their domain and land the mail in
- * spam. Their name is carried in the display name and their address in
- * Reply-To, so answers still reach them directly.
+ * From stays on our noreply address (the organizer's would fail SPF/DKIM); their
+ * name goes in the display name, their address in Reply-To.
  */
 export async function sendCourseMailToRegistrant(params: {
   to: string;

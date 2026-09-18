@@ -7,13 +7,8 @@ import {
 } from "@/server/utils/registration-access-token";
 
 /**
- * Anyone can register for a course without an account, so "my registration"
- * cannot always mean "signed in as the registrant". A magic link — a signed,
- * expiring token bound to the registration and the registrant's address —
- * grants the same ownership the registrant would have when logged in.
- *
- * Everything else still applies unchanged: the edit deadline, the cancelled
- * check, capacity. The token only answers "is this the registrant?".
+ * Registrations need no account, so a magic link (signed, expiring token bound to registration
+ * and address) grants registrant ownership. It only answers "is this the registrant?".
  */
 type AccessContext = {
   headers: Headers;
@@ -25,10 +20,7 @@ type OwnedRegistration = {
   registrantEmail: string;
 };
 
-/**
- * Guessing a HMAC-SHA256 signature is hopeless, but an unauthenticated
- * endpoint should not hand out unlimited attempts either.
- */
+/** HMAC guessing is hopeless, but an unauthenticated endpoint still shouldn't allow unlimited attempts. */
 function assertTokenAttemptAllowed(headers: Headers): void {
   const key = `trpc:registrations.accessToken:${clientKeyFromHeaders(headers)}`;
   const { success } = rateLimit(key, {
@@ -64,10 +56,7 @@ export function isRegistrationOwner(
   );
 }
 
-/**
- * Course staff are always account holders, so staff checks need a viewer id.
- * Magic-link callers have none and are never staff.
- */
+/** Magic-link callers have no viewer id and are never staff. */
 export function viewerId(ctx: AccessContext): string | null {
   return ctx.session?.user.id ?? null;
 }

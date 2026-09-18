@@ -34,11 +34,7 @@ function pickWeighted<T>(items: T[], weightOf: (item: T) => number): T | null {
   return items[items.length - 1] ?? null;
 }
 
-/**
- * Aus einem festen Anzeige-Pool ziehen (z. B. „Eigenes Set"): derselbe Pfad
- * wie bei den Standard-Pools — Wiederholungs-Schutz über `avoidMidi` und
- * Miss-Boost über `boostMidis` bleiben erhalten.
- */
+/** Aus einem festen Anzeige-Pool ziehen (z. B. „Eigenes Set“), mit Wiederholungs-Schutz und Miss-Boost. */
 export function pickFromDisplayPool(
   pool: WrittenPitch[],
   avoidMidi: number | null,

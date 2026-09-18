@@ -20,12 +20,7 @@ const META_ICON = "text-dark dark:text-night-muted mt-0.5 h-4 w-4 shrink-0";
 const LINK =
   "semi-condensed text-primary-ink dark:text-primary inline-flex min-h-11 items-center gap-2 text-[0.9375rem] font-semibold underline-offset-4 hover:underline";
 
-/**
- * Chorzeile: gleiche Grammatik wie `PersonContactRow` (Titel-Stimme, Meta mit
- * Bezirksmarke, Body-Zeilen mit Icon, Textlink für Kontaktwege) statt einer
- * Karte. Kein eigener Rahmen — die Haarlinie zwischen Chören kommt von der
- * umgebenden Liste.
- */
+/** Chorzeile wie `PersonContactRow`; die Haarlinie zwischen Chören kommt von der Liste. */
 export function ChoirRow({ choir }: { choir: Choir }) {
   const email =
     choir.representative?.email ??

@@ -3,15 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 
 /**
- * Meldet, ob der große Seitentitel nach oben aus dem Bild gelaufen ist.
- *
- * Gemeinsame Grundlage für den Kolumnentitel (`PageTitleBar`) und für die
- * Seiten, die eine eigene klebende Leiste mitbringen (Termine, Aktuelles):
- * Dort soll der Titel in der Leiste erst auftauchen, wenn der große Titel
- * vorbei ist — sonst steht derselbe Text zweimal untereinander.
- *
- * Die zurückgegebene Marke gehört als leeres 1px-Element genau an die Stelle,
- * ab der „vorbei“ gelten soll — also direkt hinter den Seitenkopf.
+ * Ob der große Seitentitel oben aus dem Bild ist, damit klebende Leisten ihn erst dann
+ * zeigen. Die Marke als leeres 1px-Element direkt hinter den Seitenkopf setzen.
  */
 export function useTitelVorbei(stickyTop: number) {
   const marke = useRef<HTMLDivElement>(null);
@@ -25,12 +18,8 @@ export function useTitelVorbei(stickyTop: number) {
       (eintraege) => {
         const eintrag = eintraege[0];
         if (!eintrag) return;
-        // Verglichen wird gegen `stickyTop`, nicht gegen die Fensterkante:
-        // Das Sichtfeld ist per `rootMargin` um genau diesen Betrag
-        // verkleinert, die Marke steht beim Überqueren also noch bei rund
-        // `stickyTop`. Ein Vergleich gegen 0 verpasst diesen Moment — und
-        // danach meldet sich der Beobachter nicht wieder, weil der
-        // Schnittzustand unverändert bleibt.
+        // Gegen `stickyTop`, nicht 0: Das Sichtfeld ist per `rootMargin` verkleinert.
+        // Gegen 0 verpasst man das Überqueren, und der Beobachter meldet sich nicht wieder.
         setVorbei(
           !eintrag.isIntersecting && eintrag.boundingClientRect.top < stickyTop,
         );

@@ -235,9 +235,7 @@ export default function DownloadPickerModal({
 
   const handleInsert = () => {
     if (selectedDownload) {
-      // Der Editor schreibt den Typ sichtbar in den Linktext („… (PDF)“):
-      // Dort gehört das Format hin, nicht der Enum-Wert — sonst stünde bei
-      // einem Flyer „(IMAGE)“ im Beitrag.
+      // Der Typ steht sichtbar im Linktext („… (PDF)“) — das Format, nicht der Enum-Wert („(IMAGE)“).
       onSelect(
         selectedDownload.title,
         selectedDownload.fileUrl,
@@ -275,7 +273,6 @@ export default function DownloadPickerModal({
           </div>
         </ScrollableModalHeader>
 
-        {/* Tabs */}
         <div className="border-rule dark:border-night-rule flex border-b">
           <button
             type="button"
@@ -296,7 +293,6 @@ export default function DownloadPickerModal({
         <ScrollableModalBody className="min-h-0 p-4">
           {activeTab === "library" ? (
             <div>
-              {/* Filters */}
               <div className="mb-4 flex flex-wrap gap-3">
                 <Input
                   type="text"
@@ -323,7 +319,6 @@ export default function DownloadPickerModal({
                 </Select>
               </div>
 
-              {/* Downloads List */}
               {isLoading ? (
                 <div className="flex items-center justify-center py-12">
                   <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
@@ -395,7 +390,6 @@ export default function DownloadPickerModal({
             </div>
           ) : (
             <div className="space-y-6">
-              {/* File Upload */}
               <div>
                 <Label required>Datei hochladen</Label>
                 {uploadedFileUrl ? (
@@ -478,7 +472,6 @@ export default function DownloadPickerModal({
                 />
               </div>
 
-              {/* Title */}
               <div>
                 <Label htmlFor="downloadPickerTitle" required>
                   Titel
@@ -492,7 +485,6 @@ export default function DownloadPickerModal({
                 />
               </div>
 
-              {/* Description */}
               <div>
                 <Label htmlFor="downloadPickerDescription">
                   Beschreibung (optional)
@@ -506,7 +498,6 @@ export default function DownloadPickerModal({
                 />
               </div>
 
-              {/* Category and File Type */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="downloadPickerCategory">Kategorie</Label>
@@ -542,14 +533,12 @@ export default function DownloadPickerModal({
                 </div>
               </div>
 
-              {/* Error Message */}
               {uploadError && (
                 <div className="border border-red-700 p-3 text-sm text-red-700 dark:border-red-400 dark:text-red-400">
                   {uploadError}
                 </div>
               )}
 
-              {/* Create Button */}
               <Button
                 type="button"
                 onClick={handleCreateDownload}

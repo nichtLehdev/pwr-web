@@ -4,13 +4,8 @@ import ExcelJS from "exceljs";
 import { berlinDayKey } from "@/lib/berlin-time";
 
 /**
- * Der eine Weg, aus Zeilen eine echte .xlsx-Datei zu machen.
- *
- * Vorher waren alle "Excel"-Exporte semikolongetrennte CSVs mit .xls-Endung:
- * Beträge kamen als Text an, Excel warnte beim Öffnen vor dem falschen Format,
- * und ein Semikolon in einem Namen verschob die halbe Zeile. Hier entstehen
- * stattdessen Zahlen als Zahlen, Daten als Daten und Freitext als Freitext —
- * eine Formel wird daraus nie, denn Werte setzen wir immer als Wert.
+ * Echte .xlsx-Exporte. Werte werden immer als Wert gesetzt, nie als Formel
+ * (keine Formel-Injection aus Freitext).
  */
 
 export type XlsxCellValue = string | number | Date | null;
@@ -30,11 +25,8 @@ export type XlsxColumn = {
 export type XlsxRow = Record<string, XlsxCellValue>;
 
 const CURRENCY_FORMAT = '#,##0.00 "€"';
-// Kleingeschrieben, weil das die Schreibweise aus der OOXML-Spezifikation ist.
-// Excel nimmt es auch groß, Apples Tabellendarstellung (Numbers, Vorschau auf
-// iPhone und Mac) liest `DD` dagegen als Tag-im-Jahr und `YYYY` als
-// wochenbasiertes Jahr: aus dem 15.06.2010 wurde dort "166.06.2010" und aus
-// dem 01.01.1999 das Jahr 1998.
+// Kleingeschrieben: Apple (Numbers, Vorschau) liest `DD` als Tag-im-Jahr und
+// `YYYY` als wochenbasiertes Jahr.
 const DATE_FORMAT = "dd.mm.yyyy";
 
 /** Zeitzone, in der die Geschäftsstelle auf die Exporte schaut. */
@@ -56,12 +48,8 @@ const MIN_WIDTH = 10;
 const MAX_WIDTH = 48;
 
 /**
- * Auf den Kalendertag in Europe/Berlin normalisiert, ohne Uhrzeit.
- *
- * ExcelJS rechnet ein Date über seine UTC-Anteile in die Excel-Seriennummer
- * um. Eine Anmeldung um 01:30 deutscher Zeit stand damit im Export einen Tag
- * zu früh. Wir legen den gemeinten Tag deshalb selbst auf UTC-Mitternacht —
- * die Spalte zeigt ohnehin nur das Datum.
+ * Berliner Kalendertag auf UTC-Mitternacht: ExcelJS rechnet über die UTC-Anteile,
+ * sonst stünde eine Anmeldung kurz nach Mitternacht einen Tag zu früh.
  */
 function toExportDay(value: Date): Date {
   return new Date(`${EXPORT_DATE_PARTS.format(value)}T00:00:00Z`);
@@ -79,8 +67,7 @@ function displayLength(value: XlsxCellValue, column: XlsxColumn): number {
   if (typeof value === "number") {
     return column.format === "currency" ? value.toFixed(2).length + 4 : 12;
   }
-  // Bei umbrechenden Spalten bestimmt nicht die längste Zeile die Breite,
-  // sonst wird aus einer Bemerkung eine bildschirmbreite Spalte.
+  // Umbrechende Spalten deckeln, sonst wird eine Bemerkung bildschirmbreit.
   const longestLine = value
     .split("\n")
     .reduce((max, line) => Math.max(max, line.length), 0);
@@ -161,7 +148,6 @@ export async function buildXlsxBuffer(options: {
 
   const lastDataRow = firstDataRow + rows.length - 1;
 
-  // Ohne Datenzeilen hätte die Summenzeile keinen Bereich zum Aufaddieren.
   if (options.totals && rows.length > 0) {
     const totalsRow = sheet.addRow([]);
     totalsRow.getCell(1).value = "Summe";
@@ -173,12 +159,8 @@ export async function buildXlsxBuffer(options: {
           const value = row[column.key];
           return acc + (typeof value === "number" ? value : 0);
         }, 0);
-        // SUBTOTAL statt SUM: filtert jemand die Liste, zählt die Summe nur
-        // noch die sichtbaren Zeilen — sonst steht unter einer gefilterten
-        // Ansicht eine Zahl, die zu ihr nicht passt.
-        //
-        // `result` mitgeben, weil Vorschauen und Konverter, die keine Formeln
-        // rechnen, sonst eine leere Zelle statt der Summe zeigen.
+        // SUBTOTAL statt SUM, damit gefilterte Ansichten nur Sichtbares summieren.
+        // `result` für Vorschauen, die keine Formeln rechnen.
         cell.value = {
           formula: `SUBTOTAL(109,${letter}${firstDataRow}:${letter}${lastDataRow})`,
           result: Math.round((sum + Number.EPSILON) * 100) / 100,
@@ -221,10 +203,7 @@ export async function buildXlsxBuffer(options: {
   return Buffer.from(await workbook.xlsx.writeBuffer());
 }
 
-/**
- * `2026-09-10` — Datumsteil für Dateinamen, als deutscher Kalendertag: Der
- * UTC-Tag aus `toISOString()` hing nachts bis 2 Uhr noch am Vortag.
- */
+/** `2026-09-10` für Dateinamen, als deutscher Kalendertag (nicht UTC). */
 export function exportDateStamp(date = new Date()): string {
   return berlinDayKey(date);
 }

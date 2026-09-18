@@ -7,8 +7,7 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const Card = React.forwardRef<HTMLDivElement, CardProps>(
   ({ className, variant = "default", ...props }, ref) => {
-    // Eckig und ohne Schatten. `elevated` hebt sich jetzt ueber die Linie ab
-    // statt ueber Tiefe — Schatten gibt es in dieser Gestaltung nicht.
+    // Eckig und ohne Schatten; `elevated` hebt sich ueber die Linie ab.
     const variants = {
       default:
         "border-rule dark:border-night-rule dark:bg-night-raised border bg-paper",

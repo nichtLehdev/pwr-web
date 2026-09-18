@@ -1,4 +1,3 @@
-// Export all UI components for easy importing
 export { Button, type ButtonProps } from "./button";
 export { Input, type InputProps } from "./input";
 export { Textarea, type TextareaProps } from "./textarea";

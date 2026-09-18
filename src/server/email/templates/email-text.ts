@@ -1,14 +1,8 @@
 import { emailBaseUrl } from "./email-layout";
 
 /**
- * Nur-Text-Fassung einer E-Mail.
- *
- * Bisher ging jede Mail als reines HTML raus. Das schadet der Zustellbarkeit
- * (Spamfilter bewerten fehlende Textfassungen schlechter) und schließt alle
- * aus, die ihr Postfach auf Text stellen oder es vorlesen lassen.
- *
- * Die Zeilen kommen aus der jeweiligen Vorlage; Kopf und Fuß stehen hier,
- * damit sie nicht wieder fünfzehnmal dupliziert werden.
+ * Nur-Text-Fassung (Spamfilter, Text- und Vorlese-Postfächer). Kopf und Fuß
+ * stehen hier, die Zeilen kommen aus der Vorlage.
  */
 export function emailText(zeilen: (string | null | undefined)[]): string {
   const kopf = [
@@ -26,23 +20,15 @@ export function emailText(zeilen: (string | null | undefined)[]): string {
     emailBaseUrl(),
   ];
 
-  // Nur weggelassene Abschnitte (null) fallen raus. Leere Zeichenketten
-  // bleiben stehen — sie sind die Absatztrennung, ohne sie steht der ganze
-  // Text als eine Mauer da.
+  // Nur null fällt raus; leere Zeichenketten sind die Absatztrennung.
   const rumpf = zeilen.filter((z): z is string => z != null);
 
   return [...kopf, ...rumpf, ...fuss].join("\n");
 }
 
-/**
- * Eine Angabe als Zeile im Tabellensatz, z. B. „Start:        02.10.2026“.
- * Die Beschriftung wird auf eine feste Breite gebracht, damit die Werte
- * untereinander stehen — das Pendant zur Werttabelle im HTML.
- */
+/** Angabe als Zeile im Tabellensatz, z. B. „Start:        02.10.2026“. */
 export function textZeile(beschriftung: string, wert: string): string {
-  // Feste Breite 18, aber nie kürzer als die Beschriftung selbst: Sonst klebt
-  // der Wert bei langen Beschriftungen direkt am Doppelpunkt
-  // („Ursprünglicher Betrag:310,00 €“).
+  // Nie kürzer als die Beschriftung, sonst klebt der Wert am Doppelpunkt.
   const kopf = `${beschriftung}:`;
   return `${kopf.padEnd(Math.max(22, kopf.length + 1))}${wert}`;
 }

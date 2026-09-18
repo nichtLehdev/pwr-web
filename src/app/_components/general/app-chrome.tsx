@@ -18,10 +18,8 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      {/* Erstes fokussierbares Element der Seite — sonst führt der Weg zum Inhalt
-          auf jeder Seite erneut durch die vollständige Navigation. Verschoben
-          statt `sr-only`: `sr-only`/`not-sr-only` streiten sich um dieselbe
-          `position`-Eigenschaft, die Verschiebung tut das nicht. */}
+      {/* Skip-Link als erstes fokussierbares Element. Verschoben statt `sr-only`:
+          `sr-only`/`not-sr-only` streiten sich um dieselbe `position`-Eigenschaft. */}
       <a
         href="#inhalt"
         className="programm bg-ink text-paper dark:bg-night-text dark:text-night fixed top-2 left-2 z-[60] -translate-y-24 px-4 py-2 text-sm font-semibold opacity-0 transition-transform focus:translate-y-0 focus:opacity-100"

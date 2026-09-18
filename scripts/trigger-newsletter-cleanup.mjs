@@ -1,18 +1,6 @@
-// =============================================================================
-// Trigger for the newsletter-cleanup cron route (from inside the app container)
-// =============================================================================
-//
-// Used by the mStudio cron job targeting the "app" stack service:
-//   command: node /app/scripts/trigger-newsletter-cleanup.mjs
-//
-// Deletes newsletter sign-ups that were never confirmed. Daily is plenty —
-// the rows only become deletable after 30 days.
-//
-// Calls the app's own /api/cron/newsletter-cleanup route on localhost using
-// CRON_SECRET from the container environment. Exits non-zero on any failure
-// so mStudio's execution history and failure alerting reflect real outcomes.
-//
-// =============================================================================
+// Runs inside the app container as mStudio cron job: node /app/scripts/trigger-newsletter-cleanup.mjs
+// Exits non-zero on failure so mStudio's history and alerting reflect real outcomes.
+// Unconfirmed sign-ups only become deletable after 30 days, so daily is plenty.
 
 const secret = process.env.CRON_SECRET;
 if (!secret) {

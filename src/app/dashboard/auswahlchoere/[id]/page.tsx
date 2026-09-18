@@ -114,7 +114,6 @@ export default function AuswahlchorDetailPage() {
       }
       maxWidth="7xl"
     >
-      {/* Auswahlchor Image and Status Badge */}
       <div className="mb-6 flex items-center gap-4">
         {auswahlchor.image?.url ? (
           <div className="border-rule dark:border-night-rule relative h-20 w-20 shrink-0 overflow-hidden border">
@@ -149,7 +148,6 @@ export default function AuswahlchorDetailPage() {
         </div>
       </div>
 
-      {/* Description */}
       {auswahlchor.description && (
         <div className="border-rule dark:border-night-rule mb-6 border p-6">
           <h2 className="condensed text-ink dark:text-night-text mb-3 text-lg font-bold">
@@ -161,9 +159,7 @@ export default function AuswahlchorDetailPage() {
         </div>
       )}
 
-      {/* Details Grid */}
       <div className="mb-6 grid gap-6 sm:grid-cols-2">
-        {/* Founded & Members */}
         <div className="border-rule dark:border-night-rule border p-6">
           <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
             Informationen
@@ -188,7 +184,6 @@ export default function AuswahlchorDetailPage() {
           </dl>
         </div>
 
-        {/* Conductor */}
         <div className="border-rule dark:border-night-rule border p-6">
           <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
             Chorleitung
@@ -229,7 +224,6 @@ export default function AuswahlchorDetailPage() {
         </div>
       </div>
 
-      {/* Styling */}
       <div className="border-rule dark:border-night-rule mb-6 border p-6">
         <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
           Styling
@@ -262,7 +256,6 @@ export default function AuswahlchorDetailPage() {
         </dl>
       </div>
 
-      {/* Upcoming Events */}
       {auswahlchor.events && auswahlchor.events.length > 0 && (
         <div className="border-rule dark:border-night-rule mb-6 border p-6">
           <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
@@ -306,7 +299,6 @@ export default function AuswahlchorDetailPage() {
         </div>
       )}
 
-      {/* Metadata */}
       <div className="border-rule dark:border-night-rule border p-6">
         <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
           Details
@@ -331,7 +323,6 @@ export default function AuswahlchorDetailPage() {
         </dl>
       </div>
 
-      {/* Actions */}
       <div className="mt-6 flex flex-wrap gap-3">
         <Link
           href="/dashboard/auswahlchoere"

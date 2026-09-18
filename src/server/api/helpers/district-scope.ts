@@ -12,8 +12,7 @@ import {
   type PermissionCache,
 } from "./permissions";
 
-// Damit die Router nur einen Import brauchen; die Entscheidungslogik selbst
-// steht db-frei in @/lib/district-scope und ist dort auch getestet.
+// Die db-freie Entscheidungslogik steht (samt Tests) in @/lib/district-scope.
 export {
   assertDistrictAllowed,
   assertDistrictChangeAllowed,
@@ -24,12 +23,8 @@ export {
 export type { ContentResource, DistrictScope } from "@/lib/district-scope";
 
 /**
- * Die Bezirke kommen aus `UserBezirkScope`, nicht aus `User.bezirkId`.
- *
- * `User.bezirkId` ist die Organisationszugehörigkeit und steht öffentlich für
- * ein Amt; sie taugt nicht als Berechtigungsgrenze. Sonst müsste man jemanden
- * zum Obmann machen, nur damit er einmal einen Termin für einen Bezirk
- * einstellen darf.
+ * Die Bezirke kommen aus `UserBezirkScope`, nicht aus `User.bezirkId`: das ist die
+ * öffentliche Organisationszugehörigkeit (ein Amt) und keine Berechtigungsgrenze.
  */
 export async function resolveDistrictScope(
   db: PrismaClient,

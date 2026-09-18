@@ -64,8 +64,7 @@ type EItem = { origIdx: number; t: number };
 type TItem = { origIdx: number; t: number };
 
 /**
- * Jedem erwarteten Schlag den nächstliegenden Tipp zuordnen (iterativ kleinste Distanz).
- * So landet ein Tipp beim zeitlich passenden Schlag statt strikt in Reihenfolge.
+ * Paart iterativ nach kleinster Distanz statt strikt in Reihenfolge;
  * Paare jenseits `maxPairDistanceMs` werden nicht gebildet.
  */
 function pairByGlobalNearest(
@@ -116,9 +115,7 @@ function verdictFor(deltaMs: number | null, tol: number): OnsetVerdict {
   return "off";
 }
 
-/**
- * Nächstliegende Paarung, dann Timing-Score je Schlag.
- */
+/** Nächstliegende Paarung, dann Timing-Score je Schlag. */
 export function scoreTaps(
   expectedEvents: RhythmEvent[],
   tapTimesMs: number[],

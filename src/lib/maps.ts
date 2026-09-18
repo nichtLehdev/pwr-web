@@ -1,4 +1,3 @@
-/** The location fields a maps link can be built from. */
 export interface MappableLocation {
   name?: string | null;
   street?: string | null;
@@ -9,13 +8,8 @@ export interface MappableLocation {
 }
 
 /**
- * Google Maps URL for a location, or null when there is nothing to point at.
- *
- * Coordinates win whenever they are set: they open directions to the exact
- * spot, while a text query only guesses from an address that is often
- * ambiguous — a "Gemeindehaus" exists in every second Ort. Without
- * coordinates the search form is the honest fallback; it shows the place and
- * lets the user start navigation from there.
+ * Coordinates win: they open directions to the exact spot, while an address
+ * query is often ambiguous (a "Gemeindehaus" exists in every second Ort).
  */
 export function locationMapsUrl(
   location: MappableLocation | null | undefined,

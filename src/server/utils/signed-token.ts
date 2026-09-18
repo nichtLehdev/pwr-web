@@ -1,14 +1,8 @@
 import { createHmac, timingSafeEqual } from "crypto";
 
 /**
- * The one signing primitive behind every link we mail out that has to work
- * without a login: newsletter confirmation and unsubscribe, magic links to a
- * course registration.
- *
- * A token is `"<expiryEpochMs>.<hmac(purpose|subject|expiry)>"`. It carries no
- * secret of its own and needs no database row — the signature over the purpose
- * is what keeps a token minted for one flow from being replayed in another,
- * and the expiry is inside the signed payload so it cannot be stretched.
+ * Token: `"<expiryEpochMs>.<hmac(purpose|subject|expiry)>"`. The signed purpose
+ * blocks replay across flows; the signed expiry cannot be stretched.
  */
 
 function getSecret(): string {

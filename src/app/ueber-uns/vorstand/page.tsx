@@ -97,7 +97,6 @@ export default async function VorstandPage() {
         </>
       }
     >
-      {/* Vorstandsmitglieder */}
       <PageSection labelledBy="mitglieder-heading">
         <Split
           stickyHead
@@ -139,7 +138,6 @@ export default async function VorstandPage() {
         </Split>
       </PageSection>
 
-      {/* Aufgaben des Vorstands */}
       <PageSection labelledBy="aufgaben-heading" rule>
         <Split
           side="right"
@@ -150,7 +148,6 @@ export default async function VorstandPage() {
         </Split>
       </PageSection>
 
-      {/* Organisationsstruktur */}
       <PageSection labelledBy="struktur-heading" rule>
         <Split
           head={

@@ -1,9 +1,6 @@
 /**
- * Anzahlungsblock der Anmeldemails: Betrag, Bankverbindung, Verwendungszweck
- * und GiroCode — dieselben Angaben wie im letzten Schritt des Anmeldeformulars.
- *
- * Der QR-Code geht als Inline-Anhang (CID) mit, nicht als data:-URL: viele
- * Mailprogramme (Gmail vorneweg) blenden eingebettete data:-Bilder aus.
+ * Anzahlungsblock der Anmeldemails. Der GiroCode geht als Inline-Anhang (CID)
+ * mit, nicht als data:-URL: Gmail u. a. blenden data:-Bilder aus.
  */
 import QRCode from "qrcode";
 import { buildEpcQrPayload } from "@/lib/epc-qr";

@@ -37,12 +37,7 @@ interface RegistrationDownPaymentCardProps {
   };
 }
 
-/**
- * Anzahlung auf der Anmeldungsseite der Anmeldenden: Stand, Restbetrag und —
- * solange noch etwas offen ist — die Überweisungsdaten in derselben Tabelle,
- * falls die Mail verloren gegangen ist. Ein ruhiger Kassenzettel auf einer
- * Fläche statt verschachtelter Warnkästen.
- */
+/** Anzahlung der Anmeldenden; solange etwas offen ist, auch die Überweisungsdaten (falls die Mail fehlt). */
 export function RegistrationDownPaymentCard({
   registration,
   course,

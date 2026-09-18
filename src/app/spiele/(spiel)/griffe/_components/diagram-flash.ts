@@ -2,10 +2,7 @@ import type { StaffFlash } from "../../noten-lesen/_components/staff-display";
 
 export type DiagramFlash = StaffFlash;
 
-/**
- * Rückmeldung am Diagrammrahmen. Richtig ist Tinte — das Heft führt kein
- * Grün. Falsch bleibt Rot, die einzige Signalfarbe, die bleibt.
- */
+/** Rückmeldung am Diagrammrahmen: Richtig ist Tinte (das Heft führt kein Grün), falsch Rot. */
 export function diagramShellClass(flash: DiagramFlash): string {
   switch (flash) {
     case "correct":

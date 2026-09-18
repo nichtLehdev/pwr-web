@@ -1,11 +1,6 @@
 /**
- * Greedily wraps text into lines that fit within maxWidth, for use with
- * SVG <text>/<tspan> (which doesn't wrap on its own). Text width is
- * estimated from character count rather than measured, since SVG text
- * measurement requires a mounted DOM node - good enough for short labels
- * like city names. Words longer than maxWidth on their own (e.g.
- * "Königswinter" with no space to break on) are force-broken at the
- * character level so they never overflow.
+ * Width is estimated from character count (measuring SVG text needs a mounted node);
+ * words longer than maxWidth are force-broken so they never overflow.
  */
 export function wrapSvgText(
   text: string,

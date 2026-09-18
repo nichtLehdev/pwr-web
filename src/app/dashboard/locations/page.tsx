@@ -56,9 +56,7 @@ export default function DashboardLocationsPage() {
     PERMISSIONS.ORGANIZATION_MANAGE_LOCATIONS,
   );
 
-  // Die ganze Liste auf einmal: Standorte sind eine überschaubare Stammdatei,
-  // und nur so können Sortierung und Spaltenfilter über alle Zeilen greifen
-  // statt nur über die gerade sichtbare Seite.
+  // Die ganze Liste auf einmal, damit Sortierung und Spaltenfilter über alle Zeilen greifen.
   const {
     data: locationsData,
     isLoading: locationsLoading,

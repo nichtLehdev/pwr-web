@@ -53,9 +53,8 @@ export const invoiceSummaryColumns: XlsxColumn[] = [
 ];
 
 /**
- * Nur bei Kursen mit Anzahlung: was die Rechnung schon abzieht, und wo die
- * Anzahlung der Anmeldung gerade steht. Stehen dort "Bezahlt" und ein leerer
- * Abzug nebeneinander, wurde die Rechnung vor dem Zahlungseingang erstellt.
+ * Nur bei Kursen mit Anzahlung. "Bezahlt" neben leerem Abzug heißt: Die Rechnung
+ * wurde vor dem Zahlungseingang erstellt.
  */
 export const invoiceSummaryDownPaymentColumns: XlsxColumn[] = [
   {
@@ -87,10 +86,8 @@ type SummaryInvoice = {
 };
 
 /**
- * Eine Zeile je ausgestellter Rechnung.
- *
- * Fällt die Anmeldung weg (gelöscht — die Rechnung bleibt aufbewahrungs-
- * pflichtig bestehen), tragen die Empfängerfelder der Rechnung die Zeile.
+ * Ist die Anmeldung gelöscht (die Rechnung bleibt aufbewahrungspflichtig),
+ * tragen die Empfängerfelder der Rechnung die Zeile.
  */
 export function buildInvoiceSummaryRows(
   invoices: SummaryInvoice[],

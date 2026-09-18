@@ -6,12 +6,8 @@ export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 /**
- * Branded fallback link preview.
- *
- * Next injects this as `og:image` on every route that does not set its own —
- * so pages without a cover image still get a card instead of a bare URL in
- * WhatsApp, Mastodon and Facebook. Drawn rather than shipped as a PNG so it
- * stays in sync with the brand colours and needs no binary asset.
+ * Branded fallback `og:image` for every route that does not set its own. Drawn
+ * rather than a PNG so it stays in sync with the brand colours.
  */
 export default function OpengraphImage() {
   return new ImageResponse(

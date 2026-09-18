@@ -1,14 +1,6 @@
 /**
- * Datum und Uhrzeit in deutscher Ortszeit — unabhängig davon, in welcher
- * Zeitzone der Code gerade läuft.
- *
- * Der Server läuft im Container in UTC, und auch Client-Komponenten werden
- * dort zuerst gerendert, Mails und PDFs ohnehin. Ohne feste Zone stand eine
- * Probe um 19:00 im ersten HTML und in jeder Mail als 17:00, ein Kurs ab
- * 00:30 am Vortag — und nach der Hydration ersetzte der Browser das durch
- * seine eigene Zone. Die Termine finden in Deutschland statt und werden in
- * deutscher Zeit gelesen, deshalb läuft jede Anzeige durch diese Helfer:
- * `toLocaleDateString()`, `getDate()` & Co. folgen der Zone der Maschine.
+ * Datum und Uhrzeit in deutscher Ortszeit. Der Server (SSR, Mails, PDFs) läuft in UTC, und
+ * `toLocaleDateString()`, `getDate()` & Co. folgen der Zone der Maschine — daher diese Helfer.
  */
 
 export const ZEITZONE = "Europe/Berlin";
@@ -16,10 +8,7 @@ export const ZEITZONE = "Europe/Berlin";
 /** Was als Zeitpunkt ankommt: Date, ISO-Zeichenkette (superjson, JSON) oder ms. */
 export type Zeitpunkt = Date | string | number;
 
-/**
- * Die Formate, die in der Plattform vorkommen. Die Namen beschreiben das
- * Ergebnis; das Beispiel ist Freitag, 2. Oktober 2026, 19:30 Uhr.
- */
+/** Beispiele jeweils für Freitag, 2. Oktober 2026, 19:30 Uhr. */
 export const FORMAT = {
   /** 2.10.2026 — wie `toLocaleDateString("de-DE")` ohne Optionen. */
   datum: { day: "numeric", month: "numeric", year: "numeric" },
@@ -120,10 +109,8 @@ export type FormatName = keyof typeof FORMAT;
 const formatters = new Map<string, Intl.DateTimeFormat>();
 
 /**
- * `Intl.DateTimeFormat` für Deutsch in Berliner Zeit, je Optionssatz nur
- * einmal gebaut — der Aufbau kostet ein Vielfaches des Formatierens, und
- * Tabellen formatieren Hunderte Zellen. Eine mitgegebene `timeZone` wird
- * bewusst überschrieben.
+ * `Intl.DateTimeFormat` in Berliner Zeit, je Optionssatz gecacht (der Aufbau ist teuer).
+ * Eine mitgegebene `timeZone` wird bewusst überschrieben.
  */
 export function berlinFormatter(
   format: FormatName | Intl.DateTimeFormatOptions,
@@ -147,11 +134,8 @@ function toDate(value: Zeitpunkt): Date | null {
 }
 
 /**
- * Ein Zeitpunkt als deutscher Text in Berliner Zeit. Ohne Format wie
- * `toLocaleDateString("de-DE")`: „2.10.2026“.
- *
- * Ein ungültiges Datum ergibt eine leere Zeichenkette statt „Invalid Date“
- * oder einer Ausnahme, die die ganze Seite reißen würde.
+ * Zeitpunkt als deutscher Text in Berliner Zeit, ohne Format „2.10.2026“.
+ * Ein ungültiges Datum ergibt "" statt „Invalid Date“ oder einer Ausnahme.
  */
 export function formatBerlin(
   value: Zeitpunkt,
@@ -198,11 +182,7 @@ const WEEKDAYS: Record<string, number> = {
   Sat: 6,
 };
 
-/**
- * Jahr, Monat, Tag, Stunde, Minute und Wochentag, wie sie in Deutschland auf
- * der Uhr stehen — Ersatz für `getFullYear()`, `getDate()`, `getHours()` &
- * Co., wo es um Anzeige oder den deutschen Kalendertag geht.
- */
+/** Ersatz für `getFullYear()`, `getDate()`, `getHours()` & Co. in Berliner Zeit. */
 export function berlinParts(value: Zeitpunkt): BerlinParts {
   const date = toDate(value);
   if (!date) {
@@ -237,13 +217,8 @@ function berlinOffset(epochMs: number): number {
 }
 
 /**
- * Der Zeitpunkt, an dem in Berlin die angegebene Uhrzeit gilt. Monat 1–12;
- * Überläufe rechnen weiter wie bei `new Date(y, m, d)`, also ist
- * `berlinDate(2026, 12, 32)` der 1. Januar 2027.
- *
- * Der Offset wird am Ergebnis nachgeprüft, weil er sich an den
- * Umstellungstagen zwischen Vermutung und Ergebnis ändern kann. Mitternacht
- * gibt es in Berlin immer genau einmal — umgestellt wird um 2 bzw. 3 Uhr.
+ * Zeitpunkt, an dem in Berlin diese Uhrzeit gilt. Monat 1–12, Überläufe wie bei `new Date(y, m, d)`.
+ * Der Offset wird am Ergebnis nachgeprüft, weil er sich an Umstellungstagen ändern kann.
  */
 export function berlinDate(
   year: number,

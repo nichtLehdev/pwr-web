@@ -1,10 +1,6 @@
 /**
- * Server side of the invoice document: turning a stored invoice row into the
- * shared `InvoiceDocument` shape, rendering it, and freezing the result on disk.
- *
- * Published PDFs are written once and never overwritten — a correction goes
- * through storno plus a successor invoice, so every document that ever left the
- * house stays byte-identical to what the recipient received.
+ * Renders stored invoices and freezes published PDFs on disk. They are never overwritten;
+ * a correction goes through storno plus a successor invoice.
  */
 import { mkdir, readFile, writeFile } from "fs/promises";
 import { join, resolve } from "path";
@@ -16,16 +12,11 @@ import {
 import { renderInvoicePdf } from "@/lib/invoice-render";
 import { UPLOADS_ROOT } from "@/server/utils/uploads-dir";
 
-/** Subfolder of the uploads volume holding the frozen invoice PDFs. */
 export const INVOICE_UPLOAD_FOLDER = "invoices";
 
 let cachedLogo: string | null | undefined;
 
-/**
- * The letterhead logo as a data URL, read once per process. A missing file is
- * cached as "absent" so a broken deployment doesn't hit the disk per invoice —
- * the renderer falls back to a text header.
- */
+/** Read once per process; a missing file is cached as absent (renderer falls back to a text header). */
 async function loadLogoBase64(): Promise<string | undefined> {
   if (cachedLogo !== undefined) return cachedLogo ?? undefined;
   try {
@@ -141,12 +132,7 @@ export interface StoredInvoicePdf {
   size: number;
 }
 
-/**
- * Render and persist the PDF of a published invoice.
- *
- * The on-disk name is derived from the invoice number (unique by construction),
- * never from user input, so no two invoices can collide or escape the folder.
- */
+/** The file name derives from the unique invoice number, never user input, so it cannot collide or escape the folder. */
 export async function storeInvoicePdf(
   invoice: InvoiceRecordForPdf,
   signatureBase64?: string,

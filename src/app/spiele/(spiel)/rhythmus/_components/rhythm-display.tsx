@@ -30,25 +30,15 @@ export interface RhythmDisplayProps {
   bars: number;
   /** Wo Takte wechseln (Index der ersten Note des neuen Takts); für Taktstriche. */
   barStartEventIndices?: number[];
-  /**
-   * Optional (Ergebnis-Phase): Urteil je Event-Index — färbt Notenköpfe.
-   * Pausen bleiben `undefined`; ohne Prop ändert sich nichts.
-   */
+  /** Ergebnis-Phase: Urteil je Event-Index, färbt Notenköpfe (Pausen `undefined`). */
   eventVerdicts?: (OnsetVerdict | undefined)[];
-  /**
-   * `play` (Vorgabe): die Notenzeile ist der einzige Inhalt und nimmt sich den
-   * Platz. `review`: sie teilt ihn sich mit der Auswertung und bleibt kleiner.
-   */
+  /** `play`: Notenzeile füllt den Platz; `review`: kleiner, neben der Auswertung. */
   variant?: "play" | "review";
 }
 
 /**
- * Höhe des Notenkastens. Das Spielmaß nutzt auch der Ladeplatzhalter in
- * `rhythm-display-loader.tsx` — bitte zusammen ändern.
- *
- * `svh` statt `dvh`: die kleine Ansichtshöhe springt nicht, wenn die Adresszeile
- * auf dem Handy ein- und ausfährt — sonst würde das Notenbild mitten im Spiel
- * neu gezeichnet.
+ * Höhe des Notenkastens; das Spielmaß nutzt auch `rhythm-display-loader.tsx`.
+ * `svh` statt `dvh`, sonst zeichnet die ein-/ausfahrende Adresszeile das Bild mitten im Spiel neu.
  */
 export const NOTATION_BOX_PLAY =
   "h-[clamp(10rem,26svh,15rem)] md:h-[clamp(12rem,32svh,20rem)]";
@@ -61,10 +51,8 @@ const STAVE_Y = 60;
 /** Obergrenze, damit bei sehr wenig Tinte (eine Ganze) nichts plakatgroß wird. */
 const MAX_SCALE = 2.0;
 /**
- * Tintenhöhe einer Zeile bei Maßstab 1, im Browser gemessen: rund 200–220px
- * (Hals und Fähnchen über der Linie, Pausen darunter). Zu klein angesetzt,
- * rechnet sich das Bild zu groß und muss über die Höhe eingepasst werden —
- * dann steht die Zeile schmaler als die Satzbreite.
+ * Tintenhöhe einer Zeile bei Maßstab 1. Zu klein angesetzt, wird das Bild über
+ * die Höhe eingepasst und steht schmaler als die Satzbreite.
  */
 const INK_HEIGHT = 210;
 
@@ -72,11 +60,7 @@ function timeSigString(ts: TimeSignature): string {
   return `${ts.numerator}/${ts.denominator}`;
 }
 
-/**
- * Urteil → Notenfarbe. Kein Grün: getroffen ist schlicht Tinte, knapp daneben
- * trägt die Messing-Tinte des Hefts (im Nachtdruck das Druckorange selbst),
- * daneben bleibt Rot — die einzige Signalfarbe, die das Heft kennt.
- */
+/** Kein Grün: getroffen ist Tinte, knapp daneben Messing, daneben Rot. */
 function verdictColor(verdict: OnsetVerdict, dark: boolean): string {
   switch (verdict) {
     case "good":
@@ -129,14 +113,8 @@ export function RhythmDisplay({
     const colors = notationColors(dark);
 
     /**
-     * Die logische Breite steuert allein die Notendichte — wie groß das Bild
-     * am Ende steht, entscheidet der Platz. Schmal gezeichnet und groß
-     * skaliert heißt: auf einem hohen Fenster werden die Noten größer.
-     *
-     * Eine Notenzeile ist breit und flach; sie kann einen hohen Kasten nie
-     * ausfüllen, ohne über die Breite hinauszuwachsen. Sie wächst deshalb nur
-     * bis zu einem geschmackvollen Maß mit — der Rest bleibt Luft um sie
-     * herum, wie im gedruckten Notenbeispiel.
+     * Die logische Breite steuert nur die Notendichte, die Größe entscheidet der Platz.
+     * Die Zeile wächst nur bis zu einem Maß mit (1.8); der Rest bleibt Luft.
      */
     const targetScale = Math.min(1.8, boxH / INK_HEIGHT);
     const minLogicalW = Math.max(300, 60 + events.length * 22);
@@ -232,17 +210,8 @@ export function RhythmDisplay({
         .joinVoices([voice])
         .formatToStave([voice], stave, { context: ctx, stave });
 
-      /* Die Farbe muss an den Kontext, nicht an den Stave: `stave.setStyle()`
-       * allein erreicht weder die Notenlinien noch Schlüssel und Taktart —
-       * das sind eigene StaveModifier mit eigenem Stil und fielen auf den
-       * Kontext-Standard zurück, also reines Schwarz auf Nachtgrund. Balken
-       * und Triolen weiter unten hängen am selben Standard und werden damit
-       * ebenfalls mitgefärbt; `note` und `stave` liefern denselben Wert, es
-       * verschiebt sich also nichts. Die nachgezeichneten Taktstriche setzen
-       * ihre eigene Farbe in save()/restore() und bleiben unberührt.
-       *
-       * Bedingungslos, nicht nur nachts: Hell ist der Kontext-Standard
-       * ebenfalls reines Schwarz statt der Tinte #1c1d1f. */
+      /* Farbe an den Kontext, nicht an den Stave: Notenlinien, Schlüssel, Taktart,
+       * Balken und Triolen fallen sonst auf den Kontext-Standard reines Schwarz zurück. */
       ctx.setFillStyle(colors.stave);
       ctx.setStrokeStyle(colors.stave);
 
@@ -278,12 +247,7 @@ export function RhythmDisplay({
         }
       }
 
-      /**
-       * Erst zeichnen, dann die viewBox auf die tatsächliche Tinte ziehen: die
-       * feste Zeichenfläche ließ unter jeder Notenzeile 74px Papier leer
-       * (gemessen: 200px Tinte in 280px Kasten). Jetzt füllt das Bild den
-       * Kasten, ohne je breiter als er zu werden.
-       */
+      /** Erst zeichnen, dann die viewBox auf die tatsächliche Tinte ziehen. */
       const svg = el.querySelector("svg");
       if (svg instanceof SVGSVGElement) {
         let vbX = 0;
@@ -342,11 +306,7 @@ export function RhythmDisplay({
   useEffect(() => {
     const el = containerRef.current;
     if (!el || typeof ResizeObserver === "undefined") return;
-    /**
-     * Entprellt und mit Schwelle: die Höhe zählt jetzt mit (der Kasten wächst
-     * mit dem Fenster), aber erst ab 8px — winzige Sprünge sollen nicht neu
-     * zeichnen.
-     */
+    /** Entprellt; Höhenänderungen zählen erst ab 8px. */
     let lastWidth = el.clientWidth;
     let lastHeight = el.clientHeight;
     let timer: number | null = null;
@@ -370,10 +330,7 @@ export function RhythmDisplay({
   }, [draw]);
 
   return (
-    // Kein Rahmen: im Heft steht eine Notenzeile auf dem Papier, nicht in
-    // einem Kasten — und ein Kasten um eine flache Zeile stünde auf hohen
-    // Fenstern zur Hälfte leer. Das SVG passt sich über seine viewBox ein,
-    // deshalb gibt es kein horizontales Scrollen.
+    // Das SVG passt sich über seine viewBox ein, daher kein horizontales Scrollen.
     <div
       ref={containerRef}
       role="img"

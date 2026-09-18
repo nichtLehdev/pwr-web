@@ -8,10 +8,7 @@ interface ParticipantSheetProps {
   subtitle?: string;
   /** X, backdrop and Escape — always closes, however incomplete the fields. */
   onClose: () => void;
-  /**
-   * The footer button. Separate from `onClose` so it can decline to close and
-   * reveal what is still missing instead; defaults to `onClose`.
-   */
+  /** Footer button; separate from `onClose` so it can decline to close. Defaults to `onClose`. */
   onDone?: () => void;
   children: React.ReactNode;
 }
@@ -20,16 +17,7 @@ interface ParticipantSheetProps {
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-/**
- * Editing surface for a single participant: full-screen on phones, a centred
- * dialog from `sm:` up.
- *
- * Full-screen is the point — the participant fields used to live in a card
- * inside the form's own scroll container, so on a phone they competed with the
- * step navigation for the same few hundred pixels. Here the fields get the
- * whole viewport, the body is the only thing that scrolls, and "Fertig" sits in
- * a footer that can't be scrolled away from.
- */
+/** Editing surface for one participant: full-screen on phones, a centred dialog from `sm:` up. */
 export function ParticipantSheet({
   title,
   subtitle,
@@ -39,16 +27,13 @@ export function ParticipantSheet({
 }: ParticipantSheetProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Moves focus off whatever opened the sheet, so Escape (below) is caught here
-  // instead of bubbling on to the form's global handler, which would read it as
-  // "abort the whole registration". Focusing the container rather than the
-  // first input also keeps the mobile keyboard shut until a field is tapped.
+  // Focus the container so Escape is caught here, not by the form's global "abort"
+  // handler; not the first input, so the mobile keyboard stays shut.
   useEffect(() => {
     containerRef.current?.focus();
   }, []);
 
-  // The page behind the sheet must not scroll along. Restoring the previous
-  // value rather than clearing it keeps the modal variant's own lock intact.
+  // Restore the previous value rather than clearing it, so the modal's own lock stays intact.
   useEffect(() => {
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -75,9 +60,7 @@ export function ParticipantSheet({
             onClose();
             return;
           }
-          // Der Tabulator bleibt im Fenster: `aria-modal` sperrt nur den
-          // Lesecursor, nicht die Tastatur — hinter dem Abdunkeln lag sonst
-          // das halbe Formular in der Tab-Reihenfolge.
+          // Tab-Falle: `aria-modal` sperrt nur den Lesecursor, nicht die Tastatur.
           if (e.key === "Tab" && containerRef.current) {
             const focusables = Array.from(
               containerRef.current.querySelectorAll<HTMLElement>(FOCUSABLE),

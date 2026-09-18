@@ -8,9 +8,8 @@ export type GriffeInstrumentId =
 export type GriffeDifficultyId = "beginner" | "intermediate" | "advanced";
 
 /**
- * Auswahl im Setup: feste Stufen oder „Eigenes Set" aus der öffentlichen
- * Notenset-Bibliothek. Die Grifftabellen-Funktionen kennen weiterhin nur
- * die festen Stufen — Custom bewertet wie Fortgeschritten (alle Varianten).
+ * Feste Stufen oder „Eigenes Set“. Die Grifftabellen kennen nur die festen Stufen —
+ * Custom bewertet wie Fortgeschritten (alle Varianten).
  */
 export type GriffeDifficultyChoice = GriffeDifficultyId | "custom";
 
@@ -89,8 +88,8 @@ export const GRIFFE_MODE_LABELS: Record<
   },
 };
 
-/** Alt (nur noch Migration): einzelner Instrument-Key aus früheren Versionen. */
+/** Nur noch für die Migration: alter Einzel-Key mit dem Instrument. */
 export const STORAGE_GRIFFE_INSTRUMENT_KEY = "pwr-griffe-instrument";
 
-/** Neu: Instrument + Schwierigkeit + Modus als ein JSON-Blob. */
+/** Instrument + Schwierigkeit + Modus als ein JSON-Blob. */
 export const STORAGE_GRIFFE_SETTINGS_KEY = "pwr-griffe-settings";

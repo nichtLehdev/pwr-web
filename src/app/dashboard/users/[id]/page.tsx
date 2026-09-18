@@ -134,7 +134,6 @@ export default function UserDetailPage() {
       }
       maxWidth="7xl"
     >
-      {/* Avatar and Role Badge */}
       <div className="mb-6 flex items-start gap-4">
         <div className="bg-rule/60 dark:bg-night-raised h-16 w-16 overflow-hidden rounded-full">
           {user.profileImage?.url ? (
@@ -152,9 +151,7 @@ export default function UserDetailPage() {
         </div>
       </div>
 
-      {/* User Info Sections */}
       <div className="space-y-6">
-        {/* Basic Info */}
         <section className="border-rule dark:border-night-rule border p-6">
           <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
             Persönliche Informationen
@@ -215,7 +212,6 @@ export default function UserDetailPage() {
           </dl>
         </section>
 
-        {/* Address */}
         {(user.street || user.zipCode || user.city) && (
           <section className="border-rule dark:border-night-rule border p-6">
             <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
@@ -256,7 +252,6 @@ export default function UserDetailPage() {
           </section>
         )}
 
-        {/* Memberships */}
         <section className="border-rule dark:border-night-rule border p-6">
           <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
             Mitgliedschaften
@@ -309,7 +304,6 @@ export default function UserDetailPage() {
           </div>
         </section>
 
-        {/* Metadata */}
         <section className="border-rule dark:border-night-rule border p-6">
           <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
             Kontodaten
@@ -343,7 +337,6 @@ export default function UserDetailPage() {
         </section>
       </div>
 
-      {/* Delete Confirmation Modal */}
       {showDeleteModal && (
         <ScrollableModal>
           <ScrollableModalCard maxW="md">

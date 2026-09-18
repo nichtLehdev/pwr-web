@@ -4,9 +4,8 @@ import { tmpdir } from "os";
 import { join } from "path";
 
 /**
- * Download files are plain uploads referenced by URL, with no Media row behind
- * them, so they only reach the ZIP through the filePaths argument. UPLOADS_ROOT
- * is read at module load, hence the dynamic import after the env var is set.
+ * Download files have no Media row and reach the ZIP only via filePaths.
+ * UPLOADS_ROOT is read at module load, hence the dynamic import after setting it.
  */
 describe("export/import ZIP round trip for raw upload files", () => {
   let uploadsRoot: string;

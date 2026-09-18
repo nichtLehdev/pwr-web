@@ -11,21 +11,8 @@ import {
 } from "./dashboard-nav-items";
 
 /**
- * Persistent, permission-filtered navigation for /dashboard/**.
- *
- * Desktop (lg+): sticky left sidebar below the fixed site header (offset via
- * `--main-padding-top`, set on <main> by MainContent). Below lg: horizontal
- * scrollable bar above the page content. Rendered as a fragment — the
- * dashboard layout arranges both via `flex-col lg:flex-row`.
- *
- * Die Leiste steht auf einem leicht getönten Grund, nicht auf Papier: Sind
- * Navigation und Arbeitsfläche dieselbe Farbe, trennt sie nur noch eine
- * Haarlinie und die Spalte franst in den Inhalt aus. Öffentlich stellt sich
- * die Frage nicht — dort gibt es keine ständige Navigationsspalte.
- *
- * Der aktive Eintrag ist eine Druckfläche in Orange mit Tinte darauf, wie im
- * Heft. Vorher stand dort oranger Text auf blassorangem Grund; Orange als
- * Textfarbe erreicht den Kontrast nicht.
+ * Permission-filtered navigation for /dashboard/**: sticky sidebar from lg (offset via
+ * `--main-padding-top`), a scrollable bar below. Fragment — the layout arranges both.
  */
 export default function DashboardSidebar() {
   const pathname = usePathname();
@@ -49,9 +36,7 @@ export default function DashboardSidebar() {
   };
   const website = { title: "Zur Webseite", href: "/", icon: Home };
 
-  // Active item = the nav href that is the longest path-prefix of the current
-  // pathname ("/dashboard/courses/xyz" → "Kurse"; plain "/dashboard" only
-  // matches "Übersicht" exactly, since every other href is longer).
+  // Active item = the href that is the longest path-prefix of the pathname.
   const navHrefs = [
     overview.href,
     ...groups.flatMap((group) => group.items.map((item) => item.href)),
@@ -64,7 +49,6 @@ export default function DashboardSidebar() {
 
   return (
     <>
-      {/* Desktop sidebar (lg and up) */}
       <aside className="programm font-programm border-rule dark:border-night-rule bg-rule/25 dark:bg-night-raised hidden w-64 shrink-0 border-r lg:block">
         <nav
           aria-label="Dashboard-Navigation"
@@ -110,7 +94,6 @@ export default function DashboardSidebar() {
         </nav>
       </aside>
 
-      {/* Mobile / tablet bar (below lg) */}
       <nav
         aria-label="Dashboard-Navigation"
         className="programm font-programm border-rule dark:border-night-rule bg-rule/25 dark:bg-night-raised border-b lg:hidden"

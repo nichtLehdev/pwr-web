@@ -54,8 +54,6 @@ const EDIT_POST_NAV_ITEMS: DashboardSectionNavItem[] = [
   { href: "#post-edit-status", label: "Status" },
 ];
 
-// Dashboard access is now controlled by permissions
-
 export default function EditPostPage() {
   const router = useRouter();
   const toast = useToast();
@@ -76,10 +74,8 @@ export default function EditPostPage() {
   const hasApprovePermission = hasPermission("posts.approve" as PermissionKey);
   const isHigherRole = hasApprovePermission;
   const scopedBezirkIds = profile?.bezirkScopes?.map((s) => s.bezirkId) ?? [];
-  // Zuständigkeit statt Zugehörigkeit: `profile.bezirkId` sagt, wo jemand im
-  // Werk verortet ist (und trägt öffentlich ein Amt), nicht wofür er schreiben
-  // darf. Beides zu vermischen hieße, für eine einzelne Ausnahme ein Amt zu
-  // vergeben.
+  // Zuständigkeit (bezirkScopes), nicht Zugehörigkeit (`profile.bezirkId`, trägt
+  // öffentlich ein Amt) entscheidet, wofür jemand schreiben darf.
   const { selectableBezirkIds } = districtFieldState(
     isHigherRole,
     scopedBezirkIds,
@@ -455,20 +451,17 @@ export default function EditPostPage() {
           storageFailed={storageFailed}
         />
 
-        {/* Error Message */}
         {error && (
           <div className="mb-6 bg-red-50 p-4 text-red-700 dark:bg-red-900/20 dark:text-red-400">
             {error}
           </div>
         )}
 
-        {/* Form */}
         <form onSubmit={handleSubmit}>
           <DashboardSectionedFormLayout
             navItems={EDIT_POST_NAV_ITEMS}
             contentClassName="space-y-0"
           >
-            {/* Basic Information */}
             <section
               id="post-edit-basic"
               className="dashboard-form-scroll-anchor"
@@ -540,7 +533,6 @@ export default function EditPostPage() {
               </div>
             </section>
 
-            {/* Cover Image */}
             <section
               id="post-edit-media"
               className="dashboard-form-scroll-anchor border-rule dark:border-night-rule border-t pt-10"
@@ -614,7 +606,6 @@ export default function EditPostPage() {
               </div>
             </section>
 
-            {/* Content */}
             <section
               id="post-edit-content"
               className="dashboard-form-scroll-anchor border-rule dark:border-night-rule border-t pt-10"
@@ -642,7 +633,6 @@ export default function EditPostPage() {
               </div>
             </section>
 
-            {/* District */}
             <section
               id="post-edit-district"
               className="dashboard-form-scroll-anchor border-rule dark:border-night-rule border-t pt-10"
@@ -701,7 +691,6 @@ export default function EditPostPage() {
               </div>
             </section>
 
-            {/* Author */}
             <section
               id="post-edit-author"
               className="dashboard-form-scroll-anchor border-rule dark:border-night-rule border-t pt-10"
@@ -748,7 +737,6 @@ export default function EditPostPage() {
                     )}
                   </div>
 
-                  {/* User Dropdown */}
                   {showAuthorDropdown &&
                     authorSearch &&
                     filteredUsers &&
@@ -807,7 +795,6 @@ export default function EditPostPage() {
               </div>
             </section>
 
-            {/* Options for users with approve permission */}
             {hasApprovePermission && (
               <section className="border-rule dark:border-night-rule border-t pt-10">
                 <h2 className="text-ink dark:text-night-text mb-4 text-lg font-semibold">
@@ -829,7 +816,6 @@ export default function EditPostPage() {
               </section>
             )}
 
-            {/* Status section */}
             <section
               id="post-edit-status"
               className="dashboard-form-scroll-anchor border-rule dark:border-night-rule border-t pt-10"
@@ -840,12 +826,9 @@ export default function EditPostPage() {
                 description="Pruef- und Veroeffentlichungsstatus festlegen."
               />
 
-              {/* Notice for approved/rejected posts being edited */}
               {(post?.status === ContentStatus.APPROVED ||
                 post?.status === ContentStatus.REJECTED) &&
                 !isHigherRole && (
-                  // Hinweis statt Alarm: Tinte auf Papier an einer Haarlinie
-                  // statt bernsteinfarbenem Kasten.
                   <div className="border-ink dark:border-night-text mb-4 border-l-2 py-2 pl-4">
                     <div className="flex items-start gap-3">
                       <AlertTriangle className="dark:text-night-text text-ink mt-0.5 h-5 w-5 shrink-0" />
@@ -911,7 +894,6 @@ export default function EditPostPage() {
               )}
             </section>
 
-            {/* Actions */}
             <div className="border-rule dark:border-night-rule mt-10 flex flex-col gap-3 border-t pt-6 sm:flex-row sm:justify-end">
               <Link
                 href={`/dashboard/posts/${postId}`}
@@ -934,7 +916,6 @@ export default function EditPostPage() {
           </DashboardSectionedFormLayout>
         </form>
       </DashboardPage>
-      {/* Media Picker Modal */}
       <MediaPickerModal
         isOpen={isMediaPickerOpen}
         onClose={() => setIsMediaPickerOpen(false)}
@@ -947,7 +928,6 @@ export default function EditPostPage() {
         }}
       />
 
-      {/* Image Position Editor */}
       {showImagePositionEditor && coverImageUrl && (
         <ImagePositionEditor
           imageUrl={coverImageUrl}

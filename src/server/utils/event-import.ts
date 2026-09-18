@@ -13,11 +13,7 @@ import {
   readText,
 } from "./import-values";
 
-/**
- * Reine Leseregeln für einen Termin aus einem Export-ZIP — das Gegenstück zu
- * `course-import.ts`. Was die Datenbank braucht (Bezirk, Standort, Chor,
- * Auswahlchor, Bild, Slug, verknüpfte Dateien), setzt die Route davor.
- */
+/** Leseregeln für einen Termin aus einem Export-ZIP; Datenbankbezüge setzt die Route. */
 
 export type EventPriceOptionImport = {
   label: string;
@@ -42,12 +38,8 @@ export function readEventPriceOptions(raw: unknown): EventPriceOptionImport[] {
 }
 
 /**
- * Verweis auf eine Datei, die am Termin hängt.
- *
- * Dateien sind eigene Einträge mit eigenem Export (`downloads`) und werden hier
- * nicht mitgeliefert — ein Termin-ZIP soll nicht dieselbe Datei ein zweites Mal
- * in den Bestand legen. Mit ausgegeben werden nur die Merkmale, an denen sich
- * die vorhandene Datei im Zielbestand wiederfinden lässt.
+ * Dateien haben einen eigenen Export und reisen nicht mit; nur Merkmale, um die
+ * vorhandene Datei im Ziel wiederzufinden.
  */
 export type EventDownloadRef = {
   downloadId: string | null;
@@ -62,9 +54,7 @@ export function readEventDownloadRefs(raw: unknown): EventDownloadRef[] {
     if (typeof entry !== "object" || entry === null) return [];
     const link = entry as Record<string, unknown>;
 
-    // Ältere Ausgaben kannten den Block nicht; neuere schreiben die flache
-    // Form. Die verschachtelte Form (`download: { … }`) kann aus einer von Hand
-    // zusammengestellten Datei kommen.
+    // Exporte schreiben die flache Form; `download: { … }` kann aus Handarbeit stammen.
     const nested = (
       typeof link.download === "object" && link.download !== null
         ? link.download
@@ -100,13 +90,7 @@ export type EventContentImport = {
   publishedAt: Date | null;
 };
 
-/**
- * Die Terminfelder, die ohne Datenbank aus dem Export zu lesen sind.
- *
- * Nicht übernommen werden — wie beim Kurs — `reviewNotes`, `reviewDate` und
- * `reviewerId` (Prüfvermerke einer Freigabe, die hier nicht stattgefunden hat)
- * sowie `id`, `createdById`, `createdAt` und `updatedAt`.
- */
+/** Bewusst nicht übernommen: Prüfvermerke, Zeitstempel und IDs. */
 export function readEventContent(
   raw: Record<string, unknown>,
 ): EventContentImport {
@@ -121,13 +105,7 @@ export function readEventContent(
     cancelled: readBoolean(raw.cancelled, false),
     category: readEnum(raw.category, EventCategory, EventCategory.ANDERE),
     districtName: readText(raw.districtName),
-    /**
-     * Der Export schreibt die Ensemble-Art seit jeher als
-     * `performingEnsembleType`; der Import las `ensembleType` und bekam deshalb
-     * nie einen Wert — die Art ging bei jedem Rundlauf verloren. Der alte Name
-     * wird weiter gelesen, damit von Hand geschriebene Dateien, die sich am
-     * bisherigen Importer orientiert haben, nicht plötzlich ausfallen.
-     */
+    /** `ensembleType` weiter lesen: von Hand geschriebene Dateien nutzen den alten Namen. */
     performingEnsembleType: readEnum(
       raw.performingEnsembleType ?? raw.ensembleType,
       EventEnsembleType,

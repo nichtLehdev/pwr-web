@@ -8,10 +8,8 @@ import { createLogger } from "@/server/utils/logger";
 const log = createLogger("tRPC");
 
 /**
- * Codes that mean the *caller* did something wrong (not logged in, bad input,
- * gone, rate-limited). They are part of normal operation and would otherwise
- * fill the production log, so they only show at debug level. Everything else
- * is an unhandled server-side failure and is always logged as an error.
+ * Caller errors are normal operation and only logged at debug level; any other
+ * code is a server-side failure and always logged as an error.
  */
 const EXPECTED_ERROR_CODES = new Set<string>([
   "BAD_REQUEST",
@@ -28,10 +26,6 @@ const EXPECTED_ERROR_CODES = new Set<string>([
   "CLIENT_CLOSED_REQUEST",
 ]);
 
-/**
- * This wraps the `createTRPCContext` helper and provides the required context for the tRPC API when
- * handling a HTTP request (e.g. when you make requests from Client Components).
- */
 const createContext = async (req: NextRequest) => {
   return createTRPCContext({
     headers: req.headers,

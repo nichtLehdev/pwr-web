@@ -80,11 +80,7 @@ const QUIZ_SECONDS_BY_DIFFICULTY: Record<GriffeDifficultyId, number> = {
 const QUIZ_SECONDS_CUSTOM = 8;
 const QUIZ_ROUND_LEN = 15;
 
-/**
- * Breit und flach (z. B. 1440×650): Notenzeile links, Griffbild rechts —
- * gestapelt reicht die Höhe dort nicht, das Griffbild rutscht unter die Falz.
- * Auf hohen Fenstern bleibt beides untereinander und darf dafür wachsen.
- */
+/** Breit und flach: nebeneinander, gestapelt rutscht das Griffbild unter die Falz. */
 const WIDE_SHORT_TWO_COLUMNS =
   "[@media(min-width:56rem)_and_(max-height:52rem)]:grid-cols-2 [@media(min-width:56rem)_and_(max-height:52rem)]:items-center";
 
@@ -311,7 +307,6 @@ export function FingeringGame() {
   useEffect(() => {
     if (!pitch) return;
     if (process.env.NODE_ENV === "production") return;
-    // Debug: aktuell angezeigte Note als MIDI verfolgen.
     console.debug(
       "[Griffe] displayed note midi:",
       writtenPitchToMidi(pitch),
@@ -351,9 +346,8 @@ export function FingeringGame() {
     });
   }, []);
 
-  // Einstellungen als ein Blob persistieren; alten Einzel-Key aufräumen.
-  // Solange eine Set-Referenz noch auflöst, nichts schreiben — sonst würde
-  // der Zwischenzustand (Standard-Stufe ohne Set) das gespeicherte Set löschen.
+  // Nicht schreiben, solange eine Set-Referenz noch auflöst — sonst löscht der
+  // Zwischenzustand (Standard-Stufe ohne Set) das gespeicherte Set.
   useEffect(() => {
     if (!hydrated || pendingSetResolve) return;
     try {
@@ -404,11 +398,7 @@ export function FingeringGame() {
     }
   }, []);
 
-  /**
-   * Set aktivieren: auf spielbare Töne filtern, Stufe auf „custom" stellen.
-   * Liefert false, wenn das Set fürs aktuelle Instrument unbrauchbar ist
-   * (< 2 Töne mit Griff) — dann bleibt alles wie es war.
-   */
+  /** Auf spielbare Töne filtern, Stufe „custom“; false (unverändert), wenn < 2 Töne mit Griff. */
   const activateCustomSet = useCallback(
     (set: NoteSetSummary): boolean => {
       const cov = noteSetCoverageForInstrument(set, instrument);
@@ -1100,9 +1090,6 @@ export function FingeringGame() {
 
       {phase === "play" && pitch && (
         <div className="flex flex-col gap-3 md:gap-4">
-          {/* Eine Bedienung statt zweier: Der Chip nennt die Einstellung und
-              klappt sie auf. Der zweite Weg („Zurück zum Setup") führte an
-              dieselbe Stelle und konkurrierte nur mit dem Chip. */}
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
@@ -1185,8 +1172,6 @@ export function FingeringGame() {
             </div>
           )}
 
-          {/* Punktestand gehört in die Kopfleiste der Hülle — das ist der
-              Platz, den sie dafür anbietet, und der Inhalt gewinnt die Zeile. */}
           <GameBarSlot>
             <p className="condensed text-ink dark:text-night-text flex items-center gap-x-2 text-sm font-bold tabular-nums sm:gap-x-3">
               <span>Serie {streak}</span>
@@ -1225,11 +1210,7 @@ export function FingeringGame() {
             )}
           >
             <div className="flex min-w-0 flex-col gap-[clamp(0.5rem,1.6dvh,1rem)]">
-              {/* Die Notenzeile trägt ihre Kastenhöhe über `className`, die
-                  Notenschrift skaliert darin mit (so macht es Noten-Lesen
-                  selbst). Statt fester 240px wächst sie mit dem Fenster — und
-                  nimmt sich auf flachen Fenstern zurück, damit das Griffbild
-                  daneben Platz behält. */}
+              {/* Kastenhöhe über `className`, die Notenschrift skaliert darin mit. */}
               <StaffDisplay
                 clef={clef}
                 pitch={pitch}
@@ -1237,21 +1218,16 @@ export function FingeringGame() {
                 flash={flash}
                 className={cn(
                   "mx-auto w-full max-w-[46rem] shrink-0",
-                  // Das Zugdiagramm braucht mehr Höhe als drei Ventilknöpfe
-                  // (Register, Schieber, sieben Positionen). Bei der Posaune
-                  // nimmt sich die Notenzeile deshalb etwas zurück, damit
-                  // beides ohne Rollen auf den Schirm passt.
+                  // Das Zugdiagramm braucht mehr Höhe als Ventilknöpfe, daher
+                  // bei der Posaune eine niedrigere Notenzeile.
                   inputKind === "slide"
                     ? "h-[clamp(8rem,24dvh,17rem)]"
                     : "h-[clamp(9rem,30dvh,22rem)]",
                 )}
               />
 
-              {/* Feedback-Region bleibt dauerhaft gemountet (aria-live), nur der
-                  Inhalt wechselt. Symbol + Text, nicht nur Farbe. Die Höhe ist
-                  vorgehalten, damit die Merkhilfe das Griffbild nicht schiebt —
-                  ohne Rahmen und Fläche, sonst stünde zwischen Notenzeile und
-                  Griffbild ein leerer Kasten, der wie ein Fehler aussieht. */}
+              {/* Dauerhaft gemountet (aria-live), nur der Inhalt wechselt. Höhe vorgehalten,
+                  damit die Merkhilfe das Griffbild nicht schiebt. */}
               <div
                 role="status"
                 aria-live="polite"

@@ -111,15 +111,10 @@ export default function BezirkDetailPage() {
       }
       maxWidth="7xl"
     >
-      {/* District Badge */}
       <div className="mb-6 flex items-center gap-4">
         <span
-          // Weiss traegt auf keiner der dreizehn Bezirksfarben (1,81:1 bis
-          // 4,47:1). Tinte reicht bei Kleintext ebenfalls nicht ueberall
-          // (schlechtester Wert 3,78:1) — deshalb steht die Farbe sonst als
-          // Markierung neben der Schrift. Hier nicht: 24px fett ist
-          // WCAG-Grosstext mit Schwelle 3:1, und dort traegt Tinte auf allen
-          // dreizehn. Die Kachel darf ihre Flaeche behalten.
+          // Tinte auf Bezirksfarbe nur hier: 24px fett ist WCAG-Grosstext
+          // (Schwelle 3:1), bei Kleintext reicht der Kontrast nicht ueberall.
           className="text-ink flex h-16 w-16 items-center justify-center text-2xl font-bold"
           style={{
             backgroundColor: `var(--color-district-${bezirk.number})`,
@@ -129,7 +124,6 @@ export default function BezirkDetailPage() {
         </span>
       </div>
 
-      {/* Statistics */}
       {stats && (
         <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
           <div className="border-rule dark:border-night-rule border p-4">
@@ -167,7 +161,6 @@ export default function BezirkDetailPage() {
         </div>
       )}
 
-      {/* Obleute */}
       <div className="border-rule dark:border-night-rule mb-6 border p-6">
         <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
           Bezirksobleute
@@ -226,7 +219,6 @@ export default function BezirkDetailPage() {
         )}
       </div>
 
-      {/* Ensembles */}
       {bezirk.ensembles && bezirk.ensembles.length > 0 && (
         <div className="border-rule dark:border-night-rule mb-6 border p-6">
           <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
@@ -270,7 +262,6 @@ export default function BezirkDetailPage() {
         </div>
       )}
 
-      {/* Upcoming Events */}
       {bezirk.events && bezirk.events.length > 0 && (
         <div className="border-rule dark:border-night-rule mb-6 border p-6">
           <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
@@ -303,7 +294,6 @@ export default function BezirkDetailPage() {
         </div>
       )}
 
-      {/* Metadata */}
       <div className="border-rule dark:border-night-rule border p-6">
         <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
           Details
@@ -344,7 +334,6 @@ export default function BezirkDetailPage() {
         </dl>
       </div>
 
-      {/* Actions */}
       <div className="mt-6 flex flex-wrap gap-3">
         <Link
           href="/dashboard/bezirke"
