@@ -24,6 +24,7 @@ import { eventPath, postPath } from "@/lib/slug";
 import { markdownToSingleLine } from "@/lib/markdown-to-plain-text";
 
 import { createLogger } from "@/server/utils/logger";
+import { formatBerlin } from "@/lib/berlin-time";
 
 const log = createLogger("Utils");
 
@@ -690,14 +691,10 @@ export const newsletterRouter = createTRPCRouter({
               ctx.headers ? { headers: ctx.headers } : undefined,
             )}${eventPath(event)}`;
             const eventDate = new Date(event.eventDate);
-            const formattedDate = eventDate.toLocaleDateString("de-DE", {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-            });
+            const formattedDate = formatBerlin(
+              eventDate,
+              "datumMitWochentagUhrzeit",
+            );
             const locationText = event.location
               ? `${event.location.name || ""} ${event.location.city || ""}`.trim()
               : event.districtName || "";

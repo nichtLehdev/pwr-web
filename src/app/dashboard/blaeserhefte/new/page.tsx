@@ -24,6 +24,7 @@ import {
   Label,
   Textarea,
 } from "@/app/_components/ui";
+import { berlinParts } from "@/lib/berlin-time";
 
 export default function NewBlaeserheftPage() {
   const router = useRouter();
@@ -43,7 +44,7 @@ export default function NewBlaeserheftPage() {
 
   const [title, setTitle] = useState("");
   const [subtitle, setSubtitle] = useState("");
-  const [year, setYear] = useState(new Date().getFullYear());
+  const [year, setYear] = useState(() => berlinParts(new Date()).year);
   const [description, setDescription] = useState("");
   const [chapters, setChapters] = useState("");
   const [highlights, setHighlights] = useState("");

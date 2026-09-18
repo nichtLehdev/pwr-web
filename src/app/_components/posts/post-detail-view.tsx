@@ -23,16 +23,14 @@ import { usePermissions } from "@/lib/use-permissions";
 import type { PermissionKey } from "@/lib/permissions";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { zoomLabel } from "@/lib/image-zoom";
+import { berlinFormatter } from "@/lib/berlin-time";
 import { ArrowLeftIcon, CalendarIcon, EditIcon, PinIcon } from "lucide-react";
 
 type PostWithRelations = RouterOutputs["posts"]["getById"];
 type PostListItem = RouterOutputs["posts"]["getAll"]["posts"][number];
 
-const DATE = new Intl.DateTimeFormat("de-DE", {
-  day: "2-digit",
-  month: "long",
-  year: "numeric",
-});
+// Berliner Zeit: Auch diese Client-Komponente rendert zuerst auf dem Server.
+const DATE = berlinFormatter("datumLangZweistellig");
 
 function formatFileSize(bytes: number | null): string {
   if (!bytes) return "";

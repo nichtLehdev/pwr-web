@@ -8,6 +8,7 @@ import {
 import { formatDateRange } from "@/lib/format-date-range";
 import { formatAvailableSlots } from "@/lib/format-available-slots";
 import { isExternalCourse } from "@/lib/course-external";
+import { berlinFormatter } from "@/lib/berlin-time";
 
 export type ProgrammeEvent =
   RouterOutputs["events"]["getAll"]["events"][number];
@@ -41,14 +42,9 @@ export type ProgrammeEntry = {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-const TIME = new Intl.DateTimeFormat("de-DE", {
-  hour: "2-digit",
-  minute: "2-digit",
-});
-const DAY_MONTH = new Intl.DateTimeFormat("de-DE", {
-  day: "numeric",
-  month: "long",
-});
+// Berliner Zeit: Die Programmzeilen rendern zuerst auf dem Server (UTC).
+const TIME = berlinFormatter("uhrzeit");
+const DAY_MONTH = berlinFormatter("tagMonat");
 
 /** Gleiche Regel wie die Kursseite: offen, schon geöffnet, Frist nicht vorbei. */
 export function isRegistrationOpen(

@@ -16,6 +16,7 @@ import {
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
 import { Tag } from "@/app/_components/programmheft/tag";
+import { formatBerlin } from "@/lib/berlin-time";
 
 export default function UserDetailPage() {
   const router = useRouter();
@@ -319,13 +320,7 @@ export default function UserDetailPage() {
                 Erstellt am
               </dt>
               <dd className="text-ink dark:text-night-text mt-1">
-                {new Date(user.createdAt).toLocaleDateString("de-DE", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
+                {formatBerlin(user.createdAt, "datumUhrzeit")}
               </dd>
             </div>
             <div>
@@ -333,13 +328,7 @@ export default function UserDetailPage() {
                 Zuletzt aktualisiert
               </dt>
               <dd className="text-ink dark:text-night-text mt-1">
-                {new Date(user.updatedAt).toLocaleDateString("de-DE", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
+                {formatBerlin(user.updatedAt, "datumUhrzeit")}
               </dd>
             </div>
             <div className="sm:col-span-2">

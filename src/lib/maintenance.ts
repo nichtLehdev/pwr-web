@@ -1,4 +1,5 @@
 /** Gemeinsame Konstanten für den Wartungsmodus. Ohne Node-Abhängigkeiten. */
+import { formatBerlin } from "./berlin-time";
 
 export const MAINTENANCE_BYPASS_COOKIE = "pwr_maintenance_bypass";
 
@@ -53,4 +54,15 @@ export interface MaintenanceVerdict {
   blocked: boolean;
   message: string;
   until: string | null;
+}
+
+/**
+ * Das voraussichtliche Ende für die Wartungsseite, in deutscher Ortszeit:
+ * „Freitag, 2. Oktober 2026 um 23:59". Die Seite rendert auf dem Server, und
+ * der läuft in UTC — ohne feste Zone stand dort 21:59, wo im Dashboard 23:59
+ * eingetragen war. `null` ohne oder mit unbrauchbarem Wert.
+ */
+export function formatMaintenanceUntil(iso: string | null): string | null {
+  if (!iso) return null;
+  return formatBerlin(iso, "datumVollUhrzeit") || null;
 }

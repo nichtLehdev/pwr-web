@@ -10,6 +10,7 @@ import {
   ManageRegistrationCta,
   manageRegistrationCtaText,
 } from "./manage-registration-cta";
+import { formatBerlin } from "@/lib/berlin-time";
 
 interface CourseRegistrationConfirmedProps {
   registrantFirstName: string;
@@ -26,12 +27,7 @@ interface CourseRegistrationConfirmedProps {
   downPaymentHasQr?: boolean;
 }
 
-const formatDate = (date: Date) =>
-  new Intl.DateTimeFormat("de-DE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  }).format(date);
+const formatDate = (date: Date) => formatBerlin(date, "datumZweistellig");
 
 const formatPrice = (price: number) =>
   new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(

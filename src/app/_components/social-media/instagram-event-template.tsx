@@ -12,6 +12,7 @@ import {
   ArrowUpRightIcon,
 } from "lucide-react";
 import type { EventCategory } from "~/generated/prisma/enums";
+import { berlinParts, formatBerlin } from "@/lib/berlin-time";
 
 type InstagramEventTemplateProps = {
   event: RouterOutputs["events"]["getEventsByMonth"][0];
@@ -63,18 +64,11 @@ export default function InstagramEventTemplate({
     ? getDistrictColor(event.bezirk.number)
     : "#faa619";
 
-  const eventDay = new Date(event.eventDate).getDate();
-  const eventMonth = new Date(event.eventDate).toLocaleDateString("de-DE", {
-    month: "long",
-  });
-  const eventYear = new Date(event.eventDate).getFullYear();
-  const eventTime = new Date(event.eventDate).toLocaleTimeString("de-DE", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-  const eventWeekday = new Date(event.eventDate).toLocaleDateString("de-DE", {
-    weekday: "long",
-  });
+  // Tag und Jahr in Berliner Zeit, passend zu Monat und Uhrzeit daneben.
+  const { day: eventDay, year: eventYear } = berlinParts(event.eventDate);
+  const eventMonth = formatBerlin(event.eventDate, "monat");
+  const eventTime = formatBerlin(event.eventDate, "uhrzeit");
+  const eventWeekday = formatBerlin(event.eventDate, "wochentag");
 
   // Die Vorlage setzt reinen Text in eine Grafik. Vorher entfernte sie nur
   // spitze Klammern — aus `<u>Wort</u>` wurde damit „uWort/u", und

@@ -16,6 +16,7 @@ import {
 } from "./course-registration-form/seat-split-choice";
 import type { ShortageCourse } from "./course-registration-form/seat-shortage-notice";
 import { Note } from "@/app/_components/programmheft/note";
+import { formatBerlin } from "@/lib/berlin-time";
 
 /**
  * Schaltflächen-Stimmen des Programmhefts, wie auf der Anmeldungsseite, die
@@ -28,14 +29,7 @@ const BTN_OUTLINE = `border-ink text-ink hover:bg-ink hover:text-paper dark:bord
 /** Rot wie „Verwerfen“ im Anmeldeformular: gibt die Plätze unwiderruflich ab. */
 const BTN_DESTRUCTIVE = `bg-red-700 text-paper hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-700 ${BTN_BASE}`;
 
-const formatDateTime = (date: Date) =>
-  new Date(date).toLocaleString("de-DE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+const formatDateTime = (date: Date) => formatBerlin(date, "datumUhrzeit");
 
 interface PromotionOfferCardProps {
   registrationId: string;

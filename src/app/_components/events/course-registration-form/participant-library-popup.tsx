@@ -2,6 +2,7 @@
 
 import { X, Plus } from "lucide-react";
 import type { RouterOutputs } from "@/trpc/react";
+import { formatBerlin } from "@/lib/berlin-time";
 
 interface ParticipantLibraryPopupProps {
   isOpen: boolean;
@@ -73,9 +74,7 @@ export function ParticipantLibraryPopup({
                           {saved.firstName} {saved.lastName}
                         </div>
                         <div className="text-dark dark:text-night-muted text-xs">
-                          {new Date(saved.birthDate).toLocaleDateString(
-                            "de-DE",
-                          )}
+                          {formatBerlin(saved.birthDate)}
                           {saved.city && ` • ${saved.city}`}
                         </div>
                       </div>

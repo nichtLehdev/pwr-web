@@ -21,6 +21,7 @@ import type {
 import { useToast } from "@/app/_components/ui/toast";
 import { Mail } from "lucide-react";
 import { Tag, type TagTone } from "@/app/_components/programmheft/tag";
+import { formatBerlin } from "@/lib/berlin-time";
 
 /** Gefüllte Werkbank-Schaltfläche, wie auf den Formularseiten des Hefts. */
 const BTN_PRIMARY =
@@ -207,8 +208,7 @@ export default function DashboardNewsletterSubscribersPage() {
           header: "Abonniert am",
           enableColumnFilter: false,
           meta: { cellClassName: "whitespace-nowrap" },
-          cell: ({ getValue }) =>
-            new Date(getValue()).toLocaleDateString("de-DE"),
+          cell: ({ getValue }) => formatBerlin(new Date(getValue())),
         }),
         column.display({
           id: "actions",

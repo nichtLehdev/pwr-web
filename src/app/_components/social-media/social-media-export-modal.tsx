@@ -14,15 +14,16 @@ import {
   ScrollableModal,
   ScrollableModalCard,
 } from "@/app/_components/ui/scrollable-modal";
+import { berlinParts, formatBerlin } from "@/lib/berlin-time";
 
 interface SocialMediaExportModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const currentDate = new Date();
-const currentYear = currentDate.getFullYear();
-const currentMonth = currentDate.getMonth() + 1;
+// Voreinstellung: der laufende Monat in Deutschland — die Abfrage dazu
+// schneidet die Monate ebenfalls in Berliner Zeit.
+const { year: currentYear, month: currentMonth } = berlinParts(new Date());
 
 /** Native size of the Instagram templates - also the exported image size. */
 const CANVAS_SIZE = 1080;
@@ -339,8 +340,10 @@ export default function SocialMediaExportModal({
           .toLowerCase();
         const blob = await downloadImage(element);
 
-        const eventDate = new Date(event.eventDate);
-        const dayNum = String(eventDate.getDate()).padStart(2, "0");
+        const dayNum = String(berlinParts(event.eventDate).day).padStart(
+          2,
+          "0",
+        );
         zip.file(`${dayNum}-${safeTitle}.png`, blob);
       }
 
@@ -545,9 +548,7 @@ export default function SocialMediaExportModal({
                             {event.title}
                           </div>
                           <div className="text-sm opacity-80">
-                            {new Date(event.eventDate).toLocaleDateString(
-                              "de-DE",
-                            )}
+                            {formatBerlin(event.eventDate)}
                           </div>
                         </button>
                       );
@@ -567,7 +568,7 @@ export default function SocialMediaExportModal({
                 >
                   <div className="truncate font-semibold">{event.title}</div>
                   <div className="text-sm opacity-80">
-                    {new Date(event.eventDate).toLocaleDateString("de-DE")}
+                    {formatBerlin(event.eventDate)}
                   </div>
                 </button>
               ))}

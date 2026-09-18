@@ -12,6 +12,7 @@ import {
   ManageRegistrationCta,
   manageRegistrationCtaText,
 } from "./manage-registration-cta";
+import { formatBerlin } from "@/lib/berlin-time";
 
 interface SiblingDiscountApprovedProps {
   registrantFirstName: string;
@@ -29,11 +30,7 @@ interface SiblingDiscountApprovedProps {
 }
 
 function formatDate(date: Date) {
-  return new Intl.DateTimeFormat("de-DE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  }).format(date);
+  return formatBerlin(date, "datumZweistellig");
 }
 
 function formatPrice(price: number) {

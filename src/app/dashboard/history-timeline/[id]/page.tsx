@@ -10,6 +10,7 @@ import { usePermissions } from "@/lib/use-permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 import { DashboardPage } from "@/app/_components/dashboard";
 import { Tag } from "@/app/_components/programmheft/tag";
+import { formatBerlin } from "@/lib/berlin-time";
 // Dashboard access is now controlled by permissions
 
 export default function HistoryEventDetailPage() {
@@ -247,11 +248,7 @@ export default function HistoryEventDetailPage() {
                 Erstellt am
               </dt>
               <dd className="text-ink dark:text-night-text font-medium">
-                {new Date(historyEvent.createdAt).toLocaleDateString("de-DE", {
-                  day: "2-digit",
-                  month: "long",
-                  year: "numeric",
-                })}
+                {formatBerlin(historyEvent.createdAt, "datumLangZweistellig")}
               </dd>
             </div>
             <div>
@@ -259,11 +256,7 @@ export default function HistoryEventDetailPage() {
                 Zuletzt aktualisiert
               </dt>
               <dd className="text-ink dark:text-night-text font-medium">
-                {new Date(historyEvent.updatedAt).toLocaleDateString("de-DE", {
-                  day: "2-digit",
-                  month: "long",
-                  year: "numeric",
-                })}
+                {formatBerlin(historyEvent.updatedAt, "datumLangZweistellig")}
               </dd>
             </div>
           </dl>

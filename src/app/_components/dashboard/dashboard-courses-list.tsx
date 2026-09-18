@@ -52,6 +52,7 @@ import {
 } from "@/app/_components/ui/scrollable-modal";
 import { Tag, type TagTone } from "@/app/_components/programmheft/tag";
 import { cn } from "@/lib/utils";
+import { formatBerlin } from "@/lib/berlin-time";
 
 type DashboardCoursesListProps = Record<string, never>;
 
@@ -397,12 +398,7 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
         cell: ({ row }) => {
           const start = new Date(row.original.startDate);
           const end = new Date(row.original.endDate);
-          const format = (date: Date) =>
-            date.toLocaleDateString("de-DE", {
-              day: "2-digit",
-              month: "2-digit",
-              year: "numeric",
-            });
+          const format = (date: Date) => formatBerlin(date, "datumZweistellig");
           return start.getTime() === end.getTime()
             ? format(start)
             : `${format(start)} – ${format(end)}`;
@@ -499,8 +495,7 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
         header: "Erstellt am",
         enableColumnFilter: false,
         meta: { cellClassName: "whitespace-nowrap tabular-nums" },
-        cell: ({ getValue }) =>
-          new Date(getValue()).toLocaleDateString("de-DE"),
+        cell: ({ getValue }) => formatBerlin(new Date(getValue())),
       }),
       column.display({
         id: "actions",

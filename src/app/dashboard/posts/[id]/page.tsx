@@ -37,6 +37,7 @@ import {
   ScrollableModalBody,
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
+import { formatBerlin } from "@/lib/berlin-time";
 
 const categoryLabels: Record<PostCategory, string> = {
   MAGAZIN: "Magazin",
@@ -543,9 +544,7 @@ export default function PostDetailPage() {
             {post.reviewer && (
               <p className="text-dark dark:text-night-muted mt-2 text-sm">
                 — {post.reviewer.displayName}
-                {post.reviewDate && (
-                  <>, {new Date(post.reviewDate).toLocaleDateString("de-DE")}</>
-                )}
+                {post.reviewDate && <>, {formatBerlin(post.reviewDate)}</>}
               </p>
             )}
           </section>
@@ -686,13 +685,7 @@ export default function PostDetailPage() {
                     Erstellt am
                   </dt>
                   <dd className="text-ink dark:text-night-text mt-1">
-                    {new Date(post.createdAt).toLocaleDateString("de-DE", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                    {formatBerlin(post.createdAt, "datumLangUhrzeit")}
                   </dd>
                 </div>
                 {post.reviewer && (
@@ -711,16 +704,7 @@ export default function PostDetailPage() {
                       </dt>
                       <dd className="text-ink dark:text-night-text mt-1">
                         {post.reviewDate
-                          ? new Date(post.reviewDate).toLocaleDateString(
-                              "de-DE",
-                              {
-                                day: "numeric",
-                                month: "long",
-                                year: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              },
-                            )
+                          ? formatBerlin(post.reviewDate, "datumLangUhrzeit")
                           : "–"}
                       </dd>
                     </div>
@@ -732,13 +716,7 @@ export default function PostDetailPage() {
                       Veröffentlicht am
                     </dt>
                     <dd className="text-ink dark:text-night-text mt-1">
-                      {new Date(post.publishedAt).toLocaleDateString("de-DE", {
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                      {formatBerlin(post.publishedAt, "datumLangUhrzeit")}
                     </dd>
                   </div>
                 )}
@@ -747,13 +725,7 @@ export default function PostDetailPage() {
                     Zuletzt aktualisiert
                   </dt>
                   <dd className="text-ink dark:text-night-text mt-1">
-                    {new Date(post.updatedAt).toLocaleDateString("de-DE", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                    {formatBerlin(post.updatedAt, "datumLangUhrzeit")}
                   </dd>
                 </div>
               </dl>

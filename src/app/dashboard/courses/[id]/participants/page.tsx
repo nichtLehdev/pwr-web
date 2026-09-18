@@ -49,6 +49,7 @@ import {
   resolveParticipantPriceOption,
 } from "@/lib/course-price-options";
 import { Tag, type TagTone } from "@/app/_components/programmheft/tag";
+import { berlinDayKey, berlinParts, formatBerlin } from "@/lib/berlin-time";
 
 type CourseRegistrationRow =
   RouterOutputs["courses"]["getRegistrations"]["registrations"][number];
@@ -131,12 +132,12 @@ function getCustomFieldValue(
 
 function formatBirthDate(birthDate: Date | string | null | undefined): string {
   if (!birthDate) return "–";
-  return new Date(birthDate).toLocaleDateString("de-DE");
+  return formatBerlin(birthDate);
 }
 
 function formatBirthYear(birthDate: Date | string | null | undefined): string {
   if (!birthDate) return "–";
-  return String(new Date(birthDate).getFullYear());
+  return String(berlinParts(birthDate).year);
 }
 
 export default function CourseParticipantsPage() {
@@ -740,15 +741,13 @@ export default function CourseParticipantsPage() {
               ? DOWN_PAYMENT_STATE_LABELS[downPaymentState(registration)]
               : "",
           }),
-          anmeldedatum: new Date(registration.createdAt).toLocaleDateString(
-            "de-DE",
-          ),
+          anmeldedatum: formatBerlin(registration.createdAt),
           anmerkungen: registration.notes || "",
         };
       }),
     );
 
-    const filename = `${course.title.replace(/[^a-zA-Z0-9äöüÄÖÜß]/g, "_")}_teilnehmer_${new Date().toISOString().split("T")[0]}`;
+    const filename = `${course.title.replace(/[^a-zA-Z0-9äöüÄÖÜß]/g, "_")}_teilnehmer_${berlinDayKey(new Date())}`;
 
     if (format === "json") {
       const jsonString = JSON.stringify(exportData, null, 2);
@@ -1383,16 +1382,7 @@ export default function CourseParticipantsPage() {
                     <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-sm">
                       <span className="text-dark dark:text-night-muted">
                         Angemeldet am{" "}
-                        {new Date(registration.createdAt).toLocaleDateString(
-                          "de-DE",
-                          {
-                            day: "2-digit",
-                            month: "2-digit",
-                            year: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          },
-                        )}
+                        {formatBerlin(registration.createdAt, "datumUhrzeit")}
                       </span>
                       <div className="flex flex-wrap items-center gap-3">
                         {registration.invoiceId && (

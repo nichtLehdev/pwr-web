@@ -5,35 +5,26 @@
  * course ("27. Aug., 02:00 – 30. Aug., 02:00") read like data errors and the
  * arrival/departure times belong in the description. Times are shown for
  * single-day items only.
+ *
+ * Alles in deutscher Ortszeit: Die Programmzeilen rendern zuerst auf dem
+ * Server in UTC, und ein Kurs ab 00:00 stand dort sonst am Vortag.
  */
+import { berlinParts, formatBerlin, isSameBerlinDay } from "./berlin-time";
 
 export function isSameCalendarDay(a: Date, b: Date): boolean {
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  );
+  return isSameBerlinDay(a, b);
 }
 
 /** Inclusive calendar-day count: 14.–15. Aug is 2 days, not 1. */
 export function calendarDaysInclusive(start: Date, end: Date): number {
-  const startDay = new Date(
-    start.getFullYear(),
-    start.getMonth(),
-    start.getDate(),
-  );
-  const endDay = new Date(end.getFullYear(), end.getMonth(), end.getDate());
-  return (
-    Math.round(
-      (endDay.getTime() - startDay.getTime()) / (24 * 60 * 60 * 1000),
-    ) + 1
-  );
+  const s = berlinParts(start);
+  const e = berlinParts(end);
+  // Kalendertage als UTC-Mitternacht, damit der Umstellungstag mit 23 oder
+  // 25 Stunden trotzdem als ein Tag zählt.
+  const startDay = Date.UTC(s.year, s.month - 1, s.day);
+  const endDay = Date.UTC(e.year, e.month - 1, e.day);
+  return Math.round((endDay - startDay) / (24 * 60 * 60 * 1000)) + 1;
 }
-
-const TIME = new Intl.DateTimeFormat("de-DE", {
-  hour: "2-digit",
-  minute: "2-digit",
-});
 
 /**
  * "14. August 2026, 15:00 – 18:00 Uhr" for single-day ranges,
@@ -41,38 +32,22 @@ const TIME = new Intl.DateTimeFormat("de-DE", {
  */
 export function formatDateRange(start: Date, end: Date): string {
   if (isSameCalendarDay(start, end)) {
-    const day = start.toLocaleDateString("de-DE", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
+    const day = formatBerlin(start, "datumLang");
     const sameTime = start.getTime() === end.getTime();
     return sameTime
-      ? `${day}, ${TIME.format(start)} Uhr`
-      : `${day}, ${TIME.format(start)} – ${TIME.format(end)} Uhr`;
+      ? `${day}, ${formatBerlin(start, "uhrzeit")} Uhr`
+      : `${day}, ${formatBerlin(start, "uhrzeit")} – ${formatBerlin(end, "uhrzeit")} Uhr`;
   }
 
-  const sameMonth =
-    start.getFullYear() === end.getFullYear() &&
-    start.getMonth() === end.getMonth();
-  if (sameMonth) {
-    return `${start.getDate()}. – ${end.toLocaleDateString("de-DE", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    })}`;
+  const s = berlinParts(start);
+  const e = berlinParts(end);
+  if (s.year === e.year && s.month === e.month) {
+    return `${s.day}. – ${formatBerlin(end, "datumLang")}`;
   }
 
-  const sameYear = start.getFullYear() === end.getFullYear();
-  const startStr = start.toLocaleDateString("de-DE", {
-    day: "numeric",
-    month: "short",
-    ...(sameYear ? {} : { year: "numeric" }),
-  });
-  const endStr = end.toLocaleDateString("de-DE", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-  return `${startStr} – ${endStr}`;
+  const startStr = formatBerlin(
+    start,
+    s.year === e.year ? { day: "numeric", month: "short" } : "datumMonatKurz",
+  );
+  return `${startStr} – ${formatBerlin(end, "datumMonatKurz")}`;
 }
