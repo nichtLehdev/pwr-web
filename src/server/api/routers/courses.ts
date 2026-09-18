@@ -27,7 +27,10 @@ import {
 } from "../helpers/review-notifications";
 import { PERMISSIONS } from "@/lib/permissions";
 import { MAX_DESCRIPTION_LENGTH } from "@/lib/description";
-import { getCourseCapacitySummary } from "@/lib/course-available-slots";
+import {
+  seatRegistrationsQuery,
+  seatSummaryForPublic,
+} from "../helpers/course-capacity";
 import { validatePriceOptionDistinctness } from "@/lib/course-price-options";
 import {
   MAX_PRICE_OPTION_AGE,
@@ -245,20 +248,10 @@ export const coursesRouter = createTRPCRouter({
             collaborators: courseCollaboratorsForPublic,
             priceOptions: true,
             customFields: true,
-            registrations: {
-              where: {
-                registrationStatus: RegistrationStatus.CONFIRMED,
-              },
-              // select (not include): a registration row carries the
-              // registrant's full contact and billing data, which a public
-              // course list must never fetch just to count participants.
-              select: {
-                registrationStatus: true,
-                participants: {
-                  select: { priceOptionId: true, priceOption: true },
-                },
-              },
-            },
+            // select (not include): a registration row carries the
+            // registrant's full contact and billing data, which a public
+            // course list must never fetch just to count participants.
+            registrations: seatRegistrationsQuery,
           },
           skip: (input.page - 1) * input.limit,
           take: input.limit,
@@ -268,11 +261,10 @@ export const coursesRouter = createTRPCRouter({
       ]);
 
       const courses = coursesRaw.map((course) => {
-        const participantCount = course.registrations.reduce(
-          (sum, reg) => sum + reg.participants.length,
-          0,
-        );
-        const summary = getCourseCapacitySummary(course);
+        // Die Kursliste zeigt freie Plätze wie die Kursseite: ohne die, die
+        // Wartende nutzen könnten.
+        const summary = seatSummaryForPublic(course);
+        const participantCount = summary.confirmedParticipants;
         // courseNumber ist eine reine Buchhaltungsangabe (siehe getById) und
         // hat in der öffentlichen Kursliste nichts zu suchen.
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -1925,7 +1917,15 @@ export const coursesRouter = createTRPCRouter({
       return rejected;
     }),
 
-  /** Same identifier rules as `getById` — the detail page passes it straight on. */
+  /**
+   * Same identifier rules as `getById` — the detail page passes it straight on.
+   *
+   * Die freien Plätze, wie eine neue Anmeldung sie sieht: ohne die, die
+   * Wartende nutzen könnten (`@/lib/waitlist-priority`). So zeigen Kursseite,
+   * Kurskarte und Anmeldeformular „Nur Warteliste“, statt einen Platz zu
+   * versprechen, den der Server dann den Wartenden vorbehält. Das Kursteam
+   * sieht die tatsächlichen Plätze über `registrations.getWaitlistOverview`.
+   */
   getAvailableSlots: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
@@ -1933,26 +1933,7 @@ export const coursesRouter = createTRPCRouter({
         where: isUuid(input.id) ? { id: input.id } : { slug: input.id },
         include: {
           priceOptions: true,
-          _count: {
-            select: {
-              registrations: {
-                where: {
-                  registrationStatus: RegistrationStatus.CONFIRMED,
-                },
-              },
-            },
-          },
-          registrations: {
-            where: {
-              registrationStatus: RegistrationStatus.CONFIRMED,
-            },
-            select: {
-              registrationStatus: true,
-              participants: {
-                select: { priceOptionId: true, priceOption: true },
-              },
-            },
-          },
+          registrations: seatRegistrationsQuery,
         },
       });
 
@@ -1975,10 +1956,8 @@ export const coursesRouter = createTRPCRouter({
         };
       }
 
-      const summary = getCourseCapacitySummary(course);
-
       return {
-        ...summary,
+        ...seatSummaryForPublic(course),
         allowWaitingList: course.allowWaitingList ?? false,
       };
     }),

@@ -168,11 +168,27 @@ export default function EditRegistrationPage() {
       { enabled: !!session?.user && !!registrationId },
     );
 
-  const { data: availability, isLoading: availabilityLoading } =
+  const { data: publicAvailability, isLoading: availabilityLoading } =
     api.courses.getAvailableSlots.useQuery(
       { id: registration?.course?.id ?? "" },
       { enabled: !!registration?.course?.id },
     );
+  // Die öffentlichen Plätze sind die, die eine neue Anmeldung nutzen dürfte —
+  // ohne die, die Wartende nutzen könnten. Das Kursteam darf freie Plätze trotzdem
+  // vergeben (etwa zwei Anmeldungen zusammenführen) und sieht deshalb die
+  // tatsächlichen; der Server hält es genauso.
+  const { data: teamOverview, isLoading: teamOverviewLoading } =
+    api.registrations.getWaitlistOverview.useQuery(
+      { courseId: registration?.course?.id ?? "" },
+      {
+        enabled: !!registration?.course?.id && !!management?.isStaff,
+        staleTime: 0,
+      },
+    );
+  const availability =
+    management?.isStaff && teamOverview
+      ? teamOverview.seats
+      : publicAvailability;
 
   const updateMutation = api.registrations.updateMyRegistration.useMutation({
     onSuccess: () => {
@@ -831,7 +847,8 @@ export default function EditRegistrationPage() {
     sessionLoading ||
     registrationLoading ||
     waitingForManagement ||
-    availabilityLoading
+    availabilityLoading ||
+    (isStaff && teamOverviewLoading)
   ) {
     return (
       <div className="bg-paper dark:bg-night text-ink dark:text-night-text flex min-h-[calc(100vh-4rem)] items-center justify-center">
@@ -1210,6 +1227,18 @@ export default function EditRegistrationPage() {
                       Teilnehmer hinzufügen oder entfernen
                       {ticketsLocked ? " und Preiskategorien ändern" : ""} kann
                       nur das Kursteam.
+                    </p>
+                  )}
+                  {!isStaff && holdsSeats && availability?.hasWaitingList && (
+                    // Derselbe Vorrang, den der Server beim Speichern prüft —
+                    // hier vorab, damit niemand erst nach dem Absenden erfährt,
+                    // dass ein freier Platz schon den Wartenden zusteht. Die
+                    // Plätze oben sind bereits ohne sie gezählt.
+                    <p className="text-dark dark:text-night-muted mt-1 text-sm">
+                      Für diesen Kurs warten Anmeldungen auf der Warteliste.
+                      Freie Plätze, die sie nutzen könnten, gehen zuerst an sie;
+                      Teilnehmer hinzufügen oder die Preiskategorie wechseln
+                      geht nur, soweit die übrigen reichen.
                     </p>
                   )}
                 </div>
