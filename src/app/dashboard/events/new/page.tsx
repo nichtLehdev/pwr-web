@@ -30,6 +30,8 @@ import {
 } from "~/generated/prisma/enums";
 import { Lock, Trash2, ImageIcon, FileDown, X } from "lucide-react";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
+import RichTextEditor from "@/app/_components/editor/rich-text-editor-lazy";
+import { MAX_DESCRIPTION_LENGTH } from "@/lib/description";
 import DownloadPickerModal from "@/app/_components/editor/download-picker-modal";
 import { datedSlugBase, slugify } from "@/lib/slug";
 import { useAutosave } from "@/lib/useAutosave";
@@ -408,6 +410,17 @@ export default function NewEventPage() {
       return;
     }
 
+    // Ohne `maxLength` am Textfeld muss die Länge hier geprüft
+    // werden: Sonst lehnte erst der Server ab, und zwar mit
+    // einer englischen Zod-Meldung.
+    if (description.length > MAX_DESCRIPTION_LENGTH) {
+      setError(
+        `Die Beschreibung ist zu lang (${description.length} von ${MAX_DESCRIPTION_LENGTH} Zeichen).`,
+      );
+      setIsSubmitting(false);
+      return;
+    }
+
     const dateTime = new Date(`${eventDate}T${eventTime}`);
 
     const preparedPriceOptions = !isFree
@@ -558,14 +571,26 @@ export default function NewEventPage() {
                       <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
                         Beschreibung
                       </label>
-                      <textarea
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        rows={4}
+                      {/* Schreibfläche statt Textfeld: Gespeichert wird
+                          Markdown, dargestellt dasselbe wie auf der
+                          Terminseite. Der Umfang `beschreibung` lässt
+                          Überschriften (ab h3), Listen, Links und
+                          Hervorhebungen zu — Bilder, Tabellen und Downloads
+                          gehören in einen Beitrag, nicht in eine
+                          Beschreibung. Den Namen für Screenreader trägt
+                          `ariaLabel`: Die Fläche ist kein Formularfeld, ein
+                          `htmlFor` greift daran nicht. */}
+                      <RichTextEditor
+                        variant="beschreibung"
+                        ariaLabel="Beschreibung"
+                        content={description}
+                        onChange={setDescription}
                         placeholder="Beschreibe die Veranstaltung..."
-                        className="border-ink dark:border-night-text dark:bg-night dark:text-night-text text-ink bg-paper block w-full border px-3 py-2"
-                        maxLength={5000}
                       />
+                      <p className="text-dark dark:text-night-muted mt-2 text-xs">
+                        Überschriften, Listen, Links und Hervorhebungen sind
+                        möglich.
+                      </p>
                     </div>
 
                     <div>

@@ -23,7 +23,7 @@ import {
   type ProgrammeEntry,
 } from "@/app/_components/programmheft/programme-data";
 import { ProgrammeList } from "@/app/_components/programmheft/programme";
-import { COURSE_TYPE_MAP, EVENT_CATEGORY_MAP } from "@/lib/termine-labels";
+import { isRegistrationOpen } from "@/app/_components/programmheft/programme-data";
 import { useStickyTop } from "@/lib/use-sticky-top";
 import { useTitelVorbei } from "@/lib/use-titel-vorbei";
 import CalendarView from "./calendar/calendar-view";
@@ -68,6 +68,10 @@ const TYPE_OPTIONS: { value: FilterType; label: string }[] = [
 const TOGGLE_BUTTON =
   "flex h-11 w-11 items-center justify-center transition-colors";
 const TOGGLE_ACTIVE = "bg-ink text-paper dark:bg-night-text dark:text-night";
+/** Kontrollkästchen im Programmheft: eckig, Haarlinie, gefüllt statt Haken. */
+const CHECKBOX =
+  "border-ink checked:bg-ink dark:border-night-text dark:checked:bg-night-text bg-paper dark:bg-night h-5 w-5 shrink-0 cursor-pointer appearance-none border-2";
+
 const TOGGLE_INACTIVE =
   "text-ink hover:bg-ink hover:text-paper dark:text-night-text dark:hover:bg-night-text dark:hover:text-night";
 
@@ -198,8 +202,12 @@ export default function EventsClient({
   const [selectedDistrict, setSelectedDistrict] = useState<string>(
     params.get("district") || "all",
   );
-  const [selectedCategory, setSelectedCategory] = useState<string>(
-    params.get("category") || "all",
+  /**
+   * `?anmeldung=offen` — die Startseite zeigt nur einen Lehrgang mit offener
+   * Anmeldung und verweist für die übrigen hierher.
+   */
+  const [nurOffeneAnmeldung, setNurOffeneAnmeldung] = useState(
+    params.get("anmeldung") === "offen",
   );
   const [monthGrouping, setMonthGrouping] = useStoredPreference<MonthGrouping>(
     "termineMonthGrouping",
@@ -233,6 +241,17 @@ export default function EventsClient({
         if (filterType === "events" && item.type !== "event") return false;
         if (filterType === "courses" && item.type !== "course") return false;
 
+        // Termine nehmen keine Anmeldungen entgegen; der Filter lässt also
+        // nur Angebote übrig, deren Anmeldung gerade läuft. „Angebote“, weil
+        // darunter neben Lehrgängen auch Workshops, Freizeiten und
+        // Komponistenporträts stehen.
+        if (
+          nurOffeneAnmeldung &&
+          (item.type !== "course" || !isRegistrationOpen(item, now))
+        ) {
+          return false;
+        }
+
         if (selectedDistrict !== "all") {
           if (selectedDistrict === "Bezirksübergreifend") {
             if (item.bezirk !== null) return false;
@@ -245,23 +264,10 @@ export default function EventsClient({
           }
         }
 
-        if (selectedCategory !== "all") {
-          if (item.type === "event") {
-            const enumValue = EVENT_CATEGORY_MAP[selectedCategory];
-            if (enumValue && item.category !== enumValue) return false;
-          } else {
-            const courseTypeEnum = COURSE_TYPE_MAP[selectedCategory];
-
-            if (courseTypeEnum && item.courseType !== courseTypeEnum) {
-              return false;
-            }
-          }
-        }
-
         return true;
       });
     },
-    [filterType, selectedDistrict, selectedCategory],
+    [filterType, selectedDistrict, nurOffeneAnmeldung, now],
   );
 
   const futureItems = useMemo(() => {
@@ -385,29 +391,22 @@ export default function EventsClient({
       .map((b) => `Bezirk ${b.number} (${b.name})`),
   ];
 
-  const eventCategories = ["Konzert", "Gottesdienst", "Probe", "Andere"];
-  const courseCategories = [
-    "Lehrgang",
-    "Freizeit",
-    "Workshop",
-    "Komponistenportrait",
-    "Veranstaltung",
-    "Andere",
-  ];
-
   const hasActiveFilters =
-    filterType !== "all" ||
-    selectedDistrict !== "all" ||
-    selectedCategory !== "all";
+    filterType !== "all" || selectedDistrict !== "all" || nurOffeneAnmeldung;
 
   const resetFilters = () => {
     setFilterType("all");
     setSelectedDistrict("all");
-    setSelectedCategory("all");
+    setNurOffeneAnmeldung(false);
   };
 
+  /*
+   * `min-h-12`: Die Umschalter daneben sind 44px hoch und stehen in einem
+   * Rahmen von 2px, ihr Kasten misst also 48px. Ein Feld mit 44px stünde
+   * sichtbar niedriger daneben.
+   */
   const selectFieldClass =
-    "rounded-none! border-ink! dark:border-night-text! text-ink! dark:text-night-text! bg-paper! dark:bg-night! w-full border-2! px-3 py-2 text-sm";
+    "rounded-none! border-ink! dark:border-night-text! text-ink! dark:text-night-text! bg-paper! dark:bg-night! min-h-12 w-full border-2! px-3 py-2 text-sm";
 
   return (
     <PublicPage
@@ -528,39 +527,58 @@ export default function EventsClient({
 
             {/* Collapsible Filter Panel */}
             {filtersOpen && (
-              <div className="border-rule dark:border-night-rule mt-3 space-y-4 border-t pt-4">
-                {/* Type Filter */}
-                <div>
-                  <label className="semi-condensed text-dark dark:text-night-muted mb-2 block text-sm font-semibold">
-                    Typ
-                  </label>
-                  <div className="border-ink dark:border-night-text flex border-2">
-                    {TYPE_OPTIONS.map((option, index) => (
-                      <button
-                        key={option.value}
-                        onClick={() => setFilterType(option.value)}
-                        className={cn(
-                          "semi-condensed flex-1 px-3 py-2 text-sm font-semibold transition-colors",
-                          index > 0 &&
-                            "border-ink dark:border-night-text border-l-2",
-                          filterType === option.value
-                            ? TOGGLE_ACTIVE
-                            : TOGGLE_INACTIVE,
-                        )}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* District & Category */}
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              /*
+               * Zwei Zeilen statt vier gestapelter Blöcke: Seit die Kategorie
+               * weg ist, stehen Typ und Bezirk nebeneinander. Darunter die
+               * Schalter — links der Filter, rechts die Darstellung, die
+               * keine Auswahl trifft, sondern nur die Liste gliedert und
+               * deshalb durch die Haarlinie abgesetzt ist.
+               */
+              <div className="border-rule dark:border-night-rule mt-3 border-t pt-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {/* Typ */}
                   <div>
-                    <label className="semi-condensed text-dark dark:text-night-muted mb-2 block text-sm font-semibold">
+                    <span
+                      id="termine-typ-label"
+                      className="semi-condensed text-dark dark:text-night-muted mb-2 block text-sm font-semibold"
+                    >
+                      Typ
+                    </span>
+                    <div
+                      role="group"
+                      aria-labelledby="termine-typ-label"
+                      className="border-ink dark:border-night-text flex border-2"
+                    >
+                      {TYPE_OPTIONS.map((option, index) => (
+                        <button
+                          key={option.value}
+                          onClick={() => setFilterType(option.value)}
+                          aria-pressed={filterType === option.value}
+                          className={cn(
+                            "semi-condensed min-h-11 flex-1 px-3 text-sm font-semibold transition-colors",
+                            index > 0 &&
+                              "border-ink dark:border-night-text border-l-2",
+                            filterType === option.value
+                              ? TOGGLE_ACTIVE
+                              : TOGGLE_INACTIVE,
+                          )}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Bezirk */}
+                  <div>
+                    <label
+                      htmlFor="termine-bezirk"
+                      className="semi-condensed text-dark dark:text-night-muted mb-2 block text-sm font-semibold"
+                    >
                       Bezirk
                     </label>
                     <Select
+                      id="termine-bezirk"
                       value={selectedDistrict}
                       onChange={(e) => setSelectedDistrict(e.target.value)}
                       className={selectFieldClass}
@@ -573,71 +591,48 @@ export default function EventsClient({
                       ))}
                     </Select>
                   </div>
-
-                  <div>
-                    <label className="semi-condensed text-dark dark:text-night-muted mb-2 block text-sm font-semibold">
-                      Kategorie
-                    </label>
-                    <Select
-                      value={selectedCategory}
-                      onChange={(e) => setSelectedCategory(e.target.value)}
-                      className={selectFieldClass}
-                    >
-                      <option value="all">Alle</option>
-                      {filterType !== "courses" && (
-                        <optgroup label="Events">
-                          {eventCategories.map((cat) => (
-                            <option key={cat} value={cat}>
-                              {cat}
-                            </option>
-                          ))}
-                        </optgroup>
-                      )}
-                      {filterType !== "events" && (
-                        <>
-                          <optgroup label="Lehrgänge">
-                            {courseCategories.map((cat) => (
-                              <option key={cat} value={cat}>
-                                {cat}
-                              </option>
-                            ))}
-                          </optgroup>
-                        </>
-                      )}
-                    </Select>
-                  </div>
                 </div>
 
-                {/* Darstellung */}
-                <div>
-                  <label className="flex min-h-11 w-full cursor-pointer items-center justify-between gap-3">
-                    <span className="text-ink dark:text-night-text flex items-center gap-2 text-sm font-semibold">
-                      <CalendarRangeIcon
-                        className="text-dark dark:text-night-muted h-4 w-4"
-                        aria-hidden
-                      />
-                      Nach Monaten gruppieren
+                <div className="border-rule dark:border-night-rule mt-4 flex flex-wrap items-center gap-x-8 gap-y-1 border-t pt-2">
+                  <label className="flex min-h-11 cursor-pointer items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={nurOffeneAnmeldung}
+                      onChange={(e) => setNurOffeneAnmeldung(e.target.checked)}
+                      className={CHECKBOX}
+                    />
+                    <span className="semi-condensed text-ink dark:text-night-text text-sm font-semibold">
+                      Nur Angebote mit offener Anmeldung
                     </span>
+                  </label>
+
+                  <label className="flex min-h-11 cursor-pointer items-center gap-3">
                     <input
                       type="checkbox"
                       checked={groupByMonth}
                       onChange={(e) =>
                         setMonthGrouping(e.target.checked ? "on" : "off")
                       }
-                      className="border-ink text-ink dark:border-night-text h-5 w-5 shrink-0 rounded-none"
+                      className={CHECKBOX}
                     />
+                    <span className="semi-condensed text-ink dark:text-night-text flex items-center gap-2 text-sm font-semibold">
+                      <CalendarRangeIcon
+                        className="text-dark dark:text-night-muted h-4 w-4"
+                        aria-hidden
+                      />
+                      Nach Monaten gruppieren
+                    </span>
                   </label>
-                </div>
 
-                {/* Reset Button */}
-                {hasActiveFilters && (
-                  <button
-                    onClick={resetFilters}
-                    className="link-ink text-left text-sm"
-                  >
-                    Filter zurücksetzen
-                  </button>
-                )}
+                  {hasActiveFilters && (
+                    <button
+                      onClick={resetFilters}
+                      className="link-ink ml-auto min-h-11 text-sm"
+                    >
+                      Filter zurücksetzen
+                    </button>
+                  )}
+                </div>
               </div>
             )}
           </div>

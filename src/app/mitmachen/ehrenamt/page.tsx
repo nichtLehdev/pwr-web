@@ -149,28 +149,6 @@ export default function EhrenamtPage() {
         </Split>
       </PageSection>
 
-      <PageSection labelledBy="erfahrungsbericht-heading" rule>
-        <h2 id="erfahrungsbericht-heading" className="sr-only">
-          Erfahrungsbericht
-        </h2>
-        <blockquote className="border-ink dark:border-night-text border-t-2 pt-8">
-          <p className="text-ink dark:text-night-text max-w-[60ch] text-xl leading-relaxed italic sm:text-2xl">
-            „Die Arbeit als Chorleiter erfüllt mich sehr. Es ist wunderbar zu
-            sehen, wie sich die Bläserinnen und Bläser entwickeln und gemeinsam
-            Musik machen. Die Unterstützung durch das Posaunenwerk gibt mir
-            Sicherheit und hilft mir, immer besser zu werden.“
-          </p>
-          <footer className="mt-4">
-            <span className="condensed text-ink dark:text-night-text text-lg leading-tight font-bold not-italic">
-              Michael K.
-            </span>
-            <span className="text-dark dark:text-night-muted ml-2 text-base not-italic">
-              Chorleiter seit 2018
-            </span>
-          </footer>
-        </blockquote>
-      </PageSection>
-
       <ClosingCall
         id="bereit-heading"
         title="Bereit, dich einzubringen?"

@@ -1,6 +1,7 @@
 import ImageWithFallback from "@/app/_components/ui/image-with-fallback";
 import type { RouterOutputs } from "@/trpc/react";
 import MediaCredit from "@/app/_components/general/media-credit";
+import ZoomableImage from "@/app/_components/general/zoomable-image";
 import { Tag } from "@/app/_components/programmheft/tag";
 
 type HistoryEvent = RouterOutputs["organization"]["getHistory"][number];
@@ -62,7 +63,13 @@ export default function HistoryTimeline({ events }: HistoryTimelineProps) {
 
               {event.image ? (
                 <figure className="mt-4 max-w-sm">
-                  <div className="bg-ink dark:bg-night-raised relative aspect-[3/2] overflow-hidden">
+                  <ZoomableImage
+                    src={event.image.url}
+                    alt={event.image.alt || event.title || "Ereignisbild"}
+                    copyright={event.image.copyright}
+                    creator={event.image.creator}
+                    className="bg-ink dark:bg-night-raised aspect-[3/2] w-full overflow-hidden"
+                  >
                     <ImageWithFallback
                       src={event.image.url}
                       alt={event.image.alt || event.title || "Ereignisbild"}
@@ -70,7 +77,7 @@ export default function HistoryTimeline({ events }: HistoryTimelineProps) {
                       sizes="(min-width: 640px) 24rem, 100vw"
                       className="object-cover"
                     />
-                  </div>
+                  </ZoomableImage>
                   <MediaCredit
                     copyright={event.image.copyright}
                     creator={event.image.creator}

@@ -87,7 +87,7 @@ export function SeatShortageNotice({
       <p>
         <strong>Hinweis:</strong> {cause}{" "}
         {participantCount > 1
-          ? `Alle ${participantCount} Teilnehmer kommen auf die Warteliste und werden gemeinsam bestätigt, sobald genug Plätze frei sind.`
+          ? `Alle ${participantCount} Teilnehmer kommen auf die Warteliste und werden gemeinsam bestätigt, wenn genug Plätze frei sind und das Kursteam die Warteliste nachrücken lässt.`
           : "Sie werden auf die Warteliste gesetzt und bei einem freigewordenen Platz benachrichtigt."}
       </p>
     </Note>

@@ -25,6 +25,7 @@ import DownloadPickerModal from "./download-picker-modal";
 import { Button, Input } from "@/app/_components/ui";
 import { cn } from "@/lib/utils";
 import "@/styles/article-content.css";
+import "@/styles/beschreibung.css";
 import {
   Bold,
   Italic,
@@ -51,11 +52,36 @@ import {
   Trash2,
 } from "lucide-react";
 
+/**
+ * Umfang der Schreibfläche.
+ *
+ * - `voll`: Beitragseditor mit Bildern, Downloads, Tabellen, Ausrichtung.
+ * - `beschreibung`: Beschreibungen von Terminen und Kursen. Sie stehen in
+ *   einem Abschnitt einer Seite, deren Kopf schon eine h2 ist, und umfließen
+ *   dort ein Bild — Überschriften beginnen deshalb bei h3, und Bilder,
+ *   Downloads, Tabellen und Ausrichtung gibt es nicht. Ein zweiter Editor
+ *   wäre dieselbe Datei mit weniger Knöpfen gewesen.
+ */
+export type RichTextVariant = "voll" | "beschreibung";
+
 interface RichTextEditorProps {
   content: string;
   onChange: (markdown: string) => void;
   placeholder?: string;
   className?: string;
+  variant?: RichTextVariant;
+  /**
+   * Beschriftung der Schreibfläche. Die Fläche ist kein `input`, ein `label`
+   * mit `htmlFor` greift daran nicht — ohne diese Angabe hätte das Feld für
+   * Screenreader keinen Namen.
+   */
+  ariaLabel?: string;
+  /**
+   * Pflichtfeld. Ein `required` wie am `textarea` gibt es hier nicht; diese
+   * Angabe erhält wenigstens die Ansage („Erforderlich"). Geprüft wird beim
+   * Absenden im Formular, wie bisher.
+   */
+  ariaRequired?: boolean;
   /**
    * Hands the TipTap instance to the caller once it exists, so surrounding UI
    * can insert at the cursor (e.g. the placeholder chips in the course mail
@@ -397,10 +423,12 @@ function Toolbar({
   editor,
   onOpenMediaPicker,
   onOpenDownloadPicker,
+  variant = "voll",
 }: {
   editor: Editor | null;
   onOpenMediaPicker: () => void;
   onOpenDownloadPicker: () => void;
+  variant?: RichTextVariant;
 }) {
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
@@ -441,6 +469,11 @@ function Toolbar({
     setLinkUrl("");
   }, [editor, linkUrl]);
 
+  const voll = variant === "voll";
+  // Die Beschreibung steht unter einem h2 der Seite; ihre erste Stufe ist
+  // deshalb h3. Im Beitrag ist der Titel das h1, dort beginnt sie bei h2.
+  const kopfStufen = voll ? [2, 3, 4] : [3, 4];
+
   const isMarkActive = (markName: string) => {
     if (!editor) return false;
 
@@ -473,45 +506,45 @@ function Toolbar({
       >
         <Italic className="h-4 w-4" />
       </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleUnderline().run()}
-        isActive={isMarkActive("underline")}
-        title="Unterstrichen (Strg+U)"
-      >
-        <UnderlineIcon className="h-4 w-4" />
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleStrike().run()}
-        isActive={isMarkActive("strike")}
-        title="Durchgestrichen"
-      >
-        <Strikethrough className="h-4 w-4" />
-      </ToolbarButton>
+      {voll && (
+        <>
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleUnderline().run()}
+            isActive={isMarkActive("underline")}
+            title="Unterstrichen (Strg+U)"
+          >
+            <UnderlineIcon className="h-4 w-4" />
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleStrike().run()}
+            isActive={isMarkActive("strike")}
+            title="Durchgestrichen"
+          >
+            <Strikethrough className="h-4 w-4" />
+          </ToolbarButton>
+        </>
+      )}
 
       <ToolbarSeparator />
 
-      {/* Headings - Display H1/H2/H3 but use actual levels 2/3/4 */}
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-        isActive={editor.isActive("heading", { level: 2 })}
-        title="Überschrift 1"
-      >
-        <span className="text-sm font-bold">H1</span>
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-        isActive={editor.isActive("heading", { level: 3 })}
-        title="Überschrift 2"
-      >
-        <span className="text-sm font-bold">H2</span>
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleHeading({ level: 4 }).run()}
-        isActive={editor.isActive("heading", { level: 4 })}
-        title="Überschrift 3"
-      >
-        <span className="text-sm font-bold">H3</span>
-      </ToolbarButton>
+      {/* Überschriften: Der Knopf zählt ab 1, die Stufe richtet sich nach der
+          Seite (siehe `kopfStufen`). */}
+      {kopfStufen.map((level, index) => (
+        <ToolbarButton
+          key={level}
+          onClick={() =>
+            editor
+              .chain()
+              .focus()
+              .toggleHeading({ level: level as 2 | 3 | 4 })
+              .run()
+          }
+          isActive={editor.isActive("heading", { level })}
+          title={`Überschrift ${index + 1}`}
+        >
+          <span className="text-sm font-bold">H{index + 1}</span>
+        </ToolbarButton>
+      ))}
 
       <ToolbarSeparator />
 
@@ -531,52 +564,56 @@ function Toolbar({
         <ListOrdered className="h-4 w-4" />
       </ToolbarButton>
 
-      <ToolbarSeparator />
+      {voll && (
+        <>
+          <ToolbarSeparator />
 
-      {/* Text alignment */}
-      <ToolbarButton
-        onClick={() => editor.chain().focus().setTextAlign("left").run()}
-        isActive={
-          editor.isActive({ textAlign: "left" }) ||
-          (!editor.isActive({ textAlign: "center" }) &&
-            !editor.isActive({ textAlign: "right" }) &&
-            !editor.isActive({ textAlign: "justify" }))
-        }
-        title="Linksbündig"
-      >
-        <AlignLeft className="h-4 w-4" />
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor.chain().focus().setTextAlign("center").run()}
-        isActive={editor.isActive({ textAlign: "center" })}
-        title="Zentriert"
-      >
-        <AlignCenter className="h-4 w-4" />
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor.chain().focus().setTextAlign("right").run()}
-        isActive={editor.isActive({ textAlign: "right" })}
-        title="Rechtsbündig"
-      >
-        <AlignRight className="h-4 w-4" />
-      </ToolbarButton>
+          {/* Text alignment */}
+          <ToolbarButton
+            onClick={() => editor.chain().focus().setTextAlign("left").run()}
+            isActive={
+              editor.isActive({ textAlign: "left" }) ||
+              (!editor.isActive({ textAlign: "center" }) &&
+                !editor.isActive({ textAlign: "right" }) &&
+                !editor.isActive({ textAlign: "justify" }))
+            }
+            title="Linksbündig"
+          >
+            <AlignLeft className="h-4 w-4" />
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={() => editor.chain().focus().setTextAlign("center").run()}
+            isActive={editor.isActive({ textAlign: "center" })}
+            title="Zentriert"
+          >
+            <AlignCenter className="h-4 w-4" />
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={() => editor.chain().focus().setTextAlign("right").run()}
+            isActive={editor.isActive({ textAlign: "right" })}
+            title="Rechtsbündig"
+          >
+            <AlignRight className="h-4 w-4" />
+          </ToolbarButton>
 
-      <ToolbarSeparator />
+          <ToolbarSeparator />
 
-      {/* Block elements */}
-      <ToolbarButton
-        onClick={() => editor.chain().focus().toggleBlockquote().run()}
-        isActive={editor.isActive("blockquote")}
-        title="Zitat"
-      >
-        <Quote className="h-4 w-4" />
-      </ToolbarButton>
-      <ToolbarButton
-        onClick={() => editor.chain().focus().setHorizontalRule().run()}
-        title="Horizontale Linie"
-      >
-        <div className="h-4 w-4 border-t-2 border-current" />
-      </ToolbarButton>
+          {/* Block elements */}
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleBlockquote().run()}
+            isActive={editor.isActive("blockquote")}
+            title="Zitat"
+          >
+            <Quote className="h-4 w-4" />
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={() => editor.chain().focus().setHorizontalRule().run()}
+            title="Horizontale Linie"
+          >
+            <div className="h-4 w-4 border-t-2 border-current" />
+          </ToolbarButton>
+        </>
+      )}
 
       <ToolbarSeparator />
 
@@ -625,64 +662,70 @@ function Toolbar({
       </div>
 
       {/* Image - opens modal */}
-      <ToolbarButton onClick={onOpenMediaPicker} title="Bild einfügen">
-        <ImageIcon className="h-4 w-4" />
-      </ToolbarButton>
+      {voll && (
+        <ToolbarButton onClick={onOpenMediaPicker} title="Bild einfügen">
+          <ImageIcon className="h-4 w-4" />
+        </ToolbarButton>
+      )}
 
       {/* Download - opens modal */}
-      <ToolbarButton onClick={onOpenDownloadPicker} title="Download einfügen">
-        <FileText className="h-4 w-4" />
-      </ToolbarButton>
+      {voll && (
+        <ToolbarButton onClick={onOpenDownloadPicker} title="Download einfügen">
+          <FileText className="h-4 w-4" />
+        </ToolbarButton>
+      )}
 
       {/* Table dropdown */}
-      <div className="relative">
-        <ToolbarButton
-          onClick={() => setShowTableMenu(!showTableMenu)}
-          isActive={editor.isActive("table")}
-          title="Tabelle"
-        >
-          <TableIcon className="h-4 w-4" />
-        </ToolbarButton>
-        {showTableMenu && (
-          <div className="border-ink bg-paper dark:border-night-text dark:bg-night-raised absolute top-full left-0 z-50 mt-1 min-w-48 border-2 p-1">
-            <button
-              type="button"
-              onClick={() => {
-                editor
-                  .chain()
-                  .focus()
-                  .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
-                  .run();
-                setShowTableMenu(false);
-              }}
-              disabled={editor.isActive("table")}
-              className="text-ink hover:bg-rule/60 dark:text-night-text dark:hover:bg-night-rule flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Plus className="h-4 w-4" />
-              Tabelle einfügen (3×3)
-            </button>
-            {editor.isActive("table") && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => {
-                    editor.chain().focus().deleteTable().run();
-                    setShowTableMenu(false);
-                  }}
-                  className="hover:bg-rule/60 dark:hover:bg-night-rule flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-700 transition-colors dark:text-red-400"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Tabelle löschen
-                </button>
-                <div className="bg-rule dark:bg-night-rule my-1 h-px" />
-                <p className="text-dark dark:text-night-muted px-3 py-1.5 text-xs">
-                  Rechtsklick auf Zelle für weitere Optionen
-                </p>
-              </>
-            )}
-          </div>
-        )}
-      </div>
+      {voll && (
+        <div className="relative">
+          <ToolbarButton
+            onClick={() => setShowTableMenu(!showTableMenu)}
+            isActive={editor.isActive("table")}
+            title="Tabelle"
+          >
+            <TableIcon className="h-4 w-4" />
+          </ToolbarButton>
+          {showTableMenu && (
+            <div className="border-ink bg-paper dark:border-night-text dark:bg-night-raised absolute top-full left-0 z-50 mt-1 min-w-48 border-2 p-1">
+              <button
+                type="button"
+                onClick={() => {
+                  editor
+                    .chain()
+                    .focus()
+                    .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+                    .run();
+                  setShowTableMenu(false);
+                }}
+                disabled={editor.isActive("table")}
+                className="text-ink hover:bg-rule/60 dark:text-night-text dark:hover:bg-night-rule flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Plus className="h-4 w-4" />
+                Tabelle einfügen (3×3)
+              </button>
+              {editor.isActive("table") && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      editor.chain().focus().deleteTable().run();
+                      setShowTableMenu(false);
+                    }}
+                    className="hover:bg-rule/60 dark:hover:bg-night-rule flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-700 transition-colors dark:text-red-400"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Tabelle löschen
+                  </button>
+                  <div className="bg-rule dark:bg-night-rule my-1 h-px" />
+                  <p className="text-dark dark:text-night-muted px-3 py-1.5 text-xs">
+                    Rechtsklick auf Zelle für weitere Optionen
+                  </p>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       <ToolbarSeparator />
 
@@ -711,7 +754,11 @@ export default function RichTextEditor({
   placeholder = "Schreiben Sie hier Ihren Text...",
   className = "",
   onEditorReady,
+  variant = "voll",
+  ariaLabel,
+  ariaRequired,
 }: RichTextEditorProps) {
+  const voll = variant === "voll";
   const isInitialized = useRef(false);
   const [showMediaPicker, setShowMediaPicker] = useState(false);
   const [showDownloadPicker, setShowDownloadPicker] = useState(false);
@@ -725,8 +772,10 @@ export default function RichTextEditor({
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
+        // Beschreibungen stehen unter der h2 ihres Abschnitts (siehe
+        // `RichTextVariant`); h2 wäre dort eine zweite Seitenüberschrift.
         heading: {
-          levels: [2, 3, 4],
+          levels: voll ? [2, 3, 4] : [3, 4],
         },
       }),
       // Ohne eigene Klasse: Links gestaltet article-content.css — Brauntinte
@@ -738,39 +787,56 @@ export default function RichTextEditor({
       Link.configure({
         openOnClick: false,
       }),
-      // Statt des schlichten Image: Breite und Ausrichtung als Klassen, mit
-      // einrastenden Ziehgriffen. Die alte Klasse `max-w-full rounded-lg`
-      // entfaellt — Bilder gestaltet jetzt article-content.css, und Rundungen
-      // gibt es im Programmheft nicht.
-      ArtikelBild,
       Placeholder.configure({
         placeholder,
       }),
-      Underline,
-      TextAlign.configure({
-        types: ["heading", "paragraph"],
-        defaultAlignment: "left",
-      }),
-      // Breite, Linienmodell und Abstand der Tabelle stehen ebenfalls im
-      // Stylesheet — die Klasse hier war doppelt gemoppelt. `resizable`
-      // bleibt: Das ist Verhalten, keine Gestaltung.
-      Table.configure({
-        resizable: true,
-      }),
-      TableRow,
-      // Ohne eigene Klassen: Tabellenlinien und Kopfzeile bestimmt
-      // article-content.css — in der Schreibflaeche und im veroeffentlichten
-      // Beitrag gleichermassen, weil beide dieselbe Datei nutzen. Die
-      // Grautoene hier waren sichtbar wirkungslos (das Stylesheet ueberstimmt
-      // sie), schrieben sich aber als tote Klassen in jeden neuen Beitrag.
-      TableCell,
-      TableHeader,
+      // Alles Folgende schreibt Auszeichnung, die eine Beschreibung nicht
+      // kennt: Bilder, Ausrichtung, Unterstreichung und Tabellen. Die Knöpfe
+      // dazu fehlen in der schlanken Werkzeugleiste ohnehin; ohne die
+      // Erweiterungen kann auch eingefügter Text sie nicht mitbringen.
+      ...(voll
+        ? [
+            // Statt des schlichten Image: Breite und Ausrichtung als Klassen,
+            // mit einrastenden Ziehgriffen. Die alte Klasse `max-w-full
+            // rounded-lg` entfaellt — Bilder gestaltet jetzt
+            // article-content.css, und Rundungen gibt es im Programmheft
+            // nicht.
+            ArtikelBild,
+            Underline,
+            TextAlign.configure({
+              types: ["heading", "paragraph"],
+              defaultAlignment: "left",
+            }),
+            // Breite, Linienmodell und Abstand der Tabelle stehen ebenfalls im
+            // Stylesheet — die Klasse hier war doppelt gemoppelt. `resizable`
+            // bleibt: Das ist Verhalten, keine Gestaltung.
+            Table.configure({
+              resizable: true,
+            }),
+            TableRow,
+            // Ohne eigene Klassen: Tabellenlinien und Kopfzeile bestimmt
+            // article-content.css — in der Schreibflaeche und im
+            // veroeffentlichten Beitrag gleichermassen, weil beide dieselbe
+            // Datei nutzen. Die Grautoene hier waren sichtbar wirkungslos (das
+            // Stylesheet ueberstimmt sie), schrieben sich aber als tote
+            // Klassen in jeden neuen Beitrag.
+            TableCell,
+            TableHeader,
+          ]
+        : []),
     ],
     content: initialHtml,
     immediatelyRender: false,
     editorProps: {
       attributes: {
-        class: "article-content p-4 min-h-[300px] focus:outline-none",
+        // Dieselbe Satzgestaltung wie in der Anzeige: Der Beitrag nutzt
+        // article-content.css, die Beschreibung beschreibung.css. Geschrieben
+        // wird, was später auf der Seite steht.
+        class: voll
+          ? "article-content p-4 min-h-[300px] focus:outline-none"
+          : "beschreibung p-4 min-h-[180px] focus:outline-none",
+        ...(ariaLabel ? { "aria-label": ariaLabel } : {}),
+        ...(ariaRequired ? { "aria-required": "true" } : {}),
       },
     },
     onUpdate: ({ editor }) => {
@@ -850,6 +916,7 @@ export default function RichTextEditor({
           editor={editor}
           onOpenMediaPicker={() => setShowMediaPicker(true)}
           onOpenDownloadPicker={() => setShowDownloadPicker(true)}
+          variant={variant}
         />
         <div
           className="text-ink dark:text-night-text"
@@ -867,19 +934,22 @@ export default function RichTextEditor({
         />
       )}
 
-      {/* Media Picker Modal */}
-      <MediaPickerModal
-        isOpen={showMediaPicker}
-        onClose={() => setShowMediaPicker(false)}
-        onSelect={handleImageSelect}
-      />
+      {/* Bild- und Download-Auswahl gibt es nur im Beitragseditor. */}
+      {voll && (
+        <>
+          <MediaPickerModal
+            isOpen={showMediaPicker}
+            onClose={() => setShowMediaPicker(false)}
+            onSelect={handleImageSelect}
+          />
 
-      {/* Download Picker Modal */}
-      <DownloadPickerModal
-        isOpen={showDownloadPicker}
-        onClose={() => setShowDownloadPicker(false)}
-        onSelect={handleDownloadSelect}
-      />
+          <DownloadPickerModal
+            isOpen={showDownloadPicker}
+            onClose={() => setShowDownloadPicker(false)}
+            onSelect={handleDownloadSelect}
+          />
+        </>
+      )}
     </>
   );
 }
