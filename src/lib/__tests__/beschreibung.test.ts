@@ -12,19 +12,32 @@ import {
  * Text meinen — deshalb prüft der letzte Block sie gegeneinander.
  */
 
-/** Grobes Abräumen der Tags, nur für den Vergleich der beiden Enden. */
+const TEST_ENTITIES: Record<string, string> = {
+  "&amp;": "&",
+  "&lt;": "<",
+  "&gt;": ">",
+  "&quot;": '"',
+  "&#39;": "'",
+};
+
+/**
+ * Grobes Abräumen der Tags, nur für den Vergleich der beiden Enden. Tags bis
+ * zur Ruhe, Entitäten in einem Durchgang — dieselben Regeln wie im Helfer,
+ * sonst meldet CodeQL auch hier unvollständiges Abräumen.
+ */
 function htmlZuText(html: string): string {
-  return html
+  let text = html
     .replace(/>\n+</g, "><")
     .replace(/<br\s*\/?>/g, "\n")
     .replace(/<\/li>/g, "\n")
-    .replace(/<\/(p|h[1-6]|ul|ol|blockquote)>/g, "\n\n")
-    .replace(/<[^>]+>/g, "")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
+    .replace(/<\/(p|h[1-6]|ul|ol|blockquote)>/g, "\n\n");
+  let vorher: string;
+  do {
+    vorher = text;
+    text = text.replace(/<[^<>]+>/g, "");
+  } while (text !== vorher);
+  return text
+    .replace(/&(?:amp|lt|gt|quot|#39);/g, (e) => TEST_ENTITIES[e] ?? e)
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
@@ -171,5 +184,36 @@ describe("Klartext und Darstellung sagen dasselbe", () => {
     expect(markdownToPlainText(markdown)).toBe(
       htmlZuText(descriptionToHtml(markdown)),
     );
+  });
+});
+
+/**
+ * CodeQL meldete, dass ein einzelner Durchgang Tags neu zusammensetzen kann
+ * und Entitäten nach dem Abräumen wieder Tags ergeben. Klartext wird nirgends
+ * ausgeführt, soll aber von sich aus frei von Tags sein.
+ */
+describe("markdownToPlainText — keine Tags im Ergebnis", () => {
+  const ohneSkript = (eingabe: string) =>
+    expect(markdownToPlainText(eingabe).toLowerCase()).not.toContain("<script");
+
+  it("setzt beim Abräumen kein neues Tag zusammen", () => {
+    ohneSkript("<<b>script>alert(1)<</b>/script>");
+    ohneSkript("<scr<script>x</script>ipt>alert(1)</script>");
+    ohneSkript("<<script>script>alert(1)<</script>/script>");
+  });
+
+  it("lässt aus Entitäten keine Tags entstehen", () => {
+    ohneSkript("&lt;script&gt;alert(1)&lt;/script&gt;");
+    expect(markdownToPlainText("&lt;b&gt;fett&lt;/b&gt;")).toBe("fett");
+  });
+
+  it("entschlüsselt Entitäten nur einmal", () => {
+    expect(markdownToPlainText("&amp;lt;")).toBe("&lt;");
+    expect(markdownToPlainText("Bläser &amp; Chor")).toBe("Bläser & Chor");
+  });
+
+  it("lässt spitze Klammern im Text stehen", () => {
+    expect(markdownToPlainText("Kinder <10 Jahre")).toBe("Kinder <10 Jahre");
+    expect(markdownToPlainText("a < b und c > d")).toBe("a < b und c > d");
   });
 });
