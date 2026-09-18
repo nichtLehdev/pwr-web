@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import { AlertCircle, Save, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -34,6 +35,12 @@ interface ParticipantCardProps {
   /** Only offered to signed-in registrants, who have a participant library. */
   onSaveToLibrary?: () => void;
   saveToLibraryPending?: boolean;
+  /**
+   * Schlüssel (`data-focus-key`) des Bearbeiten-Knopfs, damit das Formular
+   * den Fokus nach dem Schließen des Fensters oder bei fehlenden Angaben
+   * hierher zurückholen kann.
+   */
+  focusKey?: string;
 }
 
 /**
@@ -58,7 +65,9 @@ export function ParticipantCard({
   children,
   onSaveToLibrary,
   saveToLibraryPending,
+  focusKey,
 }: ParticipantCardProps) {
+  const errorId = useId();
   const isInGroup = siblingGroupSize > 1;
   const hasError = !!validationError;
 
@@ -90,9 +99,11 @@ export function ParticipantCard({
     !!participant.birthDate;
 
   const hasActions = !!onSaveToLibrary || !!onRemove;
+  // Rechts Platz für die 44px-Knöpfe (6px Rand), damit der Name nicht
+  // darunter läuft.
   const summaryLayout = cn(
     "flex w-full items-start gap-3 p-4 text-left",
-    hasActions && (onSaveToLibrary ? "pr-[5.5rem]" : "pr-14"),
+    hasActions && (onSaveToLibrary ? "pr-24" : "pr-14"),
   );
 
   const summary = (
@@ -161,7 +172,11 @@ export function ParticipantCard({
         <button
           type="button"
           onClick={onEdit}
+          data-focus-key={focusKey}
           aria-label={`Teilnehmer ${index + 1}${fullName ? ` — ${fullName}` : ""} bearbeiten`}
+          // Der Name aus aria-label überdeckt den Inhalt — „Angaben fehlen“
+          // wäre sonst nicht zu hören.
+          aria-describedby={hasError ? errorId : undefined}
           className={summaryLayout}
         >
           {summary}
@@ -173,8 +188,17 @@ export function ParticipantCard({
       {/* Outside the button: nesting these would be invalid markup and would
           swallow taps meant for the card. Pinned to the name's line so the
           card has one right-hand cluster instead of three loose elements. */}
+      {hasError ? (
+        <span id={errorId} className="sr-only">
+          {validationError}
+        </span>
+      ) : null}
+
+      {/* 44px Trefferfläche bei gleicher Symbolgröße; der Rand ist um die
+          Hälfte des Zuwachses kleiner, damit die Symbole dort bleiben, wo sie
+          waren. */}
       {hasActions ? (
-        <div className="absolute top-2.5 right-2.5 flex items-center gap-0.5">
+        <div className="absolute top-1.5 right-1.5 flex items-center">
           {onSaveToLibrary ? (
             <button
               type="button"
@@ -182,7 +206,7 @@ export function ParticipantCard({
               disabled={!canSaveToLibrary || saveToLibraryPending}
               title="Teilnehmer in Bibliothek speichern"
               aria-label="Teilnehmer in Bibliothek speichern"
-              className="text-dark hover:bg-ink hover:text-paper dark:text-night-muted dark:hover:bg-night-text dark:hover:text-night flex h-9 w-9 items-center justify-center transition-colors disabled:opacity-40"
+              className="text-dark hover:bg-ink hover:text-paper dark:text-night-muted dark:hover:bg-night-text dark:hover:text-night flex h-11 w-11 items-center justify-center transition-colors disabled:opacity-40"
             >
               <Save className="h-4 w-4" aria-hidden />
             </button>
@@ -198,7 +222,7 @@ export function ParticipantCard({
                   : "Mindestens ein Teilnehmer muss bleiben"
               }
               aria-label={`Teilnehmer ${index + 1} entfernen`}
-              className="hover:text-paper dark:hover:text-night flex h-9 w-9 items-center justify-center text-red-700 transition-colors hover:bg-red-700 disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-red-700 dark:text-red-400 dark:hover:bg-red-400 dark:disabled:hover:text-red-400"
+              className="hover:text-paper dark:hover:text-night flex h-11 w-11 items-center justify-center text-red-700 transition-colors hover:bg-red-700 disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-red-700 dark:text-red-400 dark:hover:bg-red-400 dark:disabled:hover:text-red-400"
             >
               <Trash2 className="h-4 w-4" aria-hidden />
             </button>

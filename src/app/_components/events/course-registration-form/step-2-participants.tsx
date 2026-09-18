@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BookOpen, UserIcon, Plus, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { RouterOutputs } from "@/trpc/react";
@@ -17,6 +17,7 @@ import {
   priceOptionAgeReferenceDate,
 } from "@/lib/course-price-option-age";
 import { formatEuro } from "@/lib/invoice-document";
+import { isPriceOptionFullFor } from "@/lib/registration-seat-shortage";
 import { Checkbox } from "@/app/_components/programmheft/field";
 import { Heading } from "@/app/_components/programmheft/section-head";
 import { Note } from "@/app/_components/programmheft/note";
@@ -54,7 +55,17 @@ interface Step2ParticipantsProps {
    * whose age limits they fall outside of.
    */
   staffMode?: boolean;
+  /** Sprungziel für den Fokus beim Wechsel in diesen Schritt. */
+  headingId: string;
+  /** Restplätze je Preiskategorie, um ausgebuchte zu kennzeichnen. */
+  capacityByPriceOption?: Record<string, number> | null;
 }
+
+/** Schlüssel (`data-focus-key`) des oberen „Hinzufügen“. */
+export const ADD_PARTICIPANT_FOCUS_KEY = "add-participant";
+
+/** Schlüssel (`data-focus-key`) der Karte eines Teilnehmers. */
+export const participantFocusKey = (index: number) => `participant-${index}`;
 
 export function Step2Participants({
   course,
@@ -70,6 +81,8 @@ export function Step2Participants({
   groupIdCounterRef,
   siblingDiscountError,
   staffMode = false,
+  headingId,
+  capacityByPriceOption,
 }: Step2ParticipantsProps) {
   /**
    * Die Preiskategorie, die zu diesem Geburtsdatum passt. Bleibt genau eine
@@ -97,8 +110,35 @@ export function Step2Participants({
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   /** Set once "Fertig" is pressed on an incomplete participant. */
   const [doneAttempted, setDoneAttempted] = useState(false);
+  /** Zählt jedes gescheiterte „Fertig“ — der Fokus springt dann ins Feld. */
+  const [doneFailures, setDoneFailures] = useState(0);
   /** Which of the two action groups the library popup belongs to. */
   const [libraryAnchor, setLibraryAnchor] = useState<LibraryAnchor>("top");
+
+  const rootRef = useRef<HTMLDivElement>(null);
+  /**
+   * Wohin der Fokus nach dem Schließen des Fensters zurückkehrt: zum
+   * auslösenden Knopf, und ist der verschwunden (das „Hinzufügen“ der leeren
+   * Liste), zum gleichwertigen Knopf über der Liste. Vorher landete der Fokus
+   * nach Escape, „Fertig“ oder dem Schließen auf `BODY`.
+   */
+  const sheetReturn = useRef<{
+    element: HTMLElement | null;
+    key: string;
+  } | null>(null);
+  /** Fokus, der nach dem nächsten Rendern gesetzt wird. */
+  const pendingFocus = useRef<(() => void) | null>(null);
+
+  const focusByKey = (key: string) =>
+    rootRef.current
+      ?.querySelector<HTMLElement>(`[data-focus-key="${key}"]`)
+      ?.focus();
+
+  useEffect(() => {
+    const run = pendingFocus.current;
+    pendingFocus.current = null;
+    run?.();
+  });
 
   const toggleParticipantLibrary = (anchor: LibraryAnchor) => {
     if (showParticipantLibrary && libraryAnchor === anchor) {
@@ -109,7 +149,30 @@ export function Step2Participants({
     setShowParticipantLibrary(true);
   };
 
-  const openParticipant = (index: number | null) => {
+  const openParticipant = (
+    index: number | null,
+    returnKey: string = index === null ? "" : participantFocusKey(index),
+  ) => {
+    if (index !== null) {
+      // Safari fokussiert angeklickte Knöpfe nicht, sondern den nächsten
+      // fokussierbaren Vorfahren (`main`) — nur ein Element aus dieser Liste
+      // taugt als Rückweg, sonst bleibt der Schlüssel.
+      const active = document.activeElement;
+      sheetReturn.current = {
+        element:
+          active instanceof HTMLElement && rootRef.current?.contains(active)
+            ? active
+            : null,
+        key: returnKey,
+      };
+    } else if (editingIndex !== null && sheetReturn.current) {
+      const { element, key } = sheetReturn.current;
+      sheetReturn.current = null;
+      pendingFocus.current = () => {
+        if (element?.isConnected) element.focus();
+        else focusByKey(key);
+      };
+    }
     setEditingIndex(index);
     setDoneAttempted(false);
   };
@@ -122,6 +185,7 @@ export function Step2Participants({
   const finishEditing = () => {
     if (editingIndex !== null && validationErrors[editingIndex]) {
       setDoneAttempted(true);
+      setDoneFailures((n) => n + 1);
       return;
     }
     openParticipant(null);
@@ -157,7 +221,10 @@ export function Step2Participants({
     });
     // A blank card has nothing to read, so go straight to the fields. The
     // prefilled routes below don't, since their card already says who it is.
-    openParticipant(registrationData.participants.length);
+    openParticipant(
+      registrationData.participants.length,
+      ADD_PARTICIPANT_FOCUS_KEY,
+    );
   };
 
   const addMyselfAsParticipant = () => {
@@ -253,6 +320,15 @@ export function Step2Participants({
     // Removing shifts every later index, which would leave the sheet pointing
     // at the wrong participant.
     openParticipant(null);
+    const remaining = registrationData.participants.length - 1;
+    // Der Entfernen-Knopf verschwindet mit der Karte; der Fokus geht zur
+    // Karte, die nachrückt, sonst zur vorigen, sonst zu „Hinzufügen“.
+    pendingFocus.current = () =>
+      focusByKey(
+        remaining > 0
+          ? participantFocusKey(Math.min(index, remaining - 1))
+          : ADD_PARTICIPANT_FOCUS_KEY,
+      );
     setRegistrationData({
       ...registrationData,
       participants: registrationData.participants.filter((_, i) => i !== index),
@@ -341,7 +417,7 @@ export function Step2Participants({
   const ADD_BUTTON_GROUP =
     "grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center";
   const ADD_BUTTON_BASE =
-    "semi-condensed inline-flex h-10 w-full items-center justify-center gap-1.5 px-3 text-xs font-semibold transition-colors sm:w-auto sm:gap-2 sm:px-4 sm:text-sm";
+    "semi-condensed inline-flex h-11 w-full items-center justify-center gap-1.5 px-3 text-xs font-semibold transition-colors sm:w-auto sm:gap-2 sm:px-4 sm:text-sm";
   const ADD_BUTTON_SECONDARY =
     "border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night border-2";
 
@@ -383,6 +459,9 @@ export function Step2Participants({
       <button
         type="button"
         onClick={addParticipant}
+        data-focus-key={
+          anchor === "top" ? ADD_PARTICIPANT_FOCUS_KEY : undefined
+        }
         className={cn(
           ADD_BUTTON_BASE,
           "bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-primary dark:text-ink dark:hover:bg-paper col-span-2",
@@ -413,14 +492,38 @@ export function Step2Participants({
     );
   }
 
+  /**
+   * Ausgebucht für die Person im Fenster — die übrigen Personen dieser
+   * Anmeldung in derselben Kategorie zählen mit. Gekennzeichnet wie auf der
+   * Bearbeiten-Seite; gesperrt nur, wo der Server ablehnen würde: ohne
+   * Warteliste. Mit Warteliste kommt die Anmeldung darauf, und das Kursteam
+   * darf überbuchen.
+   */
+  const priceOptionFull = (optionId: string) =>
+    editingIndex !== null &&
+    isPriceOptionFullFor({
+      priceOptionId: optionId,
+      otherParticipantPriceOptionIds: registrationData.participants
+        .filter((_, i) => i !== editingIndex)
+        .map((p) => p.priceOptionId),
+      priceOptions: course.priceOptions,
+      capacityByPriceOption,
+    });
+
   return (
-    <div className="flex flex-col">
+    <div ref={rootRef} className="flex flex-col">
       {/* Actions live in the header, like the edit page. They used to sit in a
           bordered "Weitere Teilnehmer" panel wedged between the description
           and the list — a box and a heading around what is really one button. */}
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <Heading as="h3" size="list" className="text-lg sm:text-[1.375rem]">
+          <Heading
+            as="h3"
+            size="list"
+            id={headingId}
+            tabIndex={-1}
+            className="text-lg sm:text-[1.375rem]"
+          >
             Teilnehmer
             {hasParticipants
               ? ` (${registrationData.participants.length})`
@@ -472,6 +575,7 @@ export function Step2Participants({
                 siblingGroupSize={siblingGroupSize(index)}
                 onEdit={() => openParticipant(index)}
                 onRemove={() => removeParticipant(index)}
+                focusKey={participantFocusKey(index)}
                 onSaveToLibrary={
                   currentUser ? () => saveParticipant(index) : undefined
                 }
@@ -554,9 +658,16 @@ export function Step2Participants({
             priceOptions={course.priceOptions}
             customFields={course.customFields ?? []}
             priceOptionField={{
+              isOptionDisabled: (optionId) =>
+                !staffMode &&
+                !course.allowWaitingList &&
+                priceOptionFull(optionId),
+              getOptionSuffix: (optionId) =>
+                priceOptionFull(optionId) ? " (ausgebucht)" : "",
               ageReferenceDate: course.startDate,
               allowAgeMismatch: staffMode,
             }}
+            focusProblemSignal={doneFailures}
             participant={editingParticipant}
             onChange={(field, value) =>
               updateParticipant(editingIndex, field, value)

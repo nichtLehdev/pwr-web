@@ -101,6 +101,160 @@ export function getParticipantDisplayName(
   return `${firstName} ${firstLetter}.`;
 }
 
+/**
+ * Etwas, das einem Schritt noch fehlt. Der gesperrte Weiter-Knopf sagte
+ * früher nur „geht nicht“; jetzt nennt das Formular, was fehlt, markiert das
+ * Feld und springt hinein.
+ */
+export interface FormProblem {
+  /** Schlüssel des Feldes (`data-focus-key`), in das der Fokus springt. */
+  field: string;
+  /** Kurzform für die Sammelmeldung am Weiter-Knopf („Noch offen: …“). */
+  label: string;
+  /** Meldung direkt am Feld. */
+  message: string;
+}
+
+export const EMAIL_HINT =
+  "Bitte eine gültige E-Mail-Adresse eingeben, z. B. max@example.com";
+
+/** Sammelmeldung am Weiter-Knopf aus den Kurzformen, in Feldreihenfolge. */
+export function problemSummary(problems: readonly FormProblem[]): string {
+  return `Noch offen: ${problems.map((p) => p.label).join(", ")}.`;
+}
+
+/**
+ * Was in Schritt 1 fehlt oder nicht stimmt, in der Reihenfolge der Felder.
+ * Dieselben Regeln, nach denen der Schritt als vollständig gilt.
+ */
+export function registrantProblems(
+  registrationData: RegistrationData,
+  /** Siehe {@link validateStep}: Telefon und Adresse sind hier optional. */
+  staffMode = false,
+): FormProblem[] {
+  const problems: FormProblem[] = [];
+  const missing = (field: string, label: string, message: string) =>
+    problems.push({ field, label, message });
+  const d = registrationData;
+
+  if (!d.registrantFirstName)
+    missing("registrantFirstName", "Vorname", "Bitte Vornamen angeben.");
+  if (!d.registrantLastName)
+    missing("registrantLastName", "Nachname", "Bitte Nachnamen angeben.");
+  // Das Format gehört hierher, nicht erst zum Absenden: eine Adresse mit
+  // Tippfehler kam sonst durch Schritt 1 und 2 und scheiterte erst am
+  // Server — drei Schritte entfernt von dem Feld, um das es geht.
+  if (!d.registrantEmail)
+    missing("registrantEmail", "E-Mail", "Bitte E-Mail-Adresse angeben.");
+  else if (!isPlausibleEmail(d.registrantEmail))
+    missing("registrantEmail", "gültige E-Mail-Adresse", EMAIL_HINT);
+  if (!staffMode && !d.registrantPhone)
+    missing("registrantPhone", "Telefon", "Bitte Telefonnummer angeben.");
+
+  // Mit abweichender Rechnungsadresse zählt deren Anschrift, sonst die
+  // eigene — für das Kursteam ist die eigene optional.
+  if (d.useSeparateBilling) {
+    if (!d.billingStreet)
+      missing(
+        "billingStreet",
+        "Straße und Hausnummer der Rechnungsadresse",
+        "Bitte Straße und Hausnummer angeben.",
+      );
+    if (!d.billingZipCode)
+      missing(
+        "billingZipCode",
+        "PLZ der Rechnungsadresse",
+        "Bitte Postleitzahl angeben.",
+      );
+    if (!d.billingCity)
+      missing(
+        "billingCity",
+        "Stadt der Rechnungsadresse",
+        "Bitte Stadt angeben.",
+      );
+    // Optional — wenn aber ausgefüllt, prüft der Server sie genauso.
+    if (d.billingEmail && !isPlausibleEmail(d.billingEmail))
+      missing("billingEmail", "gültige E-Mail für die Rechnung", EMAIL_HINT);
+  } else if (!staffMode) {
+    if (!d.registrantStreet)
+      missing(
+        "registrantStreet",
+        "Straße und Hausnummer",
+        "Bitte Straße und Hausnummer angeben.",
+      );
+    if (!d.registrantZipCode)
+      missing("registrantZipCode", "PLZ", "Bitte Postleitzahl angeben.");
+    if (!d.registrantCity)
+      missing("registrantCity", "Ort", "Bitte Ort angeben.");
+  }
+  return problems;
+}
+
+/**
+ * Was in der Übersicht vor dem Absenden noch fehlt: Zahlungsweise,
+ * Bestätigung der Anzahlung und Zustimmung, in dieser Reihenfolge auf der
+ * Seite.
+ */
+export function summaryProblems(
+  registrationData: RegistrationData,
+  course: CourseWithRelations,
+  {
+    termsAccepted = false,
+    staffMode = false,
+    downPaymentAcknowledged = false,
+  }: {
+    termsAccepted?: boolean;
+    staffMode?: boolean;
+    downPaymentAcknowledged?: boolean;
+  },
+): FormProblem[] {
+  const problems: FormProblem[] = [];
+  if (
+    registrationNeedsPaymentMethod(course) &&
+    courseRequiresPaymentMethodChoice(course)
+  ) {
+    const pm = registrationData.paymentMethod as
+      CoursePaymentMethod | undefined;
+    if (pm !== "CASH" && pm !== "INVOICE") {
+      problems.push({
+        field: "paymentMethod",
+        label: "Zahlungsweise",
+        message: "Bitte wählen Sie eine Zahlungsweise.",
+      });
+    }
+  }
+  // Nur bei der öffentlichen Anmeldung und nur, wenn überhaupt eine
+  // Anzahlung fällig wird.
+  if (
+    !staffMode &&
+    !downPaymentAcknowledged &&
+    calculateDownPayment(registrationData, course) !== null
+  ) {
+    problems.push({
+      field: "downPaymentAcknowledged",
+      label: "Bestätigung zur Anzahlung",
+      message: "Bitte bestätigen Sie die Angaben zur Anzahlung.",
+    });
+  }
+  if (!termsAccepted) {
+    problems.push(
+      staffMode
+        ? {
+            field: "termsAccepted",
+            label: "Zustimmung des Anmelders",
+            message: "Bitte bestätigen Sie, dass der Anmelder zugestimmt hat.",
+          }
+        : {
+            field: "termsAccepted",
+            label: "Zustimmung zu AGB und Datenschutzerklärung",
+            message:
+              "Bitte stimmen Sie den Allgemeinen Geschäftsbedingungen und der Datenschutzerklärung zu.",
+          },
+    );
+  }
+  return problems;
+}
+
 export function validateStep(
   step: 1 | 2 | 3,
   registrationData: RegistrationData,
@@ -121,43 +275,7 @@ export function validateStep(
 ): boolean {
   switch (step) {
     case 1:
-      const {
-        registrantFirstName,
-        registrantLastName,
-        registrantEmail,
-        registrantPhone,
-        registrantStreet,
-        registrantZipCode,
-        registrantCity,
-      } = registrationData;
-
-      // Das Format gehört hierher, nicht erst zum Absenden: eine Adresse mit
-      // Tippfehler kam sonst durch Schritt 1 und 2 und scheiterte erst am
-      // Server — drei Schritte entfernt von dem Feld, um das es geht.
-      const basicValid = !!(
-        registrantFirstName &&
-        registrantLastName &&
-        isPlausibleEmail(registrantEmail) &&
-        (staffMode || registrantPhone)
-      );
-
-      if (registrationData.useSeparateBilling) {
-        const { billingStreet, billingZipCode, billingCity, billingEmail } =
-          registrationData;
-        // Die Rechnungsadresse ist optional — wenn sie aber ausgefüllt ist,
-        // prüft der Server sie genauso.
-        if (billingEmail && !isPlausibleEmail(billingEmail)) return false;
-        return basicValid && !!(billingStreet && billingZipCode && billingCity);
-      }
-
-      if (staffMode) {
-        return basicValid;
-      }
-
-      return (
-        basicValid &&
-        !!(registrantStreet && registrantZipCode && registrantCity)
-      );
+      return registrantProblems(registrationData, staffMode).length === 0;
     case 2:
       // Must have at least one participant
       if (registrationData.participants.length === 0) {
@@ -222,24 +340,14 @@ export function validateStep(
         }
         return true;
       });
-    case 3: {
-      if (
-        registrationNeedsPaymentMethod(course) &&
-        courseRequiresPaymentMethodChoice(course)
-      ) {
-        const pm = registrationData.paymentMethod as
-          CoursePaymentMethod | undefined;
-        if (pm !== "CASH" && pm !== "INVOICE") return false;
-      }
-      if (
-        !staffMode &&
-        !downPaymentAcknowledged &&
-        calculateDownPayment(registrationData, course) !== null
-      ) {
-        return false;
-      }
-      return termsAccepted === true;
-    }
+    case 3:
+      return (
+        summaryProblems(registrationData, course, {
+          termsAccepted,
+          staffMode,
+          downPaymentAcknowledged,
+        }).length === 0
+      );
     default:
       return false;
   }
