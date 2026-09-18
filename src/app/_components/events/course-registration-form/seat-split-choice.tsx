@@ -105,6 +105,11 @@ export function SeatSplitChoice({
       ...availability,
     }) !== null;
 
+  /** Der erste Teilnehmer, der sich noch auswählen lässt. */
+  const firstChoosable = participants.findIndex(
+    (_, index) => selected.has(index) || !wouldOverfill(index),
+  );
+
   const problemText =
     problem === null
       ? null
@@ -151,7 +156,8 @@ export function SeatSplitChoice({
               </span>
               <span className="text-dark dark:text-night-muted mt-1 block text-sm">
                 Alle {participants.length} Teilnehmer warten gemeinsam und
-                werden bestätigt, sobald genug Plätze frei sind.
+                werden bestätigt, wenn genug Plätze frei sind und das Kursteam
+                die Warteliste nachrücken lässt.
               </span>
             </span>
           </label>
@@ -203,6 +209,10 @@ export function SeatSplitChoice({
                   >
                     <input
                       type="checkbox"
+                      // Sprungziel, wenn die Auswahl vor dem Absenden fehlt.
+                      data-focus-key={
+                        index === firstChoosable ? "seatSelection" : undefined
+                      }
                       checked={checked}
                       disabled={disabled}
                       onChange={() => toggle(index)}

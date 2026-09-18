@@ -74,7 +74,8 @@ export function StaffOptions({
           className="border-ink! dark:border-night-text! text-ink! dark:text-night-text! bg-paper! dark:bg-night! w-full rounded-none! border-2! px-3 py-2 text-sm"
         >
           <option value="AUTO">
-            Automatisch (bestätigt, solange Plätze frei sind)
+            Automatisch (bestätigt, solange Plätze frei sind und niemand auf der
+            Warteliste Vorrang hat)
           </option>
           <option value="CONFIRMED">Bestätigt</option>
           {course.allowWaitingList && (
@@ -99,9 +100,10 @@ export function StaffOptions({
 
       {needsOverbookingConsent && (
         <Note tone="important">
-          <label className="flex cursor-pointer items-start gap-3">
+          <label className="flex min-h-11 cursor-pointer items-start gap-3">
             <input
               type="checkbox"
+              data-focus-key="allowOverbooking"
               checked={options.allowOverbooking}
               onChange={(e) =>
                 setOptions((prev) => ({
@@ -123,7 +125,7 @@ export function StaffOptions({
         </Note>
       )}
 
-      <label className="flex cursor-pointer items-start gap-3">
+      <label className="flex min-h-11 cursor-pointer items-start gap-3">
         <input
           type="checkbox"
           checked={options.sendConfirmationEmail}
@@ -144,7 +146,7 @@ export function StaffOptions({
       </label>
 
       {downPaymentAmount !== null && (
-        <label className="flex cursor-pointer items-start gap-3">
+        <label className="flex min-h-11 cursor-pointer items-start gap-3">
           <input
             type="checkbox"
             checked={options.downPaymentAlreadyPaid}

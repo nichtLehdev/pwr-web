@@ -36,6 +36,11 @@ interface HeadingProps {
   size?: HeadingSize;
   /** 2px-Tintenstrich unter dem Kopf. */
   rule?: boolean;
+  /**
+   * `-1` macht den Kopf zum Sprungziel für den Fokus, etwa beim Wechsel
+   * zwischen Formularschritten, ohne ihn in die Tab-Reihenfolge zu nehmen.
+   */
+  tabIndex?: number;
   className?: string;
   children: ReactNode;
 }
@@ -45,12 +50,14 @@ export function Heading({
   id,
   size = "headline",
   rule = false,
+  tabIndex,
   className,
   children,
 }: HeadingProps) {
   return (
     <Tag
       id={id}
+      tabIndex={tabIndex}
       className={cn(
         "condensed text-ink dark:text-night-text font-extrabold",
         SIZE[size],

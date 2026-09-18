@@ -172,11 +172,14 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
 
     React.useEffect(() => {
       if (!open) return;
-      const idx = Math.max(
-        0,
-        options.findIndex((o) => o.value === value),
+      // Beim Öffnen steht die Markierung auf der Auswahl — auch wenn sie
+      // inzwischen gesperrt ist, damit man hört, wo man steht. Ohne Auswahl
+      // auf dem ersten wählbaren Eintrag statt auf einem gesperrten.
+      const selectedIndex = options.findIndex((o) => o.value === value);
+      const firstEnabled = options.findIndex((o) => !o.disabled);
+      setHighlight(
+        selectedIndex >= 0 ? selectedIndex : Math.max(0, firstEnabled),
       );
-      setHighlight(idx);
     }, [open, options, value]);
 
     React.useEffect(() => {
@@ -184,6 +187,19 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
       const el = listRef.current.querySelector(`[data-index="${highlight}"]`);
       el?.scrollIntoView({ block: "nearest" });
     }, [highlight, open]);
+
+    /**
+     * Der nächste wählbare Eintrag in Pfeilrichtung. Gibt es keinen mehr,
+     * bleibt die Markierung stehen — vorher blieb sie am Rand auf einem
+     * gesperrten Eintrag hängen, den Enter dann stumm nicht übernahm.
+     */
+    const stepHighlight = (delta: 1 | -1) =>
+      setHighlight((h) => {
+        for (let i = h + delta; i >= 0 && i < options.length; i += delta) {
+          if (!options[i]?.disabled) return i;
+        }
+        return h;
+      });
 
     const onKeyDownButton = (e: React.KeyboardEvent<HTMLButtonElement>) => {
       if (disabled) return;
@@ -193,18 +209,7 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
           setOpen(true);
           return;
         }
-        const delta = e.key === "ArrowDown" ? 1 : -1;
-        setHighlight((h) => {
-          let next = h + delta;
-          next = Math.max(0, Math.min(options.length - 1, next));
-          let guard = 0;
-          while (options[next]?.disabled && guard < options.length) {
-            next += delta;
-            next = Math.max(0, Math.min(options.length - 1, next));
-            guard += 1;
-          }
-          return next;
-        });
+        stepHighlight(e.key === "ArrowDown" ? 1 : -1);
       } else if (e.key === "Enter" || e.key === " ") {
         if (open) {
           e.preventDefault();
@@ -214,26 +219,29 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
             close();
           }
         }
-      } else if (e.key === "Escape") {
+      } else if (e.key === "Escape" && open) {
+        // Escape schließt nur die Liste. Weitergereicht schloss es auch das
+        // umgebende Fenster (Teilnehmer-Fenster) — mitsamt allen Eingaben.
         e.preventDefault();
+        e.stopPropagation();
         close();
         buttonRef.current?.focus();
       }
     };
 
     const onKeyDownList = (e: React.KeyboardEvent<HTMLUListElement>) => {
-      if (e.key === "ArrowDown") {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
         e.preventDefault();
-        setHighlight((h) => Math.min(options.length - 1, h + 1));
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        setHighlight((h) => Math.max(0, h - 1));
+        stepHighlight(e.key === "ArrowDown" ? 1 : -1);
       } else if (e.key === "Escape") {
         e.preventDefault();
+        e.stopPropagation();
         close();
         buttonRef.current?.focus();
       }
     };
+
+    const optionId = (index: number) => `${listId}-option-${index}`;
 
     // `role="combobox"` verbietet „Name aus Inhalt": Der sichtbare Text im
     // Auslöser zählt nicht als Name. Ohne aria-label, aria-labelledby oder ein
@@ -279,6 +287,11 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
           aria-expanded={open}
           aria-controls={listId}
           aria-haspopup="listbox"
+          // Der Fokus bleibt auf dem Knopf; welcher Eintrag gerade markiert
+          // ist, erfahren Vorlesegeräte nur hierüber.
+          aria-activedescendant={
+            open && options[highlight] ? optionId(highlight) : undefined
+          }
           aria-required={required}
           aria-invalid={ariaInvalid}
           aria-describedby={ariaDescribedBy}
@@ -326,14 +339,24 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
               return (
                 <li
                   key={`${index}-${opt.value}`}
+                  id={optionId(index)}
                   role="option"
                   aria-selected={selected}
+                  // Gesperrt auch für Vorlesegeräte: vorher nur ausgegraut und
+                  // als ganz normale Auswahl vorgelesen, die dann stumm nicht
+                  // übernommen wurde.
+                  aria-disabled={opt.disabled || undefined}
                   data-index={index}
                   className={cn(
-                    "text-ink dark:text-night-text flex cursor-pointer items-start gap-2 px-3 py-2",
-                    fieldSize === "md" ? "text-base" : "text-sm",
+                    "text-ink dark:text-night-text flex items-start gap-2 px-3",
+                    // md: 44px hohe Zeilen, dieselbe Trefferfläche wie das Feld.
+                    fieldSize === "md" ? "py-2.5 text-base" : "py-2 text-sm",
                     index === highlight && "bg-rule/60 dark:bg-night-rule",
-                    opt.disabled && "cursor-not-allowed opacity-40",
+                    // Nur eine der beiden Zeigerformen: nebeneinander entschied
+                    // die Reihenfolge im Stylesheet, und es blieb der Zeiger.
+                    opt.disabled
+                      ? "cursor-not-allowed opacity-40"
+                      : "cursor-pointer",
                     selected && "font-medium",
                   )}
                   onMouseEnter={() => !opt.disabled && setHighlight(index)}

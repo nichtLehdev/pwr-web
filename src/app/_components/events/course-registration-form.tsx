@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useId, useRef, useMemo } from "react";
 import { api } from "@/trpc/react";
 import { useToast } from "@/app/_components/ui/toast";
 import { cn } from "@/lib/utils";
@@ -19,9 +19,19 @@ import type {
   StaffRegistrationOptions,
 } from "./course-registration-form/types";
 import { Step1RegistrantInfo } from "./course-registration-form/step-1-registrant-info";
-import { Step2Participants } from "./course-registration-form/step-2-participants";
+import {
+  ADD_PARTICIPANT_FOCUS_KEY,
+  participantFocusKey,
+  Step2Participants,
+} from "./course-registration-form/step-2-participants";
 import { Step3Summary } from "./course-registration-form/step-3-summary";
-import { validateStep as validateStepUtil } from "./course-registration-form/utils";
+import {
+  problemSummary,
+  registrantProblems,
+  summaryProblems,
+  validateStep as validateStepUtil,
+  type FormProblem,
+} from "./course-registration-form/utils";
 import { registrationErrorMessage } from "@/lib/registration-error-message";
 import { registrationSeatShortage } from "@/lib/registration-seat-shortage";
 import {
@@ -38,6 +48,44 @@ import {
 } from "@/app/_components/ui/scrollable-modal";
 import { Heading } from "@/app/_components/programmheft/section-head";
 import { Note } from "@/app/_components/programmheft/note";
+
+/**
+ * Wie weit feste Leisten oben hineinragen: Kopfleiste samt Banner und der
+ * mitlaufende Kolumnentitel. Als `scroll-margin-top` der Sprungziele gesetzt,
+ * damit der Browser den Wert aus den CSS-Variablen der Seite ausrechnet.
+ */
+const FOCUS_TARGET_MARGIN =
+  "[&_:is([data-focus-key],h3)]:scroll-mt-[calc(var(--main-padding-top,5rem)+var(--kolumnentitel-hoehe,0px))]";
+
+/**
+ * Fokus setzen und das Element nur dann verschieben, wenn es unter den festen
+ * Leisten oben oder der klebenden Fußleiste läge. Auf großen Bildschirmen, wo
+ * alles schon zu sehen ist, springt beim Schrittwechsel so nichts.
+ *
+ * Sofort statt weich und auf eine feste Position: Lief noch das weiche
+ * Scrollen vom letzten Tab-Schritt, setzte es sich sonst gegen den Sprung
+ * durch, und das Ziel landete unter der Kopfleiste. Derselbe Aufruf hält
+ * dieses Scrollen auch an, wenn das Ziel gerade schon sichtbar ist.
+ */
+function focusVisibly(
+  element: HTMLElement,
+  footer: HTMLElement | null,
+  align: "start" | "center",
+) {
+  element.focus({ preventScroll: true });
+  const rect = element.getBoundingClientRect();
+  const top = parseFloat(getComputedStyle(element).scrollMarginTop) || 0;
+  const bottom =
+    window.innerHeight - (footer?.getBoundingClientRect().height ?? 0);
+  const margin = 16;
+  const visible = rect.top >= top + margin && rect.bottom <= bottom - margin;
+  const shift = visible
+    ? 0
+    : align === "start"
+      ? rect.top - top - margin
+      : rect.top + rect.height / 2 - (top + bottom) / 2;
+  window.scrollTo({ top: window.scrollY + shift, behavior: "instant" });
+}
 
 export default function CourseRegistrationForm({
   course,
@@ -70,6 +118,26 @@ export default function CourseRegistrationForm({
   });
 
   const [currentStep, setCurrentStep] = useState<Step>(1);
+  /**
+   * Der letzte Versuch, mit Lücken weiterzugehen: ab dann nennt das Formular
+   * die Lücken am Knopf und markiert die Felder — nur die, die bei diesem
+   * Versuch fehlten (`fields`). Was erst danach dazukommt, etwa die gerade
+   * aufgeklappte Rechnungsadresse, wird nicht sofort rot, sondern beim
+   * nächsten Versuch genannt. `count` hängt die Meldung bei jedem Versuch neu
+   * ein, damit sie auch unverändert wieder vorgelesen wird.
+   */
+  const [attempt, setAttempt] = useState<{
+    step: Step;
+    count: number;
+    fields: string[];
+  } | null>(null);
+  const stepHeadingId = useId();
+  const problemSummaryId = useId();
+  const formRootRef = useRef<HTMLDivElement>(null);
+  const footerRef = useRef<HTMLDivElement>(null);
+  /** Feld, in das der Fokus nach dem nächsten Rendern springt. */
+  const pendingProblemFocus = useRef<string | null>(null);
+  const previousStepRef = useRef<Step>(1);
   const groupIdCounterRef = useRef(0);
   const [validationErrors, setValidationErrors] = useState<
     Record<number, string>
@@ -325,7 +393,26 @@ export default function CourseRegistrationForm({
     );
   };
 
-  const canProceed = validateStep(currentStep);
+  // Beim Schrittwechsel auf die Überschrift des neuen Schritts: Vorher fiel
+  // der Fokus auf `BODY` (der gedrückte Knopf wurde gesperrt oder
+  // verschwand), und Tastatur wie Vorlesegerät begannen wieder oben auf der
+  // Seite.
+  useEffect(() => {
+    if (previousStepRef.current === currentStep) return;
+    previousStepRef.current = currentStep;
+    const heading = document.getElementById(stepHeadingId);
+    if (heading) focusVisibly(heading, footerRef.current, "start");
+  }, [currentStep, stepHeadingId]);
+
+  useEffect(() => {
+    const key = pendingProblemFocus.current;
+    if (!key) return;
+    pendingProblemFocus.current = null;
+    const field = formRootRef.current?.querySelector<HTMLElement>(
+      `[data-focus-key="${key}"]`,
+    );
+    if (field) focusVisibly(field, footerRef.current, "center");
+  });
 
   const participantPriceOptionIds = registrationData.participants.map(
     (p) => p.priceOptionId,
@@ -414,6 +501,106 @@ export default function CourseRegistrationForm({
     staffSeatsShort &&
     staffResolvedStatus === "CONFIRMED" &&
     !staffOptions.allowOverbooking;
+
+  /**
+   * Was dem aktuellen Schritt fehlt, in der Reihenfolge der Seite. Leer heißt:
+   * es darf weitergehen. Dieselben Regeln wie `validateStep`.
+   */
+  const stepProblems = (step: Step): FormProblem[] => {
+    if (step === 1) return registrantProblems(registrationData, staffMode);
+    if (step === 2) {
+      if (registrationData.participants.length === 0) {
+        return [
+          {
+            field: ADD_PARTICIPANT_FOCUS_KEY,
+            label: "mindestens ein Teilnehmer",
+            message: "",
+          },
+        ];
+      }
+      const problems = registrationData.participants.flatMap(
+        (participant, index): FormProblem[] => {
+          const error = validationErrors[index];
+          if (!error) return [];
+          const name =
+            [participant.firstName, participant.lastName]
+              .map((part) => part?.trim())
+              .filter(Boolean)
+              .join(" ") || `Teilnehmer ${index + 1}`;
+          return [
+            {
+              field: participantFocusKey(index),
+              label: `Angaben zu ${name}`,
+              message: error,
+            },
+          ];
+        },
+      );
+      // Die Prüfung der Karten läuft einen Bildaufbau später; bis dahin
+      // bleibt es bei der allgemeinen Nennung.
+      return problems.length > 0 || validateStep(2)
+        ? problems
+        : [{ field: "", label: "Angaben zu den Teilnehmern", message: "" }];
+    }
+    const summary = summaryProblems(registrationData, course, {
+      termsAccepted,
+      staffMode,
+      downPaymentAcknowledged,
+    });
+    const terms = summary.filter((p) => p.field === "termsAccepted");
+    return [
+      ...(seatSelectionIssue
+        ? [
+            {
+              field: "seatSelection",
+              label: "Auswahl für die freien Plätze",
+              message: "",
+            },
+          ]
+        : []),
+      ...summary.filter((p) => p.field !== "termsAccepted"),
+      ...(blockedByFull
+        ? [
+            {
+              field: "allowOverbooking",
+              label: "Überbuchung zulassen oder Status ändern",
+              message: "",
+            },
+          ]
+        : []),
+      ...terms,
+    ];
+  };
+
+  const currentProblems = stepProblems(currentStep);
+  const shownProblems =
+    attempt?.step === currentStep
+      ? currentProblems.filter((p) => attempt.fields.includes(p.field))
+      : [];
+  const showProblems = shownProblems.length > 0;
+
+  const goToStep = (step: Step) => {
+    setAttempt(null);
+    setCurrentStep(step);
+  };
+
+  /**
+   * Weiter bzw. Absenden. Der Knopf ist nicht mehr gesperrt: mit Lücken nennt
+   * er sie, markiert die Felder und springt ins erste — vorher war er nur
+   * ausgegraut und sagte nicht, was fehlt.
+   */
+  const advance = (proceed: () => void) => {
+    if (currentProblems.length > 0) {
+      setAttempt((prev) => ({
+        step: currentStep,
+        count: (prev?.count ?? 0) + 1,
+        fields: currentProblems.map((p) => p.field),
+      }));
+      pendingProblemFocus.current = currentProblems[0]?.field || null;
+      return;
+    }
+    proceed();
+  };
 
   const handleSubmit = async () => {
     setSubmitError("");
@@ -584,7 +771,7 @@ export default function CourseRegistrationForm({
             <button
               type="button"
               onClick={() => setShowDiscardConfirm(false)}
-              className="border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night semi-condensed flex-1 border-2 px-4 py-2 font-semibold transition-colors"
+              className="border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night semi-condensed min-h-11 flex-1 border-2 px-4 py-2 font-semibold transition-colors"
             >
               Weiter ausfüllen
             </button>
@@ -594,7 +781,7 @@ export default function CourseRegistrationForm({
                 setShowDiscardConfirm(false);
                 onClose();
               }}
-              className="semi-condensed flex-1 bg-red-700 px-4 py-2 font-semibold text-white transition-colors hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-700"
+              className="semi-condensed min-h-11 flex-1 bg-red-700 px-4 py-2 font-semibold text-white transition-colors hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-700"
             >
               Verwerfen
             </button>
@@ -617,6 +804,8 @@ export default function CourseRegistrationForm({
           registrationData={registrationData}
           setRegistrationData={setRegistrationData}
           staffMode={staffMode}
+          headingId={stepHeadingId}
+          problems={shownProblems}
         />
       )}
       {currentStep === 2 && (
@@ -634,6 +823,8 @@ export default function CourseRegistrationForm({
           groupIdCounterRef={groupIdCounterRef}
           siblingDiscountError={siblingDiscountError}
           staffMode={staffMode}
+          headingId={stepHeadingId}
+          capacityByPriceOption={capacityByPriceOption}
         />
       )}
       {currentStep === 3 && (
@@ -654,6 +845,8 @@ export default function CourseRegistrationForm({
           }
           isWaitlist={expectsWaitlist}
           seatShortage={seatShortage}
+          headingId={stepHeadingId}
+          problems={shownProblems}
           seatSplit={{
             availability: seatAvailability,
             canSplit,
@@ -687,11 +880,9 @@ export default function CourseRegistrationForm({
     <>
       <button
         type="button"
-        onClick={() =>
-          currentStep > 1 && setCurrentStep((currentStep - 1) as Step)
-        }
+        onClick={() => currentStep > 1 && goToStep((currentStep - 1) as Step)}
         disabled={currentStep === 1}
-        className="border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night semi-condensed order-2 border-2 px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:order-1 sm:px-5"
+        className="border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night semi-condensed order-2 min-h-11 border-2 px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:order-1 sm:px-5"
       >
         Zurück
       </button>
@@ -701,31 +892,21 @@ export default function CourseRegistrationForm({
       {currentStep < 3 ? (
         <button
           type="button"
-          onClick={() => {
-            if (currentStep === 2 && Object.keys(validationErrors).length > 0) {
-              return;
-            }
-            setCurrentStep((currentStep + 1) as Step);
-          }}
-          disabled={
-            !canProceed ||
-            (currentStep === 2 && Object.keys(validationErrors).length > 0)
-          }
-          className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-primary dark:text-ink dark:hover:bg-paper semi-condensed order-3 px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:px-5"
+          onClick={() => advance(() => goToStep((currentStep + 1) as Step))}
+          aria-describedby={showProblems ? problemSummaryId : undefined}
+          className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-primary dark:text-ink dark:hover:bg-paper semi-condensed order-3 min-h-11 px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:px-5"
         >
           {currentStep === 1 ? "Weiter zu Teilnehmern" : "Weiter zur Übersicht"}
         </button>
       ) : (
         <button
           type="button"
-          onClick={handleSubmit}
-          disabled={
-            submitMutation.isPending ||
-            !canProceed ||
-            blockedByFull ||
-            seatSelectionIssue !== null
-          }
-          className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-primary dark:text-ink dark:hover:bg-paper semi-condensed order-3 px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:px-5"
+          onClick={() => advance(() => void handleSubmit())}
+          // Gesperrt nur, solange die Anmeldung unterwegs ist — ein zweiter
+          // Klick würde sie doppelt absenden.
+          disabled={submitMutation.isPending}
+          aria-describedby={showProblems ? problemSummaryId : undefined}
+          className="bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-primary dark:text-ink dark:hover:bg-paper semi-condensed order-3 min-h-11 px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:px-5"
         >
           {submitMutation.isPending
             ? staffMode
@@ -740,7 +921,7 @@ export default function CourseRegistrationForm({
   );
 
   return (
-    <div className="w-full">
+    <div ref={formRootRef} className={cn("w-full", FOCUS_TARGET_MARGIN)}>
       <div className="border-ink dark:border-night-text bg-paper dark:bg-night border-b-2">
         <div className="sheet max-w-3xl py-4 sm:py-5">
           <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -761,7 +942,7 @@ export default function CourseRegistrationForm({
             <button
               type="button"
               onClick={requestClose}
-              className="border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night semi-condensed self-start border-2 px-3 py-1.5 text-sm font-semibold transition-colors sm:mt-1"
+              className="border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night semi-condensed min-h-11 self-start border-2 px-3 py-1.5 text-sm font-semibold transition-colors sm:mt-1"
             >
               Abbrechen
             </button>
@@ -810,9 +991,26 @@ export default function CourseRegistrationForm({
         {stepBody}
       </div>
 
-      <div className="border-ink dark:border-night-text bg-paper/95 dark:bg-night/95 sticky bottom-0 z-20 border-t-2 px-4 py-2.5 pt-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] backdrop-blur-sm sm:py-3">
-        <div className="container mx-auto flex max-w-3xl flex-col items-stretch justify-between gap-2 sm:flex-row sm:items-center sm:gap-3">
-          {footerButtons}
+      <div
+        ref={footerRef}
+        className="border-ink dark:border-night-text bg-paper/95 dark:bg-night/95 sticky bottom-0 z-20 border-t-2 px-4 py-2.5 pt-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] backdrop-blur-sm sm:py-3"
+      >
+        <div className="container mx-auto max-w-3xl">
+          {/* Am Knopf, der gerade gedrückt wurde: was noch fehlt. Die Felder
+              selbst tragen ihre Meldung zusätzlich. */}
+          {showProblems ? (
+            <p
+              key={attempt?.count}
+              id={problemSummaryId}
+              role="alert"
+              className="mb-2 text-sm font-semibold text-red-700 dark:text-red-400"
+            >
+              {problemSummary(shownProblems)}
+            </p>
+          ) : null}
+          <div className="flex flex-col items-stretch justify-between gap-2 sm:flex-row sm:items-center sm:gap-3">
+            {footerButtons}
+          </div>
         </div>
       </div>
       {discardConfirm}
