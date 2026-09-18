@@ -27,15 +27,7 @@ import {
 import { TrashIcon, UserIcon } from "lucide-react";
 import { CheckIcon } from "lucide-react";
 import { computeReorderUpdates } from "@/lib/reorder";
-
-const FOERDERVEREIN_ROLE_LABELS: Record<string, string> = {
-  VORSITZENDER: "Vorsitzender",
-  STELLVERTRETER: "Stellvertreter",
-  SCHATZMEISTER: "Schatzmeister",
-  SCHRIFTFUEHRER: "Schriftführer",
-  BEISITZER: "Beisitzer",
-  MITGLIED: "Mitglied",
-};
+import { foerdervereinRoleLabel } from "@/lib/foerderverein";
 
 type FoerdervereinMember =
   RouterOutputs["organization"]["getFoerderverein"][number];
@@ -198,26 +190,23 @@ export default function DashboardFoerdervereinPage() {
             );
           },
         }),
-        column.accessor(
-          (member) => FOERDERVEREIN_ROLE_LABELS[member.role] ?? member.role,
-          {
-            id: "role",
-            header: "Position / Rolle",
-            meta: { filterVariant: "set", label: "Rolle" },
-            cell: ({ row, getValue }) => (
-              <div className="flex flex-col gap-1">
-                {row.original.position && (
-                  <span className="text-ink dark:text-night-text text-sm">
-                    {row.original.position}
-                  </span>
-                )}
-                <Tag tone="inverse" className="w-fit">
-                  {getValue()}
-                </Tag>
-              </div>
-            ),
-          },
-        ),
+        column.accessor((member) => foerdervereinRoleLabel(member.role), {
+          id: "role",
+          header: "Position / Rolle",
+          meta: { filterVariant: "set", label: "Rolle" },
+          cell: ({ row, getValue }) => (
+            <div className="flex flex-col gap-1">
+              {row.original.position && (
+                <span className="text-ink dark:text-night-text text-sm">
+                  {row.original.position}
+                </span>
+              )}
+              <Tag tone="inverse" className="w-fit">
+                {getValue()}
+              </Tag>
+            </div>
+          ),
+        }),
         column.accessor((member) => (member.user ? "Verknüpft" : "Manuell"), {
           id: "linked",
           header: "Verknüpfung",
