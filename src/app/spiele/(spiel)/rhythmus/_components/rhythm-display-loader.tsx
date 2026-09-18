@@ -3,13 +3,20 @@
 import dynamic from "next/dynamic";
 import type { RhythmDisplayProps } from "./rhythm-display";
 
+/**
+ * Gleiche Maße wie der Notenkasten im Spiel (`NOTATION_BOX_PLAY` in
+ * rhythm-display) — der Platzhalter erscheint nur beim ersten Laden, also
+ * immer in der Spielphase.
+ */
+const BOX = "h-[clamp(10rem,26svh,15rem)] md:h-[clamp(12rem,32svh,20rem)]";
+
 const RhythmDisplay = dynamic(
   () => import("./rhythm-display").then((m) => ({ default: m.RhythmDisplay })),
   {
     ssr: false,
     loading: () => (
-      <div className="dark:border-dark-border dark:bg-dark-surface flex min-h-[232px] items-center justify-center rounded-lg border border-gray-200 bg-gray-50 md:min-h-[280px]">
-        <p className="text-dark dark:text-dark-text-secondary text-sm">
+      <div className={`flex items-center justify-center ${BOX}`}>
+        <p className="text-dark dark:text-night-muted text-sm">
           Notenzeile wird geladen…
         </p>
       </div>

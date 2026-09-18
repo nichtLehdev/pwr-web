@@ -12,7 +12,9 @@ export function FingeringText({ label, className }: FingeringTextProps) {
   return (
     <p
       className={cn(
-        "text-dark dark:text-dark-text text-center text-lg font-bold tracking-tight tabular-nums md:text-xl",
+        // Mit der Fensterhöhe mitwachsend: auf hohen Fenstern darf der
+        // gegriffene Ton so groß stehen wie im Griffbild.
+        "text-ink dark:text-night-text text-center text-[clamp(1.125rem,2.4dvh,1.75rem)] leading-tight font-bold tracking-tight tabular-nums",
         className,
       )}
       aria-live="polite"

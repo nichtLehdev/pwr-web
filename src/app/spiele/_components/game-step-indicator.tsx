@@ -17,7 +17,7 @@ export function GameStepIndicator({
       role="list"
       aria-label="Spielschritte"
       className={cn(
-        "border-dark-border/40 dark:border-dark-border/60 flex flex-wrap items-center justify-center gap-1.5 border-b pb-3 md:gap-2 md:pb-4",
+        "border-rule dark:border-night-rule flex flex-wrap items-center justify-center gap-1.5 border-b pb-3 md:gap-2 md:pb-4",
         className,
       )}
     >
@@ -27,12 +27,15 @@ export function GameStepIndicator({
           role="listitem"
           aria-current={i === current ? "step" : undefined}
           className={cn(
-            "rounded-lg px-2.5 py-1 text-[10px] font-bold tracking-wide transition-colors md:px-3 md:text-xs",
+            // Gefüllt heißt: Hier bist du. Erledigte Schritte tragen nur eine
+            // Umrandung — Grün war nie eine Signalfarbe des Hefts, und drei
+            // gefüllte Stufen nebeneinander hätten keine mehr Bedeutung.
+            "px-2.5 py-1 text-[10px] font-bold tracking-wide transition-colors md:px-3 md:text-xs",
             i === current
               ? "on-orange bg-primary text-ink"
               : i < current
-                ? "bg-emerald-500/15 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-200"
-                : "text-dark/55 dark:text-dark-text-muted bg-transparent",
+                ? "border-rule text-dark dark:border-night-rule dark:text-night-muted border bg-transparent"
+                : "text-dark/55 dark:text-night-muted bg-transparent",
           )}
         >
           {label}

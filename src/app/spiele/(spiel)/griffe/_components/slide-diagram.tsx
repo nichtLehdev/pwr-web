@@ -8,7 +8,7 @@ import { diagramShellClass } from "./diagram-flash";
 
 /** Auflösung nach falscher Antwort: richtig UND Spieler-Eingabe zeigen. */
 export type SlideReveal = {
-  /** Korrektes Token (z. B. `2+`, `*1`) — grün markiert. */
+  /** Korrektes Token (z. B. `2+`, `*1`) — mit Tinte gefüllt. */
   correct: string;
   /** Spieler-Token — rot markiert („“ bei Timeout). */
   player: string;
@@ -18,7 +18,7 @@ export type SlideDiagramProps = {
   position: number | null;
   register: "high" | "neutral" | "low";
   quart: boolean;
-  /** Auflösung: richtige Position grün, Spieler-Position rot. */
+  /** Auflösung: richtige Position in Tinte, Spieler-Position rot. */
   reveal?: SlideReveal | null;
   /** Quartventil-Umschalter anzeigen (nur Fortgeschritten sinnvoll). */
   showQuart?: boolean;
@@ -88,17 +88,17 @@ export function SlideDiagram({
 
   const registerButtonClass = (active: boolean) =>
     cn(
-      "min-h-[44px] rounded-lg border px-3 py-2 text-sm font-bold transition active:scale-[0.98]",
+      "min-h-11 border px-4 py-2 text-sm font-bold transition active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100",
       GAME_FOCUS_RING,
       active
-        ? "border-primary bg-primary text-white"
-        : "border-dark-border text-dark dark:text-dark-text",
+        ? "on-orange border-primary bg-primary text-ink"
+        : "border-rule text-ink hover:border-ink dark:border-night-rule dark:text-night-text dark:hover:border-night-text",
     );
 
   return (
     <div
       className={cn(
-        "rounded-lg border p-3 transition-colors duration-200 md:p-4",
+        "border p-[clamp(0.5rem,1.6dvh,1rem)] transition-colors duration-200",
         diagramShellClass(flash),
         className,
       )}
@@ -106,9 +106,9 @@ export function SlideDiagram({
       <div
         className="relative mx-auto w-full max-w-xl"
         role="group"
-        aria-label="Zugposition wählen"
+        aria-label="Griffdiagramm: Zugposition 1 bis 7 wählen"
       >
-        <div className="mb-3 flex flex-wrap items-center justify-center gap-2">
+        <div className="mb-[clamp(0.5rem,1.6dvh,1rem)] flex flex-wrap items-center justify-center gap-2">
           <button
             type="button"
             disabled={locked}
@@ -157,12 +157,12 @@ export function SlideDiagram({
           )}
         </div>
 
-        <div className="border-dark-border/50 dark:border-dark-border dark:bg-dark-surface/50 rounded-lg border bg-white/60 px-4 py-4">
+        <div className="border-rule bg-paper dark:border-night-rule dark:bg-night-raised border px-4 py-[clamp(0.5rem,1.4dvh,1rem)]">
           <div className="flex items-center justify-between">
-            <span className="text-dark dark:text-dark-text-muted text-xs font-bold">
+            <span className="text-dark dark:text-night-muted text-xs font-bold">
               Zugposition
             </span>
-            <span className="text-dark dark:text-dark-text text-sm font-bold tabular-nums">
+            <span className="text-ink dark:text-night-text text-[clamp(1rem,2.2dvh,1.5rem)] font-bold tabular-nums">
               {position ?? "—"}
             </span>
           </div>
@@ -179,9 +179,9 @@ export function SlideDiagram({
               onChange({ position: next, register, quart });
             }}
             className={cn(
-              "mt-3 w-full",
-              "accent-primary",
-              "h-2 cursor-pointer rounded-lg",
+              // 44px hoch, nicht 8: der Schieber ist ein Klickziel wie jedes
+              // andere, auch wenn die Schiene dünn gezeichnet wird.
+              "accent-primary mt-1 h-11 w-full cursor-pointer",
               GAME_FOCUS_RING,
               locked && "opacity-70",
             )}
@@ -200,17 +200,24 @@ export function SlideDiagram({
                   type="button"
                   disabled={locked}
                   aria-pressed={isCurrent}
-                  aria-label={`Zugposition ${pos}`}
+                  aria-label={
+                    isRevealCorrect
+                      ? `Zugposition ${pos} — richtige Position`
+                      : isRevealPlayerWrong
+                        ? `Zugposition ${pos} — deine Eingabe, falsch`
+                        : `Zugposition ${pos}`
+                  }
                   onClick={() => onChange({ position: pos, register, quart })}
                   className={cn(
-                    "min-h-[44px] flex-1 rounded-lg border text-sm font-bold tabular-nums transition",
+                    "min-h-[clamp(44px,6dvh,56px)] flex-1 border text-[clamp(0.875rem,2dvh,1.25rem)] font-bold tabular-nums transition motion-reduce:transition-none",
+                    GAME_FOCUS_RING,
                     isRevealCorrect
-                      ? "border-emerald-600 bg-emerald-500 text-white dark:border-emerald-400"
+                      ? "border-ink bg-ink text-paper dark:border-night-text dark:bg-night-text dark:text-night"
                       : isRevealPlayerWrong
-                        ? "border-rose-500 bg-transparent text-rose-600 dark:border-rose-400 dark:text-rose-300"
+                        ? "border-red-600 bg-transparent text-red-700 dark:border-red-400 dark:text-red-400"
                         : isCurrent
-                          ? "border-primary bg-primary text-white"
-                          : "text-dark hover:border-primary/40 dark:text-dark-text-muted border-transparent",
+                          ? "on-orange border-primary bg-primary text-ink"
+                          : "text-ink hover:border-ink dark:text-night-text dark:hover:border-night-text border-transparent",
                   )}
                 >
                   {pos}
@@ -220,12 +227,12 @@ export function SlideDiagram({
           </div>
 
           {revealing && (
-            <p className="text-dark dark:text-dark-text-muted mt-3 text-center text-xs font-bold">
-              <span className="text-emerald-700 dark:text-emerald-300">
+            <p className="text-dark dark:text-night-muted mt-3 text-center text-xs font-bold">
+              <span className="text-ink dark:text-night-text">
                 Richtig: {formatSlideLabel(reveal.correct)}
               </span>
               {" · "}
-              <span className="text-rose-600 dark:text-rose-300">
+              <span className="text-red-700 dark:text-red-400">
                 Deine Antwort:{" "}
                 {reveal.player ? formatSlideLabel(reveal.player) : "—"}
               </span>

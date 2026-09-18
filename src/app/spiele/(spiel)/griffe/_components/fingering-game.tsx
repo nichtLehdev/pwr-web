@@ -12,7 +12,6 @@ import {
   StaffDisplay,
   type StaffFlash,
 } from "../../noten-lesen/_components/staff-display-loader";
-import { ScoreBar } from "../../noten-lesen/_components/score-bar";
 import type { GameModeId } from "../../noten-lesen/_lib/types";
 import {
   answerLabelForPitch,
@@ -56,7 +55,7 @@ import {
   type GriffeInstrumentId,
   type StoredCustomSetRef,
 } from "../_lib/types";
-import { GameDock } from "../../../_components/game-shell-context";
+import { GameBarSlot, GameDock } from "../../../_components/game-shell-context";
 import { GameStepIndicator } from "../../../_components/game-step-indicator";
 import { useGameStats } from "../../../_lib/stats/use-game-stats";
 import { FingeringText } from "./fingering-text";
@@ -80,6 +79,14 @@ const QUIZ_SECONDS_BY_DIFFICULTY: Record<GriffeDifficultyId, number> = {
 /** Eigene Sets mischen Lagen beliebig — großzügig wie Anfänger. */
 const QUIZ_SECONDS_CUSTOM = 8;
 const QUIZ_ROUND_LEN = 15;
+
+/**
+ * Breit und flach (z. B. 1440×650): Notenzeile links, Griffbild rechts —
+ * gestapelt reicht die Höhe dort nicht, das Griffbild rutscht unter die Falz.
+ * Auf hohen Fenstern bleibt beides untereinander und darf dafür wachsen.
+ */
+const WIDE_SHORT_TWO_COLUMNS =
+  "[@media(min-width:56rem)_and_(max-height:52rem)]:grid-cols-2 [@media(min-width:56rem)_and_(max-height:52rem)]:items-center";
 
 function quizSecondsFor(difficulty: GriffeDifficultyChoice): number {
   return difficulty === "custom"
@@ -976,9 +983,14 @@ export function FingeringGame() {
     return formatVariantDisplay(instrument, [token]);
   })();
 
-  const insShort = GRIFFE_INSTRUMENTS.find(
-    (i) => i.id === instrument,
-  )?.shortLabel;
+  const insConfig = GRIFFE_INSTRUMENTS.find((i) => i.id === instrument);
+  const insShort = insConfig?.shortLabel;
+  const difficultyLabel =
+    difficulty === "custom"
+      ? (customSet?.name ?? "Eigenes Set")
+      : GRIFFE_DIFFICULTY_LABELS[difficulty].title;
+  const modeLabel =
+    mode === "learn" ? "Lernen" : mode === "quiz" ? "Quiz" : "Endlos";
 
   // Lernen/Endlos erreichen nie eine Auswertung — dritten Schritt ausblenden.
   const stepLabels =
@@ -1019,7 +1031,7 @@ export function FingeringGame() {
 
   if (!hydrated) {
     return (
-      <div className="text-dark dark:text-dark-text-muted py-16 text-center text-sm">
+      <div className="text-dark dark:text-night-muted py-16 text-center text-sm">
         Lädt …
       </div>
     );
@@ -1033,16 +1045,16 @@ export function FingeringGame() {
       />
 
       {phase === "setup" && (
-        <div className="space-y-5 md:space-y-6">
+        <div className="space-y-[clamp(0.75rem,2.4dvh,1.5rem)]">
           <div className="text-center">
             <Music
-              className="text-primary mx-auto h-11 w-11 stroke-[1.45] md:h-16 md:w-16 md:stroke-[1.35]"
+              className="text-primary-ink dark:text-primary mx-auto h-[clamp(2.25rem,5dvh,4rem)] w-[clamp(2.25rem,5dvh,4rem)] stroke-[1.4]"
               aria-hidden
             />
-            <h2 className="text-dark dark:text-dark-text mt-2 text-xl font-bold tracking-tight md:mt-3 md:text-3xl">
+            <h2 className="text-ink dark:text-night-text mt-2 text-[clamp(1.25rem,3dvh,1.875rem)] leading-tight font-bold tracking-tight">
               Griffe
             </h2>
-            <p className="text-dark dark:text-dark-text-secondary mx-auto mt-2 max-w-lg text-sm md:text-base">
+            <p className="text-dark dark:text-night-muted mx-auto mt-2 max-w-lg text-sm md:text-base">
               Note lesen — Ventile oder Zug wählen. Sofortiges Feedback,
               Merkhilfen und Modi wie beim Noten-Lesen.
             </p>
@@ -1052,7 +1064,7 @@ export function FingeringGame() {
             <p
               role="status"
               aria-live="polite"
-              className="rounded-lg border border-amber-300/60 bg-amber-50 px-3 py-2 text-center text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-100"
+              className="border-primary-ink bg-rule/25 text-ink dark:border-primary dark:bg-night-raised dark:text-night-text border-l-4 px-3 py-2 text-sm"
             >
               {setupHint}
             </p>
@@ -1088,51 +1100,49 @@ export function FingeringGame() {
 
       {phase === "play" && pitch && (
         <div className="flex flex-col gap-3 md:gap-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
+          {/* Eine Bedienung statt zweier: Der Chip nennt die Einstellung und
+              klappt sie auf. Der zweite Weg („Zurück zum Setup") führte an
+              dieselbe Stelle und konkurrierte nur mit dem Chip. */}
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={() => setSetupOpen((o) => !o)}
+              aria-expanded={setupOpen}
+              aria-controls="griffe-setup-panel"
+              aria-label={`Einstellungen ändern — ${insConfig?.label ?? ""}, ${difficultyLabel}, ${modeLabel}`}
               className={cn(
-                "border-dark-border text-dark hover:bg-background-secondary dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-background inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-bold transition active:scale-[0.98]",
+                "border-rule text-ink hover:bg-rule/25 dark:border-night-rule dark:text-night-text dark:hover:bg-night-raised inline-flex min-h-11 items-center gap-2 border px-3 py-2 text-sm font-bold transition-colors active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100",
                 GAME_FOCUS_RING,
               )}
             >
               <Settings2 className="h-4 w-4 shrink-0 stroke-[2]" aria-hidden />
-              {insShort}
-              {" · "}
-              {difficulty === "custom"
-                ? (customSet?.name ?? "Eigenes Set")
-                : GRIFFE_DIFFICULTY_LABELS[difficulty].title}
-              {" · "}
-              {mode === "learn"
-                ? "Lernen"
-                : mode === "quiz"
-                  ? "Quiz"
-                  : "Endlos"}
+              <span aria-hidden>
+                {insShort}
+                {" · "}
+                {difficultyLabel}
+                {" · "}
+                {modeLabel}
+              </span>
               <ChevronDown
-                className={cn("h-4 w-4 transition", setupOpen && "rotate-180")}
+                className={cn(
+                  "h-4 w-4 shrink-0 transition-transform motion-reduce:transition-none",
+                  setupOpen && "rotate-180",
+                )}
                 aria-hidden
               />
-            </button>
-            <button
-              type="button"
-              onClick={openSetup}
-              className={cn(
-                "text-dark dark:text-dark-text-muted rounded-lg text-xs font-bold underline-offset-2 hover:underline active:opacity-70",
-                GAME_FOCUS_RING,
-              )}
-            >
-              Zurück zum Setup
             </button>
           </div>
 
           {setupOpen && (
-            <div className="border-dark-border/60 dark:border-dark-border dark:bg-dark-surface/40 rounded-lg border bg-white/50 p-4">
+            <div
+              id="griffe-setup-panel"
+              className="border-rule bg-rule/25 dark:border-night-rule dark:bg-night-raised border p-4"
+            >
               {setupHint && (
                 <p
                   role="status"
                   aria-live="polite"
-                  className="mb-3 rounded-lg border border-amber-300/60 bg-amber-50 px-3 py-2 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-100"
+                  className="border-primary-ink bg-paper text-ink dark:border-primary dark:bg-night dark:text-night-text mb-3 border-l-4 px-3 py-2 text-sm"
                 >
                   {setupHint}
                 </p>
@@ -1175,81 +1185,130 @@ export function FingeringGame() {
             </div>
           )}
 
-          <ScoreBar
-            mode={mode}
-            streak={streak}
-            bestStreak={bestStreak}
-            quizCorrect={mode === "quiz" ? quizCorrect : undefined}
-            quizIndex={mode === "quiz" ? quizIndex : undefined}
-            quizTotal={mode === "quiz" ? QUIZ_ROUND_LEN : undefined}
-            secondsLeft={mode === "quiz" ? quizSecondsLeft : null}
-          />
-
-          <StaffDisplay
-            clef={clef}
-            pitch={pitch}
-            staffAccidentalLayout={staffAccidentalLayout}
-            flash={flash}
-            className="shrink-0"
-          />
-
-          {/* Feedback-Region bleibt dauerhaft gemountet (aria-live), nur der
-              Inhalt wechselt. Symbol + Text, nicht nur Farbe. */}
-          <div
-            role="status"
-            aria-live="polite"
-            className="text-dark dark:text-dark-text-secondary border-dark-border/40 dark:border-dark-border dark:bg-dark-background/50 max-h-[20vh] min-h-[2.75rem] shrink-0 overflow-y-auto rounded-lg border bg-white/60 px-3 py-2 text-sm leading-snug"
-          >
-            {feedbackText && (
-              <span className="flex items-start gap-1.5">
-                {flash === "correct" && (
-                  <Check
-                    className="mt-0.5 h-4 w-4 shrink-0 stroke-[3] text-emerald-600 dark:text-emerald-400"
-                    aria-hidden
-                  />
-                )}
-                {flash === "wrong" && (
-                  <X
-                    className="mt-0.5 h-4 w-4 shrink-0 stroke-[3] text-rose-600 dark:text-rose-400"
-                    aria-hidden
-                  />
-                )}
-                <span>{feedbackText}</span>
+          {/* Punktestand gehört in die Kopfleiste der Hülle — das ist der
+              Platz, den sie dafür anbietet, und der Inhalt gewinnt die Zeile. */}
+          <GameBarSlot>
+            <p className="condensed text-ink dark:text-night-text flex items-center gap-x-2 text-sm font-bold tabular-nums sm:gap-x-3">
+              <span>Serie {streak}</span>
+              <span className="text-dark dark:text-night-muted hidden font-semibold sm:inline">
+                Beste {bestStreak}
               </span>
+              {mode === "quiz" && (
+                <span className="text-dark dark:text-night-muted font-semibold">
+                  {quizIndex + 1}/{QUIZ_ROUND_LEN}
+                </span>
+              )}
+              {mode === "quiz" && (
+                <span className="text-dark dark:text-night-muted hidden font-semibold sm:inline">
+                  Richtig {quizCorrect}
+                </span>
+              )}
+              {mode === "quiz" && quizSecondsLeft != null && (
+                <span
+                  className={cn(
+                    "w-[3.5rem] text-right",
+                    quizSecondsLeft <= 2
+                      ? "text-red-700 dark:text-red-400"
+                      : "text-ink dark:text-night-text",
+                  )}
+                >
+                  {quizSecondsLeft.toFixed(1)} s
+                </span>
+              )}
+            </p>
+          </GameBarSlot>
+
+          <div
+            className={cn(
+              "grid grid-cols-1 gap-[clamp(0.5rem,1.8dvh,1.25rem)]",
+              WIDE_SHORT_TWO_COLUMNS,
             )}
+          >
+            <div className="flex min-w-0 flex-col gap-[clamp(0.5rem,1.6dvh,1rem)]">
+              {/* Die Notenzeile trägt ihre Kastenhöhe über `className`, die
+                  Notenschrift skaliert darin mit (so macht es Noten-Lesen
+                  selbst). Statt fester 240px wächst sie mit dem Fenster — und
+                  nimmt sich auf flachen Fenstern zurück, damit das Griffbild
+                  daneben Platz behält. */}
+              <StaffDisplay
+                clef={clef}
+                pitch={pitch}
+                staffAccidentalLayout={staffAccidentalLayout}
+                flash={flash}
+                className={cn(
+                  "mx-auto w-full max-w-[46rem] shrink-0",
+                  // Das Zugdiagramm braucht mehr Höhe als drei Ventilknöpfe
+                  // (Register, Schieber, sieben Positionen). Bei der Posaune
+                  // nimmt sich die Notenzeile deshalb etwas zurück, damit
+                  // beides ohne Rollen auf den Schirm passt.
+                  inputKind === "slide"
+                    ? "h-[clamp(8rem,24dvh,17rem)]"
+                    : "h-[clamp(9rem,30dvh,22rem)]",
+                )}
+              />
+
+              {/* Feedback-Region bleibt dauerhaft gemountet (aria-live), nur der
+                  Inhalt wechselt. Symbol + Text, nicht nur Farbe. Die Höhe ist
+                  vorgehalten, damit die Merkhilfe das Griffbild nicht schiebt —
+                  ohne Rahmen und Fläche, sonst stünde zwischen Notenzeile und
+                  Griffbild ein leerer Kasten, der wie ein Fehler aussieht. */}
+              <div
+                role="status"
+                aria-live="polite"
+                className="text-ink dark:text-night-text max-h-[22dvh] min-h-[clamp(2.75rem,7dvh,5rem)] shrink-0 overflow-y-auto px-1 py-2 text-sm leading-snug"
+              >
+                {feedbackText && (
+                  <span className="flex items-start gap-1.5">
+                    {flash === "correct" && (
+                      <Check
+                        className="text-ink dark:text-night-text mt-0.5 h-4 w-4 shrink-0 stroke-[3]"
+                        aria-hidden
+                      />
+                    )}
+                    {flash === "wrong" && (
+                      <X
+                        className="mt-0.5 h-4 w-4 shrink-0 stroke-[3] text-red-700 dark:text-red-400"
+                        aria-hidden
+                      />
+                    )}
+                    <span>{feedbackText}</span>
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="mx-auto flex w-full max-w-[46rem] min-w-0 flex-col justify-center gap-[clamp(0.5rem,1.6dvh,1rem)]">
+              {inputKind === "slide" ? (
+                <>
+                  <SlideDiagram
+                    position={slidePosition}
+                    register={slideRegister}
+                    quart={slideQuart}
+                    reveal={revealSlide}
+                    showQuart={difficulty === "advanced"}
+                    onChange={handleSlideChange}
+                    disabled={answerLocked}
+                    flash={diagramFlash}
+                  />
+                  <FingeringText label={liveSlideLabel} />
+                </>
+              ) : (
+                <>
+                  <ValveDiagram
+                    valveCount={valveCount}
+                    pressed={valvePressed}
+                    reveal={revealValves}
+                    onToggle={toggleValve}
+                    disabled={answerLocked}
+                    flash={diagramFlash}
+                  />
+                  <FingeringText label={liveValveLabel} />
+                </>
+              )}
+            </div>
           </div>
 
-          <div className="flex flex-col gap-3">
-            {inputKind === "slide" ? (
-              <>
-                <SlideDiagram
-                  position={slidePosition}
-                  register={slideRegister}
-                  quart={slideQuart}
-                  reveal={revealSlide}
-                  showQuart={difficulty === "advanced"}
-                  onChange={handleSlideChange}
-                  disabled={answerLocked}
-                  flash={diagramFlash}
-                />
-                <FingeringText label={liveSlideLabel} />
-                <GameDock>{actionButton}</GameDock>
-              </>
-            ) : (
-              <>
-                <ValveDiagram
-                  valveCount={valveCount}
-                  pressed={valvePressed}
-                  reveal={revealValves}
-                  onToggle={toggleValve}
-                  disabled={answerLocked}
-                  flash={diagramFlash}
-                />
-                <FingeringText label={liveValveLabel} />
-                <GameDock>{actionButton}</GameDock>
-              </>
-            )}
-          </div>
+          <GameDock>{actionButton}</GameDock>
         </div>
       )}
 
@@ -1257,10 +1316,10 @@ export function FingeringGame() {
         <div className="flex flex-col gap-4">
           <div className="text-center">
             <Music
-              className="text-primary mx-auto h-10 w-10 stroke-[1.4]"
+              className="text-primary-ink dark:text-primary mx-auto h-10 w-10 stroke-[1.4]"
               aria-hidden
             />
-            <p className="text-dark dark:text-dark-text mt-2 text-lg font-bold">
+            <p className="text-ink dark:text-night-text mt-2 text-lg font-bold">
               Runde zu Ende
             </p>
           </div>
@@ -1273,9 +1332,9 @@ export function FingeringGame() {
             onChangeSetup={openSetup}
           />
           {aggregates && aggregates.plays > 0 && (
-            <p className="text-dark dark:text-dark-text-muted text-center text-sm">
+            <p className="text-dark dark:text-night-muted text-center text-sm">
               Persönlicher Rekord:{" "}
-              <span className="text-dark dark:text-dark-text font-bold">
+              <span className="text-ink dark:text-night-text font-bold">
                 {aggregates.bestScore}/{QUIZ_ROUND_LEN} richtig
               </span>
               {aggregates.bestStreak > 0 && (
