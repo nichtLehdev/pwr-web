@@ -85,9 +85,9 @@ export function GriffeInstrumentSelector({
                 className={tileClass(active)}
               >
                 <span className="font-bold">{ins.label}</span>
-                <p aria-hidden className={hintClass(active)}>
+                <span aria-hidden className={cn("block", hintClass(active))}>
                   {ins.description}
-                </p>
+                </span>
               </button>
             );
           })}
@@ -112,9 +112,9 @@ export function GriffeInstrumentSelector({
                 className={tileClass(active)}
               >
                 <span className="font-bold">{d.title}</span>
-                <p aria-hidden className={hintClass(active)}>
+                <span aria-hidden className={cn("block", hintClass(active))}>
                   {d.hint}
-                </p>
+                </span>
               </button>
             );
           })}
@@ -136,9 +136,9 @@ export function GriffeInstrumentSelector({
                 )}
               >
                 <span className="font-bold">{customSetName}</span>
-                <p aria-hidden className={hintClass(true)}>
+                <span aria-hidden className={cn("block", hintClass(true))}>
                   {customSetSummary}
-                </p>
+                </span>
               </button>
               <div className="mt-2 flex flex-wrap justify-center gap-2">
                 <button
@@ -168,10 +168,10 @@ export function GriffeInstrumentSelector({
               className={cn(tileClass(false), "w-full")}
             >
               <span className="font-bold">Eigenes Set …</span>
-              <p aria-hidden className={hintClass(false)}>
+              <span aria-hidden className={cn("block", hintClass(false))}>
                 Notenset aus der öffentlichen Bibliothek wählen — gespielt
                 werden alle Noten mit Griff für das gewählte Instrument
-              </p>
+              </span>
             </button>
           )}
         </div>
@@ -193,9 +193,9 @@ export function GriffeInstrumentSelector({
                 className={tileClass(active)}
               >
                 <span className="font-bold">{m.title}</span>
-                <p aria-hidden className={hintClass(active)}>
+                <span aria-hidden className={cn("block", hintClass(active))}>
                   {m.hint}
-                </p>
+                </span>
               </button>
             );
           })}
