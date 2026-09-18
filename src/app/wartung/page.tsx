@@ -17,9 +17,13 @@ function formatUntil(iso: string | null): string | null {
   if (!iso) return null;
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return null;
+  // Mit fester Zeitzone: Die Seite rendert auf dem Server, und der läuft in
+  // UTC. Ohne Angabe stand dort 21:59, wo im Dashboard 23:59 eingetragen war
+  // (im Winter 22:59) — eingetragen wird immer in deutscher Ortszeit.
   return new Intl.DateTimeFormat("de-DE", {
-    dateStyle: "long",
+    dateStyle: "full",
     timeStyle: "short",
+    timeZone: "Europe/Berlin",
   }).format(date);
 }
 
