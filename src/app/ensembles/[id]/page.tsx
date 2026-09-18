@@ -11,6 +11,7 @@ import { headMeta } from "@/app/_components/programmheft/page-head";
 import { Heading } from "@/app/_components/programmheft/section-head";
 import { WayList, WayRow } from "@/app/_components/programmheft/way-list";
 import MediaCredit from "@/app/_components/general/media-credit";
+import ZoomableImage from "@/app/_components/general/zoomable-image";
 import LocationNavigationLink from "@/app/_components/general/location-navigation-link";
 import { MailIcon, PhoneIcon, UserIcon } from "lucide-react";
 import { SocialIcon } from "@/app/_components/ui/social-icon";
@@ -215,14 +216,21 @@ export default async function EnsembleDetailPage({ params }: PageProps) {
             </div>
             {ensemble.image?.url && (
               <div className="flex shrink-0 flex-col gap-1 sm:items-end">
-                <div className="bg-rule dark:bg-night-rule relative h-24 w-24 overflow-hidden sm:h-28 sm:w-28">
+                <ZoomableImage
+                  src={ensemble.image.url}
+                  alt={ensemble.image.alt || ensemble.name}
+                  copyright={ensemble.image.copyright}
+                  creator={ensemble.image.creator}
+                  className="bg-rule dark:bg-night-rule h-24 w-24 overflow-hidden sm:h-28 sm:w-28"
+                >
                   <Image
                     src={ensemble.image.url}
-                    alt={ensemble.name}
+                    alt={ensemble.image.alt || ensemble.name}
                     fill
+                    sizes="112px"
                     className="object-cover"
                   />
-                </div>
+                </ZoomableImage>
                 <MediaCredit
                   copyright={ensemble.image.copyright}
                   creator={ensemble.image.creator}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 import { Link as LinkIcon, Link2Off } from "lucide-react";
 import type { CourseCustomFieldRule } from "@/lib/course-custom-fields";
 import type { ParticipantFields } from "./types";
@@ -52,6 +52,11 @@ interface ParticipantEditorProps {
     /** Die schon gebuchte Kategorie bleibt wählbar, egal wie alt jemand ist. */
     ageExemptOptionId?: string | null;
   };
+  /**
+   * Zählt hoch, wenn „Fertig“ an fehlenden Angaben scheitert: dann springt
+   * der Fokus ins erste markierte Feld, statt auf dem Knopf stehen zu bleiben.
+   */
+  focusProblemSignal?: number;
   /** Left out when the course has no sibling discount or nobody to link to. */
   siblings?: {
     candidates: SiblingCandidate[];
@@ -69,6 +74,11 @@ interface ParticipantEditorProps {
 const LABEL_CLASS =
   "text-ink! dark:text-night-text! mb-1! block! text-sm! font-semibold!";
 
+/** Sichtbares Sternchen; vorgelesen wird stattdessen „Pflichtfeld“. */
+function RequiredMark() {
+  return <span aria-hidden> *</span>;
+}
+
 /**
  * Every field of a single participant, in one column on phones and two from
  * `md:` up. Deliberately carries no card chrome of its own — it is rendered
@@ -83,8 +93,12 @@ export function ParticipantEditor({
   validationError,
   showProblems,
   priceOptionField,
+  focusProblemSignal = 0,
   siblings,
 }: ParticipantEditorProps) {
+  const uid = useId();
+  const alertId = `${uid}-meldung`;
+  const rootRef = useRef<HTMLDivElement>(null);
   const alertRef = useRef<HTMLParagraphElement>(null);
 
   // The banner sits above fields that may be a scroll away, so a "Fertig" that
@@ -95,8 +109,33 @@ export function ParticipantEditor({
     }
   }, [showProblems, validationError]);
 
+  useEffect(() => {
+    if (focusProblemSignal === 0) return;
+    // Kästchengruppen sind als Ganzes markiert; angesprungen wird ihr erstes
+    // Kästchen.
+    rootRef.current
+      ?.querySelector<HTMLElement>(
+        '[aria-invalid="true"], [data-invalid] input',
+      )
+      ?.focus();
+  }, [focusProblemSignal]);
+
   const flagged = (field: string) =>
     showProblems && missingFields.includes(field);
+
+  /**
+   * Beschriftung und Fehlerzustand eines Felds: Vorher hatten die Felder
+   * weder `id` noch `htmlFor`, Vorname und Geburtsdatum blieben für
+   * Vorlesegeräte ganz ohne Namen. Die Meldung oben beschreibt jedes
+   * markierte Feld mit.
+   */
+  const fieldA11y = (key: string, invalid: boolean, required = true) => ({
+    id: `${uid}-${key}`,
+    required,
+    "aria-required": required || undefined,
+    "aria-invalid": invalid || undefined,
+    "aria-describedby": invalid && validationError ? alertId : undefined,
+  });
 
   const birthDateInvalid =
     flagged("birthDate") ||
@@ -106,10 +145,11 @@ export function ParticipantEditor({
         validationError.includes("Jahr alt")));
 
   return (
-    <div className="space-y-5">
+    <div ref={rootRef} className="space-y-5">
       {showProblems && validationError ? (
         <p
           ref={alertRef}
+          id={alertId}
           role="alert"
           className="border-2 border-red-700 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-400 dark:bg-red-900/20 dark:text-red-300"
         >
@@ -119,13 +159,16 @@ export function ParticipantEditor({
 
       <div className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2">
         <div>
-          <label className={LABEL_CLASS}>Vorname *</label>
+          <label htmlFor={`${uid}-firstName`} className={LABEL_CLASS}>
+            Vorname
+            <RequiredMark />
+          </label>
           <input
+            {...fieldA11y("firstName", flagged("firstName"))}
             type="text"
             value={participant.firstName}
             onChange={(e) => onChange("firstName", e.target.value)}
             maxLength={100}
-            required
             className={fieldClass({
               error: flagged("firstName"),
             })}
@@ -133,13 +176,16 @@ export function ParticipantEditor({
         </div>
 
         <div>
-          <label className={LABEL_CLASS}>Nachname *</label>
+          <label htmlFor={`${uid}-lastName`} className={LABEL_CLASS}>
+            Nachname
+            <RequiredMark />
+          </label>
           <input
+            {...fieldA11y("lastName", flagged("lastName"))}
             type="text"
             value={participant.lastName}
             onChange={(e) => onChange("lastName", e.target.value)}
             maxLength={100}
-            required
             className={fieldClass({
               error: flagged("lastName"),
             })}
@@ -147,8 +193,12 @@ export function ParticipantEditor({
         </div>
 
         <div>
-          <label className={LABEL_CLASS}>Geburtsdatum *</label>
+          <label htmlFor={`${uid}-birthDate`} className={LABEL_CLASS}>
+            Geburtsdatum
+            <RequiredMark />
+          </label>
           <input
+            {...fieldA11y("birthDate", birthDateInvalid)}
             type="date"
             value={
               participant.birthDate
@@ -169,7 +219,6 @@ export function ParticipantEditor({
                 .toISOString()
                 .split("T")[0]
             }
-            required
             className={fieldClass({
               error: birthDateInvalid,
             })}
@@ -177,13 +226,16 @@ export function ParticipantEditor({
         </div>
 
         <div>
-          <label className={LABEL_CLASS}>Wohnort *</label>
+          <label htmlFor={`${uid}-city`} className={LABEL_CLASS}>
+            Wohnort
+            <RequiredMark />
+          </label>
           <input
+            {...fieldA11y("city", flagged("city"))}
             type="text"
             value={participant.city}
             onChange={(e) => onChange("city", e.target.value)}
             maxLength={100}
-            required
             className={fieldClass({
               error: flagged("city"),
             })}
@@ -192,8 +244,11 @@ export function ParticipantEditor({
         </div>
 
         <div>
-          <label className={LABEL_CLASS}>Instrument</label>
+          <label htmlFor={`${uid}-instrument`} className={LABEL_CLASS}>
+            Instrument
+          </label>
           <input
+            id={`${uid}-instrument`}
             type="text"
             value={participant.instrument ?? ""}
             onChange={(e) => onChange("instrument", e.target.value)}
@@ -211,6 +266,9 @@ export function ParticipantEditor({
               onChange("priceOptionId", priceOptionId)
             }
             error={flagged("priceOptionId")}
+            errorDescriptionId={
+              flagged("priceOptionId") && validationError ? alertId : undefined
+            }
             labelClassName={LABEL_CLASS}
             placeholderOption={priceOptionField?.placeholderOption}
             isOptionDisabled={priceOptionField?.isOptionDisabled}
@@ -233,6 +291,7 @@ export function ParticipantEditor({
                   .map((m) => m.slice("customField:".length))
               : []
           }
+          errorDescriptionId={validationError ? alertId : undefined}
           labelClassName={LABEL_CLASS}
           inputClassName={FIELD_SIZE_CLASS}
           selectFieldSize={FIELD_SELECT_SIZE}
@@ -241,10 +300,19 @@ export function ParticipantEditor({
 
       {siblings && siblings.candidates.length > 0 ? (
         <div className="border-rule dark:border-night-rule space-y-2 border-t pt-5">
-          <label className="text-ink dark:text-night-text block text-sm font-semibold">
+          {/* Überschrift einer Knopfgruppe, kein Feld — ein <label> ohne
+              Bezug hätte nichts beschriftet. */}
+          <p
+            id={`${uid}-geschwister`}
+            className="text-ink dark:text-night-text block text-sm font-semibold"
+          >
             Geschwister verknüpfen
-          </label>
-          <div className="flex flex-wrap items-center gap-2">
+          </p>
+          <div
+            role="group"
+            aria-labelledby={`${uid}-geschwister`}
+            className="flex flex-wrap items-center gap-2"
+          >
             {siblings.candidates.map((candidate) => (
               <button
                 key={candidate.key}

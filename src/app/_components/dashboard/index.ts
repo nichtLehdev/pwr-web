@@ -50,6 +50,7 @@ export {
 } from "./new-location-form";
 export { SocialLinksEditor, cleanSocialLinks } from "./social-links-editor";
 export { CourseInvoicesButton } from "./course-invoices-button";
+export { EntryExportButton, useEntryExport } from "./entry-export";
 export {
   DashboardListViewToggle,
   useDashboardListView,

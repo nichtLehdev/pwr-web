@@ -5,7 +5,10 @@ import { Camera } from "lucide-react";
 interface MediaCreditProps {
   copyright?: string | null;
   creator?: string | null;
-  /** Optional: use light text (e.g. on dark image backgrounds) */
+  /**
+   * `light`: auf Nachtgrund (Lightbox). Früher lag der Nachweis mit
+   * Textschatten über dem Foto; im Programmheft steht er unter dem Bild.
+   */
   variant?: "default" | "light";
   /** Optional: show a small camera icon next to the photographer/creator */
   showCreatorIcon?: boolean;
@@ -28,7 +31,7 @@ export default function MediaCredit({
 
   const variantClasses =
     variant === "light"
-      ? "text-white/90 text-shadow-sm"
+      ? "text-night-muted"
       : "text-dark dark:text-night-muted";
 
   return (

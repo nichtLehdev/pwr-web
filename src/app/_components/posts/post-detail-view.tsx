@@ -12,15 +12,17 @@ import { headMeta } from "@/app/_components/programmheft/page-head";
 import { BezirkLabel } from "@/app/_components/programmheft/bezirk-label";
 import { WayList, WayRow } from "@/app/_components/programmheft/way-list";
 import { NewsColumns } from "@/app/_components/programmheft/news";
-import ImageLightbox from "./image-lightbox";
+import ImageLightbox from "@/app/_components/general/image-lightbox";
+import ZoomableImage from "@/app/_components/general/zoomable-image";
 import MediaCredit from "@/app/_components/general/media-credit";
 import PublicShareButton from "@/app/_components/general/public-share-button";
-import type { FileType } from "~/generated/prisma/enums";
+import { DOWNLOAD_FILE_TYPE_LABELS } from "@/lib/download-file-types";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
 import type { PermissionKey } from "@/lib/permissions";
 import { sanitizeHtml } from "@/lib/sanitize";
+import { zoomLabel } from "@/lib/image-zoom";
 import { ArrowLeftIcon, CalendarIcon, EditIcon, PinIcon } from "lucide-react";
 
 type PostWithRelations = RouterOutputs["posts"]["getById"];
@@ -31,14 +33,6 @@ const DATE = new Intl.DateTimeFormat("de-DE", {
   month: "long",
   year: "numeric",
 });
-
-const fileTypeLabels: Record<FileType, string> = {
-  PDF: "PDF",
-  DOCX: "Word",
-  XLSX: "Excel",
-  ZIP: "ZIP",
-  MP3: "Audio",
-};
 
 function formatFileSize(bytes: number | null): string {
   if (!bytes) return "";
@@ -62,6 +56,10 @@ function CoverFallback() {
     </div>
   );
 }
+
+/** Bildfeld des Titelbilds; mit Bild als Vergrößern-Button, ohne als Fläche. */
+const COVER_FRAME =
+  "bg-ink dark:bg-night-raised relative aspect-[2/1] w-full overflow-hidden sm:aspect-[3/2]";
 
 interface PostDetailViewProps {
   post: PostWithRelations;
@@ -87,26 +85,60 @@ export default function PostDetailView({
     const container = document.querySelector(".article-content");
     if (!container) return;
 
-    const handleContainerClick = (event: Event) => {
-      const target = event.target as HTMLElement | null;
+    const open = (img: HTMLImageElement) => {
+      setLightboxImage({
+        src: img.getAttribute("src") || "",
+        alt: img.getAttribute("alt") || "",
+        copyright: img.getAttribute("data-copyright") ?? undefined,
+        creator: img.getAttribute("data-creator") ?? undefined,
+      });
+    };
+
+    // Die Bilder kommen als gespeichertes HTML, einen Button kann der Filter
+    // dort nicht durchlassen. Damit sie trotzdem per Tastatur erreichbar sind,
+    // bekommen sie hier Tab-Halt, Rolle und Namen — ausgenommen Bilder in
+    // Links, deren Klick bleibt die Navigation.
+    const images = Array.from(container.querySelectorAll("img")).filter(
+      (img) => !img.closest("a"),
+    );
+    for (const img of images) {
+      img.tabIndex = 0;
+      img.setAttribute("role", "button");
+      img.setAttribute("aria-haspopup", "dialog");
+      img.setAttribute("aria-label", zoomLabel(img.getAttribute("alt")));
+    }
+
+    const imageFor = (target: EventTarget | null) => {
+      const el = target instanceof HTMLElement ? target : null;
+      if (!el || el.closest("a")) return null;
       const img =
-        target?.tagName === "IMG"
-          ? (target as HTMLImageElement)
-          : target?.closest("figure")?.querySelector("img");
-      if (img && img.tagName === "IMG") {
-        setLightboxImage({
-          src: img.getAttribute("src") || "",
-          alt: img.getAttribute("alt") || "",
-          copyright: img.getAttribute("data-copyright") ?? undefined,
-          creator: img.getAttribute("data-creator") ?? undefined,
-        });
-      }
+        el instanceof HTMLImageElement
+          ? el
+          : el.closest("figure")?.querySelector("img");
+      return img instanceof HTMLImageElement ? img : null;
+    };
+
+    const handleContainerClick = (event: Event) => {
+      const img = imageFor(event.target);
+      if (img) open(img);
+    };
+    const handleContainerKeyDown = (event: Event) => {
+      const { key, target } = event as KeyboardEvent;
+      if (key !== "Enter" && key !== " ") return;
+      if (!(target instanceof HTMLImageElement)) return;
+      const img = imageFor(target);
+      if (!img) return;
+      // Leertaste scrollte sonst die Seite weiter.
+      event.preventDefault();
+      open(img);
     };
 
     container.addEventListener("click", handleContainerClick);
+    container.addEventListener("keydown", handleContainerKeyDown);
 
     return () => {
       container.removeEventListener("click", handleContainerClick);
+      container.removeEventListener("keydown", handleContainerKeyDown);
     };
   }, []);
 
@@ -204,7 +236,14 @@ export default function PostDetailView({
           {post.author || post.authorName || post.createdBy ? (
             <div className="border-rule dark:border-night-rule mx-auto flex max-w-[65ch] items-center gap-4 border-b pb-8">
               {displayImage?.url ? (
-                <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full">
+                <ZoomableImage
+                  src={displayImage.url}
+                  alt={displayImage.alt || displayName || "Autor Bild"}
+                  copyright={displayImage.copyright}
+                  creator={displayImage.creator}
+                  hint={false}
+                  className="h-14 w-14 shrink-0 overflow-hidden rounded-full"
+                >
                   <Image
                     src={displayImage.url}
                     alt={displayImage.alt || displayName || "Autor Bild"}
@@ -212,7 +251,7 @@ export default function PostDetailView({
                     sizes="56px"
                     className="object-cover"
                   />
-                </div>
+                </ZoomableImage>
               ) : null}
               <div className="min-w-0">
                 {userId && canViewUserProfile ? (
@@ -266,8 +305,14 @@ export default function PostDetailView({
                 also derselbe Fehler wie zuvor am Desktop, nur klein. Flacher
                 geschnitten bleibt das Bild da und der Text sichtbar. */}
             <figure className="mb-5 w-full sm:float-right sm:mb-2 sm:ml-8 sm:w-3/5">
-              <div className="bg-ink dark:bg-night-raised relative aspect-[2/1] w-full overflow-hidden sm:aspect-[3/2]">
-                {post.coverImage?.url ? (
+              {post.coverImage?.url ? (
+                <ZoomableImage
+                  src={post.coverImage.url}
+                  alt={post.coverImage.alt || post.title}
+                  copyright={post.coverImage.copyright}
+                  creator={post.coverImage.creator}
+                  className={COVER_FRAME}
+                >
                   <Image
                     src={post.coverImage.url}
                     alt={post.coverImage.alt || post.title}
@@ -277,10 +322,12 @@ export default function PostDetailView({
                     className="object-cover"
                     style={{ objectPosition: position }}
                   />
-                ) : (
+                </ZoomableImage>
+              ) : (
+                <div className={COVER_FRAME}>
                   <CoverFallback />
-                )}
-              </div>
+                </div>
+              )}
               <figcaption>
                 <MediaCredit
                   copyright={post.coverImage?.copyright}
@@ -332,15 +379,15 @@ export default function PostDetailView({
                   key={download.id}
                   href={download.fileUrl}
                   kind="download"
-                  fileType={fileTypeLabels[download.fileType]}
+                  fileType={DOWNLOAD_FILE_TYPE_LABELS[download.fileType]}
                   title={download.title}
                   description={
                     download.description || download.fileSize
                       ? [
                           download.description,
                           download.fileSize
-                            ? `${fileTypeLabels[download.fileType]} · ${formatFileSize(download.fileSize)}`
-                            : fileTypeLabels[download.fileType],
+                            ? `${DOWNLOAD_FILE_TYPE_LABELS[download.fileType]} · ${formatFileSize(download.fileSize)}`
+                            : DOWNLOAD_FILE_TYPE_LABELS[download.fileType],
                         ]
                           .filter(Boolean)
                           .join(" — ")

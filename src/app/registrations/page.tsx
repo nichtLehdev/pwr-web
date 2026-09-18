@@ -63,10 +63,15 @@ const STATUS_TAG: Record<RegistrationStatus, { label: string; tone: TagTone }> =
     CANCELLED: { label: "Storniert", tone: "cancelled" },
   };
 
+/**
+ * Aus Sicht der Anmeldenden, nicht des Teams: Hier ist nichts zu prüfen,
+ * sondern etwas wird geprüft. „Rabatt prüfen“ steht weiterhin im Dashboard,
+ * wo es tatsächlich eine Aufgabe ist.
+ */
 const DISCOUNT_TAG: Partial<
   Record<SiblingDiscountStatus, { label: string; tone: TagTone }>
 > = {
-  PENDING: { label: "Rabatt prüfen", tone: "orange" },
+  PENDING: { label: "Rabatt wird geprüft", tone: "orange" },
   APPROVED: { label: "Rabatt genehmigt", tone: "inverse" },
   REJECTED: { label: "Rabatt abgelehnt", tone: "ink" },
 };
@@ -308,7 +313,14 @@ export default function MyRegistrationsPage() {
             {data.registrations.map((registration) => {
               const editInfo = getEditDeadlineInfo(registration);
               const statusTag = STATUS_TAG[registration.registrationStatus];
+              // Bei einer stornierten Anmeldung gibt es keinen Rabatt mehr:
+              // Ein „wird geprüft“ daneben verspricht eine Entscheidung, die
+              // nicht mehr kommt.
+              const cancelled =
+                registration.registrationStatus ===
+                RegistrationStatus.CANCELLED;
               const discountTag =
+                !cancelled &&
                 registration.siblingDiscountStatus &&
                 registration.siblingDiscountStatus !==
                   SiblingDiscountStatus.NONE

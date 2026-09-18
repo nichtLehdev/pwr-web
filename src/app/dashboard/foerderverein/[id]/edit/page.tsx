@@ -60,7 +60,6 @@ export default function EditFoerdervereinPage() {
   const [role, setRole] = useState<FoerdervereinRole>(
     FoerdervereinRole.MITGLIED,
   );
-  const [memberSince, setMemberSince] = useState("");
   const [description, setDescription] = useState("");
   const [sortOrder, setSortOrder] = useState(0);
   const [userId, setUserId] = useState<string | null>(null);
@@ -84,11 +83,6 @@ export default function EditFoerdervereinPage() {
       });
       setPosition(member.position || "");
       setRole(member.role as FoerdervereinRole);
-      setMemberSince(
-        member.memberSince
-          ? new Date(member.memberSince).toISOString().split("T")[0]!
-          : "",
-      );
       setDescription(member.description || "");
       setSortOrder(member.sortOrder || 0);
       setUserId(member.userId);
@@ -165,7 +159,6 @@ export default function EditFoerdervereinPage() {
       imageId: person.imageId,
       position: position.trim() || null,
       role,
-      memberSince: memberSince ? new Date(memberSince) : null,
       description: description.trim() || null,
       sortOrder,
       userId,
@@ -283,17 +276,6 @@ export default function EditFoerdervereinPage() {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <Label>Mitglied seit</Label>
-                <Input
-                  type="date"
-                  value={memberSince}
-                  onChange={(e) => setMemberSince(e.target.value)}
-                  max={new Date().toISOString().split("T")[0]}
-                  title="Datum kann nicht in der Zukunft liegen"
-                />
-              </div>
-
               <div>
                 <Label>Reihenfolge</Label>
                 <Input

@@ -236,19 +236,6 @@ export default function FoerdervereinDetailPage() {
                 </dd>
               </div>
             )}
-            {member.memberSince && (
-              <div>
-                <dt className="text-dark dark:text-night-muted text-sm font-medium">
-                  Mitglied seit
-                </dt>
-                <dd className="text-ink dark:text-night-text mt-1">
-                  {new Date(member.memberSince).toLocaleDateString("de-DE", {
-                    year: "numeric",
-                    month: "long",
-                  })}
-                </dd>
-              </div>
-            )}
             <div>
               <dt className="text-dark dark:text-night-muted text-sm font-medium">
                 Verknüpfung

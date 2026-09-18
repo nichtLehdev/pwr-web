@@ -14,19 +14,14 @@ import {
 import { Note } from "@/app/_components/programmheft/note";
 import { Tag } from "@/app/_components/programmheft/tag";
 import { seatShortageCause, type ShortageCourse } from "./seat-shortage-notice";
+import { RADIO_INPUT_CLASS } from "@/app/_components/programmheft/field";
 
 /** Wie das Kontrollkästchen in `programmheft/field`: eckig, angehakt Tinte. */
 const CHECKBOX_CLASS =
   "border-ink checked:bg-ink dark:border-night-text dark:checked:bg-night-text bg-paper dark:bg-night mt-0.5 h-5 w-5 shrink-0 cursor-[inherit] appearance-none border-2";
 
-/**
- * Selbst gezeichnet wie das Kontrollkästchen: der native Knopf erscheint in
- * Safari im Nachtdruck als volle weiße Scheibe und sieht dann gewählt aus.
- * Rund bleibt er, damit er als Einzelwahl erkennbar ist; der Punkt ist der
- * Hintergrund innerhalb des Polsters.
- */
-const RADIO_CLASS =
-  "border-ink checked:bg-ink dark:border-night-text dark:checked:bg-night-text mt-0.5 h-5 w-5 shrink-0 cursor-pointer appearance-none rounded-full border-2 bg-clip-content p-[3px]";
+/** Gemeinsame Einzelwahl (siehe `RADIO_INPUT_CLASS`), hier oben ausgerichtet. */
+const RADIO_CLASS = `${RADIO_INPUT_CLASS} mt-0.5`;
 
 /**
  * Auswahlkarte: Haarlinie, gewählt ein 2px-Tintenrahmen. Das Polster gleicht
@@ -105,6 +100,11 @@ export function SeatSplitChoice({
       ...availability,
     }) !== null;
 
+  /** Der erste Teilnehmer, der sich noch auswählen lässt. */
+  const firstChoosable = participants.findIndex(
+    (_, index) => selected.has(index) || !wouldOverfill(index),
+  );
+
   const problemText =
     problem === null
       ? null
@@ -151,7 +151,8 @@ export function SeatSplitChoice({
               </span>
               <span className="text-dark dark:text-night-muted mt-1 block text-sm">
                 Alle {participants.length} Teilnehmer warten gemeinsam und
-                werden bestätigt, sobald genug Plätze frei sind.
+                werden bestätigt, wenn genug Plätze frei sind und das Kursteam
+                die Warteliste nachrücken lässt.
               </span>
             </span>
           </label>
@@ -203,6 +204,10 @@ export function SeatSplitChoice({
                   >
                     <input
                       type="checkbox"
+                      // Sprungziel, wenn die Auswahl vor dem Absenden fehlt.
+                      data-focus-key={
+                        index === firstChoosable ? "seatSelection" : undefined
+                      }
                       checked={checked}
                       disabled={disabled}
                       onChange={() => toggle(index)}

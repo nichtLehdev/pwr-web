@@ -31,7 +31,10 @@ import {
   CourseInvoicesButton,
   DashboardFormMediaSplit,
   DashboardFormSectionLayout,
+  DashboardOverflowMenu,
   DashboardPage,
+  EntryExportButton,
+  useEntryExport,
 } from "@/app/_components/dashboard";
 import {
   ScrollableModal,
@@ -39,6 +42,8 @@ import {
   ScrollableModalBody,
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
+import { renderDescriptionHtml } from "@/lib/sanitize";
+import "@/styles/beschreibung.css";
 import { RegistrationPaymentBadge } from "@/app/_components/dashboard/invoice-payment-badge";
 import { participantPriceOptionLabel } from "@/lib/course-price-options";
 import { priceOptionAgeLabel } from "@/lib/course-price-option-age";
@@ -178,6 +183,10 @@ export default function CourseDetailPage() {
     },
   });
 
+  // Nur der Kurs selbst — Anmeldungen, Teilnehmende und Rechnungen bleiben
+  // als personenbezogene Daten draußen (siehe Export-Route).
+  const entryExport = useEntryExport("courses", courseId);
+
   const deleteMutation = api.courses.delete.useMutation({
     onSuccess: () => {
       toast.success("Kurs erfolgreich gelöscht");
@@ -290,6 +299,7 @@ export default function CourseDetailPage() {
 
   const confirmedCount = course._count?.participants ?? 0;
   const isExternal = isExternalCourse(course);
+  const beschreibungHtml = renderDescriptionHtml(course.description);
   const districtLabel = course.bezirk
     ? `${course.bezirk.name}`
     : "Übergreifend";
@@ -304,7 +314,7 @@ export default function CourseDetailPage() {
   const detailShortlinks = [
     { href: "#course-detail-overview", label: "Überblick" },
     { href: "#course-detail-info", label: "Kursinfos" },
-    ...(course.description
+    ...(beschreibungHtml
       ? [{ href: "#course-detail-description", label: "Beschreibung" }]
       : []),
     ...((course.collaborators?.length ?? 0) > 0 ||
@@ -466,7 +476,10 @@ export default function CourseDetailPage() {
         { label: course.title },
       ]}
       actions={
-        <div className="flex flex-wrap gap-2">
+        // `w-full sm:w-auto`: Nur über die volle Breite kann `ml-auto` das
+        // „…“-Menü auf dem Telefon an den rechten Rand schieben — sein Panel
+        // ist rechts verankert.
+        <div className="flex w-full flex-wrap gap-2 sm:w-auto">
           <CourseInvoicesButton courseId={courseId} />
           {canEdit && (
             <Link
@@ -477,6 +490,9 @@ export default function CourseDetailPage() {
               Bearbeiten
             </Link>
           )}
+          {entryExport.canExport && (
+            <EntryExportButton exporter={entryExport} />
+          )}
           {canDelete && (
             <button
               onClick={() => setShowDeleteModal(true)}
@@ -485,6 +501,15 @@ export default function CourseDetailPage() {
               <Trash2 className="h-4 w-4" />
               Löschen
             </button>
+          )}
+          {/* Auf dem Telefon steht der Export im „…“-Menü (siehe
+              EntryExportButton); ab sm als Knopf vor „Löschen“, damit die
+              zerstörerische Aktion am Ende der Reihe bleibt. */}
+          {entryExport.canExport && (
+            <DashboardOverflowMenu
+              className="ml-auto sm:hidden"
+              items={[entryExport.menuItem]}
+            />
           )}
         </div>
       }
@@ -678,8 +703,11 @@ export default function CourseDetailPage() {
               )
             )}
 
-            {/* Description */}
-            {course.description && (
+            {/* Beschreibung wie auf der öffentlichen Kursseite gesetzt. Vorher
+                wurde der Rohtext an jedem Zeilenumbruch in einen Absatz
+                zerlegt — mit `prose`-Klassen, die ohne das
+                Typography-Plugin nichts bewirkten. */}
+            {beschreibungHtml && (
               <section
                 id="course-detail-description"
                 className="dashboard-form-scroll-anchor dark:border-night-rule border-rule border-t pt-10"
@@ -687,11 +715,10 @@ export default function CourseDetailPage() {
                 <h2 className="dark:text-night-text text-ink mb-4 text-lg font-semibold">
                   Beschreibung
                 </h2>
-                <div className="prose prose-sm text-ink dark:text-night-text max-w-none">
-                  {course.description.split("\n").map((paragraph, i) => (
-                    <p key={i}>{paragraph}</p>
-                  ))}
-                </div>
+                <div
+                  className="beschreibung"
+                  dangerouslySetInnerHTML={{ __html: beschreibungHtml }}
+                />
               </section>
             )}
 

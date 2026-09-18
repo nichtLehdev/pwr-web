@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { Dispatch, SetStateAction } from "react";
+import { useId, type Dispatch, type SetStateAction } from "react";
 import type {
   RegistrationData,
   CourseWithRelations,
@@ -22,6 +22,7 @@ import {
   calculateOriginalPrice,
   calculateDiscountAmount,
   calculateDownPayment,
+  type FormProblem,
 } from "./utils";
 import {
   COURSE_PAYMENT_METHOD_LABELS,
@@ -34,6 +35,7 @@ import { priceOptionDisplayLabel } from "@/lib/course-price-options";
 import { formatEuro } from "@/lib/invoice-document";
 import { Heading } from "@/app/_components/programmheft/section-head";
 import { ValueTable } from "@/app/_components/programmheft/value-table";
+import { RADIO_INPUT_CLASS } from "@/app/_components/programmheft/field";
 
 interface Step3SummaryProps {
   course: CourseWithRelations;
@@ -59,6 +61,13 @@ interface Step3SummaryProps {
     setSelectedIndexes: (indexes: number[]) => void;
     problem: SeatSelectionProblem | null;
   };
+  /** Sprungziel für den Fokus beim Wechsel in diesen Schritt. */
+  headingId: string;
+  /**
+   * Was vor dem Absenden noch fehlt — erst nach einem Klick auf „Verbindlich
+   * anmelden“ übergeben, dann am jeweiligen Feld gemeldet.
+   */
+  problems?: readonly FormProblem[];
   /** Set when the course team records the registration itself. */
   staff?: {
     options: StaffRegistrationOptions;
@@ -71,13 +80,37 @@ interface Step3SummaryProps {
 }
 
 /** Kopf einer Zwischengruppe innerhalb der Zusammenfassung. */
-function GroupHeading({ children }: { children: React.ReactNode }) {
+function GroupHeading({
+  id,
+  children,
+}: {
+  id?: string;
+  children: React.ReactNode;
+}) {
   return (
-    <Heading as="h4" size="list" className="text-[1.375rem]">
+    <Heading as="h4" size="list" id={id} className="text-[1.375rem]">
       {children}
     </Heading>
   );
 }
+
+/** Meldung direkt unter einem Feld der Übersicht. */
+function FieldProblem({ id, children }: { id: string; children: string }) {
+  return (
+    <p
+      id={id}
+      className="mt-1 text-sm font-medium text-red-700 dark:text-red-400"
+    >
+      {children}
+    </p>
+  );
+}
+
+/**
+ * Kontrollkästchen mit Text, Trefferfläche über die ganze Beschriftung und
+ * mindestens 44px hoch — das Kästchen selbst bleibt optisch klein.
+ */
+const CONSENT_LABEL_CLASS = "flex min-h-11 cursor-pointer items-start gap-3";
 
 export function Step3Summary({
   course,
@@ -91,9 +124,19 @@ export function Step3Summary({
   isWaitlist,
   seatShortage,
   seatSplit,
+  headingId,
+  problems = [],
   staff,
 }: Step3SummaryProps) {
+  const uid = useId();
   const downPaymentAmount = calculateDownPayment(registrationData, course);
+  const problemFor = (field: string) =>
+    problems.find((p) => p.field === field)?.message;
+  const paymentProblem = problemFor("paymentMethod");
+  const termsProblem = problemFor("termsAccepted");
+  const paymentHeadingId = `${uid}-zahlungsweise`;
+  const paymentProblemId = `${uid}-zahlungsweise-fehler`;
+  const termsProblemId = `${uid}-zustimmung-fehler`;
 
   // Aufgeteilt gilt der Anzahlungsblock den bestätigten Teilnehmern; die
   // wartenden zahlen erst nach ihrer Platzbestätigung.
@@ -147,7 +190,7 @@ export function Step3Summary({
 
   return (
     <div className="space-y-8">
-      <Heading as="h3" size="list" rule>
+      <Heading as="h3" size="list" id={headingId} tabIndex={-1} rule>
         Zusammenfassung
       </Heading>
 
@@ -281,20 +324,28 @@ export function Step3Summary({
 
       {registrationNeedsPaymentMethod(course) && (
         <div className="border-rule dark:border-night-rule border-t pt-8">
-          <GroupHeading>Zahlungsweise</GroupHeading>
+          <GroupHeading id={paymentHeadingId}>Zahlungsweise</GroupHeading>
           {courseRequiresPaymentMethodChoice(course) ? (
             <div className="mt-2 space-y-3">
               <p className="text-dark dark:text-night-muted text-sm">
                 Bitte wählen Sie, wie Sie die Teilnahmegebühr begleichen
                 möchten.
               </p>
-              <div className="space-y-1">
+              <div
+                role="radiogroup"
+                aria-labelledby={paymentHeadingId}
+                aria-required
+                aria-invalid={paymentProblem ? true : undefined}
+                aria-describedby={paymentProblem ? paymentProblemId : undefined}
+                className="space-y-1"
+              >
                 {courseAcceptsCash(course) && (
                   <label className="border-rule dark:border-night-rule flex min-h-11 cursor-pointer items-center gap-3 border-b py-2">
                     <input
                       type="radio"
                       name="course-payment-method"
-                      className="border-ink text-ink h-4 w-4 shrink-0"
+                      data-focus-key="paymentMethod"
+                      className={RADIO_INPUT_CLASS}
                       checked={registrationData.paymentMethod === "CASH"}
                       onChange={() =>
                         setRegistrationData((d) => ({
@@ -313,7 +364,11 @@ export function Step3Summary({
                     <input
                       type="radio"
                       name="course-payment-method"
-                      className="border-ink text-ink h-4 w-4 shrink-0"
+                      // Ohne Barzahlung ist dies der erste Knopf der Gruppe.
+                      data-focus-key={
+                        courseAcceptsCash(course) ? undefined : "paymentMethod"
+                      }
+                      className={RADIO_INPUT_CLASS}
                       checked={registrationData.paymentMethod === "INVOICE"}
                       onChange={() =>
                         setRegistrationData((d) => ({
@@ -328,6 +383,11 @@ export function Step3Summary({
                   </label>
                 )}
               </div>
+              {paymentProblem ? (
+                <FieldProblem id={paymentProblemId}>
+                  {paymentProblem}
+                </FieldProblem>
+              ) : null}
               <p className="text-dark dark:text-night-muted text-xs">
                 {downPaymentAmount !== null
                   ? "Die Anzahlung wird in jedem Fall vorab überwiesen; die Zahlungsweise gilt für den Restbetrag."
@@ -421,6 +481,7 @@ export function Step3Summary({
               : {
                   checked: downPaymentAcknowledged,
                   onChange: setDownPaymentAcknowledged,
+                  problem: problemFor("downPaymentAcknowledged"),
                 }
           }
           // Staff record on someone else's behalf — their own account says
@@ -443,53 +504,69 @@ export function Step3Summary({
               splitPlan ? confirmedDownPayment : downPaymentAmount
             }
           />
-          <label className="flex cursor-pointer items-start gap-3">
+          <div>
+            <label className={CONSENT_LABEL_CLASS}>
+              <input
+                type="checkbox"
+                checked={termsAccepted}
+                onChange={(e) => setTermsAccepted(e.target.checked)}
+                required
+                data-focus-key="termsAccepted"
+                aria-invalid={termsProblem ? true : undefined}
+                aria-describedby={termsProblem ? termsProblemId : undefined}
+                className="border-ink dark:border-night-text mt-1 h-4 w-4 shrink-0 rounded-none"
+              />
+              <span className="text-ink dark:text-night-text text-sm">
+                Der Anmelder hat dieser Anmeldung zugestimmt (z. B. per E-Mail,
+                telefonisch oder auf einem Papierformular) und die
+                Teilnahmebedingungen zur Kenntnis genommen.
+              </span>
+            </label>
+            {termsProblem ? (
+              <FieldProblem id={termsProblemId}>{termsProblem}</FieldProblem>
+            ) : null}
+          </div>
+        </>
+      ) : (
+        /* Terms */
+        <div>
+          <label className={CONSENT_LABEL_CLASS}>
             <input
               type="checkbox"
               checked={termsAccepted}
               onChange={(e) => setTermsAccepted(e.target.checked)}
               required
+              data-focus-key="termsAccepted"
+              aria-invalid={termsProblem ? true : undefined}
+              aria-describedby={termsProblem ? termsProblemId : undefined}
               className="border-ink dark:border-night-text mt-1 h-4 w-4 shrink-0 rounded-none"
             />
             <span className="text-ink dark:text-night-text text-sm">
-              Der Anmelder hat dieser Anmeldung zugestimmt (z. B. per E-Mail,
-              telefonisch oder auf einem Papierformular) und die
-              Teilnahmebedingungen zur Kenntnis genommen.
+              Ich akzeptiere die{" "}
+              <Link
+                href="/impressum"
+                className="link-ink"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Allgemeinen Geschäftsbedingungen
+              </Link>{" "}
+              und die{" "}
+              <Link
+                href="/datenschutz"
+                className="link-ink"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Datenschutzerklärung
+              </Link>
+              .
             </span>
           </label>
-        </>
-      ) : (
-        /* Terms */
-        <label className="flex cursor-pointer items-start gap-3">
-          <input
-            type="checkbox"
-            checked={termsAccepted}
-            onChange={(e) => setTermsAccepted(e.target.checked)}
-            required
-            className="border-ink dark:border-night-text mt-1 h-4 w-4 shrink-0 rounded-none"
-          />
-          <span className="text-ink dark:text-night-text text-sm">
-            Ich akzeptiere die{" "}
-            <Link
-              href="/impressum"
-              className="link-ink"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Allgemeinen Geschäftsbedingungen
-            </Link>{" "}
-            und die{" "}
-            <Link
-              href="/datenschutz"
-              className="link-ink"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Datenschutzerklärung
-            </Link>
-            .
-          </span>
-        </label>
+          {termsProblem ? (
+            <FieldProblem id={termsProblemId}>{termsProblem}</FieldProblem>
+          ) : null}
+        </div>
       )}
     </div>
   );

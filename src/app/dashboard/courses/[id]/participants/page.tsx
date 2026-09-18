@@ -34,6 +34,7 @@ import {
 } from "@/app/_components/ui/data-table";
 import { RegistrationPaymentBadge } from "@/app/_components/dashboard/invoice-payment-badge";
 import { DownPaymentBadge } from "@/app/_components/dashboard/down-payment-panel";
+import { WaitlistPromotionPanel } from "@/app/_components/dashboard/waitlist-promotion-panel";
 import {
   DOWN_PAYMENT_STATE_LABELS,
   downPaymentReceived,
@@ -265,6 +266,7 @@ export default function CourseParticipantsPage() {
     setBulkAction(null);
     setSelectedIds(new Set());
     void utils.courses.getRegistrations.invalidate({ courseId });
+    void utils.registrations.getWaitlistOverview.invalidate({ courseId });
     const failed = ids.length - succeeded;
     if (failed === 0) {
       toast.success(
@@ -973,6 +975,17 @@ export default function CourseParticipantsPage() {
             </div>
           </div>
         </div>
+
+        {/* Warteliste: freie Plätze, Wartende und der Knopf zum Nachrücken —
+            automatisch rückt niemand mehr nach. */}
+        {canManageRegistrations && (
+          <WaitlistPromotionPanel
+            courseId={courseId}
+            onPromoted={() =>
+              void utils.courses.getRegistrations.invalidate({ courseId })
+            }
+          />
+        )}
 
         {/* View Mode Toggle & Filters */}
         <div className="border-rule dark:border-night-rule mb-6 border p-4">

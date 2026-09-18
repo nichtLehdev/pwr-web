@@ -17,6 +17,7 @@ import { Tag } from "@/app/_components/programmheft/tag";
 import { Note } from "@/app/_components/programmheft/note";
 import { headMeta } from "@/app/_components/programmheft/page-head";
 import { cn } from "@/lib/utils";
+import { markdownToPlainText } from "@/lib/markdown-to-plain-text";
 
 interface EventDetailModalProps {
   event: CalendarItem & {
@@ -35,6 +36,7 @@ export default function EventDetailModal({
   event,
   onClose,
 }: EventDetailModalProps) {
+  const beschreibungText = markdownToPlainText(event.description ?? "");
   const eventDate = event.type === "event" ? event.date : null;
   const eventDuration =
     event.type === "event" && event.duration ? event.duration : null;
@@ -219,14 +221,18 @@ export default function EventDetailModal({
             </Note>
           )}
 
-          {/* Description */}
-          {event.description && (
+          {/* Beschreibung als Klartext, nicht als gesetzter Text: Das
+              Schnellfenster des Kalenders ist eine Vorschau mit Link auf die
+              Detailseite, und die Kalenderseite soll dafür nicht die
+              Markdown- und Filterbibliotheken mitladen. `markdownToPlainText`
+              behält Absätze und Umbrüche, entfernt aber die Syntaxzeichen. */}
+          {beschreibungText && (
             <div>
               <h3 className="text-ink dark:text-night-text mb-1 font-semibold">
                 Beschreibung
               </h3>
               <div className="text-dark dark:text-night-muted whitespace-pre-wrap">
-                {event.description}
+                {beschreibungText}
               </div>
             </div>
           )}

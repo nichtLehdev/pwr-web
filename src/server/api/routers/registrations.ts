@@ -45,6 +45,38 @@ function viewerIsCourseTeamMember(
 ) {
   return (collaborators?.length ?? 0) > 0;
 }
+
+/**
+ * Anmeldungen eines Kurses verwalten (Warteliste nachrücken lassen, ihre
+ * Übersicht sehen) — dieselbe Regel wie `updateStatus`: Kursersteller, jedes
+ * Kursteam-Mitglied oder das Recht `courses.manage_registrations`. Den Kurs
+ * mit `collaborators: collaboratorsForViewer(…)` laden.
+ */
+async function assertMayManageCourseRegistrations(
+  ctx: {
+    session: { user: { id: string } };
+    permissionCache: Parameters<typeof userHasPermission>[2];
+  },
+  course: {
+    createdById: string | null;
+    collaborators: { role: CourseCollaboratorRole }[];
+  },
+): Promise<void> {
+  const isCreator = course.createdById === ctx.session.user.id;
+  const teamMember = viewerIsCourseTeamMember(course.collaborators);
+  if (isCreator || teamMember) return;
+  const canManageRegistrations = await userHasPermission(
+    ctx.session.user.id,
+    PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
+    ctx.permissionCache,
+  );
+  if (!canManageRegistrations) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Insufficient permissions",
+    });
+  }
+}
 import { userHasPermission } from "../helpers/permissions";
 import { userCanBookInvoicePayments } from "../helpers/invoice-access";
 import { userCanManageSiblingDiscount } from "../helpers/course-access";
@@ -66,9 +98,17 @@ import {
   countConfirmedParticipants,
   findFullPriceTier,
   loadSeatAvailability,
+  loadSeatsForNewRegistrations,
   priceTierFullMessage,
   runSerializable,
+  waitlistSeatRequests,
 } from "../helpers/course-capacity";
+import {
+  seatSummaryForNewRegistrations,
+  WAITLIST_PRIORITY_EDIT_MESSAGE,
+} from "@/lib/waitlist-priority";
+import { registrationSeatShortage } from "@/lib/registration-seat-shortage";
+import { getCourseCapacitySummary } from "@/lib/course-available-slots";
 import {
   acceptPromotionOffer,
   assertMayAnswerPromotionOffer,
@@ -554,17 +594,38 @@ export const registrationsRouter = createTRPCRouter({
           tx,
           input.courseId,
         );
-
+        // Wer schon wartet, geht vor: Eine neue Anmeldung bekommt nur Plätze,
+        // die keine wartende nutzen könnte — sonst überholte sie die
+        // Wartenden, bis das Team nachrücken lässt. Ohne Warteliste am Kurs
+        // sind das die tatsächlich freien Plätze.
+        const seatsForNew = await loadSeatsForNewRegistrations(tx, course);
         const newParticipants = participantsWithPriceOptions.length;
-        const totalAfterRegistration =
-          currentParticipantsCount + newParticipants;
-        const maxParticipants = computeCourseCapacity(course);
-        const availableSpots = maxParticipants - currentParticipantsCount;
+
+        // Kurs zuerst, dann die Preiskategorien. Eine ausgebuchte Kategorie
+        // gilt wie ein voller Kurs: mit Warteliste kommt die Anmeldung
+        // darauf, ohne wird sie abgelehnt — sie scheiterte sonst trotz
+        // Warteliste.
+        const shortage = registrationSeatShortage({
+          participantPriceOptionIds: participantsWithPriceOptions.map(
+            (participant) => participant.priceOptionId,
+          ),
+          ...seatsForNew,
+        });
 
         let status: RegistrationStatus = RegistrationStatus.CONFIRMED;
 
-        if (totalAfterRegistration > maxParticipants) {
+        if (shortage) {
           if (!course.allowWaitingList) {
+            if (shortage.kind === "priceOption") {
+              const fullOption = course.priceOptions.find(
+                (option) => option.id === shortage.priceOptionId,
+              )!;
+              throw new TRPCError({
+                code: "BAD_REQUEST",
+                message: priceTierFullMessage(fullOption),
+              });
+            }
+            const availableSpots = shortage.free;
             if (availableSpots > 0 && availableSpots < newParticipants) {
               throw new TRPCError({
                 code: "BAD_REQUEST",
@@ -579,36 +640,11 @@ export const registrationsRouter = createTRPCRouter({
           status = RegistrationStatus.WAITLIST;
         }
 
-        // Auch die Preiskategorien haben ihre Grenzen. Eine ausgebuchte gilt
-        // wie ein voller Kurs: mit Warteliste kommt die Anmeldung darauf,
-        // ohne wird sie abgelehnt — sie scheiterte sonst trotz Warteliste.
-        if (status === RegistrationStatus.CONFIRMED) {
-          const additionsByOptionId: Record<string, number> = {};
-          for (const participant of participantsWithPriceOptions) {
-            additionsByOptionId[participant.priceOptionId] =
-              (additionsByOptionId[participant.priceOptionId] ?? 0) + 1;
-          }
-          const fullOption = await findFullPriceTier(
-            tx,
-            input.courseId,
-            course.priceOptions,
-            additionsByOptionId,
-          );
-          if (fullOption) {
-            if (!course.allowWaitingList) {
-              throw new TRPCError({
-                code: "BAD_REQUEST",
-                message: priceTierFullMessage(fullOption),
-              });
-            }
-            status = RegistrationStatus.WAITLIST;
-          }
-        }
-
         // Aufgeteilt wird nur, wenn die Anmeldenden es gewählt haben und
         // nicht ohnehin alle Platz haben. Passt ihre Auswahl inzwischen
         // nicht mehr, entscheiden sie neu: still anders aufzuteilen hieße,
-        // an ihrer Stelle zu bestimmen, wer mitfährt.
+        // an ihrer Stelle zu bestimmen, wer mitfährt. Aufgeteilt wird nur in
+        // Plätze, die keiner wartenden Anmeldung zustehen.
         const confirmedIndexes =
           status === RegistrationStatus.WAITLIST ? seatSelection : null;
         if (confirmedIndexes) {
@@ -617,6 +653,7 @@ export const registrationsRouter = createTRPCRouter({
             participants: participantsWithPriceOptions,
             selection: confirmedIndexes,
             confirmedCount: currentParticipantsCount,
+            seatsForNewRegistrations: seatsForNew,
           });
         }
 
@@ -875,10 +912,25 @@ export const registrationsRouter = createTRPCRouter({
         );
 
         // "Automatisch" behandelt eine ausgebuchte Preiskategorie wie einen
-        // vollen Kurs, genau wie die öffentliche Anmeldung.
+        // vollen Kurs, genau wie die öffentliche Anmeldung — und nutzt wie
+        // sie nur Plätze, die keiner wartenden Anmeldung zustehen. Ein
+        // ausdrücklich gewählter Status ist die Entscheidung des Teams und
+        // darf alle freien Plätze nutzen, etwa wenn es zwei Anmeldungen zu
+        // einer zusammenführt.
+        const seatsForNew = requestedStatus
+          ? undefined
+          : await loadSeatsForNewRegistrations(tx, course);
+        const fitsForNewRegistration =
+          !!seatsForNew &&
+          registrationSeatShortage({
+            participantPriceOptionIds: participantsWithPriceOptions.map(
+              (participant) => participant.priceOptionId,
+            ),
+            ...seatsForNew,
+          }) === null;
         const status: RegistrationStatus =
           requestedStatus ??
-          ((fitsInCapacity && !fullOption) || !course.allowWaitingList
+          (fitsForNewRegistration || !course.allowWaitingList
             ? RegistrationStatus.CONFIRMED
             : RegistrationStatus.WAITLIST);
 
@@ -916,6 +968,7 @@ export const registrationsRouter = createTRPCRouter({
             participants: participantsWithPriceOptions,
             selection: confirmedIndexes,
             confirmedCount,
+            seatsForNewRegistrations: seatsForNew,
           });
         }
 
@@ -1946,6 +1999,34 @@ export const registrationsRouter = createTRPCRouter({
             grownOptionCounts,
             id,
           );
+
+          // Die Warteliste geht vor: Anmeldende dürfen ihre bestätigte
+          // Anmeldung nicht auf Plätze vergrößern, die Wartende nutzen
+          // könnten — gemessen an denselben freien Plätzen, die eine neue
+          // Anmeldung bekäme. Das Kursteam darf es; es baut etwa zwei
+          // Anmeldungen zu einer um, damit der Geschwisterrabatt greift.
+          const added =
+            participantsWithPriceOptions.length -
+            registration.participants.length;
+          const grows = added > 0 || Object.keys(grownOptionCounts).length > 0;
+          if (grows && !isStaff) {
+            const open = await loadSeatsForNewRegistrations(tx, course);
+            const tierOverrun = Object.entries(grownOptionCounts).some(
+              ([optionId, count]) => {
+                const free = open.capacityByPriceOption[optionId];
+                return (
+                  free !== undefined &&
+                  count - (bookedByOptionId[optionId] ?? 0) > free
+                );
+              },
+            );
+            if (added > open.availableSlots || tierOverrun) {
+              throw new TRPCError({
+                code: "BAD_REQUEST",
+                message: WAITLIST_PRIORITY_EDIT_MESSAGE,
+              });
+            }
+          }
         }
 
         const existingParticipantIds = participantsWithPriceOptions
@@ -2178,17 +2259,10 @@ export const registrationsRouter = createTRPCRouter({
         }
       }
 
-      // Demoting a confirmed registration frees seats for the waitlist.
-      if (
-        previousStatus === RegistrationStatus.CONFIRMED &&
-        input.registrationStatus !== RegistrationStatus.CONFIRMED
-      ) {
-        const promoted = await promoteFromWaitlist(
-          ctx.db,
-          registration.courseId,
-        );
-        await sendPromotionEmails(promoted);
-      }
+      // Herabstufen macht Plätze frei, aber niemand rückt automatisch nach:
+      // Oft ist es nur ein Zwischenschritt des Teams (versehentlich
+      // gestrichen, zwei Anmeldungen werden zusammengeführt). Die Plätze
+      // gehören der Warteliste, bis das Team sie nachrücken lässt.
 
       void logAudit(ctx.db, {
         actorId: ctx.session.user.id,
@@ -2310,14 +2384,9 @@ export const registrationsRouter = createTRPCRouter({
         }
       }
 
-      // A cancellation frees seats — offer them to the waitlist (FIFO).
-      if (!wasAlreadyCancelled) {
-        const promoted = await promoteFromWaitlist(
-          ctx.db,
-          registration.courseId,
-        );
-        await sendPromotionEmails(promoted);
-      }
+      // Eine Stornierung macht Plätze frei, aber niemand rückt automatisch
+      // nach — sie gehören der Warteliste, bis das Team sie nachrücken lässt
+      // (eine versehentliche Stornierung soll sich zurücknehmen lassen).
 
       return updated;
     }),
@@ -2345,8 +2414,9 @@ export const registrationsRouter = createTRPCRouter({
     }),
 
   /**
-   * Nachrück-Angebot ablehnen: die Plätze gehen an die Nächsten, die
-   * Anmeldung behält ihren Platz auf der Warteliste.
+   * Nachrück-Angebot ablehnen: die Anmeldung behält ihren Platz auf der
+   * Warteliste. Die Plätze bekommen die Nächsten, sobald das Kursteam die
+   * Warteliste nachrücken lässt.
    */
   declinePromotionOffer: publicProcedure
     .input(z.object({ id: z.string(), accessToken: z.string().optional() }))
@@ -2357,6 +2427,175 @@ export const registrationsRouter = createTRPCRouter({
         actorId: viewerId(ctx),
       });
       return { declined: true };
+    }),
+
+  /**
+   * Stand der Warteliste für das Kursteam: die tatsächlich freien Plätze (die
+   * Öffentlichkeit sieht nur die, die keine Wartende nutzen könnte), wer
+   * wartet und ob ein Angebot läuft. Grundlage für den Knopf „Warteliste nachrücken lassen“ und
+   * für Formulare, in denen das Team freie Plätze bewusst vergibt.
+   */
+  getWaitlistOverview: protectedProcedure
+    .input(z.object({ courseId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const course = await ctx.db.course.findUnique({
+        where: { id: input.courseId },
+        select: {
+          id: true,
+          createdById: true,
+          startDate: true,
+          allowWaitingList: true,
+          maxParticipants: true,
+          priceOptions: {
+            select: { id: true, label: true, maxParticipants: true },
+          },
+          collaborators: collaboratorsForViewer(viewerId(ctx)),
+          registrations: {
+            where: {
+              registrationStatus: {
+                in: [RegistrationStatus.CONFIRMED, RegistrationStatus.WAITLIST],
+              },
+            },
+            orderBy: { createdAt: "asc" },
+            select: {
+              id: true,
+              registrationStatus: true,
+              registrantFirstName: true,
+              registrantLastName: true,
+              promotionOfferExpiresAt: true,
+              participants: {
+                orderBy: { createdAt: "asc" },
+                select: { priceOptionId: true, priceOption: true },
+              },
+            },
+          },
+        },
+      });
+      if (!course) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Course not found",
+        });
+      }
+      await assertMayManageCourseRegistrations(ctx, course);
+
+      const waiting = course.registrations.filter(
+        (r) => r.registrationStatus === RegistrationStatus.WAITLIST,
+      );
+      const now = new Date();
+      const offer = waiting.find(
+        (r) => r.promotionOfferExpiresAt && r.promotionOfferExpiresAt > now,
+      );
+      const seats = {
+        ...getCourseCapacitySummary({
+          maxParticipants: course.maxParticipants,
+          priceOptions: course.priceOptions,
+          registrations: course.registrations.filter(
+            (r) => r.registrationStatus === RegistrationStatus.CONFIRMED,
+          ),
+        }),
+        hasWaitingList: waiting.length > 0,
+      };
+
+      return {
+        allowWaitingList: course.allowWaitingList,
+        courseStarted: course.startDate <= now,
+        /** Tatsächlich freie Plätze — das Team darf sie alle vergeben. */
+        seats,
+        /** Was davon neue Anmeldungen bekämen (wie `getAvailableSlots`). */
+        seatsForNewRegistrations: seatSummaryForNewRegistrations(
+          seats,
+          course.priceOptions,
+          waitlistSeatRequests(course, waiting),
+        ),
+        waitingRegistrations: waiting.length,
+        waitingParticipants: waiting.reduce(
+          (sum, r) => sum + r.participants.length,
+          0,
+        ),
+        runningOffer: offer
+          ? {
+              registrationId: offer.id,
+              registrantName: `${offer.registrantFirstName} ${offer.registrantLastName}`,
+              expiresAt: offer.promotionOfferExpiresAt!,
+            }
+          : null,
+      };
+    }),
+
+  /**
+   * „Warteliste nachrücken lassen“: der einzige Weg, auf dem noch jemand
+   * nachrückt (Entscheidung vom 18.09.2026 — freie Plätze sind oft nur ein
+   * Zwischenstand des Teams). Bestätigt, wer ganz passt, macht der ersten
+   * teilweise Passenden ein Angebot und verschickt die Mails. Die Antwort sagt
+   * auch, warum niemand (mehr) nachrücken konnte — etwa weil die Anmeldung
+   * vorn in keinen freien Platz passt und die Warteliste dort anhält.
+   */
+  promoteWaitlist: protectedProcedure
+    .input(z.object({ courseId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const course = await ctx.db.course.findUnique({
+        where: { id: input.courseId },
+        select: {
+          id: true,
+          createdById: true,
+          collaborators: collaboratorsForViewer(viewerId(ctx)),
+        },
+      });
+      if (!course) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Course not found",
+        });
+      }
+      await assertMayManageCourseRegistrations(ctx, course);
+
+      const run = await promoteFromWaitlist(ctx.db, course.id);
+      await sendPromotionEmails(run);
+
+      const name = (r: {
+        registrantFirstName: string;
+        registrantLastName: string;
+      }) => `${r.registrantFirstName} ${r.registrantLastName}`;
+      const summary = {
+        promoted: run.promoted.map((r) => ({
+          id: r.id,
+          registrantName: name(r),
+          participants: r.participantsCount,
+        })),
+        offered: run.offered.map((r) => ({
+          id: r.id,
+          registrantName: name(r),
+          participants: r.participantNames.length,
+          seats: r.seats,
+          expiresAt: r.expiresAt,
+        })),
+        expired: run.expired.map((r) => ({
+          id: r.id,
+          registrantName: name(r),
+        })),
+        halt: run.halt,
+      };
+
+      void logAudit(ctx.db, {
+        actorId: ctx.session.user.id,
+        actorEmail: ctx.session.user.email,
+        action: "registration.promote_waitlist",
+        entityType: "course",
+        entityId: course.id,
+        details: {
+          promoted: summary.promoted.map((r) => r.id),
+          offered: summary.offered.map((r) => ({
+            id: r.id,
+            seats: r.seats,
+            expiresAt: r.expiresAt.toISOString(),
+          })),
+          expired: summary.expired.map((r) => r.id),
+          halt: run.halt.kind,
+        },
+      });
+
+      return summary;
     }),
 
   /**
@@ -2497,15 +2736,13 @@ export const registrationsRouter = createTRPCRouter({
   delete: permissionProcedure(PERMISSIONS.COURSES_MANAGE_REGISTRATIONS)
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
+      // Auch Löschen lässt niemanden nachrücken: Das Team löscht etwa eine
+      // Anmeldung, die es mit einer anderen zusammengeführt hat. Freie
+      // Plätze vergibt es selbst per `promoteWaitlist`.
       const deleted = await ctx.db.courseRegistration.delete({
         where: { id: input.id },
-        select: { courseId: true, registrationStatus: true },
+        select: { courseId: true },
       });
-
-      if (deleted.registrationStatus === RegistrationStatus.CONFIRMED) {
-        const promoted = await promoteFromWaitlist(ctx.db, deleted.courseId);
-        await sendPromotionEmails(promoted);
-      }
 
       void logAudit(ctx.db, {
         actorId: ctx.session.user.id,

@@ -178,7 +178,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
       <div className="bg-ink/55 absolute inset-0" onClick={handleClose} />
 
       <div className="border-ink bg-paper dark:border-night-rule dark:bg-night-raised relative z-10 mx-4 w-full max-w-2xl border-2">
-        <div className="border-rule dark:border-night-rule flex items-center gap-3 border-b px-4">
+        <div className="border-rule dark:border-night-rule has-[.suchfeld:focus-visible]:border-ink dark:has-[.suchfeld:focus-visible]:border-night-text flex items-center gap-3 border-b-2 px-4">
           <Search
             className="text-dark dark:text-night-muted h-5 w-5 shrink-0"
             aria-hidden
@@ -190,7 +190,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Suche nach Terminen, Beiträgen, Downloads…"
             aria-label="Suchbegriff"
-            className="text-ink dark:text-night-text placeholder:text-dark dark:placeholder:text-night-muted w-full bg-transparent py-4 text-lg outline-none"
+            className="suchfeld text-ink dark:text-night-text placeholder:text-dark dark:placeholder:text-night-muted w-full bg-transparent py-4 text-lg outline-none"
           />
           {query && (
             <button

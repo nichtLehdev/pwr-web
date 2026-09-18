@@ -1,5 +1,8 @@
 import { describe, expect, it } from "@jest/globals";
-import { registrationSeatShortage } from "../registration-seat-shortage";
+import {
+  isPriceOptionFullFor,
+  registrationSeatShortage,
+} from "../registration-seat-shortage";
 
 const priceOptions = [
   { id: "erwachsene", maxParticipants: 10 },
@@ -89,5 +92,62 @@ describe("registrationSeatShortage", () => {
         capacityByPriceOption: { erwachsene: 0 },
       }),
     ).toMatchObject({ kind: "course" });
+  });
+});
+
+describe("isPriceOptionFullFor", () => {
+  const options = [
+    { id: "erwachsene", maxParticipants: null },
+    { id: "jugend", maxParticipants: 2 },
+  ];
+
+  it("marks a limited category without free seats", () => {
+    expect(
+      isPriceOptionFullFor({
+        priceOptionId: "jugend",
+        otherParticipantPriceOptionIds: [],
+        priceOptions: options,
+        capacityByPriceOption: { jugend: 0, erwachsene: 5 },
+      }),
+    ).toBe(true);
+  });
+
+  it("counts the other participants of this registration against the free seats", () => {
+    const input = {
+      priceOptionId: "jugend",
+      priceOptions: options,
+      capacityByPriceOption: { jugend: 1 },
+    };
+    expect(
+      isPriceOptionFullFor({ ...input, otherParticipantPriceOptionIds: [] }),
+    ).toBe(false);
+    expect(
+      isPriceOptionFullFor({
+        ...input,
+        otherParticipantPriceOptionIds: ["erwachsene", "jugend"],
+      }),
+    ).toBe(true);
+  });
+
+  it("never marks a category without its own limit, like the server", () => {
+    expect(
+      isPriceOptionFullFor({
+        priceOptionId: "erwachsene",
+        otherParticipantPriceOptionIds: ["erwachsene"],
+        priceOptions: options,
+        capacityByPriceOption: { erwachsene: 0 },
+      }),
+    ).toBe(false);
+  });
+
+  it("stays open when the free seats are unknown", () => {
+    expect(
+      isPriceOptionFullFor({
+        priceOptionId: "jugend",
+        otherParticipantPriceOptionIds: ["jugend", "jugend"],
+        priceOptions: options,
+        capacityByPriceOption: null,
+      }),
+    ).toBe(false);
   });
 });

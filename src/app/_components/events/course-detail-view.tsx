@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
 import type { PermissionKey } from "@/lib/permissions";
 import type { RouterOutputs } from "@/trpc/react";
-import { sanitizeHtml } from "@/lib/sanitize";
+import { renderDescriptionHtml } from "@/lib/sanitize";
+import { markdownToSingleLine } from "@/lib/markdown-to-plain-text";
 import { isRegistrationDeadlinePassed } from "@/lib/registration-deadline";
 import { calendarDaysInclusive } from "@/lib/format-date-range";
 import { formatAvailableSlots } from "@/lib/format-available-slots";
@@ -25,7 +25,7 @@ import {
   PersonRow,
 } from "@/app/_components/programmheft/person-row";
 import { courseTypeLabel } from "@/lib/termine-labels";
-import MediaCredit from "@/app/_components/general/media-credit";
+import { TerminBeschreibung } from "./termin-bild";
 import PublicShareButton from "@/app/_components/general/public-share-button";
 import {
   Clock,
@@ -210,7 +210,12 @@ export default function CourseDetailView({
         )}
         <PublicShareButton
           title={course.title}
-          text={course.motto || course.description || course.title}
+          /* Klartext, siehe event-detail-view. */
+          text={
+            course.motto ||
+            markdownToSingleLine(course.description) ||
+            course.title
+          }
           className={headMeta.action}
         />
       </div>
@@ -308,27 +313,15 @@ export default function CourseDetailView({
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-3">
           {/* Main Content */}
           <div className="space-y-10 lg:col-span-2">
-            {/* Course Image */}
-            {course.image && (
-              <div className="relative aspect-video w-full">
-                <Image
-                  src={course.image.url}
-                  alt={course.image.alt || course.title}
-                  fill
-                  className="object-cover"
-                />
-                {(course.image.copyright || course.image.creator) && (
-                  <div className="absolute right-2 bottom-2 flex justify-end">
-                    <MediaCredit
-                      copyright={course.image.copyright}
-                      creator={course.image.creator}
-                      showCreatorIcon
-                      className="text-right text-white/90 drop-shadow-sm"
-                    />
-                  </div>
-                )}
-              </div>
-            )}
+            {/* Beschreibung mit Kursbild zuerst: Termin und Ort stehen schon
+                im Seitenkopf. Das Bild bleibt in der Hauptspalte statt in der
+                Randspalte — dort hätte es „Jetzt anmelden“ nach unten
+                gedrückt. Aufbau siehe `TerminBeschreibung`. */}
+            <TerminBeschreibung
+              image={course.image}
+              fallbackAlt={course.title}
+              html={renderDescriptionHtml(course.description)}
+            />
 
             {/* Date & Time */}
             <div>
@@ -435,21 +428,6 @@ export default function CourseDetailView({
                   )}
                   <LocationNavigationLink location={course.location} />
                 </div>
-              </div>
-            )}
-
-            {/* Description */}
-            {course.description && (
-              <div>
-                <Heading as="h2" size="list" rule>
-                  Beschreibung
-                </Heading>
-                <div
-                  className="prose dark:prose-invert text-ink dark:text-night-text mt-4 max-w-none"
-                  dangerouslySetInnerHTML={{
-                    __html: sanitizeHtml(course.description),
-                  }}
-                />
               </div>
             )}
 
