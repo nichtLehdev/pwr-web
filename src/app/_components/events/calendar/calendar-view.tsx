@@ -12,19 +12,41 @@ import {
   eventEntry,
   type ProgrammeEntry,
 } from "@/app/_components/programmheft/programme-data";
+import {
+  berlinDate,
+  berlinParts,
+  daysInMonth as countDaysInMonth,
+  formatBerlin,
+  startOfBerlinDay,
+  startOfNextBerlinDay,
+  weekdayOf,
+} from "@/lib/berlin-time";
 
 interface CalendarViewProps {
   items: CalendarItem[];
 }
 
+/** Ein Kalendermonat in Deutschland; `month` läuft von 1 bis 12. */
+type CalendarMonth = { year: number; month: number };
+
+function currentBerlinMonth(): CalendarMonth {
+  const { year, month } = berlinParts(new Date());
+  return { year, month };
+}
+
+/**
+ * Tage, Monat und „heute" in Berliner Zeit: Der Kalender rendert zuerst auf
+ * dem Server (UTC), und mit `new Date(y, m, d)` & Co. stand ein Termin um
+ * 00:30 dort am Vortag. `selectedDate` ist deshalb immer 00:00 Uhr Berliner
+ * Zeit des gewählten Tages.
+ */
 export default function CalendarView({ items }: CalendarViewProps) {
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
-  const calendarNow = useMemo(() => {
-    const date = new Date();
-    date.setHours(0, 0, 0, 0);
-    return date;
-  }, []);
+  const [selectedDate, setSelectedDate] = useState<Date>(() =>
+    startOfBerlinDay(new Date()),
+  );
+  const [currentMonth, setCurrentMonth] =
+    useState<CalendarMonth>(currentBerlinMonth);
+  const calendarNow = useMemo(() => startOfBerlinDay(new Date()), []);
 
   /**
    * Termin oder Kurs als Programmzeile. `eventEntry`/`courseEntry` stammen aus
@@ -49,51 +71,31 @@ export default function CalendarView({ items }: CalendarViewProps) {
     ),
   }));
 
-  const getDaysInMonth = (date: Date) => {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const daysInMonth = lastDay.getDate();
-    const startingDayOfWeek = (firstDay.getDay() + 6) % 7;
+  const { year, month } = currentMonth;
+  const daysInMonth = countDaysInMonth(year, month);
+  const startingDayOfWeek = (weekdayOf(year, month, 1) + 6) % 7;
 
-    return { daysInMonth, startingDayOfWeek, firstDay, lastDay };
-  };
-
-  const { daysInMonth, startingDayOfWeek } = getDaysInMonth(currentMonth);
-
-  const getEventsForDay = (day: number) => {
-    const date = new Date(
-      currentMonth.getFullYear(),
-      currentMonth.getMonth(),
-      day,
-    );
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
-
-    return calendarItems.filter((item) => {
+  /** Termine, die in [startOfDay, startOfNextDay) fallen; Kurse, die ihn berühren. */
+  const itemsBetween = (startOfDay: Date, startOfNextDay: Date) =>
+    calendarItems.filter((item) => {
       if (item.type === "course") {
         const course = item;
         const endDate = new Date(course.endDate);
-        return item.date <= endOfDay && endDate >= startOfDay;
+        return item.date < startOfNextDay && endDate >= startOfDay;
       }
 
-      return item.date >= startOfDay && item.date <= endOfDay;
+      return item.date >= startOfDay && item.date < startOfNextDay;
     });
-  };
+
+  const getEventsForDay = (day: number) =>
+    itemsBetween(
+      berlinDate(year, month, day),
+      berlinDate(year, month, day + 1),
+    );
 
   const getCourseStatusForDay = (day: number) => {
-    const date = new Date(
-      currentMonth.getFullYear(),
-      currentMonth.getMonth(),
-      day,
-    );
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
+    const startOfDay = berlinDate(year, month, day);
+    const startOfNextDay = berlinDate(year, month, day + 1);
 
     const courses = calendarItems.filter((item) => item.type === "course");
 
@@ -101,15 +103,15 @@ export default function CalendarView({ items }: CalendarViewProps) {
       const startDate = course.date;
       const endDate = new Date(course.endDate);
 
-      if (startDate >= startOfDay && startDate <= endOfDay) {
+      if (startDate >= startOfDay && startDate < startOfNextDay) {
         return "start";
       }
 
-      if (endDate >= startOfDay && endDate <= endOfDay) {
+      if (endDate >= startOfDay && endDate < startOfNextDay) {
         return "end";
       }
 
-      if (startDate < startOfDay && endDate > endOfDay) {
+      if (startDate < startOfDay && endDate >= startOfNextDay) {
         return "ongoing";
       }
     }
@@ -117,29 +119,14 @@ export default function CalendarView({ items }: CalendarViewProps) {
     return null;
   };
 
-  const getItemsForSelectedDay = () => {
-    const startOfDay = new Date(selectedDate);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(selectedDate);
-    endOfDay.setHours(23, 59, 59, 999);
-
-    return calendarItems
-      .filter((item) => {
-        if (item.type === "course") {
-          const course = item;
-          const endDate = new Date(course.endDate);
-          return item.date <= endOfDay && endDate >= startOfDay;
-        }
-
-        return item.date >= startOfDay && item.date <= endOfDay;
-      })
-      .sort((a, b) => a.date.getTime() - b.date.getTime());
-  };
+  const getItemsForSelectedDay = () =>
+    itemsBetween(
+      startOfBerlinDay(selectedDate),
+      startOfNextBerlinDay(selectedDate),
+    ).sort((a, b) => a.date.getTime() - b.date.getTime());
 
   const getUpcomingItems = () => {
-    const startOfNextDay = new Date(selectedDate);
-    startOfNextDay.setDate(startOfNextDay.getDate() + 1);
-    startOfNextDay.setHours(0, 0, 0, 0);
+    const startOfNextDay = startOfNextBerlinDay(selectedDate);
 
     return calendarItems
       .filter((item) => item.date >= startOfNextDay)
@@ -152,44 +139,34 @@ export default function CalendarView({ items }: CalendarViewProps) {
 
   const goToPreviousMonth = () => {
     setCurrentMonth(
-      new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1),
+      month === 1 ? { year: year - 1, month: 12 } : { year, month: month - 1 },
     );
   };
 
   const goToNextMonth = () => {
     setCurrentMonth(
-      new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1),
+      month === 12 ? { year: year + 1, month: 1 } : { year, month: month + 1 },
     );
   };
 
   const goToToday = () => {
-    const today = new Date();
-    setCurrentMonth(today);
-    setSelectedDate(today);
+    setCurrentMonth(currentBerlinMonth());
+    setSelectedDate(startOfBerlinDay(new Date()));
   };
 
-  const monthName = currentMonth.toLocaleDateString("de-DE", {
-    month: "long",
-    year: "numeric",
-  });
+  const monthName = formatBerlin(berlinDate(year, month, 1), "monatJahr");
   const weekDays = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 
   const isToday = (day: number) => {
-    const today = new Date();
-    return (
-      day === today.getDate() &&
-      currentMonth.getMonth() === today.getMonth() &&
-      currentMonth.getFullYear() === today.getFullYear()
-    );
+    const today = berlinParts(new Date());
+    return day === today.day && month === today.month && year === today.year;
   };
 
-  const isSelected = (day: number) => {
-    return (
-      day === selectedDate.getDate() &&
-      currentMonth.getMonth() === selectedDate.getMonth() &&
-      currentMonth.getFullYear() === selectedDate.getFullYear()
-    );
-  };
+  const selectedParts = berlinParts(selectedDate);
+  const isSelected = (day: number) =>
+    day === selectedParts.day &&
+    month === selectedParts.month &&
+    year === selectedParts.year;
 
   return (
     <div className="space-y-6">
@@ -262,15 +239,7 @@ export default function CalendarView({ items }: CalendarViewProps) {
               return (
                 <button
                   key={day}
-                  onClick={() =>
-                    setSelectedDate(
-                      new Date(
-                        currentMonth.getFullYear(),
-                        currentMonth.getMonth(),
-                        day,
-                      ),
-                    )
-                  }
+                  onClick={() => setSelectedDate(berlinDate(year, month, day))}
                   /*
                    * Die Schriftfarbe steht in jedem Zweig, nicht als Grundwert
                    * davor: `cn` und die Klassenliste entscheiden nichts, es
@@ -375,15 +344,12 @@ export default function CalendarView({ items }: CalendarViewProps) {
       {/* Termine für den ausgewählten Tag - nur Mobile */}
       <div className="lg:hidden">
         <Heading as="h3" size="list" rule>
-          {selectedDate.toLocaleDateString("de-DE", {
-            weekday: "long",
-            day: "numeric",
-            month: "long",
-            year:
-              selectedDate.getFullYear() !== new Date().getFullYear()
-                ? "numeric"
-                : undefined,
-          })}
+          {formatBerlin(
+            selectedDate,
+            selectedParts.year !== berlinParts(new Date()).year
+              ? "datumMitWochentag"
+              : { weekday: "long", day: "numeric", month: "long" },
+          )}
         </Heading>
 
         {todayItems.length > 0 ? (

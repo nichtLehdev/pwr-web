@@ -26,6 +26,7 @@ import {
   fieldControlClasses,
 } from "@/app/_components/programmheft/field";
 import { cn } from "@/lib/utils";
+import { berlinDayKey, formatBerlin } from "@/lib/berlin-time";
 
 /**
  * Schaltflächen-Stimmen des Programmhefts, lokal wiederholt wie auf den
@@ -134,7 +135,14 @@ Jeder Code kann nur einmal verwendet werden.
 Backup-Codes:
 ${backupCodes.map((code, index) => `${index + 1}. ${code}`).join("\n")}
 
-Generiert am: ${new Date().toLocaleString("de-DE")}
+Generiert am: ${formatBerlin(new Date(), {
+      day: "numeric",
+      month: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    })}
 
 Bewahre diese Datei sicher auf und teile sie niemals mit anderen!`;
 
@@ -142,7 +150,7 @@ Bewahre diese Datei sicher auf und teile sie niemals mit anderen!`;
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `posaunenwerk-2fa-backup-codes-${new Date().toISOString().split("T")[0]}.txt`;
+    link.download = `posaunenwerk-2fa-backup-codes-${berlinDayKey(new Date())}.txt`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

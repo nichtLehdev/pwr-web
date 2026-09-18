@@ -1,5 +1,6 @@
 import { emailBaseUrl, farben, schrift } from "./email-layout";
 import { emailText, textLink } from "./email-text";
+import { formatBerlin } from "@/lib/berlin-time";
 
 /**
  * `schrift` enthält Schriftnamen in doppelten Anführungszeichen (für
@@ -26,12 +27,7 @@ function escapeHtml(value: string): string {
     .replace(/"/g, "&quot;");
 }
 
-const formatDate = (date: Date) =>
-  new Intl.DateTimeFormat("de-DE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  }).format(date);
+const formatDate = (date: Date) => formatBerlin(date, "datumZweistellig");
 
 export function generateCourseMailHtml({
   bodyHtml,

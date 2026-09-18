@@ -10,6 +10,7 @@ import {
   link,
 } from "./email-layout";
 import { emailText, textLink, textZeile } from "./email-text";
+import { formatBerlin } from "@/lib/berlin-time";
 
 interface SiblingDiscountRejectedProps {
   registrantFirstName: string;
@@ -25,11 +26,7 @@ interface SiblingDiscountRejectedProps {
 }
 
 function formatDate(date: Date) {
-  return new Intl.DateTimeFormat("de-DE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  }).format(date);
+  return formatBerlin(date, "datumZweistellig");
 }
 
 function formatPrice(price: number) {

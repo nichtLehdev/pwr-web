@@ -13,6 +13,7 @@ import {
 } from "@/lib/export-selection";
 
 import { createLogger } from "@/server/utils/logger";
+import { berlinDayKey } from "@/lib/berlin-time";
 
 const log = createLogger("Export");
 
@@ -41,7 +42,7 @@ export async function GET(
     }
 
     const { type } = await params;
-    const date = new Date().toISOString().slice(0, 10);
+    const date = berlinDayKey(new Date());
 
     // Optional: nur einzelne Einträge (`?ids=a,b`). Ohne Parameter bleibt es
     // beim ganzen Bestand, genau wie vor der Auswahl.

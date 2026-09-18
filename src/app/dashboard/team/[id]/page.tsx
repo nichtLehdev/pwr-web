@@ -13,6 +13,7 @@ import { SocialIcon } from "@/app/_components/ui/social-icon";
 import { DashboardPage } from "@/app/_components/dashboard";
 import { Tag } from "@/app/_components/programmheft/tag";
 import { ArrowLeftIcon, Edit, Trash2 } from "lucide-react";
+import { formatBerlin } from "@/lib/berlin-time";
 
 const CONTACT_TYPE_LABELS: Record<string, string> = {
   GESCHAEFTSSTELLE: "Geschäftsstelle",
@@ -314,11 +315,7 @@ export default function TeamDetailPage() {
                 Erstellt am
               </dt>
               <dd className="text-ink dark:text-night-text mt-1">
-                {new Date(member.createdAt).toLocaleDateString("de-DE", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                })}
+                {formatBerlin(member.createdAt, "datumZweistellig")}
               </dd>
             </div>
             <div>
@@ -326,11 +323,7 @@ export default function TeamDetailPage() {
                 Zuletzt aktualisiert
               </dt>
               <dd className="text-ink dark:text-night-text mt-1">
-                {new Date(member.updatedAt).toLocaleDateString("de-DE", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                })}
+                {formatBerlin(member.updatedAt, "datumZweistellig")}
               </dd>
             </div>
           </dl>

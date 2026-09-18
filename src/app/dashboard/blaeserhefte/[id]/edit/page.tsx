@@ -23,6 +23,7 @@ import {
   Label,
   Textarea,
 } from "@/app/_components/ui";
+import { berlinParts } from "@/lib/berlin-time";
 
 export default function EditBlaeserheftPage() {
   const router = useRouter();
@@ -50,7 +51,7 @@ export default function EditBlaeserheftPage() {
 
   const [title, setTitle] = useState("");
   const [subtitle, setSubtitle] = useState("");
-  const [year, setYear] = useState(new Date().getFullYear());
+  const [year, setYear] = useState(() => berlinParts(new Date()).year);
   const [description, setDescription] = useState("");
   const [chapters, setChapters] = useState("");
   const [highlights, setHighlights] = useState("");
@@ -78,7 +79,7 @@ export default function EditBlaeserheftPage() {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setTitle(heft.title || "");
       setSubtitle(heft.subtitle || "");
-      setYear(heft.year || new Date().getFullYear());
+      setYear(heft.year || berlinParts(new Date()).year);
       setDescription(heft.description || "");
       setChapters(
         typeof heft.chapters === "string"

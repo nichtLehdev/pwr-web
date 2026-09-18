@@ -4,6 +4,7 @@ import { ArrowRight, Calendar, MapPin, Users } from "lucide-react";
 import { eventPath } from "@/lib/slug";
 import { BezirkLabel } from "@/app/_components/programmheft/bezirk-label";
 import { Tag } from "@/app/_components/programmheft/tag";
+import { formatBerlin } from "@/lib/berlin-time";
 
 interface EventCardProps {
   id: string;
@@ -57,16 +58,8 @@ export default function EventCard({
         </span>
         <span className="text-dark dark:text-night-muted mt-1 flex items-center gap-2 text-sm">
           <Calendar className="h-4 w-4 shrink-0" aria-hidden />
-          {date.toLocaleDateString("de-DE", {
-            day: "2-digit",
-            month: "long",
-            year: "numeric",
-          })}
-          ,{" "}
-          {date.toLocaleTimeString("de-DE", {
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
+          {formatBerlin(date, "datumLangZweistellig")},{" "}
+          {formatBerlin(date, "uhrzeit")}
           {duration && duration > 0 && (
             <span>
               ({Math.floor(duration / 60)}h{" "}

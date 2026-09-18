@@ -1,5 +1,6 @@
 import { ContentStatus } from "~/generated/prisma/enums";
 import type { RouterOutputs } from "@/trpc/react";
+import { formatBerlin } from "@/lib/berlin-time";
 
 export type MediaItem = RouterOutputs["media"]["getAll"]["media"][number];
 
@@ -53,11 +54,7 @@ export function getMimeTypeLabel(mimeType: string): string {
 }
 
 export function formatDate(value: Date | string): string {
-  return new Intl.DateTimeFormat("de-DE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  }).format(new Date(value));
+  return formatBerlin(value, "datumZweistellig");
 }
 
 /** `object-position` aus dem gespeicherten Fokuspunkt, sonst die Vorgabe. */

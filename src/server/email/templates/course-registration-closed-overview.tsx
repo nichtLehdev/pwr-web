@@ -10,6 +10,7 @@ import {
   link,
 } from "./email-layout";
 import { emailText, textZeile } from "./email-text";
+import { formatBerlin } from "@/lib/berlin-time";
 
 interface CourseRegistrationClosedOverviewProps {
   courseTitle: string;
@@ -24,21 +25,11 @@ interface CourseRegistrationClosedOverviewProps {
 }
 
 function formatDate(date: Date) {
-  return new Intl.DateTimeFormat("de-DE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
+  return formatBerlin(date, "datumUhrzeit");
 }
 
 function formatDateOnly(date: Date) {
-  return new Intl.DateTimeFormat("de-DE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  }).format(date);
+  return formatBerlin(date, "datumZweistellig");
 }
 
 function formatPrice(price: number) {

@@ -14,6 +14,7 @@ import {
   User,
 } from "lucide-react";
 import { eventPath } from "@/lib/slug";
+import { formatBerlin } from "@/lib/berlin-time";
 
 interface DashboardEventCardProps {
   id: string;
@@ -50,9 +51,7 @@ export default function DashboardEventCard({
   const creatorLine =
     createdBy &&
     `${createdBy.displayName || "Unbekannt"}${
-      createdAt
-        ? ` · ${new Date(createdAt).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "2-digit" })}`
-        : ""
+      createdAt ? ` · ${formatBerlin(createdAt, "datumKurz")}` : ""
     }`;
 
   const districtLabel = district ? `Bezirk ${district}` : "Übergreifend";
@@ -60,14 +59,7 @@ export default function DashboardEventCard({
   const metaIconClass =
     "text-dark dark:text-night-muted mt-0.5 h-4 w-4 shrink-0";
 
-  const dateLabel = `${date.toLocaleDateString("de-DE", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  })}, ${date.toLocaleTimeString("de-DE", {
-    hour: "2-digit",
-    minute: "2-digit",
-  })}`;
+  const dateLabel = `${formatBerlin(date, "datumMonatKurzZweistellig")}, ${formatBerlin(date, "uhrzeit")}`;
 
   return (
     // Karte statt Kasten mit Rundung und Schatten — siehe DashboardCourseCard.

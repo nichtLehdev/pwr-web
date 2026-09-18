@@ -11,6 +11,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { DashboardPage } from "@/app/_components/dashboard";
 import { Edit, UserIcon } from "lucide-react";
 import { ArrowLeftIcon } from "lucide-react";
+import { formatBerlin } from "@/lib/berlin-time";
 
 export default function LocationDetailPage() {
   const router = useRouter();
@@ -198,13 +199,7 @@ export default function LocationDetailPage() {
                     ) : (
                       <div className="text-primary-ink dark:text-primary shrink-0 text-center">
                         <div className="text-sm font-medium">
-                          {new Date(event.eventDate).toLocaleDateString(
-                            "de-DE",
-                            {
-                              day: "2-digit",
-                              month: "short",
-                            },
-                          )}
+                          {formatBerlin(event.eventDate, "tagMonatKurz")}
                         </div>
                       </div>
                     )}
@@ -213,11 +208,7 @@ export default function LocationDetailPage() {
                         {event.title}
                       </p>
                       <p className="text-dark dark:text-night-muted truncate text-sm">
-                        {new Date(event.eventDate).toLocaleDateString("de-DE", {
-                          day: "2-digit",
-                          month: "long",
-                          year: "numeric",
-                        })}
+                        {formatBerlin(event.eventDate, "datumLangZweistellig")}
                       </p>
                     </div>
                   </div>
@@ -242,20 +233,8 @@ export default function LocationDetailPage() {
                         {course.title}
                       </p>
                       <p className="text-dark dark:text-night-muted truncate text-sm">
-                        {new Date(course.startDate).toLocaleDateString(
-                          "de-DE",
-                          {
-                            day: "2-digit",
-                            month: "long",
-                            year: "numeric",
-                          },
-                        )}{" "}
-                        -{" "}
-                        {new Date(course.endDate).toLocaleDateString("de-DE", {
-                          day: "2-digit",
-                          month: "long",
-                          year: "numeric",
-                        })}
+                        {formatBerlin(course.startDate, "datumLangZweistellig")}{" "}
+                        - {formatBerlin(course.endDate, "datumLangZweistellig")}
                       </p>
                     </div>
                   </div>
@@ -321,11 +300,7 @@ export default function LocationDetailPage() {
               Erstellt am
             </dt>
             <dd className="text-ink dark:text-night-text font-medium">
-              {new Date(location.createdAt).toLocaleDateString("de-DE", {
-                day: "2-digit",
-                month: "long",
-                year: "numeric",
-              })}
+              {formatBerlin(location.createdAt, "datumLangZweistellig")}
             </dd>
           </div>
           <div>
@@ -333,11 +308,7 @@ export default function LocationDetailPage() {
               Zuletzt aktualisiert
             </dt>
             <dd className="text-ink dark:text-night-text font-medium">
-              {new Date(location.updatedAt).toLocaleDateString("de-DE", {
-                day: "2-digit",
-                month: "long",
-                year: "numeric",
-              })}
+              {formatBerlin(location.updatedAt, "datumLangZweistellig")}
             </dd>
           </div>
         </dl>

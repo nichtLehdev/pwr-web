@@ -30,6 +30,7 @@ import type {
   SortingState,
 } from "@tanstack/react-table";
 import { PencilIcon, SearchIcon, UsersIcon } from "lucide-react";
+import { formatBerlin } from "@/lib/berlin-time";
 
 type AdminRegistration =
   RouterOutputs["registrations"]["getAllAdmin"]["registrations"][number];
@@ -81,11 +82,7 @@ function formatPrice(price: number) {
 }
 
 function formatDate(date: Date | string) {
-  return new Intl.DateTimeFormat("de-DE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  }).format(new Date(date));
+  return formatBerlin(date, "datumZweistellig");
 }
 
 /** Reads one set filter out of the table's filter state. */

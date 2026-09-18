@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, Clock, MapPin, Users } from "lucide-react";
 import { coursePath, eventPath } from "@/lib/slug";
 import { Tag } from "@/app/_components/programmheft/tag";
+import { formatBerlin } from "@/lib/berlin-time";
 
 interface CompactEventCardProps {
   id: string;
@@ -34,10 +35,7 @@ export default function CompactEventCard({
   cancelled,
 }: CompactEventCardProps) {
   const dateObj = new Date(date);
-  const time = dateObj.toLocaleTimeString("de-DE", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const time = formatBerlin(dateObj, "uhrzeit");
 
   return (
     <Link

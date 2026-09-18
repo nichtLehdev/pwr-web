@@ -48,6 +48,7 @@ import { priceOptionAgeLabel } from "@/lib/course-price-option-age";
 import { coursePath, courseRegistrationPath } from "@/lib/slug";
 import LocationNavigationLink from "@/app/_components/general/location-navigation-link";
 import { cn } from "@/lib/utils";
+import { formatBerlin, isSameBerlinDay } from "@/lib/berlin-time";
 
 type CourseWithRelations = RouterOutputs["courses"]["getById"];
 type CourseSpots = RouterOutputs["courses"]["getAvailableSlots"];
@@ -63,29 +64,11 @@ function formatCourseSchedule(course: {
 }): string {
   const start = new Date(course.startDate);
   const end = new Date(course.endDate);
-  const sameDay = start.toDateString() === end.toDateString();
+  const sameDay = isSameBerlinDay(start, end);
   if (sameDay) {
-    return `${start.toLocaleDateString("de-DE", {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    })}, ${start.toLocaleTimeString("de-DE", {
-      hour: "2-digit",
-      minute: "2-digit",
-    })} – ${end.toLocaleTimeString("de-DE", {
-      hour: "2-digit",
-      minute: "2-digit",
-    })} Uhr`;
+    return `${formatBerlin(start, "datumMitWochentag")}, ${formatBerlin(start, "uhrzeit")} – ${formatBerlin(end, "uhrzeit")} Uhr`;
   }
-  return `${start.toLocaleDateString("de-DE", {
-    day: "numeric",
-    month: "long",
-  })} – ${end.toLocaleDateString("de-DE", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  })}`;
+  return `${formatBerlin(start, "tagMonat")} – ${formatBerlin(end, "datumLang")}`;
 }
 
 /** Outline-Schaltfläche für nicht-navigierende Aktionen (ICS-Download). */
@@ -133,7 +116,7 @@ export default function CourseDetailView({
   const isRegistrationNotOpenYet =
     registrationOpensAt && registrationOpensAt > new Date();
 
-  const isSameDay = startDate.toDateString() === endDate.toDateString();
+  const isSameDay = isSameBerlinDay(startDate, endDate);
   const durationDays = calendarDaysInclusive(startDate, endDate);
 
   const isExternal = isExternalCourse(course);
@@ -265,13 +248,10 @@ export default function CourseDetailView({
             <span className="flex items-center gap-2">
               <Clock className={headMeta.icon} aria-hidden />
               Anmeldung ab:{" "}
-              {registrationOpensAt.toLocaleDateString("de-DE", {
-                day: "2-digit",
-                month: "long",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}{" "}
+              {formatBerlin(
+                registrationOpensAt,
+                "datumLangZweistelligUhrzeit",
+              )}{" "}
               Uhr
             </span>
           )}
@@ -285,11 +265,7 @@ export default function CourseDetailView({
               <span className="flex items-center gap-2">
                 <Clock className={headMeta.icon} aria-hidden />
                 Anmeldeschluss:{" "}
-                {registrationDeadline.toLocaleDateString("de-DE", {
-                  day: "2-digit",
-                  month: "long",
-                  year: "numeric",
-                })}
+                {formatBerlin(registrationDeadline, "datumLangZweistellig")}
               </span>
             </>
           ) : null}
@@ -332,39 +308,18 @@ export default function CourseDetailView({
                 {isSameDay ? (
                   <>
                     <p className="text-ink dark:text-night-text text-lg font-semibold">
-                      {startDate.toLocaleDateString("de-DE", {
-                        weekday: "long",
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                      })}
+                      {formatBerlin(startDate, "datumMitWochentag")}
                     </p>
                     <p className="text-dark dark:text-night-muted">
-                      {startDate.toLocaleTimeString("de-DE", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}{" "}
-                      -{" "}
-                      {endDate.toLocaleTimeString("de-DE", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}{" "}
-                      Uhr
+                      {formatBerlin(startDate, "uhrzeit")} -{" "}
+                      {formatBerlin(endDate, "uhrzeit")} Uhr
                     </p>
                   </>
                 ) : (
                   <>
                     <p className="text-ink dark:text-night-text text-lg font-semibold">
-                      {startDate.toLocaleDateString("de-DE", {
-                        day: "numeric",
-                        month: "long",
-                      })}{" "}
-                      -{" "}
-                      {endDate.toLocaleDateString("de-DE", {
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                      })}
+                      {formatBerlin(startDate, "tagMonat")} -{" "}
+                      {formatBerlin(endDate, "datumLang")}
                     </p>
                     <p className="text-dark dark:text-night-muted">
                       {durationDays} {durationDays === 1 ? "Tag" : "Tage"}
@@ -375,18 +330,8 @@ export default function CourseDetailView({
                   <Note tone="info" className="mt-4">
                     <p className="font-semibold">Anmeldung öffnet am</p>
                     <p>
-                      {registrationOpensAt.toLocaleDateString("de-DE", {
-                        weekday: "long",
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                      })}{" "}
-                      um{" "}
-                      {registrationOpensAt.toLocaleTimeString("de-DE", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}{" "}
-                      Uhr
+                      {formatBerlin(registrationOpensAt, "datumMitWochentag")}{" "}
+                      um {formatBerlin(registrationOpensAt, "uhrzeit")} Uhr
                     </p>
                   </Note>
                 )}
@@ -543,8 +488,7 @@ export default function CourseDetailView({
 
                 {registrationDeadline && !isDeadlinePassed && (
                   <p className="text-dark dark:text-night-muted mt-3 text-center text-xs">
-                    Anmeldung bis{" "}
-                    {registrationDeadline.toLocaleDateString("de-DE")} möglich
+                    Anmeldung bis {formatBerlin(registrationDeadline)} möglich
                   </p>
                 )}
               </Panel>
@@ -567,18 +511,9 @@ export default function CourseDetailView({
                 </p>
                 <p className="text-dark dark:text-night-muted mt-1 text-sm">
                   {isRegistrationNotOpenYet
-                    ? `Die Anmeldung für diesen Kurs öffnet am ${registrationOpensAt?.toLocaleDateString(
-                        "de-DE",
-                        {
-                          day: "2-digit",
-                          month: "long",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        },
-                      )} Uhr. Die Kursdetails sind bereits verfügbar.`
-                    : isDeadlinePassed
-                      ? `Die Anmeldefrist für diesen Kurs ist am ${registrationDeadline?.toLocaleDateString("de-DE")} abgelaufen.`
+                    ? `Die Anmeldung für diesen Kurs öffnet am ${formatBerlin(registrationOpensAt, "datumLangZweistelligUhrzeit")} Uhr. Die Kursdetails sind bereits verfügbar.`
+                    : isDeadlinePassed && registrationDeadline
+                      ? `Die Anmeldefrist für diesen Kurs ist am ${formatBerlin(registrationDeadline)} abgelaufen.`
                       : !isExternal && spots.isFull && !course.allowWaitingList
                         ? "Alle Plätze sind belegt und es gibt keine Warteliste."
                         : "Die Anmeldung für diesen Kurs ist derzeit nicht möglich."}

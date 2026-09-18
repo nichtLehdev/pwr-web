@@ -26,6 +26,7 @@ import { MAX_DESCRIPTION_LENGTH } from "@/lib/description";
 import { permissionProcedure } from "../middleware/permissions";
 import { createEventSlug, updateEventSlug } from "../helpers/content-slug";
 import { isUuid, MAX_SLUG_LENGTH } from "@/lib/slug";
+import { berlinDate } from "@/lib/berlin-time";
 
 export const eventsRouter = createTRPCRouter({
   getAll: publicProcedure
@@ -1190,15 +1191,18 @@ export const eventsRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
-      const startDate = new Date(input.year, input.month - 1, 1);
-      const endDate = new Date(input.year, input.month, 0, 23, 59, 59, 999);
+      // Der Monat, wie er in Deutschland im Kalender steht. `new Date(y, m, 1)`
+      // rechnete in der Zone des Servers (UTC): Ein Termin am 1. um 00:30
+      // landete im Vormonat, einer am Monatsletzten um 23:30 fehlte.
+      const startDate = berlinDate(input.year, input.month, 1);
+      const nextMonth = berlinDate(input.year, input.month + 1, 1);
 
       const events = await ctx.db.event.findMany({
         where: {
           status: ContentStatus.APPROVED,
           eventDate: {
             gte: startDate,
-            lte: endDate,
+            lt: nextMonth,
           },
         },
         include: {

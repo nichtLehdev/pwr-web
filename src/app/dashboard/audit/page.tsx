@@ -16,6 +16,7 @@ import type {
   SortingState,
 } from "@tanstack/react-table";
 import { ShieldIcon } from "lucide-react";
+import { formatBerlin } from "@/lib/berlin-time";
 
 type AuditEntry = RouterOutputs["audit"]["list"]["entries"][number];
 
@@ -32,14 +33,7 @@ type SortableColumn = keyof typeof SORTABLE_COLUMNS;
 const column = createDataTableColumnHelper<AuditEntry>();
 
 function formatDateTime(date: Date | string) {
-  return new Intl.DateTimeFormat("de-DE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  }).format(new Date(date));
+  return formatBerlin(date, "datumUhrzeitSekunden");
 }
 
 /** Reads one set filter out of the table's filter state. */

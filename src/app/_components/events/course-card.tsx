@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { isRegistrationDeadlinePassed } from "@/lib/registration-deadline";
 import { formatDateRange } from "@/lib/format-date-range";
+import { formatBerlin } from "@/lib/berlin-time";
 import { formatAvailableSlots } from "@/lib/format-available-slots";
 import { api } from "@/trpc/react";
 import { courseTypeLabel } from "@/lib/termine-labels";
@@ -84,10 +85,8 @@ export default function CourseCard({
           {isRegistrationNotOpenYet && (
             <Tag tone="inverse">
               Anmeldung ab{" "}
-              {registrationOpensAt?.toLocaleDateString("de-DE", {
-                day: "2-digit",
-                month: "short",
-              })}
+              {registrationOpensAt &&
+                formatBerlin(registrationOpensAt, "tagMonatKurz")}
             </Tag>
           )}
           {registrationOpen && spotsAvailable.availableSlots > 0 && (

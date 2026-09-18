@@ -15,6 +15,7 @@ import {
   type Point,
 } from "../../_components/programmheft/point-list";
 import LoadingSpinner from "../../_components/general/loading-spinner";
+import { formatBerlin } from "@/lib/berlin-time";
 
 const INFO_ITEMS: Point[] = [
   {
@@ -193,10 +194,7 @@ export default function BlechblattPage() {
                             {edition.title}
                           </span>
                           <span className="semi-condensed text-dark dark:text-night-muted mt-0.5 block text-sm font-semibold">
-                            {new Date(edition.createdAt).toLocaleDateString(
-                              "de-DE",
-                              { year: "numeric", month: "long" },
-                            )}
+                            {formatBerlin(edition.createdAt, "monatJahr")}
                           </span>
                           {edition.description ? (
                             <span className="text-dark dark:text-night-muted mt-1 block max-w-[46ch] text-sm">

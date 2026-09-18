@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { TrackingConsentLink } from "@/app/_components/stats/tracking-consent-link";
+import { berlinParts } from "@/lib/berlin-time";
 
 const COLUMN_LINK =
   "text-paper/85 hover:text-primary inline-flex min-h-10 items-center text-base underline-offset-4 transition-colors hover:underline";
@@ -19,7 +20,7 @@ function ColumnHeading({ children }: { children: string }) {
 }
 
 export default function Footer() {
-  const currentYear = new Date().getFullYear();
+  const currentYear = berlinParts(new Date()).year;
 
   const footerLinks = {
     about: [

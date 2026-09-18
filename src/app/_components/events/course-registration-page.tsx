@@ -17,6 +17,7 @@ import { courseTypeLabel } from "@/lib/termine-labels";
 import CourseRegistrationForm from "@/app/_components/events/course-registration-form";
 import { CourseExistingRegistrationOptions } from "@/app/_components/events/course-existing-registration-options";
 import { coursePath } from "@/lib/slug";
+import { formatBerlin, isSameBerlinDay } from "@/lib/berlin-time";
 
 type Course = NonNullable<RouterOutputs["courses"]["getById"]>;
 type Spots = RouterOutputs["courses"]["getAvailableSlots"];
@@ -24,29 +25,11 @@ type Spots = RouterOutputs["courses"]["getAvailableSlots"];
 function formatCourseSchedule(course: Course): string {
   const start = new Date(course.startDate);
   const end = new Date(course.endDate);
-  const sameDay = start.toDateString() === end.toDateString();
+  const sameDay = isSameBerlinDay(start, end);
   if (sameDay) {
-    return `${start.toLocaleDateString("de-DE", {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    })}, ${start.toLocaleTimeString("de-DE", {
-      hour: "2-digit",
-      minute: "2-digit",
-    })} – ${end.toLocaleTimeString("de-DE", {
-      hour: "2-digit",
-      minute: "2-digit",
-    })} Uhr`;
+    return `${formatBerlin(start, "datumMitWochentag")}, ${formatBerlin(start, "uhrzeit")} – ${formatBerlin(end, "uhrzeit")} Uhr`;
   }
-  return `${start.toLocaleDateString("de-DE", {
-    day: "numeric",
-    month: "long",
-  })} – ${end.toLocaleDateString("de-DE", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  })}`;
+  return `${formatBerlin(start, "tagMonat")} – ${formatBerlin(end, "datumLang")}`;
 }
 
 export default function CourseRegistrationPage({

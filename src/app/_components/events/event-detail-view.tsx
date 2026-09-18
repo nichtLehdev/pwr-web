@@ -36,6 +36,7 @@ import {
   downloadFormatCode,
   isPreviewableImageDownload,
 } from "@/lib/download-file-types";
+import { formatBerlin } from "@/lib/berlin-time";
 
 type EventWithRelations = RouterOutputs["events"]["getById"];
 
@@ -50,20 +51,9 @@ function formatEventHeroSchedule(
   const endDate = durationMinutes
     ? new Date(eventDate.getTime() + durationMinutes * 60 * 1000)
     : new Date(eventDate.getTime() + 2 * 60 * 60 * 1000);
-  const datePart = eventDate.toLocaleDateString("de-DE", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-  const timeStart = eventDate.toLocaleTimeString("de-DE", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-  const timeEnd = endDate.toLocaleTimeString("de-DE", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const datePart = formatBerlin(eventDate, "datumMitWochentag");
+  const timeStart = formatBerlin(eventDate, "uhrzeit");
+  const timeEnd = formatBerlin(endDate, "uhrzeit");
   const dur =
     durationMinutes && durationMinutes > 0
       ? ` (${Math.floor(durationMinutes / 60)}h${
@@ -159,7 +149,7 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
           text={
             event.motto ||
             markdownToSingleLine(event.description ?? "") ||
-            `${event.title} am ${eventDate.toLocaleDateString("de-DE")}`
+            `${event.title} am ${formatBerlin(eventDate)}`
           }
           className={headMeta.action}
         />
@@ -228,18 +218,10 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
               </Heading>
               <div className="mt-4 space-y-2">
                 <p className="text-ink dark:text-night-text text-lg font-semibold">
-                  {eventDate.toLocaleDateString("de-DE", {
-                    weekday: "long",
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  })}
+                  {formatBerlin(eventDate, "datumMitWochentag")}
                 </p>
                 <p className="text-dark dark:text-night-muted">
-                  {eventDate.toLocaleTimeString("de-DE", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
+                  {formatBerlin(eventDate, "uhrzeit")}
                   {event.duration && event.duration > 0 && (
                     <span>
                       {" "}

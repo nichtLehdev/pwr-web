@@ -36,6 +36,7 @@ import {
   Trash2Icon,
   UsersIcon,
 } from "lucide-react";
+import { formatBerlin } from "@/lib/berlin-time";
 
 const statusLabels: Record<RegistrationStatus, string> = {
   CONFIRMED: "Bestätigt",
@@ -919,11 +920,8 @@ function CourseMailPageContent() {
                         {mail.subject}
                       </p>
                       <p className="dark:text-night-muted text-dark text-xs">
-                        {new Intl.DateTimeFormat("de-DE", {
-                          dateStyle: "medium",
-                          timeStyle: "short",
-                        }).format(new Date(mail.createdAt))}{" "}
-                        · {mail.senderName} · {mail.sentCount}/
+                        {formatBerlin(mail.createdAt, "mittelKurz")} ·{" "}
+                        {mail.senderName} · {mail.sentCount}/
                         {mail.recipientCount} zugestellt
                         {mail.failedCount > 0 &&
                           ` · ${mail.failedCount} fehlgeschlagen`}

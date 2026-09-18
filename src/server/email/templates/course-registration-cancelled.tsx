@@ -1,6 +1,7 @@
 import { Text } from "@react-email/components";
 import { EmailLayout, Regel, abschnittskopf, grundtext } from "./email-layout";
 import { emailText, textZeile } from "./email-text";
+import { formatBerlin } from "@/lib/berlin-time";
 
 interface CourseRegistrationCancelledProps {
   registrantFirstName: string;
@@ -12,12 +13,7 @@ interface CourseRegistrationCancelledProps {
   registrationId: string;
 }
 
-const formatDate = (date: Date) =>
-  new Intl.DateTimeFormat("de-DE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  }).format(date);
+const formatDate = (date: Date) => formatBerlin(date, "datumZweistellig");
 
 export function CourseRegistrationCancelled({
   registrantFirstName,

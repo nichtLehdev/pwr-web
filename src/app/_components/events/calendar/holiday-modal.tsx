@@ -10,6 +10,7 @@ import {
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
 import { Note } from "@/app/_components/programmheft/note";
+import { formatBerlin } from "@/lib/berlin-time";
 
 interface HolidayModalProps {
   holiday: Holiday;
@@ -58,12 +59,7 @@ export default function HolidayModal({ holiday, onClose }: HolidayModalProps) {
           {/* Date */}
           <div className="mb-4">
             <p className="text-dark dark:text-night-muted">
-              {holiday.date.toLocaleDateString("de-DE", {
-                weekday: "long",
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-              })}
+              {formatBerlin(holiday.date, "datumMitWochentag")}
             </p>
           </div>
 
