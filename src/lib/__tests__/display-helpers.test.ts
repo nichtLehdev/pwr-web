@@ -9,6 +9,7 @@ import {
   isSameCalendarDay,
 } from "../format-date-range";
 import { formatAvailableSlots } from "../format-available-slots";
+import { berlinDate } from "../berlin-time";
 
 describe("registration deadline (whole-day inclusive)", () => {
   it("keeps a midnight-stored deadline open for its whole day", () => {
@@ -46,63 +47,104 @@ describe("registration deadline (whole-day inclusive)", () => {
   });
 });
 
+// Termine sind deutsche Ortszeit: Die Zeitpunkte entstehen deshalb über
+// `berlinDate` und nicht über `new Date(y, m, d)`, das der Zone der Maschine
+// folgt — der Server läuft in UTC, die Anzeige muss trotzdem Berlin zeigen.
 describe("date range formatting", () => {
   it("counts calendar days inclusively", () => {
     expect(
       calendarDaysInclusive(
-        new Date(2026, 7, 14, 15, 0),
-        new Date(2026, 7, 15, 13, 0),
+        berlinDate(2026, 8, 14, 15, 0),
+        berlinDate(2026, 8, 15, 13, 0),
       ),
     ).toBe(2); // 14.–15. Aug is 2 days even though it's < 24h
     expect(
       calendarDaysInclusive(
-        new Date(2026, 7, 14, 9, 0),
-        new Date(2026, 7, 14, 18, 0),
+        berlinDate(2026, 8, 14, 9, 0),
+        berlinDate(2026, 8, 14, 18, 0),
       ),
     ).toBe(1);
     expect(
       calendarDaysInclusive(
-        new Date(2026, 7, 27, 2, 0),
-        new Date(2026, 7, 30, 2, 0),
+        berlinDate(2026, 8, 27, 2, 0),
+        berlinDate(2026, 8, 30, 2, 0),
       ),
     ).toBe(4);
   });
 
+  it("zählt deutsche Kalendertage, auch über Mitternacht und die Zeitumstellung", () => {
+    // 04.05. 22:00 UTC ist der 05.05. 00:00 in Berlin.
+    expect(
+      calendarDaysInclusive(
+        new Date("2027-05-04T22:00:00Z"),
+        new Date("2027-05-09T11:00:00Z"),
+      ),
+    ).toBe(5);
+    // Über den 25.10. (25 Stunden) hinweg.
+    expect(
+      calendarDaysInclusive(
+        berlinDate(2026, 10, 24, 10, 0),
+        berlinDate(2026, 10, 26, 10, 0),
+      ),
+    ).toBe(3);
+  });
+
   it("shows times for single-day ranges only", () => {
     const singleDay = formatDateRange(
-      new Date(2026, 7, 14, 15, 0),
-      new Date(2026, 7, 14, 18, 0),
+      berlinDate(2026, 8, 14, 15, 0),
+      berlinDate(2026, 8, 14, 18, 0),
     );
-    expect(singleDay).toContain("15:00");
-    expect(singleDay).toContain("Uhr");
+    expect(singleDay).toBe("14. August 2026, 15:00 – 18:00 Uhr");
 
     const multiDay = formatDateRange(
-      new Date(2026, 7, 27, 2, 0),
-      new Date(2026, 7, 30, 2, 0),
+      berlinDate(2026, 8, 27, 2, 0),
+      berlinDate(2026, 8, 30, 2, 0),
     );
-    expect(multiDay).not.toContain("02:00");
-    expect(multiDay).not.toContain("Uhr");
-    expect(multiDay).toContain("27.");
-    expect(multiDay).toContain("30.");
+    expect(multiDay).toBe("27. – 30. August 2026");
+  });
+
+  it("zeigt Tag und Uhrzeit in Berliner Zeit, nicht in der des Servers", () => {
+    // Ein Workshop am 05.09. von 10 bis 17 Uhr, gespeichert in UTC.
+    expect(
+      formatDateRange(
+        new Date("2026-09-05T08:00:00Z"),
+        new Date("2026-09-05T15:00:00Z"),
+      ),
+    ).toBe("5. September 2026, 10:00 – 17:00 Uhr");
+    // Beginn um Mitternacht: in UTC noch der Vortag.
+    expect(
+      formatDateRange(
+        new Date("2027-06-17T22:00:00Z"),
+        new Date("2027-06-27T21:59:00Z"),
+      ),
+    ).toBe("18. – 27. Juni 2027");
   });
 
   it("spells out cross-month ranges", () => {
-    const range = formatDateRange(new Date(2026, 7, 30), new Date(2026, 8, 2));
-    expect(range).toContain("Aug");
-    expect(range).toContain("Sep");
+    const range = formatDateRange(
+      berlinDate(2026, 8, 30),
+      berlinDate(2026, 9, 2),
+    );
+    expect(range).toBe("30. Aug. – 2. Sept. 2026");
+  });
+
+  it("nennt beide Jahre, wenn der Kurs über Neujahr geht", () => {
+    expect(
+      formatDateRange(berlinDate(2026, 12, 28, 18), berlinDate(2027, 1, 5, 10)),
+    ).toBe("28. Dez. 2026 – 5. Jan. 2027");
   });
 
   it("isSameCalendarDay compares dates, not timestamps", () => {
     expect(
       isSameCalendarDay(
-        new Date(2026, 1, 1, 0, 0),
-        new Date(2026, 1, 1, 23, 59),
+        berlinDate(2026, 2, 1, 0, 0),
+        berlinDate(2026, 2, 1, 23, 59),
       ),
     ).toBe(true);
     expect(
       isSameCalendarDay(
-        new Date(2026, 1, 1, 23, 59),
-        new Date(2026, 1, 2, 0, 0),
+        berlinDate(2026, 2, 1, 23, 59),
+        berlinDate(2026, 2, 2, 0, 0),
       ),
     ).toBe(false);
   });

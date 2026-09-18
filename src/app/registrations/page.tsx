@@ -41,6 +41,7 @@ import { Tag, type TagTone } from "@/app/_components/programmheft/tag";
 import { ValueTable } from "@/app/_components/programmheft/value-table";
 import { ButtonLink } from "@/app/_components/programmheft/button-link";
 import { cn } from "@/lib/utils";
+import { formatBerlin } from "@/lib/berlin-time";
 
 /**
  * Schaltflächen-Stimmen des Programmhefts, lokal wiederholt wie auf den
@@ -179,11 +180,7 @@ export default function MyRegistrationsPage() {
   }
 
   const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString("de-DE", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
+    return formatBerlin(date, "datumZweistellig");
   };
 
   const getEditDeadlineInfo = (

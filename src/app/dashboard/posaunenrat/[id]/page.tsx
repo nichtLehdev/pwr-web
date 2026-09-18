@@ -13,6 +13,7 @@ import { DashboardPage } from "@/app/_components/dashboard";
 import { Tag } from "@/app/_components/programmheft/tag";
 import { EditIcon, TrashIcon } from "lucide-react";
 import { ArrowLeftIcon } from "lucide-react";
+import { formatBerlin } from "@/lib/berlin-time";
 
 const POSAUNENRAT_ROLE_LABELS: Record<string, string> = {
   VORSTAND: "Vorstand",
@@ -261,11 +262,7 @@ export default function PosaunenratDetailPage() {
                 Erstellt am
               </dt>
               <dd className="text-ink dark:text-night-text mt-1">
-                {new Date(member.createdAt).toLocaleDateString("de-DE", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                })}
+                {formatBerlin(member.createdAt, "datumZweistellig")}
               </dd>
             </div>
             <div>
@@ -273,11 +270,7 @@ export default function PosaunenratDetailPage() {
                 Zuletzt aktualisiert
               </dt>
               <dd className="text-ink dark:text-night-text mt-1">
-                {new Date(member.updatedAt).toLocaleDateString("de-DE", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                })}
+                {formatBerlin(member.updatedAt, "datumZweistellig")}
               </dd>
             </div>
           </dl>

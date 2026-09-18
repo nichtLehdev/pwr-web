@@ -31,6 +31,7 @@ import {
 } from "@/app/_components/ui/scrollable-modal";
 import { renderDescriptionHtml } from "@/lib/sanitize";
 import "@/styles/beschreibung.css";
+import { formatBerlin } from "@/lib/berlin-time";
 
 const categoryLabels: Record<EventCategory, string> = {
   KONZERT: "Konzert",
@@ -184,16 +185,8 @@ export default function EventDetailPage() {
   const canReview = isReviewer && event.status === ContentStatus.PENDING;
 
   const eventDate = new Date(event.eventDate);
-  const formattedDate = eventDate.toLocaleDateString("de-DE", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-  const formattedTime = eventDate.toLocaleTimeString("de-DE", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const formattedDate = formatBerlin(eventDate, "datumMitWochentag");
+  const formattedTime = formatBerlin(eventDate, "uhrzeit");
   const beschreibungHtml = renderDescriptionHtml(event.description);
   const districtLabel = event.bezirk
     ? `Bezirk ${event.bezirk.number} - ${event.bezirk.shortName}`
@@ -423,11 +416,7 @@ export default function EventDetailPage() {
             {event.reviewer && (
               <p className="text-dark dark:text-night-muted mt-2 text-sm">
                 — {event.reviewer.displayName}
-                {event.reviewDate && (
-                  <>
-                    , {new Date(event.reviewDate).toLocaleDateString("de-DE")}
-                  </>
-                )}
+                {event.reviewDate && <>, {formatBerlin(event.reviewDate)}</>}
               </p>
             )}
           </section>
@@ -726,13 +715,7 @@ export default function EventDetailPage() {
                     Erstellt am
                   </dt>
                   <dd className="text-ink dark:text-night-text mt-1">
-                    {new Date(event.createdAt).toLocaleDateString("de-DE", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                    {formatBerlin(event.createdAt, "datumLangUhrzeit")}
                   </dd>
                 </div>
                 {event.reviewer && (
@@ -751,16 +734,7 @@ export default function EventDetailPage() {
                       </dt>
                       <dd className="text-ink dark:text-night-text mt-1">
                         {event.reviewDate
-                          ? new Date(event.reviewDate).toLocaleDateString(
-                              "de-DE",
-                              {
-                                day: "numeric",
-                                month: "long",
-                                year: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              },
-                            )
+                          ? formatBerlin(event.reviewDate, "datumLangUhrzeit")
                           : "–"}
                       </dd>
                     </div>
@@ -772,13 +746,7 @@ export default function EventDetailPage() {
                       Veröffentlicht am
                     </dt>
                     <dd className="text-ink dark:text-night-text mt-1">
-                      {new Date(event.publishedAt).toLocaleDateString("de-DE", {
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                      {formatBerlin(event.publishedAt, "datumLangUhrzeit")}
                     </dd>
                   </div>
                 )}
@@ -787,13 +755,7 @@ export default function EventDetailPage() {
                     Zuletzt aktualisiert
                   </dt>
                   <dd className="text-ink dark:text-night-text mt-1">
-                    {new Date(event.updatedAt).toLocaleDateString("de-DE", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                    {formatBerlin(event.updatedAt, "datumLangUhrzeit")}
                   </dd>
                 </div>
               </dl>

@@ -1,4 +1,5 @@
 import type { JSX } from "react";
+import { formatBerlin } from "./berlin-time";
 
 /**
  * Utility function to merge class names.
@@ -83,12 +84,7 @@ export function getFileIcon(fileType: string) {
 }
 
 export function formatDate(dateString: string): string {
-  const date = new Date(dateString);
-  return date.toLocaleDateString("de-DE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
+  return formatBerlin(dateString, "datumZweistellig");
 }
 
 /**

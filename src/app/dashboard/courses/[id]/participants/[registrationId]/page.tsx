@@ -53,6 +53,7 @@ import {
   DownPaymentPanel,
 } from "@/app/_components/dashboard/down-payment-panel";
 import { Tag, type TagTone } from "@/app/_components/programmheft/tag";
+import { formatBerlin } from "@/lib/berlin-time";
 
 const registrationStatusLabels: Record<RegistrationStatus, string> = {
   CONFIRMED: "Bestätigt",
@@ -81,11 +82,7 @@ const siblingDiscountStatusTones: Record<SiblingDiscountStatus, TagTone> = {
 };
 
 function formatDate(date: Date | string): string {
-  return new Date(date).toLocaleDateString("de-DE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
+  return formatBerlin(date, "datumZweistellig");
 }
 
 function getCustomFieldValue(
@@ -514,14 +511,10 @@ export default function RegistrationDetailPage() {
                 {registration.promotionOffer && (
                   <Tag tone="orange">
                     Nachrück-Angebot bis{" "}
-                    {new Date(
+                    {formatBerlin(
                       registration.promotionOffer.expiresAt,
-                    ).toLocaleString("de-DE", {
-                      day: "2-digit",
-                      month: "2-digit",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                      "tagMonatUhrzeit",
+                    )}
                   </Tag>
                 )}
                 {canEdit && (
@@ -893,10 +886,7 @@ export default function RegistrationDetailPage() {
                           </span>
                           {invoice.paidAt && (
                             <span className="text-dark dark:text-night-muted block text-xs">
-                              Verbucht am{" "}
-                              {new Date(invoice.paidAt).toLocaleDateString(
-                                "de-DE",
-                              )}
+                              Verbucht am {formatBerlin(invoice.paidAt)}
                               {invoice.paidAmount !== null &&
                                 ` · ${formatEuro(invoice.paidAmount)}`}
                             </span>
@@ -970,13 +960,9 @@ export default function RegistrationDetailPage() {
                       Rechnungsdatum:
                     </span>
                     <span className="text-dark dark:text-night-text text-sm">
-                      {new Date(registration.invoiceDate).toLocaleDateString(
-                        "de-DE",
-                        {
-                          day: "2-digit",
-                          month: "2-digit",
-                          year: "numeric",
-                        },
+                      {formatBerlin(
+                        registration.invoiceDate,
+                        "datumZweistellig",
                       )}
                     </span>
                   </div>

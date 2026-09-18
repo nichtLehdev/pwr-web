@@ -27,6 +27,7 @@ import {
 } from "../helpers/invoice-pdf";
 import { invoiceTotal, type InvoiceLineItem } from "@/lib/invoice-document";
 import { invoiceOpenAmount } from "@/lib/invoice-payment";
+import { berlinDate } from "@/lib/berlin-time";
 
 /**
  * Everything the PDF renderer needs, in one reusable include. Both storno
@@ -1246,10 +1247,13 @@ export const invoicesRouter = createTRPCRouter({
           ...(years
             ? [
                 {
+                  // Das Jahr, das auf der Rechnung steht: Rechnungsdatum in
+                  // Berliner Zeit. Nach UTC-Jahren fiel eine Rechnung vom
+                  // 01.01. um 00:30 noch ins Vorjahr.
                   OR: years.map((year) => ({
                     invoiceDate: {
-                      gte: new Date(Date.UTC(year, 0, 1)),
-                      lt: new Date(Date.UTC(year + 1, 0, 1)),
+                      gte: berlinDate(year, 1, 1),
+                      lt: berlinDate(year + 1, 1, 1),
                     },
                   })),
                 },

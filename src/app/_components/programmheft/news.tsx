@@ -6,14 +6,12 @@ import ImageWithFallback from "@/app/_components/ui/image-with-fallback";
 import { extractPlainTextFromMarkdown } from "@/lib/utils";
 import { postPath } from "@/lib/slug";
 import { BezirkLabel } from "./bezirk-label";
+import { berlinFormatter } from "@/lib/berlin-time";
 
 export type NewsPost = RouterOutputs["posts"]["getAll"]["posts"][number];
 
-const DATE = new Intl.DateTimeFormat("de-DE", {
-  day: "2-digit",
-  month: "long",
-  year: "numeric",
-});
+// Berliner Zeit: rendert auf dem Server, und der läuft in UTC.
+const DATE = berlinFormatter("datumLangZweistellig");
 
 /**
  * Beiträge ohne (oder mit kaputtem) Titelbild zeigen das Logo auf der

@@ -14,6 +14,7 @@ import { Tag } from "@/app/_components/programmheft/tag";
 import { EditIcon } from "lucide-react";
 import { TrashIcon } from "lucide-react";
 import { ArrowLeftIcon } from "lucide-react";
+import { formatBerlin } from "@/lib/berlin-time";
 
 const FOERDERVEREIN_ROLE_LABELS: Record<string, string> = {
   VORSITZENDER: "Vorsitzender",
@@ -289,11 +290,7 @@ export default function FoerdervereinDetailPage() {
                 Erstellt am
               </dt>
               <dd className="text-ink dark:text-night-text mt-1">
-                {new Date(member.createdAt).toLocaleDateString("de-DE", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                })}
+                {formatBerlin(member.createdAt, "datumZweistellig")}
               </dd>
             </div>
             <div>
@@ -301,11 +298,7 @@ export default function FoerdervereinDetailPage() {
                 Zuletzt aktualisiert
               </dt>
               <dd className="text-ink dark:text-night-text mt-1">
-                {new Date(member.updatedAt).toLocaleDateString("de-DE", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                })}
+                {formatBerlin(member.updatedAt, "datumZweistellig")}
               </dd>
             </div>
           </dl>

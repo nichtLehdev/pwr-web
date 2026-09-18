@@ -1,6 +1,7 @@
 import "server-only";
 
 import ExcelJS from "exceljs";
+import { berlinDayKey } from "@/lib/berlin-time";
 
 /**
  * Der eine Weg, aus Zeilen eine echte .xlsx-Datei zu machen.
@@ -220,9 +221,12 @@ export async function buildXlsxBuffer(options: {
   return Buffer.from(await workbook.xlsx.writeBuffer());
 }
 
-/** `2026-09-10` — Datumsteil für Dateinamen. */
+/**
+ * `2026-09-10` — Datumsteil für Dateinamen, als deutscher Kalendertag: Der
+ * UTC-Tag aus `toISOString()` hing nachts bis 2 Uhr noch am Vortag.
+ */
 export function exportDateStamp(date = new Date()): string {
-  return date.toISOString().split("T")[0]!;
+  return berlinDayKey(date);
 }
 
 /**

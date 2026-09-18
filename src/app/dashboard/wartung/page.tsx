@@ -16,6 +16,7 @@ import {
   Label,
   Textarea,
 } from "@/app/_components/ui";
+import { formatBerlin } from "@/lib/berlin-time";
 
 function toLocalInput(value: Date | null): string {
   if (!value) return "";
@@ -120,11 +121,7 @@ export default function MaintenanceDashboardPage() {
             </Tag>
             {data?.updatedAt && (
               <p className="text-dark dark:text-night-muted mt-1 text-xs">
-                Zuletzt geändert am{" "}
-                {new Intl.DateTimeFormat("de-DE", {
-                  dateStyle: "medium",
-                  timeStyle: "short",
-                }).format(data.updatedAt)}
+                Zuletzt geändert am {formatBerlin(data.updatedAt, "mittelKurz")}
                 {data.updatedBy?.displayName
                   ? ` von ${data.updatedBy.displayName}`
                   : ""}

@@ -28,13 +28,10 @@ import {
 } from "lucide-react";
 import { DashboardPage } from "@/app/_components/dashboard";
 import { Tag, type TagTone } from "@/app/_components/programmheft/tag";
+import { formatBerlin } from "@/lib/berlin-time";
 
 function formatDate(date: Date | string): string {
-  return new Date(date).toLocaleDateString("de-DE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
+  return formatBerlin(date, "datumZweistellig");
 }
 
 const registrationStatusTone: Record<RegistrationStatus, TagTone> = {

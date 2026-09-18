@@ -36,6 +36,7 @@ import { formatEuro } from "@/lib/invoice-document";
 import { Heading } from "@/app/_components/programmheft/section-head";
 import { ValueTable } from "@/app/_components/programmheft/value-table";
 import { RADIO_INPUT_CLASS } from "@/app/_components/programmheft/field";
+import { formatBerlin } from "@/lib/berlin-time";
 
 interface Step3SummaryProps {
   course: CourseWithRelations;
@@ -201,8 +202,7 @@ export function Step3Summary({
           {course.title}
         </p>
         <p className="text-dark dark:text-night-muted text-sm">
-          {new Date(course.startDate).toLocaleDateString("de-DE")} -{" "}
-          {new Date(course.endDate).toLocaleDateString("de-DE")}
+          {formatBerlin(course.startDate)} - {formatBerlin(course.endDate)}
         </p>
         {course.location && (
           <p className="text-dark dark:text-night-muted text-sm">
@@ -276,9 +276,7 @@ export function Step3Summary({
                     {participant.firstName} {participant.lastName}
                   </span>
                   <span className="text-dark dark:text-night-muted block text-sm">
-                    {new Date(participant.birthDate).toLocaleDateString(
-                      "de-DE",
-                    )}
+                    {formatBerlin(participant.birthDate)}
                     {participant.instrument && ` • ${participant.instrument}`}
                   </span>
                   <span className="text-dark dark:text-night-muted block text-sm">

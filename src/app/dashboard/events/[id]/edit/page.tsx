@@ -43,6 +43,7 @@ import DownloadPickerModal from "@/app/_components/editor/download-picker-modal"
 import { datedSlugBase, slugify } from "@/lib/slug";
 import { useAutosave } from "@/lib/useAutosave";
 import { useBeforeUnload } from "@/lib/useBeforeUnload";
+import { toLocalDateInputValue } from "@/lib/date-input";
 
 const categoryLabels: Record<EventCategory, string> = {
   KONZERT: "Konzert",
@@ -337,7 +338,7 @@ export default function EditEventPage() {
         title: event.title || "",
         motto: event.motto || "",
         description: event.description || "",
-        eventDate: date.toISOString().split("T")[0] || "",
+        eventDate: toLocalDateInputValue(date),
         eventTime: date.toLocaleTimeString("de-DE", {
           hour: "2-digit",
           minute: "2-digit",
@@ -416,8 +417,12 @@ export default function EditEventPage() {
         setDistrictName(event.districtName || "");
         setStatus(event.status);
 
+        // Datum und Uhrzeit beide in der Zone des Browsers, in der das Formular
+        // sie beim Speichern auch wieder zusammensetzt. Der UTC-Tag aus
+        // `toISOString()` legte einen Termin um 00:30 beim Speichern auf den
+        // Vortag.
         const date = new Date(event.eventDate);
-        setEventDate(date.toISOString().split("T")[0] || "");
+        setEventDate(toLocalDateInputValue(date));
         setEventTime(
           date.toLocaleTimeString("de-DE", {
             hour: "2-digit",

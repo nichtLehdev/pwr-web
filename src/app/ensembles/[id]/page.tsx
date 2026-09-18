@@ -22,6 +22,7 @@ import { buildPageMetadata, plainTextExcerpt, SITE_NAME } from "@/lib/seo";
 import { ensemblePath, eventPath, isUuid } from "@/lib/slug";
 import JsonLd from "@/app/_components/seo/json-ld";
 import { breadcrumbSchema, musicGroupSchema } from "@/lib/structured-data";
+import { formatBerlin } from "@/lib/berlin-time";
 
 /** Kontaktzeile für Chorleitung/Ansprechpartner: Ink-Text, Messing-Tinte beim Hover. */
 const CONTACT_ROW =
@@ -375,15 +376,7 @@ export default async function EnsembleDetailPage({ params }: PageProps) {
                         key={event.id}
                         href={eventPath(event)}
                         title={event.title}
-                        description={`${date.toLocaleDateString("de-DE", {
-                          weekday: "long",
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        })}, ${date.toLocaleTimeString("de-DE", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}${locationLine ? ` · ${locationLine}` : ""}`}
+                        description={`${formatBerlin(date, "datumMitWochentag")}, ${formatBerlin(date, "uhrzeit")}${locationLine ? ` · ${locationLine}` : ""}`}
                       />
                     );
                   })}
@@ -402,14 +395,9 @@ export default async function EnsembleDetailPage({ params }: PageProps) {
                       key={event.id}
                       href={eventPath(event)}
                       title={event.title}
-                      description={new Date(event.eventDate).toLocaleDateString(
-                        "de-DE",
-                        {
-                          weekday: "long",
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        },
+                      description={formatBerlin(
+                        event.eventDate,
+                        "datumMitWochentag",
                       )}
                     />
                   ))}

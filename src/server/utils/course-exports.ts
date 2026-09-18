@@ -12,6 +12,7 @@ import {
   invoiceSummaryDownPaymentColumns,
 } from "@/lib/invoice-summary-export";
 import { buildXlsxBuffer, exportDateStamp } from "@/server/utils/xlsx";
+import { formatBerlin } from "@/lib/berlin-time";
 
 /**
  * Die fertigen Arbeitsmappen der Kursexporte — Dashboard-Download und
@@ -22,7 +23,7 @@ import { buildXlsxBuffer, exportDateStamp } from "@/server/utils/xlsx";
 export type CourseExportFile = { buffer: Buffer; filename: string };
 
 function stand(now: Date): string {
-  return `Stand: ${now.toLocaleDateString("de-DE")}`;
+  return `Stand: ${formatBerlin(now)}`;
 }
 
 type ParticipantsExportCourse = Parameters<

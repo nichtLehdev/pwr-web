@@ -14,6 +14,7 @@ import {
   Edit,
   ExternalLink,
 } from "lucide-react";
+import { formatBerlin } from "@/lib/berlin-time";
 
 interface DashboardCourseCardProps {
   id: string;
@@ -77,24 +78,15 @@ export default function DashboardCourseCard({
   const formatDateRange = () => {
     const start = new Date(startDate);
     const end = new Date(endDate);
-    const startStr = start.toLocaleDateString("de-DE", {
-      day: "2-digit",
-      month: "short",
-    });
-    const endStr = end.toLocaleDateString("de-DE", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
+    const startStr = formatBerlin(start, "tagMonatKurz");
+    const endStr = formatBerlin(end, "datumMonatKurzZweistellig");
     return `${startStr} - ${endStr}`;
   };
 
   const creatorLine =
     createdBy &&
     `${createdBy.displayName || "Unbekannt"}${
-      createdAt
-        ? ` · ${new Date(createdAt).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "2-digit" })}`
-        : ""
+      createdAt ? ` · ${formatBerlin(createdAt, "datumKurz")}` : ""
     }`;
 
   const districtLabel = district ? `Bezirk ${district}` : "Übergreifend";
@@ -115,10 +107,8 @@ export default function DashboardCourseCard({
           {isRegistrationNotOpenYet && registrationOpen ? (
             <Tag tone="inverse">
               Öffnet{" "}
-              {registrationOpensAt?.toLocaleDateString("de-DE", {
-                day: "2-digit",
-                month: "short",
-              })}
+              {registrationOpensAt &&
+                formatBerlin(registrationOpensAt, "tagMonatKurz")}
             </Tag>
           ) : isEffectivelyOpen ? (
             <Tag tone="ink">Anmeldung offen</Tag>

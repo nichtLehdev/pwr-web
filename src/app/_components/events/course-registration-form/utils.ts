@@ -13,6 +13,7 @@ import {
 } from "@/lib/course-payment-methods";
 import type { CoursePaymentMethod } from "~/generated/prisma/client";
 import { registrationDownPayment } from "@/lib/course-down-payment";
+import { berlinParts } from "@/lib/berlin-time";
 
 /**
  * Maps the form's participants onto the shared discount rule. The preview the
@@ -365,13 +366,12 @@ export function participantAge(
   const born = new Date(birthDate);
   if (Number.isNaN(born.getTime())) return null;
 
-  const today = new Date();
-  let age = today.getFullYear() - born.getFullYear();
-  const monthsApart = today.getMonth() - born.getMonth();
-  if (
-    monthsApart < 0 ||
-    (monthsApart === 0 && today.getDate() < born.getDate())
-  ) {
+  // Deutscher Kalendertag wie bei `ageOnDate` — auch beim ersten Rendern auf
+  // dem Server (UTC) soll dasselbe Alter dastehen wie danach im Browser.
+  const b = berlinParts(born);
+  const today = berlinParts(new Date());
+  let age = today.year - b.year;
+  if (today.month < b.month || (today.month === b.month && today.day < b.day)) {
     age--;
   }
   return age >= 0 && age < 150 ? age : null;

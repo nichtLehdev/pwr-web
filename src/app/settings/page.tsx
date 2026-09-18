@@ -43,6 +43,7 @@ import {
   Checkbox,
   fieldControlClasses,
 } from "@/app/_components/programmheft/field";
+import { berlinDayKey, formatBerlin } from "@/lib/berlin-time";
 
 interface UserPreferences {
   termineDefaultView: "list" | "calendar";
@@ -1140,7 +1141,7 @@ export default function SettingsPage() {
                           const url = window.URL.createObjectURL(blob);
                           const a = document.createElement("a");
                           a.href = url;
-                          a.download = `meine-daten-export-${new Date().toISOString().split("T")[0]}.json`;
+                          a.download = `meine-daten-export-${berlinDayKey(new Date())}.json`;
                           document.body.appendChild(a);
                           a.click();
                           window.URL.revokeObjectURL(url);
@@ -1188,9 +1189,7 @@ export default function SettingsPage() {
                                 {participant.firstName} {participant.lastName}
                               </p>
                               <p className="text-dark dark:text-night-muted text-xs">
-                                {new Date(
-                                  participant.birthDate,
-                                ).toLocaleDateString("de-DE")}
+                                {formatBerlin(participant.birthDate)}
                                 {participant.city && ` · ${participant.city}`}
                                 {participant.instrument &&
                                   ` · ${participant.instrument}`}

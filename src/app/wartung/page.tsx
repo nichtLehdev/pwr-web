@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { Wrench } from "lucide-react";
 import { resolveMaintenance } from "@/server/maintenance";
-import { MAINTENANCE_DEFAULT_MESSAGE } from "@/lib/maintenance";
+import {
+  MAINTENANCE_DEFAULT_MESSAGE,
+  formatMaintenanceUntil,
+} from "@/lib/maintenance";
 
 /** Wird vom Proxy per Rewrite ausgeliefert; bewusst ohne Navigation. */
 export const dynamic = "force-dynamic";
@@ -13,23 +16,9 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-function formatUntil(iso: string | null): string | null {
-  if (!iso) return null;
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return null;
-  // Mit fester Zeitzone: Die Seite rendert auf dem Server, und der läuft in
-  // UTC. Ohne Angabe stand dort 21:59, wo im Dashboard 23:59 eingetragen war
-  // (im Winter 22:59) — eingetragen wird immer in deutscher Ortszeit.
-  return new Intl.DateTimeFormat("de-DE", {
-    dateStyle: "full",
-    timeStyle: "short",
-    timeZone: "Europe/Berlin",
-  }).format(date);
-}
-
 export default async function WartungPage() {
   const verdict = await resolveMaintenance(await headers());
-  const until = formatUntil(verdict.until);
+  const until = formatMaintenanceUntil(verdict.until);
 
   return (
     <div className="programm font-programm bg-paper text-ink dark:bg-night dark:text-night-text flex min-h-screen items-center">

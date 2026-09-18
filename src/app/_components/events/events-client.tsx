@@ -37,6 +37,11 @@ import {
 } from "lucide-react";
 import { ListIcon, Calendar } from "lucide-react";
 import FeedConfigModal from "../feeds/feed-config-modal";
+import {
+  berlinDayKey,
+  formatBerlin,
+  startOfBerlinDay,
+} from "@/lib/berlin-time";
 
 type ViewMode = "list" | "calendar";
 
@@ -218,11 +223,9 @@ export default function EventsClient({
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [icalModalOpen, setIcalModalOpen] = useState(false);
 
-  const now = useMemo(() => {
-    const date = new Date();
-    date.setHours(0, 0, 0, 0);
-    return date;
-  }, []);
+  // Heute 00:00 in Berlin — „heute" und „vorbei" meinen den deutschen
+  // Kalendertag, auch beim ersten Rendern auf dem Server (UTC).
+  const now = useMemo(() => startOfBerlinDay(new Date()), []);
 
   const allItems = useMemo<CalendarItem[]>(
     () => [
@@ -272,11 +275,10 @@ export default function EventsClient({
 
   const futureItems = useMemo(() => {
     return allItems.filter((item) => {
-      const itemDate = new Date(
+      const itemDay = startOfBerlinDay(
         item.type === "event" ? item.eventDate : item.endDate,
       );
-      itemDate.setHours(0, 0, 0, 0);
-      return itemDate >= now;
+      return itemDay >= now;
     });
   }, [allItems, now]);
 
@@ -304,13 +306,9 @@ export default function EventsClient({
         const date = new Date(
           item.type === "event" ? item.eventDate : item.startDate,
         );
-        const monthKey = `${date.getFullYear()}-${String(
-          date.getMonth() + 1,
-        ).padStart(2, "0")}`;
-        const monthLabel = date.toLocaleDateString("de-DE", {
-          year: "numeric",
-          month: "long",
-        });
+        // „2026-10" — Monat in Berliner Zeit, wie die Überschrift darüber.
+        const monthKey = berlinDayKey(date).slice(0, 7);
+        const monthLabel = formatBerlin(date, "monatJahr");
 
         if (!acc[monthKey]) {
           acc[monthKey] = { label: monthLabel, items: [] };
@@ -324,11 +322,10 @@ export default function EventsClient({
 
   const pastItems = useMemo(() => {
     const past = allItems.filter((item) => {
-      const itemDate = new Date(
+      const itemDay = startOfBerlinDay(
         item.type === "event" ? item.eventDate : item.endDate,
       );
-      itemDate.setHours(0, 0, 0, 0);
-      return itemDate < now;
+      return itemDay < now;
     });
 
     return applyFilters(past).sort((a, b) => {

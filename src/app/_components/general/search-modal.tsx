@@ -16,6 +16,7 @@ import {
   Search,
   Frown,
 } from "lucide-react";
+import { formatBerlin } from "@/lib/berlin-time";
 
 interface SearchModalProps {
   isOpen: boolean;
@@ -89,13 +90,7 @@ function SearchResultItem({
             {typeLabels[result.type]}
           </span>
           {result.date && (
-            <span>
-              {new Date(result.date).toLocaleDateString("de-DE", {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-              })}
-            </span>
+            <span>{formatBerlin(result.date, "datumMonatKurz")}</span>
           )}
         </span>
       </button>

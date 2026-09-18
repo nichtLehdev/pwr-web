@@ -6,6 +6,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { invoicePaymentState } from "@/lib/invoice-payment";
 
 import { createLogger } from "@/server/utils/logger";
+import { berlinDayKey } from "@/lib/berlin-time";
 
 const log = createLogger("User Export");
 
@@ -270,7 +271,7 @@ export async function GET(
     return NextResponse.json(exportData, {
       headers: {
         "Content-Type": "application/json",
-        "Content-Disposition": `attachment; filename="user-data-export-${userId}-${new Date().toISOString().split("T")[0]}.json"`,
+        "Content-Disposition": `attachment; filename="user-data-export-${userId}-${berlinDayKey(new Date())}.json"`,
       },
     });
   } catch (error) {

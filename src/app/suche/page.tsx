@@ -9,6 +9,7 @@ import { Heading } from "../_components/programmheft/section-head";
 import { WayList, WayRow } from "../_components/programmheft/way-list";
 import { api } from "@/trpc/react";
 import type { SearchResultType } from "@/server/api/routers/search";
+import { formatBerlin } from "@/lib/berlin-time";
 
 const TYPE_LABELS: Record<SearchResultType, string> = {
   post: "Beiträge",
@@ -35,11 +36,7 @@ const TYPE_ORDER: SearchResultType[] = [
 const PAGE_RESULTS_CAP = 4;
 
 function formatDate(date: Date | string) {
-  return new Intl.DateTimeFormat("de-DE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  }).format(new Date(date));
+  return formatBerlin(date, "datumZweistellig");
 }
 
 function SearchPageContent() {

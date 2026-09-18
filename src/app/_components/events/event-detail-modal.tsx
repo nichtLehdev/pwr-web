@@ -18,6 +18,7 @@ import { Note } from "@/app/_components/programmheft/note";
 import { headMeta } from "@/app/_components/programmheft/page-head";
 import { cn } from "@/lib/utils";
 import { markdownToPlainText } from "@/lib/markdown-to-plain-text";
+import { formatBerlin, isSameBerlinDay } from "@/lib/berlin-time";
 
 interface EventDetailModalProps {
   event: CalendarItem & {
@@ -50,44 +51,22 @@ export default function EventDetailModal({
     event.type === "course" &&
     courseStartDate &&
     courseEndDate &&
-    courseStartDate.toDateString() !== courseEndDate.toDateString();
+    !isSameBerlinDay(courseStartDate, courseEndDate);
 
   const displayStartDate =
     event.type === "event"
-      ? eventDate!.toLocaleDateString("de-DE", {
-          weekday: "long",
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-        })
-      : courseStartDate!.toLocaleDateString("de-DE", {
-          weekday: "long",
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-        });
+      ? formatBerlin(eventDate!, "datumMitWochentag")
+      : formatBerlin(courseStartDate!, "datumMitWochentag");
 
   const startTime =
     event.type === "event"
-      ? eventDate!.toLocaleTimeString("de-DE", {
-          hour: "2-digit",
-          minute: "2-digit",
-        })
-      : courseStartDate!.toLocaleTimeString("de-DE", {
-          hour: "2-digit",
-          minute: "2-digit",
-        });
+      ? formatBerlin(eventDate!, "uhrzeit")
+      : formatBerlin(courseStartDate!, "uhrzeit");
 
-  const endDateString = courseEndDate?.toLocaleDateString("de-DE", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  const endDateString =
+    courseEndDate && formatBerlin(courseEndDate, "datumLang");
 
-  const endTime = courseEndDate?.toLocaleTimeString("de-DE", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const endTime = courseEndDate && formatBerlin(courseEndDate, "uhrzeit");
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {

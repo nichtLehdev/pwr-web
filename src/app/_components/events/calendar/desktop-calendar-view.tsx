@@ -12,6 +12,14 @@ import EventDetailModal from "../event-detail-modal";
 import MoreEventsModal from "./more-events-modal";
 import HolidayModal from "./holiday-modal";
 import { ChevronLeft, ChevronRight, X, Users, StarIcon } from "lucide-react";
+import {
+  berlinDate,
+  berlinParts,
+  daysInMonth as countDaysInMonth,
+  formatBerlin,
+  isSameBerlinDay,
+  weekdayOf,
+} from "@/lib/berlin-time";
 
 const MAX_EVENTS_PER_DAY = 4;
 const MAX_VISIBLE_WHEN_OVERFLOW = 3;
@@ -77,10 +85,23 @@ interface DesktopCalendarViewProps {
   items: CalendarItem[];
 }
 
+/** Ein Kalendermonat in Deutschland; `month` läuft von 1 bis 12. */
+type CalendarMonth = { year: number; month: number };
+
+function currentBerlinMonth(): CalendarMonth {
+  const { year, month } = berlinParts(new Date());
+  return { year, month };
+}
+
 export default function DesktopCalendarView({
   items,
 }: DesktopCalendarViewProps) {
-  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
+  // Monat und Tage in Berliner Zeit: Der Kalender rendert zuerst auf dem
+  // Server (UTC), und `new Date(y, m, d)` & Co. legten dort einen Termin um
+  // 00:30 in die Zelle des Vortags. Die Zellen sind deutsche Kalendertage,
+  // gleich in welcher Zone Server oder Browser laufen.
+  const [currentMonth, setCurrentMonth] =
+    useState<CalendarMonth>(currentBerlinMonth);
   const [selectedEvent, setSelectedEvent] =
     useState<CalendarItemInternal | null>(null);
   const [showMoreEventsDay, setShowMoreEventsDay] = useState<number | null>(
@@ -140,39 +161,28 @@ export default function DesktopCalendarView({
     [items],
   );
 
-  const getDaysInMonth = (date: Date) => {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const daysInMonth = lastDay.getDate();
-    const startingDayOfWeek = (firstDay.getDay() + 6) % 7;
-
-    return { daysInMonth, startingDayOfWeek };
-  };
-
-  const { daysInMonth, startingDayOfWeek } = getDaysInMonth(currentMonth);
+  const { year, month } = currentMonth;
+  const daysInMonth = countDaysInMonth(year, month);
+  /** Spalte des Tages, Montag = 0. */
+  const columnOf = (day: number) => (weekdayOf(year, month, day) + 6) % 7;
+  const startingDayOfWeek = columnOf(1);
+  /** Beginn des Tages in Berlin und Beginn des nächsten (exklusiv). */
+  const dayBounds = (day: number) => ({
+    startOfDay: berlinDate(year, month, day),
+    startOfNextDay: berlinDate(year, month, day + 1),
+  });
 
   const holidaysThisMonth = useMemo(
-    () =>
-      getHolidaysForMonth(currentMonth.getFullYear(), currentMonth.getMonth()),
-    [currentMonth],
+    () => getHolidaysForMonth(year, month - 1),
+    [year, month],
   );
 
   const getEventsForDay = (day: number) => {
-    const date = new Date(
-      currentMonth.getFullYear(),
-      currentMonth.getMonth(),
-      day,
-    );
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
+    const { startOfDay, startOfNextDay } = dayBounds(day);
 
     return calendarItems.filter((item): item is CalendarEventInternal => {
       if (item.type === "event") {
-        return item.date >= startOfDay && item.date <= endOfDay;
+        return item.date >= startOfDay && item.date < startOfNextDay;
       }
       return false;
     });
@@ -215,15 +225,7 @@ export default function DesktopCalendarView({
   }, [calendarItems]);
 
   const getCoursesForDay = (day: number) => {
-    const date = new Date(
-      currentMonth.getFullYear(),
-      currentMonth.getMonth(),
-      day,
-    );
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
+    const { startOfDay, startOfNextDay } = dayBounds(day);
 
     const coursesAtDay: Array<{
       course: CalendarCourseInternal;
@@ -235,20 +237,13 @@ export default function DesktopCalendarView({
 
     courseRows.forEach((row, rowIndex) => {
       const course = row.find(
-        (c) => c.date <= endOfDay && c.endDate >= startOfDay,
+        (c) => c.date < startOfNextDay && c.endDate >= startOfDay,
       );
 
       if (course) {
-        const startDate = new Date(course.date);
-        startDate.setHours(0, 0, 0, 0);
-        const endDate = new Date(course.endDate);
-        endDate.setHours(0, 0, 0, 0);
-
-        const isStart = startDate >= startOfDay && startDate <= endOfDay;
-        const isEnd = endDate >= startOfDay && endDate <= endOfDay;
-
-        const dayOfWeek = (date.getDay() + 6) % 7;
-        const isWeekStart = dayOfWeek === 0 && startDate < startOfDay;
+        const isStart = isSameBerlinDay(course.date, startOfDay);
+        const isEnd = isSameBerlinDay(course.endDate, startOfDay);
+        const isWeekStart = columnOf(day) === 0 && course.date < startOfDay;
 
         coursesAtDay.push({
           course,
@@ -267,21 +262,14 @@ export default function DesktopCalendarView({
     const mappings = new Map<number, Map<number, number>>();
 
     const getCoursesForDayInline = (day: number) => {
-      const date = new Date(
-        currentMonth.getFullYear(),
-        currentMonth.getMonth(),
-        day,
-      );
-      const startOfDay = new Date(date);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(date);
-      endOfDay.setHours(23, 59, 59, 999);
+      const startOfDay = berlinDate(year, month, day);
+      const startOfNextDay = berlinDate(year, month, day + 1);
 
       const coursesAtDay: Array<{ row: number }> = [];
 
       courseRows.forEach((row, rowIndex) => {
         const course = row.find(
-          (c) => c.date <= endOfDay && c.endDate! >= startOfDay,
+          (c) => c.date < startOfNextDay && c.endDate! >= startOfDay,
         );
 
         if (course) {
@@ -293,12 +281,7 @@ export default function DesktopCalendarView({
     };
 
     for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(
-        currentMonth.getFullYear(),
-        currentMonth.getMonth(),
-        day,
-      );
-      const dayOfWeek = (date.getDay() + 6) % 7;
+      const dayOfWeek = (weekdayOf(year, month, day) + 6) % 7;
       const mondayDay = day - dayOfWeek;
 
       if (mondayDay >= 1 && !mappings.has(mondayDay)) {
@@ -325,18 +308,11 @@ export default function DesktopCalendarView({
     }
 
     return mappings;
-  }, [currentMonth, daysInMonth, courseRows]);
+  }, [year, month, daysInMonth, courseRows]);
 
   const getCompactCoursesForDay = (day: number) => {
     const coursesAtDay = getCoursesForDay(day);
-    const date = new Date(
-      currentMonth.getFullYear(),
-      currentMonth.getMonth(),
-      day,
-    );
-    const dayOfWeek = (date.getDay() + 6) % 7;
-
-    const mondayDay = day - dayOfWeek;
+    const mondayDay = day - columnOf(day);
 
     const rowMapping = weekRowMappings.get(mondayDay);
 
@@ -352,24 +328,22 @@ export default function DesktopCalendarView({
 
   const goToPreviousMonth = () => {
     setCurrentMonth(
-      new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1),
+      month === 1 ? { year: year - 1, month: 12 } : { year, month: month - 1 },
     );
   };
 
   const goToNextMonth = () => {
     setCurrentMonth(
-      new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1),
+      month === 12 ? { year: year + 1, month: 1 } : { year, month: month + 1 },
     );
   };
 
   const goToToday = () => {
-    setCurrentMonth(new Date());
+    setCurrentMonth(currentBerlinMonth());
   };
 
-  const monthName = currentMonth.toLocaleDateString("de-DE", {
-    month: "long",
-    year: "numeric",
-  });
+  const firstOfMonth = berlinDate(year, month, 1);
+  const monthName = formatBerlin(firstOfMonth, "monatJahr");
   const weekDays = [
     "Montag",
     "Dienstag",
@@ -381,12 +355,8 @@ export default function DesktopCalendarView({
   ];
 
   const isToday = (day: number) => {
-    const today = new Date();
-    return (
-      day === today.getDate() &&
-      currentMonth.getMonth() === today.getMonth() &&
-      currentMonth.getFullYear() === today.getFullYear()
-    );
+    const today = berlinParts(new Date());
+    return day === today.day && month === today.month && year === today.year;
   };
 
   const lastRowIndex = Math.ceil((startingDayOfWeek + daysInMonth) / 7) - 1;
@@ -460,13 +430,7 @@ export default function DesktopCalendarView({
           {/* Days */}
           {Array.from({ length: daysInMonth }).map((_, i) => {
             const day = i + 1;
-            const date = new Date(
-              currentMonth.getFullYear(),
-              currentMonth.getMonth(),
-              day,
-            );
-            const dayOfWeek = (date.getDay() + 6) % 7;
-            const isLastColumn = dayOfWeek === 6;
+            const isLastColumn = columnOf(day) === 6;
             const currentCellIndex = startingDayOfWeek + i;
             const currentRowIndex = Math.floor(currentCellIndex / 7);
             const isLastRow = currentRowIndex === lastRowIndex;
@@ -474,7 +438,7 @@ export default function DesktopCalendarView({
             const today = isToday(day);
             const coursesAtDay = getCompactCoursesForDay(day);
             const holiday = holidaysThisMonth.find(
-              (h) => h.date.getDate() === day,
+              (h) => berlinParts(h.date).day === day,
             );
 
             const allEventsForDay = [
@@ -628,13 +592,7 @@ export default function DesktopCalendarView({
                       >
                         <div className="space-y-1">
                           {displayedEvents.map((event, idx) => {
-                            const time = event.date.toLocaleTimeString(
-                              "de-DE",
-                              {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              },
-                            );
+                            const time = formatBerlin(event.date, "uhrzeit");
                             const categoryStyle = getEventCategoryStyle(
                               event.category,
                             );
@@ -765,7 +723,7 @@ export default function DesktopCalendarView({
       {showMoreEventsDay !== null && (
         <MoreEventsModal
           day={showMoreEventsDay}
-          currentMonth={currentMonth}
+          currentMonth={firstOfMonth}
           events={[
             ...getCoursesForDay(showMoreEventsDay).map((c) => c.course),
             ...getEventsForDay(showMoreEventsDay),

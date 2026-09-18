@@ -14,6 +14,7 @@ import { readSocialLinks } from "@/lib/social-links";
 import { EditIcon, GlobeIcon, MusicIcon } from "lucide-react";
 import { UserIcon } from "lucide-react";
 import { ArrowLeftIcon } from "lucide-react";
+import { formatBerlin } from "@/lib/berlin-time";
 
 export default function EnsembleDetailPage() {
   const router = useRouter();
@@ -454,10 +455,7 @@ export default function EnsembleDetailPage() {
                 ) : (
                   <div className="text-primary-ink dark:text-primary shrink-0 text-center">
                     <div className="text-sm font-medium">
-                      {new Date(event.eventDate).toLocaleDateString("de-DE", {
-                        day: "2-digit",
-                        month: "short",
-                      })}
+                      {formatBerlin(event.eventDate, "tagMonatKurz")}
                     </div>
                   </div>
                 )}
@@ -488,11 +486,7 @@ export default function EnsembleDetailPage() {
               Erstellt am
             </dt>
             <dd className="text-ink dark:text-night-text font-medium">
-              {new Date(ensemble.createdAt).toLocaleDateString("de-DE", {
-                day: "2-digit",
-                month: "long",
-                year: "numeric",
-              })}
+              {formatBerlin(ensemble.createdAt, "datumLangZweistellig")}
             </dd>
           </div>
           <div>
@@ -500,11 +494,7 @@ export default function EnsembleDetailPage() {
               Zuletzt aktualisiert
             </dt>
             <dd className="text-ink dark:text-night-text font-medium">
-              {new Date(ensemble.updatedAt).toLocaleDateString("de-DE", {
-                day: "2-digit",
-                month: "long",
-                year: "numeric",
-              })}
+              {formatBerlin(ensemble.updatedAt, "datumLangZweistellig")}
             </dd>
           </div>
         </dl>
