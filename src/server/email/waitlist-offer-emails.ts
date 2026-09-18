@@ -4,6 +4,9 @@ import {
   WaitlistPromotionOffer,
   WaitlistPromotionOfferExpired,
   WaitlistPromotionOfferExpiringTeam,
+  waitlistPromotionOfferExpiredText,
+  waitlistPromotionOfferExpiringTeamText,
+  waitlistPromotionOfferText,
   type WaitlistPromotionOfferExpiredProps,
   type WaitlistPromotionOfferExpiringTeamProps,
   type WaitlistPromotionOfferProps,
@@ -19,6 +22,7 @@ export async function sendWaitlistPromotionOfferEmail({
     to: email,
     subject: `Plätze frei geworden: ${props.courseTitle} - Posaunenwerk Rheinland`,
     html,
+    text: waitlistPromotionOfferText(props),
   });
 }
 
@@ -32,6 +36,7 @@ export async function sendWaitlistPromotionOfferExpiredEmail({
     to: email,
     subject: `Platzangebot abgelaufen: ${props.courseTitle} - Posaunenwerk Rheinland`,
     html,
+    text: waitlistPromotionOfferExpiredText(props),
   });
 }
 
@@ -41,11 +46,13 @@ export async function sendWaitlistPromotionOfferExpiringTeamEmail({
   ...props
 }: WaitlistPromotionOfferExpiringTeamProps & { recipients: string[] }) {
   const html = await render(WaitlistPromotionOfferExpiringTeam(props));
+  const text = waitlistPromotionOfferExpiringTeamText(props);
   for (const to of recipients) {
     await sendEmail({
       to,
       subject: `Nachrück-Angebot läuft bald ab: ${props.courseTitle} - Posaunenwerk Rheinland`,
       html,
+      text,
     });
   }
 }

@@ -2,6 +2,7 @@ import { render } from "@react-email/components";
 import { sendEmail } from "./send-email";
 import {
   CourseRegistrationSplit,
+  courseRegistrationSplitText,
   type SplitPartMailInfo,
 } from "./templates/course-registration-split";
 import { downPaymentQrAttachment } from "./down-payment";
@@ -25,14 +26,14 @@ export async function sendCourseRegistrationSplitEmail(params: {
   const qrCode = props.confirmed.downPayment
     ? await downPaymentQrAttachment(props.confirmed.downPayment)
     : null;
-  const html = await render(
-    CourseRegistrationSplit({ ...props, downPaymentHasQr: qrCode !== null }),
-  );
+  const templateProps = { ...props, downPaymentHasQr: qrCode !== null };
+  const html = await render(CourseRegistrationSplit(templateProps));
 
   return sendEmail({
     to: email,
     subject: `Anmeldung teilweise bestätigt: ${props.courseTitle} - Posaunenwerk Rheinland`,
     html,
+    text: courseRegistrationSplitText(templateProps),
     ...(qrCode && { attachments: [qrCode] }),
   });
 }

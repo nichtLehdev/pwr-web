@@ -327,8 +327,10 @@ describe("promotionHaltText", () => {
       false,
       date,
     );
-    expect(text).toContain("Vorn steht die Anmeldung von Erika Muster");
-    expect(text).toContain("hält dort an");
+    expect(text).toContain(
+      "An erster Stelle steht die Anmeldung von Erika Muster",
+    );
+    expect(text).toContain("endet an dieser Stelle");
   });
 
   it("names the running offer and its deadline", () => {
@@ -343,7 +345,7 @@ describe("promotionHaltText", () => {
         date,
       ),
     ).toBe(
-      "Das Angebot an Max Muster läuft noch bis 2026-09-25. Bis dahin hält die Warteliste an.",
+      "Das Angebot an Max Muster läuft noch bis 2026-09-25. Bis dahin ruht die Warteliste.",
     );
   });
 
