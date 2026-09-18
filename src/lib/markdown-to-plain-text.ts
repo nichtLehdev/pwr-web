@@ -23,6 +23,33 @@ const ENTITIES: Record<string, string> = {
 const MASKIERT_AB = 0xe000;
 
 /**
+ * Wendet eine Ersetzung an, bis sich nichts mehr ändert. Ein einzelner
+ * Durchgang reicht beim Entfernen von Tags nicht: Aus `<<b>script>` macht er
+ * `<script>` — das Entfernen selbst setzt ein neues Tag zusammen (CodeQL:
+ * „Incomplete multi-character sanitization").
+ */
+function bisStabil(text: string, muster: RegExp, ersatz = ""): string {
+  let vorher: string;
+  do {
+    vorher = text;
+    text = text.replace(muster, ersatz);
+  } while (text !== vorher);
+  return text;
+}
+
+/** Skript- und Stilblöcke samt Inhalt. */
+const SKRIPT_ODER_STIL = /<(script|style)\b[\s\S]*?<\/\1\s*>/gi;
+
+/**
+ * Nur echte Tags, nicht jedes spitze Klammerpaar: „Kinder <10 Jahre" und
+ * „a < b" sind Text und werden in der Anzeige auch als Text dargestellt.
+ */
+const TAG = /<\/?[a-zA-Z][^<>]*>/g;
+
+/** Alle bekannten Entitäten in einem Muster — für eine einzige Auflösung. */
+const ENTITY = /&(?:amp|lt|gt|quot|#39|apos|nbsp);/g;
+
+/**
  * Wandelt Markdown in Klartext um.
  *
  * Für alles, was keine Auszeichnung darstellen kann: iCal-Feed, Seiten- und
@@ -63,13 +90,11 @@ export function markdownToPlainText(markdown: string): string {
   // diese Zeile bliebe von `<script>alert(1)</script>` das „alert(1)" im
   // Kalendereintrag stehen — gemessen. Gefährlich ist das nicht (Klartext
   // wird nirgends ausgeführt), nur falsch.
-  text = text.replace(/<(script|style)\b[\s\S]*?<\/\1\s*>/gi, "");
+  text = bisStabil(text, SKRIPT_ODER_STIL);
 
-  // Sonst nur echte Tags entfernen, nicht jedes spitze Klammerpaar: „Kinder
-  // <10 Jahre" ist Text und wird in der Anzeige auch als Text dargestellt.
-  // Die frühere Fassung löschte pauschal `<` und `>` und machte aus
-  // `<u>Wort</u>` das Wort „uWort/u".
-  text = text.replace(/<\/?[a-zA-Z][^<>]*>/g, "");
+  // Sonst nur echte Tags entfernen (siehe `TAG`). Die frühere Fassung
+  // löschte pauschal `<` und `>` und machte aus `<u>Wort</u>` „uWort/u".
+  text = bisStabil(text, TAG);
 
   // Das Ziel darf ein Klammerpaar enthalten (`javascript:alert(1)`, aber auch
   // Wikipedia-Adressen mit Klammern) — eine Ebene reicht dafür. Vorher blieb
@@ -103,9 +128,14 @@ export function markdownToPlainText(markdown: string): string {
     String.fromCharCode(zeichen.charCodeAt(0) - MASKIERT_AB),
   );
 
-  for (const [entity, char] of Object.entries(ENTITIES)) {
-    text = text.split(entity).join(char);
-  }
+  // In einem einzigen Durchgang: Nacheinander aufgelöst würde aus „&amp;lt;"
+  // erst „&lt;" und dann „<" — doppelt entschlüsselt.
+  text = text.replace(ENTITY, (entity) => ENTITIES[entity] ?? entity);
+
+  // Aufgelöste Entitäten können Tags ergeben („&lt;script&gt;" → „<script>").
+  // Klartext wird zwar nirgends ausgeführt, aber er soll von sich aus sicher
+  // sein, egal wo ihn jemand später einsetzt — also noch einmal abräumen.
+  text = bisStabil(bisStabil(text, SKRIPT_ODER_STIL), TAG);
 
   text = text.replace(/[ \t]+$/gm, "");
   text = text.replace(/[ \t]{2,}/g, " ");
