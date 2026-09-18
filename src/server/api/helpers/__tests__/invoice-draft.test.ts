@@ -7,6 +7,7 @@ import {
   type RegistrationForDraft,
 } from "../invoice-draft";
 import { SiblingDiscountStatus } from "~/generated/prisma/enums";
+import { berlinDate } from "@/lib/berlin-time";
 
 const COURSE_START = new Date("2026-09-01T10:00:00");
 
@@ -500,7 +501,7 @@ describe("lineItemsFromRegistration", () => {
         downPaymentAmount: 50,
         downPaymentStatus: "PAID",
         downPaymentPaidAmount: null,
-        downPaymentPaidAt: new Date(2026, 5, 3),
+        downPaymentPaidAt: berlinDate(2026, 6, 3),
       }),
       course,
     );

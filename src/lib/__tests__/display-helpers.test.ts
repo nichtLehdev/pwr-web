@@ -9,28 +9,31 @@ import {
   isSameCalendarDay,
 } from "../format-date-range";
 import { formatAvailableSlots } from "../format-available-slots";
-import { berlinDate } from "../berlin-time";
+import { berlinDate, berlinParts } from "../berlin-time";
 
+// Fristen gelten bis zum Ende ihres deutschen Kalendertages. Die Zeitpunkte
+// entstehen über `berlinDate`, damit die Tests in jeder Zeitzone dasselbe
+// prüfen — der Server läuft in UTC.
 describe("registration deadline (whole-day inclusive)", () => {
   it("keeps a midnight-stored deadline open for its whole day", () => {
-    const deadline = new Date(2026, 7, 10, 0, 0, 0); // 10.08. 00:00 (legacy rows)
-    const sameDayEvening = new Date(2026, 7, 10, 21, 30);
+    const deadline = berlinDate(2026, 8, 10, 0, 0); // 10.08. 00:00 (legacy rows)
+    const sameDayEvening = berlinDate(2026, 8, 10, 21, 30);
     expect(isRegistrationDeadlinePassed(deadline, sameDayEvening)).toBe(false);
   });
 
   it("closes after the deadline day is over", () => {
-    const deadline = new Date(2026, 7, 10, 0, 0, 0);
-    const nextMorning = new Date(2026, 7, 11, 0, 1);
+    const deadline = berlinDate(2026, 8, 10, 0, 0);
+    const nextMorning = berlinDate(2026, 8, 11, 0, 1);
     expect(isRegistrationDeadlinePassed(deadline, nextMorning)).toBe(true);
   });
 
   it("handles end-of-day-stored deadlines identically", () => {
-    const deadline = new Date(2026, 7, 10, 23, 59, 59);
+    const deadline = new Date(berlinDate(2026, 8, 11).getTime() - 1000); // 10.08. 23:59:59
     expect(
-      isRegistrationDeadlinePassed(deadline, new Date(2026, 7, 10, 12, 0)),
+      isRegistrationDeadlinePassed(deadline, berlinDate(2026, 8, 10, 12, 0)),
     ).toBe(false);
     expect(
-      isRegistrationDeadlinePassed(deadline, new Date(2026, 7, 11, 0, 1)),
+      isRegistrationDeadlinePassed(deadline, berlinDate(2026, 8, 11, 0, 1)),
     ).toBe(true);
   });
 
@@ -39,11 +42,12 @@ describe("registration deadline (whole-day inclusive)", () => {
     expect(isRegistrationDeadlinePassed(undefined)).toBe(false);
   });
 
-  it("normalizes to 23:59:59.999 of the same day", () => {
-    const end = deadlineEndOfDay(new Date(2026, 7, 10, 3, 0));
-    expect(end.getDate()).toBe(10);
-    expect(end.getHours()).toBe(23);
-    expect(end.getMinutes()).toBe(59);
+  it("normalizes to 23:59:59.999 of the same German day", () => {
+    const end = deadlineEndOfDay(berlinDate(2026, 8, 10, 3, 0));
+    const teile = berlinParts(end);
+    expect([teile.day, teile.hour, teile.minute, teile.second]).toEqual([
+      10, 23, 59, 59,
+    ]);
   });
 });
 
