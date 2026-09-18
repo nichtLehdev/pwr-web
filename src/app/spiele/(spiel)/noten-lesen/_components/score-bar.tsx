@@ -15,12 +15,8 @@ export type ScoreBarProps = {
 };
 
 /**
- * Punktestand für den Slot rechts in der Kopfleiste der Hülle (`GameBarSlot`).
- *
- * Vorher war das ein eigener Kasten im Inhalt — eine zweite Statusleiste
- * direkt unter der echten. Als Zeile in der Kopfleiste kostet sie keine
- * Bauhöhe mehr; die Nebenwerte treten erst ab `sm` dazu, damit auf dem Handy
- * neben Zurück-Link und Titel nichts umbricht.
+ * Punktestand für `GameBarSlot` in der Kopfleiste. Nebenwerte erst ab `sm`, damit auf
+ * dem Handy neben Zurück-Link und Titel nichts umbricht.
  */
 export function ScoreBar({
   mode,

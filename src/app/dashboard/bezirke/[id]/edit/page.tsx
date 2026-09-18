@@ -24,11 +24,7 @@ import {
 } from "lucide-react";
 import { Button, Input, Label, Card, CardContent } from "@/app/_components/ui";
 
-/**
- * Ein Bezirksamt im Formular. `id` fehlt bei neu angelegten Zeilen; alles
- * andere wird so übernommen, wie es hier steht — ein Benutzerkonto ist
- * optional, ein Name reicht.
- */
+/** Ein Bezirksamt im Formular; `id` fehlt bei neuen Zeilen, ein Konto ist optional. */
 type PersonDraft = {
   id?: string;
   userId: string | null;
@@ -253,16 +249,13 @@ export default function EditBezirkPage() {
       ]}
       maxWidth="7xl"
     >
-      {/* Error */}
       {error && (
         <div className="mb-6 border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
           <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
         </div>
       )}
 
-      {/* Form */}
       <form onSubmit={handleSubmit}>
-        {/* Obleute */}
         <Card>
           <CardContent>
             <div className="mb-1 flex items-center justify-between">
@@ -313,7 +306,6 @@ export default function EditBezirkPage() {
           </CardContent>
         </Card>
 
-        {/* Actions */}
         <div className="mt-6 flex flex-wrap gap-3">
           <Button
             type="submit"
@@ -405,7 +397,6 @@ function PersonCard({
         </div>
       </div>
 
-      {/* Benutzerverknüpfung */}
       <div className="mb-4">
         <Label>Benutzerkonto (optional)</Label>
         {person.userId ? (
@@ -432,7 +423,6 @@ function PersonCard({
         )}
       </div>
 
-      {/* Bild */}
       <div className="mb-4 flex items-center gap-4">
         {person.imageUrl ? (
           <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full">
@@ -468,7 +458,6 @@ function PersonCard({
         </div>
       </div>
 
-      {/* Kontaktdaten */}
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <Label>Name {person.userId ? "" : "*"}</Label>

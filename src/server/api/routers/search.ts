@@ -679,9 +679,6 @@ const staticPages = [
   })),
 ];
 
-/**
- * Search static pages by query
- */
 function searchStaticPages(query: string, limit: number): SearchResult[] {
   const searchTerm = query.toLowerCase();
   const results: SearchResult[] = [];

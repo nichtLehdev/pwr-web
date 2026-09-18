@@ -4,11 +4,7 @@ import {
   isRegistrationDeadlinePassed,
 } from "@/lib/registration-deadline";
 
-/**
- * Fristen gelten bis zum Ende ihres deutschen Kalendertages — unabhängig
- * davon, in welcher Zeitzone Server oder Browser laufen und mit welcher
- * Uhrzeit die Frist gespeichert wurde.
- */
+/** Fristen gelten bis zum Ende ihres deutschen Kalendertages, egal in welcher Zone oder mit welcher Uhrzeit gespeichert. */
 describe("deadlineEndOfDay", () => {
   const ende = "2026-08-31T21:59:59.999Z"; // 31.08. 23:59:59.999 Sommerzeit
 

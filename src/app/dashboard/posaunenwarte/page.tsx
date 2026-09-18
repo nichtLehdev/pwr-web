@@ -118,9 +118,8 @@ export default function DashboardPosaunenwartenPage() {
   const columns = useMemo<DataTableColumn<Posaunenwart>[]>(
     () =>
       column.columns([
-        // Die gespeicherte Reihenfolge als eigene Spalte: nur so bleiben die
-        // Hoch/Runter-Pfeile nachvollziehbar, wenn nach etwas anderem sortiert
-        // wird — sie verschieben immer die gespeicherte Position, nie die Sicht.
+        // Eigene Spalte: Die Hoch/Runter-Pfeile verschieben immer die gespeicherte
+        // Position, nie die Sicht — auch wenn nach etwas anderem sortiert wird.
         column.accessor((person) => (posaunenwarte?.indexOf(person) ?? 0) + 1, {
           id: "position",
           header: "#",

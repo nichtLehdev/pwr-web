@@ -41,10 +41,7 @@ function timingBiasLine(medianSignedDeltaMs: number | null): string | null {
     : "Du warst meist etwas zu spät.";
 }
 
-/**
- * Δ-Farbe an der echten Toleranz. Kein Grün: getroffen ist Tinte, knapp
- * daneben die Messing-Tinte (nachts das Druckorange), daneben Rot.
- */
+/** Δ-Farbe an der echten Toleranz. Kein Grün: getroffen ist Tinte, knapp daneben Messing, daneben Rot. */
 function deltaColorClass(deltaMs: number | null, toleranceMs: number): string {
   if (deltaMs === null) return "text-red-700 dark:text-red-400";
   const abs = Math.abs(deltaMs);
@@ -65,8 +62,6 @@ export function ResultView({
 
   return (
     <div className="border-rule dark:border-night-rule flex flex-col gap-[clamp(0.75rem,2.2svh,1.5rem)] border-t pt-[clamp(0.75rem,2.2svh,1.5rem)]">
-      {/* Zahl und Zuspruch nebeneinander: auf breiten Fenstern spart das die
-          Höhe, die vorher als vierte gestapelte Zeile verloren ging. */}
       <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-stretch sm:gap-6">
         <p className="on-orange bg-primary text-ink flex min-w-[8rem] flex-col items-center justify-center px-5 py-2.5">
           <span className="sr-only">Trefferquote {result.percent} Prozent</span>

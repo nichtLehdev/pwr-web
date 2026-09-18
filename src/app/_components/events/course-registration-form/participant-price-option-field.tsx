@@ -34,30 +34,16 @@ type ParticipantPriceOptionFieldProps = {
   placeholderOption?: boolean;
   isOptionDisabled?: (optionId: string) => boolean;
   getOptionSuffix?: (optionId: string) => string;
-  /**
-   * Geburtsdatum des Teilnehmers und der Stichtag (erster Kurstag), an dem die
-   * Altersgrenzen gemessen werden. Fehlt eines von beiden, bleiben alle
-   * Kategorien wählbar — ohne Geburtsdatum gibt es nichts zu prüfen.
-   */
+  /** Mit dem Stichtag (erster Kurstag) für die Altersgrenzen; fehlt eines, bleibt alles wählbar. */
   birthDate?: Date | string | null;
   ageReferenceDate?: Date | string | null;
-  /**
-   * Nur für das Kursteam: Kategorien außerhalb der Altersgrenze bleiben
-   * wählbar, der Hinweis darunter sagt trotzdem, dass die Grenze gerade
-   * übergangen wird.
-   */
+  /** Nur Kursteam: Kategorien außerhalb der Altersgrenze bleiben wählbar, mit Hinweis. */
   allowAgeMismatch?: boolean;
-  /**
-   * Die Kategorie, in der dieser Teilnehmer bereits angemeldet ist: sie bleibt
-   * wählbar, auch wenn ihre Altersgrenze inzwischen enger gezogen wurde.
-   */
+  /** Bereits gebuchte Kategorie bleibt wählbar, auch wenn ihre Altersgrenze enger gezogen wurde. */
   ageExemptOptionId?: string | null;
   className?: string;
   labelClassName?: string;
-  /**
-   * Meldung außerhalb des Felds, die den Fehler erklärt (die Sammelmeldung im
-   * Teilnehmer-Fenster) — wird mit `aria-describedby` verknüpft.
-   */
+  /** Sammelmeldung außerhalb des Felds, per `aria-describedby` verknüpft. */
   errorDescriptionId?: string;
 };
 
@@ -107,10 +93,8 @@ export function ParticipantPriceOptionField({
     (isOptionDisabled?.(option.id) ?? false) ||
     (!allowAgeMismatch && !ageFits(option));
 
-  // Wählbares nach oben — ausgebucht oder außerhalb der Altersgrenze steht
-  // hinten. Bei vielen Kategorien scrollt man sonst an gesperrten Einträgen
-  // vorbei, um die zwei zu finden, die überhaupt in Frage kommen. Innerhalb
-  // der beiden Gruppen bleibt die Reihenfolge des Kurses erhalten.
+  // Wählbares nach oben, Gesperrtes nach hinten; innerhalb beider Gruppen bleibt
+  // die Reihenfolge des Kurses.
   const orderedOptions = [
     ...priceOptions.filter((option) => !isDisabled(option)),
     ...priceOptions.filter(isDisabled),
@@ -118,8 +102,7 @@ export function ParticipantPriceOptionField({
 
   return (
     <div className={cn("md:col-span-2", className)}>
-      {/* Mit `htmlFor` auf den Auslöser der Auswahlliste: vorher hatte die
-          Liste gar keinen Namen (axe: button-name). */}
+      {/* `htmlFor` auf den Auslöser, sonst hat die Liste keinen Namen (axe: button-name). */}
       <label htmlFor={selectId} className={labelClassName}>
         Preisoption<span aria-hidden> *</span>
       </label>
@@ -164,9 +147,7 @@ export function ParticipantPriceOptionField({
                   key={option.id}
                   value={option.id}
                   disabled={isDisabled(option)}
-                  // Price (and availability) as trailing text, so a long option
-                  // name truncates on narrow screens without taking the price
-                  // with it.
+                  // Trailing text, so a long name truncates without taking the price with it.
                   data-trailing={`${formatEuro(option.price)}${
                     getOptionSuffix?.(option.id) ?? ""
                   }`}

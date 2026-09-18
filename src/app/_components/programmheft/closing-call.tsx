@@ -10,9 +10,8 @@ interface ClosingCallProps {
 }
 
 /**
- * Schlussaufruf: volle orange Druckfläche am Seitenende, Tinte darauf, auch im
- * Nachtdruck. Ein bewusster Blickfang — höchstens einmal pro Seite und immer
- * als letzter Abschnitt vor der Fußzeile.
+ * Schlussaufruf auf voller oranger Fläche, auch im Nachtdruck: höchstens
+ * einmal pro Seite, als letzter Abschnitt vor der Fußzeile.
  */
 export function ClosingCall({ id, title, text, actions }: ClosingCallProps) {
   const [first, ...rest] = actions;

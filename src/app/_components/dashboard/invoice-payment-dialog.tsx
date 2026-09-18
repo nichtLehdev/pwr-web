@@ -38,13 +38,7 @@ export function dateFromInput(value: string): Date | undefined {
   return new Date(year, month - 1, day);
 }
 
-/**
- * Zahlung an einer Rechnung verbuchen — mit Betrag, Wertstellung und Notiz.
- *
- * Der Ein-Klick-Weg ("voller Betrag, heute") bleibt daneben bestehen; dieser
- * Dialog ist für alles, was davon abweicht: Teilzahlungen und Überweisungen,
- * die vor Tagen eingegangen sind.
- */
+/** Zahlung verbuchen, wenn sie vom Ein-Klick-Weg („voller Betrag, heute“) abweicht. */
 export function InvoicePaymentDialog({
   invoice,
   onClose,

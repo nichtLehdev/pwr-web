@@ -23,15 +23,8 @@ export interface DownloadImagePreviewProps {
 }
 
 /**
- * Bild-Download (vor allem Flyer an Terminen) als Zeile einer Download-Liste:
- * Vorschaubild links, daneben Titel, Dateimeta und ein echter Download-Link.
- *
- * Steht als `<li>` in derselben `WayList` wie die übrigen `WayRow`s — gleiche
- * Haarlinie, gleiche Titelgröße —, damit Flyer und PDFs eine Liste bleiben.
- * Die Zeile füllt sich bewusst nicht orange wie eine Wegzeile: Sie trägt zwei
- * Ziele (ansehen, herunterladen), eine volle Klickfläche wäre mehrdeutig.
- *
- * Nur für Downloads, die `isPreviewableImageDownload` durchlassen.
+ * Bild-Download (Flyer) als `<li>` einer `WayList`. Füllt sich nicht orange wie eine Wegzeile:
+ * zwei Ziele (ansehen, herunterladen). Nur für `isPreviewableImageDownload`.
  */
 export function DownloadImagePreview({ download }: DownloadImagePreviewProps) {
   const format = downloadFormatCode(download);
@@ -53,8 +46,7 @@ export function DownloadImagePreview({ download }: DownloadImagePreviewProps) {
             {download.description}
           </p>
         ) : null}
-        {/* Ohne `target`: Die Antwort kommt als Anhang, ein neuer Tab bliebe
-            leer zurück. */}
+        {/* Ohne `target`: die Antwort ist ein Anhang, ein neuer Tab bliebe leer. */}
         <a
           href={downloadAttachmentUrl(download)}
           download
@@ -76,16 +68,8 @@ const FRAME =
   "border-rule dark:border-night-rule bg-paper dark:bg-night-raised relative aspect-[5/7] w-24 shrink-0 border sm:w-32";
 
 /**
- * Vorschaubild im festen Rahmen, ganz gezeigt (`object-contain`) — ein
- * beschnittener Flyer verliert genau das, was man sehen will.
- *
- * Ein Klick öffnet es in der Lightbox — wie jedes andere Bild der Seite.
- * Keine Lupe im Eckfeld: Der Rahmen ist 96px schmal, und rechts daneben steht
- * ohnehin „Herunterladen“, das Bild ist also erkennbar zweifach nutzbar.
- *
- * Schlägt das Laden fehl (etwa ein noch nicht freigegebener Download, den
- * Besucher nicht sehen dürfen), steht ein ruhiger Platzhalter statt eines
- * kaputten Bildsymbols; der Download-Link daneben bleibt.
+ * Vorschaubild ganz gezeigt (`object-contain`), öffnet die Lightbox. Schlägt das Laden fehl
+ * (etwa ein noch nicht freigegebener Download), steht ein Platzhalter.
  */
 function PreviewThumbnail({ src, title }: { src: string; title: string }) {
   const [failed, setFailed] = useState(false);

@@ -10,11 +10,7 @@ interface PageSectionProps {
   spacing?: "default" | "close";
   /** `top`: ohne Luft oben, z. B. eine Wegliste direkt unter dem Seitenkopf. */
   flush?: "top";
-  /**
-   * `foerderverein`: volle Druckfläche in Fördervereinsblau, nur wo der
-   * Förderverein spricht. Darauf steht alles in Tinte, auch im Nachtdruck
-   * (`.print-field`); ein Strich darüber entfällt.
-   */
+  /** `foerderverein`: Fläche in Fördervereinsblau, nur wo der Förderverein spricht. */
   surface?: "paper" | "foerderverein";
   className?: string;
   /** Klassen für das Blatt, z. B. ein 12-Spalten-Raster. */
@@ -23,10 +19,8 @@ interface PageSectionProps {
 }
 
 /**
- * Zweispaltiger Abschnitt ab 64rem: Kopf und Einleitung (4/12) neben dem
- * Inhalt (8/12). Mit `side="right"` wechselt der Kopf die Seite, so dass
- * aufeinanderfolgende Abschnitte wie linke und rechte Heftseiten alternieren.
- * Im DOM steht der Kopf immer zuerst; mobil steht er über dem Inhalt.
+ * Zweispaltiger Abschnitt ab 64rem, Kopf (4/12) neben Inhalt (8/12).
+ * `side="right"` setzt den Kopf rechts; im DOM steht er immer zuerst.
  */
 export function Split({
   head,
@@ -38,21 +32,8 @@ export function Split({
   head: ReactNode;
   side?: "left" | "right";
   /**
-   * Lässt den Kopf mitlaufen, während der Inhalt daneben vorbeizieht — damit
-   * bei langen Listen nicht verlorengeht, worunter man gerade liest.
-   *
-   * Ausdrücklich pro Abschnitt zu setzen und kein Grundverhalten: Sticky
-   * greift erst, wenn die Inhaltsspalte höher ist als das Fenster. Von 36
-   * Abschnitten im Heft trifft das auf drei zu; überall sonst bewegt sich
-   * nichts und die Regel liefe wirkungslos mit.
-   *
-   * Gegen den Leerraum in der Kopfspalte hilft das übrigens nicht — die Lücke
-   * bleibt gleich groß, der Kopf wandert nur darin. Dagegen hilft nur, die
-   * Spalte zu füllen (siehe Auswahlchöre und Regionalposaunenwarte).
-   *
-   * `lg:self-start` ist die eigentliche Bedingung: Rasterzellen werden sonst
-   * auf die Zeilenhöhe gestreckt, und eine gestreckte Zelle kann nicht kleben
-   * — sie füllt die Zeile ja bereits aus.
+   * Kopf läuft bei langen Inhalten mit; nur setzen, wo der Inhalt höher als
+   * das Fenster ist. `lg:self-start` ist nötig, eine gestreckte Zelle klebt nicht.
    */
   stickyHead?: boolean;
   /** Abstand und Rhythmus des Inhalts, z. B. `mt-8` für die mobile Stapelung. */
@@ -62,10 +43,8 @@ export function Split({
   return (
     <div className="lg:grid lg:grid-cols-12 lg:gap-10">
       <div
-        // Rechts als ein einziger `grid-column`-Wert statt `col-span-4` plus
-        // `col-start-9`: Die Kurzform `grid-column` aus `col-span` setzt auch
-        // den Start zurück. Ob der Kopf rechts landet, hinge sonst davon ab,
-        // in welcher Reihenfolge die beiden Klassen im Stylesheet stehen.
+        // Ein `grid-column`-Wert statt `col-span-4 col-start-9`: `col-span`
+        // setzt den Start zurück, das Ergebnis hinge an der Klassenreihenfolge.
         className={cn(
           side === "left"
             ? "lg:col-span-4"

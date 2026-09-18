@@ -15,11 +15,7 @@ interface NewsletterConfirmProps {
   subscriberName?: string;
 }
 
-/**
- * Double opt-in mail: the only thing standing between a typed-in address and
- * an active subscription. Deliberately contains no newsletter content — it is
- * a confirmation request, not a first issue.
- */
+/** Double opt-in mail; deliberately no newsletter content (a request, not a first issue). */
 export function NewsletterConfirm({
   confirmUrl,
   subscriberName,

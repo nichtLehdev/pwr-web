@@ -27,9 +27,7 @@ export function GameStepIndicator({
           role="listitem"
           aria-current={i === current ? "step" : undefined}
           className={cn(
-            // Gefüllt heißt: Hier bist du. Erledigte Schritte tragen nur eine
-            // Umrandung — Grün war nie eine Signalfarbe des Hefts, und drei
-            // gefüllte Stufen nebeneinander hätten keine mehr Bedeutung.
+            // Gefüllt = aktueller Schritt; erledigte Schritte nur umrandet.
             "px-2.5 py-1 text-[10px] font-bold tracking-wide transition-colors md:px-3 md:text-xs",
             i === current
               ? "on-orange bg-primary text-ink"

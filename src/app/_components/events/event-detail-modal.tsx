@@ -95,7 +95,6 @@ export default function EventDetailModal({
         maxW="2xl"
         className="border-ink dark:border-night-text rounded-none! border-2 shadow-none!"
       >
-        {/* Header */}
         <div className="border-ink dark:border-night-text border-b-2 p-6">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
@@ -133,14 +132,12 @@ export default function EventDetailModal({
         </div>
 
         <ScrollableModalBody className="space-y-5">
-          {/* Cancelled Warning */}
           {cancelled && (
             <Note tone="error">
               <p>Diese Veranstaltung findet nicht mehr statt.</p>
             </Note>
           )}
 
-          {/* Date & Time */}
           <div>
             <p className="text-ink dark:text-night-text font-semibold">
               {displayStartDate}
@@ -167,7 +164,6 @@ export default function EventDetailModal({
             )}
           </div>
 
-          {/* Location */}
           {event.location && (
             <div>
               <p className="text-ink dark:text-night-text font-semibold">
@@ -190,7 +186,6 @@ export default function EventDetailModal({
             </div>
           )}
 
-          {/* Participation offer - only for events */}
           {event.type === "event" && event.openToParticipants && (
             <Note tone="important" title="Mitmachangebot" titleAs="h3">
               <p>
@@ -200,11 +195,7 @@ export default function EventDetailModal({
             </Note>
           )}
 
-          {/* Beschreibung als Klartext, nicht als gesetzter Text: Das
-              Schnellfenster des Kalenders ist eine Vorschau mit Link auf die
-              Detailseite, und die Kalenderseite soll dafür nicht die
-              Markdown- und Filterbibliotheken mitladen. `markdownToPlainText`
-              behält Absätze und Umbrüche, entfernt aber die Syntaxzeichen. */}
+          {/* Klartext, damit die Kalenderseite nicht die Markdown- und Filterbibliotheken mitlädt. */}
           {beschreibungText && (
             <div>
               <h3 className="text-ink dark:text-night-text mb-1 font-semibold">
@@ -216,7 +207,6 @@ export default function EventDetailModal({
             </div>
           )}
 
-          {/* Ensemble info - only for events */}
           {event.type === "event" && event.performingEnsembleName && (
             <div>
               <h3 className="text-ink dark:text-night-text mb-1 font-semibold">
@@ -228,7 +218,6 @@ export default function EventDetailModal({
             </div>
           )}
 
-          {/* Conductor */}
           {event.type === "event" && event.leitung && (
             <div>
               <h3 className="text-ink dark:text-night-text mb-1 font-semibold">
@@ -238,7 +227,6 @@ export default function EventDetailModal({
             </div>
           )}
 
-          {/* Course-specific info */}
           {event.type === "course" && (
             <>
               {event.prerequisites && (

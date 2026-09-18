@@ -25,11 +25,7 @@ export interface PasswordStrengthMeterProps {
   className?: string;
 }
 
-/**
- * Vier Segmente plus Klartext-Bewertung. Bleibt unsichtbar, solange das Feld
- * leer ist — ein rotes „Sehr schwach“ auf einem noch gar nicht angefassten
- * Formular ist keine Information, sondern nur Lärm.
- */
+/** Vier Segmente plus Klartext-Bewertung; unsichtbar, solange das Feld leer ist. */
 export function PasswordStrengthMeter({
   password,
   className,
@@ -53,8 +49,7 @@ export function PasswordStrengthMeter({
             key={segment}
             className={cn(
               "h-1.5 flex-1 rounded-full transition-colors",
-              // Die Skala rot → bernstein → limette → grün bleibt: Sie IST die
-              // Aussage der Anzeige. Nur die leere Spur war altes Grau.
+              // Die Farbskala rot → grün ist selbst die Aussage der Anzeige.
               segment <= filled
                 ? BAR_COLORS[score]
                 : "bg-rule dark:bg-night-rule",

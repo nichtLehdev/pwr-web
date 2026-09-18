@@ -78,7 +78,6 @@ export default async function StrukturGeschichtePage() {
         </p>
       }
     >
-      {/* Organisatorische Struktur */}
       <PageSection labelledBy="struktur-heading">
         <Split
           head={
@@ -109,7 +108,6 @@ export default async function StrukturGeschichtePage() {
         </Split>
       </PageSection>
 
-      {/* Förderverein */}
       <PageSection labelledBy="foerderverein-heading" surface="foerderverein">
         <Split
           side="right"
@@ -144,7 +142,6 @@ export default async function StrukturGeschichtePage() {
         </Split>
       </PageSection>
 
-      {/* Geschichte */}
       <PageSection id="geschichte" labelledBy="geschichte-heading" rule>
         <Split
           head={<Heading id="geschichte-heading">Unsere Geschichte</Heading>}
@@ -161,7 +158,6 @@ export default async function StrukturGeschichtePage() {
         </Split>
       </PageSection>
 
-      {/* Vision & Mission */}
       <PageSection labelledBy="vision-heading" rule>
         <Split
           side="right"

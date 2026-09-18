@@ -69,7 +69,6 @@ export async function POST(
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    // Check if user has admin permissions
     const { userHasPermission } =
       await import("@/server/api/helpers/permissions");
     const { PERMISSIONS } = await import("@/lib/permissions");
@@ -170,9 +169,8 @@ export async function POST(
       }
     }
 
-    // Raw uploads (e.g. download files) travel by path, not as Media rows.
-    // They are written back under uploads/ and the entity URL is rewritten,
-    // since the source system's URL means nothing here.
+    // Raw uploads (e.g. download files) travel by path, not as Media rows;
+    // the entity URL is rewritten because the source URL means nothing here.
     const uploadUrlMap: Record<string, string> = {}; // old URL -> new URL
 
     if (uploadFiles.size > 0 && Object.keys(fileMapping).length > 0) {
@@ -305,9 +303,8 @@ export async function POST(
             );
           }
 
-          // Ein Set, weil zwei Verweise über Pfad und Titel auf dieselbe Datei
-          // führen können — zweimal verknüpft verletzte das der Eindeutigkeit
-          // von Termin und Datei.
+          // Set: Pfad und Titel können auf dieselbe Datei zeigen, und
+          // Termin+Datei ist eindeutig.
           const downloadIds = new Set<string>();
           for (const ref of readEventDownloadRefs(eventData.downloads)) {
             const downloadId = await references.downloadId(
@@ -720,12 +717,9 @@ export async function POST(
           const imageId = readText(courseData.imageId);
           const newImageId = imageId ? mediaIdMap[imageId] || imageId : null;
 
-          // Die Kursnummer ist global eindeutig und bildet den Nummernkreis
-          // der Rechnungen (RE-<Kursnummer>-<lfd.>). Ist sie im Zielbestand
-          // schon vergeben, kommt der Kurs ohne Nummer an: Zwei Kurse teilten
-          // sich sonst eine Rechnungsfolge. Eine Ersatznummer wird bewusst
-          // nicht erfunden — die Nummer stammt aus der Buchhaltung, nicht aus
-          // diesem Vorgang.
+          // Die Kursnummer bildet den Rechnungs-Nummernkreis. Ist sie schon
+          // vergeben, kommt der Kurs ohne Nummer an; eine Ersatznummer wird
+          // bewusst nicht erfunden, sie stammt aus der Buchhaltung.
           const exportedNumber = normalizeCourseNumber(
             readText(courseData.courseNumber),
           );

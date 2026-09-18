@@ -406,23 +406,19 @@ export default function EditEnsemblePage() {
         ]}
         maxWidth="7xl"
       >
-        {/* Error */}
         {error && (
           <div className="mb-6 border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
             <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
           </div>
         )}
 
-        {/* Form */}
         <form onSubmit={handleSubmit}>
           <div className="space-y-6">
-            {/* Basic Information */}
             <Card>
               <CardHeader>
                 <CardTitle>Grundinformationen</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Name */}
                 <div>
                   <Label required>Name</Label>
                   <Input
@@ -459,7 +455,6 @@ export default function EditEnsemblePage() {
                   </p>
                 </div>
 
-                {/* Description */}
                 <div>
                   <Label>Beschreibung</Label>
                   <Textarea
@@ -471,7 +466,6 @@ export default function EditEnsemblePage() {
                   />
                 </div>
 
-                {/* Bezirk */}
                 <div>
                   <Label>Bezirk</Label>
                   <Select
@@ -487,7 +481,6 @@ export default function EditEnsemblePage() {
                   </Select>
                 </div>
 
-                {/* Image */}
                 <div>
                   <Label>Bild</Label>
                   {imageUrl ? (
@@ -539,7 +532,6 @@ export default function EditEnsemblePage() {
                   )}
                 </div>
 
-                {/* Active */}
                 <div className="flex items-center gap-2">
                   <Checkbox
                     id="isActive"
@@ -553,13 +545,11 @@ export default function EditEnsemblePage() {
               </CardContent>
             </Card>
 
-            {/* People */}
             <Card>
               <CardHeader>
                 <CardTitle>Personen</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Conductor */}
                 <div className="relative" data-dropdown>
                   <div className="mb-2 flex items-center justify-between">
                     <Label className="mb-0">Chorleitung</Label>
@@ -619,7 +609,6 @@ export default function EditEnsemblePage() {
                     </div>
                   )}
 
-                  {/* Conductor Dropdown */}
                   {!useCustomConductor && showConductorDropdown && (
                     <div className="border-ink dark:border-night-text dark:bg-night-raised bg-paper absolute z-10 mt-1 w-full overflow-hidden border">
                       <div
@@ -666,7 +655,6 @@ export default function EditEnsemblePage() {
                     </div>
                   )}
 
-                  {/* Selected conductor indicator */}
                   {!useCustomConductor && conductorId && (
                     <p className="text-dark dark:text-night-muted mt-2 text-sm">
                       ✓ Chorleitung verknüpft
@@ -708,7 +696,6 @@ export default function EditEnsemblePage() {
                   </div>
                 </div>
 
-                {/* Representative */}
                 <div className="relative" data-dropdown>
                   <div className="mb-2 flex items-center justify-between">
                     <Label className="mb-0">Ansprechpartner</Label>
@@ -768,7 +755,6 @@ export default function EditEnsemblePage() {
                     </div>
                   )}
 
-                  {/* Representative Dropdown */}
                   {!useCustomRepresentative && showRepresentativeDropdown && (
                     <div className="border-ink dark:border-night-text dark:bg-night-raised bg-paper absolute z-10 mt-1 w-full overflow-hidden border">
                       <div
@@ -815,7 +801,6 @@ export default function EditEnsemblePage() {
                     </div>
                   )}
 
-                  {/* Selected representative indicator */}
                   {!useCustomRepresentative && representativeId && (
                     <p className="text-dark dark:text-night-muted mt-2 text-sm">
                       ✓ Ansprechpartner verknüpft
@@ -859,7 +844,6 @@ export default function EditEnsemblePage() {
               </CardContent>
             </Card>
 
-            {/* Rehearsal */}
             <Card>
               <CardHeader className="flex-row items-center justify-between space-y-0">
                 <CardTitle>Probenzeiten</CardTitle>
@@ -985,7 +969,6 @@ export default function EditEnsemblePage() {
                   </div>
                 </div>
 
-                {/* Location */}
                 <div className="relative" data-dropdown>
                   <Label>Probenort</Label>
                   <div className="relative">
@@ -1012,7 +995,6 @@ export default function EditEnsemblePage() {
                     )}
                   </div>
 
-                  {/* Location Dropdown */}
                   {showLocationDropdown && locationsData && (
                     <div className="border-ink dark:border-night-text dark:bg-night-raised bg-paper absolute z-10 mt-1 w-full overflow-hidden border">
                       <div
@@ -1064,7 +1046,6 @@ export default function EditEnsemblePage() {
                     </div>
                   )}
 
-                  {/* Selected location indicator */}
                   {locationId && (
                     <p className="text-dark dark:text-night-muted mt-2 text-sm">
                       ✓ Probenort ausgewählt
@@ -1118,7 +1099,6 @@ export default function EditEnsemblePage() {
             </Card>
           </div>
 
-          {/* Actions */}
           <div className="mt-6 flex flex-wrap gap-3">
             <Button
               type="submit"
@@ -1137,7 +1117,6 @@ export default function EditEnsemblePage() {
           </div>
         </form>
       </DashboardPage>
-      {/* Media Picker Modal */}
       <MediaPickerModal
         isOpen={showMediaPicker}
         onClose={() => setShowMediaPicker(false)}

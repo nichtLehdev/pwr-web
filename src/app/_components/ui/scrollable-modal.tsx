@@ -18,9 +18,8 @@ export function ScrollableModal({
   children: React.ReactNode;
   onBackdropClick?: () => void;
   /**
-   * Schließt den Dialog per Klick auf den Hintergrund *und* per Escape. Wo nur
-   * `onBackdropClick` gesetzt ist, bleibt es beim bisherigen Verhalten — ein
-   * Formular mit ungesicherten Eingaben soll nicht versehentlich weggehen.
+   * Schließt per Hintergrundklick *und* Escape. Nur `onBackdropClick` schließt
+   * nicht per Escape, damit ungesicherte Formulare nicht versehentlich weggehen.
    */
   onClose?: () => void;
   className?: string;

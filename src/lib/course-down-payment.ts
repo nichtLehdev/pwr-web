@@ -1,13 +1,6 @@
 /**
- * Anzahlungen für Kurse — Berechnung, Regeln und Zahlungsstand an einer Stelle.
- *
- * Kursformular, Anmeldeformular, tRPC-Router, Mails, Rechnungsentwurf und
- * Exporte fragen alle diese Funktionen, damit niemand eigene Regeln erfindet:
- * die Anmeldung zeigt denselben Betrag, den der Server speichert, und die
- * Rechnung zieht genau das ab, was als eingegangen verbucht ist.
- *
- * Dependency-frei (nur String-Unions statt Prisma-Enums), damit Client und
- * Server dieselbe Datei benutzen können.
+ * Anzahlungen für Kurse — einzige Quelle der Regeln für Formulare, Server, Mails und Rechnung.
+ * String-Unions statt Prisma-Enums, damit auch der Client die Datei nutzen kann.
  */
 import { roundMoney, SIBLING_DISCOUNT_RATE } from "./sibling-discount";
 
@@ -59,9 +52,8 @@ export type DownPaymentConfig = {
 };
 
 /**
- * Speicherfertige Kursfelder: was zum gewählten Modus nicht gehört, wird
- * geleert. So bleibt kein alter Kursbetrag stehen, wenn auf "je Kategorie"
- * umgestellt wird, und ein Vergleich vorher/nachher sieht nur echte Änderungen.
+ * Leert, was zum gewählten Modus nicht gehört, damit kein alter Betrag stehen
+ * bleibt und ein Vergleich vorher/nachher nur echte Änderungen sieht.
  */
 export function normalizeDownPaymentConfig(
   config: DownPaymentConfig,
@@ -88,10 +80,8 @@ export function priceOptionDownPaymentAmount(
 }
 
 /**
- * Ob ein Speichervorgang die Anzahlung verändert — Grundlage für Berechtigung
- * und Sperre bei aktiven Anmeldungen. Kategorien werden über ihre id
- * zugeordnet; eine neue Kategorie ändert die Anzahlung nur, wenn sie einen
- * Betrag mitbringt.
+ * Ob ein Speichervorgang die Anzahlung verändert (Berechtigung, Sperre bei aktiven
+ * Anmeldungen). Eine neue Kategorie zählt nur, wenn sie einen Betrag mitbringt.
  */
 export function downPaymentSettingsChanged(
   stored: DownPaymentConfig & {
@@ -154,9 +144,8 @@ export function downPaymentForPriceOption(
 }
 
 /**
- * Anzahlung einer ganzen Anmeldung. `null` statt 0, wenn nichts fällig wird —
- * so steht es auch in `CourseRegistration.downPaymentAmount`, und "keine
- * Anzahlung" ist von "Anzahlung vergessen" unterscheidbar.
+ * Anzahlung einer ganzen Anmeldung; `null` statt 0, wenn nichts fällig wird
+ * (wie in `CourseRegistration.downPaymentAmount`).
  */
 export function registrationDownPayment(
   course: DownPaymentCourse,
@@ -201,9 +190,8 @@ export function downPaymentRefundNotice(course: {
 const euro = (value: number) => `${value.toFixed(2).replace(".", ",")} €`;
 
 /**
- * Höchste zulässige Anzahlung für eine Kategorie: ihr Preis — oder, wenn der
- * Kurs den Geschwisterkindrabatt anbietet, der rabattierte Preis. Sonst könnte
- * ein Geschwisterkind mehr anzahlen, als es am Ende überhaupt kostet.
+ * Höchstens der Preis, mit Geschwisterkindrabatt der rabattierte Preis —
+ * sonst zahlt ein Geschwisterkind mehr an, als es kostet.
  */
 export function maxDownPaymentForPrice(
   price: number,
@@ -230,10 +218,7 @@ export type DownPaymentSettings = {
   }>;
 };
 
-/**
- * Prüft die Anzahlungs-Einstellungen eines Kurses beim Speichern. Gibt die
- * erste Beanstandung als Satz zurück oder `null`, wenn alles passt.
- */
+/** Erste Beanstandung als Satz oder `null`. */
 export function validateDownPaymentSettings(
   settings: DownPaymentSettings,
 ): string | null {
@@ -296,14 +281,9 @@ export function validateDownPaymentSettings(
 }
 
 /**
- * Was Anmeldende an ihrer Anmeldung selbst ändern dürfen, sobald eine
- * Anzahlung im Spiel ist. Das Kursteam ist davon ausgenommen — es klärt
- * Änderungen an Teilnehmerzahl und Betrag mit der Kasse.
- *
- * - Mit Anzahlung: gleiche Teilnehmerzahl; Personen dürfen getauscht werden.
- *   Hängt die Anzahlung an der Kategorie, bleiben auch die Kategorien gleich.
- * - Ohne Anzahlung: alles wie bisher, nur darf keine Anzahlung neu entstehen,
- *   denn deren Hinweise wurden nie bestätigt.
+ * Was Anmeldende (nicht das Kursteam) selbst ändern dürfen: Mit Anzahlung gleiche Teilnehmerzahl,
+ * bei TICKET auch gleiche Kategorien. Ohne Anzahlung darf keine neu entstehen, denn deren
+ * Hinweise wurden nie bestätigt.
  */
 export function registrantEditViolation(args: {
   course: DownPaymentCourse;
@@ -390,9 +370,8 @@ export function downPaymentReceived(registration: DownPaymentInput): number {
 }
 
 /**
- * Betrag, den die Rechnung als bereits gezahlt abzieht. Nur PAID zählt:
- * erstattet ist nichts mehr da, und einbehalten wird nur bei Stornierungen,
- * die ohnehin keine Kursrechnung bekommen.
+ * Von der Rechnung abgezogener Betrag. Nur PAID zählt: Erstattetes ist weg,
+ * einbehalten wird nur bei Stornos, die keine Rechnung bekommen.
  */
 export function downPaymentCredit(registration: DownPaymentInput): number {
   return registration.downPaymentStatus === "PAID"
@@ -444,10 +423,8 @@ export function downPaymentState(
 }
 
 /**
- * Wenn das Kursteam die Teilnehmer einer bereits bezahlten Anmeldung ändert,
- * ändert sich der Anzahlungsbetrag — der eingegangene Betrag aber nicht.
- * `paidAmount = null` hieße danach "voller neuer Betrag"; deshalb wird der
- * alte Betrag ausgeschrieben, sobald er vom neuen abweicht.
+ * Ändert sich der Betrag einer bezahlten Anmeldung, wird der alte als eingegangen
+ * festgeschrieben — `paidAmount = null` hieße sonst „voller neuer Betrag“.
  */
 export function pinnedPaidAmountAfterChange(
   registration: Pick<

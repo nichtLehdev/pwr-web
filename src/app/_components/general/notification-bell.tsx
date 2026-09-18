@@ -26,9 +26,8 @@ function formatRelativeTime(date: Date | string): string {
 }
 
 /**
- * Glocke mit Zähler und Klapptafel, nur für angemeldete Nutzer (die
- * Navigation prüft die Sitzung). Der Zähler steht in Tinte auf Orange —
- * Papier auf Orange erreicht nur 1,99:1 und fiele durch.
+ * Nur für angemeldete Nutzer (die Navigation prüft die Sitzung). Zähler in Tinte auf Orange —
+ * Papier auf Orange fiele beim Kontrast durch.
  */
 export default function NotificationBell() {
   const [open, setOpen] = useState(false);

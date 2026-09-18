@@ -9,11 +9,7 @@ import ZoomableImage from "@/app/_components/general/zoomable-image";
 const LINK =
   "semi-condensed text-primary-ink dark:text-primary inline-flex min-h-11 items-center gap-2 text-base font-semibold underline-offset-4 hover:underline";
 
-/**
- * Leeres Bildfeld (Tinte, Nacht: Nacht erhöht) mit hellem Logo, wenn ein
- * Vorstandsmitglied kein Foto hat — gleiche Bildsprache wie bei Meldungen
- * ohne Titelbild, damit die Reihe gleich aufgebaut bleibt.
- */
+/** Ohne Foto: helles Logo auf Tinte, wie bei Meldungen ohne Titelbild. */
 function PortraitFallback() {
   return (
     <div className="flex h-full w-full items-center justify-center px-8">
@@ -41,15 +37,7 @@ interface VorstandPortraitProps {
   phone?: string | null;
 }
 
-/**
- * Großzügiges Porträt für den Vorstand (auf Wunsch des Eigentümers: „Die
- * Bilder machen die Website lebendiger und greifbarer"): rechteckiges
- * Bildfeld ohne Rundung und ohne Schatten im festen Seitenverhältnis 3:4,
- * darunter Name, Amt und Kontakt im Haarliniensatz, durch eine Haarlinie vom
- * Bild getrennt. Einheitliches Seitenverhältnis über alle Karten, damit die
- * Namen in einer Zeile stehen; ohne Foto zeigt das Bildfeld das helle Logo
- * auf Tinte statt eines Platzhalters.
- */
+/** Porträt in festem 3:4 über alle Karten, damit die Namen darunter in einer Zeile stehen. */
 export function VorstandPortrait({
   name,
   role,

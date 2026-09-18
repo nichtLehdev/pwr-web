@@ -10,14 +10,8 @@ import { useToast } from "@/app/_components/ui/toast";
 import type { DashboardOverflowItem } from "./dashboard-overflow-menu";
 
 /**
- * Export eines einzelnen Eintrags (Termin, Kurs, Beitrag) von seiner
- * Detailseite aus — dasselbe ZIP wie der Gesamtexport unter Export/Import,
- * nur mit diesem einen Eintrag und seinen Medien.
- *
- * Als Hook statt als fertiger Knopf, weil die Seiten die Aktion zweimal zeigen:
- * ab `sm` als Knopf in der Kopfzeile, auf dem Telefon im „…“-Menü. Beide
- * müssen denselben Ladezustand teilen, sonst ließe sich der Export im Menü
- * ein zweites Mal starten, während der Knopf noch lädt.
+ * Export eines einzelnen Eintrags als ZIP. Hook statt Knopf, weil Kopfzeilen-Knopf und
+ * „…“-Menü denselben Ladezustand teilen müssen.
  */
 export function useEntryExport(type: SelectableExportType, id: string) {
   const { hasPermission } = usePermissions();
@@ -65,11 +59,7 @@ export function useEntryExport(type: SelectableExportType, id: string) {
   return { canExport, isExporting, exportEntry, label, menuItem };
 }
 
-/**
- * Der Kopfzeilen-Knopf ab `sm`. Auf dem Telefon ausgeblendet — dort steht
- * derselbe Eintrag im „…“-Menü (`menuItem`), damit die Kopfzeile nicht in
- * drei Knopfreihen zerfällt.
- */
+/** Der Kopfzeilen-Knopf ab `sm`; auf dem Telefon steht er im „…“-Menü (`menuItem`). */
 export function EntryExportButton({
   exporter,
 }: {

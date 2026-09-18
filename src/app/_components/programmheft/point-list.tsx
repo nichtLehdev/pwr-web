@@ -3,11 +3,7 @@ import { cn } from "@/lib/utils";
 
 export type Point = { title: ReactNode; text?: ReactNode };
 
-/**
- * Merkpunkte statt Icon-Kacheln: Titel in der Titelstimme, Text darunter,
- * Spalten mit 1px-Haarlinien getrennt, über allem ein 2px-Tintenstrich.
- * Zwei Spalten ab 48rem (Gründe, Aufgaben) oder drei ab 40rem (kurze Fakten).
- */
+/** Merkpunkte statt Icon-Kacheln; drei Spalten nur für kurze Fakten. */
 export function PointList({
   items,
   columns = 2,

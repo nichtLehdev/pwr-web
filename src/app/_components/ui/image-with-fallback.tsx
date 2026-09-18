@@ -3,16 +3,10 @@
 import { useState } from "react";
 import Image, { type ImageProps } from "next/image";
 
-/**
- * Theme-aware logo placeholder, shown wherever an image is missing or fails
- * to load — a designed fallback instead of a blank slab.
- */
+/** Logo placeholder for images that are missing or fail to load. */
 export function LogoPlaceholder({ className = "" }: { className?: string }) {
   return (
-    // Tinte statt Graustufen, und in beiden Modi dunkler Grund — genau wie der
-    // bereits umgestellte CoverFallback der Beitragsansicht. Vorher kehrte sich
-    // das Feld um (hell auf dunkel, dunkel auf hell), weshalb es zwei Logos
-    // brauchte; auf durchgehend dunklem Grund genügt das helle.
+    // In beiden Modi dunkler Grund, daher genügt das helle Logo.
     <div
       className={`bg-ink dark:bg-night-raised relative flex h-full w-full items-center justify-center px-4 ${className}`}
     >
@@ -34,10 +28,7 @@ type ImageWithFallbackProps = Omit<ImageProps, "src" | "onError"> & {
   fallback?: React.ReactNode;
 };
 
-/**
- * next/image that renders a designed fallback when src is missing OR the
- * file fails to load (broken uploads, deleted media).
- */
+/** next/image with a fallback when src is missing OR the file fails to load. */
 export default function ImageWithFallback({
   src,
   fallback,

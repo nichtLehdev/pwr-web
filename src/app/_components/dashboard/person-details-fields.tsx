@@ -7,10 +7,8 @@ import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import { api } from "@/trpc/react";
 
 /**
- * Personen auf öffentlichen Seiten brauchen kein Benutzerkonto. Diese beiden
- * Bausteine bilden das ab: eigene Angaben (Bild, Name, Kontakt) plus eine
- * optionale Verknüpfung zu einem Konto, aus dem leer gelassene Felder ergänzt
- * werden.
+ * Personen brauchen kein Benutzerkonto: eigene Angaben plus optionale Verknüpfung zu
+ * einem Konto, aus dem leer gelassene Felder ergänzt werden.
  */
 
 export type PersonDetails = {

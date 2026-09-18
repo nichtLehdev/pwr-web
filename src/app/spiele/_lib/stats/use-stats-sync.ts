@@ -14,12 +14,9 @@ import {
 const FLUSH_BATCH = 50;
 
 /**
- * Hintergrund-Sync der lokalen Ergebnisse für angemeldete Nutzer:
- * - Outbox-Flush beim Mount, bei `online`, bei Sichtbarkeit und nach jedem
- *   neuen Ergebnis (Outbox-Event).
- * - Server-Aggregate werden per Max-Merge in die lokalen Bestwerte gemischt.
- * Anonyme Nutzer sammeln nur lokal; nach dem ersten Login lädt die Outbox
- * automatisch hoch. Einmal mounten (Spiele-Übersicht oder GameShell).
+ * Hintergrund-Sync für Angemeldete: Outbox-Flush bei Mount, `online`, Sichtbarkeit und neuem
+ * Ergebnis; Server-Aggregate per Max-Merge. Anonyme sammeln lokal, die Outbox lädt nach dem
+ * ersten Login hoch. Nur einmal mounten (Spiele-Übersicht oder GameShell).
  */
 export function useStatsSync() {
   const { data: session } = useSession();

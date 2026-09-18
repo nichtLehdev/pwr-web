@@ -175,14 +175,12 @@ export default function EditLocationPage() {
       ]}
       maxWidth="7xl"
     >
-      {/* Error */}
       {error && (
         <div className="mb-6 border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
           <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
         </div>
       )}
 
-      {/* Form */}
       <form onSubmit={handleSubmit}>
         <DashboardSectionedFormLayout
           navItems={LOCATION_EDIT_NAV_ITEMS}
@@ -199,8 +197,6 @@ export default function EditLocationPage() {
             />
             <DashboardFormBlock title="Adresse">
               <div className="space-y-6">
-                {/* Address search — same component as the new-location form,
-                    here it overwrites the fields of an existing standort. */}
                 <AddressAutocomplete
                   hint="Vorschlag auswählen, um die Felder unten zu überschreiben"
                   onSelect={(suggestion) => {
@@ -214,7 +210,6 @@ export default function EditLocationPage() {
                   }}
                 />
 
-                {/* Name */}
                 <div>
                   <Label>Name</Label>
                   <Input
@@ -229,7 +224,6 @@ export default function EditLocationPage() {
                   </p>
                 </div>
 
-                {/* City */}
                 <div>
                   <Label>Stadt</Label>
                   <Input
@@ -241,7 +235,6 @@ export default function EditLocationPage() {
                   />
                 </div>
 
-                {/* Country */}
                 <div>
                   <Label>Land</Label>
                   <Input
@@ -254,7 +247,6 @@ export default function EditLocationPage() {
                   />
                 </div>
 
-                {/* Street */}
                 <div>
                   <Label>Straße</Label>
                   <Input
@@ -266,7 +258,6 @@ export default function EditLocationPage() {
                   />
                 </div>
 
-                {/* Zip Code */}
                 <div>
                   <Label>Postleitzahl</Label>
                   <Input
@@ -278,7 +269,6 @@ export default function EditLocationPage() {
                   />
                 </div>
 
-                {/* Additional Info */}
                 <div>
                   <Label>Zusätzliche Informationen</Label>
                   <Textarea
@@ -307,7 +297,6 @@ export default function EditLocationPage() {
             />
             <DashboardFormBlock title="Kartenposition">
               <div className="space-y-6">
-                {/* Latitude */}
                 <div>
                   <Label>Breitengrad (Latitude)</Label>
                   <Input
@@ -322,7 +311,6 @@ export default function EditLocationPage() {
                   </p>
                 </div>
 
-                {/* Longitude */}
                 <div>
                   <Label>Längengrad (Longitude)</Label>
                   <Input
@@ -340,7 +328,6 @@ export default function EditLocationPage() {
             </DashboardFormBlock>
           </div>
 
-          {/* Actions */}
           <div className="border-rule dark:border-night-rule mt-16 flex flex-col gap-3 border-t pt-10 sm:flex-row sm:justify-end">
             <Button
               type="submit"

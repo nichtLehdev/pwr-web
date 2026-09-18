@@ -10,12 +10,7 @@ import { berlinDayKey } from "@/lib/berlin-time";
 
 const log = createLogger("User Export");
 
-/**
- * Export user data for GDPR compliance (Art. 20 DSGVO)
- * GET /api/users/[userId]/export
- *
- * Users can export their own data, admins can export any user's data
- */
+/** GDPR data export (Art. 20 DSGVO): own data, or any user's for admins. */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ userId: string }> },
@@ -35,7 +30,6 @@ export async function GET(
       PERMISSIONS.USERS_MANAGE,
     );
 
-    // Users can only export their own data unless they're admin
     if (!isAdmin && userId !== session.user.id) {
       return NextResponse.json(
         { error: "You can only export your own data" },
@@ -66,7 +60,6 @@ export async function GET(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Get course registrations
     const registrations = await db.courseRegistration.findMany({
       where: {
         OR: [{ registrantId: userId }, { registrantEmail: user.email }],
@@ -95,18 +88,15 @@ export async function GET(
       orderBy: { createdAt: "desc" },
     });
 
-    // Get saved participants
     const savedParticipants = await db.savedParticipant.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" },
     });
 
-    // Get newsletter subscription status
     const newsletterSubscriber = await db.newsletterSubscriber.findUnique({
       where: { email: user.email },
     });
 
-    // Get sessions
     const sessions = await db.session.findMany({
       where: { userId },
       select: {
@@ -133,7 +123,6 @@ export async function GET(
       take: 1000,
     });
 
-    // Get created content counts
     const [createdEventsCount, createdCoursesCount, createdPostsCount] =
       await Promise.all([
         db.event.count({ where: { createdById: userId } }),

@@ -7,15 +7,7 @@ import {
   readCoursePriceOptions,
 } from "../course-import";
 
-/**
- * Prüft die Abbildung Export → Import für Kurse: Was das ZIP schreibt, muss
- * auf der anderen Seite wieder ankommen — und was nicht zum Inhalt gehört,
- * darf nicht mitwandern.
- *
- * Die Beispielnutzlast ist nach dem echten `courses.json` gebaut: Der Export
- * schreibt die Kursfelder unverändert aus der Datenbank, Datumsangaben also
- * als ISO-Zeichenkette.
- */
+/** Nutzlast nach dem echten `courses.json` (Datumsangaben als ISO-Zeichenkette). */
 const exportedCourse = (
   overrides: Record<string, unknown> = {},
 ): Record<string, unknown> => ({
@@ -136,7 +128,7 @@ describe("readCourseContent", () => {
   });
 
   it("liest ein ZIP aus dem alten Stand mit Standardwerten", () => {
-    // Genau die Felder, die der bisherige Import geschrieben hat.
+    // Nur die Felder, die ein ZIP aus dem alten Stand enthält.
     const content = readCourseContent({
       title: "Alter Kurs",
       description: "Text",
@@ -158,7 +150,7 @@ describe("readCourseContent", () => {
       invoicingEnabled: false,
       publishedAt: null,
     });
-    // Ohne Enddatum gilt der Starttag — wie schon vorher.
+    // Ohne Enddatum gilt der Starttag.
     expect(content.endDate.toISOString()).toBe("2026-03-01T09:00:00.000Z");
   });
 

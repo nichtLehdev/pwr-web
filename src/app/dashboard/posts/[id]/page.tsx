@@ -55,11 +55,7 @@ const statusLabels: Record<ContentStatus, string> = {
   ARCHIVED: "Archiviert",
 };
 
-// Etikett statt pastelliger Pille: Zustaende sind rechteckige Druckflaechen
-// (siehe Tag-Komponente). Spiegelt die Zuordnung aus content-status.tsx —
-// derselbe Status muss ueberall gleich aussehen. Tag hat inzwischen einen
-// fuenften, umrandeten Ton: Entwurf und Archiviert sind Ruhezustaende ohne
-// Handlungsbedarf und standen bisher so laut gefuellt wie "Veroeffentlicht".
+// Spiegelt die Zuordnung aus content-status.tsx — derselbe Status muss ueberall gleich aussehen.
 const statusTones: Record<ContentStatus, TagTone> = {
   DRAFT: "muted",
   PENDING: "orange",
@@ -67,8 +63,6 @@ const statusTones: Record<ContentStatus, TagTone> = {
   REJECTED: "cancelled",
   ARCHIVED: "muted",
 };
-
-// Dashboard access is now controlled by permissions
 
 export default function PostDetailPage() {
   const router = useRouter();
@@ -257,9 +251,7 @@ export default function PostDetailPage() {
           { label: post.title },
         ]}
         actions={
-          // `w-full sm:w-auto`: Nur über die volle Breite kann `ml-auto` das
-          // „…“-Menü auf dem Telefon an den rechten Rand schieben — sein Panel
-          // ist rechts verankert.
+          // `w-full`: Nur so schiebt `ml-auto` das „…“-Menü auf dem Telefon an den rechten Rand.
           <div className="flex w-full flex-wrap gap-2 sm:w-auto">
             {canEdit && (
               <Link
@@ -282,9 +274,8 @@ export default function PostDetailPage() {
                 Löschen
               </button>
             )}
-            {/* Auf dem Telefon steht der Export im „…“-Menü (siehe
-                EntryExportButton); ab sm als Knopf vor „Löschen“, damit die
-                zerstörerische Aktion am Ende der Reihe bleibt. */}
+            {/* Auf dem Telefon steht der Export im „…“-Menü; ab sm als Knopf
+                vor „Löschen“, damit die zerstörerische Aktion am Ende bleibt. */}
             {entryExport.canExport && (
               <DashboardOverflowMenu
                 className="ml-auto sm:hidden"
@@ -295,7 +286,6 @@ export default function PostDetailPage() {
         }
         maxWidth="7xl"
       >
-        {/* Status Badges */}
         <div
           id="post-detail-overview"
           className="dashboard-form-scroll-anchor mb-5 flex flex-wrap items-center gap-3"
@@ -311,14 +301,12 @@ export default function PostDetailPage() {
           )}
         </div>
 
-        {/* Review Section (for reviewers with pending posts) */}
         {canReview && (
           <section className="border-rule dark:border-night-rule mb-6 border-2 p-6">
             <h2 className="text-ink dark:text-night-text mb-4 text-lg font-semibold">
               Prüfung
             </h2>
             <div className="space-y-4">
-              {/* Warning if there's unapproved content */}
               {hasUnapprovedContent && (
                 <div className="flex items-start gap-3 border border-red-300 bg-red-50 p-3 dark:border-red-700 dark:bg-red-900/20">
                   <AlertTriangleIcon className="h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />
@@ -374,7 +362,6 @@ export default function PostDetailPage() {
           </section>
         )}
 
-        {/* Attached Content Section (for reviewers) */}
         {isReviewer && attachedContent && (
           <section
             id="post-detail-attached"
@@ -391,7 +378,6 @@ export default function PostDetailPage() {
                 </p>
               )}
 
-            {/* Downloads */}
             {attachedContent.downloads.length > 0 && (
               <div className="mb-4">
                 <h3 className="text-ink dark:text-night-text mb-2 text-sm font-medium">
@@ -417,7 +403,6 @@ export default function PostDetailPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        {/* Download button */}
                         <a
                           href={download.fileUrl}
                           target="_blank"
@@ -453,7 +438,6 @@ export default function PostDetailPage() {
               </div>
             )}
 
-            {/* Media */}
             {attachedContent.media.length > 0 && (
               <div>
                 <h3 className="text-ink dark:text-night-text mb-2 text-sm font-medium">
@@ -534,7 +518,6 @@ export default function PostDetailPage() {
           </section>
         )}
 
-        {/* Review Notes (if exists) */}
         {post.reviewNotes && post.status !== ContentStatus.PENDING && (
           <section className="border-rule dark:border-night-rule mb-8 border-t pt-10">
             <h2 className="text-ink dark:text-night-text mb-3 text-lg font-semibold">
@@ -550,14 +533,12 @@ export default function PostDetailPage() {
           </section>
         )}
 
-        {/* Post Details */}
         <DashboardFormSectionLayout
           className="lg:grid lg:grid-cols-[minmax(0,1fr)_10.5rem] lg:items-start lg:gap-10 lg:pt-4 xl:gap-14"
           railClassName="dashboard-sticky-shell-top lg:sticky lg:block lg:self-start"
           railItems={detailShortlinks}
         >
           <div className="space-y-0">
-            {/* Basic Info */}
             <section
               id="post-detail-info"
               className="dashboard-form-scroll-anchor border-rule dark:border-night-rule border-t pt-10"
@@ -587,7 +568,6 @@ export default function PostDetailPage() {
               </dl>
             </section>
 
-            {/* Cover Image */}
             {post.coverImage && (
               <section
                 id="post-detail-cover"
@@ -631,7 +611,6 @@ export default function PostDetailPage() {
               </section>
             )}
 
-            {/* Content */}
             <section
               id="post-detail-content"
               className="dashboard-form-scroll-anchor border-rule dark:border-night-rule border-t pt-10"
@@ -653,7 +632,6 @@ export default function PostDetailPage() {
               )}
             </section>
 
-            {/* Markdown Source */}
             <section className="border-rule dark:border-night-rule border-t pt-10">
               <h2 className="text-ink dark:text-night-text mb-4 text-lg font-semibold">
                 Markdown-Quelltext
@@ -663,7 +641,6 @@ export default function PostDetailPage() {
               </pre>
             </section>
 
-            {/* Meta Info */}
             <section
               id="post-detail-meta"
               className="dashboard-form-scroll-anchor border-rule dark:border-night-rule border-t pt-10"
@@ -733,7 +710,6 @@ export default function PostDetailPage() {
           </div>
         </DashboardFormSectionLayout>
 
-        {/* Back Link */}
         <div className="mt-8">
           <Link
             href="/dashboard/posts"
@@ -745,7 +721,6 @@ export default function PostDetailPage() {
         </div>
       </DashboardPage>
 
-      {/* Reject Modal */}
       {showRejectModal && (
         <ScrollableModal>
           <ScrollableModalCard maxW="md">
@@ -790,7 +765,6 @@ export default function PostDetailPage() {
         </ScrollableModal>
       )}
 
-      {/* Delete Modal */}
       {showDeleteModal && (
         <ScrollableModal>
           <ScrollableModalCard maxW="md">

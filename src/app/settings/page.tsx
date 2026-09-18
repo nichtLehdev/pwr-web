@@ -63,11 +63,6 @@ const defaultPreferences: UserPreferences = {
 
 type SettingsTab = "profile" | "account" | "preferences" | "data" | "danger";
 
-/**
- * Schaltflächen- und Feld-Stimmen des Programmhefts, lokal wiederholt wie auf
- * den übrigen öffentlichen Formularseiten (z. B. /anmeldung-verwalten,
- * /mitmachen/mitgliedschaft).
- */
 const BTN_PRIMARY =
   "bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-primary dark:text-ink dark:hover:bg-paper semi-condensed inline-flex min-h-12 items-center justify-center gap-2 px-6 text-base font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60";
 const BTN_OUTLINE =
@@ -421,12 +416,8 @@ export default function SettingsPage() {
           })}
         </nav>
 
-        {/* 48rem war zu eng — das Formular klebte als schmale Säule am linken
-            Rand, während die halbe Seite leer blieb. Die volle Satzbreite
-            wäre das andere Extrem: 650px pro Feld für Vor- und Nachname. */}
         <div className="mt-10 max-w-5xl">
           <form onSubmit={handleSubmit}>
-            {/* Profile Tab */}
             {activeTab === "profile" && (
               <div className="space-y-10">
                 <div>
@@ -438,7 +429,6 @@ export default function SettingsPage() {
                   </p>
                 </div>
 
-                {/* Profile Image */}
                 <div>
                   <p className={cn(FIELD_LABEL_CLASS, "mb-2")}>Profilbild</p>
                   <ProfileImageUpload
@@ -467,7 +457,6 @@ export default function SettingsPage() {
                   )}
                 </div>
 
-                {/* Personal Data */}
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                   <div>
                     <FieldLabel htmlFor="firstName">Vorname</FieldLabel>
@@ -551,7 +540,6 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                {/* Address */}
                 <div>
                   <Heading as="h3" size="list" className="text-[1.375rem]">
                     Adresse
@@ -599,7 +587,6 @@ export default function SettingsPage() {
                       </div>
                     </div>
 
-                    {/* Privacy: what to show on public pages */}
                     <div className="border-rule dark:border-night-rule border-t pt-6">
                       <p className="text-ink dark:text-night-text text-sm font-semibold">
                         Öffentliche Sichtbarkeit
@@ -638,7 +625,6 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                {/* Bio */}
                 <div>
                   <FieldLabel htmlFor="bio">Biografie</FieldLabel>
                   <textarea
@@ -654,7 +640,6 @@ export default function SettingsPage() {
                   <FieldHint>{formData.bio.length}/2000 Zeichen</FieldHint>
                 </div>
 
-                {/* Save Button */}
                 <div className="border-rule dark:border-night-rule flex justify-end border-t pt-6">
                   <button
                     type="submit"
@@ -670,7 +655,6 @@ export default function SettingsPage() {
               </div>
             )}
 
-            {/* Account Tab */}
             {activeTab === "account" && (
               <div className="space-y-10">
                 <div>
@@ -683,7 +667,6 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="space-y-6">
-                  {/* Username */}
                   <div>
                     <FieldLabel htmlFor="username">Benutzername</FieldLabel>
                     <input
@@ -722,7 +705,6 @@ export default function SettingsPage() {
                     )}
                   </div>
 
-                  {/* Email */}
                   <div>
                     <FieldLabel htmlFor="email">E-Mail-Adresse</FieldLabel>
                     <input
@@ -738,7 +720,6 @@ export default function SettingsPage() {
                     </FieldHint>
                   </div>
 
-                  {/* Phone */}
                   <div>
                     <FieldLabel htmlFor="phone">Telefonnummer</FieldLabel>
                     <input
@@ -752,7 +733,6 @@ export default function SettingsPage() {
                     />
                   </div>
 
-                  {/* Password Change */}
                   <div className="border-rule dark:border-night-rule border-t pt-6">
                     <Heading as="h3" size="list" className="text-[1.375rem]">
                       Passwort ändern
@@ -895,7 +875,6 @@ export default function SettingsPage() {
                     </div>
                   </div>
 
-                  {/* 2FA */}
                   <div className="border-rule dark:border-night-rule border-t pt-6">
                     <Heading as="h3" size="list" className="text-[1.375rem]">
                       Zwei-Faktor-Authentifizierung (2FA)
@@ -927,7 +906,6 @@ export default function SettingsPage() {
                     )}
                   </div>
 
-                  {/* Save Button */}
                   <div className="border-rule dark:border-night-rule flex justify-end border-t pt-6">
                     <button
                       type="submit"
@@ -944,7 +922,6 @@ export default function SettingsPage() {
               </div>
             )}
 
-            {/* Preferences Tab */}
             {activeTab === "preferences" && (
               <div className="space-y-10">
                 <div>
@@ -957,7 +934,6 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="space-y-8">
-                  {/* Termine Default View */}
                   <div>
                     <p className={FIELD_LABEL_CLASS}>
                       Standard-Ansicht für Termine
@@ -1014,7 +990,6 @@ export default function SettingsPage() {
                     </div>
                   </div>
 
-                  {/* Theme */}
                   <div>
                     <p className={FIELD_LABEL_CLASS}>Design-Theme</p>
                     <p className="text-dark dark:text-night-muted mt-1 mb-3 text-xs">
@@ -1083,10 +1058,8 @@ export default function SettingsPage() {
                     </div>
                   </div>
 
-                  {/* Tracking Consent */}
                   <TrackingConsentSection />
 
-                  {/* Save Button */}
                   <div className="border-rule dark:border-night-rule flex justify-end border-t pt-6">
                     <button
                       type="submit"
@@ -1103,7 +1076,6 @@ export default function SettingsPage() {
               </div>
             )}
 
-            {/* Data Tab */}
             {activeTab === "data" && (
               <div className="space-y-10">
                 <div>
@@ -1116,7 +1088,6 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="space-y-10">
-                  {/* Data Export */}
                   <div>
                     <Heading as="h3" size="list" className="text-[1.375rem]">
                       Daten exportieren
@@ -1164,7 +1135,6 @@ export default function SettingsPage() {
                     </button>
                   </div>
 
-                  {/* Saved Participants */}
                   <div className="border-rule dark:border-night-rule border-t pt-8">
                     <Heading as="h3" size="list" className="text-[1.375rem]">
                       Gespeicherte Teilnehmer
@@ -1232,7 +1202,6 @@ export default function SettingsPage() {
               </div>
             )}
 
-            {/* Danger Zone Tab */}
             {activeTab === "danger" && (
               <div className="space-y-10">
                 <div>
@@ -1265,7 +1234,6 @@ export default function SettingsPage() {
           </form>
         </div>
 
-        {/* Unsaved Changes Modal */}
         {pendingTab !== null && (
           <ScrollableModal onBackdropClick={() => setPendingTab(null)}>
             <ScrollableModalCard
@@ -1310,7 +1278,6 @@ export default function SettingsPage() {
           </ScrollableModal>
         )}
 
-        {/* Delete Account Modal */}
         {showDeleteAccountModal && (
           <ScrollableModal>
             <ScrollableModalCard
@@ -1373,7 +1340,6 @@ export default function SettingsPage() {
                         toast.success(
                           "Ihr Konto wurde erfolgreich gelöscht. Sie werden jetzt abgemeldet.",
                         );
-                        // Logout and redirect
                         setTimeout(() => {
                           window.location.href = "/";
                         }, 2000);

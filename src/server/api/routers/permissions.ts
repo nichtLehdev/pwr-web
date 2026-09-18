@@ -26,8 +26,6 @@ export const permissionsRouter = createTRPCRouter({
     return await getUserPermissions(ctx.session.user.id, ctx.permissionCache);
   }),
 
-  // ========== PERMISSIONS ==========
-
   getAllPermissions: manageProcedure.query(() => {
     return PERMISSION_DEFINITIONS.sort((a, b) => {
       if (a.category !== b.category) {
@@ -75,8 +73,6 @@ export const permissionsRouter = createTRPCRouter({
         users: users.map((u) => ({ user: u.user })),
       };
     }),
-
-  // ========== ROLES ==========
 
   getAllRoles: manageProcedure.query(async ({ ctx }) => {
     return await ctx.db.role.findMany({
@@ -335,8 +331,6 @@ export const permissionsRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  // ========== USER ROLE ASSIGNMENTS ==========
-
   assignRolesToUser: manageProcedure
     .input(
       z.object({
@@ -395,8 +389,6 @@ export const permissionsRouter = createTRPCRouter({
         userPermissions: userPermissions,
       };
     }),
-
-  // ========== USER PERMISSIONS (DIRECT) ==========
 
   assignPermissionsToUser: manageProcedure
     .input(
@@ -461,8 +453,6 @@ export const permissionsRouter = createTRPCRouter({
     });
   }),
 
-  // ========== EFFECTIVE PERMISSION PREVIEW ==========
-
   previewEffectivePermissions: manageProcedure
     .input(
       z.object({
@@ -479,7 +469,6 @@ export const permissionsRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const allPermissionValues = Object.values(PERMISSIONS);
 
-      // Check if admin role is being assigned
       const roles = await ctx.db.role.findMany({
         where: { id: { in: input.roleIds } },
         include: { permissions: true },
@@ -502,7 +491,6 @@ export const permissionsRouter = createTRPCRouter({
         };
       }
 
-      // Build deny set from proposed direct permissions
       const deniedKeys = new Set(
         input.directPermissions
           .filter((p) => !p.granted)
@@ -514,7 +502,6 @@ export const permissionsRouter = createTRPCRouter({
         { sources: string[]; granted: boolean }
       > = {};
 
-      // Track direct permissions
       for (const dp of input.directPermissions) {
         if (!dp.granted) {
           permissionSources[dp.permissionKey] = {
@@ -529,8 +516,6 @@ export const permissionsRouter = createTRPCRouter({
         }
       }
 
-      // Resolve role permissions (including hierarchy) using in-memory batch approach
-      // We already have the roles loaded, but need hierarchy resolution
       const { batchResolveRolePermissions } =
         await import("../helpers/permissions");
       const rolePermMap = await batchResolveRolePermissions(input.roleIds);

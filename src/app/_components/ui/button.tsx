@@ -32,10 +32,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const baseStyles =
       "semi-condensed inline-flex items-center justify-center font-semibold transition-colors disabled:pointer-events-none disabled:opacity-50";
 
-    // Die Hauptaktion ist mit Tinte gefuellt, nicht mit Orange: Im Heft ist
-    // Orange eine Flaeche zum Markieren, nicht die Farbe des Handelns. Das
-    // behebt zugleich `bg-primary text-white` — weiss auf Orange sind 1,99:1
-    // und fallen durch.
+    // Hauptaktion in Tinte: Orange ist im Heft eine Markierfläche, und weiss
+    // auf Orange verfehlt den Kontrast.
     const variants = {
       primary:
         "bg-ink text-paper hover:bg-dark dark:bg-night-text dark:text-night dark:hover:bg-night-muted",

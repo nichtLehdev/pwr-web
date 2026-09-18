@@ -134,9 +134,8 @@ export default function DashboardTeamPage() {
   const columns = useMemo<DataTableColumn<TeamMember>[]>(
     () =>
       column.columns([
-        // Die gespeicherte Reihenfolge als eigene Spalte: nur so bleiben die
-        // Hoch/Runter-Pfeile nachvollziehbar, wenn nach etwas anderem sortiert
-        // wird — sie verschieben immer die gespeicherte Position, nie die Sicht.
+        // Eigene Spalte: Die Hoch/Runter-Pfeile verschieben immer die gespeicherte
+        // Position, nie die Sicht — auch wenn nach etwas anderem sortiert wird.
         column.accessor((member) => (teamMembers?.indexOf(member) ?? 0) + 1, {
           id: "position",
           header: "#",

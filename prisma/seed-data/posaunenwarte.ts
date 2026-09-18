@@ -1,9 +1,5 @@
 import { PosaunenwartRoleType } from "~/generated/prisma/client";
 
-// ============================================================================
-// SEED DATA - ONLY POSAUNENWARTE
-// ============================================================================
-
 export const posaunenwarteResponsibilitiesData = [
   // Jörg Häusler (LPW) - Responsible for ALL Bezirke
   {
@@ -55,13 +51,4 @@ export const posaunenwarteResponsibilitiesData = [
     priority: 2,
   },
 
-  // Add more RPWs here if you have them in the future
-  // Example:
-  // {
-  //   username: "another.rpw",
-  //   roleType: "RPW" as PosaunenwartRoleType,
-  //   bezirke: [6, 7, 8],
-  //   notes: "Regionalposaunenwart für die Bezirke 6, 7 und 8",
-  //   priority: 2,
-  // },
 ];

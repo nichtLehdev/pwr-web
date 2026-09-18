@@ -1,22 +1,12 @@
 import { emailBaseUrl, farben, schrift } from "./email-layout";
 import { emailText, textLink } from "./email-text";
 
-/**
- * `schrift` enthält Schriftnamen in doppelten Anführungszeichen (für
- * React-Inline-Styles unproblematisch). In einem HTML-`style="…"`-Attribut
- * würden sie die Anführung vorzeitig schließen und alles Folgende
- * verschlucken — deshalb hier auf einfache umgesetzt.
- */
+/** Doppelte Anführungszeichen aus `schrift` würden das `style="…"`-Attribut vorzeitig schließen. */
 const htmlSchrift = schrift.replace(/"/g, "'");
 
 /**
- * Generate newsletter email HTML manually
- * This approach gives us full control over HTML injection
- *
- * Der Rumpf (`content`) ist vom Autor verfasstes, bereits bereinigtes HTML
- * und wird unverändert eingesetzt — deshalb bleibt diese Vorlage ein
- * Zeichenketten-Bauer statt einer react-email-Komponente. Nur die Hülle
- * (Kopf, Rahmen, Fußzeile) folgt derselben Gestaltung wie EmailLayout.
+ * Zeichenketten-Bauer statt react-email: `content` ist bereits bereinigtes
+ * Autoren-HTML und wird unverändert eingesetzt.
  */
 export function generateNewsletterHtml({
   content,
@@ -96,11 +86,7 @@ export function generateNewsletterHtml({
 </html>`;
 }
 
-/**
- * Nur-Text-Fassung. Der Rumpf ist vom Autor verfasstes HTML und lässt sich
- * nicht verlustfrei in Text verwandeln — daher nur Hinweis, Anrede und
- * Abmeldelink, ohne den eigentlichen Inhalt.
- */
+/** Ohne den Rumpf: Autoren-HTML lässt sich nicht verlustfrei in Text verwandeln. */
 export function generateNewsletterText({
   unsubscribeUrl,
   subscriberName,

@@ -29,7 +29,6 @@ export async function GET(
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    // Check if user has export permissions
     const { userHasPermission } =
       await import("@/server/api/helpers/permissions");
     const { PERMISSIONS } = await import("@/lib/permissions");
@@ -44,8 +43,7 @@ export async function GET(
     const { type } = await params;
     const date = berlinDayKey(new Date());
 
-    // Optional: nur einzelne Einträge (`?ids=a,b`). Ohne Parameter bleibt es
-    // beim ganzen Bestand, genau wie vor der Auswahl.
+    // Optional nur einzelne Einträge (`?ids=a,b`), sonst der ganze Bestand.
     const selection = parseExportSelection(
       type,
       request.nextUrl.searchParams.getAll("ids"),
@@ -414,24 +412,15 @@ export async function GET(
       }
 
       case "courses": {
-        // Bewusst ohne Anmeldungen, Teilnehmende und Rechnungen: Das sind
-        // personenbezogene Daten, und ein Kurs soll sich weitergeben lassen,
-        // ohne sie mitzunehmen.
-        // Ebenfalls draußen bleibt das Kursteam mit Zugang (`collaborators`):
-        // Das sind Berechtigungen auf Konten dieses Bestands, kein Inhalt —
-        // über ein ZIP vergeben ließen sich damit stillschweigend Zugriffe
-        // einrichten. Öffentlich genannte Teammitglieder ohne Zugang
-        // (`guestTeamMembers`) stehen dagegen auf der Kursseite und wandern mit.
+        // Bewusst ohne Anmeldungen, Teilnehmende und Rechnungen (personenbezogen)
+        // und ohne `collaborators`: Per ZIP ließen sich sonst still Zugriffe
+        // einrichten. `guestTeamMembers` sind öffentlich und wandern mit.
         const courses = await db.course.findMany({
           where: idFilter,
           include: {
-            // Das Kursbild reist als Media-Zeile mit, genau wie das Titelbild
-            // eines Termins oder Beitrags — kein Sonderweg nötig.
             image: true,
             location: true,
             bezirk: true,
-            // Preiskategorien, Anmeldefelder und das öffentlich genannte
-            // Kursteam gehören zum Kurs und fehlten bisher ganz.
             priceOptions: { orderBy: { createdAt: "asc" } },
             customFields: { orderBy: { sortOrder: "asc" } },
             guestTeamMembers: { orderBy: { sortOrder: "asc" } },

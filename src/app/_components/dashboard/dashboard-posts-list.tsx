@@ -97,16 +97,8 @@ const sortOptions: {
 ];
 
 /**
- * Spiegelt die Zuordnung aus `content-status.tsx` — derselbe Status muss in
- * der Liste genauso aussehen wie auf der Kachel. Vorher lief hier eine eigene
- * Tabelle, und zwar mit umgekehrtem Gewicht: „Entwurf" stand gefüllt,
- * „Veröffentlicht" zurückgenommen.
- *
- * Gefüllt heißt „das musst du sehen", umrandet „das ist nur der Stand".
- * `Tag` hat dafür den umrandeten `muted`-Ton bekommen.
- *
- * Dass diese Tabelle hier überhaupt doppelt steht, bleibt ein offener Punkt —
- * richtig wäre `ContentStatusBadge` aus `content-status.tsx`.
+ * Muss `content-status.tsx` spiegeln, damit derselbe Status überall gleich aussieht.
+ * TODO: durch `ContentStatusBadge` aus `content-status.tsx` ersetzen.
  */
 const STATUS_TONE: Record<ContentStatus, TagTone> = {
   DRAFT: "muted",
@@ -116,21 +108,13 @@ const STATUS_TONE: Record<ContentStatus, TagTone> = {
   ARCHIVED: "muted",
 };
 
-/**
- * Auswahlfelder und der Sortier-Knopf stehen als ungleichartige
- * Bedienelemente nebeneinander — die Kastenform bleibt hier richtig (wie in
- * /registrations für Termine und Aktuelles begründet), nur eckig statt rund
- * und aus der Programmheft-Palette statt Grau/Weiß/Schatten.
- */
+/** Ungleichartige Bedienelemente nebeneinander: Kastenform bleibt, aber eckig und aus der Programmheft-Palette. */
 const TOOLBAR_SELECT_CLASS =
   "border-ink dark:border-night-text dark:bg-night min-h-11 min-w-0 border bg-paper px-2.5 py-1.5 text-sm text-ink dark:text-night-text";
 
 /**
- * Bestätigungs-Knöpfe in den Massenaktions-Dialogen, wie öffentlich
- * (`BTN_PRIMARY`/`BTN_OUTLINE` in /settings, /registrations): Tinte gefüllt
- * für die Hauptaktion statt Orange mit weißer Schrift (1,99:1, fällt durch)
- * oder — wie bisher — Lila, das sonst nirgends im System vorkommt. Orange
- * bleibt Auswahl-/Zustandsfarbe (Seitenleiste, Etiketten) vorbehalten.
+ * Hauptaktion in Tinte statt Orange mit weißer Schrift (1,99:1, fällt durch);
+ * Orange bleibt Auswahl-/Zustandsfarbe.
  */
 const MODAL_BTN_PRIMARY =
   "bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-primary dark:text-ink dark:hover:bg-paper semi-condensed inline-flex min-h-11 items-center justify-center px-4 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60";
@@ -159,9 +143,7 @@ export default function DashboardPostsList({}: DashboardPostsListProps) {
   const [categoryFilter, setCategoryFilter] = useState<PostCategory | "all">(
     "all",
   );
-  // Die Sortierung selbst ist der Zustand — eine leere Sortierung ist der
-  // dritte Klick auf einen Spaltenkopf und bedeutet "wieder Standardordnung".
-  // Aus ihr werden Spalte und Richtung für Abfrage und Kartenansicht abgeleitet.
+  // Leere Sortierung = dritter Klick auf einen Spaltenkopf = Standardordnung.
   const [sorting, setSorting] = useState<SortingState>([DEFAULT_SORTING]);
   const activeSort = sorting[0] ?? DEFAULT_SORTING;
   const sortBy = activeSort.id as TableSortColumn;
@@ -808,7 +790,6 @@ export default function DashboardPostsList({}: DashboardPostsListProps) {
         </div>
       )}
 
-      {/* Loading State */}
       {view === "table" ? (
         <DataTable
           data={data?.posts}
@@ -886,7 +867,6 @@ export default function DashboardPostsList({}: DashboardPostsListProps) {
             </div>
           )}
 
-          {/* Posts Grid */}
           {!isLoading && data?.posts && data.posts.length > 0 && (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
               {data.posts.map((post) => (
@@ -938,7 +918,6 @@ export default function DashboardPostsList({}: DashboardPostsListProps) {
             </div>
           )}
 
-          {/* Empty State */}
           {!isLoading && data?.posts && data.posts.length === 0 && (
             <div className="border-rule dark:border-night-rule border-t py-14 text-center">
               <SquareDashed className="text-dark dark:text-night-muted mx-auto h-10 w-10" />
@@ -953,7 +932,6 @@ export default function DashboardPostsList({}: DashboardPostsListProps) {
             </div>
           )}
 
-          {/* Pagination */}
           {view === "cards" && data && data.pages > 1 && (
             <div className="flex items-center justify-center gap-3 pt-1">
               <button
@@ -979,8 +957,6 @@ export default function DashboardPostsList({}: DashboardPostsListProps) {
               </button>
             </div>
           )}
-
-          {/* Delete Confirmation Modal */}
         </>
       )}
 
@@ -1019,7 +995,6 @@ export default function DashboardPostsList({}: DashboardPostsListProps) {
         </ScrollableModal>
       )}
 
-      {/* Status Change Modal */}
       {showStatusChange && (
         <ScrollableModal>
           <ScrollableModalCard maxW="md">

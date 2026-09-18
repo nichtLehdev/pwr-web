@@ -68,11 +68,7 @@ const statusLabels: Record<ContentStatus, string> = {
 };
 
 /**
- * Spiegelt die Zuordnung aus `content-status.tsx` — derselbe Status muss
- * überall gleich aussehen. Vorher lag „Abgelehnt" auf `ink` und
- * „Veröffentlicht" auf `inverse`: im Hellmodus sind beide Töne identisch
- * gefüllt, das Gewicht war also vertauscht und nichts unterscheidbar.
- *
+ * Spiegelt `content-status.tsx`, derselbe Status muss überall gleich aussehen.
  * Gefüllt heißt „das musst du sehen", umrandet „das ist nur der Stand".
  */
 const statusTones: Record<ContentStatus, TagTone> = {
@@ -94,8 +90,6 @@ const registrationStatusTones: Record<RegistrationStatus, TagTone> = {
   WAITLIST: "orange",
   CANCELLED: "cancelled",
 };
-
-// Dashboard access is now controlled by permissions
 
 export default function CourseDetailPage() {
   const router = useRouter();
@@ -449,9 +443,8 @@ export default function CourseDetailPage() {
         { label: course.title },
       ]}
       actions={
-        // `w-full sm:w-auto`: Nur über die volle Breite kann `ml-auto` das
-        // „…“-Menü auf dem Telefon an den rechten Rand schieben — sein Panel
-        // ist rechts verankert.
+        // `w-full sm:w-auto`: Nur so schiebt `ml-auto` das rechts verankerte
+        // „…“-Menü auf dem Telefon an den Rand.
         <div className="flex w-full flex-wrap gap-2 sm:w-auto">
           <CourseInvoicesButton courseId={courseId} />
           {canEdit && (
@@ -475,9 +468,8 @@ export default function CourseDetailPage() {
               Löschen
             </button>
           )}
-          {/* Auf dem Telefon steht der Export im „…“-Menü (siehe
-              EntryExportButton); ab sm als Knopf vor „Löschen“, damit die
-              zerstörerische Aktion am Ende der Reihe bleibt. */}
+          {/* Mobil steht der Export im „…“-Menü; ab sm hier, damit
+              „Löschen“ am Ende der Reihe bleibt. */}
           {entryExport.canExport && (
             <DashboardOverflowMenu
               className="ml-auto sm:hidden"
@@ -488,7 +480,6 @@ export default function CourseDetailPage() {
       }
       maxWidth="7xl"
     >
-      {/* Status Badges */}
       <div className="mb-5 flex flex-wrap items-center gap-2">
         <Tag tone={statusTones[course.status]}>
           {statusLabels[course.status]}
@@ -552,7 +543,6 @@ export default function CourseDetailPage() {
         </div>
       </section>
 
-      {/* Tabs */}
       {canViewParticipants && !isExternal && (
         <div className="dark:border-night-rule border-rule mb-6 border-b">
           <nav className="-mb-px flex gap-4">
@@ -580,7 +570,6 @@ export default function CourseDetailPage() {
         </div>
       )}
 
-      {/* Details Tab */}
       {activeTab === "details" && (
         <DashboardFormSectionLayout
           className="lg:grid lg:grid-cols-[minmax(0,1fr)_10.5rem] lg:items-start lg:gap-10 lg:pt-4 xl:gap-14"
@@ -588,7 +577,6 @@ export default function CourseDetailPage() {
           railItems={detailShortlinks}
         >
           <div className="space-y-0">
-            {/* Review Section - Only for pending courses */}
             {canReview && (
               <section className="border-rule dark:border-night-rule mb-8 border p-6">
                 <h2 className="dark:text-night-text text-ink mb-4 text-lg font-semibold">
@@ -629,7 +617,6 @@ export default function CourseDetailPage() {
               </section>
             )}
 
-            {/* Rejection Notice */}
             {course.status === ContentStatus.REJECTED && course.reviewNotes && (
               <section className="mb-8 border border-red-200 bg-red-50 p-6 dark:border-red-900/50 dark:bg-red-900/20">
                 <h2 className="mb-2 text-lg font-semibold text-red-800 dark:text-red-300">
@@ -670,10 +657,7 @@ export default function CourseDetailPage() {
               )
             )}
 
-            {/* Beschreibung wie auf der öffentlichen Kursseite gesetzt. Vorher
-                wurde der Rohtext an jedem Zeilenumbruch in einen Absatz
-                zerlegt — mit `prose`-Klassen, die ohne das
-                Typography-Plugin nichts bewirkten. */}
+            {/* Beschreibung wie auf der öffentlichen Kursseite gesetzt. */}
             {beschreibungHtml && (
               <section
                 id="course-detail-description"
@@ -689,7 +673,6 @@ export default function CourseDetailPage() {
               </section>
             )}
 
-            {/* Öffentliches Kurs-Team */}
             {((course.collaborators?.length ?? 0) > 0 ||
               (course.guestTeamMembers?.length ?? 0) > 0) && (
               <section
@@ -741,7 +724,6 @@ export default function CourseDetailPage() {
               </section>
             )}
 
-            {/* Prerequisites & What to Bring */}
             {(course.prerequisites || course.whatToBring) && (
               <section
                 id="course-detail-more"
@@ -775,7 +757,6 @@ export default function CourseDetailPage() {
               </section>
             )}
 
-            {/* Custom Fields */}
             {course.customFields && course.customFields.length > 0 && (
               <section
                 id="course-detail-fields"
@@ -843,7 +824,6 @@ export default function CourseDetailPage() {
               </section>
             )}
 
-            {/* Pricing */}
             <section
               id="course-detail-prices"
               className="dashboard-form-scroll-anchor dark:border-night-rule border-rule border-t pt-10"
@@ -893,7 +873,6 @@ export default function CourseDetailPage() {
               )}
             </section>
 
-            {/* Meta Info */}
             <section
               id="course-detail-meta"
               className="dashboard-form-scroll-anchor dark:border-night-rule border-rule border-t pt-10"
@@ -946,10 +925,8 @@ export default function CourseDetailPage() {
         </DashboardFormSectionLayout>
       )}
 
-      {/* Participants Tab */}
       {activeTab === "participants" && canViewParticipants && (
         <div className="space-y-6">
-          {/* Link to full participants page */}
           <div className="flex flex-wrap justify-end gap-2">
             {canMailRegistrants && (
               <Link
@@ -978,7 +955,6 @@ export default function CourseDetailPage() {
             </Link>
           </div>
 
-          {/* Summary */}
           <section className="dark:border-night-rule border-rule border-t pt-10">
             <h2 className="dark:text-night-text text-ink mb-4 text-lg font-semibold">
               Übersicht
@@ -1021,7 +997,6 @@ export default function CourseDetailPage() {
             </div>
           </section>
 
-          {/* Registrations List */}
           <section className="dark:border-night-rule border-rule border-t pt-10">
             <h2 className="dark:text-night-text text-ink mb-4 text-lg font-semibold">
               Anmeldungen
@@ -1041,7 +1016,6 @@ export default function CourseDetailPage() {
                     key={registration.id}
                     className="dark:border-night-rule border-rule border p-4"
                   >
-                    {/* Registration Header */}
                     <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
                       <div>
                         <h3 className="dark:text-night-text text-ink font-medium">
@@ -1079,7 +1053,6 @@ export default function CourseDetailPage() {
                       </div>
                     </div>
 
-                    {/* Participants */}
                     {registration.participants.length > 0 && (
                       <div className="dark:border-night-rule border-rule mt-3 border-t pt-3">
                         <h4 className="text-dark dark:text-night-muted mb-2 text-sm font-medium">
@@ -1120,7 +1093,6 @@ export default function CourseDetailPage() {
                       </div>
                     )}
 
-                    {/* Registration Meta */}
                     <div className="dark:border-night-rule border-rule mt-3 flex items-center justify-between border-t pt-3 text-sm">
                       <span className="text-dark dark:text-night-muted">
                         Angemeldet am {formatBerlin(registration.createdAt)}
@@ -1137,7 +1109,6 @@ export default function CourseDetailPage() {
         </div>
       )}
 
-      {/* Reject Modal */}
       {showRejectModal && (
         <ScrollableModal>
           <ScrollableModalCard maxW="md">
@@ -1181,7 +1152,6 @@ export default function CourseDetailPage() {
         </ScrollableModal>
       )}
 
-      {/* Delete Modal */}
       {showDeleteModal && (
         <ScrollableModal>
           <ScrollableModalCard maxW="md">
@@ -1194,8 +1164,6 @@ export default function CourseDetailPage() {
                 Aktion kann nicht rückgängig gemacht werden. Anmeldungen,
                 Preiskategorien und eigene Felder des Kurses gehen mit.
               </p>
-              {/* Vorher wusste man das erst aus der Fehlermeldung nach dem
-                  Klick. Die Regel gehört vor die Entscheidung. */}
               <p className="text-dark dark:text-night-muted mb-4 text-sm">
                 Ausgestellte Rechnungen bleiben erhalten: Gibt es welche, lässt
                 sich der Kurs nicht löschen — die Belege sind

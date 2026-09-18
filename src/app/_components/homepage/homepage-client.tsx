@@ -8,14 +8,8 @@ import Mitteilungen from "@/app/_components/homepage/mitteilungen";
 import Register from "@/app/_components/homepage/register";
 
 /**
- * Startseite als Programmheft: Titelblatt und „Kommende Termine“ teilen sich
- * den ersten Bildschirm, danach Aktuelles, das Register und die Rückseite.
- *
- * `startDate` comes from the server rather than `new Date()` here: it is part
- * of the events query key, and a client-side timestamp would never match the
- * key the server prefetched under — every visit would refetch and the
- * server-rendered markup would be thrown away. It also serves as "now" for the
- * registration-deadline texts, so server and client render the same words.
+ * `startDate` comes from the server: it is part of the events query key, and a client
+ * timestamp would never match the prefetched key. Also "now" for the deadline texts.
  */
 export default function HomepageClient({ startDate }: { startDate: Date }) {
   const { data: carouselItems, isLoading: isLoadingCarousel } =
@@ -64,8 +58,7 @@ export default function HomepageClient({ startDate }: { startDate: Date }) {
 
       <Register />
 
-      {/* Rückseite des Hefts: volle orange Fläche als Blickfang —
-          vom Eigentümer ausdrücklich so gewünscht. */}
+      {/* Volle orange Fläche: ausdrücklich so gewünscht. */}
       <ClosingCall
         id="mitmachen-heading"
         title="Lust auf Posaunenchor?"

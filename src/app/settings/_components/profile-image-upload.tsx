@@ -114,7 +114,6 @@ export default function ProfileImageUpload({
   return (
     <div className="space-y-4">
       <div className="flex flex-col items-start gap-4 sm:flex-row sm:gap-6">
-        {/* Image Preview */}
         <div className="bg-rule dark:bg-night-rule relative h-32 w-32 shrink-0 overflow-hidden rounded-full">
           {preview ? (
             <Image
@@ -139,7 +138,6 @@ export default function ProfileImageUpload({
           )}
         </div>
 
-        {/* Upload Controls */}
         <div className="w-full flex-1 sm:w-auto">
           <input
             ref={fileInputRef}

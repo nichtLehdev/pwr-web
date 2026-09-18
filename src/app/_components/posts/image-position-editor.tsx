@@ -133,7 +133,6 @@ export default function ImagePositionEditor({
         </ScrollableModalHeader>
 
         <ScrollableModalBody className="p-0">
-          {/* Instructions */}
           <div className="border-rule dark:border-night-rule border-b bg-blue-50 p-4 dark:bg-blue-900/20">
             <p className="text-sm text-blue-800 dark:text-blue-300">
               Klicke oder ziehe auf das Bild, um den Fokuspunkt zu setzen. Der
@@ -142,7 +141,6 @@ export default function ImagePositionEditor({
             </p>
           </div>
 
-          {/* Image Container */}
           <div className="p-6">
             <div
               ref={containerRef}
@@ -173,18 +171,15 @@ export default function ImagePositionEditor({
                 }}
               >
                 <div className="relative">
-                  {/* Crosshair */}
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="h-8 w-0.5 bg-white shadow-lg" />
                     <div className="h-0.5 w-8 bg-white shadow-lg" />
                   </div>
-                  {/* Circle */}
                   <div className="h-12 w-12 rounded-full border-4 border-white shadow-lg" />
                 </div>
               </div>
             </div>
 
-            {/* Position Display */}
             <div className="mt-4 flex items-center justify-center gap-4 text-sm">
               <div className="text-dark dark:text-night-muted">
                 X:{" "}

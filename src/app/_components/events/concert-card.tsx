@@ -6,11 +6,7 @@ import { Calendar, MapPin } from "lucide-react";
 import { eventPath } from "@/lib/slug";
 import { Tag } from "@/app/_components/programmheft/tag";
 
-/**
- * Der Auswahlchor-Überblick rendert auf dem Server, dessen Zeitzone UTC ist.
- * Ohne feste Zone stand hier 15:00, während die Detailseite im Browser 17:00
- * anzeigte — Termine sind immer deutsche Ortszeit.
- */
+/** Feste Zone: rendert auf dem Server (UTC), Termine sind aber immer deutsche Ortszeit. */
 const BERLIN_DATE = new Intl.DateTimeFormat("de-DE", {
   year: "numeric",
   month: "long",

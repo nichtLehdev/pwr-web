@@ -56,7 +56,6 @@ export const materialsRouter = createTRPCRouter({
             ctx.permissionCache,
           );
           if (canUploadDownloads) {
-            // Can see approved + own pending
             where.AND = [
               {
                 OR: [

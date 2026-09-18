@@ -60,10 +60,8 @@ export default function DashboardEnsemblesPage() {
     "ensembles.delete" as PermissionKey,
   ]);
 
-  // Die ganze Liste auf einmal: Ensembles sind eine überschaubare Stammdatei,
-  // und nur so greifen Sortierung und Spaltenfilter über alle Zeilen statt nur
-  // über die gerade sichtbare Seite. Inaktive kommen mit und lassen sich über
-  // den Status-Filter in der Spalte ausblenden.
+  // Die ganze Liste auf einmal (überschaubar), damit Sortierung und Filter über
+  // alle Zeilen greifen. Inaktive blendet der Status-Filter aus.
   const {
     data: ensemblesData,
     isLoading: ensemblesLoading,

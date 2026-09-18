@@ -33,11 +33,7 @@ import {
   type MediaItem,
 } from "./media-shared";
 
-/**
- * Der Formularzustand, wie ihn der Dialog beim Öffnen aus dem Medium zieht.
- * Strings bleiben Strings — die Umwandlung leerer Felder zu `null` passiert
- * erst beim Speichern, damit die Eingabe sich normal bedienen lässt.
- */
+/** Leere Felder werden erst beim Speichern zu `null`, damit die Eingabe normal bedienbar bleibt. */
 type EditForm = {
   name: string;
   alt: string;
@@ -81,16 +77,10 @@ export function MediaEditModal({
   const [error, setError] = useState("");
   const [isCropping, setIsCropping] = useState(false);
 
-  /**
-   * Der Zuschnitt läuft *über* diesem Dialog, nicht an seiner Stelle: „Abbrechen“
-   * im Zuschneide-Fenster führt damit zurück ins Formular, und die bereits
-   * getippten Angaben stehen noch da.
-   */
+  /** Der Zuschnitt läuft *über* diesem Dialog, damit „Abbrechen“ die getippten Angaben behält. */
   const { replace, isBusy: isReplacing } = useReplaceMediaFile(() => {
     setIsCropping(false);
-    // Der Server verwirft den Fokuspunkt beim Ersetzen — er zeigte auf einen
-    // Ausschnitt, den es nicht mehr gibt. Das Formular muss mitziehen, sonst
-    // schriebe „Speichern“ den alten Punkt wieder zurück.
+    // Der Server verwirft den Fokuspunkt beim Ersetzen; sonst schriebe „Speichern“ den alten zurück.
     setForm((current) => ({
       ...current,
       focalPointX: null,
@@ -126,9 +116,7 @@ export function MediaEditModal({
     updateMutation.mutate({
       id: media.id,
       name,
-      // `|| null` statt `|| undefined`: ein geleertes Feld soll die Spalte
-      // leeren. Mit `undefined` ließe Prisma den alten Wert stehen, und der
-      // Dialog meldete eine Änderung, die nie stattgefunden hat.
+      // `|| null`, nicht `|| undefined`: mit `undefined` ließe Prisma den alten Wert stehen.
       alt: form.alt.trim() || null,
       title: form.title.trim() || null,
       caption: form.caption.trim() || null,
@@ -154,9 +142,6 @@ export function MediaEditModal({
         </ScrollableModalHeader>
 
         <ScrollableModalBody>
-          {/* Links das Bild samt Werkzeugen, rechts die Metadaten: das
-              Formular ist der eigentliche Zweck des Dialogs und bekommt die
-              Spalte, die nicht scrollen muss. */}
           <div className="grid gap-6 md:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
             <div className="space-y-3">
               {isImage ? (

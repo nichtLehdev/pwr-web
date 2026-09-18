@@ -1,11 +1,6 @@
 /**
- * Passwortstärke ohne Zusatz-Dependency.
- *
- * Bewusst kein zxcvbn: die Wörterbücher wiegen mehrere hundert Kilobyte im
- * Client-Bundle und die Registrierung ist die erste Seite, die ein neuer Nutzer
- * lädt. Die Heuristik hier ist grob, aber ehrlich — sie belohnt Länge deutlich
- * stärker als Zeichenklassen-Bingo und erkennt die Muster, die Nutzer sonst für
- * "sicher" halten (Tastaturreihen, Jahreszahlen, wiederholte Zeichen).
+ * Bewusst kein zxcvbn: dessen Wörterbücher wiegen mehrere hundert Kilobyte im Bundle
+ * der Registrierung. Die Heuristik belohnt Länge stärker als Zeichenklassen.
  */
 
 export const PASSWORD_MIN_LENGTH = 8;
@@ -71,10 +66,8 @@ const LABELS: Record<PasswordScore, string> = {
 };
 
 /**
- * Bewertet ein Passwort auf einer Skala von 0 (sehr schwach) bis 4 (sehr stark).
- * Ein Passwort unter {@link PASSWORD_MIN_LENGTH} Zeichen kommt nie über 0 —
- * der Balken darf nicht grün werden, wenn das Formular die Eingabe ohnehin
- * ablehnt.
+ * Skala 0–4. Unter {@link PASSWORD_MIN_LENGTH} Zeichen immer 0, damit der Balken nicht
+ * grün wird, wenn das Formular die Eingabe ohnehin ablehnt.
  */
 export function scorePassword(password: string): PasswordStrength {
   if (!password) {

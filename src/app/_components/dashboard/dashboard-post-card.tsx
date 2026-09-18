@@ -65,15 +65,12 @@ export default function DashboardPostCard({
   return (
     // Karte statt Kasten mit Rundung und Schatten — siehe DashboardCourseCard.
     <div className="border-rule dark:border-night-rule bg-paper dark:bg-night relative flex h-full flex-col border p-4 pb-5">
-      {/* Top Row: Status & Pinned */}
       <div className="mb-2.5 flex flex-wrap items-start justify-between gap-x-3 gap-y-1.5">
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1.5">
           <ContentStatusBadge status={status} className="shrink-0" />
 
           {pinned && (
-            // Orange als Hervorhebung: „Gepinnt" stand als gefülltes Etikett
-            // direkt neben „Veröffentlicht" und sah im Hellmodus identisch aus
-            // — zwei schwarze Blöcke nebeneinander, unterscheidbar nur am Wort.
+            // Orange, sonst gleicht „Gepinnt" hell dem gefüllten „Veröffentlicht" daneben.
             <Tag tone="orange" className="gap-1">
               <PinIcon className="h-3 w-3" />
               Gepinnt
@@ -95,21 +92,17 @@ export default function DashboardPostCard({
         </span>
       </div>
 
-      {/* Title */}
       <h3 className="semi-condensed text-ink dark:text-night-text mb-3.5 line-clamp-2 text-base leading-snug font-semibold sm:text-[1.0625rem]">
         {title}
       </h3>
 
-      {/* Excerpt */}
       {excerpt && (
         <p className="text-dark dark:text-night-muted mb-3 line-clamp-2 text-sm leading-snug">
           {excerpt}
         </p>
       )}
 
-      {/* Meta Info */}
       <div className="text-dark dark:text-night-muted mb-3 space-y-1.5 text-sm leading-snug">
-        {/* Published Date */}
         {publishedAt && (
           <div className="flex items-center gap-2">
             <CalendarIcon className={metaIconClass} />
@@ -125,7 +118,6 @@ export default function DashboardPostCard({
           <span>{categoryLabels[category]}</span>
         </div>
 
-        {/* Created By */}
         {createdBy && (
           <div className="flex items-center gap-2">
             <UserIcon className={metaIconClass} />
@@ -138,7 +130,6 @@ export default function DashboardPostCard({
           </div>
         )}
 
-        {/* Reviewer */}
         {reviewer && (
           <div className="flex items-center gap-2">
             <CheckCircleIcon className={metaIconClass} />
@@ -152,7 +143,6 @@ export default function DashboardPostCard({
         )}
       </div>
 
-      {/* Actions */}
       <div className="border-rule dark:border-night-rule mt-auto flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t pt-3.5">
         <Link
           href={`/dashboard/posts/${id}`}

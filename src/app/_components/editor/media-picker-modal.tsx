@@ -17,10 +17,7 @@ import { useToast } from "@/app/_components/ui/toast";
 import { Button, Input, Label } from "@/app/_components/ui";
 import { cn } from "@/lib/utils";
 
-/**
- * Register-Reihe wie im restlichen Dashboard: gefüllte Unterstreichung in
- * Tinte statt Orange — Orange markiert hier Zustände, nicht Navigation.
- */
+/** Unterstreichung in Tinte statt Orange — Orange markiert hier Zustände, nicht Navigation. */
 function tabClass(active: boolean) {
   return cn(
     "semi-condensed border-b-2 px-6 py-3 text-sm font-semibold transition-colors",
@@ -366,7 +363,6 @@ export default function MediaPickerModal({
           </div>
         </ScrollableModalHeader>
 
-        {/* Tabs */}
         <div className="border-rule dark:border-night-rule flex border-b">
           <button
             type="button"
@@ -387,7 +383,6 @@ export default function MediaPickerModal({
         <ScrollableModalBody className="min-h-0 p-4">
           {activeTab === "library" ? (
             <div>
-              {/* Search */}
               <div className="mb-4">
                 <Input
                   type="text"
@@ -398,7 +393,6 @@ export default function MediaPickerModal({
                 />
               </div>
 
-              {/* Media Grid */}
               {isLoading ? (
                 <div className="flex items-center justify-center py-12">
                   <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
@@ -478,10 +472,8 @@ export default function MediaPickerModal({
                         alt={newImageAlt || pendingUpload.name}
                         fill
                         className="object-contain"
-                        // No media DB row exists yet, so the file is
-                        // session-gated — the image optimizer fetches
-                        // without cookies and would 404. Load it directly
-                        // from the browser instead.
+                        // No media row yet, so the file is session-gated; the
+                        // image optimizer fetches without cookies and would 404.
                         unoptimized
                       />
                     </div>
@@ -499,7 +491,6 @@ export default function MediaPickerModal({
                     </div>
                   </div>
 
-                  {/* Metadata – edit before saving to library */}
                   <div className="border-rule dark:border-night-rule border-t pt-6">
                     <p className="text-ink dark:text-night-text mb-4 text-sm font-medium">
                       Metadaten (vor dem Speichern bearbeiten)
@@ -663,7 +654,6 @@ export default function MediaPickerModal({
         </ScrollableModalFooter>
       </ScrollableModalCard>
 
-      {/* Re-crop (real crop) for selected image */}
       {showRecrop && selectedMedia && (
         <ImageCropEditor
           imageUrl={selectedMedia.url}

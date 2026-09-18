@@ -1,9 +1,6 @@
 /**
- * Prefilling a new invoice draft from a course registration.
- *
- * The draft is only a starting point: once created, the invoice owns its own
- * copy of recipient and positions, so an organizer can correct an address or
- * add a line without rewriting the registration behind a participant's back.
+ * Prefills an invoice draft from a registration. The invoice then owns its own copy of
+ * recipient and positions, so edits never rewrite the registration.
  */
 import {
   DOWN_PAYMENT_LINE_DESCRIPTION,
@@ -42,10 +39,7 @@ export interface RegistrationForDraft {
   billingEmail: string | null;
   siblingDiscountApplied: boolean;
   siblingDiscountStatus: SiblingDiscountStatus;
-  /**
-   * Anzahlung. Abgezogen wird nur, was als eingegangen verbucht ist — eine
-   * offene Anzahlung ist Teil des Rechnungsbetrags.
-   */
+  /** Abgezogen wird nur eine als eingegangen verbuchte Anzahlung. */
   downPaymentAmount?: number | null;
   downPaymentStatus?: DownPaymentStatus | null;
   downPaymentPaidAmount?: number | null;
@@ -71,10 +65,6 @@ export interface CourseForDraft {
   }[];
 }
 
-/**
- * Who the invoice is addressed to: the separate billing address when the
- * registrant asked for one, otherwise the registrant themselves.
- */
 export function recipientFromRegistration(
   registration: RegistrationForDraft,
 ): InvoiceRecipient {
@@ -114,14 +104,8 @@ const participantName = (participant: {
 }) => `${participant.firstName} ${participant.lastName}`.trim();
 
 /**
- * One line per price category — the category is the position, the participants
- * booked into it are the sub-line — plus one negative line per distinct sibling
- * discount, and one negative line for a down payment already received.
- *
- * Grouping this way is how an invoice normally reads ("2 × Vollzahler"), and it
- * keeps a course with a dozen participants down to a handful of lines. Uses the
- * same shared discount computation as registration create/update, so the
- * prefilled total matches the total the registrant was quoted.
+ * One line per price category plus negative lines for sibling discounts and a received down
+ * payment; shares the discount computation with registration create/update.
  */
 export function lineItemsFromRegistration(
   registration: RegistrationForDraft,
@@ -133,11 +117,7 @@ export function lineItemsFromRegistration(
   }) =>
     resolveParticipantPriceOption(participant, course.priceOptions)?.price ?? 0;
 
-  // Insertion-ordered, so the categories appear in the order they were booked
-  // rather than in some hash order. Keyed by priceOptionId (falling back to
-  // the raw label for pre-id registrations) rather than by label text alone —
-  // two categories can share a name, and grouping by name would silently
-  // merge them onto one line at whichever price was found first.
+  // Keyed by priceOptionId (label only as fallback): two categories can share a name.
   const byCategory = new Map<
     string,
     { label: string; unitPrice: number; names: string[] }
@@ -192,9 +172,7 @@ export function lineItemsFromRegistration(
       groupNames.set(participant.siblingGroupId, names);
     }
 
-    // Keyed by sibling group *and* amount. Two children of the same family on
-    // the same ticket earn the identical reduction and belong on one line;
-    // a third on a cheaper ticket, or another family entirely, does not.
+    // Keyed by sibling group *and* amount: same family and same reduction share one line.
     const discountLines = new Map<
       string,
       { discount: number; count: number; siblings: string[] }

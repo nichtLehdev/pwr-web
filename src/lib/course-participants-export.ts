@@ -105,20 +105,14 @@ type ExportCourse = {
   }>;
 };
 
-/**
- * Spaltenschlüssel eines Zusatzfelds. Der Präfix trennt es von den festen
- * Spalten — ein Zusatzfeld namens "status" überschrieb sonst den Anmeldestatus.
- */
+/** Präfix, damit ein Zusatzfeld wie "status" keine feste Spalte überschreibt. */
 function customFieldKey(fieldName: string): string {
   return `zusatz:${fieldName}`;
 }
 
 export type CourseParticipantsExportOptions = {
   excludeCancelled?: boolean;
-  /**
-   * Geburtsdatum mitexportieren. Aus: der Kurs-E-Mail an die Organisation
-   * liegt keine Geburtsdatenliste bei, die dort niemand angefordert hat.
-   */
+  /** Aus für die Kurs-E-Mail an die Organisation, die keine Geburtsdaten braucht. */
   includeBirthDate?: boolean;
 };
 
@@ -159,10 +153,9 @@ export function courseParticipantsColumns(
     { header: "Anmelder:in Nachname", key: "anmelder_nachname" },
     { header: "Anmelder:in E-Mail", key: "anmelder_email" },
     { header: "Anmelder:in Telefon", key: "anmelder_telefon" },
-    // Bewusst ohne Summe: eine Anmeldung mit drei Teilnehmenden steht in drei
-    // Zeilen, ihr Gesamtpreis würde dreifach gezählt.
+    // Bewusst ohne Summe: je Teilnehmerzeile wiederholt, würde mehrfach gezählt.
     { header: "Gesamtpreis Anmeldung", key: "gesamtpreis", format: "currency" },
-    // Ebenfalls ohne Summe, aus demselben Grund: je Anmeldung, nicht je Person.
+    // Ebenfalls ohne Summe, aus demselben Grund.
     ...(courseHasDownPaymentColumns(course)
       ? [
           {
@@ -284,11 +277,7 @@ export type CourseRegistrationStats = {
   refundPendingRegistrations: number;
 };
 
-/**
- * Zahlungsdaten einer Anmeldung — seit dem Umzug des Zahlungsstatus an die
- * Rechnung ist das kein Feld der Anmeldung mehr, sondern die Summe ihrer
- * ausgestellten Rechnungen.
- */
+/** Zahlungsdaten einer Anmeldung = Summe ihrer ausgestellten Rechnungen. */
 type ExportInvoice = {
   status: InvoiceStatus;
   totalAmount: number;

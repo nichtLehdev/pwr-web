@@ -16,10 +16,7 @@ export type NotificationPayload = {
   url?: string | null;
 };
 
-/**
- * Create an in-app notification for one user. Fire-and-forget by design —
- * a notification failure must never fail the triggering mutation.
- */
+/** Fire-and-forget: a notification failure must never fail the triggering mutation. */
 export async function createNotification(
   db: Db,
   userId: string,
@@ -41,15 +38,8 @@ export async function createNotification(
 }
 
 /**
- * Resolve the users who effectively hold a permission, for fan-out
- * notifications (e.g. "new post awaiting review" → everyone with
- * posts.approve).
- *
- * Covers: direct user grants, roles that carry the permission themselves,
- * and the implicit-all Administrator/Admin role. Deny overrides are
- * respected. Permissions inherited through role *hierarchy* are not
- * resolved here (acceptable for notification fan-out; the permission
- * middleware stays authoritative for access control).
+ * Users holding a permission, for notification fan-out only: covers direct grants, roles and
+ * the admin role, respects denies, but ignores role hierarchy. Not for access control.
  */
 export async function findUserIdsWithPermission(
   db: Db,
@@ -89,9 +79,7 @@ export async function findUserIdsWithPermission(
   return [...userIds];
 }
 
-/**
- * Notify every user holding a permission — except the actor themselves.
- */
+/** Notify every user holding a permission, except the actor themselves. */
 export async function notifyUsersWithPermission(
   db: Db,
   permissionKey: PermissionKey,

@@ -18,11 +18,8 @@ export interface AnnouncementBannerProps {
   message: string;
   /** Short message for mobile (optional, defaults to message) */
   mobileMessage?: string;
-  /** Visual variant/color scheme */
   variant?: BannerVariant;
-  /** Whether the banner can be dismissed */
   dismissible?: boolean;
-  /** Optional link */
   link?: {
     href: string;
     label: string;
@@ -31,11 +28,7 @@ export interface AnnouncementBannerProps {
   icon?: React.ReactNode;
 }
 
-/**
- * Druckflächen aus dem Programmheft, Schrift immer mit ≥ 4,5:1 (WCAG 1.4.3):
- * Hinweise auf Orange mit Tinte; Warnung und Wartung als Tintenfläche
- * (Nachtdruck: Nachtschrift als Fläche), die Art nennt das Etikett.
- */
+/** Schrift immer mit ≥ 4,5:1 (WCAG 1.4.3); die Art nennt das Etikett. */
 const variantStyles: Record<BannerVariant, string> = {
   info: "bg-primary text-ink",
   warning: "bg-ink text-paper dark:bg-night-text dark:text-night",
@@ -205,11 +198,8 @@ export function AnnouncementBanner({
 }
 
 /**
- * Fragt zur Laufzeit ab, ob dieses Deployment eine Vorab-Umgebung ist.
- *
- * Bewusst nicht als Prop aus dem Root-Layout: /dashboard & Co. werden statisch
- * vorgerendert, dort wäre `APP_ENV` auf den Build-Zeit-Wert eingefroren und das
- * Banner erschiene auch auf der öffentlichen Seite.
+ * Fragt zur Laufzeit, ob dies eine Vorab-Umgebung ist. Kein Prop aus dem
+ * Layout: Statisch vorgerenderte Seiten frieren `APP_ENV` zur Build-Zeit ein.
  */
 function useIsPreRelease() {
   const [isPreRelease, setIsPreRelease] = useState(false);

@@ -18,16 +18,8 @@ interface TitelblattProps {
 }
 
 /**
- * Titelblatt der Startseite: orange Druckfläche mit Leitsatz und der
- * Bildstrecke aus dem Dashboard-Karussell.
- *
- * Auf dem Handy löst sich der Block in zwei Rasterzellen auf (`contents`):
- * Titel oben, dann „Kommende Termine“ (order-2), dann das Foto — so stehen
- * offene Anmeldungen direkt unter dem Titel statt hinter dem Bild.
- *
- * Die Bildstrecke wechselt nur, solange niemand hinsieht oder hineinklickt,
- * lässt sich anhalten und bleibt bei `prefers-reduced-motion` ganz stehen
- * (WCAG 2.2.2).
+ * Titelblatt der Startseite. Auf dem Handy per `contents` aufgelöst, damit „Kommende Termine“
+ * vor dem Foto steht. Die Bildstrecke ist anhaltbar und steht bei `prefers-reduced-motion` (WCAG 2.2.2).
  */
 export default function Titelblatt({
   items,
@@ -131,9 +123,8 @@ export default function Titelblatt({
                         : undefined
                     }
                     priority={i === 0}
-                    // Folgebilder sofort laden: lazy starten sie hinter
-                    // opacity-0 nicht zuverlässig, und der Wechsel zeigte
-                    // dann eine schwarze Fläche. Es sind höchstens fünf.
+                    // Folgebilder eager: lazy laden sie hinter opacity-0 nicht
+                    // zuverlässig, der Wechsel zeigte dann Schwarz.
                     loading={i === 0 ? undefined : "eager"}
                   />
                 </div>

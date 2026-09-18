@@ -7,9 +7,8 @@ import {
 import { resolveMaintenance } from "@/server/maintenance";
 
 /**
- * Wartungsmodus. Heißt `proxy.ts`, weil Next diese Datei damit auf Node
- * ausführt — in der Edge-Runtime lädt Prisma nicht. Ein `export const runtime`
- * lehnt Next hier ab.
+ * Heißt `proxy.ts`, damit Next ihn auf Node ausführt (in Edge lädt Prisma nicht);
+ * `export const runtime` lehnt Next hier ab.
  */
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;

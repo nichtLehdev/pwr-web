@@ -1,8 +1,6 @@
 /**
- * Only allow same-origin path redirects from ?redirect= query params.
- * Anything absolute ("https://evil.example", "//evil.example",
- * "/\evil.example") falls back — otherwise the login flow is an open
- * redirect for phishing links.
+ * Only same-origin paths from ?redirect=; anything absolute falls back, otherwise
+ * the login flow is an open redirect for phishing links.
  */
 export function safeInternalPath(
   value: string | null | undefined,

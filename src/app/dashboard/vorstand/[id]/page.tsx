@@ -151,7 +151,6 @@ export default function VorstandDetailPage() {
       }
       maxWidth="7xl"
     >
-      {/* Avatar and Position Badge */}
       <div className="mb-6 flex items-center gap-4">
         {imageUrl ? (
           <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full">
@@ -179,9 +178,7 @@ export default function VorstandDetailPage() {
         </span>
       </div>
 
-      {/* Details */}
       <div className="space-y-6">
-        {/* Contact Info */}
         <section className="border-rule dark:border-night-rule dark:bg-night-raised bg-paper border p-6">
           <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
             Kontaktinformationen
@@ -215,7 +212,6 @@ export default function VorstandDetailPage() {
           </dl>
         </section>
 
-        {/* Description / Bio */}
         {displayBio && (
           <section className="border-rule dark:border-night-rule dark:bg-night-raised bg-paper border p-6">
             <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
@@ -227,7 +223,6 @@ export default function VorstandDetailPage() {
           </section>
         )}
 
-        {/* Meta Info */}
         <section className="border-rule dark:border-night-rule dark:bg-night-raised bg-paper border p-6">
           <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
             Weitere Informationen
@@ -280,7 +275,6 @@ export default function VorstandDetailPage() {
         </section>
       </div>
 
-      {/* Back Link */}
       <div className="mt-8">
         <Link
           href="/dashboard/vorstand"

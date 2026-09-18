@@ -200,23 +200,19 @@ export default function EditHistoryEventPage() {
         ]}
         maxWidth="7xl"
       >
-        {/* Error */}
         {error && (
           <div className="mb-6 border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
             <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
           </div>
         )}
 
-        {/* Form */}
         <form onSubmit={handleSubmit}>
           <div className="space-y-6">
-            {/* Basic Information */}
             <Card>
               <CardHeader>
                 <CardTitle>Grundinformationen</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Year */}
                 <div>
                   <Label required>Jahr</Label>
                   <Input
@@ -230,7 +226,6 @@ export default function EditHistoryEventPage() {
                   />
                 </div>
 
-                {/* Title */}
                 <div>
                   <Label required>Titel</Label>
                   <Input
@@ -243,7 +238,6 @@ export default function EditHistoryEventPage() {
                   />
                 </div>
 
-                {/* Description */}
                 <div>
                   <Label required>Beschreibung</Label>
                   <Textarea
@@ -256,7 +250,6 @@ export default function EditHistoryEventPage() {
                   />
                 </div>
 
-                {/* Category */}
                 <div>
                   <Label>Kategorie</Label>
                   <Select
@@ -272,7 +265,6 @@ export default function EditHistoryEventPage() {
                   </Select>
                 </div>
 
-                {/* Sort Order */}
                 <div>
                   <Label>Sortierreihenfolge</Label>
                   <Input
@@ -289,7 +281,6 @@ export default function EditHistoryEventPage() {
               </CardContent>
             </Card>
 
-            {/* Image */}
             <Card>
               <CardHeader>
                 <CardTitle>Bild</CardTitle>
@@ -359,7 +350,6 @@ export default function EditHistoryEventPage() {
                   )}
                 </div>
 
-                {/* Image Alt */}
                 {imageUrl && (
                   <div>
                     <Label>Alt-Text für Bild</Label>
@@ -375,7 +365,6 @@ export default function EditHistoryEventPage() {
               </CardContent>
             </Card>
 
-            {/* Actions */}
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
               <Button
                 type="submit"
@@ -394,7 +383,6 @@ export default function EditHistoryEventPage() {
           </div>
         </form>
       </DashboardPage>
-      {/* Media Picker Modal */}
       <MediaPickerModal
         isOpen={showMediaPicker}
         onClose={() => setShowMediaPicker(false)}

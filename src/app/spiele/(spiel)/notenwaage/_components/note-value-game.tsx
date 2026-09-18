@@ -41,21 +41,12 @@ const ROUND_LEN = 10;
 const SUCCESS_ADVANCE_MS = 1600;
 
 /*
- * Maße nach Fensterhöhe statt in festen Pixeln. Gemessen stand der Inhalt bei
- * 1440x1000 in einem 371px hohen Band, darüber und darunter 286/294px Leere.
- * `calc(… dvh - …px)` bildet „Fensterhöhe minus feste Zeilen“ ab: Eine reine
- * dvh-Quote kann das nicht leisten, weil Kopfleiste, Schrittanzeige, Aufgabe
- * und Dock bei 650px Fensterhöhe fast die ganze Zeile füllen, bei 1000px aber
- * nur ein Viertel.
+ * `calc(… dvh - …px)` = „Fensterhöhe minus feste Zeilen“; eine reine dvh-Quote passt nicht,
+ * weil die festen Zeilen bei flachen Fenstern fast alles, bei hohen nur ein Viertel füllen.
  */
 const WAAGE_HOEHE =
   "h-[max(130px,min(calc(40dvh_-_108px),260px))] md:h-[max(110px,min(calc(65.7dvh_-_317px),440px))]";
-/*
- * Die Waage auf dem Setup-Schirm: Sie fällt bei flachen Fenstern auf 0
- * zusammen (bei 650px ergibt die Rechnung einen negativen Wert, `max(0px, …)`
- * macht daraus null) — dort wird jeder Pixel für die Auswahl gebraucht. Erst
- * wenn Platz da ist, tritt sie auf.
- */
+/* Setup-Waage: fällt bei flachen Fenstern über `max(0px, …)` auf 0, dort braucht die Auswahl den Platz. */
 const SETUP_WAAGE =
   "h-[max(0px,min(calc(50dvh_-_440px),200px))] md:h-[max(0px,min(calc(70dvh_-_460px),320px))]";
 const STUFEN_KARTE =
@@ -398,11 +389,7 @@ export function NoteValueGame() {
             schwer sind.
           </p>
         </div>
-        {/*
-          Das Bild des Spiels, ruhig und im Gleichgewicht — vorher stand hier
-          bei 1000px Fensterhöhe nichts als Papier. Rein schmückend, also ohne
-          Statuszeile und für Vorleseprogramme unsichtbar.
-        */}
+        {/* Rein schmückend, daher für Vorleseprogramme unsichtbar. */}
         <div className={cn("shrink-0 overflow-hidden", SETUP_WAAGE)}>
           <ScaleSVG diffUnits={0} decorative />
         </div>
@@ -416,10 +403,7 @@ export function NoteValueGame() {
                   key={id}
                   type="button"
                   onClick={() => selectDifficulty(id)}
-                  // Ohne eigenen Namen las ein Vorleseprogramm Titel und
-                  // Hinweis als ein Wort vor („AnfängerGanze, Halbe, Viertel“).
-                  // Der Name ist jetzt der Titel, der Hinweis die Beschreibung
-                  // — er geht also nicht verloren, steht aber nicht im Namen.
+                  // Eigener Name, sonst liest ein Vorleseprogramm Titel und Hinweis als ein Wort.
                   aria-label={DIFFICULTY_LABELS[id].title}
                   aria-describedby={hintId}
                   aria-pressed={selected}
@@ -456,11 +440,6 @@ export function NoteValueGame() {
           )}
         </div>
 
-        {/*
-          Die Stufe bleibt sonst ein Versprechen ohne Bild: Hier liegen die
-          Notenwerte, mit denen gleich gewogen wird — und sie füllen zugleich
-          den Platz, der bei 1000px Fensterhöhe leer stand.
-        */}
         <section className="flex flex-col gap-2 md:gap-3">
           <h3 className="border-rule dark:border-night-rule text-dark dark:text-night-muted border-b pb-1 text-center text-[11px] font-bold tracking-wide uppercase md:text-xs">
             Diese Werte liegen bereit
@@ -516,11 +495,7 @@ export function NoteValueGame() {
         current={1}
       />
 
-      {/*
-        Der Spielstand gehört in den Status-Platz der Hülle — vorher standen
-        oben zwei Anzeigen nebeneinander (Chip links, Knopf rechts) und die
-        Zeile kostete Höhe, die der Waage fehlte.
-      */}
+      {/* Spielstand im Status-Platz der Hülle, damit keine eigene Zeile Höhe kostet. */}
       <GameBarSlot>
         <p className="text-ink dark:text-night-text text-xs font-bold tabular-nums md:text-sm">
           <span className="sr-only sm:not-sr-only">Runde </span>

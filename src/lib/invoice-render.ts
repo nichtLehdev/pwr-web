@@ -1,12 +1,6 @@
 /**
- * Rendering an {@link InvoiceDocument} to PDF.
- *
- * Split out from the data module so pages that only need the types or the
- * arithmetic do not pull jsPDF and the QR encoder into their bundle. Free of
- * both `window` and `fs`: the exact same code produces the PDF the organizer
- * previews in the browser and the PDF the server freezes on disk when the
- * invoice is published. Anything environment-specific (the logo bytes, where
- * the file goes) is passed in by the caller.
+ * PDF rendering, split out so type-only importers skip jsPDF. Free of `window` and `fs`:
+ * the same code renders the browser preview and the PDF frozen on publish.
  */
 import { jsPDF } from "jspdf";
 import QRCode from "qrcode";
@@ -33,11 +27,7 @@ export interface RenderInvoiceOptions {
   signatureBase64?: string;
 }
 
-/**
- * Signatures arrive as PNG (drawn) or JPEG (uploaded). jsPDF does sniff the
- * data URL itself, so this is not load-bearing — it just stops the addImage
- * call from declaring a format its input contradicts.
- */
+/** PNG (drawn) or JPEG (uploaded); jsPDF sniffs anyway, this keeps the declared format honest. */
 function imageFormat(dataUrl: string): "PNG" | "JPEG" {
   return /^data:image\/jpe?g/i.test(dataUrl) ? "JPEG" : "PNG";
 }
@@ -60,12 +50,7 @@ function drawWatermark(doc: jsPDF, text: string) {
   doc.setTextColor(0);
 }
 
-/**
- * Renders the invoice and returns the raw PDF bytes.
- *
- * Works in the browser and in Node — the caller supplies the logo, so nothing
- * here touches `fetch` or the filesystem.
- */
+/** Works in browser and Node: the caller supplies the logo, nothing here fetches or reads files. */
 export async function renderInvoicePdf(
   invoice: InvoiceDocument,
   options: RenderInvoiceOptions = {},
@@ -81,8 +66,6 @@ export async function renderInvoicePdf(
   const total = invoiceTotal(invoice.lineItems);
   const invoiceNumber = invoice.invoiceNumber ?? "ENTWURF";
   const courseNumber = invoice.course.courseNumber?.trim() ?? "";
-  // A draft has no number yet, so its preview shows the reference built around
-  // the "ENTWURF" placeholder — same shape as the issued document will carry.
   const paymentReference = invoicePaymentReference(invoiceNumber, courseNumber);
 
   const checkPageBreak = (requiredSpace = 20) => {
@@ -118,8 +101,7 @@ export async function renderInvoicePdf(
     y += 10;
   }
 
-  // Sits level with the middle of the logo rather than at the page top, so the
-  // two halves of the letterhead read as one row.
+  // Level with the logo's middle so both halves of the letterhead read as one row.
   doc.setFontSize(18);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(0);
@@ -136,10 +118,7 @@ export async function renderInvoicePdf(
   doc.text(org.contact, margin, y);
   doc.setTextColor(0);
 
-  // Recipient on the left, invoice metadata on the right. The two share one
-  // band so the upper half of the page isn't a tall column of text against an
-  // empty right margin — and it puts number, date and deadline where a reader
-  // (and a bookkeeper's eye) looks for them.
+  // Recipient on the left, invoice metadata on the right, in one band.
   y += 8;
   const bandTop = y;
   const infoLabelX = 112;
@@ -358,9 +337,8 @@ export async function renderInvoicePdf(
   doc.text(splitPayment, margin, y);
   y += splitPayment.length * 5 + 3;
 
-  // Sized to the bank details rather than to the QR: an ordinary invoice has
-  // to fit on one page including the closing, and every millimetre this block
-  // grows is one the greeting loses.
+  // Sized to the bank details, not the QR: an ordinary invoice must fit on one
+  // page including the closing.
   const leftTextTotalHeight = 22;
   const bankBlockHeight = leftTextTotalHeight + 6;
   const qrSize = bankBlockHeight - 4;
@@ -369,8 +347,7 @@ export async function renderInvoicePdf(
   checkPageBreak(bankBlockHeight + 2);
   const bankBlockY = y - 4;
 
-  // No payment QR on a draft or a storno: both would invite a transfer that
-  // must not happen.
+  // No payment QR on a draft or storno: both would invite a wrong transfer.
   let qrDataUrl: string | null = null;
   if (org.iban && invoice.status === "PUBLISHED" && total > 0) {
     try {
@@ -404,9 +381,8 @@ export async function renderInvoicePdf(
     try {
       const qrTop = bankBlockY + (bankBlockHeight - qrSize) / 2;
       const qrX = rightEdge - qrSize - 4;
-      // Deliberately uncaptioned: a QR code inside a "Bankverbindung" box
-      // needs no explaining, and any label either crowds the BIC beside it or
-      // makes the block tall enough to push the sign-off onto a second page.
+      // Deliberately uncaptioned: a label would crowd the BIC or push the
+      // sign-off onto a second page.
       doc.addImage(qrDataUrl, "PNG", qrX, qrTop, qrSize, qrSize);
     } catch {
       // Ignore image errors
@@ -421,8 +397,7 @@ export async function renderInvoicePdf(
   const closingLines = closing
     ? doc.splitTextToSize(closing, pageWidth - 2 * margin)
     : [];
-  // Ask for exactly what the sign-off needs, so it only starts a new page when
-  // it genuinely cannot fit.
+  // Exactly what the sign-off needs, so it only breaks the page when it must.
   checkPageBreak(
     closingLines.length * 5 + 4 + 15 + (options.signatureBase64 ? 22 : 0),
   );

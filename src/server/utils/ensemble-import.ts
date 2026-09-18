@@ -1,15 +1,8 @@
 import type { Prisma } from "~/generated/prisma/client";
 
-/**
- * Pure readers for the ensemble import payload. Nothing here touches the
- * database or the network, so the parsing rules stay unit-testable; the
- * Location lookup that needs both lives in the import route.
- */
+/** Pure readers for the ensemble import payload (no database, no network). */
 
-/**
- * The address block an ensemble may carry instead of a `locationId`, so a
- * sheet of chors can be imported without creating every Probenort by hand.
- */
+/** Address block an ensemble may carry instead of a `locationId`. */
 export type ImportLocation = {
   name?: string | null;
   street?: string | null;

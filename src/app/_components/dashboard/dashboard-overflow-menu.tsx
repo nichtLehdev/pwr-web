@@ -17,12 +17,8 @@ export type DashboardOverflowItem = {
 };
 
 /**
- * “…” menu for header actions that do not fit next to the title on a phone.
- *
- * Usage: keep the primary action visible, mark the remaining buttons
- * `hidden sm:inline-flex`, and repeat those entries here with
- * `className="ml-auto sm:hidden"`. The `ml-auto` matters — the panel is
- * right-anchored, so a left-aligned trigger pushes it off the screen edge.
+ * “…” menu for header actions that don't fit on a phone: repeat `hidden sm:inline-flex` buttons here.
+ * Use `className="ml-auto sm:hidden"`; the panel is right-anchored and needs a right-aligned trigger.
  */
 export function DashboardOverflowMenu({
   items,

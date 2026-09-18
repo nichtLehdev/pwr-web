@@ -56,11 +56,7 @@ type OrgTeamMember = Awaited<
   ReturnType<typeof api.organization.getTeamByContactType>
 >[number];
 
-/**
- * Team-Mitglied als Registerzeile: rundes Foto (einzige Rundung im Heft, wo
- * eines vorliegt), Name, Amt, E-Mail als Textlink, Zuständigkeiten und
- * Social-Links als kleiner Fließtext darunter.
- */
+/** Team-Mitglied als Registerzeile; das runde Foto ist die einzige Rundung im Heft. */
 function TeamMemberRow({ member }: { member: OrgTeamMember }) {
   const responsibilities =
     member.responsibilities &&
@@ -76,8 +72,7 @@ function TeamMemberRow({ member }: { member: OrgTeamMember }) {
   return (
     <li className="border-rule dark:border-night-rule flex items-start gap-4 border-b py-4">
       {member.person.image ? (
-        // Vergrößerbar ohne Lupe, wie in `PersonRow`: bei 56px verdeckte sie
-        // das Gesicht.
+        // Ohne Lupe (`hint={false}`): Bei 56px verdeckte sie das Gesicht.
         <ZoomableImage
           src={member.person.image.url}
           alt={member.person.image.alt || member.person.name || "Profilbild"}
@@ -95,8 +90,6 @@ function TeamMemberRow({ member }: { member: OrgTeamMember }) {
           />
         </ZoomableImage>
       ) : (
-        // Gleiche Form wie das Foto daneben: Ein eckiger Kasten neben einem
-        // runden Bild sind zwei Bildsprachen in derselben Zeile.
         <div className="bg-ink text-paper dark:bg-night-raised dark:text-night-muted flex h-14 w-14 shrink-0 items-center justify-center rounded-full">
           <User className="h-6 w-6" aria-hidden />
         </div>
@@ -166,11 +159,8 @@ export default async function KontaktPage() {
           head={<Heading id="erreichen-heading">So erreichen Sie uns</Heading>}
           bodyClassName="mt-8"
         >
-          {/* Gegenüberliegende Spalten wie im aufgeschlagenen Heft: Beide
-              teilen sich dieselben drei Zeilen (Einstieg, Hinweis, Team), so
-              dass die Abschnitte auf einer Linie stehen. Ohne das rutschten
-              die beiden „Unser Team" auf verschiedene Höhen und die
-              Trennlinie lief mitten hindurch. */}
+          {/* Beide Spalten teilen sich dieselben drei Zeilen (Subgrid), damit die
+              Abschnitte auf einer Linie stehen. */}
           <div className="grid sm:grid-cols-2 sm:grid-rows-[auto_auto_auto]">
             <div className="border-rule dark:border-night-rule grid content-start gap-y-10 border-b pb-12 sm:row-span-3 sm:grid-rows-subgrid sm:border-b-0 sm:pr-10 sm:pb-0 lg:pr-16">
               <div>
@@ -264,8 +254,7 @@ export default async function KontaktPage() {
                       {item}
                     </li>
                   ))}
-                  {/* Ohne flex-wrap: Sonst rutscht der Text in die nächste Zeile
-                    und das Aufzählungsquadrat bleibt allein zurück. */}
+                  {/* Ohne flex-wrap, sonst bleibt das Aufzählungsquadrat allein zurück. */}
                   <li className="border-rule dark:border-night-rule text-ink dark:text-night-text flex gap-3 border-b px-1 py-3 text-lg leading-snug">
                     <span
                       aria-hidden
@@ -273,8 +262,7 @@ export default async function KontaktPage() {
                     />
                     <span>
                       Feedback und Verbesserungsvorschlägen
-                      {/* Feedback page only exists where the GitHub
-                      integration is configured (beta) */}
+                      {/* Feedback page only exists where GitHub is configured (beta). */}
                       {env.GITHUB_TOKEN && env.GITHUB_REPO && (
                         <Link
                           href="/feedback"

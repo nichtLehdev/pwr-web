@@ -8,9 +8,6 @@ const EnsembleMap = dynamic(
     ssr: false,
     loading: () => (
       <div className="mt-4 space-y-2">
-        {/* Eckig und auf Haarlinie: Der Platzhalter soll die Karte vertreten,
-            die danach an derselben Stelle steht — nicht als grauer Kasten mit
-            Rundung aus der alten Gestaltung stehenbleiben. */}
         <div className="border-rule bg-rule/25 dark:border-night-rule dark:bg-night-raised h-[300px] w-full overflow-hidden border">
           <div className="text-dark dark:text-night-muted flex h-full items-center justify-center">
             Karte wird geladen...

@@ -1,8 +1,7 @@
 import type { MetadataRoute } from "next";
 
 /**
- * Web-App-Manifest — macht die Seite installierbar (PWA).
- * `start_url` zeigt auf die Spiele-Übersicht: mobil ist das der Haupt-Einsatzfall;
+ * `start_url` zeigt auf die Spiele (mobil der Haupt-Einsatzfall);
  * `scope: "/"` hält Navigation zum Rest der Seite in der App.
  */
 export default function manifest(): MetadataRoute.Manifest {

@@ -1,20 +1,7 @@
-# =============================================================================
-# Posaunenwerk Docker Compose Configuration
-# =============================================================================
-#
-# Quick Start:
-#   1. Copy .env.example to .env and configure values
-#   2. Update DATABASE_URL in .env to use @posaunenwerk-db:5432
-#   3. Run: docker compose up -d
-#   4. Set CRON_SECRET in .env (required for registration-closed-cron)
-#   5. (Optional) Seed database: docker compose --profile seed run --rm db-seed
-#
-# =============================================================================
+# DATABASE_URL in .env must use @posaunenwerk-db:5432; CRON_SECRET is required.
+# Seed: docker compose --profile seed run --rm db-seed
 
 services:
-  # ===========================================================================
-  # PostgreSQL Database
-  # ===========================================================================
   posaunenwerk-db:
     image: postgres:16-alpine
     container_name: posaunenwerk-db
@@ -38,9 +25,6 @@ services:
       retries: 5
       start_period: 10s
 
-  # ===========================================================================
-  # Database Migration (runs once on startup)
-  # ===========================================================================
   db-migrate:
     build:
       context: .
@@ -61,9 +45,6 @@ services:
       ["node", "node_modules/prisma/build/index.js", "migrate", "deploy"]
     restart: "no"
 
-  # ===========================================================================
-  # Database Seeding (optional, run manually)
-  # ===========================================================================
   db-seed:
     build:
       context: .
@@ -90,9 +71,6 @@ services:
     command: ["node", "node_modules/tsx/dist/cli.mjs", "prisma/seed.ts"]
     restart: "no"
 
-  # ===========================================================================
-  # Database Backup Service (scheduled backups)
-  # ===========================================================================
   db-backup:
     build:
       context: .
@@ -117,9 +95,6 @@ services:
       BACKUP_SCHEDULE: ${BACKUP_SCHEDULE:-0 2 * * *} # Default: 2 AM daily
       BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-30} # Keep backups for 30 days
 
-  # ===========================================================================
-  # Registration-closed e-mails (every 6h, calls app cron API)
-  # ===========================================================================
   registration-closed-cron:
     build:
       context: .
@@ -137,9 +112,6 @@ services:
       APP_INTERNAL_URL: http://app:3000
       REGISTRATION_CLOSED_CRON_SCHEDULE: ${REGISTRATION_CLOSED_CRON_SCHEDULE:-0 */6 * * *}
 
-  # ===========================================================================
-  # Next.js Application
-  # ===========================================================================
   app:
     build:
       context: .
@@ -160,23 +132,19 @@ services:
     expose:
       - "3000"
     volumes:
-      # Mounted outside public/ so file access always goes through the
-      # authorizing /api/uploads route (public/ would be served directly).
+      # Outside public/, so access goes through the authorizing /api/uploads route.
       - uploads_data:/app/uploads
     environment:
-      # Database - override any build-time URL with runtime URL
+      # Overrides the build-time URL
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@posaunenwerk-db:5432/${POSTGRES_DB:-posaunenwerk}
       GITHUB_REPO: ${GITHUB_REPO:-}
       GITHUB_TOKEN: ${GITHUB_TOKEN:-}
 
-      # Application
       NODE_ENV: production
       NEXT_TELEMETRY_DISABLED: 1
 
-      # Public URLs
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
 
-      # Better Auth
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?BETTER_AUTH_SECRET is required}
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
 

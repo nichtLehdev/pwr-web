@@ -268,7 +268,6 @@ export default function DashboardPosaunenwarteEditPage() {
         </div>
       )}
 
-      {/* Form: Posaunenwart-Daten */}
       <form onSubmit={handleSubmitForm} className="space-y-8">
         <PersonDetailsFields
           value={person}
@@ -361,7 +360,6 @@ export default function DashboardPosaunenwarteEditPage() {
         </div>
       </form>
 
-      {/* Bezirke section */}
       <div className="border-rule dark:border-night-rule mt-10 border-t pt-10">
         <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
           Zuständige Bezirke

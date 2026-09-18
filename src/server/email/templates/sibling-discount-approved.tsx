@@ -145,7 +145,6 @@ export function SiblingDiscountApproved({
         Informationen zum Kurs per E-Mail.
       </Text>
 
-      {/* Geteilter Baustein statt eigener Kopie: Beide waren wortgleich. */}
       <ManageRegistrationCta manageUrl={manageUrl} />
 
       <Text style={grundtext}>

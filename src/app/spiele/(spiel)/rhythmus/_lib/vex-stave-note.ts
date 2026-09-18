@@ -14,9 +14,8 @@ function attachAugmentationDots(sn: StaveNote, count: number): void {
 }
 
 /**
- * Build a StaveNote for rhythm events.
- * Pausen: Für ungepunktete Werte nutzen wir VexFlows kombinierte Dauer-Strings (`8r`, `qr`, …).
- * Das ist zuverlässiger als `duration: "8"` + `type: "r"` (Achtelpause hat Stem/Flag-Glyphen).
+ * Ungepunktete Pausen über kombinierte Dauer-Strings (`8r`, `qr`, …): zuverlässiger als
+ * `type: "r"`, weil die Achtelpause Stem/Flag-Glyphen hat.
  */
 export function staveNoteFromRhythmEvent(e: RhythmEvent): StaveNote {
   if (e.isRest) {

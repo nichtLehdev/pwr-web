@@ -55,11 +55,8 @@ import {
 } from "lucide-react";
 
 /**
- * Which filter the funnel in a column header opens.
- *
- * `set` is the AG-Grid-style checkbox list: it offers exactly the values still
- * present after the *other* columns' filters, so the list never suggests a
- * value that would produce an empty result.
+ * Filter behind a column's funnel. `set` lists only values still present after
+ * the *other* columns' filters, so no choice yields an empty result.
  */
 export type DataTableFilterVariant = "text" | "set" | "number" | "date";
 
@@ -69,9 +66,8 @@ export interface DataTableColumnMeta {
   /** Filter UI offered in the header. Omit to fall back to `text`. */
   filterVariant?: DataTableFilterVariant;
   /**
-   * Fixed options for a `set` filter, in the order they should be listed.
-   * Without this the distinct cell values are used — right for free text, wrong
-   * for enums that need a German label.
+   * Fixed `set` options in display order. Without them the distinct cell
+   * values are used, which is wrong for enums that need a German label.
    */
   filterOptions?: { value: string; label: string }[];
   /** Label for the column menu when `header` is not a plain string. */
@@ -85,8 +81,7 @@ export interface DataTableColumnMeta {
 }
 
 /**
- * The feature set every dashboard table shares. Registered once at module
- * scope — v9 stitches features in statically, so re-creating it per render
+ * Shared feature set, created once at module scope: re-creating it per render
  * would rebuild every row model on every keystroke.
  */
 export const dataTableFeatures = tableFeatures({
@@ -156,14 +151,9 @@ function columnLabel<TData extends RowData>(
   return typeof header === "string" ? header : column.id;
 }
 
-/* -------------------------------------------------------------------------- */
-/* Popover                                                                    */
-/* -------------------------------------------------------------------------- */
-
 /**
- * Header menus live in a portal on `position: fixed`. The table scrolls inside
- * `overflow-x-auto`, which would clip a menu anchored in a header cell, and on
- * a narrow viewport the funnel of the last column sits at the very edge.
+ * Header menus portal out on `position: fixed`: the table's `overflow-x-auto`
+ * would clip them, and the last column's funnel sits at the viewport edge.
  */
 function Popover({
   anchor,
@@ -252,10 +242,6 @@ function Popover({
     document.body,
   );
 }
-
-/* -------------------------------------------------------------------------- */
-/* Column filters                                                             */
-/* -------------------------------------------------------------------------- */
 
 // Haarlinie statt 2px: Auf einer Arbeitsfläche mit vielen Feldern wird ein
 // doppelter Tintenrahmen zum Lärm. 2px bleibt den Hauptaktionen vorbehalten.
@@ -483,10 +469,6 @@ function ColumnFilterMenu<TData extends RowData>({
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/* Column visibility                                                          */
-/* -------------------------------------------------------------------------- */
-
 function ColumnVisibilityMenu<TData extends RowData>({
   table,
 }: {
@@ -541,10 +523,6 @@ function ColumnVisibilityMenu<TData extends RowData>({
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/* DataTable                                                                  */
-/* -------------------------------------------------------------------------- */
-
 export interface DataTableProps<TData extends RowData> {
   data: TData[] | undefined;
   columns: DataTableColumn<TData>[];
@@ -575,21 +553,15 @@ export interface DataTableProps<TData extends RowData> {
   /** Hides the row counter and pager, for tables that carry their own. */
   hideFooter?: boolean;
   /**
-   * Stacked card for one row, used below `md` instead of the table.
-   *
-   * A wide table only reaches a phone through horizontal scrolling, and columns
-   * scrolled past the edge are columns nobody reads. Tables with more than a
-   * handful of columns should hand over a card here; sorting, filters and the
-   * pager stay above and below it either way.
+   * Stacked card for one row, used below `md` instead of the table. Wide
+   * tables should provide one; nobody reads columns scrolled past the edge.
    */
   renderMobileRow?: (row: TData) => ReactNode;
   className?: string;
 
   /*
-   * Server-side mode. A table whose rows arrive one page at a time cannot sort
-   * or filter in the browser without silently limiting itself to the current
-   * page, so those slices are handed to the caller, who turns them into query
-   * input. Pass the state, its setter and the matching `manual*` flag together.
+   * Server-side mode: paged rows can't be sorted or filtered in the browser.
+   * Pass the state, its setter and the matching `manual*` flag together.
    */
   sorting?: SortingState;
   onSortingChange?: OnChangeFn<SortingState>;
@@ -644,9 +616,8 @@ export function DataTable<TData extends RowData>({
   const rows = data ?? EMPTY_ROWS;
   const serverSearch = search !== undefined;
 
-  // The search box keeps its own value and pushes it on a timer: re-filtering
-  // a few thousand rows on every keystroke is what makes a table feel slow,
-  // and in server mode every keystroke would otherwise be a request.
+  // Debounced search: filtering on every keystroke is slow, and in server mode
+  // each keystroke would be a request.
   const [searchInput, setSearchInput] = useState(search ?? "");
   const [globalFilter, setGlobalFilter] = useState(search ?? "");
   useEffect(() => {
@@ -680,11 +651,8 @@ export function DataTable<TData extends RowData>({
     getRowId,
     initialState,
     globalFilterFn: "includesString",
-    // Dritter Klick hebt die Sortierung wieder auf. Serverseitig sortierte
-    // Tabellen müssen die leere Sortierung annehmen und auf ihre eigene
-    // Standardordnung zurückfallen — verwirft ihr `onSortingChange` sie
-    // stattdessen, hängt die Spalte auf "absteigend" fest und reagiert auf
-    // keinen weiteren Klick mehr.
+    // Dritter Klick hebt die Sortierung auf. Serverseitige `onSortingChange`
+    // müssen die leere Sortierung annehmen, sonst hängt die Spalte fest.
     enableSortingRemoval: true,
     manualSorting,
     manualFiltering,
@@ -770,8 +738,6 @@ export function DataTable<TData extends RowData>({
         </div>
       )}
 
-      {/* Kein Kasten mit Rundung und Schatten: Die Tabelle öffnet wie im Heft
-          mit einem 2px-Tintenstrich, die Zeilen trennen Haarlinien. */}
       <div className="border-ink dark:border-night-text dark:bg-night bg-paper overflow-hidden border-t-2">
         {renderMobileRow && (
           <div className="md:hidden">

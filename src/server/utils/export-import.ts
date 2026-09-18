@@ -8,10 +8,7 @@ import { createLogger } from "@/server/utils/logger";
 
 const log = createLogger("Export/Import");
 
-/**
- * Collects all unique media files referenced by entities
- * Handles nested structures like events with ensemble.image
- */
+/** Deduplicated media of the entities, including nested ensemble/auswahlChor images. */
 export function collectMediaFromEntities(
   entities: Array<{
     coverImage?: Media | null;
@@ -47,13 +44,9 @@ const PUBLIC_ROOT = resolve(
 );
 
 /**
- * Resolve a stored media path to a file on disk.
- *
- * Managed uploads live under UPLOADS_ROOT — deliberately outside public/, so
- * they are only reachable through the authorization checks in /api/uploads.
- * Every other path is a static asset that ships in public/. Both resolutions
- * are confined to their root, since Media.path is not validated on the
- * media.importMedia route and must not be able to read arbitrary files.
+ * Uploads live outside public/ (only reachable via /api/uploads auth). Both roots
+ * are enforced: Media.path is unvalidated on media.importMedia and must not read
+ * arbitrary files.
  */
 function resolveMediaFsPath(storedPath: string): string | null {
   if (storedPath.startsWith("/api/uploads/")) {
@@ -69,9 +62,6 @@ function resolveMediaFsPath(storedPath: string): string | null {
   return fullPath;
 }
 
-/**
- * Reads a media file from disk
- */
 export async function readMediaFile(media: Media): Promise<Buffer | null> {
   try {
     const filePath = resolveMediaFsPath(media.path);
@@ -97,10 +87,8 @@ export async function readMediaFile(media: Media): Promise<Buffer | null> {
 }
 
 /**
- * Reads an uploaded file by its stored path (e.g. Download.fileUrl).
- *
- * Unlike media, these files have no Media row — the entity only keeps the
- * `/api/uploads/...` URL. External URLs resolve to null and are skipped.
+ * For uploads without a Media row (e.g. Download.fileUrl). External URLs
+ * resolve to null and are skipped.
  */
 export async function readUploadFile(
   storedPath: string,
@@ -123,9 +111,6 @@ export async function readUploadFile(
   }
 }
 
-/**
- * Creates a ZIP file containing JSON data and media files
- */
 export async function createExportZip(
   jsonData: Record<string, unknown>,
   mediaFiles: Media[],
@@ -181,12 +166,8 @@ export async function createExportZip(
 }
 
 /**
- * Builds a safe on-disk filename for a file taken out of an import ZIP.
- *
- * Names inside the archive are untrusted input, so base name and extension are
- * both reduced to a known-safe alphabet: neither may contain the separators
- * that would let a crafted entry escape its target folder. `index` keeps files
- * apart whose names collapse to the same base after sanitizing.
+ * ZIP entry names are untrusted: base name and extension are reduced to a safe
+ * alphabet so no entry can escape its folder. `index` separates collapsed names.
  */
 export function buildImportFilename(
   zipFilename: string,
@@ -212,9 +193,6 @@ export function buildImportFilename(
   };
 }
 
-/**
- * Extracts a ZIP file and returns its contents
- */
 export async function extractImportZip(zipBuffer: Buffer): Promise<{
   jsonData: Record<string, unknown>;
   mediaFiles: Map<string, Buffer>; // filename -> buffer

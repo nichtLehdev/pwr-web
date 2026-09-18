@@ -1,7 +1,5 @@
 #!/bin/sh
-# =============================================================================
-# Registration-closed notification cron (calls app HTTP endpoint)
-# =============================================================================
+# Registration-closed notification cron (calls the app's HTTP endpoint)
 
 set -eu
 

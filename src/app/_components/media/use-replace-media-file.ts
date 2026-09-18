@@ -15,13 +15,8 @@ type UploadResponse = {
 };
 
 /**
- * Zugeschnittenes Bild hochladen und die alte Datei ersetzen.
- *
- * Als Hook, weil der Zuschnitt an zwei Stellen angeboten wird: als eigene
- * Aktion an der Kachel und innerhalb des Bearbeiten-Dialogs. Der Server setzt
- * dabei den Fokuspunkt zurück — er zeigte auf einen Ausschnitt, den es nach dem
- * Zuschneiden nicht mehr gibt. `onReplaced` gibt dem Aufrufer die Gelegenheit,
- * ein offenes Formular nachzuziehen.
+ * Zugeschnittenes Bild hochladen und die alte Datei ersetzen. Der Server setzt dabei den
+ * Fokuspunkt zurück; `onReplaced` lässt ein offenes Formular nachziehen.
  */
 export function useReplaceMediaFile(onReplaced?: () => void) {
   const toast = useToast();

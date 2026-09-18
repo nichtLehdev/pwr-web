@@ -213,9 +213,8 @@ export default function SocialMediaExportModal({
       cacheBust: true,
       skipFonts: true,
       backgroundColor: "#ffffff",
-      // The preview shrinks the template with a CSS transform. html-to-image
-      // clones the node with its inline styles, so without resetting the
-      // transform the template would only cover a corner of the canvas.
+      // html-to-image clones the preview's shrinking transform; without this
+      // reset the template covers only a corner of the canvas.
       style: {
         transform: "none",
         transformOrigin: "top left",
@@ -375,7 +374,6 @@ export default function SocialMediaExportModal({
         maxW="6xl"
         className="relative max-h-[90vh] overflow-hidden"
       >
-        {/* Header */}
         <div className="border-rule dark:border-night-rule bg-rule/25 dark:bg-night-raised flex items-center justify-between border-b px-6 py-4">
           <div>
             <h2 className="condensed text-ink dark:text-night-text text-2xl font-bold">
@@ -494,7 +492,6 @@ export default function SocialMediaExportModal({
           </div>
         </div>
 
-        {/* Content */}
         <div className="flex h-[calc(90vh-200px)] overflow-hidden">
           {/* Sidebar */}
           <div className="border-rule dark:border-night-rule bg-rule/25 dark:bg-night-raised w-64 shrink-0 overflow-y-auto border-r">

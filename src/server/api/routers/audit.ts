@@ -41,8 +41,7 @@ export const auditRouter = createTRPCRouter({
       const [entries, total] = await Promise.all([
         ctx.db.auditLog.findMany({
           where,
-          // Zweites Kriterium, damit das Blättern bei gleichen Werten stabil
-          // bleibt und keine Zeile zweimal auf verschiedenen Seiten auftaucht.
+          // Zweites Kriterium hält das Blättern bei gleichen Werten stabil.
           orderBy:
             input.sortBy === "createdAt"
               ? [{ createdAt: input.sortOrder }]

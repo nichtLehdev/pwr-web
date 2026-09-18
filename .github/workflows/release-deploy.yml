@@ -1,19 +1,5 @@
-# =============================================================================
-# Release & Deploy Workflow
-# =============================================================================
-# Triggers on every published release, INCLUDING pre-releases.
-#
-#   build-and-push:     builds Docker images and pushes them to GHCR with
-#                       semver tags; "latest" is only applied to full releases
-#   deploy-next:        old server (pwr.lehdev.de) via SSH — receives every
-#                       release AND every pre-release (bleeding edge)
-#   deploy-production:  mittwald container stack via deploy-container-action —
-#                       full releases only
-#
-# GitHub environments used: "next" (old server SSH secrets) and
-# "production" (mittwald API token, stack id, app secrets — see deploy/stack.yaml
-# for the full list of values the stack file expects).
-# =============================================================================
+# Runs on every release incl. pre-releases: the old server (env "next") gets all of them,
+# mittwald (env "production", values see deploy/stack.yaml) only full releases.
 
 name: Release & Deploy
 
@@ -21,7 +7,6 @@ on:
   release:
     types: [published]
 
-# Prevent concurrent deployments
 concurrency:
   group: release-deploy
   cancel-in-progress: false
@@ -34,9 +19,6 @@ env:
   CRON_IMAGE_NAME: nichtlehdev/pwr-cron
 
 jobs:
-  # ===========================================================================
-  # Build and Push Docker Images (all releases, including pre-releases)
-  # ===========================================================================
   build-and-push:
     name: Build & Push Docker Image
     runs-on: ubuntu-latest
@@ -46,8 +28,7 @@ jobs:
       packages: write
 
     outputs:
-      # Clean semver version without leading "v" (e.g. 1.4.2 or 1.5.0-rc.1);
-      # used by the deploy jobs to pin the exact image tag.
+      # Semver without leading "v" (e.g. 1.5.0-rc.1); pins the image tag for the deploys.
       version: ${{ steps.meta.outputs.version }}
       image-tag: ${{ steps.meta.outputs.tags }}
       image-digest: ${{ steps.build.outputs.digest }}
@@ -136,9 +117,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # ===========================================================================
-  # Deploy to Old Server (every release and pre-release)
-  # ===========================================================================
   deploy-next:
     name: Deploy to Old Server (next)
     runs-on: ubuntu-latest
@@ -173,34 +151,22 @@ jobs:
           port: ${{ secrets.SERVER_PORT }}
           envs: CR_PAT
           script: |
-            # Navigate to project directory
             cd ${{ secrets.SERVER_PROJECT_PATH }}
 
-            # Pin the exact release version for docker compose interpolation
-            # (pre-releases are never tagged "latest")
+            # Pre-releases are never tagged "latest", so pin the exact version.
             export APP_IMAGE_TAG=${{ needs.build-and-push.outputs.version }}
 
-            # Login to GitHub Container Registry
             echo "${{ secrets.CR_PAT }}" | docker login ghcr.io -u nichtlehdev --password-stdin
 
-            # Pull the release images
             docker pull ghcr.io/nichtlehdev/pwr-web:$APP_IMAGE_TAG
             docker pull ghcr.io/nichtlehdev/pwr-backup:$APP_IMAGE_TAG
             docker pull ghcr.io/nichtlehdev/pwr-cron:$APP_IMAGE_TAG
 
-            # Update the running containers
             docker compose -f docker-compose.prod.yml pull
             docker compose -f docker-compose.prod.yml up -d
 
-            # Cleanup old images.
-            #
-            # This server receives every pre-release, so each deploy leaves
-            # three more tagged images behind — that, not dangling layers, is
-            # what fills the disk. Only our own repositories are touched, and
-            # only tags other than the one just deployed (plus "latest", which
-            # a manual `docker compose up` without APP_IMAGE_TAG falls back
-            # to). Images belonging to anything else on this server are left
-            # alone, which `docker image prune -af` would not do.
+            # Every pre-release leaves three tagged images behind. Remove only our own old tags
+            # ("latest" stays as fallback without APP_IMAGE_TAG); `prune -af` would hit other images.
             echo "Disk before cleanup:"
             docker system df --format 'table {{.Type}}\t{{.Size}}\t{{.Reclaimable}}' || true
 
@@ -213,8 +179,6 @@ jobs:
                 | xargs -r docker rmi 2>/dev/null || true
             done
 
-            # Dangling layers left over from the above, plus stopped
-            # containers' writable layers.
             docker image prune -f
 
             echo "Disk after cleanup:"
@@ -233,7 +197,6 @@ jobs:
             # Wait for container to be healthy
             sleep 10
 
-            # Check if containers are running
             if docker ps | grep -q posaunenwerk-app; then
               echo "✅ App container is running"
             else
@@ -258,9 +221,6 @@ jobs:
               exit 1
             fi
 
-  # ===========================================================================
-  # Deploy to mittwald (full releases only)
-  # ===========================================================================
   deploy-production:
     name: Deploy to mittwald (production)
     runs-on: ubuntu-latest
@@ -279,8 +239,7 @@ jobs:
       - name: Deploy stack to mittwald
         uses: mittwald/deploy-container-action@v1
         env:
-          # Every {{ .Env.* }} placeholder in deploy/stack.yaml must be
-          # defined here (see the stack file header for the full list).
+          # Every {{ .Env.* }} placeholder in deploy/stack.yaml must be defined here.
           RELEASE_VERSION: ${{ needs.build-and-push.outputs.version }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           APP_URL: ${{ vars.APP_URL }}

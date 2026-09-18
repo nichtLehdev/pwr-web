@@ -24,9 +24,8 @@ function p(
 }
 
 /**
- * Griffe-eigene Pools, B-Dur-orientiert wie Bläserschulen beginnen — bewusst
- * unabhängig vom Noten-Lese-Spiel (dessen Lese-Umfänge ergäben z. B. einen
- * Posaunen-Anfänger rund um den 2. Zug statt um B2).
+ * B-Dur-orientiert wie Bläserschulen — bewusst unabhängig vom Noten-Lese-Spiel,
+ * dessen Umfänge etwa einen Posaunen-Anfänger um den 2. Zug statt um B2 ergäben.
  */
 
 /** Posaune (Konzert, Bassschlüssel): Anfänger = B2–F3 in B-Dur. */
@@ -47,11 +46,7 @@ const TROMBONE_INTERMEDIATE: WrittenPitch[] = [
   p("H", 3, -1), // B3 — 1. Zug
 ];
 
-/**
- * Trompete (geschriebene B-Lage; für die C-Stimme wird in `pick-pitch` −2
- * nach Konzert gewandelt → dort B3, C4, D4, Es4, F4 in B-Dur).
- * Anfänger: geschriebenes C4–G4 diatonisch.
- */
+/** Trompete, geschriebene B-Lage (C-Stimme: `pick-pitch` wandelt −2 nach Konzert). Anfänger: C4–G4. */
 const TRUMPET_BEGINNER: WrittenPitch[] = [
   p("C", 4), // C4 — offen
   p("D", 4), // D4 — 1+3
@@ -70,10 +65,7 @@ const TRUMPET_INTERMEDIATE: WrittenPitch[] = [
   p("C", 5), // C5 — offen
 ];
 
-/**
- * Fortgeschritten: kompletter chromatischer Bereich der jeweiligen
- * Grifftabelle in **Anzeige-MIDI** (C-Stimme = Konzert = Stimmton − 2).
- */
+/** Fortgeschritten: chromatischer Bereich der Grifftabelle in Anzeige-MIDI (C-Stimme = Stimmton − 2). */
 export function griffeAdvancedDisplayMidiRange(
   instrument: GriffeInstrumentId,
 ): {
@@ -107,10 +99,8 @@ function sharpEnharmonic(midi: number): WrittenPitch | null {
 }
 
 /**
- * Übliche Schreibweisen eines MIDI-Tons: erst die Flach-Schreibweise
- * (Des, Es, …), bei schwarzen Tasten zusätzlich die Kreuz-Variante.
- * Auswahl geschieht in `pick-pitch` **nach** dem gleichverteilten MIDI-Wurf,
- * damit schwarze Tasten nicht doppelt gewichtet werden.
+ * Flach-Schreibweise, bei schwarzen Tasten zusätzlich Kreuz. `pick-pitch` wählt erst
+ * nach dem MIDI-Wurf, damit schwarze Tasten nicht doppelt gewichtet werden.
  */
 export function spellingsForMidi(midi: number): WrittenPitch[] {
   const flat = midiToWrittenPitch(midi);
@@ -119,8 +109,7 @@ export function spellingsForMidi(midi: number): WrittenPitch[] {
 }
 
 /**
- * Anfänger/Mittel: kleine feste Pools (oben). Fortgeschritten wird in
- * `pick-pitch` über `griffeAdvancedDisplayMidiRange` chromatisch gewürfelt.
+ * Feste Pools für Anfänger/Mittel; Fortgeschritten würfelt `pick-pitch` chromatisch.
  * Tuba ist (noch) nicht auswählbar und bleibt auf dem Noten-Lese-Pool.
  */
 export function griffePitchPool(

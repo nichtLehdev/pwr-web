@@ -22,14 +22,9 @@ import { Checkbox } from "@/app/_components/programmheft/field";
 import { Heading } from "@/app/_components/programmheft/section-head";
 import { Note } from "@/app/_components/programmheft/note";
 
-/** The two places the add buttons appear: above the list and after it. */
 type LibraryAnchor = "top" | "bottom";
 
-/**
- * From this many participants on, the list is long enough that the header
- * group has scrolled away by the time you finish the last one — below that,
- * both groups sit on one screen and the second just reads as a duplicate.
- */
+/** Below this, both action groups fit on one screen and the second reads as a duplicate. */
 const REPEAT_ACTIONS_FROM = 3;
 
 interface Step2ParticipantsProps {
@@ -85,12 +80,8 @@ export function Step2Participants({
   capacityByPriceOption,
 }: Step2ParticipantsProps) {
   /**
-   * Die Preiskategorie, die zu diesem Geburtsdatum passt. Bleibt genau eine
-   * übrig, wird sie gesetzt — sonst bleibt die bisherige stehen und die
-   * Prüfung sagt, dass gewählt werden muss.
-   *
-   * Nicht im Kursteam-Modus: dort ist eine Kategorie außerhalb der
-   * Altersgrenze eine Absicht und kein Versehen, das korrigiert gehört.
+   * Passt genau eine Kategorie zum Geburtsdatum, wird sie gesetzt. Nicht im Kursteam-Modus:
+   * dort ist eine Kategorie außerhalb der Altersgrenze Absicht.
    */
   const priceOptionForBirthDate = (
     birthDate: Date | string | null | undefined,
@@ -112,15 +103,12 @@ export function Step2Participants({
   const [doneAttempted, setDoneAttempted] = useState(false);
   /** Zählt jedes gescheiterte „Fertig“ — der Fokus springt dann ins Feld. */
   const [doneFailures, setDoneFailures] = useState(0);
-  /** Which of the two action groups the library popup belongs to. */
   const [libraryAnchor, setLibraryAnchor] = useState<LibraryAnchor>("top");
 
   const rootRef = useRef<HTMLDivElement>(null);
   /**
-   * Wohin der Fokus nach dem Schließen des Fensters zurückkehrt: zum
-   * auslösenden Knopf, und ist der verschwunden (das „Hinzufügen“ der leeren
-   * Liste), zum gleichwertigen Knopf über der Liste. Vorher landete der Fokus
-   * nach Escape, „Fertig“ oder dem Schließen auf `BODY`.
+   * Fokusziel nach dem Schließen: der auslösende Knopf, und ist der verschwunden
+   * (das „Hinzufügen“ der leeren Liste), der gleichwertige über der Liste.
    */
   const sheetReturn = useRef<{
     element: HTMLElement | null;
@@ -154,9 +142,8 @@ export function Step2Participants({
     returnKey: string = index === null ? "" : participantFocusKey(index),
   ) => {
     if (index !== null) {
-      // Safari fokussiert angeklickte Knöpfe nicht, sondern den nächsten
-      // fokussierbaren Vorfahren (`main`) — nur ein Element aus dieser Liste
-      // taugt als Rückweg, sonst bleibt der Schlüssel.
+      // Safari fokussiert angeklickte Knöpfe nicht, sondern den fokussierbaren Vorfahren
+      // (`main`) — nur ein Element aus dieser Liste taugt als Rückweg.
       const active = document.activeElement;
       sheetReturn.current = {
         element:
@@ -178,9 +165,8 @@ export function Step2Participants({
   };
 
   /**
-   * "Fertig" only closes a participant that is complete. On an incomplete one
-   * it reveals what is missing and stays put — the X, the backdrop and Escape
-   * still leave, so nobody is stuck with a half-filled form.
+   * "Fertig" only closes a complete participant; otherwise it shows what is missing.
+   * X, backdrop and Escape still leave.
    */
   const finishEditing = () => {
     if (editingIndex !== null && validationErrors[editingIndex]) {
@@ -192,11 +178,8 @@ export function Step2Participants({
   };
 
   /**
-   * Vorbelegung für eine neue Person: die erste Kategorie, die für sie noch
-   * frei ist. Vorher war es stur die erste — ohne Warteliste stand eine
-   * ausgebuchte Kategorie dann gesperrt und zugleich gewählt da, mit
-   * Warteliste landete die Anmeldung unbemerkt darauf. Sind alle voll, bleibt
-   * es bei der ersten; die Kennzeichnung sagt dann, was los ist.
+   * Vorbelegung: die erste noch freie Kategorie, damit die Anmeldung nicht unbemerkt
+   * auf der Warteliste landet. Sind alle voll, die erste.
    */
   const defaultPriceOptionId = (): string | undefined => {
     const taken = registrationData.participants.map((p) => p.priceOptionId);
@@ -229,8 +212,7 @@ export function Step2Participants({
         {
           firstName: "",
           lastName: "",
-          // Empty like the other fields — pre-filling "today" instantly
-          // failed validation before the user typed anything.
+          // Empty: pre-filling "today" would fail validation immediately.
           birthDate: "" as any,
           city: "",
           instrument: "",
@@ -430,11 +412,8 @@ export function Step2Participants({
       ? registrationData.participants[editingIndex]
       : undefined;
 
-  // Three labelled buttons need ~376px and a phone card offers ~300, so they
-  // cannot share one row without labels too terse to read. Rather than let
-  // them wrap into a ragged second line, they are laid out as a deliberate
-  // 2-up grid with the primary spanning both — and collapse to a single row
-  // from sm: up, where the width is there.
+  // Three labelled buttons don't fit one row on phones: 2-up grid with the
+  // primary spanning both, a single row from sm: up.
   const ADD_BUTTON_GROUP =
     "grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center";
   const ADD_BUTTON_BASE =
@@ -442,11 +421,7 @@ export function Step2Participants({
   const ADD_BUTTON_SECONDARY =
     "border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night border-2";
 
-  /**
-   * Rendered above and below the list, so adding a tenth person does not mean
-   * scrolling back to the header. `anchor` decides which of the two triggers
-   * the library popup hangs off — they share one open flag.
-   */
+  /** Rendered above and below the list; `anchor` picks which trigger the shared library popup hangs off. */
   const renderActionButtons = (anchor: LibraryAnchor) => (
     <>
       {currentUser && (
@@ -494,13 +469,7 @@ export function Step2Participants({
     </>
   );
 
-  /*
-   * Ohne Preiskategorie kann sich niemand anmelden: Der Server verlangt für
-   * jede Person eine Kategorie (`priceOptionId`). Bisher tat „Hinzufügen“ in
-   * diesem Fall schlicht nichts — die Begründung stand nur in der
-   * Entwicklerkonsole, „Weiter“ blieb gesperrt, und niemand erfuhr, warum.
-   * Betroffen sind im Bestand fünf freigegebene Kurse.
-   */
+  // Ohne Preiskategorie kann sich niemand anmelden: der Server verlangt je Person eine `priceOptionId`.
   if (!course.priceOptions || course.priceOptions.length === 0) {
     return (
       <Note tone="error" title="Anmeldung noch nicht möglich" titleAs="h3">
@@ -514,11 +483,8 @@ export function Step2Participants({
   }
 
   /**
-   * Ausgebucht für die Person im Fenster — die übrigen Personen dieser
-   * Anmeldung in derselben Kategorie zählen mit. Gekennzeichnet wie auf der
-   * Bearbeiten-Seite; gesperrt nur, wo der Server ablehnen würde: ohne
-   * Warteliste. Mit Warteliste kommt die Anmeldung darauf, und das Kursteam
-   * darf überbuchen.
+   * Ausgebucht für die Person im Fenster; die übrigen Personen dieser Anmeldung zählen mit.
+   * Gesperrt nur ohne Warteliste, wo der Server ablehnen würde.
    */
   const priceOptionFull = (optionId: string) =>
     editingIndex !== null &&
@@ -533,9 +499,6 @@ export function Step2Participants({
 
   return (
     <div ref={rootRef} className="flex flex-col">
-      {/* Actions live in the header, like the edit page. They used to sit in a
-          bordered "Weitere Teilnehmer" panel wedged between the description
-          and the list — a box and a heading around what is really one button. */}
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <Heading
@@ -604,10 +567,7 @@ export function Step2Participants({
               />
             ))}
 
-            {/* Same group again once the list is long, so the tenth
-                participant can be followed by an eleventh without scrolling
-                back up. A dashed row rather than a second solid toolbar: it
-                reads as the end of the list. */}
+            {/* Same group again once the list is long; dashed so it reads as the end of the list. */}
             {registrationData.participants.length >= REPEAT_ACTIONS_FROM ? (
               <div
                 className={cn(
@@ -622,7 +582,6 @@ export function Step2Participants({
         )}
       </div>
 
-      {/* Sibling Discount Option */}
       {course.allowSiblingDiscount &&
         registrationData.participants.length > 1 &&
         hasSiblingGroups && (

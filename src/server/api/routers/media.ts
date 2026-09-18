@@ -13,21 +13,12 @@ import { parseMediaTags } from "@/lib/media-tags";
 
 const log = createLogger("Media");
 
-/**
- * Profilbilder liegen zwar in derselben Tabelle, gehören aber der
- * Benutzerverwaltung — die Medienverwaltung blendet sie überall aus, auch in
- * der Statistik. Sonst nennt die Kachel „Gesamt“ eine Zahl, die sich durch
- * Blättern nie erreichen lässt.
- */
+/** Profilbilder gehören der Benutzerverwaltung; die Medienverwaltung blendet sie überall aus, auch in der Statistik. */
 const NON_PROFILE_MEDIA: Prisma.MediaWhereInput = {
   folder: { not: "profiles" },
 };
 
-/**
- * Leere Formularfelder kommen als `null` an und müssen die Spalte auch leeren.
- * `undefined` bedeutet für Prisma „nicht anfassen“ — beides auseinanderzuhalten
- * ist der ganze Zweck der `.nullable()`-Eingaben unten.
- */
+/** Leere Felder kommen als `null` und leeren die Spalte; `undefined` heißt für Prisma „nicht anfassen“. */
 function emptyToNull(
   value: string | null | undefined,
 ): string | null | undefined {
@@ -49,10 +40,7 @@ async function unlinkMediaFile(storedPath: string) {
   }
 }
 
-// Stored url/path values must be exactly what /api/upload produces:
-// /api/uploads/<folder>/<sanitized filename>. Anything else (absolute paths,
-// dot segments, other folders) is rejected — these values are later used to
-// derive filesystem paths for deletion.
+// Exactly what /api/upload produces; these values later derive filesystem paths for deletion.
 const UPLOAD_PATH_PATTERN =
   /^\/api\/uploads\/(profiles|downloads|media)\/[a-zA-Z0-9-_]+\.[a-z0-9]+$/;
 
@@ -104,11 +92,7 @@ export const mediaRouter = createTRPCRouter({
         search: z.string().optional(),
         uploadedById: z.string().optional(),
         includeAll: z.boolean().optional(),
-        /**
-         * Serverseitig, nicht im Browser: eine Seite umfasst nur einen
-         * Ausschnitt, ein Filter über `media` allein würde Treffer auf den
-         * übrigen Seiten verschweigen.
-         */
+        /** Serverseitig, da eine Seite nur einen Ausschnitt umfasst. */
         status: z.array(z.enum(ContentStatus)).optional(),
         /** Schnellfilter der Redaktion: was noch Pflege braucht. */
         missing: z.enum(["alt", "copyright"]).optional(),
@@ -132,11 +116,8 @@ export const mediaRouter = createTRPCRouter({
       );
 
       /**
-       * Jede Bedingung als eigener `AND`-Eintrag statt als Feld auf `where`:
-       * Sichtbarkeit, Suche und die „fehlt noch“-Filter brauchen alle ein
-       * eigenes `OR`, und auf einem gemeinsamen Objekt überschreibt der letzte
-       * Schreibzugriff die vorherigen — genau so ging der Statusfilter früher
-       * gegen die Sichtbarkeitsregel verloren.
+       * Jede Bedingung als eigener `AND`-Eintrag: mehrere brauchen ein eigenes `OR`,
+       * und auf einem gemeinsamen Objekt überschreibt das letzte die vorherigen.
        */
       const and: Prisma.MediaWhereInput[] = [NON_PROFILE_MEDIA];
 
@@ -169,7 +150,6 @@ export const mediaRouter = createTRPCRouter({
         if (canApproveMedia) {
           // Can see all media
         } else if (canUploadMedia) {
-          // Can see approved + own pending
           and.push({
             OR: [
               { status: ContentStatus.APPROVED },
@@ -206,9 +186,7 @@ export const mediaRouter = createTRPCRouter({
       ]);
 
       return {
-        // Tags immer als Array herausgeben, egal ob in der JSON-Spalte ein
-        // Array oder ein alter Komma-String steht — die Ansichten sollen sich
-        // mit dem Unterschied nicht befassen müssen.
+        // Tags immer als Array, auch wenn die JSON-Spalte noch einen alten Komma-String enthält.
         media: media.map((item) => ({
           ...item,
           tags: parseMediaTags(item.tags),
@@ -294,12 +272,7 @@ export const mediaRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string(),
-        /**
-         * Durchweg `.nullable()`: ein geleertes Feld schickt `null` und löscht
-         * die Spalte, ein weggelassenes Feld bleibt `undefined` und damit
-         * unangetastet. Mit `.optional()` allein waren beide Fälle identisch —
-         * das Formular meldete „gespeichert“, und der alte Wert stand noch da.
-         */
+        /** Durchweg `.nullable()`: `null` löscht die Spalte, `undefined` lässt sie unangetastet. */
         name: z.string().min(1).max(255).optional(),
         alt: z.string().max(500).nullable().optional(),
         caption: z.string().max(1000).nullable().optional(),
@@ -437,12 +410,8 @@ export const mediaRouter = createTRPCRouter({
     }),
 
   /**
-   * Wo ein Medium verwendet wird — Grundlage für die Warnung im Löschdialog.
-   *
-   * Zwei Beziehungen stehen auf `onDelete: Cascade`: mit dem Bild verschwindet
-   * das ganze Bläserheft bzw. die Karussell-Folie. Das ist im Dialog nicht
-   * dasselbe wie „ein Beitrag verliert sein Titelbild“ und deshalb als
-   * `cascade` markiert.
+   * Für die Warnung im Löschdialog. Bläserheft und Karussell-Folie stehen auf `onDelete: Cascade`
+   * (verschwinden mit dem Bild) und sind deshalb als `cascade` markiert.
    */
   getUsage: protectedProcedure
     .input(z.object({ id: z.string() }))

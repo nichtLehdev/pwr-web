@@ -31,13 +31,8 @@ export type WaitlistOfferRunResult = {
 };
 
 /**
- * Stündlicher Lauf für Nachrück-Angebote:
- *
- * 1. Abgelaufene Angebote schließen und die Anmeldenden benachrichtigen. Die
- *    Plätze gelten als weitergegeben, gehen aber an niemanden: Seit dem
- *    18.09.2026 rückt nur nach, wer das Kursteam per Knopf nachrücken lässt —
- *    auch hier nicht automatisch.
- * 2. Angebote mit höchstens noch zwei Tagen: das Kursteam einmal erinnern.
+ * Stündlich: abgelaufene Nachrück-Angebote schließen (nachgerückt wird nur per
+ * Knopf des Kursteams, nie automatisch) und bald ablaufende einmal erinnern.
  */
 export async function processWaitlistPromotionOffers(
   now = new Date(),

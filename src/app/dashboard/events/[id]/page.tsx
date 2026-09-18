@@ -48,11 +48,7 @@ const statusLabels: Record<ContentStatus, string> = {
   ARCHIVED: "Archiviert",
 };
 
-// Etikett statt pastelliger Pille: Zustaende sind rechteckige Druckflaechen
-// (siehe Tag-Komponente). Spiegelt die Zuordnung aus content-status.tsx —
-// derselbe Status muss ueberall gleich aussehen. Tag hat inzwischen einen
-// fuenften, umrandeten Ton: Entwurf und Archiviert sind Ruhezustaende ohne
-// Handlungsbedarf und standen bisher so laut gefuellt wie "Veroeffentlicht".
+// Spiegelt die Zuordnung aus content-status.tsx — derselbe Status muss ueberall gleich aussehen.
 const statusTones: Record<ContentStatus, TagTone> = {
   DRAFT: "muted",
   PENDING: "orange",
@@ -66,8 +62,6 @@ const ensembleTypeLabels: Record<EventEnsembleType, string> = {
   ENSEMBLE: "Ensemble",
   CUSTOM: "Benutzerdefiniert",
 };
-
-// Dashboard access is now controlled by permissions
 
 export default function EventDetailPage() {
   const router = useRouter();
@@ -264,9 +258,7 @@ export default function EventDetailPage() {
           { label: event.title },
         ]}
         actions={
-          // `w-full sm:w-auto`: Nur über die volle Breite kann `ml-auto` das
-          // „…“-Menü auf dem Telefon an den rechten Rand schieben — sein Panel
-          // ist rechts verankert.
+          // `w-full`: Nur so schiebt `ml-auto` das „…“-Menü auf dem Telefon an den rechten Rand.
           <div className="flex w-full flex-wrap gap-2 sm:w-auto">
             {canEdit && (
               <Link
@@ -289,9 +281,8 @@ export default function EventDetailPage() {
                 Löschen
               </button>
             )}
-            {/* Auf dem Telefon steht der Export im „…“-Menü (siehe
-                EntryExportButton); ab sm als Knopf vor „Löschen“, damit die
-                zerstörerische Aktion am Ende der Reihe bleibt. */}
+            {/* Auf dem Telefon steht der Export im „…“-Menü; ab sm als Knopf
+                vor „Löschen“, damit die zerstörerische Aktion am Ende bleibt. */}
             {entryExport.canExport && (
               <DashboardOverflowMenu
                 className="ml-auto sm:hidden"
@@ -302,7 +293,6 @@ export default function EventDetailPage() {
         }
         maxWidth="7xl"
       >
-        {/* Status Badge */}
         <div className="mb-5 flex flex-wrap items-center gap-3">
           <Tag tone={statusTones[event.status]} className="shrink-0">
             {statusLabels[event.status]}
@@ -352,7 +342,6 @@ export default function EventDetailPage() {
           </div>
         </section>
 
-        {/* Cancelled Banner */}
         {event.cancelled && (
           <div className="mb-6 bg-red-50 p-4 dark:bg-red-900/20">
             <p className="font-medium text-red-800 dark:text-red-300">
@@ -361,7 +350,6 @@ export default function EventDetailPage() {
           </div>
         )}
 
-        {/* Review Section (for reviewers with pending events) */}
         {canReview && (
           <section className="border-rule dark:border-night-rule mb-8 border-2 p-6">
             <h2 className="text-ink dark:text-night-text mb-4 text-lg font-semibold">
@@ -404,7 +392,6 @@ export default function EventDetailPage() {
           </section>
         )}
 
-        {/* Review Notes (if exists) */}
         {event.reviewNotes && event.status !== ContentStatus.PENDING && (
           <section className="border-rule dark:border-night-rule border-t pt-10">
             <h2 className="text-ink dark:text-night-text mb-3 text-lg font-semibold">
@@ -422,14 +409,12 @@ export default function EventDetailPage() {
           </section>
         )}
 
-        {/* Event Details */}
         <DashboardFormSectionLayout
           className="lg:grid lg:grid-cols-[minmax(0,1fr)_10.5rem] lg:items-start lg:gap-10 lg:pt-4 xl:gap-14"
           railClassName="dashboard-sticky-shell-top lg:sticky lg:block lg:self-start"
           railItems={detailShortlinks}
         >
           <div className="space-y-0">
-            {/* Cover Image */}
             {event.coverImage && (
               <section className="border-rule dark:border-night-rule mb-10 overflow-hidden border">
                 <div className="relative aspect-video w-full">
@@ -443,7 +428,6 @@ export default function EventDetailPage() {
               </section>
             )}
 
-            {/* Downloads */}
             {event.downloads && event.downloads.length > 0 && (
               <section
                 id="event-detail-downloads"
@@ -488,7 +472,6 @@ export default function EventDetailPage() {
               </section>
             )}
 
-            {/* Basic Info */}
             <section
               id="event-detail-info"
               className="dashboard-form-scroll-anchor border-rule dark:border-night-rule border-t pt-10"
@@ -534,10 +517,7 @@ export default function EventDetailPage() {
               </dl>
             </section>
 
-            {/* Beschreibung wie auf der öffentlichen Seite gesetzt: dieselbe
-                Markdown-Quelle, dieselbe Filterung, dasselbe Stylesheet. Vorher
-                stand hier der Rohtext, Auszeichnung wäre also als Markdown
-                sichtbar geworden. */}
+            {/* Wie auf der öffentlichen Seite: dieselbe Markdown-Quelle, Filterung und Stylesheet. */}
             {beschreibungHtml && (
               <section
                 id="event-detail-description"
@@ -553,7 +533,6 @@ export default function EventDetailPage() {
               </section>
             )}
 
-            {/* Location */}
             {event.location && (
               <section
                 id="event-detail-location"
@@ -586,7 +565,6 @@ export default function EventDetailPage() {
               </section>
             )}
 
-            {/* Performing Ensemble */}
             {event.performingEnsembleType && (
               <section
                 id="event-detail-ensemble"
@@ -628,7 +606,6 @@ export default function EventDetailPage() {
               </section>
             )}
 
-            {/* Participation */}
             {event.openToParticipants && (
               <section
                 id="event-detail-participation"
@@ -644,7 +621,6 @@ export default function EventDetailPage() {
               </section>
             )}
 
-            {/* Pricing */}
             <section
               id="event-detail-pricing"
               className="dashboard-form-scroll-anchor border-rule dark:border-night-rule border-t pt-10"
@@ -693,7 +669,6 @@ export default function EventDetailPage() {
               </div>
             </section>
 
-            {/* Meta Info */}
             <section
               id="event-detail-meta"
               className="dashboard-form-scroll-anchor border-rule dark:border-night-rule border-t pt-10"
@@ -763,7 +738,6 @@ export default function EventDetailPage() {
           </div>
         </DashboardFormSectionLayout>
 
-        {/* Back Link */}
         <div className="mt-8">
           <Link
             href="/dashboard/events"
@@ -775,7 +749,6 @@ export default function EventDetailPage() {
         </div>
       </DashboardPage>
 
-      {/* Reject Modal */}
       {showRejectModal && (
         <ScrollableModal>
           <ScrollableModalCard maxW="md">
@@ -820,7 +793,6 @@ export default function EventDetailPage() {
         </ScrollableModal>
       )}
 
-      {/* Delete Modal */}
       {showDeleteModal && (
         <ScrollableModal>
           <ScrollableModalCard maxW="md">

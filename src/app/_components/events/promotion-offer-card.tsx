@@ -18,10 +18,7 @@ import type { ShortageCourse } from "./course-registration-form/seat-shortage-no
 import { Note } from "@/app/_components/programmheft/note";
 import { formatBerlin } from "@/lib/berlin-time";
 
-/**
- * Schaltflächen-Stimmen des Programmhefts, wie auf der Anmeldungsseite, die
- * diese Karte trägt (`registrations/[id]/page.tsx`).
- */
+/** Wie auf der Anmeldungsseite, die diese Karte trägt (`registrations/[id]/page.tsx`). */
 const BTN_BASE =
   "semi-condensed inline-flex min-h-12 items-center justify-center gap-2 px-6 text-base font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60";
 const BTN_PRIMARY = `bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-primary dark:text-ink dark:hover:bg-paper ${BTN_BASE}`;
@@ -42,10 +39,8 @@ interface PromotionOfferCardProps {
 }
 
 /**
- * Nachrück-Angebot auf der Detailseite: Es sind Plätze frei, aber nicht für
- * alle. Die Anmeldenden wählen, wer nachrückt — oder lehnen ab, dann behält
- * die Anmeldung ihren Platz, und das Kursteam kann die Plätze den Nächsten
- * anbieten (automatisch rückt seit dem 18.09.2026 niemand mehr nach).
+ * Nachrück-Angebot, wenn Plätze frei sind, aber nicht für alle: die Anmeldenden wählen, wer
+ * nachrückt, oder lehnen ab — dann behält die Anmeldung ihren Platz.
  */
 export function PromotionOfferCard({
   registrationId,
@@ -103,8 +98,6 @@ export function PromotionOfferCard({
 
   return (
     <div className="space-y-6">
-      {/* Die Frist ist der Handlungsbedarf — sie steht auf der orangen Fläche,
-          die Auswahl darunter auf Papier wie im Anmeldeformular. */}
       <Note tone="important" title="Plätze frei geworden" titleAs="h2">
         <p>
           Bis <strong>{formatDateTime(offer.expiresAt)} Uhr</strong> kannst du

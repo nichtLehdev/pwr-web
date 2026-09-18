@@ -1,15 +1,6 @@
 import { db } from "@/server/db";
 import type { PermissionKey } from "@/lib/permissions";
 
-/**
- * Get all permissions for a role, including inherited permissions from parent roles
- *
- * This function traverses the role hierarchy and collects all permissions
- * from the role itself and all its parent roles.
- *
- * @param roleId - Role ID to get permissions for
- * @returns Set of permission keys (including inherited ones)
- */
 export async function getRolePermissionsIncludingInherited(
   roleId: string,
 ): Promise<Set<PermissionKey>> {
@@ -33,12 +24,10 @@ export async function getRolePermissionsIncludingInherited(
 
     if (!role) return;
 
-    // First, collect permissions from parent role (if exists)
     if (role.parentRoleId) {
       await collectPermissions(role.parentRoleId);
     }
 
-    // Then, add permissions from this role
     role.permissions.forEach((rp) => {
       permissions.add(rp.permissionKey as PermissionKey);
     });
@@ -48,13 +37,6 @@ export async function getRolePermissionsIncludingInherited(
   return permissions;
 }
 
-/**
- * Get all permission keys for a role, including inherited permissions
- * (This is now just an alias for getRolePermissionsIncludingInherited)
- *
- * @param roleId - Role ID to get permission keys for
- * @returns Array of permission keys
- */
 export async function getRolePermissionKeysIncludingInherited(
   roleId: string,
 ): Promise<string[]> {
@@ -62,18 +44,10 @@ export async function getRolePermissionKeysIncludingInherited(
   return Array.from(permissionKeys);
 }
 
-/**
- * Check if a role hierarchy would create a circular reference
- *
- * @param roleId - Role ID to check
- * @param potentialParentId - Potential parent role ID
- * @returns true if adding this parent would create a cycle
- */
 export async function wouldCreateCircularReference(
   roleId: string,
   potentialParentId: string,
 ): Promise<boolean> {
-  // If setting parent to self, it's a cycle
   if (roleId === potentialParentId) {
     return true;
   }
@@ -83,12 +57,12 @@ export async function wouldCreateCircularReference(
 
   async function checkDescendants(currentRoleId: string): Promise<boolean> {
     if (visited.has(currentRoleId)) {
-      return false; // Already checked this branch
+      return false;
     }
     visited.add(currentRoleId);
 
     if (currentRoleId === roleId) {
-      return true; // Found a cycle
+      return true;
     }
 
     const role = await db.role.findUnique({
@@ -104,7 +78,6 @@ export async function wouldCreateCircularReference(
 
     if (!role) return false;
 
-    // Check all child roles recursively
     for (const child of role.childRoles) {
       if (await checkDescendants(child.id)) {
         return true;

@@ -14,30 +14,17 @@ export interface PublicPageProps {
   heroTitle?: string;
   /** Förderverein-Seiten sprechen mit blauem Satzstrich. */
   tone?: "default" | "foerderverein";
-  /** Brotkrumen, z. B. Start, Über uns, aktuelle Seite. */
   breadcrumbs: PublicPageBreadcrumb[];
   /** Leitsatz oder Vorspann neben dem Titel. */
   description?: ReactNode;
-  /**
-   * `compact`: kleinerer Titel und weniger Luft (Detail- und Formularseiten).
-   * Weicht `heroTitle` vom `title` ab, steht `title` als Zusatz unter dem
-   * `<h1>` (z. B. „Anmeldung“ unter dem Kurstitel).
-   */
+  /** `compact`: kleinerer Titel; weicht `heroTitle` ab, steht `title` als Zusatz unter dem `<h1>`. */
   heroSize?: "default" | "compact";
-  /**
-   * `false` für Seiten, die selbst eine klebende Leiste mit dem Seitentitel
-   * mitbringen (Termine, Aktuelles) — sonst stünden zwei Streifen übereinander.
-   */
+  /** `false` für Seiten mit eigener klebender Titelleiste (Termine, Aktuelles). */
   stickyTitle?: boolean;
   children: ReactNode;
 }
 
-/**
- * Hülle der öffentlichen Innenseiten im Programmheft: Seitenkopf auf Papier
- * mit genau einem `<h1>`, darunter die Abschnitte der Seite. Setzt Archivo,
- * Markierung und Fokusring für die ganze Seite — auch für Abschnitte, die
- * noch nicht ins Programmheft übertragen sind.
- */
+/** Hülle der öffentlichen Innenseiten: Seitenkopf mit genau einem `<h1>`, darunter die Abschnitte. */
 export default function PublicPage({
   title,
   heroTitle,
@@ -57,9 +44,7 @@ export default function PublicPage({
   return (
     <div
       className="programm font-programm bg-paper text-ink dark:bg-night dark:text-night-text flex min-h-screen flex-col"
-      // Höhe des Kolumnentitels (h-11 plus Haarlinie). Alles Klebende
-      // (`.sticky-below-nav`) rechnet sie ein — sonst klebt es unter dem
-      // Streifen und die erste Zeile ist verdeckt.
+      // Höhe des Kolumnentitels; `.sticky-below-nav` rechnet sie ein.
       style={
         stickyTitle
           ? ({

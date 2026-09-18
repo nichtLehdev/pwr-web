@@ -19,12 +19,7 @@ interface EventCardProps {
   cancelled?: boolean;
 }
 
-/**
- * Termin als Programmzeile (keine Karte). Nicht mehr im Einsatz seit
- * `/termine` Termine über `ProgrammeRow`/`programme-data.ts` rendert — hier
- * nur für den Fall belassen, dass eine einzelne Zeile ohne den vollen
- * `ProgrammeEntry`-Datensatz gebraucht wird.
- */
+/** Termin als Programmzeile ohne vollen `ProgrammeEntry`; `/termine` nutzt `ProgrammeRow`. */
 export default function EventCard({
   id,
   slug,

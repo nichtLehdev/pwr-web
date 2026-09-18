@@ -14,13 +14,9 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / 1048576).toFixed(1)} MB`;
 }
 
-/**
- * Downloadzeile: eine Wegzeile (volle Zeile, Orange-Füllung bei Hover/Fokus)
- * erweitert um Dateimeta (Typ, Größe, Datum), Auszug und Tags.
- */
+/** Wegzeile, erweitert um Dateimeta (Typ, Größe, Datum), Auszug und Tags. */
 export function DownloadRow({ download }: { download: DownloadItem }) {
-  // Formatkürzel statt Enum-Wert: Ein Flyer steht als „PNG“ da, nicht als
-  // „IMAGE“ — und so kündigt ihn auch der Screenreader-Hinweis an.
+  // Formatkürzel statt Enum-Wert: „PNG“ statt „IMAGE“, auch für den Screenreader.
   const fileType = downloadFormatCode(download);
   const date = formatBerlin(download.createdAt);
 

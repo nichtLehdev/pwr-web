@@ -2,12 +2,7 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { LinkIcon, SmartLink, linkKindFor, type LinkKind } from "./link";
 
-/**
- * Schaltfläche als Link, rechteckig und gedruckt.
- * - `primary` auf Papier: Tinte, Hover Orange; im Nachtdruck Orange, Hover Papier
- * - `primary` auf Orange: Tinte, Hover kehrt um auf Papier
- * - `outline`: 2px-Rahmen, Hover füllt mit Schriftfarbe
- */
+/** Schaltfläche als Link, rechteckig und gedruckt. */
 export type ButtonVariant = "primary" | "outline";
 
 const ON_PAPER: Record<ButtonVariant, string> = {

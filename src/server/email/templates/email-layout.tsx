@@ -13,36 +13,22 @@ import {
 import type { ReactNode } from "react";
 
 /**
- * Gemeinsame Hülle aller E-Mails im Programmheft.
- *
- * Warum hier vieles anders aussieht als auf der Website: E-Mail-Programme
- * verwerfen eingebundene Schriften, kennen kein Flex- oder Rasterlayout und
- * keine CSS-Variablen. Die schmale Archivo — das prägendste Merkmal des Hefts
- * — lässt sich deshalb nicht übertragen. Was trägt, sind die übrigen Mittel:
- * volle Druckfläche in Orange mit Tinte darauf, Haarlinien, Tabellensatz und
- * ruhige Zeilenlänge.
- *
- * Farben stehen als Festwerte, weil die Tokens aus globals.css im Postfach
- * nicht existieren.
+ * Festwerte statt Tokens: E-Mail-Programme kennen keine CSS-Variablen, keine
+ * eingebundenen Schriften und kein Flex-/Rasterlayout.
  */
 export const farben = {
-  /** Tinte — Fließtext und Flächen. */
   ink: "#1c1d1f",
   paper: "#ffffff",
-  /** Druckorange. Darauf steht immer Tinte, nie Papier (Weiß auf Orange: 1,99:1). */
+  /** Darauf steht immer Tinte, nie Papier (Weiß auf Orange: 1,99:1). */
   primary: "#faa619",
-  /** Messing-Tinte: Orange auf hellem Grund ist zu schwach für Text. 5,26:1. */
+  /** Orange auf hellem Grund ist zu schwach für Text. */
   primaryInk: "#a55800",
-  /** Haarlinie. */
   rule: "#d4d4d1",
   /** Schiefer — Meta-Angaben und Fußzeile. */
   muted: "#58595b",
 } as const;
 
-/**
- * Archivo kommt im Postfach nicht an. Die Ersatzkette bleibt bewusst
- * systemnah, damit überall dieselbe Zeile steht statt einer Notschrift.
- */
+/** Archivo kommt im Postfach nicht an; systemnahe Kette statt Notschrift. */
 export const schrift =
   "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif";
 
@@ -70,7 +56,6 @@ export const kleintext = {
   color: farben.muted,
 };
 
-/** Abschnittskopf: fett, Tinte, mit 2px-Strich darunter wie im Heft. */
 export const abschnittskopf = {
   fontFamily: schrift,
   fontSize: "22px",
@@ -80,10 +65,6 @@ export const abschnittskopf = {
   margin: "0 0 12px 0",
 };
 
-/**
- * Hauptschaltfläche: Tinte gefüllt, Papierschrift, eckig. Wie auf der
- * Website — und anders als bisher, wo sie orange mit weißer Schrift war.
- */
 export const knopf = {
   backgroundColor: farben.ink,
   color: farben.paper,
@@ -96,7 +77,6 @@ export const knopf = {
   padding: "14px 28px",
 };
 
-/** Textlink: Messing-Tinte, immer unterstrichen. */
 export const link = {
   color: farben.primaryInk,
   textDecoration: "underline",
@@ -112,28 +92,19 @@ export const ersatzLink = {
   wordBreak: "break-all" as const,
 };
 
-/** Haarlinie zwischen Abschnitten. */
 export const haarlinie = {
   borderTop: `1px solid ${farben.rule}`,
   margin: "28px 0",
 };
 
-/** 2px-Tintenstrich — trennt stärker, etwa über einer Werttabelle. */
 export const tintenstrich = {
   borderTop: `2px solid ${farben.ink}`,
   margin: "28px 0 0 0",
 };
 
 /**
- * Trennlinie als gefüllte Tabellenzelle statt als Rahmen.
- *
- * Outlook für Windows rendert mit der Word-Engine und lässt Rahmen an `<hr>`,
- * `<div>` und `<table>` je nach Fassung fallen — die Linie verschwindet dann
- * ersatzlos. Eine Zelle mit Hintergrundfarbe und fester Höhe zeichnet sie
- * dort zuverlässig. Rahmen an `<td>` (etwa in den Werttabellen) sind davon
- * nicht betroffen und bleiben, wo sie stehen.
- *
- * `stark`: 2px in Tinte, wie der Abschnittsstrich im Heft. Sonst Haarlinie.
+ * Trennlinie als gefüllte Tabellenzelle: Outlook für Windows (Word-Engine) lässt
+ * Rahmen an `<hr>`, `<div>` und `<table>` fallen; Rahmen an `<td>` sind sicher.
  */
 export function Regel({
   stark = false,
@@ -167,13 +138,8 @@ interface EmailLayoutProps {
 }
 
 /**
- * Kopf mit Bildmarke und Schriftzug auf oranger Druckfläche, darunter der
- * Inhalt auf Papier und eine Fußzeile hinter einer Haarlinie.
- *
- * Die Bildmarke liegt als Tinte-Fassung vor: Die ausgelieferte graue Marke
- * verschwimmt auf Orange, die helle wäscht aus. Wird das Bild vom Programm
- * blockiert — was viele standardmäßig tun — bleibt der Schriftzug als Text
- * darunter sichtbar, die Mail verliert also nichts.
+ * Bildmarke in Tinte-Fassung (grau/hell verschwimmt auf Orange). Blockiert das
+ * Programm Bilder, bleibt der Schriftzug als Text sichtbar.
  */
 export function EmailLayout({ preview, children }: EmailLayoutProps) {
   const basis = emailBaseUrl();
@@ -225,7 +191,6 @@ const koerper = {
   padding: "0",
 };
 
-/** Kein Schatten, keine Rundung — das Blatt steht für sich. */
 const behaelter = {
   backgroundColor: farben.paper,
   margin: "0 auto",
@@ -257,8 +222,7 @@ const unterzeile = {
   margin: "0",
 };
 
-// Die Striche über Inhalt und Fußzeile zeichnet `Regel` als Tabellenzelle —
-// ein borderTop an diesen Abschnitten würde in Outlook fehlen.
+// Kein borderTop hier: Die Striche zeichnet `Regel`, sonst fehlen sie in Outlook.
 const inhalt = {
   padding: "32px 24px 8px 24px",
 };

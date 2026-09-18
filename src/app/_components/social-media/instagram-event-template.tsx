@@ -70,9 +70,7 @@ export default function InstagramEventTemplate({
   const eventTime = formatBerlin(event.eventDate, "uhrzeit");
   const eventWeekday = formatBerlin(event.eventDate, "wochentag");
 
-  // Die Vorlage setzt reinen Text in eine Grafik. Vorher entfernte sie nur
-  // spitze Klammern — aus `<u>Wort</u>` wurde damit „uWort/u", und
-  // Markdown-Zeichen standen unverändert im Bild.
+  // Die Grafik braucht reinen Text, ohne HTML-Tags und Markdown-Zeichen.
   const descriptionText = markdownToSingleLine(event.description ?? "");
 
   const performer =
@@ -92,7 +90,6 @@ export default function InstagramEventTemplate({
       className="relative flex h-[1080px] w-[1080px] flex-col overflow-hidden bg-white"
       style={{ fontFamily: "Inter, sans-serif" }}
     >
-      {/* Image Section - larger and more prominent */}
       {imageUrl && imageAlt ? (
         <div className="relative h-[540px] w-full">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -159,7 +156,6 @@ export default function InstagramEventTemplate({
           <div className="absolute top-40 right-40 h-40 w-40 rounded-full bg-white/10" />
           <div className="absolute top-60 left-60 h-24 w-24 rounded-full bg-white/10" />
 
-          {/* Content */}
           <div className="relative z-10 flex h-full flex-col items-center justify-center px-12 text-white">
             {/* Category badge */}
             <div className="mb-8 flex items-center gap-3 rounded-full bg-white/20 px-8 py-4 text-3xl font-bold backdrop-blur-md">
@@ -191,22 +187,18 @@ export default function InstagramEventTemplate({
         </div>
       )}
 
-      {/* Content Section */}
       <div className="flex flex-1 flex-col justify-between bg-white px-10 py-8">
         <div className="space-y-4">
-          {/* Title - much larger */}
           <h1 className="text-dark text-5xl leading-tight font-black">
             {event.title}
           </h1>
 
-          {/* Motto */}
           {event.motto && (
             <p className="text-3xl font-bold italic opacity-80">
               &quot;{event.motto}&quot;
             </p>
           )}
 
-          {/* Performer Info */}
           {performer && (
             <div className="flex items-start gap-4 rounded-2xl bg-linear-to-r from-gray-50 to-white p-5 shadow-sm">
               <div
@@ -227,7 +219,6 @@ export default function InstagramEventTemplate({
             </div>
           )}
 
-          {/* Location */}
           {event.location && (
             <div className="flex items-start gap-4 rounded-2xl bg-linear-to-r from-gray-50 to-white p-5 shadow-sm">
               <div
@@ -254,7 +245,6 @@ export default function InstagramEventTemplate({
             </div>
           )}
 
-          {/* Description Preview */}
           {descriptionText && (
             <div className="rounded-2xl bg-linear-to-r from-gray-50 to-white p-5 shadow-sm">
               <p className="text-dark-light line-clamp-3 text-lg leading-relaxed">

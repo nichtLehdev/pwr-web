@@ -23,16 +23,8 @@ import {
 } from "./import-values";
 
 /**
- * Reine Leseregeln für einen Kurs aus einem Export-ZIP.
- *
- * Getrennt von der Route, weil hier die inhaltlichen Entscheidungen stecken:
- * was zum Kurs gehört und mitwandert, und was am Zielsystem neu entsteht.
- * Alles, was die Datenbank braucht (Bezirk, Standort, Bild, Slug, Kursnummer),
- * setzt die Route davor und reicht es hier hinein.
- *
- * Bewusst draußen bleiben Anmeldungen, Teilnehmende, Rechnungen, Wartelisten
- * und Nachrück-Angebote: Ein Kurs soll sich weitergeben lassen, ohne
- * personenbezogene Daten mitzunehmen.
+ * Leseregeln für einen Kurs aus einem Export-ZIP. Anmeldungen, Rechnungen und
+ * Wartelisten bleiben bewusst draußen: keine personenbezogenen Daten.
  */
 
 export type CoursePriceOptionImport = {
@@ -61,12 +53,8 @@ export type CourseGuestTeamMemberImport = {
 };
 
 /**
- * Preiskategorien eines Kurses.
- *
- * Eine Kategorie ohne Bezeichnung oder ohne lesbaren Preis wird übersprungen:
- * Sie ließe sich im Formular gar nicht anlegen, und im Kurs stünde danach eine
- * Zeile, die niemand zuordnen kann. Der Anzahlungsbetrag wandert mit, wird aber
- * erst in {@link readCourseDownPayment} gegen den Modus des Kurses geprüft.
+ * Kategorien ohne Bezeichnung oder lesbaren Preis werden übersprungen. Den
+ * Anzahlungsbetrag prüft erst {@link readCourseDownPayment}.
  */
 export function readCoursePriceOptions(
   raw: unknown,
@@ -96,11 +84,8 @@ export function readCoursePriceOptions(
 }
 
 /**
- * Zusätzliche Anmeldefelder.
- *
- * Ein Feld mit unbekannter Art wird ausgelassen statt auf TEXT zurückgesetzt:
- * Die Art bestimmt, was das Anmeldeformular zeigt und was es annimmt — ein
- * geratenes Feld führte zu Antworten, die zur Auswertung nicht passen.
+ * Felder unbekannter Art werden ausgelassen statt auf TEXT gesetzt: Die Art
+ * bestimmt, was das Anmeldeformular annimmt.
  */
 export function readCourseCustomFields(
   raw: unknown,
@@ -135,11 +120,7 @@ export function readCourseCustomFields(
   });
 }
 
-/**
- * Das öffentlich genannte Kursteam ohne Zugang zum Dashboard — Teil der
- * Kursseite wie die Leitung eines Termins, deshalb Inhalt und kein Datensatz
- * über eine anmeldende Person.
- */
+/** Öffentlich genanntes Kursteam ohne Dashboard-Zugang: Inhalt der Kursseite, keine Anmeldedaten. */
 export function readCourseGuestTeamMembers(
   raw: unknown,
 ): CourseGuestTeamMemberImport[] {
@@ -190,22 +171,13 @@ export type CourseContentImport = {
 };
 
 /**
- * Die Kursfelder, die ohne Datenbank aus dem Export zu lesen sind.
- *
- * Nicht dabei und bewusst nicht übernommen:
- * - `registrationClosedNotifiedAt` — ein Vermerk, wann die Übersichtsmail nach
- *   Anmeldeschluss verschickt wurde. Mitkopiert hielte er die Mail im
- *   Zielsystem für erledigt, obwohl sie dort nie lief.
- * - `reviewNotes`, `reviewDate`, `reviewerId` — Prüfvermerke einer Freigabe,
- *   die in diesem Bestand nicht stattgefunden hat.
- * - `createdAt`, `updatedAt` — der Kurs entsteht hier gerade neu.
- * - `id`, `createdById` — gehören dem jeweiligen Bestand, nicht dem Inhalt.
+ * Bewusst nicht übernommen: `registrationClosedNotifiedAt` (hielte die
+ * Übersichtsmail im Ziel für erledigt), Prüfvermerke, Zeitstempel und IDs.
  */
 export function readCourseContent(
   raw: Record<string, unknown>,
 ): CourseContentImport {
-  // Ohne Startdatum ließe sich der Kurs nirgends einordnen; das Enddatum darf
-  // fehlen und ist dann der Starttag, wie schon vor dieser Änderung.
+  // Ohne Startdatum ließe sich der Kurs nirgends einordnen.
   const startDate = readDate(raw.startDate) ?? new Date();
   const status = readEnum(raw.status, ContentStatus, ContentStatus.DRAFT);
 
@@ -252,15 +224,8 @@ export type CourseDownPaymentImport = {
 };
 
 /**
- * Anzahlung eines importierten Kurses.
- *
- * Die Anzahlung hängt an der Kursnummer: Sie steht im Verwendungszweck der
- * Überweisung. Kursnummern sind aber global eindeutig, und im Zielbestand kann
- * dieselbe Nummer schon vergeben sein — dann kommt der Kurs ohne Nummer an.
- * Statt eine Anzahlung anzulegen, deren Verwendungszweck ins Leere zeigt, wird
- * sie in diesem Fall weggelassen und die Preiskategorien behalten nur ihren
- * Preis. Geprüft wird mit denselben Hausregeln wie im Kursformular, damit aus
- * einem Import keine Einstellung entsteht, die das Formular später ablehnt.
+ * Die Anzahlung braucht die Kursnummer (Verwendungszweck); ist sie im Ziel schon
+ * vergeben, entfällt die Anzahlung. Geprüft wird mit den Regeln des Kursformulars.
  */
 export function readCourseDownPayment(args: {
   raw: Record<string, unknown>;

@@ -49,23 +49,13 @@ import {
 import { Heading } from "@/app/_components/programmheft/section-head";
 import { Note } from "@/app/_components/programmheft/note";
 
-/**
- * Wie weit feste Leisten oben hineinragen: Kopfleiste samt Banner und der
- * mitlaufende Kolumnentitel. Als `scroll-margin-top` der Sprungziele gesetzt,
- * damit der Browser den Wert aus den CSS-Variablen der Seite ausrechnet.
- */
+/** Höhe der festen Leisten oben; als `scroll-margin-top` gesetzt, damit der Browser die CSS-Variablen auflöst. */
 const FOCUS_TARGET_MARGIN =
   "[&_:is([data-focus-key],h3)]:scroll-mt-[calc(var(--main-padding-top,5rem)+var(--kolumnentitel-hoehe,0px))]";
 
 /**
- * Fokus setzen und das Element nur dann verschieben, wenn es unter den festen
- * Leisten oben oder der klebenden Fußleiste läge. Auf großen Bildschirmen, wo
- * alles schon zu sehen ist, springt beim Schrittwechsel so nichts.
- *
- * Sofort statt weich und auf eine feste Position: Lief noch das weiche
- * Scrollen vom letzten Tab-Schritt, setzte es sich sonst gegen den Sprung
- * durch, und das Ziel landete unter der Kopfleiste. Derselbe Aufruf hält
- * dieses Scrollen auch an, wenn das Ziel gerade schon sichtbar ist.
+ * Fokus setzen und nur scrollen, wenn das Element unter den festen Leisten läge.
+ * Sofort statt weich: ein noch laufendes weiches Scrollen setzte sich sonst gegen den Sprung durch.
  */
 function focusVisibly(
   element: HTMLElement,
@@ -119,12 +109,8 @@ export default function CourseRegistrationForm({
 
   const [currentStep, setCurrentStep] = useState<Step>(1);
   /**
-   * Der letzte Versuch, mit Lücken weiterzugehen: ab dann nennt das Formular
-   * die Lücken am Knopf und markiert die Felder — nur die, die bei diesem
-   * Versuch fehlten (`fields`). Was erst danach dazukommt, etwa die gerade
-   * aufgeklappte Rechnungsadresse, wird nicht sofort rot, sondern beim
-   * nächsten Versuch genannt. `count` hängt die Meldung bei jedem Versuch neu
-   * ein, damit sie auch unverändert wieder vorgelesen wird.
+   * Letzter Versuch, mit Lücken weiterzugehen. Markiert nur die dabei fehlenden `fields`;
+   * `count` hängt die Meldung neu ein, damit sie auch unverändert wieder vorgelesen wird.
    */
   const [attempt, setAttempt] = useState<{
     step: Step;
@@ -191,9 +177,6 @@ export default function CourseRegistrationForm({
     const inv = course.paymentInvoiceAllowed !== false;
     if (cash && !inv) {
       // Lässt der Kurs nur eine Zahlungsweise zu, wird sie hier vorbelegt.
-      // Der setState im Effekt ist bestehendes Verhalten und bleibt unangetastet;
-      // sichtbar wurde er erst, als weiter unten eine react-hooks-Unterdrückung
-      // entfallen konnte.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setRegistrationData((d) =>
         d.paymentMethod === "CASH" ? d : { ...d, paymentMethod: "CASH" },
@@ -210,8 +193,7 @@ export default function CourseRegistrationForm({
     course.paymentInvoiceAllowed,
   ]);
 
-  // Escape/Abbrechen with entered participants (or past step 1) asks first —
-  // it used to silently discard everything, even on the summary step.
+  // Escape/Abbrechen with entered participants (or past step 1) asks first.
   const hasUnsavedWork =
     currentStep > 1 || registrationData.participants.length > 0;
 
@@ -258,7 +240,6 @@ export default function CourseRegistrationForm({
         const fieldErrors: string[] = [];
         const missingFieldKeys: string[] = [];
 
-        // Check required fields
         if (!p.firstName?.trim()) {
           fieldErrors.push("Vorname");
           missingFieldKeys.push("firstName");
@@ -300,7 +281,6 @@ export default function CourseRegistrationForm({
           missingFieldKeys.push("priceOptionId");
         }
 
-        // Check required custom fields
         if (course.customFields) {
           for (const field of course.customFields) {
             if (field.isRequired) {
@@ -319,9 +299,7 @@ export default function CourseRegistrationForm({
           errors[index] = `Fehlende Pflichtfelder: ${fieldErrors.join(", ")}`;
         }
 
-        // Altersgrenze der gewählten Kategorie — zuletzt und nur, wenn sonst
-        // nichts ansteht: ohne Geburtsdatum oder Kategorie gibt es nichts zu
-        // vergleichen, und deren Fehlen ist die nähere Ursache.
+        // Altersgrenze zuletzt: fehlt Geburtsdatum oder Kategorie, ist das die nähere Ursache.
         if (!staffMode && !errors[index] && p.birthDate && p.priceOptionId) {
           const option = course.priceOptions.find(
             (po) => po.id === p.priceOptionId,
@@ -354,7 +332,6 @@ export default function CourseRegistrationForm({
     }
   }, [currentStep, registrationData.participants, course, staffMode]);
 
-  // Validate sibling discount eligibility - compute error message with useMemo
   const siblingDiscountError = useMemo(() => {
     if (
       !registrationData.siblingDiscountApplied ||
@@ -393,10 +370,8 @@ export default function CourseRegistrationForm({
     );
   };
 
-  // Beim Schrittwechsel auf die Überschrift des neuen Schritts: Vorher fiel
-  // der Fokus auf `BODY` (der gedrückte Knopf wurde gesperrt oder
-  // verschwand), und Tastatur wie Vorlesegerät begannen wieder oben auf der
-  // Seite.
+  // Beim Schrittwechsel Fokus auf die neue Überschrift, sonst fällt er auf `BODY`
+  // (der gedrückte Knopf verschwindet) und Vorlesegeräte beginnen oben.
   useEffect(() => {
     if (previousStepRef.current === currentStep) return;
     previousStepRef.current = currentStep;
@@ -430,9 +405,8 @@ export default function CourseRegistrationForm({
     ...seatAvailability,
   });
 
-  // Seats short for what has been entered — the point at which the staff
-  // mutation requires an explicit overbooking consent. The course-is-full
-  // flag covers a free-seat count that was not passed in.
+  // From here the staff mutation requires overbooking consent; `isWaitlist`
+  // covers a free-seat count that was not passed in.
   const staffSeatsShort = isWaitlist || seatShortage !== null;
 
   // Splitting needs a waiting list for the rest and at least one participant
@@ -487,7 +461,6 @@ export default function CourseRegistrationForm({
         ? "WAITLIST"
         : "CONFIRMED";
 
-  // Unless split, the whole registration goes onto the waiting list.
   const expectsWaitlist = splitting
     ? false
     : staffMode
@@ -584,11 +557,7 @@ export default function CourseRegistrationForm({
     setCurrentStep(step);
   };
 
-  /**
-   * Weiter bzw. Absenden. Der Knopf ist nicht mehr gesperrt: mit Lücken nennt
-   * er sie, markiert die Felder und springt ins erste — vorher war er nur
-   * ausgegraut und sagte nicht, was fehlt.
-   */
+  /** Weiter bzw. Absenden; mit Lücken nennt er sie, markiert die Felder und springt ins erste. */
   const advance = (proceed: () => void) => {
     if (currentProblems.length > 0) {
       setAttempt((prev) => ({
@@ -670,9 +639,7 @@ export default function CourseRegistrationForm({
     };
 
     const handlers = {
-      // The status the server assigned, not the form's guess: seats may have
-      // been taken since the page loaded, and it used to report success
-      // although the whole registration had landed on the waiting list.
+      // Use the status the server assigned: seats may have been taken since the page loaded.
       onSuccess: (registration: {
         registrationStatus: string;
         participants: unknown[];
@@ -698,11 +665,8 @@ export default function CourseRegistrationForm({
         onSuccess();
       },
       onError: (error: { message: string }) => {
-        // Surface the real cause (course filled up, deadline passed,
-        // duplicate registration) — a generic "try again" message hides
-        // errors that retrying can never fix. Zod issues arrive as a JSON
-        // array and used to collapse into that same generic text, which named
-        // neither the field nor the reason; they are now named instead.
+        // Surface the real cause (course full, deadline passed, duplicate) — retrying
+        // can't fix those. Zod issues arrive as a JSON array and are named too.
         const message = registrationErrorMessage(error.message);
         setSubmitError(message);
         toast.error(message);
@@ -738,10 +702,7 @@ export default function CourseRegistrationForm({
       return;
     }
 
-    // `splitPayload` gehört auch hierher: Ohne es verwarf der öffentliche
-    // Weg die Auswahl stillschweigend — die Anmeldenden hatten „freie Plätze
-    // nutzen" gewählt und bekamen trotzdem die ganze Gruppe auf die
-    // Warteliste. Nur der Team-Weg reichte die Auswahl weiter.
+    // `splitPayload` auch hier, sonst landet trotz Auswahl die ganze Gruppe auf der Warteliste.
     registrationMutation.mutate(
       { ...payload, ...splitPayload, downPaymentAcknowledged },
       handlers,
@@ -996,8 +957,7 @@ export default function CourseRegistrationForm({
         className="border-ink dark:border-night-text bg-paper/95 dark:bg-night/95 sticky bottom-0 z-20 border-t-2 px-4 py-2.5 pt-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] backdrop-blur-sm sm:py-3"
       >
         <div className="container mx-auto max-w-3xl">
-          {/* Am Knopf, der gerade gedrückt wurde: was noch fehlt. Die Felder
-              selbst tragen ihre Meldung zusätzlich. */}
+          {/* Am gedrückten Knopf: was noch fehlt. */}
           {showProblems ? (
             <p
               key={attempt?.count}

@@ -9,11 +9,7 @@ import {
   type AddressSuggestion,
 } from "./address-autocomplete";
 
-/**
- * Kompaktes "Neuen Ort erstellen"-Formular, das in Kurs-, Termin- und
- * Ensemble-Formularen eingeblendet wird. Enthält Zustand und Mutation, damit
- * die einbettenden Seiten nur noch auf das Ergebnis reagieren müssen.
- */
+/** Eingebettetes "Neuen Ort erstellen"-Formular mit eigenem Zustand und eigener Mutation. */
 
 export type CreatedLocation = {
   id: string;

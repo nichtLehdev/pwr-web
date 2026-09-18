@@ -1,26 +1,10 @@
 /**
- * Harte Zeilenumbrüche aus alten Beschreibungen glätten.
- *
- * Beschreibungen werden seit #311 als Markdown mit `breaks: true` angezeigt,
- * jeder einzelne Umbruch bleibt also sichtbar. Die alten Klartexte wurden im
- * Textfeld aber teils mitten im Satz umbrochen. Diese Regel fügt zwei Zeilen
- * nur zusammen, wenn der Satz erkennbar weiterläuft; gewollte Umbrüche
- * („Leitung: …" / „Zielgruppe: …"), Listen und Absätze bleiben.
- *
- * Sie ist so gebaut, dass sie bei jedem Start laufen darf: Der Editor
- * speichert einen Zeilenumbruch als Markdown-Umbruch mit zwei Leerzeichen am
- * Zeilenende, und solche Zeilen fasst die Regel nie an. Ein zweiter Lauf über
- * dasselbe Ergebnis ändert nichts mehr.
- *
- * Eigene Datei ohne Importe, weil das Laufzeit-Image nur ausdrücklich
- * aufgezählte Dateien aus `src/` enthält (siehe Dockerfile).
+ * Harte Zeilenumbrüche alter Beschreibungen glätten, nur wo der Satz erkennbar weiterläuft.
+ * Idempotent: Markdown-Umbrüche (zwei Leerzeichen) bleiben. Ohne Importe, weil das
+ * Laufzeit-Image nur aufgezählte Dateien aus `src/` enthält (siehe Dockerfile).
  */
 
-/**
- * Wörter, nach denen ein Satz weiterläuft, auch wenn das nächste Wort groß
- * beginnt — im Deutschen sind das die Artikel, Präpositionen, Konjunktionen
- * und Pronomen vor einem Substantiv („nach den \n Sommerferien“).
- */
+/** Wörter, nach denen ein Satz trotz großem Folgewort weiterläuft („nach den \n Sommerferien“). */
 const FUNKTIONSWOERTER = new Set([
   "aber",
   "als",

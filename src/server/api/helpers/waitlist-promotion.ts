@@ -192,15 +192,8 @@ async function closeExpiredOffersIn(
 }
 
 /**
- * Schließt die abgelaufenen Nachrück-Angebote eines Kurses — und tut sonst
- * nichts.
- *
- * Die Plätze, die die Anmeldung jetzt nutzen könnte, gelten als weitergegeben.
- * Früher rückte damit sofort die Nächste nach; seit das Kursteam das
- * Nachrücken selbst auslöst, bleiben die Plätze frei, bis es das tut. Der
- * stündliche Lauf ruft dies auf, `promoteFromWaitlist` vor jedem Durchgang —
- * beide nach derselben Regel. Die Ablauf-Mails verschickt
- * `sendPromotionEmails` mit `{ expired }`.
+ * Schließt nur abgelaufene Angebote; die Plätze bleiben frei, bis das Kursteam nachrücken lässt.
+ * Die Ablauf-Mails verschickt `sendPromotionEmails` mit `{ expired }`.
  */
 export async function closeExpiredPromotionOffers(
   db: Db,
@@ -218,25 +211,10 @@ export async function closeExpiredPromotionOffers(
 }
 
 /**
- * Lässt die Warteliste eines Kurses nachrücken — nur auf Knopfdruck des
- * Kursteams (`registrations.promoteWaitlist`). Stornieren, Löschen, ein
- * Statuswechsel oder ein beantwortetes Angebot lösen es nicht mehr aus: frei
- * werdende Plätze sind oft nur kurz frei (siehe `@/lib/waitlist-offer`).
- * Streng nach Anmeldezeit:
- *
- * - Eine Anmeldung, die ganz passt, wird bestätigt; die Nächste folgt.
- * - Passt nur ein Teil, bekommt sie ein Angebot — die Anmeldenden wählen, wer
- *   nachrückt — und die Warteliste wartet auf die Antwort, höchstens sieben
- *   Tage.
- * - Wer ein Angebot über so viele Plätze schon abgelehnt oder verstreichen
- *   lassen hat, wird übersprungen und behält seinen Platz.
- * - Passt von einer Anmeldung niemand (etwa weil ihre Kategorie voll ist),
- *   hält die Warteliste dort an, damit eine große Familie nicht von kleineren
- *   Gruppen überholt wird.
- *
- * Abgelaufene Angebote werden vorher geschlossen. Läuft in einer eigenen
- * SERIALIZABLE-Transaktion; die Mails gehen nach dem Commit hinaus —
- * `sendPromotionEmails` mit dem Ergebnis aufrufen.
+ * Nur auf Knopfdruck des Kursteams, streng nach Anmeldezeit: wer ganz passt, wird bestätigt; passt
+ * nur ein Teil, gibt es ein Angebot (max. sieben Tage), auf das die Liste wartet; wer ein so großes
+ * Angebot schon abgelehnt hat, wird übersprungen; passt niemand, hält die Liste dort an.
+ * Mails nach dem Commit per `sendPromotionEmails` verschicken.
  */
 export async function promoteFromWaitlist(
   db: Db,

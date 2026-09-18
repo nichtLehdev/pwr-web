@@ -16,14 +16,7 @@ const formatPrice = (price: number) =>
     price,
   );
 
-/**
- * Preisaufteilung und Überweisungsdaten der Anzahlung — geteilt von Bestätigung,
- * Warteliste und Rabatt-Prüfung, damit alle drei Mails dasselbe sagen.
- *
- * Baustein ohne eigene Hülle: läuft innerhalb der EmailLayout der
- * übergeordneten Vorlage mit, deshalb nur ein Fragment und keine eigene
- * Section-Box.
- */
+/** Anzahlungsblock für Bestätigung, Warteliste und Rabatt-Prüfung; Fragment ohne eigene Hülle. */
 export function DownPaymentSection({
   info,
   totalPrice,
@@ -117,10 +110,7 @@ const qr = {
   margin: "12px 0 4px 0",
 };
 
-/**
- * Nur-Text-Fassung — Zeilen zum Einbinden in die Mail der übergeordneten
- * Vorlage (Bestätigung, Warteliste, Rabatt-Prüfung).
- */
+/** Nur-Text-Zeilen zum Einbinden in die übergeordnete Vorlage. */
 export function downPaymentSectionText({
   info,
   totalPrice,
@@ -132,11 +122,7 @@ export function downPaymentSectionText({
   );
   const payNow = info.dueNow && !info.alreadyPaid;
 
-  // textZeile richtet nur bis 18 Zeichen aus — bei den längeren Beschriftungen
-  // hier (Restbetrag, Anzahlung mit Zusatz) reicht das nicht für ein
-  // trennendes Leerzeichen. Diese Zeilen bleiben deshalb Fließtext, wörtlich
-  // wie im HTML; nur die kurzen, einheitlichen Beschriftungen (Empfänger,
-  // IBAN, BIC, Betrag) nutzen die Tabellenausrichtung.
+  // Lange Beschriftungen bleiben Fließtext wie im HTML; nur die kurzen nutzen textZeile.
   const zeilen: string[] = [
     "",
     "ANZAHLUNG",

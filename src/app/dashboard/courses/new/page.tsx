@@ -69,8 +69,6 @@ const NEW_COURSE_NAV_ITEMS: DashboardSectionNavItem[] = [
   { href: "#kurs-form-veroeffentlichung", label: "Veröffentlichung" },
 ];
 
-// Dashboard access is now controlled by permissions
-
 interface PriceOption {
   id: string;
   price: number;
@@ -138,10 +136,8 @@ export default function NewCoursePage() {
   const [showNewLocationForm, setShowNewLocationForm] = useState(false);
   const [bezirkId, setBezirkId] = useState<string>("");
   const scopedBezirkIds = profile?.bezirkScopes?.map((s) => s.bezirkId) ?? [];
-  // Zuständigkeit statt Zugehörigkeit: `profile.bezirkId` sagt, wo jemand im
-  // Werk verortet ist (und trägt öffentlich ein Amt), nicht wofür er schreiben
-  // darf. Beides zu vermischen hieße, für eine einzelne Ausnahme ein Amt zu
-  // vergeben.
+  // Zuständigkeit statt Zugehörigkeit: `profile.bezirkId` ist ein öffentliches
+  // Amt, keine Schreibberechtigung.
   const { lockedBezirkId, hasNoDistrict, selectableBezirkIds } =
     districtFieldState(isHigherRole, scopedBezirkIds);
 
@@ -487,9 +483,8 @@ export default function NewCoursePage() {
       return;
     }
 
-    // Ohne `maxLength` am Textfeld muss die Länge hier geprüft
-    // werden: Sonst lehnte erst der Server ab, und zwar mit
-    // einer englischen Zod-Meldung.
+    // Das Textfeld hat kein `maxLength`; sonst käme erst die englische
+    // Zod-Meldung vom Server.
     if (description.length > MAX_DESCRIPTION_LENGTH) {
       setError(
         `Die Beschreibung ist zu lang (${description.length} von ${MAX_DESCRIPTION_LENGTH} Zeichen).`,
@@ -735,9 +730,6 @@ export default function NewCoursePage() {
       imageId: imageId || undefined,
       customFields:
         preparedCustomFields.length > 0 ? preparedCustomFields : undefined,
-      // Diese Zeile fehlte: submitAsDraft/submitAsApproved steuerten nur die
-      // Beschriftung des Knopfes und wanderten in den Autosave-Entwurf, kamen
-      // aber nie beim Server an.
       status: submitAsDraft
         ? ContentStatus.DRAFT
         : submitAsApproved
@@ -775,14 +767,12 @@ export default function NewCoursePage() {
         storageFailed={storageFailed}
       />
 
-      {/* Error Message */}
       {error && (
         <div className="mb-6 border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
           <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
         </div>
       )}
 
-      {/* Form */}
       <form onSubmit={handleSubmit}>
         <DashboardSectionedFormLayout
           navItems={NEW_COURSE_NAV_ITEMS}
@@ -846,8 +836,7 @@ export default function NewCoursePage() {
                         <label className="dark:text-night-text text-ink mb-2 block text-sm font-medium">
                           Beschreibung *
                         </label>
-                        {/* Markdown-Schreibfläche, siehe Termin anlegen. Die
-                            Pflicht prüft `handleSubmit` wie bisher. */}
+                        {/* Markdown-Schreibfläche; die Pflicht prüft `handleSubmit`. */}
                         <RichTextEditor
                           variant="beschreibung"
                           ariaLabel="Beschreibung"
@@ -1086,8 +1075,7 @@ export default function NewCoursePage() {
                       <Lock className="text-dark dark:text-night-muted h-5 w-5 shrink-0" />
                     </div>
                   ) : hasNoDistrict ? (
-                    // Hinweis statt Alarm: Tinte auf Papier an einer
-                    // Haarlinie statt gelbem Kasten.
+                    // Hinweis, kein Alarm: bewusst ohne Signalfarbe.
                     <div className="border-ink dark:border-night-text border-l-2 py-1 pl-4">
                       <p className="text-dark dark:text-night-muted text-sm">
                         <strong>Hinweis:</strong> Du bist keinem Bezirk
@@ -1142,7 +1130,6 @@ export default function NewCoursePage() {
                     className="border-ink dark:border-night-text dark:bg-night dark:text-night-text bg-paper text-ink w-full border px-4 py-2.5"
                   />
 
-                  {/* Location Dropdown */}
                   {showLocationDropdown && locationsData && (
                     <div className="border-ink bg-paper dark:border-night-text dark:bg-night-raised absolute z-10 mt-1 w-full overflow-hidden border-2">
                       <div
@@ -1979,7 +1966,6 @@ export default function NewCoursePage() {
             </DashboardFormBlock>
           </div>
 
-          {/* Actions */}
           <div className="dark:border-night-rule border-rule mt-16 flex flex-col gap-3 border-t pt-10 sm:flex-row sm:justify-end">
             <Link
               href="/dashboard/courses"
@@ -2004,7 +1990,6 @@ export default function NewCoursePage() {
         </DashboardSectionedFormLayout>
       </form>
 
-      {/* Media Picker Modal */}
       <MediaPickerModal
         isOpen={showMediaPicker}
         onClose={() => setShowMediaPicker(false)}

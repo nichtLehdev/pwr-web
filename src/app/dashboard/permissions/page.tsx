@@ -345,7 +345,6 @@ function RolesTab() {
         }
       />
 
-      {/* Create/Edit Modal */}
       {(showCreateModal || editingId) && (
         <ScrollableModal>
           <ScrollableModalCard maxW="md">
@@ -679,7 +678,6 @@ function UsersTab() {
     { enabled: !!selectedUserId },
   );
 
-  // Effective permission preview
   const { data: preview } =
     api.permissions.previewEffectivePermissions.useQuery(
       {
@@ -797,7 +795,6 @@ function UsersTab() {
           userPermissions?.customRoles.some((ura) => ura.role.id === role.id)),
     ) ?? false;
 
-  // Group preview permissions by category
   const groupedPreview = useMemo(() => {
     if (!preview || !permissions) return null;
     const groups: Record<
@@ -833,7 +830,6 @@ function UsersTab() {
       </h2>
 
       <div className="grid items-start gap-6 lg:grid-cols-2">
-        {/* Left Column: User Selection + Assignment */}
         <div className="space-y-4">
           <div>
             <label className="text-ink dark:text-night-text mb-2 block text-sm font-semibold">
@@ -849,7 +845,6 @@ function UsersTab() {
 
           {selectedUserId && (
             <>
-              {/* Role Assignment */}
               <div className="border-rule dark:border-night-rule border p-4">
                 <h3 className="condensed text-ink dark:text-night-text mb-3 text-sm font-bold">
                   Rollen zuweisen
@@ -937,7 +932,6 @@ function UsersTab() {
                 )}
               </div>
 
-              {/* Direct Permission Assignment */}
               <div className="border-rule dark:border-night-rule border p-4">
                 <h3 className="condensed text-ink dark:text-night-text mb-3 text-sm font-bold">
                   Direkte Berechtigungen
@@ -1016,16 +1010,8 @@ function UsersTab() {
           )}
         </div>
 
-        {/* Right Column: Effective Permission Preview */}
-        {/*
-         * Klebender Versatz aus `--main-padding-top` (Nav- und ggf.
-         * Bannerhöhe, auf <main> gesetzt): eine feste Zahl wie `top-4` stimmt
-         * nicht mehr, sobald das Beta-Banner erscheint oder der Breakpoint
-         * die Navigationshöhe ändert. `dashboard-sticky-shell-top` liefert
-         * den Versatz als Klasse (Kommas in Tailwinds Arbitrary-Werten
-         * zerbrechen sonst den JIT-Parser); die Maximalhöhen hängen an
-         * derselben Variable, damit Kopf und Liste konsistent mitwandern.
-         */}
+        {/* Versatz aus `--main-padding-top` statt fester Zahl (Banner, Breakpoints). Eigene
+            Klasse, weil Kommas in Tailwinds Arbitrary-Werten den JIT-Parser zerbrechen. */}
         <div
           className="dashboard-sticky-shell-top border-rule dark:border-night-rule bg-paper dark:bg-night sticky overflow-hidden border p-4"
           style={{

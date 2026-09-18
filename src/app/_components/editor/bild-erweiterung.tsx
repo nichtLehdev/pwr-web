@@ -1,10 +1,8 @@
 "use client";
 
 import Image from "@tiptap/extension-image";
-// `mergeAttributes` stammt aus @tiptap/core, das hier aber keine direkte
-// Abhängigkeit ist — unter pnpm sind transitive Pakete nicht auflösbar.
-// @tiptap/react reicht den Kern vollständig durch (`export * from
-// "@tiptap/core"`), deshalb kommt alles aus einer Quelle.
+// Aus @tiptap/react, nicht @tiptap/core: das ist keine direkte Abhängigkeit und
+// unter pnpm nicht auflösbar; @tiptap/react exportiert den Kern vollständig.
 import {
   mergeAttributes,
   NodeViewWrapper,
@@ -15,17 +13,8 @@ import { useCallback, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * Bild im Artikel: Breite und Ausrichtung als Klassen.
- *
- * Warum Klassen und nicht `style`: Der HTML-Filter (lib/sanitize.ts) verwirft
- * Inline-CSS — `class`, `width` und `height` überleben, alles andere nicht.
- * Frei skalieren wie in Word wäre also gar nicht speicherbar. Ein festes
- * Vokabular passt ohnehin besser zum Heft: vier Breiten, drei Ausrichtungen,
- * keine krummen Zwischenwerte.
- *
- * Die Ziehgriffe fühlen sich trotzdem frei an — sie rasten beim Ziehen auf die
- * nächste Stufe ein. Gestaltet wird das Ergebnis ausschließlich in
- * `styles/article-content.css`; diese Datei erzeugt nur die Klassen.
+ * Bild im Artikel: Breite und Ausrichtung als Klassen, nicht `style` — der HTML-Filter
+ * (lib/sanitize.ts) verwirft Inline-CSS. Gestaltet wird in `styles/article-content.css`.
  */
 
 export const BILD_GROESSEN = [
@@ -48,11 +37,7 @@ export const GROESSEN_BESCHRIFTUNG: Record<BildGroesse, string> = {
   randlos: "Randlos",
 };
 
-/**
- * Anteil an der Satzbreite — dieselben Werte wie in article-content.css.
- * Sie dienen nur dem Einrasten beim Ziehen; die tatsächliche Darstellung
- * bestimmt das Stylesheet.
- */
+/** Anteil an der Satzbreite wie in article-content.css; nur fürs Einrasten beim Ziehen. */
 const ANTEIL: Record<BildGroesse, number> = {
   schmal: 0.45,
   halb: 0.6,
@@ -166,12 +151,9 @@ function BildAnsicht({
       data-ausrichtung={ausrichtung}
       className="relative my-6"
     >
-      {/* Die Klassen stehen am <img>, damit das gespeicherte HTML genau das
-          trägt, was article-content.css gestaltet — die Hülle hier ist nur
-          Werkzeug im Editor und landet nie im Beitrag. */}
-      {/* eslint-disable-next-line @next/next/no-img-element -- next/image
-          passt hier nicht: Die Knotenansicht muss genau das <img> zeigen, das
-          später gespeichert wird, und die Maße des Bildes sind unbekannt. */}
+      {/* Klassen am <img>: die Hülle ist nur Editor-Werkzeug und landet nie im Beitrag. */}
+      {/* eslint-disable-next-line @next/next/no-img-element -- muss genau das
+          gespeicherte <img> zeigen, Maße unbekannt. */}
       <img
         src={node.attrs.src as string}
         alt={(node.attrs.alt as string) ?? ""}
@@ -193,16 +175,11 @@ function BildAnsicht({
             <span className="bg-ink text-paper dark:bg-night-text dark:text-night inline-flex min-h-11 items-center px-3 text-xs font-semibold">
               {GROESSEN_BESCHRIFTUNG[angezeigt]}
             </span>
-            {/* Die Ausrichtung gab es bisher nur im Datenmodell und im
-                Stylesheet, aber unerreichbar: Die Ziehgriffe ändern allein die
-                Größe. Ohne Bedienung war der Textumfluss eine Fähigkeit, die
-                niemand auslösen konnte. */}
             {BILD_AUSRICHTUNGEN.map((wahl) => (
               <button
                 key={wahl}
                 type="button"
-                // Ohne preventDefault nimmt der Klick dem Editor den Fokus,
-                // ProseMirror hebt die Knotenauswahl auf, und die Leiste
+                // Sonst hebt ProseMirror die Knotenauswahl auf und die Leiste
                 // verschwindet, bevor onClick greift.
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => updateAttributes({ ausrichtung: wahl })}
@@ -233,9 +210,7 @@ export const ArtikelBild = Image.extend({
         default: "standard" as BildGroesse,
         parseHTML: (el: HTMLElement) =>
           ausKlassen(el.getAttribute("class"), BILD_GROESSEN, "standard"),
-        // Die Klasse wird unten aus beiden Attributen zusammengesetzt; ohne
-        // dieses leere renderHTML schriebe TipTap zusätzlich `groesse="…"`
-        // ins Markup, was der Filter ohnehin verwürfe.
+        // Die Klasse entsteht unten aus beiden Attributen; sonst schriebe TipTap `groesse="…"` ins Markup.
         renderHTML: () => ({}),
       },
       ausrichtung: {

@@ -62,10 +62,8 @@ const WARUM = [
 ];
 
 /**
- * Jungbläserarbeit, mit „du“ (wie auf /mitmachen). Zwei Sätze im letzten
- * Abschnitt sind im Original mit „Sie“ formuliert (Arbeitshilfe- und
- * Beratungs-Beschreibung) — Formulierung bewusst unverändert übernommen,
- * siehe Abschlussbericht.
+ * Mit „du“ (wie auf /mitmachen). Die zwei „Sie“-Sätze im letzten Abschnitt sind
+ * bewusst unverändert aus dem Original übernommen.
  */
 export default function JungblaserPage() {
   return (

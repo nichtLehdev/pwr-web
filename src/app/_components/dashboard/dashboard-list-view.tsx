@@ -30,11 +30,7 @@ const VIEWS: {
   },
 ];
 
-/**
- * Kartenraster oder Tabelle — die Wahl bleibt pro Liste gespeichert, weil sie
- * zur Arbeitsweise gehört und nicht zur einzelnen Sitzung: wer die Termine
- * lieber als Tabelle pflegt, will sie beim nächsten Aufruf wieder so sehen.
- */
+/** Kartenraster oder Tabelle, pro Liste dauerhaft gespeichert: die Wahl gehört zur Arbeitsweise. */
 export function useDashboardListView(
   storageKey: string,
   fallback: DashboardListView = "cards",
@@ -52,7 +48,6 @@ const AKTIV = "on-orange bg-primary text-ink";
 const RUHEND =
   "text-dark dark:text-night-muted hover:bg-rule/60 hover:text-ink dark:hover:bg-night-rule dark:hover:text-night-text";
 
-/** Umschalter zwischen Kartenraster und Tabelle. */
 export function DashboardListViewToggle({
   view,
   onChange,

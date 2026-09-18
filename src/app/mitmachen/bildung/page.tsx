@@ -59,11 +59,7 @@ const ARBEITSHILFE_THEMEN = [
   { title: "Wie integriere ich die jungen Menschen in den Posaunenchor?" },
 ];
 
-/**
- * Aus- und Weiterbildung, durchgehend mit „du“ (wie auf /mitmachen). Ein
- * Förderverein-Abschnitt (Fördermöglichkeiten) nutzt die blaue Druckfläche;
- * das ist die einzige zusätzliche Farbfläche der Seite (One Field Rule).
- */
+/** Durchgehend mit „du“ (wie auf /mitmachen). */
 export default function BildungPage() {
   return (
     <PublicPage
@@ -83,11 +79,7 @@ export default function BildungPage() {
         </p>
       }
     >
-      {/* Hinweis und erster Abschnitt teilen sich ein Band. Getrennt ergaben
-          sie drei Linien kurz hintereinander: Kopfstrich, Kastenrahmen,
-          Abschnittsstrich. Der Rahmen statt einer orangen Füllung, weil die
-          Seite mit dem blauen Fördervereinsfeld und dem Schlussaufruf schon
-          zwei Farbflächen trägt. */}
+      {/* Hinweis mit Rahmen statt oranger Füllung: Die Seite trägt schon zwei Farbflächen. */}
       <PageSection labelledBy="angebote-heading">
         <Note tone="info" title="Wichtig" titleAs="h2" className="mb-14">
           <p>

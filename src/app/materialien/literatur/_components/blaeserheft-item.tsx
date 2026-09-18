@@ -31,11 +31,6 @@ function BulletList({ items }: { items: string[] }) {
   );
 }
 
-/**
- * Ein Bläserheft als Druckspalte: Cover als echtes Bild im Originalverhältnis,
- * ohne Rundung, Titel, Zustände als Etiketten, Beschreibung, Kapitel,
- * Highlights, Hörprobe und Preise im Tabellensatz.
- */
 export function BlaeserheftItem({
   heft,
   reverse,
@@ -43,7 +38,6 @@ export function BlaeserheftItem({
 }: {
   heft: BlaeserheftData;
   reverse: boolean;
-  /** Trennt vom vorherigen Eintrag mit einer Haarlinie statt eines Kartenabstands. */
   divider: boolean;
 }) {
   const priceRows = [
@@ -64,18 +58,15 @@ export function BlaeserheftItem({
   return (
     <article
       className={cn(
-        // Raster statt Flex: Als Flex-Kind war das Bildfeld mit `w-full` und
-        // `shrink-0` mehrdeutig — WebKit gab ihm die ganze Zeilenbreite und
-        // quetschte den Text auf ein Wort. Eine feste Rasterspalte kann das
-        // nicht passieren.
+        // Raster statt Flex: WebKit gab dem Bildfeld (`w-full shrink-0`) als Flex-Kind
+        // die ganze Zeilenbreite und quetschte den Text auf ein Wort.
         "flex flex-col gap-8 lg:grid lg:items-start lg:gap-10",
         reverse ? "lg:grid-cols-[1fr_20rem]" : "lg:grid-cols-[20rem_1fr]",
         divider && "border-rule dark:border-night-rule mt-16 border-t pt-16",
       )}
     >
-      {/* Die Cover liegen alle im Querformat 3:2 vor. Das Feld übernimmt genau
-          dieses Verhältnis, damit nichts beschnitten wird; `self-start`
-          verhindert, dass die Flex-Zeile die Spalte auf Texthöhe streckt. */}
+      {/* Cover sind alle 3:2, daher wird nichts beschnitten; `self-start` verhindert
+          das Strecken auf Texthöhe. */}
       <ZoomableImage
         src={heft.image.url}
         alt={heft.image.alt || heft.title || "Bläserheft Cover"}

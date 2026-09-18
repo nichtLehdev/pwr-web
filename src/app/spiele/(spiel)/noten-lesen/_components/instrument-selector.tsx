@@ -36,10 +36,7 @@ export type InstrumentSelectorProps = {
   onRemoveCustomSet: () => void;
 };
 
-/**
- * Gewählt ist ein Druckfeld (Orange als Fläche, Tinte als Schrift) — in beiden
- * Drucken dieselbe Farbe, weil Tinte auf Orange rund 9:1 trägt.
- */
+/** Gewählt: Tinte auf Orange in beiden Drucken (Kontrast rund 9:1). */
 function choiceCardClass(active: boolean): string {
   return cn(
     "flex min-h-11 w-full flex-col justify-center border p-3 text-center transition-colors active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100 md:p-4",
@@ -69,13 +66,8 @@ type ChoiceCardProps = {
 };
 
 /**
- * Auswahlkachel mit getrenntem Namen und Beschreibung.
- *
- * Vorher verschmolz ein Vorleseprogramm Titel und Hinweis zu einem einzigen
- * Namen („AnfängerErste Töne rund um B-Dur …“). Der Name ist jetzt der Titel
- * allein; der Hinweis hängt über `aria-describedby` daran und geht damit nicht
- * verloren. `<span class="block">` statt `<p>`, weil ein Absatz in einem
- * `<button>` kein gültiges Markup ist.
+ * Name = Titel, Hinweis per `aria-describedby`, sonst verschmilzt der Screenreader beides.
+ * `<span class="block">` statt `<p>`: Ein Absatz im `<button>` ist kein gültiges Markup.
  */
 function ChoiceCard({
   title,
@@ -126,8 +118,7 @@ export function InstrumentSelector({
   onOpenLibrary,
   onRemoveCustomSet,
 }: InstrumentSelectorProps) {
-  /* Eigenes Set aktiv (oder wird gerade aufgelöst) → die Preset-Kacheln
-   * sind abgewählt und das Instrument spielt keine Rolle. */
+  /* Eigenes Set aktiv oder wird aufgelöst → Preset-Kacheln abgewählt. */
   const customActive = customSet != null || customPending != null;
   const hideInstrument = hidesInstrumentForDifficulty(difficulty);
   const [extraOpen, setExtraOpen] = useState(() =>

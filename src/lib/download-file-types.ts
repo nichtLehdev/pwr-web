@@ -1,14 +1,8 @@
 import { FileType } from "~/generated/prisma/enums";
 
 /**
- * Was der Upload-Ordner `downloads` annimmt und wie ein Download-Dateityp
- * heißt — einmal notiert, von Upload-Route, Verwaltung, Download-Picker und
- * den öffentlichen Listen gelesen.
- *
- * Vorher standen Beschriftungen und Symbole als eigene Tabellen in fünf
- * Dateien, die Endungserkennung doppelt. Ein neuer Typ (Bilder, #309) hätte an
- * jeder Stelle einzeln nachgezogen werden müssen; die Stelle, die man
- * vergisst, zeigt dann „IMAGE“ oder ein leeres Feld.
+ * Download-Dateitypen an einer Stelle: von Upload-Route, Verwaltung,
+ * Download-Picker und öffentlichen Listen gelesen.
  */
 
 /** Bilder, die als Download taugen — vor allem Flyer an Terminen. Kein GIF. */
@@ -80,11 +74,7 @@ const FILE_TYPE_BY_EXTENSION: Record<string, FileType> = {
   webp: FileType.IMAGE,
 };
 
-/**
- * Dateityp zur Endung, die die Upload-Route zurückgibt. `null` für Endungen,
- * die kein Download sein dürfen — der Aufrufer soll dann nicht still „PDF“
- * annehmen.
- */
+/** `null` für Endungen, die kein Download sein dürfen — nicht still „PDF“ annehmen. */
 export function downloadFileTypeForExtension(
   extension: string,
 ): FileType | null {
@@ -116,13 +106,8 @@ interface DownloadFileRef {
 }
 
 /**
- * Bild-Download, der sich als Vorschau zeigen lässt: Typ `IMAGE` und eine
- * Datei aus dem eigenen Upload-Ordner mit Bildendung.
- *
- * Fremde URLs bleiben bewusst draußen — `next/image` kennt keine
- * `remotePatterns`, ein fremder Host würde die ganze Seite abstürzen lassen
- * statt nur das Bild. Die Endung schützt vor Einträgen, deren Typ von Hand
- * falsch gesetzt wurde: Ein PDF als `<img>` bliebe ein leerer Rahmen.
+ * Nur eigene Uploads mit Bildendung: `next/image` hat keine `remotePatterns`, ein
+ * fremder Host ließe die ganze Seite abstürzen. Die Endung fängt falsche Typen ab.
  */
 export function isPreviewableImageDownload(download: DownloadFileRef): boolean {
   return (
@@ -132,11 +117,7 @@ export function isPreviewableImageDownload(download: DownloadFileRef): boolean {
   );
 }
 
-/**
- * Kurzes Format-Etikett wie „PDF“ oder „PNG“ — für Dateimeta und den
- * Screenreader-Hinweis am Link. Bei Bildern sagt die Endung mehr als der
- * Sammeltyp; ohne erkennbare Endung steht „Bild“.
- */
+/** Format-Etikett wie „PDF“ oder „PNG“; bei Bildern aus der Endung, sonst „Bild“. */
 export function downloadFormatCode(download: DownloadFileRef): string {
   if (download.fileType === FileType.IMAGE) {
     const extension = urlExtension(download.fileUrl);
@@ -148,10 +129,8 @@ export function downloadFormatCode(download: DownloadFileRef): string {
 }
 
 /**
- * Link, der die Datei herunterlädt statt sie anzuzeigen. Die Upload-Route
- * liefert Bilder sonst inline aus; `?download=1` setzt
- * `Content-Disposition: attachment`, `name` den lesbaren Dateinamen (die
- * Route hängt die echte Endung an). Fremde URLs bleiben unverändert.
+ * `?download=1` erzwingt `Content-Disposition: attachment` (Bilder kämen sonst
+ * inline), `name` setzt den Dateinamen; die Route hängt die Endung an.
  */
 export function downloadAttachmentUrl(download: {
   fileUrl: string;

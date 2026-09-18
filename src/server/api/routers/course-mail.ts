@@ -34,17 +34,12 @@ import { formatBerlin } from "@/lib/berlin-time";
 const log = createLogger("Course Mail");
 
 /**
- * Attachments live in the dedicated course-mail upload folder. Accepting any
- * /api/uploads path would let an organizer mail out a private download or
- * someone else's unapproved media by pasting its URL.
+ * Only this folder: accepting any /api/uploads path would let an organizer mail out
+ * a private download or someone else's unapproved media.
  */
 const ATTACHMENT_PREFIX = "/api/uploads/course-mail/";
 
-/**
- * Combined attachment budget for one message. Mail servers commonly reject
- * anything past ~25 MB, and base64 adds roughly a third on top — 10 MB of
- * payload stays comfortably inside that.
- */
+/** Per message. Mail servers often reject >25 MB and base64 adds ~1/3, so 10 MB stays safe. */
 const MAX_TOTAL_ATTACHMENT_BYTES = 10 * 1024 * 1024;
 
 /** Sends per user per hour. Generous for real use, bounded for a stolen session. */
@@ -89,10 +84,8 @@ type RecipientInvoice = {
 };
 
 /**
- * Registrants addressed by a selection, collapsed to one entry per address.
- * A person who registered twice (e.g. two of their children) must not receive
- * the same information mail twice — their registrations are merged instead, so
- * {{teilnehmer.namen}} names every child they signed up rather than just the first.
+ * One entry per address: someone who registered twice gets one mail, with the registrations
+ * merged so {{teilnehmer.namen}} names every child.
  */
 async function resolveRecipients(
   db: PrismaClient,
@@ -169,13 +162,7 @@ const formatAmount = (amount: number) =>
     currency: "EUR",
   }).format(amount);
 
-/**
- * The invoices currently in force for the given registrations, keyed by
- * registration id.
- *
- * Only PUBLISHED ones: a draft is not a document anybody may receive, and a
- * cancelled one must not be mailed out again as if it still applied.
- */
+/** Only PUBLISHED invoices, keyed by registration id: drafts aren't sendable, cancelled ones no longer apply. */
 async function loadPublishedInvoices(
   db: PrismaClient,
   courseId: string,
@@ -222,17 +209,8 @@ async function loadPublishedInvoices(
 }
 
 /**
- * Read one recipient's invoice PDFs off disk, ready to attach.
- *
- * `budgetBytes` is what is left of the message's attachment allowance after the
- * shared files. Anything past it is skipped rather than thrown: the blast is
- * already under way by then, and a message that arrives with one attachment
- * missing beats one that never arrives at all.
- *
- * What was skipped is reported back rather than only logged. `mailedAt` and the
- * count shown to the sender must describe what actually went out — crediting an
- * invoice that was dropped here would mark a document as delivered that nobody
- * ever received, and nothing downstream would ever notice.
+ * Invoices past the remaining attachment budget are skipped, not thrown (the blast is under way),
+ * and reported back so `mailedAt` only credits what was actually attached.
  */
 type LoadedInvoiceAttachments = {
   attachments: { filename: string; content: Buffer }[];
@@ -478,13 +456,8 @@ async function renderBody(markdown: string): Promise<string> {
 }
 
 /**
- * The same message, filled in for one specific recipient.
- *
- * Shared by `send` and `preview` — the preview is worthless if it substitutes
- * differently from the delivery.
- *
- * Substitution happens into the already-sanitized HTML, so values are escaped
- * here: a registrant named "<b>" must not become markup.
+ * Shared by `send` and `preview` so both substitute identically. Values are escaped because
+ * they go into already-sanitized HTML.
  */
 function personalizeMail(
   subject: string,
@@ -498,11 +471,7 @@ function personalizeMail(
 }
 
 export const courseMailRouter = createTRPCRouter({
-  /**
-   * Whether the viewer may write to this course's registrants. The dashboard
-   * asks the server instead of re-deriving the rule, so the button and the
-   * mutation can't drift apart (the Bezirk case is invisible client-side).
-   */
+  /** Asked server-side so button and mutation can't drift apart (the Bezirk case is invisible client-side). */
   canSend: protectedProcedure
     .input(z.object({ courseId: z.string() }))
     .query(async ({ ctx, input }) => {
@@ -544,13 +513,7 @@ export const courseMailRouter = createTRPCRouter({
       };
     }),
 
-  /**
-   * The finished message as one registrant would receive it — same rendering,
-   * same substitution, same template as `send`, but nothing is sent.
-   *
-   * A mutation despite being read-only: queries travel as GET with the input
-   * in the URL, and a whole mail body does not fit there.
-   */
+  /** A mutation despite being read-only: a whole mail body doesn't fit into a GET query URL. */
   preview: protectedProcedure
     .input(
       z.object({
@@ -817,10 +780,8 @@ export const courseMailRouter = createTRPCRouter({
       /** Rechnungen, die an einer versendeten Nachricht gefehlt haben. */
       const skippedInvoices: string[] = [];
 
-      // One message per recipient rather than a single BCC blast: it keeps
-      // the greeting personal and avoids the spam scores a large BCC earns.
-      // Bounded batches, since a sequential loop over hundreds of addresses
-      // would outlive the request and Promise.all would flood the SMTP host.
+      // One message per recipient (personal greeting, no BCC spam score), in bounded batches:
+      // sequential would outlive the request, Promise.all would flood the SMTP host.
       const BATCH_SIZE = 10;
       for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
         const batch = recipients.slice(i, i + BATCH_SIZE);
@@ -937,11 +898,7 @@ export const courseMailRouter = createTRPCRouter({
         sentCount,
         failedCount,
         invoicesAttached: mailedInvoiceIds.size,
-        /**
-         * Rechnungen, die an einer versendeten Nachricht gefehlt haben. Die
-         * Nachricht ist raus, das Dokument nicht — das muss die Absenderin
-         * erfahren, sonst hält sie die Rechnung für zugestellt.
-         */
+        /** Fehlende Rechnungen an versendeten Nachrichten; sonst hält die Absenderin sie für zugestellt. */
         skippedInvoices,
       };
     }),

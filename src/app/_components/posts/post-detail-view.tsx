@@ -92,10 +92,8 @@ export default function PostDetailView({
       });
     };
 
-    // Die Bilder kommen als gespeichertes HTML, einen Button kann der Filter
-    // dort nicht durchlassen. Damit sie trotzdem per Tastatur erreichbar sind,
-    // bekommen sie hier Tab-Halt, Rolle und Namen — ausgenommen Bilder in
-    // Links, deren Klick bleibt die Navigation.
+    // Gespeichertes HTML lässt keinen Button durch, daher Tastaturzugang hier
+    // nachrüsten. Bilder in Links behalten ihre Navigation.
     const images = Array.from(container.querySelectorAll("img")).filter(
       (img) => !img.closest("a"),
     );
@@ -225,12 +223,9 @@ export default function PostDetailView({
       description={heroDescription}
     >
       <PageSection flush="top">
-        {/* Das Lesemaß ist von hier auf die einzelnen Geschwister gewandert:
-            Solange es an der Hülle hing, konnte kein Bild breiter werden als
-            der Text. Der Artikelkörper führt sein Maß jetzt selbst (siehe
-            article-content.css) und darf dafür die volle Satzbreite nutzen. */}
+        {/* Lesemaß an den Geschwistern statt an der Hülle, damit Bilder im
+            Artikelkörper breiter als der Text werden dürfen. */}
         <div className="mt-12 space-y-8">
-          {/* Author Info */}
           {post.author || post.authorName || post.createdBy ? (
             <div className="border-rule dark:border-night-rule mx-auto flex max-w-[65ch] items-center gap-4 border-b pb-8">
               {displayImage?.url ? (
@@ -273,13 +268,9 @@ export default function PostDetailView({
             </div>
           ) : null}
 
-          {/* Excerpt */}
           {post.excerpt ? (
-            // Der Maßrahmen steht außen, in Grundschriftgröße: `ch` bemisst
-            // sich an der eigenen Schriftgröße, und der Anriss läuft in
-            // `text-xl`. Direkt am Absatz wären 65ch rund 649px statt der
-            // 596px des Artikelkörpers — gemessen, er stand 27px zu weit
-            // links. Außen erbt der Rahmen 1rem und flucht damit.
+            // Maßrahmen außen in Grundschriftgröße: `ch` misst an der eigenen
+            // Schriftgröße, am `text-xl`-Absatz fluchtete er nicht mehr.
             <div className="mx-auto max-w-[65ch]">
               <p className="semi-condensed text-ink dark:text-night-text text-xl leading-relaxed font-medium">
                 {post.excerpt}
@@ -287,21 +278,12 @@ export default function PostDetailView({
             </div>
           ) : null}
 
-          {/* Main Content */}
-          {/* Titelbild und Text teilen sich eine Spalte, damit der Text das
-              Bild umfließt — so macht es das Blechblatt: Überschrift, dann
-              sofort Text, das Aufmacherbild daneben. Vorher stand das Bild als
-              885px hoher Block über allem; am Desktop mussten 483px gescrollt
-              werden, bevor ein einziges Wort zu sehen war (gemessen bei
-              1440×900). Das `after:clear-both` ist nötig, weil der Float hier
-              ein Geschwister des Artikelkörpers ist — dessen eigenes `clear`
-              greift dafür nicht. */}
+          {/* Der Text umfließt das Titelbild, damit er sofort beginnt.
+              `after:clear-both`, weil das `clear` des Artikelkörpers den
+              Float seines Geschwisters nicht erfasst. */}
           <div className="mx-auto max-w-[65ch] after:clear-both after:block after:content-['']">
-            {/* Auf dem Handy steht das Bild nicht daneben, sondern darüber —
-                dort kostet 3:2 zu viel Höhe: Bei „Wichtige Impulse…" lag der
-                erste Absatz dadurch 20px unter der Kante (gemessen 390×844),
-                also derselbe Fehler wie zuvor am Desktop, nur klein. Flacher
-                geschnitten bleibt das Bild da und der Text sichtbar. */}
+            {/* Mobil steht das Bild darüber, flacher geschnitten, damit der
+                erste Absatz im Bild bleibt. */}
             <figure className="mb-5 w-full sm:float-right sm:mb-2 sm:ml-8 sm:w-3/5">
               {post.coverImage?.url ? (
                 <ZoomableImage
@@ -335,12 +317,9 @@ export default function PostDetailView({
               </figcaption>
             </figure>
 
-            {/* `--seite`: Nur hier ist der Artikel die Hauptspalte, nur hier
-                dürfen breite Bilder über das Lesemaß hinaustreten. Editorfläche
-                und Dashboard-Vorschau teilen dieses Stylesheet, sind aber
-                schmale Rahmen — dort bliebe ein Ausbruch ein Fremdkörper.
-                `--in-spalte`: Das Maß führt hier die Hülle, sonst rutschte der
-                Körper unter dem Float weg. */}
+            {/* `--seite`: Nur hier dürfen breite Bilder über das Lesemaß hinaus.
+                `--in-spalte`: Das Maß führt die Hülle, sonst rutscht der Körper
+                unter den Float. */}
             <div
               className="article-content article-content--seite article-content--in-spalte"
               dangerouslySetInnerHTML={{
@@ -349,7 +328,6 @@ export default function PostDetailView({
             />
           </div>
 
-          {/* Share & Back */}
           <div className="border-rule dark:border-night-rule mx-auto max-w-[65ch] border-t pt-8">
             <Link
               href="/aktuelles"
@@ -361,7 +339,6 @@ export default function PostDetailView({
           </div>
         </div>
 
-        {/* Attached Downloads */}
         {post.attachedDownloads && post.attachedDownloads.length > 0 ? (
           <div className="mt-16">
             <SectionHead
@@ -398,7 +375,6 @@ export default function PostDetailView({
         ) : null}
       </PageSection>
 
-      {/* Similar Posts */}
       {relatedPosts.length > 0 ? (
         <PageSection labelledBy="aehnliche-heading" rule>
           <SectionHead id="aehnliche-heading" title="Ähnliche Beiträge" rule />
@@ -406,7 +382,6 @@ export default function PostDetailView({
         </PageSection>
       ) : null}
 
-      {/* Image Lightbox */}
       {lightboxImage ? (
         <ImageLightbox
           src={lightboxImage.src}

@@ -11,11 +11,8 @@ export type RegistrationData = Omit<
 export type ParticipantDraft = RegistrationData["participants"][number];
 
 /**
- * The participant fields `ParticipantCard` and `ParticipantEditor` read.
- *
- * Structural rather than tied to one router type, because the same two
- * components serve the registration form (participants keyed by list index,
- * not yet saved) and the edit page (participants keyed by database id).
+ * Structural rather than tied to one router type: `ParticipantCard` and `ParticipantEditor`
+ * serve both the registration form (unsaved) and the edit page (by database id).
  */
 export interface ParticipantFields {
   firstName: string;
@@ -29,19 +26,13 @@ export interface ParticipantFields {
   customFields?: unknown;
 }
 
-/**
- * Extra decisions only the course team makes when it records a registration
- * itself (paper form, phone call, late sign-up) instead of a registrant
- * filling in the public form.
- */
+/** Extra decisions only the course team makes when it records a registration itself. */
 export interface StaffRegistrationOptions {
   /**
-   * "AUTO" leaves the choice to the server: confirmed while seats are free.
-   * "SPLIT" confirms the participants chosen for the free seats and puts the
-   * rest on the waiting list as a linked registration.
+   * "AUTO": server decides, confirmed while seats are free. "SPLIT": free seats are
+   * confirmed, the rest goes on the waiting list as a linked registration.
    */
   registrationStatus: "AUTO" | "CONFIRMED" | "WAITLIST" | "SPLIT";
-  /** Fee already collected — e.g. cash handed over on the spot. */
   sendConfirmationEmail: boolean;
   /** Required to confirm a registration beyond the course capacity. */
   allowOverbooking: boolean;
@@ -56,16 +47,11 @@ export interface CourseRegistrationFormProps {
   isWaitlist: boolean;
   currentUser?: User | null;
   /**
-   * Dashboard mode: the course team enters a registration on someone's behalf.
-   * Uses the staff mutation (no deadline gate), asks for status/payment/mail
-   * decisions instead of terms acceptance, and treats the address as optional.
+   * Dashboard mode: staff registers on someone's behalf via the staff mutation (no deadline
+   * gate), with status/payment/mail decisions instead of terms acceptance; address optional.
    */
   staffMode?: boolean;
-  /**
-   * Free seats left in the course. Step 3 warns as soon as the entered
-   * participants no longer fit — not only when the course is already
-   * completely full — and staff mode asks for an overbooking consent then.
-   */
+  /** Free seats left; step 3 warns as soon as the entered participants no longer fit. */
   availableSlots?: number;
   /** Free seats per price option (by id), as `getAvailableSlots` reports them. */
   capacityByPriceOption?: Record<string, number> | null;

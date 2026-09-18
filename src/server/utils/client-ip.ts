@@ -1,10 +1,6 @@
 /**
- * IP-Adresse der anfragenden Person, sofern der Proxy sie durchreicht.
- *
- * Bewusst getrennt von `clientKeyFromHeaders()`: das Rate-Limit braucht immer
- * einen Schlüssel und nimmt notfalls "unknown". Ein Einwilligungsnachweis darf
- * dagegen keine erfundene Adresse enthalten — fehlt sie, bleibt das Feld leer,
- * und das ist ehrlicher als ein Platzhalter, der später wie ein Beleg aussieht.
+ * Getrennt von `clientKeyFromHeaders()` (notfalls "unknown"): Ein
+ * Einwilligungsnachweis darf keine erfundene Adresse enthalten.
  */
 
 /** Reicht für IPv6 mit IPv4-Suffix; alles Längere ist manipulierter Header. */

@@ -1,10 +1,5 @@
 /**
- * Seed Script for Creating Hierarchical Roles
- *
- * This script creates example roles with hierarchical relationships.
- * For example, you can create a "Course Manager" role with all course permissions,
- * and then create other roles that inherit from it.
- *
+ * Creates example roles with hierarchical relationships.
  * Usage: npx tsx prisma/seed-roles.ts
  */
 import "dotenv/config";
@@ -16,16 +11,12 @@ async function main() {
   console.log("🌱 Starting role seed...");
 
   try {
-    // Permissions are now hardcoded in the codebase, no need to seed them
-
-    // Create base roles with category-specific permissions
     console.log("👥 Creating base roles...");
     const courseManagerRole = await createCourseManagerRole();
     const eventManagerRole = await createEventManagerRole();
     const postManagerRole = await createPostManagerRole();
     const organizationManagerRole = await createOrganizationManagerRole();
 
-    // Create a comprehensive admin role that inherits from multiple base roles
     console.log("👑 Creating admin role...");
     const adminRole = await createAdminRole();
 
@@ -43,7 +34,6 @@ async function main() {
 }
 
 async function createCourseManagerRole() {
-  // Course-related permission keys (hardcoded)
   const coursePermissionKeys = [
     PERMISSIONS.COURSES_CREATE,
     PERMISSIONS.COURSES_EDIT,
@@ -65,7 +55,6 @@ async function createCourseManagerRole() {
     },
   });
 
-  // Update permissions
   await db.rolePermission.deleteMany({
     where: { roleId: role.id },
   });
@@ -85,7 +74,6 @@ async function createCourseManagerRole() {
 }
 
 async function createEventManagerRole() {
-  // Event-related permission keys (hardcoded)
   const eventPermissionKeys = [
     PERMISSIONS.EVENTS_CREATE,
     PERMISSIONS.EVENTS_EDIT,
@@ -106,7 +94,6 @@ async function createEventManagerRole() {
     },
   });
 
-  // Update permissions
   await db.rolePermission.deleteMany({
     where: { roleId: role.id },
   });
@@ -126,7 +113,6 @@ async function createEventManagerRole() {
 }
 
 async function createPostManagerRole() {
-  // Post-related permission keys (hardcoded)
   const postPermissionKeys = [
     PERMISSIONS.POSTS_CREATE,
     PERMISSIONS.POSTS_EDIT,
@@ -147,7 +133,6 @@ async function createPostManagerRole() {
     },
   });
 
-  // Update permissions
   await db.rolePermission.deleteMany({
     where: { roleId: role.id },
   });
@@ -167,7 +152,6 @@ async function createPostManagerRole() {
 }
 
 async function createOrganizationManagerRole() {
-  // Organization-related permission keys (hardcoded)
   const orgPermissionKeys = [
     PERMISSIONS.ORGANIZATION_MANAGE_TEAM,
     PERMISSIONS.ORGANIZATION_MANAGE_VORSTAND,
@@ -192,7 +176,6 @@ async function createOrganizationManagerRole() {
     },
   });
 
-  // Update permissions
   await db.rolePermission.deleteMany({
     where: { roleId: role.id },
   });
@@ -212,28 +195,21 @@ async function createOrganizationManagerRole() {
 }
 
 async function createAdminRole() {
-  // All permission keys (hardcoded)
   const allPermissionKeys = PERMISSION_DEFINITIONS.map((p) => p.key);
 
-  // Create admin role that inherits from the first parent role
-  // (In a real scenario, you might want to create a composite role differently)
-  // For admin role, we'll add all permissions directly instead of using inheritance
-  // (inheritance is demonstrated with the base roles)
+  // Admin gets all permissions directly, without inheritance.
   const role = await db.role.upsert({
     where: { name: "Admin" },
     update: {
       description: "Full system access with all permissions",
-      // parentRoleId: null, // Admin doesn't inherit - has all permissions directly
     },
     create: {
       name: "Admin",
       description: "Full system access with all permissions",
       isSystem: false,
-      // parentRoleId: null, // Admin doesn't inherit - has all permissions directly
     },
   });
 
-  // Add all permissions directly to admin role
   await db.rolePermission.deleteMany({
     where: { roleId: role.id },
   });
@@ -251,10 +227,6 @@ async function createAdminRole() {
   console.log(`  ✓ Created/Updated Admin role`);
   return role;
 }
-
-// ============================================================================
-// RUN
-// ============================================================================
 
 main()
   .then(() => {

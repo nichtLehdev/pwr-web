@@ -69,8 +69,6 @@ export default function NewsletterPage() {
         </p>
       }
     >
-      {/* Formular links, die Zusicherungen als Randnotiz rechts daneben —
-          sonst steht die halbe Seite leer. */}
       <PageSection>
         <div className="lg:grid lg:grid-cols-12 lg:gap-10">
           <div className="max-w-[38rem] lg:col-span-7">
@@ -153,10 +151,8 @@ export default function NewsletterPage() {
                   </Note>
                 )}
 
-                {/* Nicht deaktiviert, solange die Einwilligung fehlt: ein von
-                    Anfang an grauer Knopf sieht kaputt aus und sagt nicht,
-                    was fehlt. Das `required` am Kästchen bringt den Browser
-                    dazu, genau dort hinzuspringen. */}
+                {/* Nicht deaktiviert ohne Einwilligung: Das `required` am Kästchen lässt
+                    den Browser dorthin springen und sagt, was fehlt. */}
                 <button
                   type="submit"
                   disabled={status === "loading"}

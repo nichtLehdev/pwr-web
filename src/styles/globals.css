@@ -15,14 +15,8 @@
   --color-foerderverein-light: #9bc2e8;
 
   /*
-   * Nachtfarben. Die Namen bleiben, weil rund 4200 Stellen daran hängen — die
-   * Werte zeigen aber jetzt auf die Nachtpalette des Programmhefts (siehe
-   * unten). Vorher liefen zwei Paletten nebeneinander: ein blaustichiges
-   * Schiefergrau im Dashboard und die neutrale Nachtfarbe öffentlich. Wer
-   * zwischen beiden wechselte, sah zwei verschiedene Anwendungen.
-   *
-   * Nachgemessen: Öffentliche Seiten hängen nicht an diesen Tokens, ihre
-   * Darstellung bleibt unverändert.
+   * Nachtfarben: Die Namen bleiben wegen der vielen Verwendungen, die Werte
+   * entsprechen der Nachtpalette des Programmhefts (siehe unten).
    */
   --color-dark-background: #141517;
   --color-dark-background-secondary: #1d1f22;
@@ -44,7 +38,6 @@
   --color-night-text: #ecebe8;
   --color-night-muted: #a6a8ad;
 
-  /* Bezirks-Farben */
   --color-district-all: #faa619;
   --color-district-1: #3b82f6;
   --color-district-2: #10b981;
@@ -61,11 +54,7 @@
   --color-district-13: #22d3ee;
 }
 
-/*
- * Programmheft: schmale Schnitte aus der Breitenachse von Archivo, die
- * Satzbreite der öffentlichen Seiten und die Browser-Oberflächen (Markierung,
- * Fokus, Caret) in den Farben des Hefts.
- */
+/* Programmheft: schmale Archivo-Schnitte (Breitenachse) und Satzbreite der öffentlichen Seiten. */
 @utility condensed {
   font-variation-settings: "wdth" 68;
 }
@@ -98,11 +87,7 @@
   caret-color: var(--color-primary-ink);
 }
 
-/*
- * Auswahlfelder zeichnen ihr eigenes Dreieck. Tailwinds `appearance-none`
- * schreibt kein `-webkit-`-Präfix, deshalb blieb es in Safari stehen und
- * stand neben dem Zeichen, das wir selbst setzen.
- */
+/* Tailwinds `appearance-none` setzt kein `-webkit-`-Präfix; ohne es zeigt Safari sein Dreieck neben unserem. */
 .programm select {
   -webkit-appearance: none;
   appearance: none;
@@ -129,10 +114,8 @@
 }
 
 /*
- * Druckfläche in Fördervereinsblau: darauf steht alles in Tinte, auch im
- * Nachtdruck (Tinte auf #78a8da ≈ 6,8:1). Schiefer wäre dort zu schwach.
- * Kopfstriche werden Tinte, Haarlinien Tinte 30 %, Zeilen füllen sich
- * papierweiß. Ungelayert, damit es die hellen/dunklen Utilities überstimmt.
+ * Druckfläche in Fördervereinsblau: alles in Tinte, auch nachts (≈ 6,8:1).
+ * Ungelayert, damit es die hellen/dunklen Utilities überstimmt.
  */
 .print-field :is(h2, h3, h4, p, span, svg, a, li, dt, dd) {
   color: var(--color-ink);
@@ -150,11 +133,7 @@
   background-color: var(--color-paper);
 }
 
-/*
- * Programmzeile: beim Zeigen oder Fokussieren füllt sich die Zeile von links
- * mit Orange — wie ein Finger, der im Heft einer Zeile folgt. Alles darauf
- * wird tiefschwarz, damit der Kontrast auf Orange hält.
- */
+/* Programmzeile füllt sich bei Hover/Fokus von links mit Orange; Inhalt wird Tinte für den Kontrast. */
 .fill-row {
   position: relative;
   isolation: isolate;
@@ -204,22 +183,14 @@
 }
 
 /*
- * Suchfeld im Suchfenster: Beim Öffnen springt der Cursor hinein, der
- * gemeinsame Fokusrahmen zeichnete also sofort einen schwarzen Kasten — im
- * 2px-Rahmen des Fensters ein Kasten im Kasten. Stattdessen wird die Linie
- * unter der Zeile zur Tinte, wie eine Schreiblinie im Heft; die Zeile behält
- * dabei ihre Höhe, weil sie immer 2px trägt. Ungelayert wie die Regel oben,
- * sonst gewinnt der allgemeine Rahmen.
+ * Suchfeld ist beim Öffnen fokussiert: statt Fokusrahmen (Kasten im Kasten) wird
+ * die Unterlinie zur Tinte. Ungelayert, sonst gewinnt der allgemeine Rahmen.
  */
 .programm .suchfeld:focus-visible {
   outline: none;
 }
 
-/*
- * Textlink im Fließtext: Messing-Tinte (Nacht: Druckorange), immer
- * unterstrichen, damit er nicht nur an der Farbe erkennbar ist. Auf Orange
- * steht er in Tinte.
- */
+/* Textlink immer unterstrichen, damit er nicht nur an der Farbe erkennbar ist. */
 .link-ink {
   color: var(--color-primary-ink);
   font-weight: 600;
@@ -242,9 +213,8 @@
 }
 
 /*
- * Spalte mit gestrecktem Titel-Link (Aktuelles): der Rahmen liegt um die
- * ganze Spalte, der Link selbst zeichnet keinen zweiten. Ungelayert, weil
- * `.programm :focus-visible` sonst jede Tailwind-Utility überstimmt.
+ * Gestreckter Titel-Link: Fokusrahmen um die ganze Spalte statt um den Link.
+ * Ungelayert, weil `.programm :focus-visible` sonst jede Tailwind-Utility überstimmt.
  */
 .stretch-item:has(a:focus-visible) {
   outline: 3px solid var(--color-ink);
@@ -259,13 +229,7 @@
   outline: none;
 }
 
-/*
- * Bezirksflächen auf den Kartenseiten (Chor finden, Über uns/Bezirke): als
- * Tonwert statt voller Sättigung, damit die großen Flächen zurücktreten und
- * die hohlen Chor-Marker auf der Karte lesbar bleiben. Der Umriss bleibt in
- * voller Farbe als Haarlinie (non-scaling, damit er beim Zoomen der Karte
- * nicht mitskaliert).
- */
+/* Bezirksflächen als Tonwert, damit die Chor-Marker darauf lesbar bleiben. */
 .bezirk-path {
   fill-opacity: 0.45;
   stroke: currentColor;
@@ -274,12 +238,7 @@
   vector-effect: non-scaling-stroke;
 }
 
-/*
- * Im Nachtdruck macht dieselbe Deckkraft die Flächen nicht pastellig, sondern
- * dumpf, weil gegen fast Schwarz statt gegen Papierweiß gemischt wird. Höhere
- * Deckkraft hält die Bezirksfarben erkennbar, tritt aber immer noch hinter
- * einen voll gesättigten Bezirk zurück.
- */
+/* Nachts höhere Deckkraft: gegen fast Schwarz gemischt wirken die Flächen sonst dumpf. */
 .dark .bezirk-path {
   fill-opacity: 0.65;
 }
@@ -314,7 +273,6 @@ body.modal-open {
   overflow: hidden;
 }
 
-/* Container Auto-Centering */
 .container {
   margin-left: auto;
   margin-right: auto;
@@ -322,11 +280,7 @@ body.modal-open {
   padding-right: 1rem;
 }
 
-/*
- * Horizontal overflow: use `clip` instead of `hidden` so descendants can use
- * `position: sticky` (Safari/Chromium treat overflow-x:hidden on html/body as
- * blocking sticky). Still prevents sideways scroll from full-bleed sections.
- */
+/* `clip`, not `hidden`: overflow-x:hidden on html/body breaks `position: sticky` in descendants. */
 html {
   overflow-x: clip;
   width: 100%;
@@ -337,19 +291,14 @@ body {
   overflow-x: clip;
 }
 
-/*
- * Dashboard long forms: extra air below fixed shell for sticky UI.
- * --main-padding-top is set on MainContent <main> as a fully resolved calc (no nested
- * var(--nav-height)) so sticky offsets and scroll-margin inherit correctly in deep trees.
- */
+/* Extra space below the fixed dashboard shell for sticky UI. */
 :root {
   --dashboard-sticky-top-extra: 1.5rem;
 }
 
 /*
- * Sticky offsets for dashboard shell (nav + optional banner live in `--main-padding-top` on <main>).
- * Defined here instead of Tailwind arbitrary `top-[calc(var(--,...))]` because commas inside
- * arbitrary values break JIT parsing and yield invalid `top`, which disables `position: sticky`.
+ * Named classes instead of Tailwind arbitrary `top-[calc(...)]`: commas inside
+ * arbitrary values break JIT parsing and silently disable `position: sticky`.
  */
 @layer utilities {
   .dashboard-sticky-shell-top {
@@ -359,25 +308,8 @@ body {
   }
 
   /*
-   * Klebeversatz für alles, was unter der Navigation stehenbleiben soll:
-   * mitlaufende Abschnittsköpfe (`Split` mit `stickyHead`), die Randspalte der
-   * Ensemble-Detailseite, die Infospalte der Bezirkskarte.
-   *
-   * Der Versatz kommt aus `--main-padding-top`, das MainContent auf <main> als
-   * fertig ausgerechnetes calc aus Banner- und Navigationshöhe setzt und das
-   * sich nach unten vererbt. Eine feste Zahl wie `top-24` stimmt nicht: Sie
-   * ergibt 96px, während die Navigation mit Banner bei 120px endet — gemessen
-   * rutschten Ensemble-Randspalte und Bezirks-Infospalte dadurch immer 24px
-   * unter die Navigation. Derselbe Fehler steckte zuvor im Kolumnentitel.
-   *
-   * Dazu kommt `--kolumnentitel-hoehe`, das `PublicPage` setzt: Wenn etwas
-   * klebt, ist der große Titel längst aus dem Bild und der Kolumnentitel steht
-   * unter der Navigation. Ohne diesen Anteil klebte alles 21px unter dem
-   * Streifen, und die erste Zeile war angeschnitten.
-   *
-   * Als benannte Klasse aus demselben Grund wie oben: Kommas in Tailwinds
-   * Arbitrary-Werten zerbrechen den Parser, `top` wird ungültig, und
-   * `position: sticky` bliebe dann still wirkungslos.
+   * Klebeversatz unter Navigation (+ Banner) und Kolumnentitel. Keine feste Zahl
+   * wie `top-24`: Die Navigationshöhe hängt vom Banner ab.
    */
   .sticky-below-nav {
     top: calc(
@@ -401,7 +333,6 @@ body {
   }
 }
 
-/* TipTap Editor Placeholder */
 .tiptap p.is-editor-empty:first-child::before {
   color: #9ca3af;
   content: attr(data-placeholder);
@@ -414,7 +345,6 @@ body {
   color: #6b7280;
 }
 
-/* TipTap Table: selected cells */
 .tiptap td.selectedCell,
 .tiptap th.selectedCell {
   background-color: rgba(250, 166, 25, 0.15);
@@ -427,7 +357,6 @@ body {
   border-color: #fbb847;
 }
 
-/* TipTap Table: column resize handle */
 .tiptap .column-resize-handle {
   position: absolute;
   top: 0;
@@ -454,7 +383,6 @@ body {
   box-sizing: border-box;
 }
 
-/* Resize cursor when hovering near column borders */
 .tiptap.resize-cursor {
   cursor: col-resize;
 }
@@ -479,12 +407,8 @@ body {
 }
 
 /*
- * Der Einzähler schwingt bewusst über das Ziel hinaus (0.82 → 1.06 → 1): Das
- * ist ein Taktakzent, kein Bedienelement, deshalb bleibt die Kurve. Wer
- * reduzierte Bewegung eingestellt hat, soll die Zahl aber trotzdem sehen —
- * ohne Animation steht sie in ihrem natürlichen Zustand, also sichtbar und
- * unskaliert. Dieselbe Rücksicht nimmt das Spiel bei den Schlagpunkten schon
- * (`beat-pulse.tsx`, `motion-reduce:scale-100`); an dieser Stelle fehlte sie.
+ * Das Überschwingen ist als Taktakzent gewollt. Ohne Animation steht die Zahl
+ * sichtbar und unskaliert da.
  */
 @media (prefers-reduced-motion: reduce) {
   .rhythm-count-pop {
@@ -493,12 +417,8 @@ body {
 }
 
 /*
- * iOS Safari lays `input[type="date"]` (and the other date/time types) out from
- * its native widget instead of as a text box: the field keeps an intrinsic
- * width — so it overflows narrow grid columns rather than shrinking — and
- * centres its value, which makes it taller than the inputs next to it. Reset it
- * to a plain field so mixed rows (e.g. Geburtsdatum next to Wohnort in der
- * Kursanmeldung) line up.
+ * iOS Safari renders date/time inputs as native widgets (intrinsic width,
+ * centred and taller); reset them to plain fields so mixed rows line up.
  */
 input[type="date"],
 input[type="time"],

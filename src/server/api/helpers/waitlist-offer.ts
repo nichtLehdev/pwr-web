@@ -198,10 +198,8 @@ export type AcceptedOffer = {
 };
 
 /**
- * Nachrück-Angebot annehmen: die gewählten Teilnehmer rücken nach. Sind es
- * alle, wird die Anmeldung bestätigt. Sonst werden sie — wie beim Aufteilen
- * während der Anmeldung — eine eigene, bestätigte Anmeldung derselben Gruppe,
- * und die übrigen warten weiter, auf ihrem bisherigen Platz.
+ * Rücken alle Gewählten nach, wird die Anmeldung bestätigt; sonst werden sie eine eigene
+ * bestätigte Anmeldung derselben Gruppe, und die übrigen warten auf ihrem Platz weiter.
  */
 export async function acceptPromotionOffer(
   db: Db,
@@ -326,9 +324,8 @@ export async function acceptPromotionOffer(
     const confirmedDownPayment = registrationDownPayment(course, selected);
     const waitlistDownPayment = registrationDownPayment(course, rest);
 
-    // Eine schon eingegangene Anzahlung (etwa vom Team mit der Anmeldung
-    // verbucht) geht mit zum bestätigten Teil, wo sie fällig ist — sofern dort
-    // eine anfällt; sonst bleibt sie, wo sie war.
+    // Eine eingegangene Anzahlung geht mit zum bestätigten Teil, sofern dort eine
+    // fällig ist; sonst bleibt sie, wo sie war.
     const received = downPaymentReceived(registration);
     const bookingMoves = received > 0 && confirmedDownPayment != null;
 
@@ -448,16 +445,13 @@ export async function acceptPromotionOffer(
     url: `/dashboard/courses/${result.courseId}/participants/${result.confirmedRegistrationId}`,
   });
 
-  // Nicht alle Plätze genutzt? Sie gelten als weitergegeben
-  // (`promotionOfferPassedSeats`), bleiben aber frei, bis das Kursteam die
-  // Warteliste nachrücken lässt — automatisch rückt niemand mehr nach.
+  // Ungenutzte Plätze gelten als weitergegeben, bleiben aber frei, bis das Kursteam nachrücken lässt.
   return result;
 }
 
 /**
- * Nachrück-Angebot ablehnen: die Anmeldung wartet weiter auf ihrem Platz. Die
- * Plätze gelten als weitergegeben; an die Nächsten gehen sie erst, wenn das
- * Kursteam die Warteliste nachrücken lässt.
+ * Die Anmeldung wartet weiter auf ihrem Platz; die Plätze gehen erst an die Nächsten,
+ * wenn das Kursteam nachrücken lässt.
  */
 export async function declinePromotionOffer(
   db: Db,

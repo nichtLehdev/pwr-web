@@ -33,10 +33,7 @@ const typeLabels: Record<SearchResultType, string> = {
   auswahlchor: "Auswahlchor",
 };
 
-/**
- * Die Art steht als Wort in der Metazeile; das Zeichen davor ist ein blankes
- * Glyph in Tinte — keine Farbfläche und kein Icon-Kreis.
- */
+/** Blankes Glyph in Tinte; die Art steht zusätzlich als Wort in der Metazeile. */
 const typeIcons: Record<SearchResultType, React.ReactNode> = {
   post: <FileText className="h-4 w-4 shrink-0" aria-hidden />,
   event: <Calendar className="h-4 w-4 shrink-0" aria-hidden />,

@@ -5,21 +5,9 @@ import {
 } from "./registration-split";
 
 /**
- * Nachrücken von der Warteliste.
- *
- * Nachgerückt wird nur, wenn das Kursteam es auslöst (Entscheidung vom
- * 18.09.2026): Frei werdende Plätze entstehen oft nur kurz — eine versehentlich
- * gestrichene Person, zwei Anmeldungen, die das Team für den
- * Geschwisterrabatt zusammenführt —, und die Automatik hatte sie sofort
- * vergeben. Bis zum Knopfdruck gehören freie Plätze der Warteliste (siehe
- * `waitlist-priority`).
- *
- * Dann geht die Warteliste der Reihe nach durch. Passt eine Anmeldung ganz,
- * wird sie bestätigt. Passt nur ein Teil, bekommt sie ein Angebot: die
- * Anmeldenden wählen, wer nachrückt, oder lehnen ab. Bis dahin hält die
- * Warteliste an — höchstens sieben Tage. Abgelehnte oder verfallene Plätze
- * gelten als weitergegeben: Beim nächsten Nachrücken sind die Nächsten dran,
- * die Anmeldung behält ihren Platz.
+ * Nachgerückt wird nur auf Knopfdruck des Kursteams, weil Plätze oft nur kurz frei werden;
+ * bis dahin gehören sie der Warteliste. Passt eine Anmeldung nur teilweise, bekommt sie ein
+ * Angebot und die Warteliste hält an; abgelehnte Plätze gelten als weitergegeben.
  */
 
 export const PROMOTION_OFFER_DAYS = 7;
@@ -131,12 +119,8 @@ export type WaitingRegistration = {
 };
 
 /**
- * Abgelaufene, noch nicht geschlossene Angebote — mit den Plätzen, die beim
- * Schließen als weitergegeben gelten: so viele, wie die Anmeldung jetzt nutzen
- * könnte. Erst mehr freie Plätze bringen ihr ein neues Angebot.
- *
- * Eine Regel für den stündlichen Lauf, der nur noch schließt, und für das
- * Nachrücken, das vorher dasselbe tut.
+ * Als weitergegeben gelten so viele Plätze, wie die Anmeldung jetzt nutzen könnte;
+ * erst mehr freie Plätze bringen ihr ein neues Angebot.
  */
 export function expiredOfferClosures(
   waitlist: readonly WaitingRegistration[],
@@ -170,8 +154,7 @@ export type PromotionHalt =
   /** Die Anmeldung vorn hat ein laufendes Angebot. */
   | { kind: "offer_running"; registrationId: string }
   /**
-   * Die Anmeldung vorn passt in keinen der freien Plätze, etwa weil ihre
-   * Kategorie voll ist. Die Schlange bleibt dort stehen, damit eine große
+   * Die Anmeldung vorn passt nicht. Die Schlange bleibt stehen, damit eine große
    * Familie nicht dauerhaft von kleineren Gruppen überholt wird.
    */
   | { kind: "does_not_fit"; registrationId: string }
@@ -189,9 +172,8 @@ export type PromotionPlan = {
 };
 
 /**
- * Der Durchgang durch die Warteliste, ohne Datenbank: wer bestätigt wird, wer
- * ein Angebot bekommt und warum es danach nicht weitergeht. Die Warteliste
- * steht in Anmeldereihenfolge; abgelaufene Angebote sind schon geschlossen.
+ * Erwartet die Warteliste in Anmeldereihenfolge und abgelaufene Angebote
+ * bereits geschlossen.
  */
 export function planPromotion(
   waitlist: readonly WaitingRegistration[],
@@ -263,11 +245,8 @@ export type PromotionHaltSummary =
   | { kind: "offered"; registrantName: string };
 
 /**
- * Der Grund, warum (danach) niemand nachgerückt ist, in einem Satz fürs
- * Kursteam — `null`, wenn es nichts zu erklären gibt.
- *
- * @param anyoneMoved ob in diesem Durchgang schon jemand bestätigt wurde oder
- *   ein Angebot bekam; dann erklärt der Satz nur noch, warum es dort endet.
+ * Warum (danach) niemand nachgerückt ist, als Satz fürs Kursteam. Mit `anyoneMoved`
+ * erklärt er nur noch, warum der Durchgang dort endet.
  */
 export function promotionHaltText(
   halt: PromotionHaltSummary,

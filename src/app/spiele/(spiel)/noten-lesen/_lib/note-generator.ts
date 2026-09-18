@@ -13,9 +13,8 @@ import {
 import { expertPoolForClef, pitchKey, pitchPool } from "./ranges";
 
 /**
- * Session-Fehlerzähler: pitchKey → noch nötige richtige Antworten.
- * Verfehlte Töne werden im Picker ~3× gewichtet, bis sie zweimal
- * richtig beantwortet wurden.
+ * Session-Fehlerzähler: pitchKey → noch nötige richtige Antworten. Verfehlte Töne
+ * werden ~3× gewichtet, bis sie zweimal richtig beantwortet wurden.
  */
 export type MissTracker = Map<string, number>;
 
@@ -145,11 +144,8 @@ export function answerLayoutForPitches(
 }
 
 /**
- * Feste, deterministische Antwort-Layouts — kein Mischen: stabile Positionen
- * erhalten Muskelgedächtnis und die 1–7/1–12-Tastenbelegung.
- * Diatonisch: immer C D E F G A H. Chromatisch: 12 Tonklassen in fester
- * Reihenfolge; die Tonklasse des Zieltons trägt dessen Schreibweise (Dis
- * statt Es usw.), damit die richtige Antwort immer enthalten ist.
+ * Feste Layouts ohne Mischen (Muskelgedächtnis, 1–7/1–12-Tasten). Chromatisch trägt die
+ * Tonklasse des Zieltons dessen Schreibweise (Dis statt Es), damit die Antwort enthalten ist.
  */
 export function buildAnswerLabelsForLayout(
   target: WrittenPitch,

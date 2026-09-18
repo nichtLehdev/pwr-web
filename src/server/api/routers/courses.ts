@@ -82,18 +82,8 @@ const courseCollaboratorsForPublic = {
 type CourseNumberLockReason = "INVOICES" | "DOWN_PAYMENTS";
 
 /**
- * Warum die Kursnummer nicht mehr geändert werden darf — `null`, solange sie
- * frei ist.
- *
- * - Ausgestellte Rechnungen tragen die Nummer in Nummernkreis und
- *   Verwendungszweck und sind eingefroren (§14 UStG). Umnummeriert zeigten
- *   sie auf eine Nummer, die es nicht mehr gibt, und eine neue Sequenz
- *   startete wieder bei 001.
- * - Anmeldungen mit Anzahlung haben die Nummer im Verwendungszweck ihrer
- *   Überweisung bekommen (Formular, Mail). Der Verwendungszweck wird aus der
- *   aktuellen Nummer gebildet — umnummeriert fände die Kasse frühe Zahlungen
- *   unter der neuen Nummer nicht. Stornierte zählen mit: eine eingegangene
- *   Anzahlung wird dort noch erstattet oder einbehalten.
+ * Warum die Kursnummer gesperrt ist (`null` = frei): ausgestellte Rechnungen tragen sie eingefroren
+ * (§14 UStG), Anmeldungen mit Anzahlung (auch stornierte) im Verwendungszweck ihrer Überweisung.
  */
 async function courseNumberLockReason(
   db: PrismaClient,
@@ -111,11 +101,8 @@ async function courseNumberLockReason(
 }
 
 /**
- * Kursnummern sind global eindeutig: sie bilden die Rechnungsnummern-Sequenz
- * (RE-<Kursnummer>-<lfd.>), zwei Kurse mit derselben Nummer würden sich also
- * eine Nummernfolge teilen. Der Unique-Index fängt das ohnehin ab — die
- * Vorabprüfung sorgt nur dafür, dass statt eines P2002-Fehlers eine lesbare
- * Meldung im Formular landet.
+ * Kursnummern sind global eindeutig (sie bilden die Rechnungsnummern-Sequenz). Der Unique-Index
+ * fängt das ab; die Vorabprüfung liefert nur eine lesbare Meldung statt P2002.
  */
 async function assertCourseNumberAvailable(
   db: PrismaClient,
@@ -136,11 +123,7 @@ async function assertCourseNumberAvailable(
 
 const externalProviderNameSchema = z.string().max(200).optional();
 
-/**
- * Die interne Kursnummer. Leer/blank heißt "keine Nummer" — das Feld ist
- * optional und wird dann als null gespeichert. Ziffern only, weil die Nummer
- * in der Rechnungsnummer und damit im Dateinamen des eingefrorenen PDFs landet.
- */
+/** Leer heißt keine Nummer (null). Nur Ziffern, weil sie in Rechnungsnummer und PDF-Dateinamen landet. */
 const courseNumberSchema = z
   .string()
   .trim()
@@ -160,11 +143,7 @@ const externalRegistrationUrlSchema = z
     message: "Bitte gib eine gültige URL ein (mit http:// oder https://).",
   });
 
-/**
- * Preiskategorien müssen auseinanderzuhalten sein: gleiche Namen sind
- * erlaubt, brauchen dann aber unterschiedliche Beschreibungen. Sonst stehen
- * sie in der Anmeldung zweimal identisch da.
- */
+/** Gleiche Namen sind erlaubt, brauchen dann aber unterschiedliche Beschreibungen. */
 const priceOptionsMustBeDistinct = (
   options:
     ReadonlyArray<{ label: string; description?: string | null }> | undefined,
@@ -248,9 +227,7 @@ export const coursesRouter = createTRPCRouter({
             collaborators: courseCollaboratorsForPublic,
             priceOptions: true,
             customFields: true,
-            // select (not include): a registration row carries the
-            // registrant's full contact and billing data, which a public
-            // course list must never fetch just to count participants.
+            // select, not include: a public list must never fetch registrants' contact and billing data.
             registrations: seatRegistrationsQuery,
           },
           skip: (input.page - 1) * input.limit,
@@ -261,12 +238,10 @@ export const coursesRouter = createTRPCRouter({
       ]);
 
       const courses = coursesRaw.map((course) => {
-        // Die Kursliste zeigt freie Plätze wie die Kursseite: ohne die, die
-        // Wartende nutzen könnten.
+        // Freie Plätze wie auf der Kursseite: ohne die, die Wartende nutzen könnten.
         const summary = seatSummaryForPublic(course);
         const participantCount = summary.confirmedParticipants;
-        // courseNumber ist eine reine Buchhaltungsangabe (siehe getById) und
-        // hat in der öffentlichen Kursliste nichts zu suchen.
+        // courseNumber ist eine Buchhaltungsangabe und gehört nicht in die öffentliche Liste.
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { registrations, courseNumber, ...courseWithoutRegistrations } =
           course;
@@ -287,10 +262,7 @@ export const coursesRouter = createTRPCRouter({
       };
     }),
 
-  /**
-   * Accepts either the UUID or the slug. Public links use the slug; the
-   * dashboard and links shared before slugs existed still pass a UUID.
-   */
+  /** Accepts UUID or slug; the dashboard and older shared links still pass a UUID. */
   getById: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
@@ -382,9 +354,7 @@ export const coursesRouter = createTRPCRouter({
         courseRaw.id,
       );
 
-      // Die Kursnummer ist eine Buchhaltungsangabe und gehört nicht in die
-      // öffentliche Kursdarstellung. Anonyme Aufrufe — der Großteil des
-      // Traffics hier — kosten dadurch keine zusätzliche Abfrage.
+      // Die Kursnummer ist eine Buchhaltungsangabe und gehört nicht in die öffentliche Darstellung.
       const { courseNumber, ...coursePublic } = courseRaw;
       const maySeeCourseNumber =
         !!ctx.session?.user &&
@@ -426,10 +396,7 @@ export const coursesRouter = createTRPCRouter({
         ...coursePublic,
         courseNumber:
           maySeeCourseNumber || hasDownPayment ? courseNumber : null,
-        /**
-         * Ausgestellte Rechnungen oder Anmeldungen mit Anzahlung frieren die
-         * Kursnummer ein, siehe `courseNumberLockReason`.
-         */
+        /** Siehe `courseNumberLockReason`. */
         courseNumberLocked: courseNumberLockedBy !== null,
         courseNumberLockedBy,
         /** Aktive Anmeldungen frieren die Anzahlung ein, siehe `update`. */
@@ -697,8 +664,7 @@ export const coursesRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
-      // PENDING is the review marker itself — a separate pendingReview
-      // column never existed in the schema.
+      // PENDING is the review marker itself; there is no pendingReview column.
       const where: {
         status: ContentStatus;
         bezirkId?: string;
@@ -821,12 +787,6 @@ export const coursesRouter = createTRPCRouter({
               }),
             )
             .optional(),
-          // Fehlte hier vollstaendig: Die Auswahl im Formular („Direkt
-          // veroeffentlichen" / „Zur Pruefung einreichen" / „Als Entwurf
-          // speichern") erreichte den Server nie, jeder Kurs landete auf dem
-          // Prisma-Vorgabewert PENDING — auch wenn die Oberflaeche „wird
-          // sofort auf der Webseite angezeigt" versprach. Termine fuehren das
-          // Feld laengst, siehe events.create.
           status: z.enum(ContentStatus).default(ContentStatus.PENDING),
         })
         .refine((data) => data.endDate >= data.startDate, {
@@ -909,10 +869,7 @@ export const coursesRouter = createTRPCRouter({
         });
       }
 
-      // Freigeben ist die Freigabe selbst, nicht bloss ein Statuswechsel —
-      // ohne diese Pruefung koennte sich jeder Autor seine eigenen Kurse
-      // veroeffentlichen, sobald das Feld ueberhaupt durchgereicht wird.
-      // Wortgleich zu events.create.
+      // Ohne diese Pruefung koennte jeder Autor seine eigenen Kurse direkt veroeffentlichen.
       const canApprove = await userHasPermission(
         ctx.session.user.id,
         PERMISSIONS.COURSES_APPROVE,
@@ -1498,9 +1455,8 @@ export const coursesRouter = createTRPCRouter({
         data.courseNumber = nextCourseNumber;
       }
 
-      // Anzahlung: nur mit eigener Berechtigung änderbar, gesperrt solange
-      // aktive Anmeldungen bestehen (deren Betrag und Hinweise sind bestätigt),
-      // und bei jedem Speichern gegen Preise und Kursnummer geprüft.
+      // Anzahlung: nur mit eigener Berechtigung, gesperrt bei aktiven Anmeldungen,
+      // bei jedem Speichern gegen Preise und Kursnummer geprüft.
       const nextDownPayment = normalizeDownPaymentConfig({
         downPaymentMode: mergedExternal
           ? DownPaymentMode.NONE
@@ -1520,9 +1476,8 @@ export const coursesRouter = createTRPCRouter({
         priceOptions && !mergedExternal
           ? pairPriceOptions(priceOptions, course.priceOptions)
           : null;
-      // Index-gleich mit `priceOptions`, sofern eingereicht. Ein weggelassener
-      // Betrag heißt "gespeicherten behalten" — so überschreibt ein Formular
-      // ohne Anzahlungsrecht nichts.
+      // Index-gleich mit `priceOptions`. Ein weggelassener Betrag heißt "gespeicherten behalten",
+      // so überschreibt ein Formular ohne Anzahlungsrecht nichts.
       const nextPriceOptions = mergedExternal
         ? []
         : priceOptions && priceOptionPairing
@@ -1649,10 +1604,7 @@ export const coursesRouter = createTRPCRouter({
             if (
               inputOption.label !== existing.label ||
               inputOption.price !== existing.price ||
-              // Altersgrenzen gehören zu Bezeichnung und Preis, nicht zur
-              // Beschreibung: sie entscheiden, wer welchen Preis zahlt.
-              // Nachträglich verschoben, stünden Angemeldete plötzlich in
-              // einer Kategorie, die ihnen nicht mehr zusteht.
+              // Altersgrenzen sind wie Bezeichnung und Preis gesperrt: sie entscheiden, wer welchen Preis zahlt.
               (inputOption.minAge ?? null) !== existing.minAge ||
               (inputOption.maxAge ?? null) !== existing.maxAge
             ) {
@@ -1685,15 +1637,10 @@ export const coursesRouter = createTRPCRouter({
                 where: { id: existing.id },
                 data: {
                   maxParticipants: inputOption.maxParticipants ?? null,
-                  // Beschreibung bleibt änderbar, auch nach Anmeldungen: sie
-                  // ist reiner Anzeigetext ohne Einfluss auf Preis oder
-                  // Kapazität — und bei zwei gleichnamigen Kategorien das
-                  // Einzige, was sie unterscheidbar macht. Wäre sie gesperrt,
-                  // ließe sich ein bestehender Kurs mit doppeltem Namen nicht
-                  // mehr in einen gültigen Zustand bringen.
+                  // Beschreibung bleibt änderbar: reiner Anzeigetext, und bei gleichnamigen
+                  // Kategorien das einzige Unterscheidungsmerkmal.
                   description: inputOption.description ?? null,
-                  // minAge/maxAge stehen hier bewusst nicht: die Prüfung oben
-                  // lässt sie ohnehin nur unverändert durch.
+                  // minAge/maxAge bewusst nicht: die Prüfung oben lässt sie nur unverändert durch.
                 },
               });
             }),
@@ -1798,12 +1745,7 @@ export const coursesRouter = createTRPCRouter({
         });
       }
 
-      // Invoice.course stand auf onDelete: Cascade — ein geloeschter Kurs riss
-      // seine Rechnungen mit, samt fortlaufender Nummer, archiviertem PDF und
-      // Veroeffentlichungsdatum. Das widersprach dem Schema an anderer Stelle:
-      // Invoice.registration steht auf SetNull, mit dem Kommentar „die Rechnung
-      // ist aufbewahrungspflichtig". Eine Nummer haben nur veroeffentlichte und
-      // stornierte Rechnungen; Entwuerfe duerfen mitgehen.
+      // Rechnungen mit Nummer (veroeffentlicht/storniert) sind aufbewahrungspflichtig; Entwuerfe duerfen mitgehen.
       const belege = await ctx.db.invoice.count({
         where: { courseId: input.id, invoiceNumber: { not: null } },
       });
@@ -1918,13 +1860,8 @@ export const coursesRouter = createTRPCRouter({
     }),
 
   /**
-   * Same identifier rules as `getById` — the detail page passes it straight on.
-   *
-   * Die freien Plätze, wie eine neue Anmeldung sie sieht: ohne die, die
-   * Wartende nutzen könnten (`@/lib/waitlist-priority`). So zeigen Kursseite,
-   * Kurskarte und Anmeldeformular „Nur Warteliste“, statt einen Platz zu
-   * versprechen, den der Server dann den Wartenden vorbehält. Das Kursteam
-   * sieht die tatsächlichen Plätze über `registrations.getWaitlistOverview`.
+   * Same identifier rules as `getById`. Freie Plätze, wie eine neue Anmeldung sie sieht (ohne die
+   * für Wartende); die tatsächlichen sieht das Team über `registrations.getWaitlistOverview`.
    */
   getAvailableSlots: publicProcedure
     .input(z.object({ id: z.string() }))
@@ -1968,9 +1905,7 @@ export const coursesRouter = createTRPCRouter({
         courseId: z.string(),
         page: z.number().min(1).default(1),
         limit: z.number().min(1).max(100).default(50),
-        // Admin views compute stats, exports and invoice batches from this
-        // list — with `all` they get every registration instead of a silent
-        // 100-row slice that produced wrong totals on large courses.
+        // Stats, exports and invoice batches need every registration, not a 100-row slice.
         all: z.boolean().default(false),
       }),
     )
@@ -2292,10 +2227,7 @@ export const coursesRouter = createTRPCRouter({
         });
       }
 
-      // Dieselbe Sperre wie in `delete` — ohne sie waere sie ueber die
-      // Mehrfachauswahl der Kursliste trivial zu umgehen. Bewusst alles oder
-      // nichts: eine stillschweigende Teilloeschung waere schlimmer als eine
-      // klare Absage.
+      // Dieselbe Sperre wie in `delete`, bewusst alles oder nichts statt stiller Teilloeschung.
       const mitBelegen = await ctx.db.invoice.findMany({
         where: {
           courseId: { in: canDeleteIds },

@@ -13,33 +13,17 @@ export interface ZoomableImageProps {
   alt: string;
   copyright?: string | null;
   creator?: string | null;
-  /**
-   * Klassen des Rahmens, also genau das, was vorher am umschließenden `div`
-   * stand (Größe, Seitenverhältnis, Grund, `overflow-hidden`, Rundung,
-   * Rasterplatz). Keine Anzeige-Klasse: `block` setzt die Komponente selbst,
-   * sonst stünde der Button als `inline-block` auf einer Textzeile und
-   * bekäme darunter ein paar Pixel Unterlänge.
-   */
+  /** Klassen des Rahmens, ohne Anzeige-Klasse: `block` setzt die Komponente selbst. */
   className?: string;
-  /**
-   * Lupe in der Ecke bei Hover und Tastaturfokus. `false` für kleine oder
-   * runde Bildfelder (Personenfotos): Bei 56px verdeckte sie das Gesicht, im
-   * Kreis schnitt die Rundung das Eckfeld an. Der Fokusring und der
-   * Lupen-Mauszeiger bleiben dort der Hinweis.
-   */
+  /** Lupe in der Ecke bei Hover und Fokus; `false` für kleine oder runde Bildfelder (Personenfotos). */
   hint?: boolean;
-  /** Das Bild selbst, unverändert wie vorher (`next/image` mit `fill` o. ä.). */
+  /** Das Bild selbst (`next/image` mit `fill` o. ä.). */
   children: ReactNode;
 }
 
 /**
- * Macht ein Bild vergrößerbar: Der bisherige Bildrahmen wird zum Button
- * „Bild vergrößern“, der die Lightbox mit dem ganzen Bild öffnet. Aufrufer
- * tauschen nur das umschließende `div` gegen diese Komponente — Maße und
- * Satz bleiben gleich.
- *
- * Nicht für Bilder, die selbst Links sind (Karten, Karussell,
- * Suchergebnisse): Dort bleibt der Klick die Navigation.
+ * Macht den Bildrahmen zum Button, der die Lightbox öffnet. Nicht für Bilder, die
+ * selbst Links sind (Karten, Karussell, Suchergebnisse).
  */
 export default function ZoomableImage({
   src,

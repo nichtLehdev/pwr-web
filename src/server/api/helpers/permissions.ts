@@ -4,13 +4,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 export type { PermissionKey };
 import { db } from "@/server/db";
 
-/**
- * Resolve all effective permissions for a user in a single pass.
- *
- * 1. Single Prisma query fetches user + roles + role permissions + direct permissions
- * 2. Batch-loads the role hierarchy (instead of one query per ancestor)
- * 3. Applies deny logic: explicit denies override both direct grants and role grants
- */
+/** Effective permissions of a user; explicit denies override both direct and role grants. */
 export async function resolveUserPermissions(
   userId: string,
 ): Promise<Set<PermissionKey>> {
@@ -49,14 +43,12 @@ export async function resolveUserPermissions(
 
   const permissions = new Set<PermissionKey>();
 
-  // 1. Add directly granted permissions (skip denied)
   for (const up of user.userPermissions) {
     if (up.granted && !deniedKeys.has(up.permissionKey)) {
       permissions.add(up.permissionKey as PermissionKey);
     }
   }
 
-  // 2. Collect all role IDs that need hierarchy resolution
   const roleIds = user.customRoles.map((ura) => ura.role.id);
   const allRolePermissions = await batchResolveRolePermissions(roleIds);
 
@@ -73,16 +65,12 @@ export async function resolveUserPermissions(
   return permissions;
 }
 
-/**
- * Batch-resolve permissions for multiple roles including inherited permissions.
- * Loads the entire role hierarchy in batches instead of one query per ancestor.
- */
+/** Role permissions incl. inherited ones; loads the hierarchy level by level, not one query per ancestor. */
 export async function batchResolveRolePermissions(
   roleIds: string[],
 ): Promise<Map<string, Set<PermissionKey>>> {
   if (roleIds.length === 0) return new Map();
 
-  // Load all roles we'll need in batches, walking up the hierarchy
   const allRoles = new Map<
     string,
     { id: string; parentRoleId: string | null; permissionKeys: string[] }
@@ -110,7 +98,6 @@ export async function batchResolveRolePermissions(
     toFetch = nextFetch;
   }
 
-  // Now resolve permissions for each requested role by walking up the hierarchy in memory
   const result = new Map<string, Set<PermissionKey>>();
 
   function resolveForRole(
@@ -126,13 +113,11 @@ export async function batchResolveRolePermissions(
 
     const perms = new Set<PermissionKey>();
 
-    // Inherit from parent first
     if (role.parentRoleId) {
       const parentPerms = resolveForRole(role.parentRoleId, visited);
       for (const p of parentPerms) perms.add(p);
     }
 
-    // Add own permissions
     for (const key of role.permissionKeys) {
       perms.add(key as PermissionKey);
     }
@@ -151,11 +136,7 @@ export async function batchResolveRolePermissions(
 /** Per-request memo of resolved permission sets, keyed by user id. */
 export type PermissionCache = Map<string, Promise<Set<PermissionKey>>>;
 
-/**
- * Resolve permissions through the per-request cache when one is available.
- * Resolution costs several queries (user + role hierarchy), so every caller
- * inside a tRPC procedure should pass `ctx.permissionCache`.
- */
+/** Resolution costs several queries, so every caller inside a tRPC procedure should pass `ctx.permissionCache`. */
 export function resolveUserPermissionsCached(
   userId: string,
   cache?: PermissionCache,
@@ -169,10 +150,7 @@ export function resolveUserPermissionsCached(
   return cached;
 }
 
-/**
- * Check if a user has a specific permission.
- * Pass `ctx.permissionCache` so repeated checks in one request resolve once.
- */
+/** Pass `ctx.permissionCache` so repeated checks in one request resolve once. */
 export async function userHasPermission(
   userId: string,
   permissionKey: PermissionKey,
@@ -182,10 +160,7 @@ export async function userHasPermission(
   return perms.has(permissionKey);
 }
 
-/**
- * Get all permission keys a user has.
- * Pass `ctx.permissionCache` so repeated checks in one request resolve once.
- */
+/** Pass `ctx.permissionCache` so repeated checks in one request resolve once. */
 export async function getUserPermissions(
   userId: string,
   cache?: PermissionCache,
