@@ -6,6 +6,9 @@ import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/react";
 import { useSession } from "@/lib/auth";
+import { Button } from "@/app/_components/ui/button";
+import { fieldControlClasses } from "@/app/_components/programmheft/field";
+import { GAME_FOCUS_RING } from "../_lib/focus-ring";
 import type { ClefKind, WrittenPitch } from "../(spiel)/noten-lesen/_lib/types";
 import {
   CLEF_LABELS,
@@ -24,6 +27,9 @@ import {
  * Es4 / E4 / Eis4 sind getrennte Einträge). Wird im Bibliotheks-Overlay
  * gerendert, funktioniert aber auch eigenständig in jedem Scroll-Container
  * (die Speicherleiste ist sticky zum nächstgelegenen Scroll-Vorfahren).
+ *
+ * Gestaltung wie die Setup-Kacheln der Spiele: gewählt ist ein oranges
+ * Druckfeld mit Tintenschrift, nicht gewählt eine Haarlinie.
  */
 
 export type NoteSetEditorProps = {
@@ -46,29 +52,32 @@ const OCTAVE_NAMES: Record<number, string> = {
   7: "viergestrichene Oktave",
 };
 
-/** Chip-Optik wie die aktiven Kacheln der Spiele; min. 44 px Touch-Ziel. */
+/** Gewählte Note als Druckfeld; min. 44 px Touch-Ziel in beide Richtungen. */
 function pitchChipClass(active: boolean): string {
   return cn(
-    "min-h-11 min-w-11 rounded-lg border px-2.5 py-2 text-sm font-bold transition-colors active:scale-[0.99]",
-    "text-dark dark:text-dark-text",
+    "inline-flex min-h-11 min-w-11 items-center justify-center border px-2.5 text-sm font-bold transition-colors active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100",
+    GAME_FOCUS_RING,
     active
-      ? "border-primary bg-amber-50/90 dark:bg-amber-950/30"
-      : "border-dark-border/50 hover:border-primary/40 dark:border-dark-border dark:hover:border-primary/35",
+      ? "on-orange border-ink bg-primary text-ink"
+      : "border-rule text-ink hover:border-ink dark:border-night-rule dark:text-night-text dark:hover:border-night-text",
   );
 }
 
 function clefChipClass(active: boolean): string {
   return cn(
-    "rounded-lg border px-3 py-2 text-sm font-bold transition-colors active:scale-[0.99]",
-    "text-dark dark:text-dark-text",
+    "inline-flex min-h-11 items-center border px-3 text-sm font-bold transition-colors active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100",
+    GAME_FOCUS_RING,
     active
-      ? "border-primary bg-amber-50/90 dark:bg-amber-950/30"
-      : "border-dark-border/50 hover:border-primary/40 dark:border-dark-border dark:hover:border-primary/35",
+      ? "on-orange border-ink bg-primary text-ink"
+      : "border-rule text-ink hover:border-ink dark:border-night-rule dark:text-night-text dark:hover:border-night-text",
   );
 }
 
-const QUICK_ACTION_CLASS =
-  "text-dark dark:text-dark-text-muted border-dark-border/50 dark:border-dark-border hover:border-primary/40 dark:hover:border-primary/35 rounded-lg border px-2 py-1 text-xs font-bold transition-colors";
+/** Kleine Helfer über dem Raster („Stammtöne", „Leeren") — ebenfalls 44 px. */
+const QUICK_ACTION_CLASS = cn(
+  "text-dark dark:text-night-muted border-rule dark:border-night-rule hover:border-ink hover:text-ink dark:hover:border-night-text dark:hover:text-night-text inline-flex min-h-11 items-center border px-3 text-xs font-bold transition-colors motion-reduce:transition-none",
+  GAME_FOCUS_RING,
+);
 
 /** tRPC-Fehlercode defensiv auslesen (ohne any). */
 function trpcErrorCode(err: unknown): string | null {
@@ -229,7 +238,7 @@ export function NoteSetEditor({
         <div>
           <label
             htmlFor="note-set-name"
-            className="text-dark dark:text-dark-text mb-1 block text-sm font-bold"
+            className="text-ink dark:text-night-text mb-1 block text-sm font-bold"
           >
             Name
           </label>
@@ -240,9 +249,9 @@ export function NoteSetEditor({
             onChange={(e) => setName(e.target.value)}
             maxLength={60}
             placeholder="z. B. Anfängertöne Tenorhorn"
-            className="border-dark-border/50 dark:border-dark-border dark:bg-dark-background dark:text-dark-text focus:border-primary w-full rounded-lg border bg-white px-3 py-2.5 text-sm outline-none"
+            className={cn(fieldControlClasses, "text-sm", GAME_FOCUS_RING)}
           />
-          <p className="text-dark dark:text-dark-text-muted mt-1 text-xs">
+          <p className="text-dark dark:text-night-muted mt-1 text-xs">
             3–60 Zeichen
           </p>
         </div>
@@ -251,7 +260,7 @@ export function NoteSetEditor({
         <div>
           <label
             htmlFor="note-set-description"
-            className="text-dark dark:text-dark-text mb-1 block text-sm font-bold"
+            className="text-ink dark:text-night-text mb-1 block text-sm font-bold"
           >
             Beschreibung <span className="font-normal">(optional)</span>
           </label>
@@ -262,9 +271,9 @@ export function NoteSetEditor({
             maxLength={300}
             rows={2}
             placeholder="Wofür ist das Set gedacht?"
-            className="border-dark-border/50 dark:border-dark-border dark:bg-dark-background dark:text-dark-text focus:border-primary w-full rounded-lg border bg-white px-3 py-2.5 text-sm outline-none"
+            className={cn(fieldControlClasses, "text-sm", GAME_FOCUS_RING)}
           />
-          <p className="text-dark dark:text-dark-text-muted mt-1 text-xs">
+          <p className="text-dark dark:text-night-muted mt-1 text-xs">
             {trimmedDescription.length}/300 Zeichen
           </p>
         </div>
@@ -272,7 +281,7 @@ export function NoteSetEditor({
         {/* Schlüssel */}
         {!lockClef && (
           <div>
-            <p className="text-dark dark:text-dark-text mb-2 text-sm font-bold">
+            <p className="text-ink dark:text-night-text mb-2 text-sm font-bold">
               Schlüssel
             </p>
             <div
@@ -293,7 +302,7 @@ export function NoteSetEditor({
               ))}
             </div>
             {droppedHint && (
-              <p className="mt-2 text-xs text-amber-700 dark:text-amber-400">
+              <p className="text-primary-ink dark:text-primary mt-2 text-xs font-bold">
                 {droppedHint}
               </p>
             )}
@@ -303,12 +312,12 @@ export function NoteSetEditor({
         {/* Notenauswahl */}
         <div>
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-            <p className="text-dark dark:text-dark-text text-sm font-bold">
+            <p className="text-ink dark:text-night-text text-sm font-bold">
               Noten auswählen
             </p>
             <div className="flex items-center gap-3">
               <span
-                className="text-dark dark:text-dark-text-muted text-xs"
+                className="text-dark dark:text-night-muted text-xs"
                 aria-live="polite"
               >
                 {selectedCountLabel}
@@ -323,7 +332,7 @@ export function NoteSetEditor({
               </button>
             </div>
           </div>
-          <p className="text-dark dark:text-dark-text-muted mb-3 text-xs leading-snug">
+          <p className="text-dark dark:text-night-muted mb-3 text-xs leading-snug">
             Jede Schreibweise ist ein eigener Eintrag — Es4, E4 und Eis4 lassen
             sich getrennt wählen. Mindestens 2 Noten.
           </p>
@@ -332,21 +341,25 @@ export function NoteSetEditor({
             {octaveSections.map(({ octave, pitches }) => (
               <section
                 key={octave}
-                className="border-dark-border/50 dark:border-dark-border rounded-lg border p-3"
+                className="border-rule dark:border-night-rule border p-3"
               >
                 <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
-                  <p className="text-dark dark:text-dark-text text-sm font-bold">
+                  <p className="text-ink dark:text-night-text text-sm font-bold">
                     Oktave {octave}
                     {OCTAVE_NAMES[octave] && (
-                      <span className="text-dark dark:text-dark-text-muted ml-2 text-xs font-normal">
+                      <span className="text-dark dark:text-night-muted ml-2 text-xs font-normal">
                         ({OCTAVE_NAMES[octave]})
                       </span>
                     )}
                   </p>
                   <div className="flex gap-2">
+                    {/* Vorlese-Name nennt die Oktave: „Stammtöne" und
+                        „Leeren" stehen je Oktave einmal und klangen sonst
+                        alle gleich. */}
                     <button
                       type="button"
                       onClick={() => addNaturals(pitches)}
+                      aria-label={`Stammtöne der Oktave ${octave} hinzufügen`}
                       className={QUICK_ACTION_CLASS}
                     >
                       Stammtöne
@@ -354,6 +367,7 @@ export function NoteSetEditor({
                     <button
                       type="button"
                       onClick={() => clearOctave(pitches)}
+                      aria-label={`Oktave ${octave} leeren`}
                       className={QUICK_ACTION_CLASS}
                     >
                       Leeren
@@ -384,48 +398,49 @@ export function NoteSetEditor({
       </div>
 
       {/* Sticky Speicherleiste am unteren Rand des Overlays */}
-      <div className="dark:border-dark-border dark:bg-dark-surface sticky bottom-0 border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+      <div className="border-ink dark:border-night-text bg-paper dark:bg-night sticky bottom-0 border-t-2 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6">
         {saveError && (
-          <p className="mb-2 text-xs font-bold text-red-600 dark:text-red-400">
+          <p className="mb-2 text-xs font-bold text-red-700 dark:text-red-400">
             {saveError}
           </p>
         )}
         {!session.data && !session.isPending && (
-          <p className="text-dark dark:text-dark-text-muted mb-2 text-xs">
+          <p className="text-dark dark:text-night-muted mb-2 text-xs">
             Zum Veröffentlichen bitte{" "}
-            <Link
-              href="/login"
-              className="text-primary dark:text-primary-light font-bold underline"
-            >
+            <Link href="/login" className="link-ink">
               anmelden
             </Link>
             .
           </p>
         )}
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="text-dark dark:text-dark-text-muted text-xs">
+          <span className="text-dark dark:text-night-muted text-xs">
             {blockReason ?? selectedCountLabel}
           </span>
           <div className="flex gap-2">
-            <button
+            <Button
               type="button"
+              variant="secondary"
+              className="min-h-11 text-sm"
               onClick={onCancel}
               disabled={saving}
-              className="border-dark-border/50 dark:border-dark-border text-dark dark:text-dark-text hover:border-primary/40 dark:hover:border-primary/35 rounded-lg border px-4 py-2.5 text-sm font-bold transition-colors disabled:opacity-50"
             >
               Abbrechen
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              className="min-h-11 gap-2 text-sm"
               onClick={() => void handleSave()}
               disabled={blockReason != null || saving}
-              className="bg-primary hover:bg-primary-light dark:hover:bg-primary-dark inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-bold text-white transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {saving && (
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                <Loader2
+                  className="h-4 w-4 motion-safe:animate-spin"
+                  aria-hidden
+                />
               )}
               {isUpdate ? "Änderungen speichern" : "Set veröffentlichen"}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
