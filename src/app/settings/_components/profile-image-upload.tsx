@@ -83,6 +83,8 @@ export default function ProfileImageUpload({
         mimeType: data.file.mimeType,
         size: data.file.size,
         extension: extension,
+        width: data.file.width,
+        height: data.file.height,
         alt: "Profilbild",
         folder: "profiles",
         isPublic: false,
