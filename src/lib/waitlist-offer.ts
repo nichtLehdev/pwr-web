@@ -257,7 +257,7 @@ export function promotionHaltText(
     case "waiting_list_disabled":
       return "Der Kurs führt keine Warteliste.";
     case "course_started":
-      return "Der Kurs hat schon begonnen – von der Warteliste wird nicht mehr nachgerückt.";
+      return "Der Kurs hat bereits begonnen. Ein Nachrücken von der Warteliste ist nicht mehr möglich.";
     case "nobody_waiting":
       return anyoneMoved ? null : "Auf der Warteliste steht niemand.";
     case "no_free_seats":
@@ -265,15 +265,15 @@ export function promotionHaltText(
         ? "Danach ist kein Platz mehr frei."
         : "Es ist kein Platz frei.";
     case "offer_running":
-      return `Das Angebot an ${halt.registrantName} läuft noch bis ${formatDate(halt.expiresAt)}. Bis dahin hält die Warteliste an.`;
+      return `Das Angebot an ${halt.registrantName} läuft noch bis ${formatDate(halt.expiresAt)}. Bis dahin ruht die Warteliste.`;
     case "does_not_fit":
-      return `${anyoneMoved ? "Danach steht" : "Vorn steht"} die Anmeldung von ${halt.registrantName}, und von ihr passt niemand in die freien Plätze – etwa weil ihre Preiskategorie voll ist. Die Warteliste hält dort an. Bestätige gezielt, wenn jemand anderes den Platz bekommen soll.`;
+      return `${anyoneMoved ? "Als Nächstes" : "An erster Stelle"} steht die Anmeldung von ${halt.registrantName}. Niemand daraus kann die freien Plätze nutzen, etwa weil die Preiskategorie ausgebucht ist. Die Warteliste endet an dieser Stelle. Soll eine andere Anmeldung den Platz erhalten, kann sie gezielt bestätigt werden.`;
     case "offered":
       return null;
     case "end_of_list":
       if (anyoneMoved || halt.passed === 0) return null;
       return halt.passed === 1
-        ? "Die wartende Anmeldung hat ein Angebot über so viele Plätze schon abgelehnt oder verstreichen lassen. Ein neues bekommt sie erst, wenn mehr Plätze frei sind."
-        : `Alle ${halt.passed} wartenden Anmeldungen haben ein Angebot über so viele Plätze schon abgelehnt oder verstreichen lassen. Ein neues bekommen sie erst, wenn mehr Plätze frei sind.`;
+        ? "Die wartende Anmeldung hat ein Angebot über diese Anzahl an Plätzen bereits abgelehnt oder verstreichen lassen. Ein neues Angebot erhält sie erst, wenn mehr Plätze frei werden."
+        : `Alle ${halt.passed} wartenden Anmeldungen haben ein Angebot über diese Anzahl an Plätzen bereits abgelehnt oder verstreichen lassen. Ein neues Angebot erhalten sie erst, wenn mehr Plätze frei werden.`;
   }
 }

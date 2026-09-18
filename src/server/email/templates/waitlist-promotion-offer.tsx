@@ -1,87 +1,44 @@
-import type { ReactNode } from "react";
+import { Button, Section, Text } from "@react-email/components";
 import {
-  Html,
-  Head,
-  Body,
-  Container,
-  Section,
-  Text,
-  Hr,
-  Button,
-} from "@react-email/components";
+  EmailLayout,
+  Regel,
+  abschnittskopf,
+  ersatzLink,
+  grundtext,
+  knopf,
+} from "./email-layout";
+import { emailText, textLink, textZeile } from "./email-text";
+import { formatBerlin } from "@/lib/berlin-time";
 
-const formatDate = (date: Date) =>
-  new Intl.DateTimeFormat("de-DE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    timeZone: "Europe/Berlin",
-  }).format(date);
+const formatDate = (date: Date) => formatBerlin(date, "datumZweistellig");
 
 /** Frist mit Uhrzeit, im deutschen Kalendertag — nicht in der Serverzeitzone. */
 const formatDateTime = (date: Date) =>
-  new Intl.DateTimeFormat("de-DE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "Europe/Berlin",
-  }).format(date);
+  `${formatBerlin(date, "datumUhrzeit")} Uhr`;
 
 const seatsText = (seats: number) =>
   seats === 1 ? "1 Platz" : `${seats} Plätze`;
 
-function Layout({
-  heading,
-  children,
-}: {
-  heading: string;
-  children: ReactNode;
-}) {
-  return (
-    <Html lang="de">
-      <Head />
-      <Body style={main}>
-        <Container style={container}>
-          <Section style={header}>
-            <Text style={logoText}>Posaunenwerk Rheinland</Text>
-            <Text style={tagline}>
-              Posaunenwerk der Evangelischen Kirche im Rheinland
-            </Text>
-          </Section>
-          <Section style={content}>
-            <Text style={headingStyle}>{heading}</Text>
-            {children}
-          </Section>
-          <Section style={footerSection}>
-            <Text style={footerText}>
-              Posaunenwerk der Evangelischen Kirche im Rheinland
-            </Text>
-          </Section>
-        </Container>
-      </Body>
-    </Html>
-  );
-}
+const ERSATZ_HINWEIS =
+  "Falls der Button nicht funktioniert, kopiere diese Adresse in deinen Browser:";
 
 function Cta({ href, label }: { href?: string; label: string }) {
   if (!href) return null;
   return (
     <>
-      <Section style={buttonContainer}>
-        <Button style={button} href={href}>
+      <Section style={knopfFeld}>
+        <Button style={knopf} href={href}>
           {label}
         </Button>
       </Section>
-      <Text style={smallParagraph}>
-        Falls der Button nicht funktioniert, kopiere diese Adresse in deinen
-        Browser:
-      </Text>
-      <Text style={linkText}>{href}</Text>
+      <Text style={grundtext}>{ERSATZ_HINWEIS}</Text>
+      <Text style={ersatzLink}>{href}</Text>
     </>
   );
 }
+
+const ctaText = (href: string | undefined, label: string): string[] =>
+  href ? ["", textLink(`${label}:`, href)] : [];
 
 export interface WaitlistPromotionOfferProps {
   registrantFirstName: string;
@@ -98,6 +55,11 @@ export interface WaitlistPromotionOfferProps {
   /** Mit dem Nachrücken wird für die Gewählten eine Anzahlung fällig. */
   hasDownPayment: boolean;
 }
+
+const offerAuswahl = (hasDownPayment: boolean) =>
+  `Du kannst wählen, wer nachrückt: Die Gewählten sind dann bestätigt, die übrigen bleiben auf der Warteliste.${hasDownPayment ? " Für die Nachrückenden wird dann die Anzahlung fällig." : ""}`;
+const OFFER_ABLEHNEN =
+  "Möchtet ihr lieber gemeinsam warten, lehne das Angebot ab. Das Kursteam kann die Plätze dann den Nächsten auf der Warteliste anbieten, und deine Anmeldung behält ihren Platz. Das gilt ebenso, wenn die Frist verstreicht.";
 
 /**
  * Angebot an die erste wartende Anmeldung, wenn die frei gewordenen Plätze
@@ -116,53 +78,76 @@ export function WaitlistPromotionOffer({
   hasDownPayment,
 }: WaitlistPromotionOfferProps) {
   return (
-    <Layout heading="Plätze frei geworden">
-      <Text style={paragraph}>
+    <EmailLayout
+      preview={`Plätze frei geworden – Antwort bis ${formatDateTime(expiresAt)}`}
+    >
+      <Text style={abschnittskopf}>Plätze frei geworden</Text>
+      <Text style={grundtext}>
         Hallo {registrantFirstName} {registrantLastName},
       </Text>
-      <Text style={paragraph}>
+      <Text style={grundtext}>
         für deine Anmeldung auf der Warteliste sind Plätze frei geworden:
       </Text>
 
-      <Section style={courseInfo}>
-        <Text style={courseTitleStyle}>{courseTitle}</Text>
-        <Text style={courseDetail}>
-          <strong>Start:</strong> {formatDate(startDate)}
-        </Text>
-        <Text style={courseDetail}>
-          <strong>Ende:</strong> {formatDate(endDate)}
-        </Text>
-      </Section>
-
-      <Section style={offerBox}>
-        <Text style={offerTitle}>
-          {seatsText(seats)} frei – für {participantNames.length} Teilnehmer
-        </Text>
-        <Text style={courseDetail}>{participantNames.join(", ")}</Text>
-        <Text style={courseDetail}>
-          <strong>Antwort bis:</strong> {formatDateTime(expiresAt)} Uhr
-        </Text>
-      </Section>
-
-      <Text style={paragraph}>
-        Du kannst wählen, wer nachrückt: Die Gewählten sind dann bestätigt, die
-        übrigen bleiben auf der Warteliste.
-        {hasDownPayment
-          ? " Für die Nachrückenden wird dann die Anzahlung fällig."
-          : ""}
+      <Regel stark />
+      <Text style={unterTitel}>{courseTitle}</Text>
+      <Text style={grundtext}>
+        <strong>Start:</strong> {formatDate(startDate)}
       </Text>
-      <Text style={paragraph}>
-        Möchtet ihr lieber gemeinsam warten, lehne das Angebot ab. Das Kursteam
-        kann die Plätze dann den Nächsten auf der Warteliste anbieten, und deine
-        Anmeldung behält ihren Platz. Das gilt ebenso, wenn die Frist
-        verstreicht.
+      <Text style={grundtext}>
+        <strong>Ende:</strong> {formatDate(endDate)}
       </Text>
 
-      <Hr style={hr} />
+      <Regel />
+      <Text style={unterTitel}>
+        {seatsText(seats)} frei – für {participantNames.length} Teilnehmer
+      </Text>
+      <Text style={grundtext}>{participantNames.join(", ")}</Text>
+      <Text style={grundtext}>
+        <strong>Antwort bis:</strong> {formatDateTime(expiresAt)}
+      </Text>
+
+      <Regel />
+      <Text style={grundtext}>{offerAuswahl(hasDownPayment)}</Text>
+      <Text style={grundtext}>{OFFER_ABLEHNEN}</Text>
 
       <Cta href={manageUrl} label="Jetzt auswählen" />
-    </Layout>
+    </EmailLayout>
   );
+}
+
+export function waitlistPromotionOfferText({
+  registrantFirstName,
+  registrantLastName,
+  courseTitle,
+  startDate,
+  endDate,
+  participantNames,
+  seats,
+  expiresAt,
+  manageUrl,
+  hasDownPayment,
+}: WaitlistPromotionOfferProps): string {
+  return emailText([
+    "PLÄTZE FREI GEWORDEN",
+    "",
+    `Hallo ${registrantFirstName} ${registrantLastName},`,
+    "",
+    "für deine Anmeldung auf der Warteliste sind Plätze frei geworden:",
+    "",
+    courseTitle,
+    textZeile("Start", formatDate(startDate)),
+    textZeile("Ende", formatDate(endDate)),
+    "",
+    `${seatsText(seats)} frei – für ${participantNames.length} Teilnehmer`,
+    participantNames.join(", "),
+    textZeile("Antwort bis", formatDateTime(expiresAt)),
+    "",
+    offerAuswahl(hasDownPayment),
+    "",
+    OFFER_ABLEHNEN,
+    ...ctaText(manageUrl, "Jetzt auswählen"),
+  ]);
 }
 
 export interface WaitlistPromotionOfferExpiredProps {
@@ -173,6 +158,9 @@ export interface WaitlistPromotionOfferExpiredProps {
   manageUrl?: string;
 }
 
+const expiredWeiter = (participantNames: string[]) =>
+  `Deine Anmeldung (${participantNames.join(", ")}) bleibt auf der Warteliste und behält ihren Platz. Werden weitere Plätze frei, melden wir uns wieder.`;
+
 /** Das Angebot ist ohne Antwort abgelaufen; die Anmeldung wartet weiter. */
 export function WaitlistPromotionOfferExpired({
   registrantFirstName,
@@ -182,26 +170,42 @@ export function WaitlistPromotionOfferExpired({
   manageUrl,
 }: WaitlistPromotionOfferExpiredProps) {
   return (
-    <Layout heading="Platzangebot abgelaufen">
-      <Text style={paragraph}>
+    <EmailLayout preview="Platzangebot abgelaufen">
+      <Text style={abschnittskopf}>Platzangebot abgelaufen</Text>
+      <Text style={grundtext}>
         Hallo {registrantFirstName} {registrantLastName},
       </Text>
-      <Text style={paragraph}>
+      <Text style={grundtext}>
         dein Angebot, für den Kurs <strong>{courseTitle}</strong> von der
         Warteliste nachzurücken, ist abgelaufen. Das Kursteam kann die freien
         Plätze nun den Nächsten auf der Warteliste anbieten.
       </Text>
-      <Text style={paragraph}>
-        Deine Anmeldung ({participantNames.join(", ")}) bleibt auf der
-        Warteliste und behält ihren Platz. Werden weitere Plätze frei, melden
-        wir uns wieder.
-      </Text>
+      <Text style={grundtext}>{expiredWeiter(participantNames)}</Text>
 
-      <Hr style={hr} />
+      <Regel />
 
       <Cta href={manageUrl} label="Anmeldung ansehen" />
-    </Layout>
+    </EmailLayout>
   );
+}
+
+export function waitlistPromotionOfferExpiredText({
+  registrantFirstName,
+  registrantLastName,
+  courseTitle,
+  participantNames,
+  manageUrl,
+}: WaitlistPromotionOfferExpiredProps): string {
+  return emailText([
+    "PLATZANGEBOT ABGELAUFEN",
+    "",
+    `Hallo ${registrantFirstName} ${registrantLastName},`,
+    "",
+    `dein Angebot, für den Kurs ${courseTitle} von der Warteliste nachzurücken, ist abgelaufen. Das Kursteam kann die freien Plätze nun den Nächsten auf der Warteliste anbieten.`,
+    "",
+    expiredWeiter(participantNames),
+    ...ctaText(manageUrl, "Anmeldung ansehen"),
+  ]);
 }
 
 export interface WaitlistPromotionOfferExpiringTeamProps {
@@ -213,6 +217,9 @@ export interface WaitlistPromotionOfferExpiringTeamProps {
   dashboardUrl: string;
 }
 
+const TEAM_ABLAUF =
+  "Bis dahin ruht die Warteliste. Läuft die Frist ohne Antwort ab, wird das Angebot geschlossen. Die Plätze bleiben frei, bis die Warteliste im Dashboard erneut nachrückt; ein automatisches Nachrücken gibt es nicht. Alternativ könnt ihr bei den Anmeldenden nachfragen oder die Anmeldung im Dashboard selbst bestätigen.";
+
 /** Hinweis ans Kursteam, dass ein Angebot bald ohne Antwort abläuft. */
 export function WaitlistPromotionOfferExpiringTeam({
   courseTitle,
@@ -223,182 +230,65 @@ export function WaitlistPromotionOfferExpiringTeam({
   dashboardUrl,
 }: WaitlistPromotionOfferExpiringTeamProps) {
   return (
-    <Layout heading="Nachrück-Angebot läuft bald ab">
-      <Text style={paragraph}>Hallo,</Text>
-      <Text style={paragraph}>
+    <EmailLayout preview="Nachrück-Angebot läuft bald ab">
+      <Text style={abschnittskopf}>Nachrück-Angebot läuft bald ab</Text>
+      <Text style={grundtext}>Hallo,</Text>
+      <Text style={grundtext}>
         für den Kurs <strong>{courseTitle}</strong> läuft ein Nachrück-Angebot
         ab, auf das noch niemand geantwortet hat:
       </Text>
 
-      <Section style={offerBox}>
-        <Text style={offerTitle}>Anmeldung von {registrantName}</Text>
-        <Text style={courseDetail}>{participantNames.join(", ")}</Text>
-        <Text style={courseDetail}>
-          <strong>Angeboten:</strong> {seatsText(seats)}
-        </Text>
-        <Text style={courseDetail}>
-          <strong>Läuft ab:</strong> {formatDateTime(expiresAt)} Uhr
-        </Text>
-      </Section>
-
-      <Text style={paragraph}>
-        Bis dahin hält die Warteliste an. Antwortet niemand, wird das Angebot
-        geschlossen; die Plätze bleiben frei, bis ihr die Warteliste im
-        Dashboard nachrücken lasst – automatisch rückt niemand nach. Ihr könnt
-        nachfragen oder die Anmeldung im Dashboard selbst bestätigen.
+      <Regel stark />
+      <Text style={unterTitel}>Anmeldung von {registrantName}</Text>
+      <Text style={grundtext}>{participantNames.join(", ")}</Text>
+      <Text style={grundtext}>
+        <strong>Angeboten:</strong> {seatsText(seats)}
+      </Text>
+      <Text style={grundtext}>
+        <strong>Läuft ab:</strong> {formatDateTime(expiresAt)}
       </Text>
 
-      <Section style={buttonContainer}>
-        <Button style={button} href={dashboardUrl}>
-          Anmeldung im Dashboard
-        </Button>
-      </Section>
-    </Layout>
+      <Regel />
+      <Text style={grundtext}>{TEAM_ABLAUF}</Text>
+
+      <Cta href={dashboardUrl} label="Anmeldung im Dashboard" />
+    </EmailLayout>
   );
 }
 
-const main = {
-  backgroundColor: "#f5f5f5",
-  fontFamily:
-    '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Ubuntu,sans-serif',
-};
+export function waitlistPromotionOfferExpiringTeamText({
+  courseTitle,
+  registrantName,
+  participantNames,
+  seats,
+  expiresAt,
+  dashboardUrl,
+}: WaitlistPromotionOfferExpiringTeamProps): string {
+  return emailText([
+    "NACHRÜCK-ANGEBOT LÄUFT BALD AB",
+    "",
+    "Hallo,",
+    "",
+    `für den Kurs ${courseTitle} läuft ein Nachrück-Angebot ab, auf das noch niemand geantwortet hat:`,
+    "",
+    `Anmeldung von ${registrantName}`,
+    participantNames.join(", "),
+    textZeile("Angeboten", seatsText(seats)),
+    textZeile("Läuft ab", formatDateTime(expiresAt)),
+    "",
+    TEAM_ABLAUF,
+    ...ctaText(dashboardUrl, "Anmeldung im Dashboard"),
+  ]);
+}
 
-const container = {
-  backgroundColor: "#ffffff",
-  margin: "0 auto",
-  padding: "0",
-  marginBottom: "64px",
-  maxWidth: "600px",
-  borderRadius: "8px",
-  boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-};
-
-const header = {
-  backgroundColor: "#faa619",
-  padding: "32px 24px",
-  textAlign: "center" as const,
-  borderRadius: "8px 8px 0 0",
-};
-
-const logoText = {
-  color: "#ffffff",
-  fontSize: "28px",
-  fontWeight: "bold",
-  margin: "0 0 8px 0",
-  letterSpacing: "0.5px",
-};
-
-const tagline = {
-  color: "#ffffff",
-  fontSize: "12px",
-  fontWeight: "normal",
-  margin: "0",
-  opacity: 0.95,
-  letterSpacing: "0.3px",
-};
-
-const content = {
-  padding: "32px 24px",
-};
-
-const headingStyle = {
-  fontSize: "24px",
-  fontWeight: "bold",
-  color: "#58595b",
-  marginBottom: "24px",
-};
-
-const paragraph = {
-  fontSize: "16px",
-  lineHeight: "26px",
-  color: "#58595b",
-  marginBottom: "16px",
-};
-
-const smallParagraph = {
-  fontSize: "14px",
-  lineHeight: "22px",
-  color: "#58595b",
-  marginBottom: "8px",
-};
-
-const linkText = {
-  fontSize: "12px",
-  lineHeight: "20px",
-  color: "#faa619",
-  wordBreak: "break-all" as const,
-  marginBottom: "16px",
-};
-
-const courseInfo = {
-  backgroundColor: "#f9fafb",
-  padding: "20px",
-  borderRadius: "8px",
-  margin: "24px 0",
-  border: "1px solid #e5e7eb",
-};
-
-const offerBox = {
-  backgroundColor: "#fff7ed",
-  padding: "20px",
-  borderRadius: "8px",
-  margin: "24px 0",
-  border: "1px solid #fed7aa",
-};
-
-const offerTitle = {
+const unterTitel = {
+  ...abschnittskopf,
   fontSize: "18px",
-  fontWeight: "bold",
-  color: "#58595b",
-  marginBottom: "8px",
-};
-
-const courseTitleStyle = {
-  fontSize: "20px",
-  fontWeight: "bold",
-  color: "#58595b",
-  marginBottom: "16px",
-};
-
-const courseDetail = {
-  fontSize: "16px",
   lineHeight: "24px",
-  color: "#58595b",
-  marginBottom: "8px",
+  margin: "0 0 12px 0",
 };
 
-const buttonContainer = {
+const knopfFeld = {
   textAlign: "center" as const,
-  margin: "32px 0",
-};
-
-const button = {
-  backgroundColor: "#faa619",
-  borderRadius: "8px",
-  color: "#ffffff",
-  fontSize: "16px",
-  fontWeight: "bold",
-  textDecoration: "none",
-  textAlign: "center" as const,
-  display: "inline-block",
-  padding: "14px 32px",
-  boxShadow: "0 2px 4px rgba(250, 166, 25, 0.3)",
-};
-
-const hr = {
-  borderColor: "#e5e7eb",
-  margin: "32px 0",
-};
-
-const footerSection = {
-  padding: "24px",
-  backgroundColor: "#f9fafb",
-  textAlign: "center" as const,
-  borderRadius: "0 0 8px 8px",
-};
-
-const footerText = {
-  fontSize: "12px",
-  color: "#9ca3af",
-  margin: "0",
+  margin: "28px 0",
 };

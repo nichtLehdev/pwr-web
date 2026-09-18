@@ -36,15 +36,23 @@ const registrationsLabel = (count: number) =>
 const participantsLabel = (count: number) =>
   `${count} ${count === 1 ? "Teilnehmer" : "Teilnehmer"}`;
 
+const platz = (n: number) => (n === 1 ? "1 Platz" : `${n} Plätze`);
+
 /** Bis zum Knopfdruck reservieren die Wartenden, was sie nutzen könnten; Neue bekommen den Rest. */
 function reservationText(free: number, openToNew: number): string {
-  const manual = "Automatisch rückt niemand nach – das löst du hier aus.";
+  const manual = "Freie Plätze werden nicht automatisch nachbesetzt.";
   if (!Number.isFinite(free) || free <= 0) return manual;
   const reserved = free - openToNew;
   if (reserved <= 0) {
-    return `${manual} Die Wartenden können keinen der freien Plätze nutzen; sie stehen neuen Anmeldungen offen.`;
+    return free === 1
+      ? `${manual} Die Wartenden können den freien Platz nicht nutzen, etwa weil ihre Preiskategorie ausgebucht ist. Er steht daher neuen Anmeldungen offen.`
+      : `${manual} Die Wartenden können die freien Plätze nicht nutzen, etwa weil ihre Preiskategorie ausgebucht ist. Sie stehen daher neuen Anmeldungen offen.`;
   }
-  return `${manual} ${reserved === 1 ? "1 freier Platz bleibt" : `${reserved} freie Plätze bleiben`} bis dahin den Wartenden vorbehalten, ${openToNew === 0 ? "neue Anmeldungen kommen auf die Warteliste" : `neue Anmeldungen bekommen nur ${openToNew === 1 ? "den übrigen" : `die übrigen ${openToNew}`}`}.`;
+  const vorbehalten =
+    openToNew === 0
+      ? `${free === 1 ? "ist der freie Platz" : `sind die ${free} freien Plätze`} für die Warteliste reserviert; neue Anmeldungen werden auf die Warteliste gesetzt`
+      : `${reserved === 1 ? "ist 1" : `sind ${reserved}`} der ${free} freien Plätze für die Warteliste reserviert; für neue Anmeldungen ${openToNew === 1 ? "ist" : "sind"} ${platz(openToNew)} verfügbar`;
+  return `${manual} Bis zum Nachrücken ${vorbehalten}.`;
 }
 
 /**
@@ -134,7 +142,7 @@ export function WaitlistPromotionPanel({
               <time dateTime={new Date(offer.expiresAt).toISOString()}>
                 {formatDateTime(offer.expiresAt)}
               </time>
-              . Bis dahin hält die Warteliste an.{" "}
+              . Bis dahin ruht die Warteliste.{" "}
               <Link
                 href={`/dashboard/courses/${courseId}/participants/${offer.registrationId}`}
                 className="link-ink inline-flex min-h-11 items-center"
@@ -144,8 +152,8 @@ export function WaitlistPromotionPanel({
             </p>
           ) : overview.courseStarted ? (
             <p>
-              Der Kurs hat begonnen – von der Warteliste wird nicht mehr
-              nachgerückt.
+              Der Kurs hat begonnen. Ein Nachrücken von der Warteliste ist nicht
+              mehr möglich.
             </p>
           ) : overview.waitingRegistrations > 0 && free > 0 ? (
             <button
@@ -158,8 +166,7 @@ export function WaitlistPromotionPanel({
             </button>
           ) : overview.waitingRegistrations > 0 ? (
             <p className="text-dark dark:text-night-muted text-sm">
-              Sobald Plätze frei werden, kannst du die Warteliste hier
-              nachrücken lassen.
+              Sobald Plätze frei werden, kann die Warteliste hier nachrücken.
             </p>
           ) : null}
         </div>
@@ -188,23 +195,26 @@ export function WaitlistPromotionPanel({
                 <p className="text-ink dark:text-night-text mt-3">
                   {seatsLabel(free)},{" "}
                   {registrationsLabel(overview.waitingRegistrations)}. Die
-                  Warteliste wird streng in der Reihenfolge der Anmeldung
-                  durchgegangen:
+                  Warteliste wird in der Reihenfolge der Anmeldungen
+                  abgearbeitet:
                 </p>
                 <ul className="text-ink dark:text-night-text mt-3 list-disc space-y-2 pl-5">
                   <li>
-                    Passt eine Anmeldung ganz in die freien Plätze, wird sie
-                    bestätigt und bekommt eine Bestätigungsmail.
+                    Passt eine Anmeldung vollständig in die freien Plätze, wird
+                    sie bestätigt. Die Anmeldenden erhalten eine Bestätigung per
+                    E-Mail.
                   </li>
                   <li>
-                    Passt sie nur teilweise, bekommt sie ein Angebot: Die
-                    Anmeldenden wählen innerhalb von {PROMOTION_OFFER_DAYS}{" "}
+                    Passt sie nur teilweise, erhalten die Anmeldenden ein
+                    Angebot und wählen innerhalb von {PROMOTION_OFFER_DAYS}{" "}
                     Tagen (höchstens bis Kursbeginn), wer nachrückt. Bis dahin
-                    hält die Warteliste an.
+                    ruht die Warteliste.
                   </li>
                   <li>
-                    Passt von ihr niemand, etwa weil ihre Preiskategorie voll
-                    ist, bleibt alles stehen – auch die Anmeldungen dahinter.
+                    Kann niemand aus der Anmeldung nachrücken, etwa weil die
+                    Preiskategorie ausgebucht ist, endet der Durchgang an dieser
+                    Stelle. Auch die folgenden Anmeldungen rücken dann nicht
+                    nach.
                   </li>
                 </ul>
                 {promote.error && (
@@ -265,14 +275,14 @@ function PromotionResult({
         <ul className="mt-2 space-y-2">
           {result.promoted.map((r) => (
             <li key={r.id}>
-              <strong>{r.registrantName}</strong>
-              {` (${participantsLabel(r.participants)}) ist bestätigt und bekommt eine Bestätigungsmail.`}
+              Die Anmeldung von <strong>{r.registrantName}</strong>
+              {` (${participantsLabel(r.participants)}) wurde bestätigt. Die Anmeldenden erhalten eine Bestätigung per E-Mail.`}
             </li>
           ))}
           {result.offered.map((r) => (
             <li key={r.id}>
-              <strong>{r.registrantName}</strong>
-              {` bekommt ein Angebot: ${r.seats} von ${r.participants} Teilnehmern ${r.seats === 1 ? "kann" : "können"} nachrücken, Antwort bis ${formatDateTime(r.expiresAt)}. Die Anmeldenden bekommen dazu eine Mail.`}
+              Die Anmeldung von <strong>{r.registrantName}</strong>
+              {` hat ein Angebot erhalten: ${r.seats} von ${r.participants} Teilnehmern ${r.seats === 1 ? "kann" : "können"} nachrücken, Antwort bis ${formatDateTime(r.expiresAt)}. Die Anmeldenden wurden per E-Mail informiert.`}
             </li>
           ))}
         </ul>
