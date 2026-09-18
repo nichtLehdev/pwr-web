@@ -191,12 +191,33 @@ export function Step2Participants({
     openParticipant(null);
   };
 
+  /**
+   * Vorbelegung für eine neue Person: die erste Kategorie, die für sie noch
+   * frei ist. Vorher war es stur die erste — ohne Warteliste stand eine
+   * ausgebuchte Kategorie dann gesperrt und zugleich gewählt da, mit
+   * Warteliste landete die Anmeldung unbemerkt darauf. Sind alle voll, bleibt
+   * es bei der ersten; die Kennzeichnung sagt dann, was los ist.
+   */
+  const defaultPriceOptionId = (): string | undefined => {
+    const taken = registrationData.participants.map((p) => p.priceOptionId);
+    const free = course.priceOptions.find(
+      (option) =>
+        !isPriceOptionFullFor({
+          priceOptionId: option.id,
+          otherParticipantPriceOptionIds: taken,
+          priceOptions: course.priceOptions,
+          capacityByPriceOption,
+        }),
+    );
+    return (free ?? course.priceOptions[0])?.id;
+  };
+
   const addParticipant = () => {
     if (!course.priceOptions || course.priceOptions.length === 0) {
       console.error("Course price options are not defined.");
       return;
     }
-    const firstPriceOption = course.priceOptions[0];
+    const firstPriceOption = defaultPriceOptionId();
     if (!firstPriceOption) {
       console.error("No price options available");
       return;
@@ -213,7 +234,7 @@ export function Step2Participants({
           birthDate: "" as any,
           city: "",
           instrument: "",
-          priceOptionId: firstPriceOption.id,
+          priceOptionId: firstPriceOption,
           customFields: {},
           siblingGroupId: undefined,
         },
@@ -232,7 +253,7 @@ export function Step2Participants({
       console.error("Course price options are not defined.");
       return;
     }
-    const firstPriceOption = course.priceOptions[0];
+    const firstPriceOption = defaultPriceOptionId();
     if (!firstPriceOption) {
       console.error("No price options available");
       return;
@@ -251,7 +272,7 @@ export function Step2Participants({
           instrument: "",
           priceOptionId: priceOptionForBirthDate(
             currentUser?.birthDate,
-            firstPriceOption.id,
+            firstPriceOption,
           ),
           customFields: {},
           siblingGroupId: undefined,
@@ -267,7 +288,7 @@ export function Step2Participants({
       console.error("Course price options are not defined.");
       return;
     }
-    const firstPriceOption = course.priceOptions[0];
+    const firstPriceOption = defaultPriceOptionId();
     if (!firstPriceOption) {
       console.error("No price options available");
       return;
@@ -284,7 +305,7 @@ export function Step2Participants({
           instrument: saved.instrument || "",
           priceOptionId: priceOptionForBirthDate(
             saved.birthDate,
-            firstPriceOption.id,
+            firstPriceOption,
           ),
           customFields: (saved.customFields as Record<string, any>) || {},
           siblingGroupId: undefined,

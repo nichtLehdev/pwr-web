@@ -35,6 +35,7 @@ import { priceOptionDisplayLabel } from "@/lib/course-price-options";
 import { formatEuro } from "@/lib/invoice-document";
 import { Heading } from "@/app/_components/programmheft/section-head";
 import { ValueTable } from "@/app/_components/programmheft/value-table";
+import { RADIO_INPUT_CLASS } from "@/app/_components/programmheft/field";
 
 interface Step3SummaryProps {
   course: CourseWithRelations;
@@ -344,7 +345,7 @@ export function Step3Summary({
                       type="radio"
                       name="course-payment-method"
                       data-focus-key="paymentMethod"
-                      className="border-ink text-ink h-4 w-4 shrink-0"
+                      className={RADIO_INPUT_CLASS}
                       checked={registrationData.paymentMethod === "CASH"}
                       onChange={() =>
                         setRegistrationData((d) => ({
@@ -367,7 +368,7 @@ export function Step3Summary({
                       data-focus-key={
                         courseAcceptsCash(course) ? undefined : "paymentMethod"
                       }
-                      className="border-ink text-ink h-4 w-4 shrink-0"
+                      className={RADIO_INPUT_CLASS}
                       checked={registrationData.paymentMethod === "INVOICE"}
                       onChange={() =>
                         setRegistrationData((d) => ({
