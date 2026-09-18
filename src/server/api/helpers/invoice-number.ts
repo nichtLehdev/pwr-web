@@ -1,4 +1,5 @@
 import type { Prisma } from "~/generated/prisma/client";
+import { berlinParts } from "@/lib/berlin-time";
 
 type Tx = Prisma.TransactionClient;
 
@@ -6,6 +7,11 @@ type Tx = Prisma.TransactionClient;
 const YEAR_SEQUENCE_DIGITS = 5;
 /** Width of the running number in a course invoice id, e.g. "RE-2601-001". */
 const COURSE_SEQUENCE_DIGITS = 3;
+
+/** Das Jahr im Rechnungsnummernkreis: deutsches Kalenderjahr. */
+export function invoiceYear(now: Date = new Date()): number {
+  return berlinParts(now).year;
+}
 
 /**
  * Issue the next invoice number. Must be called inside the same transaction
@@ -36,7 +42,10 @@ export async function nextInvoiceId(
     return `RE-${scoped}-${String(counter.value).padStart(COURSE_SEQUENCE_DIGITS, "0")}`;
   }
 
-  const year = new Date().getFullYear();
+  // Deutsches Kalenderjahr, nicht das des Servers (UTC): Sonst bekäme eine
+  // Rechnung vom Neujahrsmorgen vor 01:00 (Sommer: 02:00) eine Nummer des
+  // Vorjahres.
+  const year = invoiceYear();
   const counter = await tx.invoiceCounter.upsert({
     where: { year },
     update: { value: { increment: 1 } },
