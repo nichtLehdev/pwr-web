@@ -57,7 +57,7 @@
     "dotenv": "^17.4.2",
     "exceljs": "^4.4.0",
     "html-to-image": "^1.11.13",
-    "isomorphic-dompurify": "^3.22.0",
+    "isomorphic-dompurify": "^4.2.0",
     "jspdf": "^4.2.1",
     "jszip": "^3.10.1",
     "leaflet": "^1.9.4",
