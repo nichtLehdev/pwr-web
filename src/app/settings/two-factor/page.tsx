@@ -28,10 +28,6 @@ import {
 import { cn } from "@/lib/utils";
 import { berlinDayKey, formatBerlin } from "@/lib/berlin-time";
 
-/**
- * Schaltflächen-Stimmen des Programmhefts, lokal wiederholt wie auf den
- * übrigen öffentlichen Formularseiten (z. B. /settings).
- */
 const BTN_PRIMARY =
   "bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-primary dark:text-ink dark:hover:bg-paper semi-condensed inline-flex min-h-12 items-center justify-center gap-2 px-6 text-base font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60";
 const BTN_OUTLINE =
@@ -46,22 +42,18 @@ export default function TwoFactorPage() {
   const toast = useToast();
   const utils = api.useUtils();
 
-  // Aktivieren
   const [enablePassword, setEnablePassword] = useState("");
   const [enableError, setEnableError] = useState("");
   const [isEnabling2FA, setIsEnabling2FA] = useState(false);
 
-  // Deaktivieren
   const [disablePassword, setDisablePassword] = useState("");
   const [disableError, setDisableError] = useState("");
   const [isDisabling2FA, setIsDisabling2FA] = useState(false);
 
-  // Neue Backup-Codes generieren
   const [backupPassword, setBackupPassword] = useState("");
   const [backupError, setBackupError] = useState("");
   const [isGeneratingCodes, setIsGeneratingCodes] = useState(false);
 
-  // Verifizieren
   const [totpCode, setTotpCode] = useState("");
   const [verifyError, setVerifyError] = useState("");
   const [isVerifying2FA, setIsVerifying2FA] = useState(false);

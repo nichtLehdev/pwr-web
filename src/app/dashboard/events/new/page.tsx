@@ -58,8 +58,6 @@ const NEW_EVENT_NAV_ITEMS: DashboardSectionNavItem[] = [
   { href: "#event-form-veroeffentlichung", label: "Veröffentlichung" },
 ];
 
-// Dashboard access is now controlled by permissions
-
 interface PriceOption {
   id: string;
   price: number;
@@ -82,10 +80,8 @@ export default function NewEventPage() {
   const hasCreatePermission = hasPermission(PERMISSIONS.EVENTS_CREATE);
   const isHigherRole = hasApprovePermission;
   const scopedBezirkIds = profile?.bezirkScopes?.map((s) => s.bezirkId) ?? [];
-  // Zuständigkeit statt Zugehörigkeit: `profile.bezirkId` sagt, wo jemand im
-  // Werk verortet ist (und trägt öffentlich ein Amt), nicht wofür er schreiben
-  // darf. Beides zu vermischen hieße, für eine einzelne Ausnahme ein Amt zu
-  // vergeben.
+  // Zuständigkeit (bezirkScopes), nicht Zugehörigkeit (`profile.bezirkId`, trägt
+  // öffentlich ein Amt) entscheidet, wofür jemand schreiben darf.
   const { lockedBezirkId, hasNoDistrict, selectableBezirkIds } =
     districtFieldState(isHigherRole, scopedBezirkIds);
 
@@ -325,8 +321,7 @@ export default function NewEventPage() {
 
   useEffect(() => {
     if (!profileLoading && profile && !hasRedirected.current) {
-      // Nicht nur "irgendein Dashboard-Recht": ohne das Anlage-Recht lehnt der
-      // Server ab, das Formular soll gar nicht erst aufgehen.
+      // Ohne das Anlage-Recht lehnt der Server ab; das Formular soll gar nicht erst aufgehen.
       if (!hasDashboardAccess || !hasCreatePermission) {
         hasRedirected.current = true;
         router.push("/dashboard");
@@ -410,9 +405,7 @@ export default function NewEventPage() {
       return;
     }
 
-    // Ohne `maxLength` am Textfeld muss die Länge hier geprüft
-    // werden: Sonst lehnte erst der Server ab, und zwar mit
-    // einer englischen Zod-Meldung.
+    // Hier prüfen, weil der Editor kein `maxLength` kennt: sonst käme die englische Zod-Meldung.
     if (description.length > MAX_DESCRIPTION_LENGTH) {
       setError(
         `Die Beschreibung ist zu lang (${description.length} von ${MAX_DESCRIPTION_LENGTH} Zeichen).`,
@@ -509,7 +502,6 @@ export default function NewEventPage() {
         storageFailed={storageFailed}
       />
 
-      {/* Error Message */}
       {error && (
         <div className="mb-6 border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
           <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
@@ -571,15 +563,7 @@ export default function NewEventPage() {
                       <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
                         Beschreibung
                       </label>
-                      {/* Schreibfläche statt Textfeld: Gespeichert wird
-                          Markdown, dargestellt dasselbe wie auf der
-                          Terminseite. Der Umfang `beschreibung` lässt
-                          Überschriften (ab h3), Listen, Links und
-                          Hervorhebungen zu — Bilder, Tabellen und Downloads
-                          gehören in einen Beitrag, nicht in eine
-                          Beschreibung. Den Namen für Screenreader trägt
-                          `ariaLabel`: Die Fläche ist kein Formularfeld, ein
-                          `htmlFor` greift daran nicht. */}
+                      {/* `ariaLabel` statt `htmlFor`: Die Schreibfläche ist kein Formularfeld. */}
                       <RichTextEditor
                         variant="beschreibung"
                         ariaLabel="Beschreibung"
@@ -809,7 +793,6 @@ export default function NewEventPage() {
                       className="border-ink dark:border-night-text dark:bg-night dark:text-night-text text-ink bg-paper block w-full border px-3 py-2"
                     />
 
-                    {/* Location Dropdown */}
                     {showLocationDropdown && locationsData && (
                       <div className="border-rule dark:border-night-rule dark:bg-night-raised bg-paper absolute z-10 mt-1 w-full overflow-hidden border">
                         <div
@@ -905,8 +888,6 @@ export default function NewEventPage() {
                       </p>
                     </div>
                   ) : hasNoDistrict ? (
-                    // Hinweis statt Alarm: Tinte auf Papier an einer
-                    // Haarlinie statt gelbem Kasten.
                     <div className="border-ink dark:border-night-text border-l-2 py-1 pl-4">
                       <p className="text-dark dark:text-night-muted text-sm">
                         <strong>Hinweis:</strong> Du bist keinem Bezirk
@@ -1015,7 +996,6 @@ export default function NewEventPage() {
                         className="border-ink dark:border-night-text dark:bg-night dark:text-night-text text-ink bg-paper block w-full border px-3 py-2"
                       />
 
-                      {/* Ensemble Dropdown */}
                       {showEnsembleDropdown && ensemblesData && (
                         <div className="border-rule dark:border-night-rule dark:bg-night-raised bg-paper absolute z-10 mt-1 w-full overflow-hidden border">
                           <div
@@ -1073,7 +1053,6 @@ export default function NewEventPage() {
                         className="border-ink dark:border-night-text dark:bg-night dark:text-night-text text-ink bg-paper block w-full border px-3 py-2"
                       />
 
-                      {/* Auswahlchor Dropdown */}
                       {showAuswahlChorDropdown && auswahlchoereData && (
                         <div className="border-rule dark:border-night-rule dark:bg-night-raised bg-paper absolute z-10 mt-1 w-full overflow-hidden border">
                           <div
@@ -1341,7 +1320,6 @@ export default function NewEventPage() {
             />
             <DashboardFormBlock title="Redaktionsstatus">
               <div className="space-y-4">
-                {/* Status selection for higher roles */}
                 {isHigherRole ? (
                   <div className="space-y-3">
                     <label className="flex cursor-pointer items-start gap-3">
@@ -1466,7 +1444,6 @@ export default function NewEventPage() {
         </DashboardSectionedFormLayout>
       </form>
 
-      {/* Media Picker Modal */}
       <MediaPickerModal
         isOpen={showMediaPicker}
         onClose={() => setShowMediaPicker(false)}
@@ -1479,7 +1456,6 @@ export default function NewEventPage() {
         }}
       />
 
-      {/* Download Picker Modal */}
       <DownloadPickerModal
         isOpen={showDownloadPicker}
         onClose={() => setShowDownloadPicker(false)}

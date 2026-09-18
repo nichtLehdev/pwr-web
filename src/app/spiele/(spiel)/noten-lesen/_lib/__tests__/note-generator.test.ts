@@ -41,7 +41,6 @@ describe("pickRandomPitch — MIDI-gleichverteilte Schreibweisenwahl", () => {
     const fraction = withAccidental / n;
     expect(fraction).toBeGreaterThan(expected - 0.03);
     expect(fraction).toBeLessThan(expected + 0.03);
-    // Alte, fehlerhafte Verteilung lag bei ~0.59:
     expect(fraction).toBeLessThan(0.5);
   });
 

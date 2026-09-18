@@ -43,10 +43,6 @@ import { ButtonLink } from "@/app/_components/programmheft/button-link";
 import { cn } from "@/lib/utils";
 import { formatBerlin } from "@/lib/berlin-time";
 
-/**
- * Schaltflächen-Stimmen des Programmhefts, lokal wiederholt wie auf den
- * übrigen öffentlichen Formularseiten (z. B. /anmeldung-verwalten).
- */
 const BTN_PRIMARY =
   "bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-primary dark:text-ink dark:hover:bg-paper semi-condensed inline-flex min-h-12 items-center justify-center gap-2 px-6 text-base font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60";
 const BTN_OUTLINE =
@@ -64,11 +60,7 @@ const STATUS_TAG: Record<RegistrationStatus, { label: string; tone: TagTone }> =
     CANCELLED: { label: "Storniert", tone: "cancelled" },
   };
 
-/**
- * Aus Sicht der Anmeldenden, nicht des Teams: Hier ist nichts zu prüfen,
- * sondern etwas wird geprüft. „Rabatt prüfen“ steht weiterhin im Dashboard,
- * wo es tatsächlich eine Aufgabe ist.
- */
+/** Aus Sicht der Anmeldenden: „wird geprüft“ statt „prüfen“ (das steht im Dashboard). */
 const DISCOUNT_TAG: Partial<
   Record<SiblingDiscountStatus, { label: string; tone: TagTone }>
 > = {
@@ -77,18 +69,7 @@ const DISCOUNT_TAG: Partial<
   REJECTED: { label: "Rabatt abgelehnt", tone: "ink" },
 };
 
-/** Auswahl-Schaltfläche wie die Register-Reihe im Filter: gefüllt, wenn aktiv. */
-/**
- * Statusfilter als Register, wie die Bereichswahl in den Einstellungen: Beide
- * tun dasselbe — eins aus N über einer einzigen Liste wählen — und sahen
- * bisher völlig verschieden aus (Kasten mit 2px-Rahmen gegen Register mit
- * Unterstrich). Die Kastenform bleibt den Werkzeugleisten auf Termine und
- * Aktuelles vorbehalten, wo ungleichartige Bedienelemente nebeneinander
- * stehen und sich voneinander absetzen müssen.
- *
- * `aria-pressed` bleibt: Hier wird gefiltert, nicht navigiert — nur das
- * Aussehen wird angeglichen, nicht die Bedeutung.
- */
+/** `aria-pressed` statt `aria-current`: Hier wird gefiltert, nicht navigiert. */
 function choiceButtonClass(active: boolean) {
   return cn(
     "semi-condensed inline-flex shrink-0 items-center gap-2 border-b-[3px] px-3 py-3 text-[1.0625rem] font-semibold whitespace-nowrap transition-colors",
@@ -310,9 +291,7 @@ export default function MyRegistrationsPage() {
             {data.registrations.map((registration) => {
               const editInfo = getEditDeadlineInfo(registration);
               const statusTag = STATUS_TAG[registration.registrationStatus];
-              // Bei einer stornierten Anmeldung gibt es keinen Rabatt mehr:
-              // Ein „wird geprüft“ daneben verspricht eine Entscheidung, die
-              // nicht mehr kommt.
+              // Storniert: kein Rabatt-Etikett mehr, die Entscheidung kommt nicht mehr.
               const cancelled =
                 registration.registrationStatus ===
                 RegistrationStatus.CANCELLED;
@@ -368,9 +347,6 @@ export default function MyRegistrationsPage() {
                         {discountTag ? (
                           <Tag tone={discountTag.tone}>{discountTag.label}</Tag>
                         ) : null}
-                        {/* Umrandet: nur der Stand. Was „aufgeteilt“ heißt,
-                            erklärt die Detailseite mit Verweis auf den
-                            anderen Teil. */}
                         {registration.registrationGroupId ? (
                           <Tag tone="muted">Aufgeteilt</Tag>
                         ) : null}
@@ -422,7 +398,6 @@ export default function MyRegistrationsPage() {
                         {editInfo.message}
                       </p>
 
-                      {/* Teilnehmer */}
                       <div className="mt-6">
                         <h3 className="semi-condensed text-ink dark:text-night-text text-sm font-semibold">
                           Teilnehmer:
@@ -466,7 +441,6 @@ export default function MyRegistrationsPage() {
                         </p>
                       ) : null}
 
-                      {/* Rabatt abgelehnt */}
                       {registration.siblingDiscountStatus ===
                         SiblingDiscountStatus.REJECTED && (
                         <Note tone="error" className="mt-6">
@@ -507,10 +481,6 @@ export default function MyRegistrationsPage() {
                       )}
                     </div>
 
-                    {/* Preis und Aktionen stehen zusammen in der rechten
-                        Spalte. Vorher klebte der Preis links unter dem Text
-                        und die Schaltflächen weit rechts — dazwischen blieb
-                        die halbe Zeile leer. */}
                     <div className="mt-6 flex shrink-0 flex-col gap-2 lg:mt-0 lg:w-80 lg:items-stretch">
                       <ValueTable rows={priceRows} />
                       {registration.downPaymentAmount ? (
@@ -596,7 +566,6 @@ export default function MyRegistrationsPage() {
           </div>
         )}
 
-        {/* Cancel Confirmation Modal */}
         {cancelModalOpen && (
           <ScrollableModal>
             <ScrollableModalCard
@@ -646,7 +615,6 @@ export default function MyRegistrationsPage() {
           </ScrollableModal>
         )}
 
-        {/* Pagination */}
         {data && data.pages > 1 && (
           <div className="mt-10 flex items-center justify-center gap-3">
             <button

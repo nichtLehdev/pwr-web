@@ -8,14 +8,8 @@ import { buildCourseParticipantsXlsx } from "@/server/utils/course-exports";
 import { attachmentHeaders } from "@/server/utils/xlsx";
 
 /**
- * Teilnehmerliste eines Kurses als .xlsx.
- *
- * POST statt GET, weil die Oberfläche ihre Filterung mitschickt: exportiert
- * wird, was die Liste gerade zeigt. Übergeben werden nur Anmelde-IDs — die
- * Daten selbst holt der Server, damit kein Client Inhalte in den Export
- * schreiben kann.
- *
- * Zugriffsregel wie `courses.getRegistrations`.
+ * Teilnehmerliste als .xlsx (Zugriff wie `courses.getRegistrations`). POST mit
+ * den gefilterten Anmelde-IDs; die Daten holt der Server, nicht der Client.
  */
 const bodySchema = z.object({
   registrationIds: z.array(z.string()).max(5000).optional(),

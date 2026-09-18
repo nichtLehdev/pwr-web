@@ -256,9 +256,7 @@ export const usersData = [
     obleuteBezirk: null,
   },
 
-  // ============================================================================
-  // VORSTAND MEMBERS (need user accounts)
-  // ============================================================================
+  // Vorstand members (need user accounts)
   {
     username: "friedemann.schmidt_eggert",
     email: "landesobmann@posaunenwerk-rheinland.de",
@@ -293,9 +291,7 @@ export const usersData = [
     obleuteBezirk: null,
   },
 
-  // ============================================================================
-  // TEAM MEMBERS (need user accounts)
-  // ============================================================================
+  // Team members (need user accounts)
   {
     username: "heide.neuland",
     email: "heide.neuland@posaunenwerk-rheinland.de",
@@ -330,9 +326,7 @@ export const usersData = [
     obleuteBezirk: null,
   },
 
-  // ============================================================================
-  // POSAUNENRAT MEMBERS (need user accounts)
-  // ============================================================================
+  // Posaunenrat members (need user accounts)
   {
     username: "ulrich.cyganek",
     email: "ulrich.cyganek@ekir.de",

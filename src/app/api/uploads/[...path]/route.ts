@@ -11,9 +11,8 @@ import { createLogger } from "@/server/utils/logger";
 
 const log = createLogger("Uploads");
 
-// No "svg" entry on purpose: SVG can contain script, and serving it inline
-// from the app origin would be a stored-XSS vector. Unknown extensions fall
-// back to application/octet-stream and are served as attachments.
+// No "svg" on purpose: inline SVG from this origin is a stored-XSS vector.
+// Unknown extensions are served as octet-stream attachments.
 const mimeTypes: Record<string, string> = {
   jpg: "image/jpeg",
   jpeg: "image/jpeg",
@@ -40,10 +39,8 @@ function getMimeType(filename: string): string {
 }
 
 /**
- * Dateiname für `Content-Disposition`. Der Wunschname kommt aus der Query und
- * ist damit Nutzereingabe: Pfadtrenner und Steuerzeichen fliegen raus, und die
- * Endung der tatsächlichen Datei wird angehängt, damit ein umbenanntes Bild
- * nicht als endungsloser Brocken im Downloads-Ordner landet.
+ * Dateiname für `Content-Disposition` aus der Query (Nutzereingabe, daher
+ * bereinigt), mit der Endung der tatsächlichen Datei.
  */
 function downloadFilename(requested: string | null, filePath: string): string {
   const storedName = filePath.split("/").pop() ?? "download";
@@ -51,9 +48,8 @@ function downloadFilename(requested: string | null, filePath: string): string {
     ? `.${storedName.split(".").pop()!.toLowerCase()}`
     : "";
 
-  // Positivliste statt Sperrliste: was kein Buchstabe, keine Ziffer und
-  // kein harmloses Satzzeichen ist, wird zum Leerzeichen. Das erwischt
-  // Pfadtrenner und Steuerzeichen gleichermaßen, ohne Umlaute zu opfern.
+  // Positivliste: Pfadtrenner und Steuerzeichen werden zu Leerzeichen,
+  // Umlaute bleiben.
   const cleaned = (requested ?? "")
     .replace(/[^\p{L}\p{N} ._\-()+&,']/gu, " ")
     .replace(/\s+/g, " ")
@@ -67,15 +63,9 @@ function downloadFilename(requested: string | null, filePath: string): string {
 }
 
 /**
- * Enforce the visibility rules stored in the database before streaming a
- * file. Mirrors the metadata rules of the materials/media routers:
- * - downloads: public+approved for everyone, otherwise session required
- * - media: public+approved for everyone, otherwise session required
- * - profiles: always public (avatars render on public pages)
- * - invoices: never served here (see below)
- * Files without a database row fall back to requiring a session. That is what
- * gates course-mail attachments: they travel inside the message itself, so
- * recipients never need this route, and the link stays staff-only.
+ * Mirrors the routers' visibility rules: downloads/media public+approved or
+ * session; profiles always public; invoices never. Files without a DB row
+ * (e.g. course-mail attachments) require a session.
  */
 async function checkAccess(
   request: NextRequest,
@@ -86,9 +76,8 @@ async function checkAccess(
 
   if (folder === "profiles") return { allowed: true, isPublic: true };
 
-  // Invoice PDFs are named after their invoice number, which is a guessable
-  // running sequence — "any logged-in session" is nowhere near enough. They are
-  // served exclusively by /api/invoices/[id]/pdf, which checks who is asking.
+  // Invoice file names are guessable, so any session is not enough; they are
+  // served only by /api/invoices/[id]/pdf.
   if (folder === "invoices") return { allowed: false, isPublic: false };
 
   let publiclyVisible = false;
@@ -173,10 +162,8 @@ export async function GET(
     if (mimeType === "application/octet-stream") {
       headers["Content-Disposition"] = "attachment";
     } else if (request.nextUrl.searchParams.has("download")) {
-      // `?download=1` macht aus der Vorschau-URL einen echten Download. Der
-      // Name kommt als Parameter mit, weil auf der Platte der entstellte
-      // Speichername steht ("bild-DFbip-176…jpg") und niemand den im
-      // Downloads-Ordner wiederfindet.
+      // `?download=1` erzwingt den Download, mit lesbarem Namen statt des
+      // entstellten Speichernamens.
       headers["Content-Disposition"] =
         `attachment; filename*=UTF-8''${encodeURIComponent(
           downloadFilename(request.nextUrl.searchParams.get("name"), filePath),

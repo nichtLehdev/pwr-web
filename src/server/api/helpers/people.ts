@@ -50,10 +50,8 @@ export function toPublicUser<U extends PersonUser>(user: U | null | undefined) {
 }
 
 /**
- * Hängt an einen Personendatensatz die aufgelöste Anzeige (`person`) und
- * ersetzt den rohen User durch die öffentliche Sicht. Alle Personen-Endpunkte
- * gehen hier durch, damit Seiten nicht jedes Mal selbst zusammenbauen müssen,
- * was aus dem Datensatz und was aus dem Konto kommt.
+ * Hängt die aufgelöste Anzeige (`person`) an und ersetzt den rohen User durch die
+ * öffentliche Sicht. Alle Personen-Endpunkte gehen hier durch.
  */
 export function withPerson<
   R extends { user?: PersonUser | null; image?: Media | null },

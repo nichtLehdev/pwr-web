@@ -96,10 +96,8 @@ function currentBerlinMonth(): CalendarMonth {
 export default function DesktopCalendarView({
   items,
 }: DesktopCalendarViewProps) {
-  // Monat und Tage in Berliner Zeit: Der Kalender rendert zuerst auf dem
-  // Server (UTC), und `new Date(y, m, d)` & Co. legten dort einen Termin um
-  // 00:30 in die Zelle des Vortags. Die Zellen sind deutsche Kalendertage,
-  // gleich in welcher Zone Server oder Browser laufen.
+  // Zellen sind deutsche Kalendertage: der Kalender rendert zuerst auf dem Server (UTC),
+  // wo `new Date(y, m, d)` einen Termin um 00:30 in den Vortag legte.
   const [currentMonth, setCurrentMonth] =
     useState<CalendarMonth>(currentBerlinMonth);
   const [selectedEvent, setSelectedEvent] =
@@ -366,7 +364,6 @@ export default function DesktopCalendarView({
   return (
     <>
       <div className="border-ink dark:border-night-text bg-paper dark:bg-night border-2">
-        {/* Header */}
         <div className="border-rule dark:border-night-rule flex items-center justify-between border-b p-4">
           <h2 className="condensed text-ink dark:text-night-text text-2xl font-extrabold">
             {monthName}
@@ -396,7 +393,6 @@ export default function DesktopCalendarView({
           </div>
         </div>
 
-        {/* Week days */}
         <div className="border-rule dark:border-night-rule grid grid-cols-7 border-b">
           {weekDays.map((day) => (
             <div
@@ -408,9 +404,7 @@ export default function DesktopCalendarView({
           ))}
         </div>
 
-        {/* Calendar Grid */}
         <div className="grid grid-cols-7" style={{ gridAutoRows: "150px" }}>
-          {/* Empty cells */}
           {Array.from({ length: startingDayOfWeek }).map((_, i) => {
             const isLastColumn = i === 6;
             const isLastRow = 0 === lastRowIndex;
@@ -427,7 +421,6 @@ export default function DesktopCalendarView({
             );
           })}
 
-          {/* Days */}
           {Array.from({ length: daysInMonth }).map((_, i) => {
             const day = i + 1;
             const isLastColumn = columnOf(day) === 6;
@@ -474,7 +467,6 @@ export default function DesktopCalendarView({
                     : "hover:bg-rule/20 dark:hover:bg-night-rule/20"
                 }`}
               >
-                {/* Date */}
                 <div className="absolute top-2 left-2 z-10 flex items-center gap-1.5">
                   <span
                     className={`text-sm font-semibold ${
@@ -663,7 +655,6 @@ export default function DesktopCalendarView({
         </div>
       </div>
 
-      {/* Legend */}
       <div className="border-ink dark:border-night-text bg-paper dark:bg-night mt-6 border-2 p-4">
         <h3 className="condensed text-ink dark:text-night-text mb-3 text-sm font-bold">
           Legende
@@ -711,7 +702,6 @@ export default function DesktopCalendarView({
         </div>
       </div>
 
-      {/* Event Detail Modal */}
       {selectedEvent && (
         <EventDetailModal
           event={selectedEvent}
@@ -719,7 +709,6 @@ export default function DesktopCalendarView({
         />
       )}
 
-      {/* More Events Modal */}
       {showMoreEventsDay !== null && (
         <MoreEventsModal
           day={showMoreEventsDay}
@@ -733,7 +722,6 @@ export default function DesktopCalendarView({
         />
       )}
 
-      {/* Holiday Modal */}
       {selectedHoliday && (
         <HolidayModal
           holiday={selectedHoliday}

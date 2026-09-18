@@ -1,12 +1,4 @@
-/**
- * Was die Medienverwaltung annimmt — einmal notiert, von der Upload-Route und
- * vom Dialog gelesen.
- *
- * Vorher standen die Grenzen doppelt im Code und wichen voneinander ab: das
- * Formular bot Video, Audio und PDF an und ließ 50 MB durch, die Route nahm
- * Bilder bis 10 MB. Alles dazwischen endete in einem nackten
- * „Upload fehlgeschlagen“.
- */
+/** Was die Medienverwaltung annimmt — einmal notiert, von Upload-Route und Dialog gelesen. */
 export const MEDIA_UPLOAD_MIME_TYPES = [
   "image/jpeg",
   "image/jpg",

@@ -41,11 +41,7 @@ const PROSE =
 const LABEL_HEAD =
   "semi-condensed text-ink dark:text-night-text text-lg font-semibold";
 
-/**
- * Seite für Mitgliedschöre und ihre Obleute: Mitgliedschaft, Beiträge und die
- * Instrumentenversicherung. Anrede durchgehend „Sie“; die Einstiegsseite
- * /mitmachen spricht Neue mit „du“ an. Abschnittsköpfe stehen links.
- */
+/** Für Mitgliedschöre und Obleute, daher „Sie“ (die Einstiegsseite /mitmachen duzt). */
 export default function MitgliedschaftPage() {
   return (
     <PublicPage

@@ -47,7 +47,6 @@ export default async function AuswahlchoerePage() {
         </p>
       }
     >
-      {/* Ensembles */}
       {ensembles.map((ensemble, index) => (
         <PageSection
           key={ensemble.name}
@@ -81,14 +80,7 @@ export default async function AuswahlchoerePage() {
                     </span>
                   ) : null}
                 </p>
-                {/* Das Bild gehört in den Kopf, nicht in den Inhalt: Sonst
-                    endet die Kopfspalte nach Name, Untertitel und Angaben und
-                    läuft neben Text und Terminen mehrere hundert Pixel leer
-                    mit — auf dieser Seite waren das bis zu 629px. Mit dem Bild
-                    trägt sie eigene Höhe. So bleiben die zwei alternierenden
-                    Spalten erhalten und die tote Fläche verschwindet, statt
-                    dass der Abschnitt zu einer einzigen Spalte gestapelt
-                    wird. */}
+                {/* Bild im Kopf, damit die Kopfspalte neben Text und Terminen nicht leer mitläuft. */}
                 {ensemble.image?.url ? (
                   <ZoomableImage
                     src={ensemble.image.url}
@@ -117,14 +109,8 @@ export default async function AuswahlchoerePage() {
                 )}
               </>
             }
-            // Text, Termine und Hinweis teilen sich ein Satzmaß. `text-lg` am
-            // Block, damit `65ch` in der Schriftgröße des Fließtexts rechnet;
-            // Termine und Hinweis setzen ihre Größen selbst.
-            //
-            // Steht der Kopf mit dem Bild rechts, rückt der Block an ihn
-            // heran. Sonst endet er bei 65 Zeichen linksbündig mitten in der
-            // Spalte: gemessen 242px Leere bis zur Bildkante, während es bei
-            // linksstehendem Kopf die 40px Rasterabstand sind.
+            // `text-lg` am Block, damit `65ch` in Fließtextgröße rechnet. Steht der Kopf
+            // rechts, rückt der Block an ihn heran statt mitten in der Spalte zu enden.
             bodyClassName={cn(
               "mt-8 max-w-[65ch] space-y-10 text-lg",
               index % 2 !== 0 && "lg:ml-auto",

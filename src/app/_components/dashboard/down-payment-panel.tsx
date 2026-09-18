@@ -23,11 +23,8 @@ import {
 } from "@/lib/course-down-payment";
 import { formatBerlin } from "@/lib/berlin-time";
 
-// Nur vier Etikett-Töne stehen zur Verfügung (siehe Tag-Komponente) — sieben
-// Anzahlungs-Zustände lassen sich darauf nicht eins-zu-eins abbilden. Offen
-// bekommt Orange (wartet auf Aktion), Teilzahlung sticht als Tinte-Etikett
-// hervor, das Erstattungsproblem bekommt den Warnton; erledigte Zustände
-// (bezahlt, erstattet, einbehalten) teilen sich den ruhigen Ton.
+// Sieben Zustände auf vier Etikett-Töne: Offenes und Klärungsbedarf laut,
+// Erledigtes (bezahlt, erstattet, einbehalten) teilt sich den ruhigen Ton.
 const stateTones: Record<DownPaymentState, TagTone> = {
   NONE: "inverse",
   OPEN: "orange",
@@ -89,10 +86,8 @@ interface DownPaymentPanelProps {
 }
 
 /**
- * Anzahlung einer Anmeldung im Dashboard: Betrag, Stand, Verwendungszweck —
- * und die Buchungen dazu. Nach einer Stornierung bleibt eine eingegangene
- * Anzahlung als "Erstattung klären" stehen, bis das Team mit der Kasse
- * entschieden hat, ob sie erstattet oder einbehalten wird.
+ * Anzahlung einer Anmeldung im Dashboard. Nach einer Stornierung steht eine eingegangene
+ * Anzahlung auf "Erstattung klären", bis das Team über Erstattung oder Einbehalt entscheidet.
  */
 export function DownPaymentPanel({
   registration,

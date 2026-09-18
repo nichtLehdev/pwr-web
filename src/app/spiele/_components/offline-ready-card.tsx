@@ -7,10 +7,8 @@ import { GAMES } from "../_lib/games";
 type WarmupState = "idle" | "warming" | "ready";
 
 /**
- * Macht die Spiele offline verfügbar: sobald ein Service Worker die Seite
- * kontrolliert, werden im Leerlauf (a) die Spiel-Dokumente SW-seitig gecacht
- * und (b) die Spiel-Module inkl. VexFlow wirklich importiert, damit genau die
- * benötigten Chunks durchs Netz — und damit in den SW-Cache — laufen.
+ * Macht die Spiele offline verfügbar: unter einem Service Worker werden im Leerlauf die
+ * Spiel-Dokumente gecacht und die Spiel-Module importiert, damit ihre Chunks in den SW-Cache laufen.
  */
 export function OfflineReadyCard() {
   const [state, setState] = useState<WarmupState>("idle");

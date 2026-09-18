@@ -11,10 +11,8 @@ function r<T>(arr: T[]): T {
 }
 
 /**
- * Zählt Lösungs-MULTISETS (Kombinationen, keine Reihenfolgen): {Viertel, Halbe}
- * ist genau EINE Lösung. Rekursion über nicht-fallende Wertindizes ab
- * `startIdx`, memoisiert auf (Rest, freie Slots, Rest-Pausen, startIdx) und
- * beschnitten über die minimal/maximal noch erreichbare Summe.
+ * Zählt Lösungs-Multisets, keine Reihenfolgen: {Viertel, Halbe} ist genau eine Lösung.
+ * Rekursion über nicht-fallende Wertindizes, memoisiert und über die erreichbare Summe beschnitten.
  */
 export function countWays(
   values: NoteValueId[],
@@ -93,11 +91,7 @@ function generateLeft(
   return ["quarter", "quarter"];
 }
 
-/**
- * Triviale Kopier-Aufgabe: die linke Seite ist selbst eine gültige rechte
- * Lösung (gleiche Symbolanzahl, Pausen-Vorgabe erfüllt) — der optimale Zug
- * wäre bloßes Abschreiben. Solche Aufgaben werden verworfen.
- */
+/** Die linke Seite ist selbst eine gültige rechte Lösung — solche Aufgaben werden verworfen. */
 export function isTrivialCopy(
   left: NoteValueId[],
   rightCount: number,

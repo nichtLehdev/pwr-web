@@ -1,9 +1,4 @@
-/**
- * Seed Script for Posaunenwerk Database
- *
- * Permissions are now hardcoded in the codebase (src/lib/permissions.ts).
- * This seed script is kept for backwards compatibility but does nothing.
- */
+/** No-op, kept for compatibility; permissions live in src/lib/permissions.ts. */
 import "dotenv/config";
 import { db } from "@/server/db";
 
@@ -14,10 +9,6 @@ async function main() {
   );
   console.log("✅ Seed completed successfully!");
 }
-
-// ============================================================================
-// RUN
-// ============================================================================
 
 main()
   .then(() => db.$disconnect())

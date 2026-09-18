@@ -103,7 +103,6 @@ export default async function PosaunenratPage() {
         </div>
       }
     >
-      {/* Zusammensetzung */}
       <PageSection labelledBy="zusammensetzung-heading">
         <Split
           stickyHead
@@ -125,7 +124,6 @@ export default async function PosaunenratPage() {
             der Posaunenarbeit erfahrene Persönlichkeiten.
           </p>
 
-          {/* Vorstandsmitglieder */}
           <div>
             <Heading as="h3" size="list" rule>
               Vorstandsmitglieder
@@ -148,7 +146,6 @@ export default async function PosaunenratPage() {
             </p>
           </div>
 
-          {/* Bezirksobleute */}
           <div>
             <Heading as="h3" size="list" rule>
               Bezirksobleute
@@ -172,7 +169,6 @@ export default async function PosaunenratPage() {
             </p>
           </div>
 
-          {/* Landeskirchenmusikdirektor:in */}
           {lkmd && (
             <div>
               <Heading as="h3" size="list" rule>
@@ -188,7 +184,6 @@ export default async function PosaunenratPage() {
             </div>
           )}
 
-          {/* Sachverständige */}
           <div>
             <Heading as="h3" size="list" rule>
               Sachverständige
@@ -208,7 +203,6 @@ export default async function PosaunenratPage() {
         </Split>
       </PageSection>
 
-      {/* Aufgaben und Verantwortung */}
       <PageSection labelledBy="aufgaben-heading" rule>
         <Split
           side="right"

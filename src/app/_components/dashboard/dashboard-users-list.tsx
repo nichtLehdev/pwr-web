@@ -34,11 +34,7 @@ type SortableColumn = keyof typeof SORTABLE_COLUMNS;
 
 const column = createDataTableColumnHelper<ListedUser>();
 
-/**
- * Die Gremien, in denen die Person sitzt — als Etikett mit einem quadratischen
- * Farbpunkt. Der Punkt ist reine Zusatzinformation (aria-hidden); die
- * Unterscheidung steht immer auch als Text im Etikett, nie nur in der Farbe.
- */
+/** Gremien als Etikett; der Farbpunkt ist nur Zusatz (aria-hidden), die Unterscheidung steht im Text. */
 function membershipBadges(
   user: ListedUser,
 ): { label: string; dotClassName: string }[] {
@@ -88,9 +84,8 @@ function membershipLabels(user: ListedUser): string {
 
 export default function DashboardUsersList() {
   const { data: session } = useSession();
-  // Die Benutzerliste wächst unbegrenzt und wird deshalb serverseitig
-  // geblättert; Sortierung und Suche sind darum Abfrageparameter — sonst würden
-  // sie nur die gerade geladene Seite betreffen.
+  // Serverseitig geblättert, daher Sortierung und Suche als Abfrageparameter —
+  // sonst beträfen sie nur die geladene Seite.
   const [sorting, setSorting] = useState<SortingState>([
     { id: "createdAt", desc: true },
   ]);
@@ -261,7 +256,6 @@ export default function DashboardUsersList() {
 
   return (
     <div className="space-y-6">
-      {/* Stats Cards */}
       {stats && (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <div className="border-rule dark:border-night-rule bg-rule/25 dark:bg-night-raised border p-4">
@@ -322,7 +316,6 @@ export default function DashboardUsersList() {
         rowCount={data?.total ?? 0}
       />
 
-      {/* Delete Confirmation Modal */}
       {showDeleteModal && (
         <ScrollableModal>
           <ScrollableModalCard maxW="md">

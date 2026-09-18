@@ -217,18 +217,15 @@ export default function EditBlaeserheftPage() {
         ]}
         maxWidth="7xl"
       >
-        {/* Error */}
         {error && (
           <div className="mb-6 border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
             <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
           </div>
         )}
 
-        {/* Form */}
         <form onSubmit={handleSubmit}>
           <Card>
             <CardContent className="space-y-6">
-              {/* Basic Info */}
               <div className="grid gap-6 md:grid-cols-2">
                 <div>
                   <Label required>Titel</Label>
@@ -290,7 +287,6 @@ export default function EditBlaeserheftPage() {
                 />
               </div>
 
-              {/* Image Selection */}
               <div>
                 <Label required>Titelbild</Label>
                 <div className="flex items-start gap-4">
@@ -319,7 +315,6 @@ export default function EditBlaeserheftPage() {
                 </div>
               </div>
 
-              {/* Chapters and Highlights */}
               <div className="grid gap-6 md:grid-cols-2">
                 <div>
                   <Label>Kapitel (eine pro Zeile)</Label>
@@ -341,7 +336,6 @@ export default function EditBlaeserheftPage() {
                 </div>
               </div>
 
-              {/* Audio Sample */}
               <div>
                 <Label>Hörprobe</Label>
                 <div className="flex items-center gap-4">
@@ -376,7 +370,6 @@ export default function EditBlaeserheftPage() {
                 </div>
               </div>
 
-              {/* Prices */}
               <div>
                 <h3 className="condensed text-ink dark:text-night-text mb-3 text-lg font-bold">
                   Preise (in Euro)
@@ -453,7 +446,6 @@ export default function EditBlaeserheftPage() {
                 </div>
               </div>
 
-              {/* Availability */}
               <div>
                 <h3 className="condensed text-ink dark:text-night-text mb-3 text-lg font-bold">
                   Verfügbarkeit
@@ -502,7 +494,6 @@ export default function EditBlaeserheftPage() {
             </CardContent>
           </Card>
 
-          {/* Actions */}
           <div className="mt-6 flex flex-wrap gap-3">
             <Button
               type="submit"

@@ -7,11 +7,8 @@ export const INVOICE_STATUS_LABELS: Record<InvoiceStatus, string> = {
   CANCELLED: "Storniert",
 };
 
-// Der Ton trägt die Dringlichkeit: Ein Entwurf verlangt nichts und bleibt
-// umrandet, eine ausgestellte Rechnung ist verbindlich und steht gefüllt, eine
-// Stornierung ist ein negativer Abschluss. Vorher lag der Entwurf auf
-// `inverse` — im Hellmodus nicht von `ink` zu unterscheiden, beide Zustände
-// sahen also gleich aus.
+// Entwurf umrandet, ausgestellt gefüllt. Nicht `inverse` für den Entwurf: im
+// Hellmodus nicht von `ink` zu unterscheiden.
 const TONE: Record<InvoiceStatus, TagTone> = {
   DRAFT: "muted",
   PUBLISHED: "ink",

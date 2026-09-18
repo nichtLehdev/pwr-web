@@ -22,22 +22,15 @@ const themeBootstrap = `
   })();
 `;
 
-// Knopf und Link teilen sich diese Klassen von Hand: `ui/button` selbst zu
-// importieren wäre ein Griff in einen Baum, der hier gerade nicht steht.
+// Von Hand statt `ui/button`: Der Baum dahinter steht hier gerade nicht.
 const PRIMARY_BUTTON =
   "bg-ink text-paper hover:bg-dark dark:bg-night-text dark:text-night dark:hover:bg-night-muted inline-flex items-center justify-center px-6 py-3 font-semibold transition-colors";
 const OUTLINE_LINK =
   "border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night inline-flex items-center justify-center border-2 px-6 py-3 font-semibold transition-colors";
 
 /**
- * Greift nur, wenn das Root-Layout selbst scheitert. Ohne Provider und ohne
- * Layout — `<html>`/`<body>` und das Theme-Skript daher von Hand.
- *
- * Kein Archivo, keine Programmheft-Schrift: Die Variable dafür setzt
- * `layout.tsx` auf `<html>`, und genau dieses Layout ist hier ausgefallen.
- * Nur `.programm` (Auswahl-, Caret- und Fokusfarben) ist gefahrlos, weil sie
- * allein von den Theme-Tokens aus `globals.css` abhängt, die oben direkt
- * importiert werden.
+ * Greift nur, wenn das Root-Layout selbst scheitert: `<html>`/`<body>` und Theme-Skript
+ * daher von Hand. Keine Programmheft-Schrift — deren Variable setzt das ausgefallene Layout.
  */
 export default function GlobalError({
   error,

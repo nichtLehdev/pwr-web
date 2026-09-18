@@ -17,7 +17,6 @@ import {
   type DataTableColumn,
 } from "@/app/_components/ui/data-table";
 import { ClockIcon, EyeIcon, PencilIcon, Plus, Trash2Icon } from "lucide-react";
-// Dashboard access is now controlled by permissions
 
 type HistoryEvent = RouterOutputs["organization"]["getHistory"][number];
 
@@ -48,7 +47,7 @@ export default function DashboardHistoryTimelinePage() {
     PERMISSIONS.ORGANIZATION_MANAGE_HISTORY,
   );
 
-  // Alle Kategorien auf einmal: die Kategorie ist jetzt ein Spaltenfilter.
+  // Alle Kategorien auf einmal: Die Kategorie ist ein Spaltenfilter.
   const {
     data: historyEvents,
     isLoading: historyLoading,

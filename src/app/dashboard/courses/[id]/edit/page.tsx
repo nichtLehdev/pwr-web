@@ -100,8 +100,6 @@ const courseCollaboratorRoleLabels: Record<CourseCollaboratorRole, string> = {
   [CourseCollaboratorRole.STAFF]: "Team (Teilnehmerliste & Anmeldungen)",
 };
 
-// Dashboard access is now controlled by permissions
-
 interface PriceOption {
   id: string;
   price: number;
@@ -229,9 +227,8 @@ export default function EditCoursePage() {
       { enabled: !!courseId && !!session?.user },
     );
 
-  // Ab der ersten ausgestellten Rechnung bzw. der ersten Anmeldung mit
-  // Anzahlung ist die Kursnummer eingefroren; der Server lehnt eine Änderung
-  // ohnehin ab, das Feld sagt es nur vorher — und warum.
+  // Ab der ersten Rechnung bzw. Anmeldung mit Anzahlung ist die Kursnummer
+  // eingefroren; das Feld sagt vorab, was der Server ohnehin ablehnt.
   const courseNumberLocked = course?.courseNumberLocked ?? false;
   const courseNumberLockedBy = course?.courseNumberLockedBy ?? null;
   // Aktive Anmeldungen haben die Anzahlung bestätigt; der Server lehnt eine
@@ -529,10 +526,8 @@ export default function EditCoursePage() {
     PERMISSIONS.REGISTRATIONS_MANAGE_SIBLING_DISCOUNT,
   );
   const scopedBezirkIds = profile?.bezirkScopes?.map((s) => s.bezirkId) ?? [];
-  // Zuständigkeit statt Zugehörigkeit: `profile.bezirkId` sagt, wo jemand im
-  // Werk verortet ist (und trägt öffentlich ein Amt), nicht wofür er schreiben
-  // darf. Beides zu vermischen hieße, für eine einzelne Ausnahme ein Amt zu
-  // vergeben.
+  // Zuständigkeit statt Zugehörigkeit: `profile.bezirkId` ist ein öffentliches
+  // Amt, keine Schreibberechtigung.
   const { selectableBezirkIds } = districtFieldState(
     isHigherRole,
     scopedBezirkIds,
@@ -841,9 +836,8 @@ export default function EditCoursePage() {
     course?.registrationStats?.totalConfirmedParticipants ??
     course?._count?.participants ??
     0;
-  // Nach id, nicht nach Label: zwei Kategorien dürfen gleich heißen und wären
-  // sonst in einem Topf. Neu hinzugefügte Kategorien ("new-…") haben noch
-  // keine id im Bestand und damit erwartungsgemäß 0 Anmeldungen.
+  // Nach id, nicht nach Label: Kategorien dürfen gleich heißen. Neue
+  // Kategorien ("new-…") haben so erwartungsgemäß 0 Anmeldungen.
   const participantsByPriceOption =
     course?.registrationStats?.byPriceOptionId ?? {};
 
@@ -893,9 +887,8 @@ export default function EditCoursePage() {
       return;
     }
 
-    // Ohne `maxLength` am Textfeld muss die Länge hier geprüft
-    // werden: Sonst lehnte erst der Server ab, und zwar mit
-    // einer englischen Zod-Meldung.
+    // Das Textfeld hat kein `maxLength`; sonst käme erst die englische
+    // Zod-Meldung vom Server.
     if (description.length > MAX_DESCRIPTION_LENGTH) {
       setError(
         `Die Beschreibung ist zu lang (${description.length} von ${MAX_DESCRIPTION_LENGTH} Zeichen).`,
@@ -1143,9 +1136,8 @@ export default function EditCoursePage() {
         : null,
       maxParticipants: isExternalProvider ? null : parseInt(maxParticipants),
       allowWaitingList: isExternalProvider ? false : allowWaitingList,
-      // Omitted entirely when the user may not change it: sending a hardcoded
-      // false would ask the server to switch the discount off behind their
-      // back. Turning the course external clears the flag server-side anyway.
+      // Omitted without permission: a hardcoded false would switch the discount
+      // off behind the user's back.
       ...(canManageSiblingDiscount
         ? {
             allowSiblingDiscount: isExternalProvider
@@ -1157,9 +1149,8 @@ export default function EditCoursePage() {
       paymentCashAllowed,
       paymentInvoiceAllowed,
       invoicingEnabled: isExternalProvider ? false : invoicingEnabled,
-      // Ohne die Berechtigung wird das Feld gar nicht angezeigt und der Wert
-      // kommt redigiert an — dann darf der Speichervorgang ihn auch nicht
-      // mitschicken, sonst würde er die Nummer löschen wollen und scheitern.
+      // Ohne Berechtigung kommt der Wert redigiert an und darf nicht mit,
+      // sonst wollte das Speichern die Nummer löschen.
       courseNumber:
         !canEnableInvoicing && !canEnableDownPayment
           ? undefined
@@ -1230,14 +1221,12 @@ export default function EditCoursePage() {
           storageFailed={storageFailed}
         />
 
-        {/* Error */}
         {error && (
           <div className="mb-6 border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950/30">
             <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
           </div>
         )}
 
-        {/* Form */}
         <form onSubmit={handleSubmit}>
           <CourseFormEditMetaBar
             startDate={startDate}
@@ -1310,10 +1299,8 @@ export default function EditCoursePage() {
                           <label className="dark:text-night-text text-ink mb-2 block text-sm font-medium">
                             Beschreibung *
                           </label>
-                          {/* Markdown-Schreibfläche, siehe Termin anlegen. Das
-                              `required` des Textfelds gibt es hier nicht; die
-                              Pflicht prüft `handleSubmit` wie bisher, die
-                              Ansage übernimmt `ariaRequired`. */}
+                          {/* Ohne `required`: Die Pflicht prüft `handleSubmit`,
+                              die Ansage übernimmt `ariaRequired`. */}
                           <RichTextEditor
                             variant="beschreibung"
                             ariaLabel="Beschreibung"
@@ -1987,7 +1974,6 @@ export default function EditCoursePage() {
                       </>
                     ) : null}
 
-                    {/* Sibling Discount - only for users who may change it */}
                     {!isExternalProvider &&
                       (canManageSiblingDiscount ? (
                         <div className="flex items-center gap-3">
@@ -2010,9 +1996,8 @@ export default function EditCoursePage() {
                           </label>
                         </div>
                       ) : (
-                        // Shown read-only rather than hidden: the setting
-                        // changes what registrants pay, so an organizer needs
-                        // to see it even when they cannot switch it.
+                        // Read-only rather than hidden: it changes what
+                        // registrants pay.
                         allowSiblingDiscount && (
                           <p className="dark:text-night-muted text-dark text-sm">
                             Geschwisterkindrabatt ist für diesen Kurs aktiv. Nur
@@ -2030,8 +2015,7 @@ export default function EditCoursePage() {
                     description="Felder, die direkt beim Ausfüllen der Anmeldung abgefragt werden."
                   >
                     {hasRegistrations && customFieldsChanged && (
-                      // Hinweis statt Alarm: Tinte auf Papier an einer
-                      // Haarlinie statt bernsteinfarbenem Kasten.
+                      // Hinweis, kein Alarm: bewusst ohne Signalfarbe.
                       <div className="border-ink dark:border-night-text mb-4 border-l-2 py-1 pl-4">
                         <p className="text-dark dark:text-night-muted text-sm">
                           <strong>Hinweis:</strong> Es sind bereits Anmeldungen
@@ -2498,10 +2482,8 @@ export default function EditCoursePage() {
                   description="Honorare und Zahlungsarten – und wie sie auf der öffentlichen Anmeldung erscheinen."
                 />
 
-                {/* Warning when there are registrations */}
                 {hasRegistrations && (
-                  // Hinweis statt Alarm: Tinte auf Papier an einer Haarlinie
-                  // statt bernsteinfarbenem Kasten.
+                  // Hinweis, kein Alarm: bewusst ohne Signalfarbe.
                   <div className="border-ink dark:border-night-text mb-4 border-l-2 py-2 pl-4">
                     <div className="flex items-start gap-3">
                       <AlertTriangle className="dark:text-night-text text-ink mt-0.5 h-5 w-5 shrink-0" />
@@ -2921,12 +2903,10 @@ export default function EditCoursePage() {
               />
 
               <DashboardFormBlock title="Redaktionsstatus">
-                {/* Notice for approved/rejected courses being edited */}
                 {(course?.status === ContentStatus.APPROVED ||
                   course?.status === ContentStatus.REJECTED) &&
                   !isHigherRole && (
-                    // Hinweis statt Alarm: Tinte auf Papier an einer
-                    // Haarlinie statt bernsteinfarbenem Kasten.
+                    // Hinweis, kein Alarm: bewusst ohne Signalfarbe.
                     <div className="border-ink dark:border-night-text mb-4 border-l-2 py-2 pl-4">
                       <div className="flex items-start gap-3">
                         <AlertTriangleIcon className="dark:text-night-text text-ink mt-0.5 h-5 w-5 shrink-0" />
@@ -3025,7 +3005,6 @@ export default function EditCoursePage() {
               </DashboardFormBlock>
             </div>
 
-            {/* Actions */}
             <div className="dark:border-night-rule border-rule mt-16 flex flex-col gap-3 border-t pt-10 sm:flex-row sm:justify-end">
               <Link
                 href={`/dashboard/courses/${courseId}`}
@@ -3048,7 +3027,6 @@ export default function EditCoursePage() {
           </DashboardSectionedFormLayout>
         </form>
 
-        {/* Media Picker Modal */}
         <MediaPickerModal
           isOpen={showMediaPicker}
           onClose={() => setShowMediaPicker(false)}

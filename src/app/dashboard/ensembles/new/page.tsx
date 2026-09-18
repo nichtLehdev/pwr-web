@@ -306,24 +306,20 @@ export default function NewEnsemblePage() {
       ]}
       maxWidth="7xl"
     >
-      {/* Error */}
       {error && (
         <div className="mb-6 border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
           <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
         </div>
       )}
 
-      {/* Form */}
       <form onSubmit={handleSubmit}>
         <div className="space-y-6">
-          {/* Basic Information */}
           <Card>
             <CardHeader>
               <CardTitle>Grundinformationen</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                {/* Name */}
                 <div>
                   <Label required>Name</Label>
                   <Input
@@ -359,7 +355,6 @@ export default function NewEnsemblePage() {
                   </p>
                 </div>
 
-                {/* Description */}
                 <div>
                   <Label>Beschreibung</Label>
                   <Textarea
@@ -371,7 +366,6 @@ export default function NewEnsemblePage() {
                   />
                 </div>
 
-                {/* Bezirk */}
                 <div>
                   <Label>Bezirk</Label>
                   <Select
@@ -390,7 +384,6 @@ export default function NewEnsemblePage() {
             </CardContent>
           </Card>
 
-          {/* Image */}
           <Card>
             <CardHeader>
               <CardTitle>Bild</CardTitle>
@@ -444,7 +437,6 @@ export default function NewEnsemblePage() {
             </CardContent>
           </Card>
 
-          {/* Active */}
           <Card>
             <CardContent>
               <div className="flex items-center gap-2">
@@ -460,13 +452,11 @@ export default function NewEnsemblePage() {
             </CardContent>
           </Card>
 
-          {/* People */}
           <Card>
             <CardHeader>
               <CardTitle>Personen</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Conductor */}
               <div className="relative" data-dropdown>
                 <div className="mb-2 flex items-center justify-between">
                   <Label className="mb-0">Chorleitung</Label>
@@ -526,7 +516,6 @@ export default function NewEnsemblePage() {
                   </div>
                 )}
 
-                {/* Conductor Dropdown */}
                 {!useCustomConductor && showConductorDropdown && (
                   <div className="border-ink dark:border-night-text dark:bg-night-raised bg-paper absolute z-10 mt-1 w-full overflow-hidden border">
                     <div
@@ -573,7 +562,6 @@ export default function NewEnsemblePage() {
                   </div>
                 )}
 
-                {/* Selected conductor indicator */}
                 {!useCustomConductor && conductorId && (
                   <p className="text-dark dark:text-night-muted mt-2 text-sm">
                     ✓ Chorleitung verknüpft
@@ -613,7 +601,6 @@ export default function NewEnsemblePage() {
                 </div>
               </div>
 
-              {/* Representative */}
               <div className="relative" data-dropdown>
                 <div className="mb-2 flex items-center justify-between">
                   <Label className="mb-0">Ansprechpartner</Label>
@@ -673,7 +660,6 @@ export default function NewEnsemblePage() {
                   </div>
                 )}
 
-                {/* Representative Dropdown */}
                 {!useCustomRepresentative && showRepresentativeDropdown && (
                   <div className="border-ink dark:border-night-text dark:bg-night-raised bg-paper absolute z-10 mt-1 w-full overflow-hidden border">
                     <div
@@ -720,7 +706,6 @@ export default function NewEnsemblePage() {
                   </div>
                 )}
 
-                {/* Selected representative indicator */}
                 {!useCustomRepresentative && representativeId && (
                   <p className="text-dark dark:text-night-muted mt-2 text-sm">
                     ✓ Ansprechpartner verknüpft
@@ -762,7 +747,6 @@ export default function NewEnsemblePage() {
             </CardContent>
           </Card>
 
-          {/* Rehearsal */}
           <Card>
             <CardHeader className="flex-row items-center justify-between space-y-0">
               <CardTitle>Probenzeiten</CardTitle>
@@ -886,7 +870,6 @@ export default function NewEnsemblePage() {
                 </div>
               </div>
 
-              {/* Location */}
               <div className="relative" data-dropdown>
                 <Label>Probenort</Label>
                 <Input
@@ -901,7 +884,6 @@ export default function NewEnsemblePage() {
                   placeholder="Suche nach einem Ort..."
                 />
 
-                {/* Location Dropdown */}
                 {showLocationDropdown && locationsData && (
                   <div className="border-ink dark:border-night-text dark:bg-night-raised bg-paper absolute z-10 mt-1 w-full overflow-hidden border">
                     <div
@@ -1000,7 +982,6 @@ export default function NewEnsemblePage() {
           </Card>
         </div>
 
-        {/* Actions */}
         <div className="mt-6 flex flex-wrap gap-3">
           <Button
             type="submit"
@@ -1019,7 +1000,6 @@ export default function NewEnsemblePage() {
         </div>
       </form>
 
-      {/* Media Picker Modal */}
       <MediaPickerModal
         isOpen={showMediaPicker}
         onClose={() => setShowMediaPicker(false)}

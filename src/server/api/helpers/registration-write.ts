@@ -26,21 +26,9 @@ type PriceOption = {
 };
 
 /**
- * Validates a submitted participant list against its course: custom-field
- * values are normalised and checked, price options are resolved to their
- * label and age limits, and the undiscounted total is summed up.
- *
- * Shared by the public registration, the staff-side registration and the
- * registration edit so all three price and persist participants identically.
- *
- * `allowAgeMismatch` is the one thing the course team may do and registrants
- * may not. An age limit is the rule, not the law: whoever records the
- * registration knows the exception it has to bend for and can enter it,
- * without the category losing its limit for everybody else. As a predicate it
- * decides per participant — the edit path uses that to leave someone already
- * booked into a category alone when they no longer fit it, whether the team
- * put them there deliberately or the limits moved while nobody was confirmed
- * yet. Without it they could not save an edit to any other field either.
+ * Validates participants against the course and sums the undiscounted total; shared by public,
+ * staff and edit paths. `allowAgeMismatch` is for the course team only; the edit path passes a
+ * predicate to leave already-booked participants alone who no longer fit their category.
  */
 export function prepareParticipantsForCourse<
   T extends {
@@ -120,11 +108,7 @@ export function prepareParticipantsForCourse<
   return { participants, originalTotalPrice: roundMoney(total) };
 }
 
-/**
- * Resolves which payment method a new registration is stored with: `null` for
- * free courses, the single allowed method when the course only offers one, and
- * the submitted choice when the course offers both.
- */
+/** `null` for free courses, the only allowed method, or the submitted choice when both are offered. */
 export function resolveCoursePaymentMethod(
   course: CoursePaymentFlags,
   submitted: CoursePaymentMethod | undefined,

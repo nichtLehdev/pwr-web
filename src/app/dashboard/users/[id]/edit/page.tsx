@@ -51,10 +51,8 @@ export default function EditUserPage() {
   const [isMediaPickerOpen, setIsMediaPickerOpen] = useState(false);
   const [showAddressPublicly, setShowAddressPublicly] = useState(true);
   const [showPhonePublicly, setShowPhonePublicly] = useState(true);
-  // Zugehörigkeit: wo die Person im Werk verortet ist. Zusammen mit
-  // districtRoleName ergibt das ein öffentlich sichtbares Amt. Nicht zu
-  // verwechseln mit bezirkScopeIds weiter unten — das ist die Zuständigkeit
-  // fürs Anlegen von Inhalten und hängt nicht am Amt.
+  // Zugehörigkeit (mit districtRoleName ein öffentliches Amt) — nicht zu verwechseln
+  // mit bezirkScopeIds, der Zuständigkeit fürs Anlegen von Inhalten.
   const [bezirkId, setBezirkId] = useState<string>("");
   const [districtRoleName, setDistrictRoleName] = useState("");
   const [bezirkScopeIds, setBezirkScopeIds] = useState<string[]>([]);
@@ -344,16 +342,13 @@ export default function EditUserPage() {
         ]}
         maxWidth="7xl"
       >
-        {/* Error Message */}
         {error && (
           <div className="mb-6 border-2 border-red-700 p-4 text-red-700 dark:border-red-400 dark:text-red-400">
             {error}
           </div>
         )}
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Profile Image */}
           <section className="border-rule dark:border-night-rule border p-6">
             <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
               Profilbild
@@ -397,7 +392,6 @@ export default function EditUserPage() {
             </div>
           </section>
 
-          {/* Basic Info */}
           <section className="border-rule dark:border-night-rule border p-6">
             <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
               Grundinformationen
@@ -511,7 +505,6 @@ export default function EditUserPage() {
             </div>
           </section>
 
-          {/* Address */}
           <section className="border-rule dark:border-night-rule border p-6">
             <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
               Adresse
@@ -700,7 +693,6 @@ export default function EditUserPage() {
             </section>
           )}
 
-          {/* Actions */}
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
             <Link
               href={`/dashboard/users/${userId}`}
@@ -720,7 +712,6 @@ export default function EditUserPage() {
           </div>
         </form>
 
-        {/* Media Picker Modal */}
         <MediaPickerModal
           isOpen={isMediaPickerOpen}
           onClose={() => setIsMediaPickerOpen(false)}

@@ -3,11 +3,7 @@
 import dynamic from "next/dynamic";
 import type { RhythmDisplayProps } from "./rhythm-display";
 
-/**
- * Gleiche Maße wie der Notenkasten im Spiel (`NOTATION_BOX_PLAY` in
- * rhythm-display) — der Platzhalter erscheint nur beim ersten Laden, also
- * immer in der Spielphase.
- */
+/** Wie `NOTATION_BOX_PLAY`: der Platzhalter erscheint nur beim ersten Laden, also in der Spielphase. */
 const BOX = "h-[clamp(10rem,26svh,15rem)] md:h-[clamp(12rem,32svh,20rem)]";
 
 const RhythmDisplay = dynamic(

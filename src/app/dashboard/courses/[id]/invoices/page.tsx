@@ -350,9 +350,8 @@ export default function CourseInvoicesPage() {
     0,
   );
 
-  // Only issued invoices: an auditor checking who paid the right amount
-  // reconciles against real invoice numbers, not drafts still being edited or
-  // storniert invoices that no longer carry a claim.
+  // Only issued invoices: reconciliation needs real invoice numbers, not
+  // drafts or storniert documents without a claim.
   const exportableInvoices = (invoices ?? []).filter(
     (invoice) => invoice.status === InvoiceStatus.PUBLISHED,
   );
@@ -433,8 +432,7 @@ export default function CourseInvoicesPage() {
       ]}
       actions={
         <>
-          {/* Redundant on phones: the breadcrumb above already links to the
-              course, so this only cost a second row of buttons. */}
+          {/* Hidden on phones: the breadcrumb already links to the course. */}
           <Link
             href={`/dashboard/courses/${courseId}`}
             className="border-rule dark:border-night-rule text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised hidden min-h-11 items-center gap-2 border px-4 py-2 text-sm font-medium sm:inline-flex"
@@ -485,8 +483,7 @@ export default function CourseInvoicesPage() {
       }
     >
       {!access?.invoicingEnabled && (
-        // Hinweis statt Alarm: Tinte auf Papier an einer Haarlinie statt
-        // Kasten in Signalfarbe.
+        // Hinweis, kein Alarm: bewusst ohne Signalfarbe.
         <div className="border-ink dark:border-night-text mb-6 border-l-2 py-2 pl-4">
           <p className="text-ink dark:text-night-text text-sm font-medium">
             Rechnungsstellung ist für diesen Kurs nicht freigeschaltet
@@ -499,7 +496,6 @@ export default function CourseInvoicesPage() {
         </div>
       )}
 
-      {/* Summary */}
       <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
         {[
           { label: "Entwürfe", value: String(summary.drafts) },
@@ -521,7 +517,6 @@ export default function CourseInvoicesPage() {
         ))}
       </div>
 
-      {/* Registration picker */}
       {showPicker && (
         <div className="border-rule dark:border-night-rule mb-6 border p-6">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -629,7 +624,6 @@ export default function CourseInvoicesPage() {
         </div>
       )}
 
-      {/* Invoice list */}
       <DataTable
         data={invoices}
         columns={invoiceColumns}

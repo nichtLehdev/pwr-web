@@ -1,10 +1,6 @@
 import type { JSX } from "react";
 import { formatBerlin } from "./berlin-time";
 
-/**
- * Utility function to merge class names.
- * Handles strings, arrays, and conditional classes.
- */
 export function cn(...classes: (string | undefined | null | false)[]): string {
   return classes.filter(Boolean).join(" ");
 }
@@ -87,10 +83,7 @@ export function formatDate(dateString: string): string {
   return formatBerlin(dateString, "datumZweistellig");
 }
 
-/**
- * Extracts a user-friendly error message from tRPC/Zod errors.
- * Handles Zod validation errors that come as JSON arrays.
- */
+/** Zod errors arrive as a JSON array in `message`; returns the first issue's message. */
 export function getErrorMessage(
   error: { message?: string } | unknown,
   fallback = "Ein Fehler ist aufgetreten.",
@@ -117,10 +110,6 @@ export function getErrorMessage(
   }
 }
 
-/**
- * Extracts plain text from markdown content by stripping markdown syntax.
- * Returns the first few lines of plain text, suitable for use as an excerpt.
- */
 export function extractPlainTextFromMarkdown(
   markdown: string,
   maxLines: number = 3,

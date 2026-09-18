@@ -15,9 +15,7 @@ import { useBanner } from "../ui/banner-context";
 import { useRouter } from "next/navigation";
 import { useToast } from "../ui/toast";
 import { ChevronDown, Search, Menu, X } from "lucide-react";
-// Dashboard access is now controlled by permissions
 
-/** Programmheft-Bausteine der Navigation. */
 const ICON_BUTTON =
   "text-ink hover:bg-ink hover:text-paper dark:text-night-text dark:hover:bg-night-text dark:hover:text-night inline-flex h-11 w-11 items-center justify-center transition-colors";
 const PANEL =
@@ -110,8 +108,7 @@ export default function Navigation() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Close the user menu on any click outside it (same pattern as
-  // NotificationBell) — the nav dropdowns close on hover-out instead.
+  // Close the user menu on any outside click; the nav dropdowns close on hover-out instead.
   useEffect(() => {
     if (!userMenuOpen) return;
     const handleClick = (event: MouseEvent) => {
@@ -414,7 +411,6 @@ export default function Navigation() {
             </div>
           </div>
 
-          {/* Mobile Menu Button - nur auf Mobile */}
           <div className="-mr-2 flex items-center lg:hidden">
             <ThemeToggle />
             {session?.user && <NotificationBell />}
@@ -434,7 +430,6 @@ export default function Navigation() {
         </div>
       </div>
 
-      {/* Mobile Menu - slide down */}
       {mobileMenuOpen && (
         <div
           className="bg-paper dark:bg-night fixed inset-x-0 bottom-0 overflow-y-auto pb-[max(1rem,env(safe-area-inset-bottom,0px))] shadow-[inset_0_2px_0_var(--color-ink)] lg:hidden dark:shadow-[inset_0_2px_0_var(--color-night-rule)]"
@@ -521,7 +516,6 @@ export default function Navigation() {
             ))}
           </ul>
 
-          {/* Mobile Suche & Login/User Menu */}
           <div className="border-ink dark:border-night-text mt-6 border-t-2">
             <button
               onClick={() => {
@@ -606,7 +600,6 @@ export default function Navigation() {
         </div>
       )}
 
-      {/* Search Modal */}
       <SearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
     </nav>
   );

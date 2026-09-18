@@ -11,21 +11,14 @@ import { Heading } from "@/app/_components/programmheft/section-head";
 interface Step1RegistrantInfoProps {
   registrationData: RegistrationData;
   setRegistrationData: React.Dispatch<React.SetStateAction<RegistrationData>>;
-  /**
-   * Team members recording a registration on someone's behalf often only have
-   * a name and an e-mail, so phone and address are optional for them.
-   */
+  /** Staff often only has name and e-mail, so phone and address are optional. */
   staffMode?: boolean;
   /** Sprungziel für den Fokus beim Wechsel in diesen Schritt. */
   headingId: string;
-  /**
-   * Was noch fehlt — erst nach einem Klick auf „Weiter“ übergeben, damit ein
-   * Formular, das gerade erst ausgefüllt wird, nicht schon rot ist.
-   */
+  /** Erst nach einem Klick auf „Weiter“ übergeben, damit ein frisches Formular nicht schon rot ist. */
   problems?: readonly FormProblem[];
 }
 
-/** Die Textfelder dieses Schritts. */
 type RegistrantTextKey = Extract<
   keyof RegistrationData,
   | "registrantFirstName"
@@ -44,11 +37,7 @@ type RegistrantTextKey = Extract<
   | "billingEmail"
 >;
 
-/**
- * Beschriftung, Feld und Meldung als ein Stück. Früher standen die
- * Beschriftungen nur als Text über den Feldern — ohne `htmlFor` und `id` —,
- * und ein Vorlesegerät nannte bestenfalls den Platzhalter („Max“).
- */
+/** Beschriftung, Feld und Meldung als ein Stück, verknüpft über `htmlFor` und `id`. */
 function RegistrantField({
   id,
   field,
@@ -66,7 +55,7 @@ function RegistrantField({
   field: string;
   label: string;
   required?: boolean;
-  /** Das Sternchen folgt dem bisherigen Bild, `required` der echten Regel. */
+  /** Das Sternchen ist nur Optik; `required` folgt der echten Regel. */
   showRequiredMark?: boolean;
   error?: string;
   hint?: string;
@@ -238,7 +227,6 @@ export function Step1RegistrantInfo({
           />
         </div>
 
-        {/* Billing Address Section */}
         <div className="border-rule dark:border-night-rule mt-8 border-t pt-8">
           <Heading as="h3" size="list" className="mb-4 text-[1.375rem]">
             Rechnungsadresse

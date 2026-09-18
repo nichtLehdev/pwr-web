@@ -15,12 +15,8 @@ type DraftRestorePromptProps = {
 };
 
 /**
- * Fragt nach, bevor ein zwischengespeicherter Entwurf ins Formular
- * übernommen wird.
- *
- * Früher wurde still wiederhergestellt: die Felder füllten sich mit altem
- * Inhalt, ohne Hinweis woher und ohne Möglichkeit, neu anzufangen — beim
- * Bearbeiten hätte das außerdem fremde Änderungen am Server überdeckt.
+ * Fragt nach, bevor ein zwischengespeicherter Entwurf übernommen wird — still wiederhergestellt
+ * würde er beim Bearbeiten fremde Änderungen am Server überdecken.
  */
 export function DraftRestorePrompt({
   draft,
@@ -72,8 +68,6 @@ export function DraftRestorePrompt({
       )}
 
       {storageFailed && (
-        // Hinweis statt Alarm: Tinte auf Papier an einer Haarlinie statt
-        // bernsteinfarbenem Kasten.
         <div
           role="alert"
           className="border-ink dark:border-night-text flex items-start gap-3 border-l-2 py-2 pl-4"

@@ -1,28 +1,18 @@
 import { slugify } from "@/lib/slug";
 
 /**
- * Auswahl einzelner Einträge für `/api/export/[type]?ids=…`.
- *
- * Ohne `ids` bleibt der Export, was er war: der ganze Bestand. Mit `ids` wird
- * dieselbe ZIP-Struktur nur für die genannten Einträge geschrieben, damit der
- * bestehende Import sie ohne Sonderweg liest.
+ * Auswahl einzelner Einträge für `/api/export/[type]?ids=…`; dieselbe ZIP-Struktur
+ * wie der Gesamtexport, damit der Import sie ohne Sonderweg liest.
  */
 
-/**
- * Inhaltstypen, deren Export sich einschränken lässt. Bewusst eine feste
- * Liste: Bei den übrigen Typen würde `ids` sonst still ignoriert und der
- * ganze Bestand käme heraus — genau das, was die Auswahl verhindern soll.
- */
+/** Feste Liste: bei anderen Typen würde `ids` still ignoriert und alles exportiert. */
 export const SELECTABLE_EXPORT_TYPES = ["posts", "events", "courses"] as const;
 export type SelectableExportType = (typeof SELECTABLE_EXPORT_TYPES)[number];
 
 /** Obergrenze, damit eine Adresszeile nicht zur Datenbankabfrage ohne Maß wird. */
 export const MAX_EXPORT_SELECTION = 100;
 
-/**
- * Nicht auf UUIDs beschränkt: Ältere oder von Hand angelegte Datensätze tragen
- * auch sprechende ids. Das Muster hält nur Trennzeichen und Überlängen fern.
- */
+/** Nicht auf UUIDs beschränkt: ältere Datensätze tragen auch sprechende ids. */
 const ID_PATTERN = /^[A-Za-z0-9_-]{1,100}$/;
 
 export type ExportSelection =
@@ -35,12 +25,8 @@ export function isSelectableExportType(
 }
 
 /**
- * Liest die Auswahl aus den `ids`-Parametern (`searchParams.getAll("ids")`).
- * Erlaubt sind kommagetrennte Listen und wiederholte Parameter.
- *
- * `ids: null` heißt „alles exportieren“. Ein vorhandener, aber leerer
- * Parameter ist dagegen ein Fehler — sonst würde `?ids=` aus einer kaputt
- * zusammengesetzten Adresse still den kompletten Bestand liefern.
+ * `ids: null` heißt „alles exportieren“. Ein vorhandener, aber leerer Parameter ist
+ * ein Fehler, sonst lieferte ein kaputtes `?ids=` still den kompletten Bestand.
  */
 export function parseExportSelection(
   type: string,
@@ -83,11 +69,7 @@ export function parseExportSelection(
   return { ok: true, ids };
 }
 
-/**
- * Die angefragten ids, zu denen die Datenbank keinen Eintrag geliefert hat.
- * Ein Export, der einen Teil der Auswahl stillschweigend weglässt, sähe aus
- * wie ein vollständiger — deshalb scheitert er lieber ganz.
- */
+/** Ein Teil-Export sähe vollständig aus — fehlende ids lassen ihn daher ganz scheitern. */
 export function findMissingIds(
   requested: readonly string[],
   found: ReadonlyArray<{ id: string }>,
@@ -97,14 +79,8 @@ export function findMissingIds(
 }
 
 /**
- * Dateiname des ZIP. Der Gesamtexport behält seinen bisherigen Namen; ein
- * Einzelexport trägt den Slug (oder, wo keiner gesetzt ist, den Titel), damit
- * man im Download-Ordner erkennt, welcher Termin darin steckt. `-export-` steht
- * vor dem Datum, weil Slugs selbst oft auf eine Jahreszahl enden.
- *
- * Alles läuft durch `slugify`: Der Name landet ungeschützt im
- * `Content-Disposition`-Header und darf weder Anführungszeichen noch
- * Nicht-ASCII enthalten.
+ * `-export-` steht vor dem Datum, weil Slugs oft auf eine Jahreszahl enden. Alles läuft
+ * durch `slugify`: der Name landet ungeschützt im `Content-Disposition`-Header.
  */
 export function buildExportFilename(
   type: string,

@@ -1,13 +1,6 @@
 /**
- * Date-range display helpers for courses/events.
- *
- * Multi-day items show dates only: start/end clock times on a three-day
- * course ("27. Aug., 02:00 – 30. Aug., 02:00") read like data errors and the
- * arrival/departure times belong in the description. Times are shown for
- * single-day items only.
- *
- * Alles in deutscher Ortszeit: Die Programmzeilen rendern zuerst auf dem
- * Server in UTC, und ein Kurs ab 00:00 stand dort sonst am Vortag.
+ * Multi-day items show dates only; clock times there read like data errors.
+ * Alles in deutscher Ortszeit, denn der Server rendert in UTC.
  */
 import { berlinParts, formatBerlin, isSameBerlinDay } from "./berlin-time";
 
@@ -19,8 +12,7 @@ export function isSameCalendarDay(a: Date, b: Date): boolean {
 export function calendarDaysInclusive(start: Date, end: Date): number {
   const s = berlinParts(start);
   const e = berlinParts(end);
-  // Kalendertage als UTC-Mitternacht, damit der Umstellungstag mit 23 oder
-  // 25 Stunden trotzdem als ein Tag zählt.
+  // UTC-Mitternacht, damit ein Umstellungstag (23 oder 25 h) als ein Tag zählt.
   const startDay = Date.UTC(s.year, s.month - 1, s.day);
   const endDay = Date.UTC(e.year, e.month - 1, e.day);
   return Math.round((endDay - startDay) / (24 * 60 * 60 * 1000)) + 1;

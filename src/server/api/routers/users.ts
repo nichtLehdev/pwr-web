@@ -10,21 +10,11 @@ import { permissionProcedure } from "../middleware/permissions";
 import { logAudit } from "../helpers/audit";
 import { invoicePaymentState } from "@/lib/invoice-payment";
 import { internationalPhoneSchema } from "@/lib/phone-number";
-// UserRole enum removed - using permissions system instead
-
-/**
- * USERS ROUTER
- *
- * Handles comprehensive user management beyond just auth
- * Includes: profiles, roles, permissions, organization membership
- */
 
 export const usersRouter = createTRPCRouter({
   /**
-   * Get user by ID — full record including contact data, so this is
-   * restricted to users with the users.view permission (dashboard user
-   * detail/edit pages). Public pages use organization.* procedures, which
-   * select only public profile fields.
+   * Full record including contact data, hence users.view only. Public pages
+   * use organization.* procedures, which select only public profile fields.
    */
   getById: permissionProcedure(PERMISSIONS.USERS_VIEW)
     .input(z.object({ id: z.string() }))
@@ -114,9 +104,6 @@ export const usersRouter = createTRPCRouter({
       return users;
     }),
 
-  /**
-   * Get current user's full profile
-   */
   getMyProfile: protectedProcedure.query(async ({ ctx }) => {
     const user = await ctx.db.user.findUnique({
       where: { id: ctx.session.user.id },
@@ -153,9 +140,6 @@ export const usersRouter = createTRPCRouter({
     return user;
   }),
 
-  /**
-   * Update own profile
-   */
   updateMyProfile: protectedProcedure
     .input(
       z.object({
@@ -265,9 +249,6 @@ export const usersRouter = createTRPCRouter({
       });
     }),
 
-  /**
-   * Update own preferences
-   */
   updateMyPreferences: protectedProcedure
     .input(
       z.object({
@@ -281,15 +262,11 @@ export const usersRouter = createTRPCRouter({
       });
     }),
 
-  /**
-   * List all users with pagination and filters
-   */
   list: permissionProcedure(PERMISSIONS.USERS_MANAGE)
     .input(
       z.object({
         page: z.number().min(1).default(1),
         limit: z.number().min(1).max(250).default(20),
-        // role filter removed - use permissions system instead
         search: z.string().optional(),
         sortBy: z
           .enum([
@@ -305,7 +282,6 @@ export const usersRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       const where = {
-        // role filter removed
         ...(input.search && {
           OR: [
             {
@@ -360,9 +336,6 @@ export const usersRouter = createTRPCRouter({
       };
     }),
 
-  /**
-   * Get user statistics
-   */
   getStatistics: permissionProcedure(PERMISSIONS.USERS_MANAGE).query(
     async ({ ctx }) => {
       const [
@@ -375,7 +348,7 @@ export const usersRouter = createTRPCRouter({
         recentUsers,
       ] = await Promise.all([
         ctx.db.user.count(),
-        Promise.resolve([]), // Role grouping no longer available
+        Promise.resolve([]),
         ctx.db.user.count({ where: { teamMember: { isNot: null } } }),
         ctx.db.user.count({ where: { vorstandMember: { isNot: null } } }),
         ctx.db.user.count({ where: { posaunenratMember: { isNot: null } } }),
@@ -393,7 +366,6 @@ export const usersRouter = createTRPCRouter({
         totalUsers,
         usersByRole: usersByRole.reduce(
           (acc) => {
-            // role-based grouping removed
             return acc;
           },
           {} as Record<string, number>,
@@ -409,9 +381,6 @@ export const usersRouter = createTRPCRouter({
     },
   ),
 
-  /**
-   * Create a new user (admin)
-   */
   create: permissionProcedure(PERMISSIONS.USERS_MANAGE)
     .input(
       z.object({
@@ -487,9 +456,6 @@ export const usersRouter = createTRPCRouter({
       });
     }),
 
-  /**
-   * Update any user (admin)
-   */
   update: permissionProcedure(PERMISSIONS.USERS_MANAGE)
     .input(
       z.object({
@@ -505,11 +471,8 @@ export const usersRouter = createTRPCRouter({
             "Benutzername darf nur Buchstaben, Zahlen, Unterstrich, Bindestrich und Punkt enthalten",
           )
           .optional(),
-        // role filter removed - use permissions system instead
         bio: z.string().max(2000).optional(),
-        // Nullable, damit sich eine Amtsbezeichnung auch wieder entfernen
-        // lässt: `undefined` heißt "unverändert", ein leeres Feld im Formular
-        // meint aber "gelöscht".
+        // Nullable: `undefined` heißt "unverändert", `null` entfernt die Amtsbezeichnung.
         districtRoleName: z.string().max(100).optional().nullable(),
         bezirkId: z.string().optional().nullable(),
         profileImageId: z.string().optional().nullable(),
@@ -565,9 +528,6 @@ export const usersRouter = createTRPCRouter({
       });
     }),
 
-  /**
-   * Delete a user (admin) - soft delete by archiving
-   */
   delete: permissionProcedure(PERMISSIONS.USERS_MANAGE)
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
@@ -619,9 +579,6 @@ export const usersRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  /**
-   * Update user role and permissions
-   */
   updateRole: permissionProcedure(PERMISSIONS.USERS_EDIT_ROLES)
     .input(
       z.object({
@@ -629,9 +586,8 @@ export const usersRouter = createTRPCRouter({
         districtRoleName: z.string().max(100).optional().nullable(),
         bezirkId: z.string().optional().nullable(),
         /**
-         * Bezirke, für die der Nutzer Inhalte pflegen darf. Getrennt von
-         * `bezirkId`: das ist die Zugehörigkeit samt öffentlichem Amt, das hier
-         * ist reine Zuständigkeit. Weglassen lässt den Zuschnitt unangetastet.
+         * Zuständigkeit für Inhalte, getrennt von `bezirkId` (Zugehörigkeit
+         * samt Amt). Weglassen lässt den Zuschnitt unangetastet.
          */
         bezirkScopeIds: z.array(z.string()).optional(),
       }),
@@ -683,16 +639,12 @@ export const usersRouter = createTRPCRouter({
       });
     }),
 
-  /**
-   * Bulk update user roles
-   */
   bulkUpdateRoles: permissionProcedure(PERMISSIONS.USERS_EDIT_ROLES)
     .input(
       z.object({
         updates: z.array(
           z.object({
             userId: z.string(),
-            // role removed - use permissions system instead
           }),
         ),
       }),
@@ -702,7 +654,7 @@ export const usersRouter = createTRPCRouter({
         input.updates.map((update) =>
           ctx.db.user.update({
             where: { id: update.userId },
-            data: {}, // role removed - use permissions system instead
+            data: {},
           }),
         ),
       );
@@ -713,9 +665,6 @@ export const usersRouter = createTRPCRouter({
       };
     }),
 
-  /**
-   * Check if username is available
-   */
   checkUsername: rateLimitedPublicProcedure("users.checkUsername", {
     maxRequests: 30,
     windowMs: 60 * 1000,
@@ -731,9 +680,6 @@ export const usersRouter = createTRPCRouter({
       };
     }),
 
-  /**
-   * Check if email is available
-   */
   checkEmail: rateLimitedPublicProcedure("users.checkEmail", {
     maxRequests: 30,
     windowMs: 60 * 1000,
@@ -753,20 +699,15 @@ export const usersRouter = createTRPCRouter({
       };
     }),
 
-  /**
-   * Get users for select dropdown (admin/protected)
-   */
   getForSelect: protectedProcedure
     .input(
       z.object({
-        // role filter removed - use permissions system instead
         excludeIds: z.array(z.string()).optional(),
       }),
     )
     .query(async ({ ctx, input }) => {
       const users = await ctx.db.user.findMany({
         where: {
-          // role filter removed
           ...(input.excludeIds && {
             id: { notIn: input.excludeIds },
           }),
@@ -783,14 +724,11 @@ export const usersRouter = createTRPCRouter({
       return users;
     }),
 
-  /**
-   * Export all user data for GDPR compliance (Art. 20 DSGVO)
-   * Users can export their own data, admins can export any user's data
-   */
+  /** Data export per Art. 20 DSGVO: own data, or any user's with users.manage. */
   exportData: protectedProcedure
     .input(
       z.object({
-        userId: z.string().optional(), // If not provided, exports current user's data
+        userId: z.string().optional(),
       }),
     )
     .query(async ({ ctx, input }) => {
@@ -806,7 +744,6 @@ export const usersRouter = createTRPCRouter({
         );
       })();
 
-      // Users can only export their own data unless they're admin
       if (!isAdmin && targetUserId !== ctx.session.user.id) {
         throw new TRPCError({
           code: "FORBIDDEN",
@@ -849,7 +786,6 @@ export const usersRouter = createTRPCRouter({
         });
       }
 
-      // Get course registrations
       const registrations = await ctx.db.courseRegistration.findMany({
         where: {
           OR: [{ registrantId: targetUserId }, { registrantEmail: user.email }],
@@ -878,20 +814,17 @@ export const usersRouter = createTRPCRouter({
         orderBy: { createdAt: "desc" },
       });
 
-      // Get saved participants
       const savedParticipants = await ctx.db.savedParticipant.findMany({
         where: { userId: targetUserId },
         orderBy: { createdAt: "desc" },
       });
 
-      // Get newsletter subscription status
       const newsletterSubscriber = await ctx.db.newsletterSubscriber.findUnique(
         {
           where: { email: user.email },
         },
       );
 
-      // Get sessions (only if admin or user themselves)
       const sessions = await ctx.db.session.findMany({
         where: { userId: targetUserId },
         select: {
@@ -902,10 +835,10 @@ export const usersRouter = createTRPCRouter({
           userAgent: true,
         },
         orderBy: { createdAt: "desc" },
-        take: 100, // Limit to last 100 sessions
+        take: 100,
       });
 
-      // Get page view stats (if user consented)
+      // Only recorded if the user consented.
       const pageViews = await ctx.db.pageView.findMany({
         where: { userId: targetUserId },
         select: {
@@ -915,10 +848,10 @@ export const usersRouter = createTRPCRouter({
           createdAt: true,
         },
         orderBy: { createdAt: "desc" },
-        take: 1000, // Limit to last 1000 views
+        take: 1000,
       });
 
-      // Get created content counts (without full data for privacy)
+      // Counts only, no content (privacy).
       const [createdEventsCount, createdCoursesCount, createdPostsCount] =
         await Promise.all([
           ctx.db.event.count({ where: { createdById: targetUserId } }),
@@ -1054,14 +987,11 @@ export const usersRouter = createTRPCRouter({
       };
     }),
 
-  /**
-   * Delete own account (Art. 17 DSGVO - Right to erasure)
-   * Users can delete their own account, but must handle dependencies first
-   */
+  /** Erasure per Art. 17 DSGVO; blocked while memberships, content or invoices exist. */
   deleteMyAccount: protectedProcedure
     .input(
       z.object({
-        confirmEmail: z.string().email(), // User must confirm with their email
+        confirmEmail: z.string().email(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -1092,7 +1022,6 @@ export const usersRouter = createTRPCRouter({
         });
       }
 
-      // Verify email matches
       if (user.email !== input.confirmEmail) {
         throw new TRPCError({
           code: "BAD_REQUEST",
@@ -1100,7 +1029,6 @@ export const usersRouter = createTRPCRouter({
         });
       }
 
-      // Check for blocking dependencies
       const blockingIssues: string[] = [];
 
       if (user.teamMember) {
@@ -1137,27 +1065,22 @@ export const usersRouter = createTRPCRouter({
         });
       }
 
-      // Delete saved participants first (cascade should handle this, but explicit is better)
       await ctx.db.savedParticipant.deleteMany({
         where: { userId: user.id },
       });
 
-      // Delete sessions
       await ctx.db.session.deleteMany({
         where: { userId: user.id },
       });
 
-      // Delete page views
       await ctx.db.pageView.deleteMany({
         where: { userId: user.id },
       });
 
-      // Delete accounts (auth system)
       await ctx.db.account.deleteMany({
         where: { userId: user.id },
       });
 
-      // Finally delete the user
       await ctx.db.user.delete({
         where: { id: user.id },
       });

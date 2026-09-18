@@ -30,7 +30,6 @@ export default function AktuellesClient() {
   const { marke, vorbei } = useTitelVorbei(stickyTop);
 
   useEffect(() => {
-    // Store original overflow value
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
@@ -41,7 +40,6 @@ export default function AktuellesClient() {
 
     return () => {
       clearTimeout(timer);
-      // Ensure overflow is restored on cleanup
       document.body.style.overflow = originalOverflow || "";
     };
   }, []);
@@ -180,22 +178,15 @@ export default function AktuellesClient() {
     >
       {/* Marke für „Titel vorbei“: steht genau hinter dem Seitenkopf. */}
       <div ref={marke} aria-hidden className="h-px" />
-      {/* Filter Bar */}
       <section
         className="bg-paper dark:bg-night border-rule dark:border-night-rule sticky z-20 border-b"
         style={{ top: `${stickyTop}px` }}
       >
         <div className="sheet py-3">
-          {/* Mobile: Compact Row */}
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-4">
-              {/* Kolumnentitel: erscheint erst, wenn der große Titel nach
-                  oben aus dem Bild gelaufen ist — sonst stünde „Aktuelles“
-                  zweimal untereinander. Statt nur die Deckkraft zu ändern,
-                  wächst der Titel aus der Breite null auf: Die Angaben stehen
-                  zunächst ganz links und rücken beim Einblenden nach rechts.
-                  Das negative `-mr-4` schluckt in eingeklapptem Zustand den
-                  `gap-4` der Zeile, sonst bliebe eine Lücke. */}
+              {/* Kolumnentitel erst, wenn der große Titel aus dem Bild ist; wächst aus Breite null.
+                  `-mr-4` schluckt eingeklappt den `gap-4` der Zeile. */}
               <p
                 aria-hidden={!vorbei}
                 className={cn(
@@ -205,7 +196,6 @@ export default function AktuellesClient() {
               >
                 Aktuelles
               </p>
-              {/* Left: Results Count */}
               <p className="text-dark dark:text-night-muted text-sm">
                 {totalFiltered} {totalFiltered === 1 ? "Beitrag" : "Beiträge"}
                 {hasActiveFilters && (
@@ -216,7 +206,6 @@ export default function AktuellesClient() {
               </p>
             </div>
 
-            {/* Right: RSS Feed & Filter Toggle Button */}
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setRssModalOpen(true)}
@@ -247,7 +236,6 @@ export default function AktuellesClient() {
                 aria-label="Filter öffnen"
               >
                 <FilterIcon className="h-4 w-4" aria-hidden />
-                {/* Active Filter Badge */}
                 {hasActiveFilters && (
                   <span
                     aria-hidden
@@ -258,10 +246,8 @@ export default function AktuellesClient() {
             </div>
           </div>
 
-          {/* Collapsible Filter Panel */}
           {filtersOpen && (
             <div className="border-rule dark:border-night-rule mt-3 space-y-4 border-t pt-4">
-              {/* Category Filter */}
               <div>
                 <span className={FIELD_LABEL}>Kategorie</span>
                 <div className="grid grid-cols-3 gap-2">
@@ -282,7 +268,6 @@ export default function AktuellesClient() {
                 </div>
               </div>
 
-              {/* District Filter */}
               <div>
                 <label htmlFor="bezirk-filter" className={FIELD_LABEL}>
                   Bezirk
@@ -302,7 +287,6 @@ export default function AktuellesClient() {
                 </select>
               </div>
 
-              {/* Reset Button */}
               {hasActiveFilters && (
                 <button
                   onClick={resetFilters}
@@ -316,9 +300,7 @@ export default function AktuellesClient() {
         </div>
       </section>
 
-      {/* Content */}
       <PageSection>
-        {/* Pinned Posts */}
         {filteredPinned.length > 0 && (
           <div>
             <Heading
@@ -334,7 +316,6 @@ export default function AktuellesClient() {
           </div>
         )}
 
-        {/* Regular Posts */}
         {sortedRegular.length > 0 && (
           <div className={filteredPinned.length > 0 ? "mt-16" : undefined}>
             {filteredPinned.length > 0 && (
@@ -346,7 +327,6 @@ export default function AktuellesClient() {
           </div>
         )}
 
-        {/* No Results */}
         {totalFiltered === 0 && (
           <div className="border-ink dark:border-night-text border-t-2 py-8 text-center">
             <p className="text-dark dark:text-night-muted text-lg">
@@ -364,7 +344,6 @@ export default function AktuellesClient() {
         )}
       </PageSection>
 
-      {/* RSS Feed Modal */}
       <FeedConfigModal
         isOpen={rssModalOpen}
         onClose={() => setRssModalOpen(false)}

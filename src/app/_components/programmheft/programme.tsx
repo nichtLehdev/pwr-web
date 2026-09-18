@@ -4,16 +4,12 @@ import { BezirkLabel } from "./bezirk-label";
 import type { ProgrammeEntry, ProgrammeRegistration } from "./programme-data";
 import { berlinFormatter, berlinParts } from "@/lib/berlin-time";
 
-// Tag, Monat und Jahr in Berliner Zeit — die Zeile rendert zuerst auf dem
-// Server in UTC, und ein Termin um 00:30 stand dort am Vortag.
+// Berliner Zeit: Die Zeile rendert zuerst auf dem Server (UTC), sonst
+// stünde ein Termin um 00:30 am Vortag.
 const MONTH = berlinFormatter("monatKurz");
 const FULL_DATE = berlinFormatter("datumMitWochentag");
 
-/**
- * Datumsfeld. Bei offener Anmeldung steht das Datum auf einer kleinen orangen
- * Fläche — auch wenn jede Zeile offen ist, bleibt es eine Spalte aus Marken,
- * keine orange Seite (Quiet Open Rule).
- */
+/** Datumsfeld; bei offener Anmeldung auf kleiner oranger Fläche (Quiet Open Rule). */
 export function DateSlot({
   date,
   now,
@@ -101,11 +97,7 @@ function RegistrationLine({
 
 type TitleLevel = "h2" | "h3" | "h4";
 
-/**
- * Programmzeile (Signature): Datumsslot, Titel, Meta-Zeile (Art ·
- * Bezirksmarke), Zeit · Ort, Status. Die ganze Zeile ist über den Titel-Link
- * klickbar; die Anmelde-Schaltfläche liegt darüber.
- */
+/** Programmzeile, als Ganzes über den Titel-Link klickbar. */
 export function ProgrammeRow({
   entry,
   now,
@@ -168,10 +160,7 @@ interface ProgrammeListProps {
   entries: ProgrammeEntry[];
   now: Date;
   isLoading?: boolean;
-  /**
-   * Fehlen Zeilen bis zu dieser Zahl, steht darunter der gestaltete leere
-   * Programmplatz (kurzer Strich + Text).
-   */
+  /** Bei weniger Zeilen folgt darunter der leere Programmplatz. */
   fillTo?: number;
   emptyText?: string;
   skeletonRows?: number;

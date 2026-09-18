@@ -1,7 +1,4 @@
 export const mediaData = {
-  // ============================================================================
-  // VORSTAND IMAGES
-  // ============================================================================
   vorstand: [
     {
       filename: "schmidt-eggert.jpg",
@@ -35,9 +32,7 @@ export const mediaData = {
     },
   ],
 
-  // ============================================================================
-  // POSAUNENRAT IMAGES (for members without user accounts)
-  // ============================================================================
+  // For members without user accounts
   posaunenrat: [
     {
       filename: "cyganek.jpg",
@@ -47,11 +42,7 @@ export const mediaData = {
     },
   ],
 
-  // ============================================================================
-  // FÖRDERVEREIN IMAGES (examples)
-  // ============================================================================
   foerderverein: [],
-  // Team Members
   teamMembers: [
     {
       filename: "joerg-haeusler.jpg",
@@ -115,7 +106,6 @@ export const mediaData = {
     },
   ],
 
-  // Bezirksobleute
   obleute: [
     {
       filename: "haetzel.jpg",
@@ -210,7 +200,6 @@ export const mediaData = {
     },
   ],
 
-  // Bläserhefte
   blaeserhefte: [
     {
       filename: "nordamerika-2025.jpg",
@@ -262,7 +251,6 @@ export const mediaData = {
     },
   ],
 
-  // AuswahlChöre
   auswahlchoere: [
     {
       filename: "conspirito-1.jpg",
@@ -287,7 +275,6 @@ export const mediaData = {
     },
   ],
 
-  // News/Post placeholders
   newsPlaceholders: [
     {
       filename: "news-placeholder-1.jpg",

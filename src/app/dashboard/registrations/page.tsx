@@ -41,9 +41,6 @@ const REGISTRATION_STATUS_LABELS: Record<RegistrationStatus, string> = {
   CANCELLED: "Storniert",
 };
 
-// Wie bei anderen Zustandsspalten ein Ton pro Status: Bestätigt ist der
-// starke Ton, Warteliste der Aufmerksamkeitston (wie sonst „Nur Warteliste"),
-// Storniert nutzt den eigens dafür reservierten `cancelled`-Ton.
 const REGISTRATION_STATUS_TONE: Record<RegistrationStatus, TagTone> = {
   CONFIRMED: "ink",
   WAITLIST: "orange",
@@ -85,7 +82,6 @@ function formatDate(date: Date | string) {
   return formatBerlin(date, "datumZweistellig");
 }
 
-/** Reads one set filter out of the table's filter state. */
 function setFilterValues(filters: ColumnFiltersState, id: string): string[] {
   const value = filters.find((filter) => filter.id === id)?.value;
   return Array.isArray(value) ? (value as string[]) : [];
@@ -96,23 +92,19 @@ export default function AdminRegistrationsPage() {
 
   const canViewAll = hasPermission(PERMISSIONS.COURSES_MANAGE_REGISTRATIONS);
   /**
-   * Wer nur den Geschwisterkindrabatt verwaltet, sieht hier ausschließlich
-   * Anmeldungen mit Rabattstatus — über die entscheidet er, über alle anderen
-   * nicht. Der Server lässt die Abfrage für ihn deshalb auch nur mit gesetztem
-   * Rabattfilter zu, weshalb "Alle" für ihn keine wählbare Option ist.
+   * Wer nur den Geschwisterkindrabatt verwaltet, sieht nur Anmeldungen mit Rabattstatus;
+   * der Server verlangt für ihn einen Rabattfilter, "Alle" ist daher nicht wählbar.
    */
   const discountOnly =
     !canViewAll &&
     hasPermission(PERMISSIONS.REGISTRATIONS_MANAGE_SIBLING_DISCOUNT);
   const canView = canViewAll || discountOnly;
 
-  // Vorbelegt über ?discount=PENDING — so landet die Freigabe-Kachel des
-  // Dashboards direkt auf den offenen Rabatten statt auf der vollen Liste.
+  // Vorbelegt über ?discount=PENDING (Freigabe-Kachel des Dashboards).
   const searchParams = useSearchParams();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(() => {
     const requested = searchParams.get("discount");
-    // NONE ist kein Rabattstatus, den man hier prüfen würde, und steht auch im
-    // Filter nicht zur Wahl — aus der URL wird er deshalb nicht übernommen.
+    // NONE steht im Filter nicht zur Wahl und wird daher nicht aus der URL übernommen.
     const initial =
       requested &&
       requested !== SiblingDiscountStatus.NONE &&
@@ -126,9 +118,8 @@ export default function AdminRegistrationsPage() {
     return initial ? [{ id: "discount", value: [initial] }] : [];
   });
 
-  // Die Liste geht über alle Kurse und wird serverseitig geblättert; Sortierung,
-  // Spaltenfilter und Suche sind darum Abfrageparameter — sonst würden sie nur
-  // die gerade geladene Seite betreffen.
+  // Serverseitig geblättert: Sortierung, Filter und Suche sind Abfrageparameter,
+  // sonst beträfen sie nur die geladene Seite.
   const [sorting, setSorting] = useState<SortingState>([
     { id: "createdAt", desc: true },
   ]);
@@ -151,8 +142,7 @@ export default function AdminRegistrationsPage() {
       registrationStatus: statusFilter.length
         ? (statusFilter as RegistrationStatus[])
         : undefined,
-      // Nur eindeutig: "offen" und "bezahlt" zugleich ist dasselbe wie kein
-      // Filter, denn der Server kennt hier nur ein Ja/Nein.
+      // Beide Werte zugleich heißt kein Filter: Der Server kennt nur Ja/Nein.
       paid:
         paymentFilter.length === 1 ? paymentFilter[0] === "paid" : undefined,
       siblingDiscountStatus: discountFilter.length
@@ -334,9 +324,8 @@ export default function AdminRegistrationsPage() {
           header: "Aktionen",
           meta: { align: "right", label: "Aktionen" },
           cell: ({ row }) =>
-            // Wer nur den Rabatt prüft, darf die Anmeldung nicht zwangsläufig
-            // bearbeiten — er wird auf die Anmeldungsseite geschickt, wo
-            // genehmigen und ablehnen sitzen.
+            // Wer nur den Rabatt prüft, darf nicht zwangsläufig bearbeiten: Er landet
+            // auf der Anmeldungsseite, wo genehmigen und ablehnen sitzen.
             discountOnly ? (
               <Link
                 href={`/dashboard/courses/${row.original.course.id}/participants/${row.original.id}`}
@@ -382,8 +371,6 @@ export default function AdminRegistrationsPage() {
       }
     >
       {discountOnly && discountFilter.length === 0 && (
-        // Hinweis statt Alarm: Tinte auf Papier an einer Haarlinie statt
-        // gelbem Kasten.
         <div className="border-ink dark:border-night-text text-dark dark:text-night-muted mb-6 border-l-2 py-1 pl-4 text-sm">
           Wähle im Spaltenfilter „Rabatt“ einen Status aus — deine Berechtigung
           gilt nur für Anmeldungen mit Geschwisterkindrabatt.

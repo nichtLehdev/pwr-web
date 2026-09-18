@@ -1,13 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/**
- * Seed Script from Backup Data
- * This seed script uses data extracted from a database backup
- */
+/** Seeds the database from data extracted from a backup. */
 import "dotenv/config";
 import { CourseCollaboratorRole } from "../generated/prisma/client";
 import { db } from "../src/server/db";
 
-// Import all seed data from backup
 import { AuswahlChorSeedData } from "./seed-data-from-backup/AuswahlChor";
 import { BezirkSeedData } from "./seed-data-from-backup/Bezirk";
 import { BlaeserheftSeedData } from "./seed-data-from-backup/Blaeserheft";
@@ -41,13 +37,7 @@ import { SessionSeedData } from "./seed-data-from-backup/session";
 import { VerificationSeedData } from "./seed-data-from-backup/verification";
 import { _CourseInstructorsSeedData } from "./seed-data-from-backup/_CourseInstructors";
 
-// ============================================================================
-// HELPER FUNCTIONS
-// ============================================================================
-
-/**
- * Convert PostgreSQL values to proper TypeScript types
- */
+/** Converts PostgreSQL backup values to TypeScript types. */
 function convertValue(value: any, fieldName: string): any {
   if (
     value === null ||
@@ -214,9 +204,6 @@ function convertValue(value: any, fieldName: string): any {
 /** Loose row type after backup field conversion (FK remapping, nulls, etc.). */
 type CleanedSeedRow = Record<string, any>;
 
-/**
- * Clean and convert a data object
- */
 function cleanData<T extends Record<string, any>>(data: T): CleanedSeedRow {
   const cleaned: CleanedSeedRow = {};
   for (const [key, value] of Object.entries(data)) {
@@ -225,9 +212,6 @@ function cleanData<T extends Record<string, any>>(data: T): CleanedSeedRow {
   return cleaned;
 }
 
-/**
- * Helper to upsert a record (create or update if exists)
- */
 async function upsertRecord<T extends Record<string, any> & { id: string }>(
   model: {
     upsert: (args: { where: any; update: any; create: any }) => Promise<T>;
@@ -257,10 +241,6 @@ async function upsertRecord<T extends Record<string, any> & { id: string }>(
   }
 }
 
-// ============================================================================
-// MAIN SEED FUNCTION
-// ============================================================================
-
 async function main() {
   console.log("🌱 Starting database seed from backup data...");
 
@@ -276,11 +256,10 @@ async function main() {
     }
 
     // 2. Seed Media (needed for many relations)
-    // Note: Media.uploadedById references User, but we create Media first
-    // and set uploadedById to null, then update it after Users are created
+    // Media.uploadedById references User: null for now, set in step 3.5.
     console.log("📸 Creating Media...");
     const mediaMap = new Map<string, string>();
-    const mediaUploadedByMap = new Map<string, string>(); // Store original uploadedById for later update
+    const mediaUploadedByMap = new Map<string, string>();
 
     for (const data of MediaSeedData) {
       const cleaned = cleanData(data);
@@ -293,11 +272,9 @@ async function main() {
       else if (typeof cleaned.height === "string")
         cleaned.height = parseInt(cleaned.height, 10);
 
-      // Store original uploadedById for later update
       if (cleaned.uploadedById) {
         mediaUploadedByMap.set(data.id, cleaned.uploadedById as string);
       }
-      // Set uploadedById to null initially (will update after Users are created)
       cleaned.uploadedById = null;
 
       const created = await upsertRecord(db.media, cleaned, "filename");
@@ -419,8 +396,7 @@ async function main() {
         cleaned.representativeId = null;
       }
 
-      // Migrate legacy ensemble-level contactEmail/contactPhone into the new
-      // per-person conductor fields. Mirrors the SQL migration.
+      // Legacy contactEmail/contactPhone → conductor fields, like the SQL migration.
       const legacy = cleaned as Record<string, unknown>;
       if (legacy.contactEmail && !legacy.conductorEmail) {
         legacy.conductorEmail = legacy.contactEmail;
@@ -686,7 +662,7 @@ async function main() {
       if (cleaned.courseId && coursesMap.has(cleaned.courseId as string)) {
         cleaned.courseId = coursesMap.get(cleaned.courseId as string);
       } else {
-        continue; // Skip if course doesn't exist
+        continue;
       }
       if (
         cleaned.registrantId &&
@@ -943,7 +919,6 @@ async function main() {
       ) {
         continue;
       }
-      // Ensure isActive is boolean
       if (typeof cleaned.isActive !== "boolean") {
         const rawActive = cleaned.isActive;
         cleaned.isActive =
@@ -974,8 +949,7 @@ async function main() {
     }
     console.log(`  ✓ Created ${SessionSeedData.length} sessions`);
 
-    // Skip TwoFactor seeding - 2FA is disabled for all users after restore
-    // The backup codes won't work in the new environment, so we don't seed them
+    // Backup codes wouldn't work in the new environment.
     console.log("  ⚠ Skipping TwoFactor records (2FA disabled for all users)");
 
     for (const data of VerificationSeedData) {

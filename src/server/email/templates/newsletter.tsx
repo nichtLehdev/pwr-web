@@ -50,11 +50,7 @@ export function NewsletterEmail({
   );
 }
 
-/**
- * Nur-Text-Fassung. Der Rumpf ist vom Autor verfasstes HTML, das sich nicht
- * verlustfrei in Text verwandeln lässt — daher nur Hinweis, Anrede und
- * Abmeldelink, ohne den eigentlichen Inhalt.
- */
+/** Ohne den Rumpf: Autoren-HTML lässt sich nicht verlustfrei in Text verwandeln. */
 export function newsletterEmailText({
   unsubscribeUrl,
   subscriberName,

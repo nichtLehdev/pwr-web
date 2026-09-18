@@ -27,11 +27,7 @@ export type NoteReadingResultViewProps = {
   result: NoteReadingResult;
 };
 
-/**
- * Auswertung ohne eigene Knopfleiste — „Nochmal spielen“ und „Schwierigkeit /
- * Modus“ stehen im Aktions-Dock der Hülle, wo die Hauptaktion jedes Spiels
- * sitzt.
- */
+/** Ohne eigene Knopfleiste: Die Aktionen stehen im Aktions-Dock der Hülle. */
 export function NoteReadingResultView({ result }: NoteReadingResultViewProps) {
   const percent =
     result.total > 0 ? Math.round((100 * result.correct) / result.total) : 0;

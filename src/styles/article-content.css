@@ -1,34 +1,12 @@
 /*
- * Artikelkörper im Programmheft.
- *
- * Diese Datei gestaltet den gespeicherten Beitrags-HTML an drei Stellen
- * gleichzeitig: der öffentlichen Beitragsansicht, der Dashboard-Vorschau und
- * der Editorfläche. Was hier steht, sieht die Redakteurin beim Schreiben
- * genauso wie die Leserin auf der Website.
- *
- * Das `!important` bleibt mit Absicht erhalten. Im bereits gespeicherten HTML
- * stehen Tailwind-Klassen aus der TipTap-Konfiguration (`border-gray-300`,
- * `rounded-lg`, `text-primary underline`). Weil dieses Stylesheet sie
- * überstimmt, wirkt eine Korrektur hier auf alle Artikel — auch auf die, die
- * längst in der Datenbank liegen. Ohne `!important` müsste jeder Altbeitrag
- * neu gespeichert werden.
- *
- * Gemessen vor der Umstellung: Links standen auf #faa619, also Druckorange als
- * Schriftfarbe auf Papier — 1,99:1, durchgefallen. In allen drei veröffentlichten
- * Beiträgen mit Links. Orange ist im Heft eine Fläche, keine Schriftfarbe;
- * dafür gibt es --color-primary-ink (5,26:1). Auf Nachtgrund trägt das Orange
- * selbst (9,4:1) und darf dort stehen bleiben.
+ * Artikelkörper für öffentliche Ansicht, Dashboard-Vorschau und Editor.
+ * `!important` ist gewollt: Es überstimmt die Tailwind-Klassen im gespeicherten
+ * HTML, damit Korrekturen auch für Altbeiträge gelten.
  */
 
 /*
- * Das Lesemaß sitzt jetzt hier statt an der Hülle in post-detail-view. Nur so
- * kann ein Bild breiter werden als der Text: Der Container hält das Maß, und
- * die Breitenklassen weiter unten treten über negative Ränder heraus.
- *
- * Bewusst kein Raster mit benannten Spalten: TipTap fügt Bilder als
- * Blockknoten direkt unter der Wurzel ein. Sie wären damit Rasterelemente —
- * und auf Rasterelementen wird `float` ignoriert, der Textumfluss also
- * unmöglich. Im Blockfluss funktioniert beides.
+ * Lesemaß am Container, damit Bilder über negative Ränder ausbrechen können.
+ * Kein Grid: Bilder wären Rasterelemente, und dort wird `float` ignoriert.
  */
 .article-content {
   max-width: 65ch;
@@ -36,9 +14,8 @@
   color: var(--color-ink);
   line-height: 1.75;
 
-  /* Ausbruchsbreiten. `randlos` meint den Satzspiegel, nicht 100vw: Ein
-     100vw breites Element in einem zentrierten Container erzeugt bei
-     sichtbarer Scrollleiste waagerechten Überlauf. */
+  /* `randlos` meint den Satzspiegel, nicht 100vw: 100vw läuft bei sichtbarer
+     Scrollleiste waagerecht über. */
   --bild-breit: min(58rem, 100vw - 5rem);
   --bild-randlos: min(100rem, 100vw - 5rem);
 }
@@ -51,15 +28,8 @@
 }
 
 /*
- * Wenn eine Hülle das Lesemaß führt, gibt der Artikelkörper es ab.
- *
- * Nötig für das Titelbild: Ein Float umfließt nur Text im selben Blockfluss.
- * Das Bild ist ein React-Element, der Artikelkörper ein Fremd-HTML-Container —
- * das Bild muss also als Geschwister davorstehen. Behielte der Artikelkörper
- * dann sein eigenes zentriertes Maß, rutschte er unter dem Float weg.
- *
- * Editorfläche und Dashboard-Vorschau haben keine solche Hülle und behalten
- * ihr Maß deshalb unverändert.
+ * Führt eine Hülle das Lesemaß (Titelbild-Float als Geschwister davor), gibt der
+ * Artikelkörper es ab, sonst rutscht er unter den Float.
  */
 .article-content.article-content--in-spalte {
   max-width: none;
@@ -123,7 +93,6 @@
   margin-bottom: 0.5rem !important;
 }
 
-/* Fließtext */
 .article-content p {
   margin-bottom: 1.5rem !important;
   color: var(--color-ink) !important;
@@ -135,9 +104,8 @@
 }
 
 /*
- * Links: Braunton statt Druckorange. Zusätzlich dauerhaft unterstrichen —
- * vorher waren Links im Fließtext allein an der Farbe zu erkennen, was für
- * farbfehlsichtige Leser nicht reicht (WCAG 1.4.1).
+ * Links: Braunton, weil Orange auf Papier als Schrift zu schwach ist (1,99:1);
+ * immer unterstrichen, nicht nur an der Farbe erkennbar (WCAG 1.4.1).
  */
 .article-content a {
   color: var(--color-primary-ink) !important;
@@ -158,7 +126,6 @@
   color: var(--color-night-text) !important;
 }
 
-/* Fett und kursiv */
 .article-content strong,
 .article-content b {
   font-weight: 700 !important;
@@ -175,7 +142,6 @@
   font-style: italic !important;
 }
 
-/* Listen */
 .article-content ul,
 .article-content ol {
   margin: 1.5rem 0 !important;
@@ -206,11 +172,7 @@
   margin-bottom: 0.5rem !important;
 }
 
-/*
- * Bilder: ohne Rundung und ohne Schlagschatten. `cursor: pointer` bleibt —
- * post-detail-view hängt am Artikelkörper einen Klick-Horcher, der Bilder in
- * der Leuchtkastenansicht öffnet; ohne den Zeiger fehlte der Hinweis darauf.
- */
+/* `cursor: pointer`: post-detail-view öffnet Bilder per Klick im Leuchtkasten. */
 .article-content img {
   max-width: 100% !important;
   height: auto !important;
@@ -222,16 +184,8 @@
 }
 
 /*
- * Bildvokabular: Breite × Ausrichtung, ausgedrückt als Klassen.
- *
- * Klassen statt `style`, weil der Filter Inline-CSS verwirft (siehe
- * lib/sanitize.ts) — `class`, `width` und `height` überleben, alles andere
- * nicht. Ein festes Vokabular passt ohnehin besser zum Heft als freies
- * Skalieren: vier Breiten, drei Ausrichtungen, keine krummen Zwischenwerte.
- *
- * Alle Regeln tragen `!important`, weil die Grundregel darüber es auch tut.
- * Bei gleicher Wichtigkeit entscheidet die Spezifität, und `img.bild-halb`
- * sticht `img`.
+ * Bildbreite und -ausrichtung als Klassen, weil der Filter Inline-`style`
+ * verwirft (lib/sanitize.ts). `!important` wie die Grundregel oben.
  */
 .article-content img.bild-schmal {
   width: 45% !important;
@@ -242,13 +196,8 @@
 }
 
 /*
- * Ausbruch nur dort, wo der Artikel die Hauptspalte der Seite IST.
- *
- * Die Ausbruchsbreiten rechnen mit `100vw`, und das Browserfenster ist in der
- * Editorfläche genauso breit wie auf der öffentlichen Seite. Ohne diese Sperre
- * wurde ein `randlos`-Bild im 596px schmalen Editor 1360px breit — gemessen.
- * Die Schreibfläche ist aber nicht die Seite. Ohne `--seite` bleibt es beim
- * Lesemaß.
+ * Ausbruch nur mit `--seite`: Die Breiten rechnen mit `100vw`, das auch im
+ * schmalen Editor die Fensterbreite ist.
  */
 .article-content img.bild-breit,
 .article-content img.bild-randlos {
@@ -300,10 +249,8 @@
 }
 
 /*
- * Mit Bildnachweis liegt das Bild in einer <figure> (posts.ts hängt sie
- * serverseitig an). Die Breitenklasse sitzt aber am <img>, deshalb hebt
- * `:has()` sie auf die Figur — sonst verlöre ein Bild seine Breite, sobald
- * jemand Urheberangaben pflegt.
+ * Mit Bildnachweis liegt das Bild in einer <figure> (posts.ts); `:has()` hebt
+ * die Breitenklasse vom <img> auf die Figur.
  */
 .article-content figure:has(> img.bild-schmal) {
   width: 45% !important;
@@ -350,11 +297,7 @@
   float: none !important;
 }
 
-/*
- * Schmale Fenster: Ein umflossenes Bild neben 30 Zeichen Text ist unlesbar,
- * und ein Ausbruch hat hier keinen Platz. Unterhalb von 48rem steht jedes
- * Bild allein und über die volle Breite.
- */
+/* Schmale Fenster: kein Umfluss, kein Ausbruch, jedes Bild in voller Breite. */
 @media (max-width: 48rem) {
   .article-content img[class*="bild-"],
   .article-content figure:has(> img[class*="bild-"]) {
@@ -464,11 +407,7 @@
   color: var(--color-night-text) !important;
 }
 
-/*
- * Code: vorher Magenta (#d946ef, 3,46:1 — durchgefallen). Jetzt Tinte auf
- * einem hauchdünn getönten Grund; der Codeblock kehrt um, wie die gefüllten
- * Etiketten des Hefts.
- */
+/* Code: Tinte auf getöntem Grund; der Codeblock kehrt um. */
 .article-content code {
   background-color: var(--color-rule) !important;
   padding: 0.125rem 0.25rem !important;
@@ -516,7 +455,6 @@
   border-top-color: var(--color-night-rule) !important;
 }
 
-/* Schmale Fenster */
 @media (max-width: 768px) {
   .article-content h2 {
     font-size: 1.5rem !important;

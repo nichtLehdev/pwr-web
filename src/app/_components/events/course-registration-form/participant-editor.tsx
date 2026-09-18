@@ -34,11 +34,7 @@ interface ParticipantEditorProps {
   missingFields: string[];
   /** Human-readable problem for this participant, shown above the fields. */
   validationError?: string;
-  /**
-   * Whether to surface `validationError` and the red field borders at all.
-   * False until the registrant asks to be done with this participant, so a
-   * form they have not finished yet is not already telling them off.
-   */
+  /** False until the registrant asks to be done, so an unfinished form doesn't show errors yet. */
   showProblems: boolean;
   /** Availability rules — the edit page greys out sold-out categories. */
   priceOptionField?: {
@@ -52,10 +48,7 @@ interface ParticipantEditorProps {
     /** Die schon gebuchte Kategorie bleibt wählbar, egal wie alt jemand ist. */
     ageExemptOptionId?: string | null;
   };
-  /**
-   * Zählt hoch, wenn „Fertig“ an fehlenden Angaben scheitert: dann springt
-   * der Fokus ins erste markierte Feld, statt auf dem Knopf stehen zu bleiben.
-   */
+  /** Zählt hoch, wenn „Fertig“ scheitert; der Fokus springt dann ins erste markierte Feld. */
   focusProblemSignal?: number;
   /** Left out when the course has no sibling discount or nobody to link to. */
   siblings?: {
@@ -66,11 +59,7 @@ interface ParticipantEditorProps {
   };
 }
 
-/**
- * `!`-Wichtigkeit, weil dieselbe Klasse auch als `labelClassName` an
- * `ParticipantCustomFields` geht, das sie an das gerundete `ui/Label` reicht
- * — `cn` dort mergt nur und entfernt die eingebauten Klassen nicht.
- */
+/** `!`, weil die Klasse auch an `ui/Label` geht, dessen `cn` die eingebauten Klassen nicht entfernt. */
 const LABEL_CLASS =
   "text-ink! dark:text-night-text! mb-1! block! text-sm! font-semibold!";
 
@@ -79,11 +68,7 @@ function RequiredMark() {
   return <span aria-hidden> *</span>;
 }
 
-/**
- * Every field of a single participant, in one column on phones and two from
- * `md:` up. Deliberately carries no card chrome of its own — it is rendered
- * inside `ParticipantSheet`, which supplies the frame.
- */
+/** Every field of one participant; no card chrome — `ParticipantSheet` supplies the frame. */
 export function ParticipantEditor({
   priceOptions,
   customFields,
@@ -111,8 +96,7 @@ export function ParticipantEditor({
 
   useEffect(() => {
     if (focusProblemSignal === 0) return;
-    // Kästchengruppen sind als Ganzes markiert; angesprungen wird ihr erstes
-    // Kästchen.
+    // Kästchengruppen sind als Ganzes markiert; angesprungen wird ihr erstes Kästchen.
     rootRef.current
       ?.querySelector<HTMLElement>(
         '[aria-invalid="true"], [data-invalid] input',
@@ -123,12 +107,7 @@ export function ParticipantEditor({
   const flagged = (field: string) =>
     showProblems && missingFields.includes(field);
 
-  /**
-   * Beschriftung und Fehlerzustand eines Felds: Vorher hatten die Felder
-   * weder `id` noch `htmlFor`, Vorname und Geburtsdatum blieben für
-   * Vorlesegeräte ganz ohne Namen. Die Meldung oben beschreibt jedes
-   * markierte Feld mit.
-   */
+  /** Beschriftung und Fehlerzustand eines Felds; die Meldung oben beschreibt jedes markierte Feld mit. */
   const fieldA11y = (key: string, invalid: boolean, required = true) => ({
     id: `${uid}-${key}`,
     required,
@@ -205,9 +184,8 @@ export function ParticipantEditor({
                 ? new Date(participant.birthDate).toISOString().split("T")[0]
                 : ""
             }
-            // No validation here: the form re-checks every participant on each
-            // change and owns `validationError`/`missingFields`, so a second
-            // copy of the age rules would only drift out of step with it.
+            // No validation here: the form owns `validationError`/`missingFields`
+            // and re-checks on every change.
             onChange={(e) =>
               onChange(
                 "birthDate",
@@ -300,8 +278,7 @@ export function ParticipantEditor({
 
       {siblings && siblings.candidates.length > 0 ? (
         <div className="border-rule dark:border-night-rule space-y-2 border-t pt-5">
-          {/* Überschrift einer Knopfgruppe, kein Feld — ein <label> ohne
-              Bezug hätte nichts beschriftet. */}
+          {/* Überschrift einer Knopfgruppe, kein Feld — daher kein <label>. */}
           <p
             id={`${uid}-geschwister`}
             className="text-ink dark:text-night-text block text-sm font-semibold"

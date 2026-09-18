@@ -76,11 +76,7 @@ const FOERDERVEREIN_FAKTEN = [
   { title: "Direkte Förderung", text: "Lehrgänge & Projekte" },
 ];
 
-/**
- * Einstiegsseite für Neue, durchgehend mit „du“. Abschnittsköpfe stehen links
- * vor dem Inhalt; nur die blaue Förderverein-Fläche setzt ihren Kopf rechts.
- * Mitgliedschaft und Versicherung für Chöre stehen auf eigener Seite.
- */
+/** Einstiegsseite für Neue, durchgehend mit „du“. */
 export default function MitmachenPage() {
   return (
     <PublicPage

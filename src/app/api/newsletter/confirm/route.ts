@@ -8,10 +8,8 @@ import { createLogger } from "@/server/utils/logger";
 const log = createLogger("Newsletter");
 
 /**
- * Newsletter sign-up, step two: the click that turns a pending row into a
- * recipient. Behind a POST from the confirmation page rather than a plain GET,
- * so link scanners and mail-security prefetchers cannot confirm on the
- * subscriber's behalf — which is exactly what double opt-in exists to prevent.
+ * Double opt-in, step two. POST rather than GET, so link scanners and mail
+ * prefetchers cannot confirm on the subscriber's behalf.
  */
 export async function POST(request: NextRequest) {
   try {

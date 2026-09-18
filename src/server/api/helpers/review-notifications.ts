@@ -23,10 +23,8 @@ const CONTENT_TYPE_LABELS = {
 } as const;
 
 /**
- * E-mail the creator of a piece of content after it was approved or
- * rejected. Fire-and-forget: review mutations must not fail because SMTP is
- * down. Skips self-reviews (the reviewer already knows) and content without
- * a creator.
+ * Fire-and-forget: review mutations must not fail because SMTP is down.
+ * Skips self-reviews and content without a creator.
  */
 export async function notifyCreatorOfReviewResult(params: {
   db: Db;
@@ -95,11 +93,7 @@ const APPROVE_PERMISSIONS = {
   post: PERMISSIONS.POSTS_APPROVE,
 } as const;
 
-/**
- * In-app notification to every reviewer when content lands in PENDING —
- * so pending items no longer have to be discovered by polling the
- * dashboard lists. Fire-and-forget.
- */
+/** In-app notification to every reviewer when content lands in PENDING. Fire-and-forget. */
 export async function notifySubmittedForReview(params: {
   db: Db;
   contentType: keyof typeof DASHBOARD_PATHS;

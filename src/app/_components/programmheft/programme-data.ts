@@ -59,10 +59,7 @@ export function isRegistrationOpen(
   return !isRegistrationDeadlinePassed(course.registrationDeadline, now);
 }
 
-/**
- * Fristen werden angekündigt, bevor sie ablaufen: eine Woche vorher nennt die
- * Zeile die verbleibenden Tage statt nur das Datum.
- */
+/** Ab einer Woche vor Fristende nennt die Zeile die verbleibenden Tage. */
 function deadlineText(
   deadline: Date,
   now: Date,

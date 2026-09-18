@@ -1,14 +1,6 @@
 /**
- * Anzeige-Name einer Preiskategorie.
- *
- * Ein Kurs darf zwei Kategorien mit demselben Namen führen — dieselbe
- * Zimmerart in zwei Häusern etwa, unterschieden nur über die Beschreibung. In
- * einer Auswahlliste stehen sie dann zweimal identisch da und sind für
- * Anmeldende nicht auseinanderzuhalten. In dem Fall wandert die Beschreibung
- * in Klammern hinter den Namen.
- *
- * Nur dann: bei eindeutigem Namen wäre die Klammer bloß Rauschen, und wo die
- * Beschreibung ohnehin als eigene Zeile steht, würde sie doppelt erscheinen.
+ * Anzeige-Name einer Preiskategorie. Nur bei doppeltem Namen (z. B. dieselbe Zimmerart in
+ * zwei Häusern) folgt die Beschreibung in Klammern.
  */
 export function priceOptionDisplayLabel(
   option: { label: string; description: string | null },
@@ -24,12 +16,8 @@ export function priceOptionDisplayLabel(
 }
 
 /**
- * Die Preiskategorie eines Teilnehmers.
- *
- * Führend ist `priceOptionId`. Auf das Label wird nur zurückgegriffen, wenn
- * keine id gespeichert ist (Anmeldungen aus der Zeit davor) **und** das Label
- * im Kurs eindeutig ist. Bei Duplikaten lieferte der Label-Treffer sonst die
- * erstbeste Kategorie — und damit den falschen Preis.
+ * Führend ist `priceOptionId`; das Label zählt nur ohne id (Altbestand) und wenn es im
+ * Kurs eindeutig ist — sonst träfe es die erstbeste Kategorie und den falschen Preis.
  */
 export function resolveParticipantPriceOption<
   TOption extends { id: string; label: string },
@@ -53,20 +41,12 @@ export function resolveParticipantPriceOption<
 }
 
 /**
- * Anzeige-Name der Preiskategorie **eines Teilnehmers** — die Variante für
- * Listen, Detailansichten und Exporte.
- *
- * Löst die Kategorie über {@link resolveParticipantPriceOption} auf und hängt
- * bei doppeltem Namen die Beschreibung an. Lässt sie sich nicht auflösen
- * (gelöschte Kategorie, mehrdeutiger Altbestand), bleibt der gespeicherte
- * Name stehen: er ist das, was zum Zeitpunkt der Anmeldung galt, und
- * verschweigen wäre schlechter als nicht disambiguieren zu können.
+ * Anzeige-Name der Kategorie eines Teilnehmers. Lässt sie sich nicht auflösen
+ * (gelöscht, mehrdeutig), bleibt der bei der Anmeldung gespeicherte Name.
  */
 export function participantPriceOptionLabel(
   participant: { priceOptionId?: string | null; priceOption?: string | null },
-  // `description` ist Pflicht, nicht optional: fehlte sie in der Abfrage,
-  // fiele die Disambiguierung stillschweigend aus und die Duplikate stünden
-  // wieder identisch nebeneinander.
+  // `description` bewusst Pflicht: fehlte sie in der Abfrage, fiele die Unterscheidung still aus.
   priceOptions:
     | readonly { id: string; label: string; description: string | null }[]
     | null
@@ -78,14 +58,8 @@ export function participantPriceOptionLabel(
 }
 
 /**
- * Prüft, ob die Preiskategorien eines Kurses auseinanderzuhalten sind.
- *
- * Gleiche Namen sind erlaubt — dieselbe Zimmerart in zwei Häusern etwa —, aber
- * dann muss die Beschreibung sie unterscheiden: sie ist das Einzige, was in
- * Auswahllisten hinter dem Namen erscheint. Ohne sie stehen zwei Einträge
- * identisch nebeneinander und Anmeldende raten, welchen sie nehmen sollen.
- *
- * Gibt die Fehlermeldung zurück oder `null`, wenn alles unterscheidbar ist.
+ * Gleiche Namen sind erlaubt, dann muss die Beschreibung sie unterscheiden.
+ * Gibt die Fehlermeldung zurück oder `null`.
  */
 export function validatePriceOptionDistinctness(
   options: ReadonlyArray<{ label: string; description?: string | null }>,
@@ -117,11 +91,7 @@ export function validatePriceOptionDistinctness(
   return null;
 }
 
-/**
- * Ob diese Kategorie eine unterscheidende Beschreibung braucht — für den
- * Hinweis direkt am Eingabefeld, damit der Konflikt beim Tippen auffällt und
- * nicht erst beim Speichern.
- */
+/** Für den Hinweis am Eingabefeld, damit der Konflikt schon beim Tippen auffällt. */
 export function needsDistinguishingDescription(
   option: { label: string; description?: string | null },
   allOptions: ReadonlyArray<{ label: string; description?: string | null }>,

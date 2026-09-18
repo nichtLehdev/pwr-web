@@ -2,15 +2,8 @@ import type { LabelHTMLAttributes, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * Formularfeld (öffentliche Variante der Dashboard-Inputs): quadratisch,
- * 2px-Tintenrahmen bei Fokus statt Ring, keine Rundung. Gilt für
- * `<input>`, `<textarea>` und natives `<select>` gleichermaßen, damit ein
- * Select in einer Zeile mit Textfeldern nicht abweicht.
- *
- * Neu angelegt für /kontakt und /feedback, weil die Dashboard-Inputs
- * (`ui/select` u.a.) gerundet sind und Klassen nicht zuverlässig
- * überschreiben lassen (`cn` mergt hier nur, es entfernt keine
- * widersprüchlichen Utilities).
+ * Öffentliche Variante der Dashboard-Inputs, gleich für input, textarea und
+ * select. Eigene Klassen, weil `cn` widersprüchliche Utilities nicht entfernt.
  */
 export const fieldControlClasses =
   "border-rule dark:border-night-rule bg-paper dark:bg-night text-ink dark:text-night-text placeholder:text-dark dark:placeholder:text-night-muted focus:border-ink dark:focus:border-night-text block min-h-11 w-full border-2 px-3 py-2 text-base transition-colors focus:outline-none disabled:cursor-not-allowed disabled:opacity-60";
@@ -83,19 +76,13 @@ export function FieldError({
 }
 
 /**
- * Kontrollkästchen ohne Rundung: leeres Papier-Quadrat, angehakt füllt es
- * sich mit Tinte. Klickziel über das Label mindestens 44px hoch.
- */
-/**
- * Einzelwahl im Programmheft, selbst gezeichnet wie das Kontrollkästchen: Der
- * native Knopf erscheint in Safari im Nachtdruck als volle weiße Scheibe und
- * sieht dann gewählt aus — bei zwei Knöpfen nebeneinander wirkten beide
- * gewählt. Rund bleibt er, damit er als Einzelwahl erkennbar ist; der Punkt
- * ist der Hintergrund innerhalb des Polsters.
+ * Einzelwahl selbst gezeichnet: Safari zeigt den nativen Knopf im Nachtdruck
+ * als weiße Scheibe, die gewählt aussieht. Der Punkt ist der Hintergrund im Polster.
  */
 export const RADIO_INPUT_CLASS =
   "border-ink checked:bg-ink dark:border-night-text dark:checked:bg-night-text h-5 w-5 shrink-0 cursor-pointer appearance-none rounded-full border-2 bg-clip-content p-[3px]";
 
+/** Kontrollkästchen ohne Rundung; Klickziel über das Label mindestens 44px hoch. */
 export function Checkbox({
   id,
   checked,

@@ -256,7 +256,6 @@ export default function DashboardHomepagePage() {
           </button>
         }
       >
-        {/* Items List */}
         {items && items.length > 0 ? (
           <div className="space-y-4">
             {items.map((item, index) => (
@@ -267,7 +266,6 @@ export default function DashboardHomepagePage() {
                 }`}
               >
                 <div className="flex items-start gap-4">
-                  {/* Image Preview */}
                   <div className="bg-rule/25 dark:bg-night-raised relative h-24 w-32 shrink-0 overflow-hidden">
                     {item.media.mimeType.startsWith("image/") ? (
                       <Image
@@ -283,7 +281,6 @@ export default function DashboardHomepagePage() {
                     )}
                   </div>
 
-                  {/* Content */}
                   <div className="flex-1">
                     <div className="flex items-start justify-between">
                       <div>
@@ -291,9 +288,6 @@ export default function DashboardHomepagePage() {
                           <h3 className="text-ink dark:text-night-text font-semibold">
                             {item.title || "Standard-Titel"}
                           </h3>
-                          {/* Umrandet, nicht gefüllt: „Inaktiv" ist ein
-                              Ruhezustand und verlangt nichts — gefüllt stand
-                              es so laut wie ein aktiver Eintrag. */}
                           {!item.isActive && <Tag tone="muted">Inaktiv</Tag>}
                         </div>
                         <p className="text-dark dark:text-night-muted mt-1 text-sm">
@@ -306,7 +300,6 @@ export default function DashboardHomepagePage() {
                     </div>
                   </div>
 
-                  {/* Actions */}
                   <div className="flex flex-col gap-2">
                     <div className="flex gap-1">
                       <button
@@ -372,7 +365,6 @@ export default function DashboardHomepagePage() {
           </div>
         )}
 
-        {/* Add Modal */}
         {showAddModal && (
           <ScrollableModal>
             <ScrollableModalCard maxW="2xl">
@@ -396,7 +388,6 @@ export default function DashboardHomepagePage() {
                 </div>
               </ScrollableModalHeader>
               <ScrollableModalBody className="space-y-4">
-                {/* Media Selection */}
                 <div>
                   <label className="text-ink dark:text-night-text mb-2 block text-sm font-medium">
                     Bild *
@@ -434,7 +425,6 @@ export default function DashboardHomepagePage() {
                   )}
                 </div>
 
-                {/* Custom Title */}
                 <div>
                   <label className="text-ink dark:text-night-text mb-2 block text-sm font-medium">
                     Titel (optional)
@@ -451,7 +441,6 @@ export default function DashboardHomepagePage() {
                   </p>
                 </div>
 
-                {/* Custom Subtitle */}
                 <div>
                   <label className="text-ink dark:text-night-text mb-2 block text-sm font-medium">
                     Untertitel (optional)
@@ -497,7 +486,6 @@ export default function DashboardHomepagePage() {
           </ScrollableModal>
         )}
 
-        {/* Edit Modal */}
         {showEditModal && editingItem && (
           <ScrollableModal>
             <ScrollableModalCard maxW="2xl">
@@ -521,7 +509,6 @@ export default function DashboardHomepagePage() {
                 </div>
               </ScrollableModalHeader>
               <ScrollableModalBody className="space-y-4">
-                {/* Media Selection */}
                 <div>
                   <label className="text-ink dark:text-night-text mb-2 block text-sm font-medium">
                     Bild *
@@ -556,7 +543,6 @@ export default function DashboardHomepagePage() {
                   )}
                 </div>
 
-                {/* Custom Title */}
                 <div>
                   <label className="text-ink dark:text-night-text mb-2 block text-sm font-medium">
                     Titel (optional)
@@ -573,7 +559,6 @@ export default function DashboardHomepagePage() {
                   </p>
                 </div>
 
-                {/* Custom Subtitle */}
                 <div>
                   <label className="text-ink dark:text-night-text mb-2 block text-sm font-medium">
                     Untertitel (optional)
@@ -619,7 +604,6 @@ export default function DashboardHomepagePage() {
           </ScrollableModal>
         )}
 
-        {/* Delete Modal */}
         {showDeleteModal && (
           <ScrollableModal>
             <ScrollableModalCard maxW="md">
@@ -653,7 +637,6 @@ export default function DashboardHomepagePage() {
           </ScrollableModal>
         )}
 
-        {/* Media Picker Modal */}
         <MediaPickerModal
           isOpen={showMediaPicker}
           onClose={() => setShowMediaPicker(false)}

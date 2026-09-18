@@ -680,9 +680,6 @@ export const organizationRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  /**
-   * Get all Posaunenwarte with their Bezirke (from Posaunenwart model)
-   */
   getPosaunenwarte: publicProcedure.query(async ({ ctx }) => {
     const list = await ctx.db.posaunenwart.findMany({
       include: posaunenwartInclude,
@@ -696,9 +693,6 @@ export const organizationRouter = createTRPCRouter({
     return list.map(toPosaunenwart);
   }),
 
-  /**
-   * Get one Posaunenwart by id (for dashboard detail/edit)
-   */
   getPosaunenwart: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
@@ -726,9 +720,6 @@ export const organizationRouter = createTRPCRouter({
       };
     }),
 
-  /**
-   * Get Posaunenwarte by specific role (LPW or RPW)
-   */
   getPosaunenwarteByRole: publicProcedure
     .input(
       z.object({
@@ -745,9 +736,6 @@ export const organizationRouter = createTRPCRouter({
       return list.map(toPosaunenwart);
     }),
 
-  /**
-   * Get Posaunenwarte for a specific Bezirk
-   */
   getPosaunenwarteForBezirk: publicProcedure
     .input(
       z.object({
@@ -793,9 +781,6 @@ export const organizationRouter = createTRPCRouter({
       return { bezirk, posaunenwarte };
     }),
 
-  /**
-   * Get complete contact info for a Bezirk
-   */
   getBezirkContacts: publicProcedure
     .input(
       z.object({
@@ -877,9 +862,6 @@ export const organizationRouter = createTRPCRouter({
       };
     }),
 
-  /**
-   * Get Posaunenwarte organizational hierarchy
-   */
   getPosaunenwarteHierarchy: publicProcedure.query(async ({ ctx }) => {
     const list = await ctx.db.posaunenwart.findMany({
       include: posaunenwartInclude,
@@ -901,9 +883,6 @@ export const organizationRouter = createTRPCRouter({
     };
   }),
 
-  /**
-   * Get Posaunenwarte coverage statistics
-   */
   getPosaunenwarteStatistics: publicProcedure.query(async ({ ctx }) => {
     const [posaunenwarte, totalBezirke, responsibilities] = await Promise.all([
       ctx.db.posaunenwart.findMany({ select: { id: true, roleType: true } }),
@@ -1026,9 +1005,6 @@ export const organizationRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  /**
-   * Add a Bezirk to a Posaunenwart's responsibilities
-   */
   addPosaunenwartResponsibility: permissionProcedure(
     PERMISSIONS.ORGANIZATION_MANAGE_POSAUNENWARTE,
   )
@@ -1079,9 +1055,6 @@ export const organizationRouter = createTRPCRouter({
       });
     }),
 
-  /**
-   * Remove a Bezirk from a Posaunenwart's responsibilities
-   */
   removePosaunenwartResponsibility: permissionProcedure(
     PERMISSIONS.ORGANIZATION_MANAGE_POSAUNENWARTE,
   )
@@ -1103,9 +1076,6 @@ export const organizationRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  /**
-   * Update a Posaunenwart responsibility
-   */
   updatePosaunenwartResponsibility: permissionProcedure(
     PERMISSIONS.ORGANIZATION_MANAGE_POSAUNENWARTE,
   )
@@ -1131,9 +1101,6 @@ export const organizationRouter = createTRPCRouter({
       });
     }),
 
-  /**
-   * Bulk update: Set all Bezirke for an RPW
-   */
   setRpwBezirke: permissionProcedure(
     PERMISSIONS.ORGANIZATION_MANAGE_POSAUNENWARTE,
   )

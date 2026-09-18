@@ -47,11 +47,7 @@ type ViewMode = "list" | "calendar";
 
 const VIEW_MODES: ViewMode[] = ["list", "calendar"];
 
-/**
- * Monatsüberschriften an oder aus. Ohne sie fließt die Liste durchgehend,
- * statt nach jedem Monat umzubrechen — bei wenigen Terminen je Monat steht
- * sonst mehr Überschrift als Inhalt auf der Seite.
- */
+/** Monatsüberschriften an oder aus; bei wenigen Terminen je Monat stünde sonst mehr Überschrift als Inhalt. */
 type MonthGrouping = "on" | "off";
 
 function isMonthGrouping(value: string): value is MonthGrouping {
@@ -80,13 +76,7 @@ const CHECKBOX =
 const TOGGLE_INACTIVE =
   "text-ink hover:bg-ink hover:text-paper dark:text-night-text dark:hover:bg-night-text dark:hover:text-night";
 
-/**
- * Monatsüberschrift zum Auf- und Zuklappen — Listenkopf-Stimme mit 2px-Strich
- * darunter, bewusst nur Typografie und Haarlinie statt einer Kachel mit
- * grauer Kopfzeile: die Termine darunter sind selbst schon Programmzeilen,
- * und eine Box um Zeilen legt eine Verschachtelung nahe, die es inhaltlich
- * nicht gibt.
- */
+/** Monatsüberschrift zum Auf- und Zuklappen; bewusst ohne Box, die eine Verschachtelung nahelegen würde. */
 function MonthHeading({
   label,
   count,
@@ -244,10 +234,7 @@ export default function EventsClient({
         if (filterType === "events" && item.type !== "event") return false;
         if (filterType === "courses" && item.type !== "course") return false;
 
-        // Termine nehmen keine Anmeldungen entgegen; der Filter lässt also
-        // nur Angebote übrig, deren Anmeldung gerade läuft. „Angebote“, weil
-        // darunter neben Lehrgängen auch Workshops, Freizeiten und
-        // Komponistenporträts stehen.
+        // Termine nehmen keine Anmeldungen entgegen; übrig bleiben Angebote mit laufender Anmeldung.
         if (
           nurOffeneAnmeldung &&
           (item.type !== "course" || !isRegistrationOpen(item, now))
@@ -355,12 +342,7 @@ export default function EventsClient({
 
   const [pastEventsExpanded, setPastEventsExpanded] = useState(false);
 
-  /**
-   * Termin oder Kurs als Programmzeile. `eventEntry`/`courseEntry` stammen aus
-   * dem Programmheft-Baustein; das Mitmachangebot hat dort keinen eigenen
-   * Platz, deshalb steht es hier — wo kein Registrierungs- oder
-   * Abgesagt-Status im Weg ist — als Statuszeile.
-   */
+  /** Termin oder Kurs als Programmzeile; das Mitmachangebot steht mangels eigenem Platz als Statuszeile. */
   const toProgrammeEntry = useCallback(
     (item: CalendarItem): ProgrammeEntry => {
       if (item.type === "event") {
@@ -397,11 +379,7 @@ export default function EventsClient({
     setNurOffeneAnmeldung(false);
   };
 
-  /*
-   * `min-h-12`: Die Umschalter daneben sind 44px hoch und stehen in einem
-   * Rahmen von 2px, ihr Kasten misst also 48px. Ein Feld mit 44px stünde
-   * sichtbar niedriger daneben.
-   */
+  // `min-h-12`: so hoch wie die Umschalter daneben samt 2px-Rahmen.
   const selectFieldClass =
     "rounded-none! border-ink! dark:border-night-text! text-ink! dark:text-night-text! bg-paper! dark:bg-night! min-h-12 w-full border-2! px-3 py-2 text-sm";
 
@@ -416,7 +394,6 @@ export default function EventsClient({
       {/* Marke für „Titel vorbei“: steht genau hinter dem Seitenkopf. */}
       <div ref={marke} aria-hidden className="h-px" />
       <div className="bg-paper dark:bg-night">
-        {/* Filter & View Toggle */}
         <section
           className="border-rule dark:border-night-rule bg-paper dark:bg-night sticky z-20 border-b"
           style={{ top: `${stickyTop}px` }}
@@ -424,13 +401,8 @@ export default function EventsClient({
           <div className="sheet py-3">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-4">
-                {/* Kolumnentitel: erscheint erst, wenn der große Titel nach
-                    oben aus dem Bild gelaufen ist — sonst stünde „Termine“
-                    zweimal untereinander. Statt nur die Deckkraft zu ändern,
-                    wächst der Titel aus der Breite null auf: Die Schalter
-                    stehen zunächst ganz links und rücken beim Einblenden
-                    nach rechts. Das negative `-mr-4` schluckt in eingeklapptem
-                    Zustand den `gap-4` der Zeile, sonst bliebe eine Lücke. */}
+                {/* Kolumnentitel erst, wenn der große Titel aus dem Bild ist; wächst aus Breite null.
+                    `-mr-4` schluckt eingeklappt den `gap-4` der Zeile. */}
                 <p
                   aria-hidden={!vorbei}
                   className={cn(
@@ -440,7 +412,6 @@ export default function EventsClient({
                 >
                   Termine
                 </p>
-                {/* Left: View Toggle */}
                 <div className="border-ink dark:border-night-text flex border-2">
                   <button
                     onClick={() => handleSetViewMode("list")}
@@ -474,7 +445,6 @@ export default function EventsClient({
                 </div>
               </div>
 
-              {/* Center: Active Filters Count */}
               <div className="flex-1 text-center">
                 <span className="text-dark dark:text-night-muted text-sm">
                   {sortedItems.length}{" "}
@@ -487,7 +457,6 @@ export default function EventsClient({
                 </span>
               </div>
 
-              {/* Right: iCal Feed & Filter Toggle Button */}
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setIcalModalOpen(true)}
@@ -522,18 +491,10 @@ export default function EventsClient({
               </div>
             </div>
 
-            {/* Collapsible Filter Panel */}
             {filtersOpen && (
-              /*
-               * Zwei Zeilen statt vier gestapelter Blöcke: Seit die Kategorie
-               * weg ist, stehen Typ und Bezirk nebeneinander. Darunter die
-               * Schalter — links der Filter, rechts die Darstellung, die
-               * keine Auswahl trifft, sondern nur die Liste gliedert und
-               * deshalb durch die Haarlinie abgesetzt ist.
-               */
+              /* Die Darstellung trifft keine Auswahl, nur Gliederung — deshalb per Haarlinie abgesetzt. */
               <div className="border-rule dark:border-night-rule mt-3 border-t pt-4">
                 <div className="grid gap-4 sm:grid-cols-2">
-                  {/* Typ */}
                   <div>
                     <span
                       id="termine-typ-label"
@@ -566,7 +527,6 @@ export default function EventsClient({
                     </div>
                   </div>
 
-                  {/* Bezirk */}
                   <div>
                     <label
                       htmlFor="termine-bezirk"
@@ -635,13 +595,9 @@ export default function EventsClient({
           </div>
         </section>
 
-        {/* Content */}
         <section className="sheet py-8 md:py-12">
           {effectiveViewMode === "list" ? (
-            /* Programm, wahlweise nach Monaten gruppiert */
             <div className="space-y-10 md:space-y-14">
-              {/* Upcoming Events — ohne Monatsgruppierung läuft das Programm
-                  durch, statt nach jedem Monat umzubrechen. */}
               {groupByMonth
                 ? Object.entries(groupedByMonth).map(
                     ([monthKey, { label, items }]) => (
@@ -668,10 +624,7 @@ export default function EventsClient({
                 </div>
               )}
 
-              {/* Past Events Section — ohne Monatsgruppierung: die
-                  Vergangenheit ist ein Nachschlagewerk, keine Planung. Wer
-                  hier aufklappt, sucht einen bestimmten Termin und liest die
-                  Liste von neu nach alt durch. */}
+              {/* Vergangenes bewusst ohne Monatsgruppierung: Nachschlagewerk, keine Planung. */}
               {pastItems.length > 0 && (
                 <div>
                   <MonthHeading
@@ -685,14 +638,11 @@ export default function EventsClient({
               )}
             </div>
           ) : (
-            /* Calendar View */
             <>
-              {/* Mobile Calendar */}
               <div className="lg:hidden">
                 <CalendarView items={calendarItems} />
               </div>
 
-              {/* Desktop Calendar */}
               <div className="hidden lg:block">
                 <DesktopCalendarView items={calendarItems} />
               </div>
@@ -701,7 +651,6 @@ export default function EventsClient({
         </section>
       </div>
 
-      {/* iCal Feed Modal */}
       <FeedConfigModal
         isOpen={icalModalOpen}
         onClose={() => setIcalModalOpen(false)}

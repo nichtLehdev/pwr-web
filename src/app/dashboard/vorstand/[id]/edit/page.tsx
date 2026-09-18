@@ -18,8 +18,6 @@ import {
 } from "@/app/_components/dashboard";
 import { Input, Label, Textarea } from "@/app/_components/ui";
 
-// Dashboard access is now controlled by permissions
-
 export default function EditVorstandPage() {
   const router = useRouter();
   const params = useParams();
@@ -196,14 +194,12 @@ export default function EditVorstandPage() {
         ]}
         maxWidth="7xl"
       >
-        {/* Error Message */}
         {error && (
           <div className="mb-6 border-l-4 border-red-600 bg-red-50 p-4 text-red-700 dark:border-red-400 dark:bg-red-900/20 dark:text-red-400">
             {error}
           </div>
         )}
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-8">
           <PersonDetailsFields
             value={person}
@@ -214,7 +210,6 @@ export default function EditVorstandPage() {
             showBio={false}
           />
 
-          {/* Position Info */}
           <section className="border-rule dark:border-night-rule dark:bg-night-raised bg-paper border p-6">
             <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
               Position
@@ -284,7 +279,6 @@ export default function EditVorstandPage() {
             description="Optional: Verknüpfe dieses Vorstandsmitglied mit einem Benutzerkonto. Leer gelassene Angaben werden dann von dort übernommen."
           />
 
-          {/* Actions */}
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
             <Link
               href={`/dashboard/vorstand/${memberId}`}
@@ -303,8 +297,6 @@ export default function EditVorstandPage() {
             </button>
           </div>
         </form>
-
-        {/* Media Picker Modal */}
       </DashboardPage>
     </>
   );

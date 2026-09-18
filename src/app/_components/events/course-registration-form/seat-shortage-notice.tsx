@@ -19,9 +19,8 @@ export type ShortageCourse = {
 };
 
 /**
- * Ein Satz dazu, woran es fehlt: am Kurs oder an einer Preiskategorie.
- * `waiting`: für eine Anmeldung, die schon auf der Warteliste steht — nicht
- * für eine, die gerade ausgefüllt wird.
+ * Woran es fehlt: am Kurs oder an einer Preiskategorie. `waiting`: die Anmeldung steht
+ * schon auf der Warteliste.
  */
 export function seatShortageCause(
   course: ShortageCourse,
@@ -51,9 +50,8 @@ export function seatShortageCause(
 }
 
 /**
- * Hinweis im letzten Schritt, wenn die Plätze für die eingetragenen
- * Teilnehmer nicht reichen und sich die Anmeldung nicht aufteilen lässt: mit
- * Warteliste landet die ganze Anmeldung dort, ohne wird sie abgelehnt.
+ * Plätze reichen nicht und Aufteilen geht nicht: mit Warteliste landet die ganze Anmeldung
+ * dort, ohne wird sie abgelehnt.
  */
 export function SeatShortageNotice({
   course,
@@ -66,9 +64,7 @@ export function SeatShortageNotice({
 }) {
   const cause = seatShortageCause(course, shortage);
 
-  // Ohne Warteliste lässt sich so nicht absenden: ein Fehler, der vorliest
-  // (`Note` setzt `role="alert"`). Mit Warteliste ist es eine Folge, die man
-  // vor dem Absenden kennen muss — die orange Fläche.
+  // Ohne Warteliste ein Fehler (`Note` setzt `role="alert"`), mit Warteliste nur ein Hinweis.
   if (!course.allowWaitingList) {
     return (
       <Note tone="error">

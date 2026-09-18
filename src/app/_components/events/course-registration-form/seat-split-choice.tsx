@@ -23,10 +23,7 @@ const CHECKBOX_CLASS =
 /** Gemeinsame Einzelwahl (siehe `RADIO_INPUT_CLASS`), hier oben ausgerichtet. */
 const RADIO_CLASS = `${RADIO_INPUT_CLASS} mt-0.5`;
 
-/**
- * Auswahlkarte: Haarlinie, gewählt ein 2px-Tintenrahmen. Das Polster gleicht
- * den dickeren Rahmen aus, damit beim Wählen nichts springt.
- */
+/** Das Polster gleicht den dickeren Rahmen im gewählten Zustand aus, damit nichts springt. */
 function choiceCard(checked: boolean): string {
   return cn(
     "flex min-h-11 cursor-pointer items-start gap-3",
@@ -49,10 +46,7 @@ interface SeatSplitChoiceProps {
   participants: SplitChoiceParticipant[];
   shortage: SeatShortage;
   availability: SeatAvailability;
-  /**
-   * Im öffentlichen Formular die Wahl zwischen ganzer Warteliste und
-   * Aufteilen. Das Kursteam wählt das über den Status der Anmeldung.
-   */
+  /** Wahl ganze Warteliste vs. Aufteilen; das Kursteam wählt das über den Status. */
   showModeChoice: boolean;
   /** Die Anmeldung steht schon auf der Warteliste (Nachrück-Angebot). */
   waiting?: boolean;
@@ -64,9 +58,8 @@ interface SeatSplitChoiceProps {
 }
 
 /**
- * Reichen die freien Plätze nicht für alle, entscheiden die Anmeldenden:
- * alle gemeinsam auf die Warteliste, oder die freien Plätze jetzt nutzen —
- * und dann, wer sie bekommt. Sonst würde etwa eine Familie ungewollt getrennt.
+ * Reichen die Plätze nicht, entscheiden die Anmeldenden: alle auf die Warteliste oder
+ * aufteilen und wer die Plätze bekommt — sonst würde etwa eine Familie ungewollt getrennt.
  */
 export function SeatSplitChoice({
   course,
@@ -213,8 +206,7 @@ export function SeatSplitChoice({
                       onChange={() => toggle(index)}
                       className={CHECKBOX_CLASS}
                     />
-                    {/* Kategorie in eigener Zeile wie in der Teilnehmerliste
-                        darüber — auf dem Handy bricht sonst der Trennpunkt um. */}
+                    {/* Kategorie in eigener Zeile, sonst bricht auf dem Handy der Trennpunkt um. */}
                     <span className="flex min-w-0 flex-1 flex-wrap items-start justify-between gap-x-4 gap-y-2">
                       <span className="min-w-0">
                         <span className="text-ink dark:text-night-text block font-semibold">

@@ -1,26 +1,6 @@
 /*
- * Beschreibung eines Termins oder Kurses.
- *
- * Die schlanke Schwester von article-content.css: dieselbe Satzhaltung, aber
- * ohne Bildvokabular, Ausbruchsbreiten und Codeblöcke — eine Beschreibung
- * kennt Absätze, Überschriften, Listen, Links und Hervorhebungen. Sie steht in
- * vier Ansichten (öffentliche Termin- und Kursseite, dieselben Seiten im
- * Dashboard) und in der Schreibfläche; was hier steht, sieht die Redakteurin
- * beim Schreiben wie die Leserin auf der Seite.
- *
- * Vorher trugen diese Container `prose dark:prose-invert`. Das
- * Typography-Plugin ist nicht geladen — nachgemessen hatten Absätze deshalb
- * gar keinen Abstand (`margin` 0px, alle Absätze klebten aneinander) und
- * Listen keine Aufzählungszeichen, weil Tailwinds Preflight beides
- * zurücksetzt.
- *
- * Kein `!important` wie im Artikelkörper: Dort steckten Tailwind-Klassen im
- * gespeicherten HTML, die überstimmt werden mussten. Beschreibungen sind
- * Markdown und tragen keine Klassen.
- *
- * Wichtig für den Umfluss des Titelbildes: Diese Datei setzt am Container
- * weder `overflow`, `display: flow-root` noch eine eigene Spalte. Ein solcher
- * Block würde nicht mehr um das nebenstehende Bild fließen.
+ * Beschreibung eines Termins oder Kurses (öffentlich, Dashboard, Editor).
+ * Kein `overflow`/`flow-root` am Container, sonst umfließt er das Titelbild nicht.
  */
 .beschreibung {
   color: var(--color-ink);
@@ -31,8 +11,7 @@
   color: var(--color-night-text);
 }
 
-/* Der erste Block sitzt an der Oberkante — den Abstand nach oben führt der
-   Abschnitt, nicht der Text. */
+/* Den Abstand nach oben führt der Abschnitt, nicht der Text. */
 .beschreibung > :first-child {
   margin-top: 0;
 }
@@ -45,8 +24,7 @@
   margin-bottom: 1.25rem;
 }
 
-/* Köpfe sprechen schmal wie die Programmköpfe, nur zwei Stufen kleiner: Der
-   Abschnittskopf „Beschreibung" darüber ist eine h2 in 1,75rem. */
+/* Zwei Stufen kleiner als der Abschnittskopf „Beschreibung" (h2, 1,75rem). */
 .beschreibung h2,
 .beschreibung h3,
 .beschreibung h4 {
@@ -77,8 +55,6 @@
   font-size: 1.25rem;
 }
 
-/* Die dritte Stufe steht schon tief in der Gliederung und bleibt halbschmal,
-   damit sie sich von der Fließschrift eher durch Fettung unterscheidet. */
 .beschreibung h4 {
   font-size: 1.125rem;
   font-variation-settings: "wdth" 84;
@@ -95,8 +71,7 @@
   font-style: italic;
 }
 
-/* Tailwinds Preflight nimmt Listen ihre Zeichen und ihren Einzug — beides
-   steht hier wieder. */
+/* Tailwinds Preflight nimmt Listen Zeichen und Einzug. */
 .beschreibung ul,
 .beschreibung ol {
   margin: 1.25rem 0;
@@ -124,11 +99,7 @@
   margin-bottom: 0;
 }
 
-/*
- * Links wie `link-ink` im übrigen Heft: Messing-Tinte auf Papier (5,26:1),
- * Druckorange im Nachtdruck (9,16:1), immer unterstrichen — an der Farbe
- * allein wäre ein Link für farbfehlsichtige Leser nicht zu erkennen.
- */
+/* Links wie `link-ink`: immer unterstrichen, nicht nur an der Farbe erkennbar. */
 .beschreibung a {
   color: var(--color-primary-ink);
   font-weight: 600;
@@ -168,11 +139,7 @@
   border-top-color: var(--color-night-rule);
 }
 
-/*
- * Bilder und Tabellen erzeugt die Schreibfläche der Beschreibung nicht. Sie
- * können aber aus der Einfuhr alter Daten stammen — dann sollen sie nicht aus
- * der Spalte laufen, sondern den Linien des Hefts folgen.
- */
+/* Bilder und Tabellen kann nur der Import alter Daten bringen, nicht der Editor. */
 .beschreibung img {
   max-width: 100%;
   height: auto;

@@ -3,11 +3,7 @@ import { RegistrationStatus } from "~/generated/prisma/client";
 
 export type CourseRegistrationStats = {
   totalConfirmedParticipants: number;
-  /**
-   * Belegte Plätze je Preiskategorie, **nach id**. Nicht nach Label: ein Kurs
-   * darf zwei Kategorien mit demselben Namen führen (dieselbe Zimmerart in
-   * zwei Häusern), und nach Label gezählt liefen beide in einen Topf.
-   */
+  /** Belegte Plätze je Kategorie nach id, nicht Label: zwei Kategorien dürfen gleich heißen. */
   byPriceOptionId: Record<string, number>;
 };
 

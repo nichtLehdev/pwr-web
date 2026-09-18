@@ -10,12 +10,8 @@ type Db = PrismaClient | Prisma.TransactionClient;
 const normalizeName = (name: string) => name.trim().toLowerCase();
 
 /**
- * Library templates start private to their creator. Once a course containing a
- * matching field (name + type) is approved, the field definition is public
- * anyway — so the matching template of the course's creator (or organizer
- * collaborators) is promoted to the shared library. Call after any transition
- * to APPROVED; promoting is idempotent and skips names that already have a
- * global template.
+ * An approved course makes its fields public, so its organizers' matching (name + type) private
+ * templates join the shared library. Call after any transition to APPROVED; idempotent.
  */
 export async function promoteCustomFieldTemplatesForCourses(
   db: Db,
@@ -75,11 +71,7 @@ export async function promoteCustomFieldTemplatesForCourses(
   }
 }
 
-/**
- * A freshly saved template may be born global: when the creator already has an
- * approved course (own or as organizer) containing this field, the definition
- * is public knowledge.
- */
+/** A new template starts global if the creator already has an approved course with this field. */
 export async function hasApprovedCourseWithField(
   db: Db,
   userId: string,

@@ -11,7 +11,6 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { DashboardPage } from "@/app/_components/dashboard";
 import { Tag } from "@/app/_components/programmheft/tag";
 import { formatBerlin } from "@/lib/berlin-time";
-// Dashboard access is now controlled by permissions
 
 export default function HistoryEventDetailPage() {
   const router = useRouter();
@@ -132,7 +131,6 @@ export default function HistoryEventDetailPage() {
       }
       maxWidth="7xl"
     >
-      {/* Image and Category Badge */}
       <div className="mb-6 flex items-center gap-4">
         {historyEvent.image?.url ? (
           <div className="border-rule dark:border-night-rule relative h-20 w-20 shrink-0 overflow-hidden border">
@@ -167,7 +165,6 @@ export default function HistoryEventDetailPage() {
         )}
       </div>
 
-      {/* Description */}
       {historyEvent.description && (
         <div className="border-rule dark:border-night-rule mb-6 border p-6">
           <h2 className="condensed text-ink dark:text-night-text mb-3 text-lg font-bold">
@@ -179,7 +176,6 @@ export default function HistoryEventDetailPage() {
         </div>
       )}
 
-      {/* Image */}
       {historyEvent.image?.url && (
         <div className="border-rule dark:border-night-rule mb-6 border p-6">
           <h2 className="condensed text-ink dark:text-night-text mb-3 text-lg font-bold">
@@ -201,9 +197,7 @@ export default function HistoryEventDetailPage() {
         </div>
       )}
 
-      {/* Details Grid */}
       <div className="mb-6 grid gap-6 sm:grid-cols-2">
-        {/* Basic Info */}
         <div className="border-rule dark:border-night-rule border p-6">
           <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
             Informationen
@@ -237,7 +231,6 @@ export default function HistoryEventDetailPage() {
           </dl>
         </div>
 
-        {/* Metadata */}
         <div className="border-rule dark:border-night-rule border p-6">
           <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
             Details
@@ -263,7 +256,6 @@ export default function HistoryEventDetailPage() {
         </div>
       </div>
 
-      {/* Actions */}
       <div className="mt-6 flex flex-wrap gap-3">
         <Link
           href="/dashboard/history-timeline"

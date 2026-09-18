@@ -45,9 +45,8 @@ function MaterialienContent() {
     return matchesCategory && matchesSearch;
   });
 
-  // In the unfiltered default view the Blechblatt back-issues (the bulk of
-  // all files) are collapsed into an archive so forms and work materials
-  // stay findable. Search or a category filter shows everything flat.
+  // Unfiltered, the Blechblatt back-issues (the bulk of all files) collapse into an
+  // archive so other materials stay findable; search or a filter shows everything flat.
   const isDefaultView = selectedCategory === "all" && searchQuery === "";
   const blechblattArchive = isDefaultView
     ? (filteredDownloads?.filter(

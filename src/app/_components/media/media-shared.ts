@@ -66,10 +66,7 @@ export function focalPointStyle(item: {
   return { objectPosition: `${item.focalPointX}% ${item.focalPointY}%` };
 }
 
-/**
- * Der Name, unter dem eine Datei im Downloads-Ordner landen soll: der gepflegte
- * Medienname plus die Endung der tatsächlichen Datei.
- */
+/** Gepflegter Medienname plus die Endung der tatsächlichen Datei. */
 export function downloadFileName(item: {
   name: string;
   extension: string;
@@ -78,10 +75,7 @@ export function downloadFileName(item: {
   return item.extension ? `${base}.${item.extension}` : base;
 }
 
-/**
- * Download-URL. Die Route liefert Bilder sonst zur Anzeige aus; `?download=1`
- * setzt `Content-Disposition: attachment`, `name` den lesbaren Dateinamen.
- */
+/** `?download=1` setzt `Content-Disposition: attachment`, `name` den lesbaren Dateinamen. */
 export function downloadUrl(item: {
   url: string;
   name: string;

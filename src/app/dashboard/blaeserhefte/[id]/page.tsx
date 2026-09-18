@@ -120,7 +120,6 @@ export default function DashboardBlaeserheftDetailPage() {
       }
       maxWidth="7xl"
     >
-      {/* Cover Image and Year Badge */}
       <div className="mb-6 flex items-start gap-4">
         {heft.image?.url ? (
           <div className="border-rule dark:border-night-rule relative h-24 w-20 shrink-0 overflow-hidden border">
@@ -141,7 +140,6 @@ export default function DashboardBlaeserheftDetailPage() {
         </Tag>
       </div>
 
-      {/* Description */}
       <div className="border-rule dark:border-night-rule mb-6 border p-6">
         <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
           Beschreibung
@@ -151,9 +149,7 @@ export default function DashboardBlaeserheftDetailPage() {
         </p>
       </div>
 
-      {/* Prices and Availability */}
       <div className="mb-6 grid gap-6 md:grid-cols-2">
-        {/* Prices */}
         <div className="border-rule dark:border-night-rule border p-6">
           <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
             Preise
@@ -188,7 +184,6 @@ export default function DashboardBlaeserheftDetailPage() {
           </dl>
         </div>
 
-        {/* Availability */}
         <div className="border-rule dark:border-night-rule border p-6">
           <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
             Verfügbarkeit
@@ -264,9 +259,7 @@ export default function DashboardBlaeserheftDetailPage() {
         </div>
       </div>
 
-      {/* Chapters and Highlights */}
       <div className="mb-6 grid gap-6 md:grid-cols-2">
-        {/* Chapters */}
         {chapters.length > 0 && (
           <div className="border-rule dark:border-night-rule border p-6">
             <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
@@ -285,7 +278,6 @@ export default function DashboardBlaeserheftDetailPage() {
           </div>
         )}
 
-        {/* Highlights */}
         {highlights.length > 0 && (
           <div className="border-rule dark:border-night-rule border p-6">
             <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
@@ -303,7 +295,6 @@ export default function DashboardBlaeserheftDetailPage() {
         )}
       </div>
 
-      {/* Audio Sample */}
       {heft.audioSample && (
         <div className="border-rule dark:border-night-rule mb-6 border p-6">
           <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
@@ -316,7 +307,6 @@ export default function DashboardBlaeserheftDetailPage() {
         </div>
       )}
 
-      {/* Actions */}
       <div className="flex flex-wrap gap-3">
         <Link
           href="/dashboard/blaeserhefte"

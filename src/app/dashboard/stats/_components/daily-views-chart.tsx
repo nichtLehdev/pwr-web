@@ -22,10 +22,7 @@ type VisitorDetails = {
   otherUsers: number;
 };
 
-/**
- * The daily page-view chart, in its own module so recharts (~100-150 KB
- * gzipped) is only loaded when the stats page renders it (via next/dynamic).
- */
+/** Own module so recharts is only loaded when the stats page renders it (next/dynamic). */
 export default function DailyViewsChart({
   recentDays,
   dayVisitorDetails,

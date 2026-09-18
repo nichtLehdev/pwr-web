@@ -255,17 +255,11 @@ export default function RegistrationDetailPage() {
       (invoice) => invoice.status === InvoiceStatus.PUBLISHED,
     ) ?? [];
 
-  // Zahlungen werden an der Rechnung verbucht und folgen deren Rechteregel:
-  // Kursverwaltung oder Kassenführung. Die Antwort kommt vom Server, weil
-  // "Kursverwaltung" die Organisator:innen des Kurses einschließt — clientseitig
-  // ist davon nichts zu sehen, und genau daran ist die frühere Prüfung hier
-  // vorbeigelaufen: Organisator:innen sahen den Knopf nicht, obwohl die Mutation
-  // sie durchgelassen hätte.
+  // Rechteregel der Rechnung (Kursverwaltung oder Kassenführung) vom Server:
+  // Kursverwaltung schließt Organisator:innen ein, das sieht der Client nicht.
   const canBookPayments = management?.canBookPayments ?? false;
 
-  // Dieselbe Berechtigung, die auch die Mutation verlangt — die frühere
-  // Prüfung auf courses.approve zeigte die Knöpfe Leuten, die der Server
-  // abgewiesen hätte.
+  // Dieselbe Berechtigung, die auch die Mutation verlangt.
   const canDecideDiscount = hasPermission(
     PERMISSIONS.REGISTRATIONS_MANAGE_SIBLING_DISCOUNT,
   );
@@ -291,9 +285,8 @@ export default function RegistrationDetailPage() {
     registration?.siblingDiscountStatus === SiblingDiscountStatus.APPROVED;
 
   /**
-   * Nachträglich gewähren: nur solange kein Rabatt anhängig oder gewährt ist
-   * und die Teilnehmer überhaupt eine Geschwistergruppe bilden. Ob der Aufrufer
-   * darf, beantwortet der Server — die Kursverantwortung ist hier nicht sichtbar.
+   * Nachträglich gewähren: nur ohne anhängigen oder gewährten Rabatt und bei
+   * einer Geschwistergruppe. Ob der Aufrufer darf, beantwortet der Server.
    */
   const canApplyDiscount =
     (management?.canManageSiblingDiscount ?? false) &&
@@ -365,7 +358,6 @@ export default function RegistrationDetailPage() {
   return (
     <main className="programm font-programm dark:bg-night dark:text-night-text bg-paper text-ink min-h-screen">
       <div className="container mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Breadcrumb */}
         <nav aria-label="Brotkrumen" className="mb-4">
           <ol className="semi-condensed text-dark dark:text-night-muted -ml-1 flex flex-wrap items-center text-sm font-semibold">
             <li>
@@ -423,7 +415,6 @@ export default function RegistrationDetailPage() {
           </ol>
         </nav>
 
-        {/* Header */}
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="condensed dark:text-night-text text-ink text-2xl leading-tight font-bold sm:text-[1.75rem]">
@@ -558,13 +549,11 @@ export default function RegistrationDetailPage() {
               registration={registration}
               className="px-3 py-1"
             />
-            {/* Phones keep only the primary action; everything else moves into
-                the "…" menu, so the header stays one short row instead of three
-                stacked rows of buttons. From sm up the full row is shown. */}
+            {/* Phones keep only the primary action, the rest moves into the
+                "…" menu. From sm up the full row is shown. */}
             {(canEdit || canCancel) && (
-              // `w-full` keeps the actions on their own row below sm so the
-              // status badges above them stay intact; `sm:contents` dissolves
-              // the wrapper again so the desktop row is unchanged.
+              // `w-full`: own row below sm so the badges stay intact;
+              // `sm:contents` dissolves the wrapper on desktop.
               <div className="flex w-full items-center gap-2 sm:contents">
                 <Link
                   href={`/dashboard/courses/${courseId}/participants`}
@@ -643,7 +632,6 @@ export default function RegistrationDetailPage() {
           </div>
         </div>
 
-        {/* Registrant Info */}
         <div className="dark:border-night-rule border-rule mb-6 border">
           <div className="dark:border-night-rule border-rule border-b p-6">
             <h2 className="text-dark dark:text-night-text flex items-center gap-2 text-lg font-semibold">
@@ -706,7 +694,6 @@ export default function RegistrationDetailPage() {
           </div>
         </div>
 
-        {/* Price Summary */}
         <div className="dark:border-night-rule border-rule mb-6 border">
           <div className="dark:border-night-rule border-rule border-b p-6">
             <h2 className="text-dark dark:text-night-text flex items-center gap-2 text-lg font-semibold">
@@ -865,9 +852,8 @@ export default function RegistrationDetailPage() {
                   />
                 </div>
 
-                {/* Gezahlt wird auf eine Rechnung, nicht auf eine Anmeldung —
-                    darum steht hier eine Zeile je ausgestellter Rechnung statt
-                    eines einzelnen Status am Datensatz. */}
+                {/* Gezahlt wird auf eine Rechnung, nicht auf eine Anmeldung:
+                    eine Zeile je ausgestellter Rechnung. */}
                 {publishedInvoices.length === 0 ? (
                   <p className="text-dark dark:text-night-muted text-sm">
                     Für diese Anmeldung wurde noch keine Rechnung ausgestellt.
@@ -978,7 +964,6 @@ export default function RegistrationDetailPage() {
           onChanged={invalidatePayment}
         />
 
-        {/* Participants */}
         <div className="dark:border-night-rule border-rule border p-4 sm:p-6">
           <h2 className="text-dark dark:text-night-text mb-4 flex items-center gap-2 text-lg font-semibold">
             <UsersIcon className="text-primary-ink dark:text-primary h-5 w-5" />
@@ -1001,9 +986,8 @@ export default function RegistrationDetailPage() {
               const isEligibleForDiscount =
                 hasDiscountEligibleSiblingGroup(siblingGroup);
 
-              // Only what the card summary does not already carry: it shows the
-              // age, city, instrument and price category, so repeating those
-              // here would be the same line twice.
+              // Only what the card summary does not already show (age, city,
+              // instrument, price category).
               const details: { label: string; value: string }[] = [
                 {
                   label: "Geburtsdatum",
@@ -1032,9 +1016,8 @@ export default function RegistrationDetailPage() {
                   siblingGroupSize={siblingGroup.length || 1}
                   extraBadges={
                     isInGroup && course.allowSiblingDiscount ? (
-                      // Gefüllt heißt: Das musst du sehen. Berechtigt ist die
-                      // Aussage, die zählt; „nicht berechtigt" ist nur der
-                      // Stand und bekommt deshalb kein Gewicht.
+                      // Nur „berechtigt“ ist gefüllt; „nicht berechtigt“ ist
+                      // nur der Stand.
                       <Tag tone={isEligibleForDiscount ? "inverse" : "muted"}>
                         {isEligibleForDiscount
                           ? "Rabatt berechtigt"
@@ -1061,7 +1044,6 @@ export default function RegistrationDetailPage() {
           </div>
         </div>
 
-        {/* Cancel confirmation modal */}
         {cancelModalOpen && (
           <ScrollableModal>
             <ScrollableModalCard maxW="md">

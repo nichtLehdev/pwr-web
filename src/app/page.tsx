@@ -11,17 +11,9 @@ export const metadata = buildPageMetadata({
 });
 
 /**
- * Server wrapper around the client homepage.
- *
- * The page needs hooks, but a client component cannot export metadata — and
- * the canonical cannot live in the root layout either, since every child route
- * would inherit "/" and declare itself a duplicate of the homepage.
- *
- * The prefetches are awaited rather than fired with `void`: only resolved
- * queries are in the cache by the time the client component server-renders, so
- * awaiting is what puts the actual events and posts into the initial HTML
- * instead of a loading spinner. `prefetch` swallows its errors, so a database
- * hiccup degrades to the client-side fetch rather than failing the page.
+ * Server wrapper so the homepage can export metadata (canonical "/" can't live in
+ * the root layout). Prefetches are awaited so events and posts land in the initial
+ * HTML; `prefetch` swallows errors, falling back to the client-side fetch.
  */
 export default async function Home() {
   const startDate = new Date();

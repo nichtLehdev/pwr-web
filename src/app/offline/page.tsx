@@ -8,10 +8,8 @@ export const metadata: Metadata = {
 };
 
 /**
- * Fallback-Seite des Service Workers für nicht gecachte Routen.
- * Bewusst schlicht: Die Links funktionieren auch ohne JavaScript-Hydration
- * als normale Anker (kein `next/link`) und führen zu den (gecachten)
- * Spielen. Ohne `PublicPage`, ohne Navigation — wie im alten Zustand.
+ * Service-Worker-Fallback für nicht gecachte Routen. Normale Anker statt `next/link`,
+ * damit die Links zu den gecachten Spielen auch ohne Hydration funktionieren.
  */
 export default function OfflinePage() {
   return (

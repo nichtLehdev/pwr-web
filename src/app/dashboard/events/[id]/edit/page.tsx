@@ -74,8 +74,6 @@ const EDIT_EVENT_NAV_ITEMS: DashboardSectionNavItem[] = [
   { href: "#event-form-veroeffentlichung", label: "Veröffentlichung" },
 ];
 
-// Dashboard access is now controlled by permissions
-
 interface PriceOption {
   id: string;
   price: number;
@@ -104,10 +102,8 @@ export default function EditEventPage() {
   const hasApprovePermission = hasPermission("events.approve" as PermissionKey);
   const isHigherRole = hasApprovePermission;
   const scopedBezirkIds = profile?.bezirkScopes?.map((s) => s.bezirkId) ?? [];
-  // Zuständigkeit statt Zugehörigkeit: `profile.bezirkId` sagt, wo jemand im
-  // Werk verortet ist (und trägt öffentlich ein Amt), nicht wofür er schreiben
-  // darf. Beides zu vermischen hieße, für eine einzelne Ausnahme ein Amt zu
-  // vergeben.
+  // Zuständigkeit statt Zugehörigkeit: `profile.bezirkId` ist ein öffentliches
+  // Amt, keine Schreibberechtigung.
   const { selectableBezirkIds } = districtFieldState(
     isHigherRole,
     scopedBezirkIds,
@@ -417,10 +413,8 @@ export default function EditEventPage() {
         setDistrictName(event.districtName || "");
         setStatus(event.status);
 
-        // Datum und Uhrzeit beide in der Zone des Browsers, in der das Formular
-        // sie beim Speichern auch wieder zusammensetzt. Der UTC-Tag aus
-        // `toISOString()` legte einen Termin um 00:30 beim Speichern auf den
-        // Vortag.
+        // Datum und Uhrzeit in der Browser-Zone, wie beim Speichern; der UTC-Tag
+        // aus `toISOString()` legte Termine um 00:30 auf den Vortag.
         const date = new Date(event.eventDate);
         setEventDate(toLocalDateInputValue(date));
         setEventTime(
@@ -608,9 +602,8 @@ export default function EditEventPage() {
       return;
     }
 
-    // Ohne `maxLength` am Textfeld muss die Länge hier geprüft
-    // werden: Sonst lehnte erst der Server ab, und zwar mit
-    // einer englischen Zod-Meldung.
+    // Das Textfeld hat kein `maxLength`; sonst käme erst die englische
+    // Zod-Meldung vom Server.
     if (description.length > MAX_DESCRIPTION_LENGTH) {
       setError(
         `Die Beschreibung ist zu lang (${description.length} von ${MAX_DESCRIPTION_LENGTH} Zeichen).`,
@@ -728,7 +721,6 @@ export default function EditEventPage() {
           storageFailed={storageFailed}
         />
 
-        {/* Error Message */}
         {error && (
           <div className="mb-6 bg-red-50 p-4 text-red-700 dark:bg-red-900/20 dark:text-red-400">
             {error}
@@ -832,7 +824,6 @@ export default function EditEventPage() {
                         </Select>
                       </div>
 
-                      {/* Cancelled Toggle */}
                       <label className="flex cursor-pointer items-center gap-3">
                         <input
                           type="checkbox"
@@ -1029,7 +1020,6 @@ export default function EditEventPage() {
                         className="border-ink dark:border-night-text dark:bg-night dark:text-night-text text-ink bg-paper block w-full border px-3 py-2"
                       />
 
-                      {/* Location Dropdown */}
                       {showLocationDropdown && locationsData && (
                         <div className="border-rule dark:border-night-rule dark:bg-night-raised bg-paper absolute z-10 mt-1 w-full overflow-hidden border">
                           <div
@@ -1099,7 +1089,6 @@ export default function EditEventPage() {
                       />
                     )}
 
-                    {/* Clear Location */}
                     {locationId && (
                       <button
                         type="button"
@@ -1239,7 +1228,6 @@ export default function EditEventPage() {
                           className="border-ink dark:border-night-text dark:bg-night dark:text-night-text text-ink bg-paper block w-full border px-3 py-2"
                         />
 
-                        {/* Ensemble Dropdown */}
                         {showEnsembleDropdown && ensemblesData && (
                           <div className="border-rule dark:border-night-rule dark:bg-night-raised bg-paper absolute z-10 mt-1 w-full overflow-hidden border">
                             <div
@@ -1297,7 +1285,6 @@ export default function EditEventPage() {
                           className="border-ink dark:border-night-text dark:bg-night dark:text-night-text text-ink bg-paper block w-full border px-3 py-2"
                         />
 
-                        {/* Auswahlchor Dropdown */}
                         {showAuswahlChorDropdown && auswahlchoereData && (
                           <div className="border-rule dark:border-night-rule dark:bg-night-raised bg-paper absolute z-10 mt-1 w-full overflow-hidden border">
                             <div
@@ -1566,12 +1553,10 @@ export default function EditEventPage() {
                 description="Redaktionsstatus, Sichtbarkeit und Freigabe im öffentlichen Kalender."
               />
               <DashboardFormBlock title="Status & Freigabe">
-                {/* Notice for approved/rejected events being edited */}
                 {(event?.status === ContentStatus.APPROVED ||
                   event?.status === ContentStatus.REJECTED) &&
                   !isHigherRole && (
-                    // Hinweis statt Alarm: Tinte auf Papier an einer
-                    // Haarlinie statt bernsteinfarbenem Kasten.
+                    // Hinweis, kein Alarm: bewusst ohne Signalfarbe.
                     <div className="border-ink dark:border-night-text mb-4 border-l-2 py-2 pl-4">
                       <div className="flex items-start gap-3">
                         <AlertTriangle className="dark:text-night-text text-ink mt-0.5 h-5 w-5 shrink-0" />
@@ -1658,7 +1643,6 @@ export default function EditEventPage() {
           </DashboardSectionedFormLayout>
         </form>
 
-        {/* Media Picker Modal */}
         <MediaPickerModal
           isOpen={showMediaPicker}
           onClose={() => setShowMediaPicker(false)}
@@ -1671,7 +1655,6 @@ export default function EditEventPage() {
           }}
         />
 
-        {/* Download Picker Modal */}
         <DownloadPickerModal
           isOpen={showDownloadPicker}
           onClose={() => setShowDownloadPicker(false)}

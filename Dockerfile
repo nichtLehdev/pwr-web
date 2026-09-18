@@ -1,6 +1,3 @@
-# ================================
-# Build stage
-# ================================
 FROM node:24-alpine AS builder
 
 # Install dependencies needed for native modules
@@ -23,14 +20,11 @@ COPY prisma.config.ts ./
 ARG DATABASE_URL
 ENV DATABASE_URL=${DATABASE_URL}
 
-# Install all dependencies (including devDependencies for build)
-# This will run prisma generate via postinstall hook
+# postinstall runs prisma generate
 RUN pnpm install --frozen-lockfile
 
-# Copy source code
 COPY . .
 
-# Build the application with memory optimizations
 ENV SKIP_ENV_VALIDATION=1
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -38,41 +32,29 @@ ENV NODE_OPTIONS="--max-old-space-size=2048"
 
 RUN pnpm build
 
-# Drop devDependencies before the runner copies node_modules — the runtime
-# entrypoints (next, prisma migrate, tsx for seeds) are all regular
-# dependencies, so the image doesn't need typescript/eslint/tailwind etc.
+# Runtime entrypoints (next, prisma migrate, tsx) are regular dependencies.
 RUN pnpm prune --prod
 
-# ================================
-# Production stage
-# ================================
 FROM node:24-alpine AS runner
 
-# Install dependencies needed for runtime
 RUN apk add --no-cache libc6-compat
 
 WORKDIR /app
 
-# Create non-root user for security and give it ownership of the workdir.
-# /app itself must be writable by the runtime user (next may write to cwd
-# in some cases) — the COPY --chown lines below only chown the files
-# copied in, not the /app directory entry itself.
+# /app itself must be writable by nextjs (next may write to cwd); COPY --chown
+# only chowns the copied files, not the directory.
 RUN addgroup --system --gid 1001 nodejs \
   && adduser --system --uid 1001 --ingroup nodejs nextjs \
   && chown nextjs:nodejs /app \
-  # Uploads volume mount point (outside public/ so access goes through the
-  # authorizing /api/uploads route)
+  # Uploads outside public/, so access goes through the authorizing /api/uploads route
   && mkdir -p /app/uploads \
   && chown nextjs:nodejs /app/uploads
 
-# Set production environment
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# We do NOT install corepack/pnpm in the runner. All runtime entrypoints
-# (next, prisma, tsx) are invoked directly via node_modules/.bin to avoid
-# pnpm 11's runDepsStatusCheck, which tries to wipe and reinstall
-# node_modules on every script invocation and fails in containers (no TTY).
+# No pnpm in the runner: pnpm 11's runDepsStatusCheck tries to reinstall node_modules
+# on every script run and fails in containers (no TTY). Entrypoints run via node directly.
 COPY --from=builder --chown=nextjs:nodejs /app/package.json ./
 
 # Copy the full build output (non-standalone)
@@ -84,18 +66,10 @@ COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./
 
-# Copy generated Prisma client
 COPY --from=builder --chown=nextjs:nodejs /app/generated ./generated
 
-# Copy tsconfig + the minimal src needed by the prisma/*.ts scripts that run
-# with tsx in the container (post-migration-setup.ts, backfill-slugs.ts,
-# backfill-phone-format.ts, backfill-description-linebreaks.ts, per the app
-# command in deploy/stack.yaml).
-# Everything those scripts import has to be listed here, transitively: the
-# rest of src/ is not in the runtime image, so a file missing from this list
-# still builds fine and only fails when the script runs at container start,
-# where the failure is non-fatal and therefore quiet. db.ts is imported by
-# all of them, so a gap in its own imports takes every one of them down.
+# Minimal src for the prisma/*.ts scripts run with tsx at container start (deploy/stack.yaml).
+# List every transitive import: a missing file builds fine and fails only at runtime, quietly.
 COPY --from=builder --chown=nextjs:nodejs /app/tsconfig.json ./
 COPY --from=builder --chown=nextjs:nodejs /app/src/server/db.ts ./src/server/
 COPY --from=builder --chown=nextjs:nodejs /app/src/server/utils/logger.ts ./src/server/utils/
@@ -110,18 +84,14 @@ COPY --chown=nextjs:nodejs scripts/trigger-registration-closed.mjs ./scripts/
 COPY --chown=nextjs:nodejs scripts/trigger-newsletter-cleanup.mjs ./scripts/
 COPY --chown=nextjs:nodejs scripts/trigger-waitlist-offers.mjs ./scripts/
 
-# Switch to non-root user
 USER nextjs
 
-# Expose port
 EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
 
-# Start the application using next directly (no pnpm wrapper, see comment
-# above about runDepsStatusCheck).
+# No pnpm wrapper, see runDepsStatusCheck above.
 CMD ["node", "node_modules/next/dist/bin/next", "start"]

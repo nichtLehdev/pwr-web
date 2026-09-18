@@ -9,13 +9,8 @@ const log = createLogger("Newsletter");
 type Credentials = { email: string | null; token: string | null };
 
 /**
- * The address and token behind one unsubscribe, from either caller.
- *
- * The unsubscribe page posts them as JSON. A mail client acting on the
- * List-Unsubscribe header (RFC 8058) knows nothing of our body format — it
- * posts a fixed `List-Unsubscribe=One-Click` form body — so for one-click the
- * pair travels in the query string instead. Query wins when present; the JSON
- * body is only read when it has to be.
+ * Address and token: JSON from our unsubscribe page, or the query string for
+ * RFC 8058 one-click (the mail client posts a fixed form body). Query wins.
  */
 async function readCredentials(request: NextRequest): Promise<Credentials> {
   const params = request.nextUrl.searchParams;
@@ -78,11 +73,9 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Datenminimierung bei der Abmeldung: bleiben darf, was die Sperrliste
-    // trägt und die zurückliegenden Versände belegt — die Adresse selbst und
-    // die Zeitstempel. Name und Einwilligungsnachweis haben ohne laufende
-    // Einwilligung keinen Zweck mehr und werden gelöscht. Wer vollständige
-    // Löschung verlangt (Art. 17), wird über die Verwaltung entfernt.
+    // Datenminimierung: Adresse und Zeitstempel bleiben für Sperrliste und
+    // Versandnachweis, Name und Einwilligungsnachweis werden gelöscht.
+    // Vollständige Löschung (Art. 17) nur über die Verwaltung.
     await db.newsletterSubscriber.update({
       where: { email },
       data: {

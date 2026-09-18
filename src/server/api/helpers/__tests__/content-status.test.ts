@@ -21,8 +21,7 @@ describe("authorMayChangeStatus", () => {
     }
   });
 
-  // The regression this closes: bulkStatusChange let an author select their own
-  // pending posts and publish them without any review.
+  // bulkStatusChange must not let authors publish their own posts unreviewed.
   it("refuses self-approval", () => {
     expect(authorMayChangeStatus(DRAFT, APPROVED)).toBe(false);
     expect(authorMayChangeStatus(PENDING, APPROVED)).toBe(false);

@@ -5,10 +5,7 @@ import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { useTheme } from "./theme-provider";
 
-/**
- * Component that syncs user theme preference from database with ThemeProvider
- * Must be placed inside TRPCReactProvider
- */
+/** Syncs the stored theme preference into ThemeProvider. Must be inside TRPCReactProvider. */
 export function ThemeSync() {
   const { data: session } = useSession();
   const { setTheme } = useTheme();

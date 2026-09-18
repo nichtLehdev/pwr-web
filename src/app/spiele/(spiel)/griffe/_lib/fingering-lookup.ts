@@ -16,20 +16,8 @@ function entry(v: string[][], m?: string): FingeringEntry {
 }
 
 /**
- * Trompeten-Griffe nach **B‑Trompeten‑Stimm‑/Schreib‑MIDI** (Tabelle = Griffe
- * für den auf der B‑Stimme notierten Ton).
- * **C‑Stimme** im Spiel: System zeigt **Konzertton** → Lookup `+2`.
- * **Trompete in B**: System zeigt **geschriebenen B‑Ton** → Lookup ohne Verschiebung.
- */
-/**
- * Standard-Griffe geschriebener B‑Trompeten‑Töne mit üblichen Alternativen.
- * Nicht jede Intonations‑Variante ist enthalten.
- *
- * **Bereich:** geschriebenes Ges3 (MIDI 54) bis E6 (MIDI 88).
- *
- * **Zeilenkommentare:** `MIDI` = Index in dieser Tabelle (= **Stimmton** /
- * geschriebener B‑Trompeten‑Ton). **Konzert:** klingender Ton (eine große
- * Sekunde tiefer, gleiche Benennung wie `midiToWrittenPitch(MIDI − 2)`).
+ * Griffe nach geschriebenem B‑Trompeten‑MIDI, Ges3 (54) bis E6 (88). Die C‑Stimme zeigt
+ * den Konzertton → Lookup `+2`. Zeilenkommentare: MIDI — Stimmton — Konzert (große Sekunde tiefer).
  */
 const TRUMPET_BY_MIDI: Partial<Record<number, FingeringEntry>> = {
   // 54 — Stimm Ges3 — Konzert: E3
@@ -108,12 +96,8 @@ const TRUMPET_BY_MIDI: Partial<Record<number, FingeringEntry>> = {
 };
 
 /**
- * BB♭‑Tuba (4 Ventile), Konzert‑MIDI im Bassschlüssel (kein Stimm-Offset).
- *
- * Systematik: offene Naturtöne bei **34 (B1, Pedal), 46 (B2), 53 (F3),
- * 58 (B3), 62 (D4), 65 (F4)**; Ventil‑Halbtonwerte **1 = 2, 2 = 1, 3 = 3,
- * 4 = 5**. Jeder Griff = Naturton minus Ventilsumme. Erste Variante =
- * Standard, weitere = übliche Alternativen. Intonation bleibt modellabhängig.
+ * BB♭‑Tuba, Konzert‑MIDI (kein Stimm-Offset). Griff = Naturton (34, 46, 53, 58, 62, 65)
+ * minus Ventilsumme (Halbtöne: 1 = 2, 2 = 1, 3 = 3, 4 = 5). Erste Variante = Standard.
  */
 const TUBA_BY_MIDI: Partial<Record<number, FingeringEntry>> = {
   // 34 — Konzert: B1 (Pedal, offen)
@@ -192,17 +176,8 @@ const TUBA_BY_MIDI: Partial<Record<number, FingeringEntry>> = {
 };
 
 /**
- * Posaune (Tenor, Quartventil-Option): Zugpositionen nach Konzert‑MIDI.
- * Bereich: G4 (MIDI 67) abwärts bis E2 (MIDI 40).
- *
- * Pro Eintrag:
- * - erste Variante = Standard
- * - weitere Varianten = Alternativen
- * Notation:
- * - `2+` = hoher 2. Platz
- * - `2-` = tiefer 2. Platz
- * - `*1` = 1. Platz mit Quartventil
- * Beispiel: entry([["2+"], ["2-"], ["*1"]])
+ * Tenorposaune, Konzert‑MIDI G4 (67) bis E2 (40); erste Variante = Standard.
+ * `2+`/`2-` = hoher/tiefer 2. Platz, `*1` = 1. Platz mit Quartventil.
  */
 const TROMBONE_BY_MIDI: Partial<Record<number, FingeringEntry>> = {
   // 67 — Konzert: G4
@@ -318,10 +293,8 @@ export function fingeringSetsEqual(a: string[], b: string[]): boolean {
 }
 
 /**
- * Posaune: neutraler Platz gilt als richtig, wenn die registerkorrigierte
- * Variante erwartet wird — erwartetes „2+“/„2-“ akzeptiert auch „2“.
- * Einseitig: erwartetes „2“ akzeptiert **kein** „2+“. Quartventil-Token
- * (`*1`) müssen exakt stimmen.
+ * Erwartetes „2+“/„2-“ akzeptiert auch „2“, aber nicht umgekehrt;
+ * Quartventil-Token (`*1`) müssen exakt stimmen.
  */
 export function slideTokenMatches(
   expected: string,

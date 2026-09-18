@@ -125,10 +125,7 @@ export function NoteGlyph({ id, className }: Props) {
         (svg as SVGSVGElement).style.position = "relative";
         (svg as SVGSVGElement).style.left = "50%";
         (svg as SVGSVGElement).style.overflow = "visible";
-        // Anteilig statt in festen Pixeln: -22px waren genau -55% der
-        // damaligen 40px-Kachel. Als Prozentwert bleibt der Bildausschnitt in
-        // jeder Größe derselbe — sonst rutscht die Note beim Vergrößern aus
-        // ihrem Kästchen (bei 28px entsprachen dieselben 22px schon -79%).
+        // Prozentual statt in Pixeln, damit die Note in jeder Größe in ihrem Kästchen bleibt.
         (svg as SVGSVGElement).style.transform = "translate(-50%, -55%)";
         svg
           .querySelectorAll(".vf-stave path, .vf-stave line, .vf-stave rect")

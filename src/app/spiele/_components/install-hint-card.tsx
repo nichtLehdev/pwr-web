@@ -11,9 +11,8 @@ type BeforeInstallPromptEvent = Event & {
 };
 
 /**
- * Install-Hinweis auf der Spiele-Übersicht: Chromium bekommt einen echten
- * Install-Button (beforeinstallprompt), iOS Safari die "Zum Home-Bildschirm"-
- * Anleitung. In der installierten App unsichtbar.
+ * Chromium bekommt einen Install-Button (beforeinstallprompt), iOS Safari die
+ * "Zum Home-Bildschirm"-Anleitung; in der installierten App unsichtbar.
  */
 export function InstallHintCard() {
   const [installEvent, setInstallEvent] =

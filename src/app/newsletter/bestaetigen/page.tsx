@@ -9,9 +9,8 @@ import { Note } from "../../_components/programmheft/note";
 import { ArrowLink } from "../../_components/programmheft/section-head";
 
 /**
- * Step two of the double opt-in. The click happens here rather than straight
- * from the mail: link scanners and mail-security prefetchers follow GET links
- * on their own, and a subscription confirmed by a robot is no confirmation.
+ * Double opt-in, step two. Confirmed by a click here, not by the mail's GET link:
+ * link scanners and mail-security prefetchers follow those on their own.
  */
 function ConfirmContent() {
   const searchParams = useSearchParams();

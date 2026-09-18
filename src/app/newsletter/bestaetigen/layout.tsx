@@ -9,11 +9,7 @@ export const metadata = buildPageMetadata({
   noIndex: true,
 });
 
-/**
- * Metadata holder for the client-rendered page in this segment.
- *
- * A transactional page reached from an e-mail link; nothing to rank.
- */
+/** Metadata holder; a transactional page reached from an e-mail link, nothing to rank. */
 export default function NewsletterConfirmLayout({
   children,
 }: {

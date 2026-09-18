@@ -1,11 +1,6 @@
 /**
- * Warum die eingetragenen Teilnehmer voraussichtlich keinen Platz bekommen.
- *
- * Der Wartelisten-Hinweis im Formular erschien nur bei einem ganz vollen Kurs:
- * wer vier Teilnehmer für zwei freie Plätze eintrug, erfuhr erst aus der Mail,
- * dass die ganze Anmeldung auf der Warteliste steht. Die freien Plätze stammen
- * vom Laden der Seite — entscheidend bleibt der Server, dies ist nur der
- * Hinweis vorab.
+ * Warum die eingetragenen Teilnehmer voraussichtlich keinen Platz bekommen. Nur ein
+ * Hinweis vorab mit den Plätzen vom Seitenladen; entscheidend bleibt der Server.
  */
 export type SeatShortage =
   | { kind: "course"; free: number; requested: number }
@@ -65,12 +60,8 @@ export function registrationSeatShortage({
 }
 
 /**
- * Ob eine Preiskategorie für eine weitere Person dieser Anmeldung ausgebucht
- * ist. Wie auf dem Server (`findFullPriceTier`) zählen nur Kategorien mit
- * eigenem Limit; unbegrenzte teilen sich die Plätze des Kurses, und dessen
- * Warteliste greift ohnehin. Die übrigen Personen derselben Anmeldung in
- * dieser Kategorie belegen die Restplätze schon — mit einem freien Platz ist
- * sie für die zweite Person voll.
+ * Wie `findFullPriceTier` auf dem Server zählen nur Kategorien mit eigenem Limit. Die
+ * übrigen Personen dieser Anmeldung in der Kategorie belegen die Restplätze schon.
  */
 export function isPriceOptionFullFor({
   priceOptionId,

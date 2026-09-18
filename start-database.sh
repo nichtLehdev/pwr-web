@@ -1,15 +1,6 @@
 #!/usr/bin/env bash
-# Use this script to start a docker container for a local development database
-
-# TO RUN ON WINDOWS:
-# 1. Install WSL (Windows Subsystem for Linux) - https://learn.microsoft.com/en-us/windows/wsl/install
-# 2. Install Docker Desktop or Podman Deskop
-# - Docker Desktop for Windows - https://docs.docker.com/docker-for-windows/install/
-# - Podman Desktop - https://podman.io/getting-started/installation
-# 3. Open WSL - `wsl`
-# 4. Run this script - `./start-database.sh`
-
-# On Linux and macOS you can run this script directly - `./start-database.sh`
+# Starts a Docker/Podman container for the local development database.
+# On Windows, run it inside WSL.
 
 # import env variables from .env
 set -a
@@ -25,7 +16,6 @@ if ! [ -x "$(command -v docker)" ] && ! [ -x "$(command -v podman)" ]; then
   exit 1
 fi
 
-# determine which docker command to use
 if [ -x "$(command -v docker)" ]; then
   DOCKER_CMD="docker"
 elif [ -x "$(command -v podman)" ]; then

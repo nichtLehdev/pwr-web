@@ -43,10 +43,6 @@ import { formatEuro } from "@/lib/invoice-document";
 import { cn } from "@/lib/utils";
 import { formatBerlin } from "@/lib/berlin-time";
 
-/**
- * Schaltflächen-Stimmen des Programmhefts, lokal wiederholt wie auf den
- * übrigen öffentlichen Formularseiten (z. B. /registrations).
- */
 const BTN_PRIMARY =
   "bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-primary dark:text-ink dark:hover:bg-paper semi-condensed inline-flex min-h-12 items-center justify-center gap-2 px-6 text-base font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60";
 const BTN_OUTLINE =
@@ -59,7 +55,7 @@ const STATUS_TAG: Record<RegistrationStatus, { label: string; tone: TagTone }> =
     CANCELLED: { label: "Storniert", tone: "cancelled" },
   };
 
-/** Bezeichnung über einem schreibgeschützten Wert (wie `headMeta.label` als Kopf über Meta-Zeilen). */
+/** Bezeichnung über einem schreibgeschützten Wert. */
 function InfoField({
   label,
   className,
@@ -378,7 +374,6 @@ export default function ViewRegistrationPage() {
             </Note>
           )}
 
-          {/* Kursdetails */}
           <div>
             <Heading as="h2" size="list" rule>
               Kursdetails
@@ -392,9 +387,7 @@ export default function ViewRegistrationPage() {
                 <InfoField label="Ort">
                   {registration.course.location.name},{" "}
                   {registration.course.location.city}
-                  {/* Eigener Block: Der Link trug nur `mt-1`, stand aber
-                      inline direkt hinter dem Ortsnamen — gemessen ohne jeden
-                      Abstand. Ein oberer Rand wirkt erst auf eigener Zeile. */}
+                  {/* Eigener Block, sonst wirkt `mt-1` nicht. */}
                   <span className="mt-1 block">
                     <LocationNavigationLink
                       location={registration.course.location}
@@ -417,7 +410,6 @@ export default function ViewRegistrationPage() {
             </ArrowLink>
           </div>
 
-          {/* Registrant Info */}
           <div>
             <Heading as="h2" size="list" rule>
               Anmelder
@@ -438,7 +430,6 @@ export default function ViewRegistrationPage() {
             </div>
           </div>
 
-          {/* Billing Info (if separate) */}
           {registration.useSeparateBilling && (
             <div>
               <Heading as="h2" size="list" rule>
@@ -477,7 +468,6 @@ export default function ViewRegistrationPage() {
             </div>
           )}
 
-          {/* Participants */}
           <div>
             <Heading as="h2" size="list" rule>
               Teilnehmer ({registration.participants.length})
@@ -564,7 +554,6 @@ export default function ViewRegistrationPage() {
             course={registration.course}
           />
 
-          {/* Price Summary */}
           <div>
             <Heading as="h2" size="list" rule>
               Preisübersicht
@@ -666,7 +655,6 @@ export default function ViewRegistrationPage() {
             )}
           </div>
 
-          {/* Notes */}
           {registration.notes && (
             <div>
               <Heading as="h2" size="list" rule>
@@ -678,7 +666,6 @@ export default function ViewRegistrationPage() {
             </div>
           )}
 
-          {/* Back Link */}
           <div>
             <Link
               href={
@@ -694,7 +681,6 @@ export default function ViewRegistrationPage() {
           </div>
         </div>
 
-        {/* Cancel Confirmation Modal */}
         {cancelModalOpen && (
           <ScrollableModal>
             <ScrollableModalCard

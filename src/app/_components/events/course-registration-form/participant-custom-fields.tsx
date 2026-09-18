@@ -12,11 +12,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/app/_components/programmheft/field";
 
-/**
- * Überschreibt die gerundeten `ui/`-Inputs (`Input`, `Select`, `Textarea`) mit
- * dem Programmheft-Feld — `cn` mergt nur, es entfernt keine widersprüchlichen
- * Utilities, deshalb per `!`-Wichtigkeit statt Klassenreihenfolge.
- */
+/** Überschreibt die `ui/`-Inputs per `!`, weil `cn` widersprüchliche Utilities nicht entfernt. */
 const CUSTOM_FIELD_INPUT_CLASS =
   "rounded-none! border-2! border-rule dark:border-night-rule bg-paper! dark:bg-night! text-ink! dark:text-night-text! shadow-none! focus:border-ink! dark:focus:border-night-text! focus:ring-0!";
 const CUSTOM_FIELD_LABEL_CLASS =
@@ -73,10 +69,7 @@ type ParticipantCustomFieldsProps = {
   selectFieldSize?: SelectProps["fieldSize"];
   /** Background/border wrapper for CHECKBOX and MULTISELECT boxes (step 2 tints sibling groups green). */
   choiceContainerClassName?: string;
-  /**
-   * Meldung außerhalb der Felder, die fehlende Angaben nennt — markierte
-   * Felder werden mit ihr per `aria-describedby` verknüpft.
-   */
+  /** Sammelmeldung außerhalb der Felder, per `aria-describedby` verknüpft. */
   errorDescriptionId?: string;
 };
 
@@ -131,8 +124,7 @@ export function ParticipantCustomFields({
 
         return (
           <div key={field.fieldName} className="md:col-span-2">
-            {/* Sternchen hier selbst und stumm: `Label` sagt sonst englisch
-                „required“ an, und die Pflicht steht schon am Feld. */}
+            {/* Eigenes stummes Sternchen: `Label` sagt sonst englisch „required“ an. */}
             <Label
               id={labelId}
               htmlFor={isGroup ? undefined : controlId}

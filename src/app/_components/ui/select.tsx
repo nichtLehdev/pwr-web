@@ -10,9 +10,8 @@ export type SelectProps = Omit<
 > & {
   error?: boolean;
   /**
-   * `md` matches the shared `Input` (16px text, 44px tall) so a select can sit
-   * in a row of text inputs without looking shorter. Below 16px iOS Safari also
-   * zooms the page in when the control is focused.
+   * `md` matches `Input` (16px text, 44px tall). Below 16px iOS Safari zooms
+   * the page in on focus.
    */
   fieldSize?: "sm" | "md";
   children: React.ReactNode;
@@ -23,9 +22,8 @@ type ParsedOption = {
   label: string;
   disabled?: boolean;
   /**
-   * Text pinned to the right of the label (e.g. a price), set via
-   * `data-trailing` on the `<option>`. It never truncates, so it stays readable
-   * on narrow screens where the label itself has to be cut off.
+   * Text pinned right of the label (e.g. a price), set via `data-trailing` on
+   * the `<option>`. Never truncates.
    */
   trailing?: string;
 };
@@ -172,9 +170,8 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
 
     React.useEffect(() => {
       if (!open) return;
-      // Beim Öffnen steht die Markierung auf der Auswahl — auch wenn sie
-      // inzwischen gesperrt ist, damit man hört, wo man steht. Ohne Auswahl
-      // auf dem ersten wählbaren Eintrag statt auf einem gesperrten.
+      // Markierung auf der Auswahl, auch wenn gesperrt (man hört, wo man steht);
+      // ohne Auswahl auf dem ersten wählbaren Eintrag.
       const selectedIndex = options.findIndex((o) => o.value === value);
       const firstEnabled = options.findIndex((o) => !o.disabled);
       setHighlight(
@@ -188,11 +185,7 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
       el?.scrollIntoView({ block: "nearest" });
     }, [highlight, open]);
 
-    /**
-     * Der nächste wählbare Eintrag in Pfeilrichtung. Gibt es keinen mehr,
-     * bleibt die Markierung stehen — vorher blieb sie am Rand auf einem
-     * gesperrten Eintrag hängen, den Enter dann stumm nicht übernahm.
-     */
+    /** Nächster wählbarer Eintrag in Pfeilrichtung; ohne einen bleibt die Markierung stehen. */
     const stepHighlight = (delta: 1 | -1) =>
       setHighlight((h) => {
         for (let i = h + delta; i >= 0 && i < options.length; i += delta) {
@@ -220,8 +213,7 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
           }
         }
       } else if (e.key === "Escape" && open) {
-        // Escape schließt nur die Liste. Weitergereicht schloss es auch das
-        // umgebende Fenster (Teilnehmer-Fenster) — mitsamt allen Eingaben.
+        // Escape schließt nur die Liste, nicht das umgebende Fenster samt Eingaben.
         e.preventDefault();
         e.stopPropagation();
         close();
@@ -243,29 +235,17 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
 
     const optionId = (index: number) => `${listId}-option-${index}`;
 
-    // `role="combobox"` verbietet „Name aus Inhalt": Der sichtbare Text im
-    // Auslöser zählt nicht als Name. Ohne aria-label, aria-labelledby oder ein
-    // `id`, auf das ein <label for> zeigt, bleibt der Knopf namenlos — axe meldet
-    // das als `button-name`, WCAG 4.1.2 Stufe A.
-    //
-    // Der Platzhalter (die Option mit leerem Wert, „Alle Bezirke", „Bitte
-    // wählen") ist der einzige Text, der den Zweck benennt und im Gegensatz zu
-    // `displayText` nicht mit der Auswahl wechselt — ein Name, der sich beim
-    // Auswählen ändert, wäre für Sprachsteuerung unbrauchbar.
-    //
-    // Gibt der Aufrufer ein `id` mit, hat er die Kopplung über <label for>
-    // selbst in der Hand; ein aria-label würde dessen sichtbaren Text
-    // überschreiben und „sprich, was du siehst" brechen. Deshalb hier nichts.
+    // `role="combobox"` nimmt keinen Namen aus dem Inhalt (WCAG 4.1.2). Ersatzname
+    // ist der Platzhalter, der sich anders als `displayText` nicht mit der Auswahl
+    // ändert. Mit `id` koppelt der Aufrufer per <label for>, dann kein aria-label.
     const platzhalterLabel = options.find((o) => o.value === "")?.label;
     const hatEigenenNamen = Boolean(ariaLabel ?? ariaLabelledBy ?? id);
     const ariaLabelEffektiv = hatEigenenNamen ? ariaLabel : platzhalterLabel;
 
     const triggerClasses = cn(
       "border-ink bg-paper text-ink flex w-full min-w-0 items-center justify-between gap-2 border px-3 py-2 text-left transition-colors",
-      // Ohne eigene Schriftgröße, wie `Input`: Mit `text-sm` war der Auslöser
-      // 38px hoch und stand neben 42px hohen Eingabefeldern sichtbar zu klein
-      // (gemeldet am Förderverein-Formular). Wer ein kompaktes Feld will,
-      // gibt `text-sm` über `className` mit, wie die Filterleisten es tun.
+      // Ohne eigene Schriftgröße, wie `Input`, damit die Höhen neben
+      // Textfeldern passen. Kompakte Felder geben `text-sm` per `className` mit.
       fieldSize === "md" ? "h-11 text-base sm:px-4" : undefined,
       "dark:border-night-text dark:bg-night dark:text-night-text",
       "hover:bg-rule/30 dark:hover:bg-night-raised",
@@ -346,9 +326,7 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
                   id={optionId(index)}
                   role="option"
                   aria-selected={selected}
-                  // Gesperrt auch für Vorlesegeräte: vorher nur ausgegraut und
-                  // als ganz normale Auswahl vorgelesen, die dann stumm nicht
-                  // übernommen wurde.
+                  // Gesperrt auch für Vorlesegeräte, nicht nur ausgegraut.
                   aria-disabled={opt.disabled || undefined}
                   data-index={index}
                   className={cn(
@@ -356,8 +334,8 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
                     // md: 44px hohe Zeilen, dieselbe Trefferfläche wie das Feld.
                     fieldSize === "md" ? "py-2.5 text-base" : "py-2",
                     index === highlight && "bg-rule/60 dark:bg-night-rule",
-                    // Nur eine der beiden Zeigerformen: nebeneinander entschied
-                    // die Reihenfolge im Stylesheet, und es blieb der Zeiger.
+                    // Nur eine Zeigerform setzen, sonst entscheidet die
+                    // Reihenfolge im Stylesheet.
                     opt.disabled
                       ? "cursor-not-allowed opacity-40"
                       : "cursor-pointer",

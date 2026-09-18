@@ -147,7 +147,6 @@ export default function NewPosaunenwartPage() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Role */}
         <section className="border-rule dark:border-night-rule dark:bg-night-raised bg-paper border p-6">
           <h2 className="condensed text-ink dark:text-night-text mb-4 text-lg font-bold">
             Rolle

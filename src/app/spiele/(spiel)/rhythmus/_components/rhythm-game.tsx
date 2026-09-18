@@ -104,7 +104,6 @@ export function RhythmGame() {
   const [rhythm, setRhythm] = useState<GeneratedRhythm | null>(null);
   /** −1 = noch keine Ziffer; „1“ erscheint erst synchron zum ersten Klick. */
   const [countLabel, setCountLabel] = useState(-1);
-  /** Länge des Einzählers (1…N) für Anzeige & Overlay. */
   const [countInBeats, setCountInBeats] = useState(4);
   /** Nach Einplanen des Einzählers: Tippfläche aktiv; Rhythmus-Nullpunkt wird zur ersten Audio-Sync-Runde verfeinert. */
   const [tapAllowed, setTapAllowed] = useState(false);
@@ -430,11 +429,7 @@ export function RhythmGame() {
     setRhythm(null);
   }, [clearTimers]);
 
-  /**
-   * Kopfleisten-Knopf: laufende Runde abbrechen und zurück ins Setup. Anders
-   * als „Von vorn“ im Ergebnis kann das mitten im Einzählen passieren — dann
-   * müssen auch die bereits eingeplanten Metronom-Klänge weg.
-   */
+  /** Kann mitten im Einzählen passieren — dann müssen auch eingeplante Metronom-Klänge weg. */
   const handleBackToSetup = useCallback(() => {
     clearTimers();
     engine.cancelScheduled();
@@ -515,8 +510,6 @@ export function RhythmGame() {
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-[clamp(0.625rem,2.2svh,1.5rem)]">
-      {/* Eine Bedienung statt zweier: der Kopfleisten-Knopf zeigt die
-          Einstellung an UND führt zurück ins Setup. */}
       {phase !== "idle" && phase !== "result" && (
         <GameBarSlot>
           <button
@@ -563,8 +556,6 @@ export function RhythmGame() {
             >
               Schwierigkeit
             </h3>
-            {/* Liegende Zeilen statt drei enger Kärtchen: der Erklärsatz steht
-                neben dem Titel, die Zeile nutzt die ganze Satzbreite. */}
             <div className="mt-2 flex flex-col gap-2">
               {DIFFICULTY_CARDS.map((c) => {
                 const Icon = c.icon;
@@ -576,8 +567,7 @@ export function RhythmGame() {
                     type="button"
                     onClick={() => setDifficulty(c.id)}
                     aria-pressed={active}
-                    // Name = Titel allein; der Erklärsatz kommt als
-                    // Beschreibung, statt mit dem Titel zu verschmelzen.
+                    // Name = Titel allein; der Erklärsatz kommt als Beschreibung.
                     aria-label={c.title}
                     aria-describedby={hintId}
                     className={cn(
@@ -778,9 +768,7 @@ export function RhythmGame() {
               )}
             </div>
 
-            {/* Im Dock steht immer genau die Handlung, die gerade dran ist:
-                vorher zwei Knöpfe, ab dem Einzählen die Tippfläche. Die tote
-                „Erst anhören“-Fläche entfällt. */}
+            {/* Im Dock steht immer genau die Handlung, die gerade dran ist. */}
             <GameDock>
               {phase === "preview" ? (
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">

@@ -9,13 +9,9 @@ import {
 } from "./registration-seat-shortage";
 
 /**
- * Aufteilen einer Anmeldung.
- *
- * Reichen die freien Plätze nicht für alle Teilnehmer, wählen die Anmeldenden,
- * wer sie bekommt: die Gewählten werden eine bestätigte Anmeldung, die übrigen
- * eine auf der Warteliste. Zwei Anmeldungen mit gemeinsamer
- * `registrationGroupId` statt eines Status je Teilnehmer, weil Kapazität,
- * Rechnungen und Anzahlung an der Anmeldung hängen.
+ * Reichen die Plätze nicht, wählen die Anmeldenden, wer bestätigt wird; der Rest kommt
+ * auf die Warteliste. Zwei Anmeldungen mit gemeinsamer `registrationGroupId` statt Status
+ * je Teilnehmer, weil Kapazität, Rechnungen und Anzahlung an der Anmeldung hängen.
  */
 
 /** Meldung, wenn die gewählten Teilnehmer beim Absenden nicht mehr passen. */
@@ -31,8 +27,7 @@ export type SeatAvailability = {
 };
 
 /**
- * Die vorbelegte Auswahl: Teilnehmer in Listenreihenfolge, solange Kurs und
- * Preiskategorie Platz haben. Wer in einer vollen Kategorie steht, wird
+ * Vorbelegung in Listenreihenfolge. Wer in einer vollen Kategorie steht, wird
  * übersprungen — nachfolgende in anderen Kategorien können noch passen.
  */
 export function defaultSeatSelection(
@@ -78,9 +73,8 @@ export function seatSelectionProblem(
 }
 
 /**
- * Prüft die übermittelte Auswahl: ganze Zahlen im Bereich, keine doppelt, und
- * ein echter Teil — mindestens einer bestätigt, mindestens einer wartet.
- * Liefert die Auswahl sortiert oder `null`, wenn sie so nicht taugt.
+ * Ganze Zahlen im Bereich, keine doppelt, und ein echter Teil (mindestens einer
+ * bestätigt, einer wartet). Sortiert, sonst `null`.
  */
 export function normalizeSeatSelection(
   indexes: readonly number[],
@@ -114,9 +108,8 @@ export function splitsSiblingGroup(
 }
 
 /**
- * Geschwisterkindrabatt eines Teils. Berechnet wird über alle Teile der
- * Gruppe — getrennte Geschwister verlieren ihn nicht — und jedem Teil der
- * Anteil seiner eigenen Teilnehmer zugerechnet.
+ * Über alle Teile der Gruppe gerechnet, damit getrennte Geschwister den Rabatt nicht
+ * verlieren; jeder Teil erhält den Anteil seiner eigenen Teilnehmer.
  */
 export function siblingDiscountWithinGroup(
   own: readonly SiblingDiscountParticipant[],
@@ -194,11 +187,7 @@ export function planRegistrationParts<
   };
 }
 
-/**
- * Preise eines Teils: seine Teilnehmer, Rabatt über die ganze Gruppe. Gehört
- * die Anmeldung schon zu einer Gruppe, zählen deren übrige Teile als
- * `otherParticipants` mit.
- */
+/** Rabatt über die ganze Gruppe: bestehende Gruppenteile zählen als `otherParticipants` mit. */
 export function partPricing(
   participants: readonly SiblingDiscountParticipant[],
   ownIndexes: readonly number[],

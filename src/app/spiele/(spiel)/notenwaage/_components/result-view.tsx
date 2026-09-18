@@ -43,8 +43,7 @@ export function NoteWaageResultView({
         <p className="text-ink dark:text-night-text mt-3 text-lg font-bold md:text-xl">
           Runde beendet
         </p>
-        {/* Orange ist im Heft eine Flaeche: als Schrift auf Papier nur 1,99:1,
-            deshalb die Messing-Tinte — im Nachtdruck traegt Orange selbst. */}
+        {/* Orange als Schrift auf Papier hat nur 1,99:1, daher Messing-Tinte; nachts trägt Orange. */}
         <p className="text-primary-ink dark:text-primary mt-2 text-4xl font-bold tabular-nums md:text-5xl">
           {score}
         </p>

@@ -15,11 +15,8 @@ type Db = typeof database;
 type IsTaken = (candidate: string) => Promise<boolean>;
 
 /**
- * Validates a slug an author typed and confirms it is still free.
- *
- * A typed slug is taken literally rather than de-duplicated: silently turning
- * "adventskonzert" into "adventskonzert-2" would publish a URL they did not
- * choose. The clash is reported instead, so they can pick another.
+ * A typed slug is taken literally, not de-duplicated: a clash is reported rather
+ * than publishing a URL the author did not choose.
  */
 async function checkedSlug(requested: string, isTaken: IsTaken) {
   const slug = requested.trim();
@@ -43,12 +40,8 @@ async function checkedSlug(requested: string, isTaken: IsTaken) {
 }
 
 /**
- * Slugs are derived from the title at creation and never regenerated on edit.
- *
- * A slug is part of a published URL: rewriting it when someone fixes a typo in
- * a headline would break every link already shared and every result Google has
- * indexed. Renaming stays possible, but only as a deliberate act — the author
- * types the new slug into the form, which warns them what it costs.
+ * Derived at creation, never regenerated on edit: that would break shared links and
+ * indexed results. Renaming is a deliberate act in the form.
  */
 export async function createPostSlug(
   db: Db,
@@ -166,14 +159,8 @@ export async function updateCourseSlug(
 }
 
 /**
- * Slug für einen Eintrag aus einem Import.
- *
- * Anders als im Formular darf ein besetzter Slug hier nicht scheitern: Ein
- * Import läuft über viele Einträge auf einmal, und ein einziger vergebener
- * Slug würde den ganzen Vorgang abbrechen. Der ausgegebene Slug wird deshalb
- * übernommen, solange er frei und gültig ist — dann führt eine geteilte
- * Adresse nach dem Wiedereinspielen wieder auf denselben Eintrag. Ist er
- * vergeben, entsteht ein neuer aus Titel und Jahr, wie beim Anlegen.
+ * Ein besetzter Slug darf den Import nicht abbrechen: Der exportierte Slug wird übernommen,
+ * wenn er frei und gültig ist, sonst entsteht ein neuer wie beim Anlegen.
  */
 async function importedSlug(
   requested: unknown,

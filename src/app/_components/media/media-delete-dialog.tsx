@@ -17,12 +17,8 @@ import {
 } from "./media-shared";
 
 /**
- * Löschdialog mit Verwendungsnachweis.
- *
- * Der vorherige Dialog fragte nur „bist du sicher?“ und nannte nicht einmal die
- * Datei. Das war vor allem deshalb heikel, weil zwei Beziehungen auf
- * `onDelete: Cascade` stehen: mit dem Bild verschwand stillschweigend das ganze
- * Bläserheft bzw. die Karussell-Folie.
+ * Löschdialog mit Verwendungsnachweis: zwei Beziehungen stehen auf `onDelete: Cascade`,
+ * mit dem Bild verschwinden Bläserheft bzw. Karussell-Folie.
  */
 export function MediaDeleteDialog({
   media,

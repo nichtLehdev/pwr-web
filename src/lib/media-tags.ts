@@ -1,8 +1,6 @@
 /**
- * `Media.tags` ist eine JSON-Spalte, in der historisch zweierlei gelandet ist:
- * Arrays aus dem Import und — über ein `z.string()` im Router — einzelne
- * Komma-Strings aus dem Dashboard. Beide Formen müssen weiter lesbar bleiben,
- * geschrieben wird ab jetzt ausschließlich ein Array.
+ * `Media.tags` enthält Arrays (Import) oder Komma-Strings (altes Dashboard). Beide
+ * bleiben lesbar; geschrieben wird nur ein Array.
  */
 export function parseMediaTags(value: unknown): string[] {
   if (Array.isArray(value)) {
@@ -15,7 +13,6 @@ export function parseMediaTags(value: unknown): string[] {
   return [];
 }
 
-/** Komma-getrennte Eingabe aus dem Formular in einzelne Tags zerlegen. */
 export function splitMediaTags(input: string): string[] {
   return input
     .split(",")
@@ -23,7 +20,6 @@ export function splitMediaTags(input: string): string[] {
     .filter(Boolean);
 }
 
-/** Tags für das Formularfeld wieder zu einer Zeile zusammenfassen. */
 export function formatMediaTags(value: unknown): string {
   return parseMediaTags(value).join(", ");
 }

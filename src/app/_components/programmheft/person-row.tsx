@@ -42,10 +42,7 @@ interface PersonRowProps {
   email?: string | null;
 }
 
-/**
- * Personenzeile (ersetzt `PeopleCard`): rundes Foto (einzige Rundung im
- * Heft), Name in der Titelstimme, Amt darunter, E-Mail als Textlink.
- */
+/** Personenzeile; das runde Foto ist die einzige Rundung im Heft. */
 export function PersonRow({ name, role, image, email }: PersonRowProps) {
   const credit = image
     ? [image.copyright, image.creator].filter(Boolean).join(" · ")
@@ -54,7 +51,7 @@ export function PersonRow({ name, role, image, email }: PersonRowProps) {
   return (
     <li className="border-rule dark:border-night-rule flex items-start gap-4 border-b py-4">
       {image ? (
-        // Vergrößerbar ohne Lupe: Bei 56px deckte sie das halbe Gesicht zu.
+        // Ohne Lupe: Im kleinen Foto deckt sie das Gesicht zu.
         <ZoomableImage
           src={image.url}
           alt={image.alt || name}

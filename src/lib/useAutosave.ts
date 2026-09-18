@@ -21,25 +21,13 @@ let sweptThisPageLoad = false;
 export type UseAutosaveOptions<T> = {
   /** Eindeutig pro Formular, z. B. "post-new" oder `post-${id}-edit`. */
   name: string;
-  /**
-   * Der zu sichernde Formularstand.
-   *
-   * Muss referenziell stabil sein (`useMemo`) — sonst wird bei jedem Render
-   * neu geplant und der Entwurf erst geschrieben, wenn das Rendern zur Ruhe
-   * kommt.
-   */
+  /** Muss referenziell stabil sein (`useMemo`), sonst wird bei jedem Render neu geplant. */
   data: T;
-  /**
-   * Entwürfe werden pro Benutzer getrennt gespeichert. Solange die Sitzung
-   * noch lädt (`null`/`undefined`), ist der Autosave inaktiv.
-   */
+  /** Solange die Sitzung lädt (`null`/`undefined`), ist der Autosave inaktiv. */
   userId: string | null | undefined;
   /**
-   * Das Formular ist befüllt und der Autosave darf laufen.
-   *
-   * Bearbeiten-Formulare müssen hier `false` liefern, bis die Serverdaten in
-   * den Feldern stehen: sonst überschreibt der leere Anfangszustand den
-   * gespeicherten Entwurf, bevor er überhaupt angeboten werden kann.
+   * Bearbeiten-Formulare liefern `false`, bis die Serverdaten stehen — sonst
+   * überschreibt der leere Anfangszustand den Entwurf, bevor er angeboten wird.
    */
   ready?: boolean;
   /** Hochzählen, wenn sich die Form von `data` ändert — ältere Entwürfe fallen dann weg. */
@@ -53,26 +41,16 @@ export type UseAutosaveResult<T> = {
   pendingDraft: StoredDraft<T> | null;
   /** Übernimmt den Entwurf: liefert die Daten und nimmt das Speichern wieder auf. */
   restoreDraft: () => T | null;
-  /** Verwirft den gefundenen Entwurf. */
   discardDraft: () => void;
-  /**
-   * Entfernt den Entwurf und hält das Speichern an (nach erfolgreichem
-   * Absenden oder bei „Abbrechen“). Sobald sich das Formular danach wieder
-   * ändert, läuft der Autosave weiter.
-   */
+  /** Nach Absenden oder „Abbrechen“: entfernt den Entwurf, pausiert bis zur nächsten Änderung. */
   clear: () => void;
   /** localStorage hat abgelehnt (Kontingent voll, Privatmodus) — es wird nichts gesichert. */
   storageFailed: boolean;
 };
 
 /**
- * Sichert einen Formularstand lokal und bietet ihn beim nächsten Aufruf zur
- * Wiederherstellung an.
- *
- * Wiederhergestellt wird nie von selbst: `pendingDraft` beschreibt den Fund,
- * die Seite fragt damit nach (siehe `DraftRestorePrompt`). Solange die Frage
- * offen ist, wird nicht gespeichert — sonst überschriebe der aktuelle
- * (leere) Formularstand genau den Entwurf, über den noch entschieden wird.
+ * Wiederhergestellt wird nie von selbst: die Seite fragt mit `pendingDraft` nach
+ * (siehe `DraftRestorePrompt`), und bis dahin wird nicht gespeichert.
  */
 export function useAutosave<T>({
   name,
@@ -96,9 +74,8 @@ export function useAutosave<T>({
   /** Serialisierter Anfangszustand (leeres Formular bzw. Serverdaten). */
   const baselineRef = useRef<string | null>(null);
   /**
-   * Stand zum Zeitpunkt von `clear()`. Solange sich daran nichts ändert, wird
-   * nicht geschrieben — sonst legt der Re-Render direkt nach dem Absenden den
-   * gerade gelöschten Entwurf wieder an.
+   * Stand bei `clear()`; unverändert wird nicht geschrieben, sonst legt der
+   * Re-Render nach dem Absenden den gelöschten Entwurf wieder an.
    */
   const suspendedAtRef = useRef<string | null>(null);
   const pendingRef = useRef(false);
@@ -117,9 +94,7 @@ export function useAutosave<T>({
     sweepDrafts({ version, maxAgeMs });
   }, [version, maxAgeMs]);
 
-  // Einmal pro Formular: Anfangszustand merken und nach einem Entwurf sehen.
-  // Der Blick in den Speicher geht erst nach dem Mounten — beim Rendern auf
-  // dem Server gibt es kein localStorage.
+  // Einmal pro Formular, erst nach dem Mounten: auf dem Server gibt es kein localStorage.
   useEffect(() => {
     if (!enabled || !key) return;
     if (initializedForKeyRef.current === key) return;
@@ -181,8 +156,7 @@ export function useAutosave<T>({
     return () => clearTimeout(timer);
   }, [data, enabled, pendingDraft, debounceMs, flush]);
 
-  // Beim Schließen des Tabs und beim Verlassen der Seite bleibt für den
-  // Debounce keine Zeit mehr — hier sofort schreiben.
+  // Beim Verlassen der Seite bleibt keine Zeit für den Debounce — sofort schreiben.
   useEffect(() => {
     if (!enabled) return;
 

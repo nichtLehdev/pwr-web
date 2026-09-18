@@ -9,22 +9,8 @@ import "@/styles/beschreibung.css";
 type TerminMedia = Pick<Media, "url" | "alt" | "copyright" | "creator">;
 
 /**
- * Beschreibung eines Termins oder Kurses mit Titelbild — dieselbe Haltung wie
- * das Titelbild der Beiträge (Blechblatt): Der Text umfließt das Bild, statt
- * dass es als 869×489px großer Aufmacher über allem steht. Vorher begann die
- * Beschreibung bei 1440×900 erst bei 1482px (Termin) bzw. 1232px (Kurs).
- *
- * - Ab `sm` steht das Bild rechts im Text, 3:2, in der halben Spaltenbreite.
- *   Die Hauptspalte ist mit 869px viel breiter als das Lesemaß der Beiträge;
- *   drei Fünftel wären 521×347px, wieder ein Aufmacher.
- * - Auf dem Handy folgt das Bild dem Text (2:1). Der Seitenkopf der Termine
- *   trägt Motto, Etiketten, Datum und Ort und ist deutlich höher als der der
- *   Beiträge: Mit dem Bild davor stand die erste Textzeile bei 390×844 erst
- *   bei 801–818px, ein zweizeiliger Titel hätte sie unter die Kante geschoben.
- * - Ohne Beschreibung gibt es nichts zu umfließen; das Bild steht dann allein
- *   in drei Fünfteln der Spalte.
- * - Der Bildnachweis steht unter dem Bild, nicht mehr mit Schatten auf dem
- *   Foto, wo er auf hellen Bildern kaum zu lesen war.
+ * Beschreibung mit Titelbild, das der Text umfließt (ab `sm` rechts, halbe Spaltenbreite).
+ * Auf dem Handy folgt das Bild dem Text, weil der hohe Seitenkopf ihn sonst unter die Kante schiebt.
  */
 export function TerminBeschreibung({
   image,
@@ -34,10 +20,7 @@ export function TerminBeschreibung({
   image: TerminMedia | null | undefined;
   /** Alternativtext, wenn das Bild keinen eigenen hat (Titel des Termins). */
   fallbackAlt: string;
-  /**
-   * Beschreibung, fertig für die Anzeige: Markdown zu HTML und gefiltert,
-   * also `renderDescriptionHtml` — sonst `null`.
-   */
+  /** Bereits gefiltertes HTML aus `renderDescriptionHtml`. */
   html: string | null;
 }) {
   if (!html && !image) return null;
@@ -88,9 +71,7 @@ export function TerminBeschreibung({
           </figure>
         ) : null}
         {html ? (
-          /* `beschreibung` statt `prose`: Das Typography-Plugin ist nicht
-             geladen, die prose-Klassen wirkten also nie — Absätze standen
-             ohne Abstand aneinander. Siehe styles/beschreibung.css. */
+          /* `beschreibung` statt `prose`: das Typography-Plugin ist nicht geladen. */
           <div
             className="beschreibung"
             dangerouslySetInnerHTML={{ __html: html }}
@@ -101,12 +82,7 @@ export function TerminBeschreibung({
   );
 }
 
-/**
- * Bild eines mitwirkenden Ensembles oder Auswahlchors. 3:2 wie auf der Seite
- * der Auswahlchöre — dieselben Fotos sollen nicht an zwei Stellen verschieden
- * beschnitten sein. Der Bildnachweis stand vorher nur bei Hover über dem Foto;
- * per Tastatur und auf dem Handy war er nie zu sehen.
- */
+/** Bild eines mitwirkenden Ensembles; 3:2 wie auf der Auswahlchöre-Seite, damit der Beschnitt gleich ist. */
 export function MitwirkendeBild({
   image,
   fallbackAlt,

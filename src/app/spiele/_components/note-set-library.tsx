@@ -29,13 +29,8 @@ import {
 import { NoteSetEditor } from "./note-set-editor";
 
 /**
- * Öffentliche Notenset-Bibliothek als Vollbild-Overlay: durchsuchen, filtern,
- * verwenden, teilen — und (angemeldet) eigene Sets erstellen, bearbeiten und
- * löschen. Der Editor läuft im selben Overlay.
- *
- * Gestaltung im Programmheft: Papier statt Weiß, Haarlinien statt Rundungen
- * und Schatten, gewählte Filter als oranges Druckfeld. Das Overlay öffnet sich
- * mitten aus dem Setup der Spiele — die Naht dorthin soll nicht auffallen.
+ * Öffentliche Notenset-Bibliothek als Vollbild-Overlay; angemeldet auch eigene Sets
+ * erstellen, bearbeiten und löschen (Editor im selben Overlay).
  */
 
 export type NoteSetUsability =
@@ -58,11 +53,7 @@ type ViewState =
 
 type SortOrder = "newest" | "popular";
 
-/**
- * Filter- und Sortier-Chip wie die Auswahlkacheln der Spiele: gewählt ist ein
- * Druckfeld (Orange als Fläche, Tinte als Schrift), sonst eine Haarlinie.
- * Mindestens 44 px hoch — vorher waren es rund 30.
- */
+/** Filter- und Sortier-Chip wie die Auswahlkacheln der Spiele, mindestens 44 px hoch. */
 function filterChipClass(active: boolean): string {
   return cn(
     "inline-flex min-h-11 items-center border px-3 text-xs font-bold transition-colors active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100",
@@ -79,10 +70,7 @@ const SECONDARY_BUTTON_CLASS = cn(
   GAME_FOCUS_RING,
 );
 
-/**
- * Löschen bleibt rot — die einzige Signalfarbe, die das Heft behält. Umrandet
- * öffnet die Rückfrage, gefüllt (Button-Variante „danger") bestätigt sie.
- */
+/** Umrandet öffnet die Rückfrage, gefüllt (Variante „danger") bestätigt sie. */
 const DANGER_BUTTON_CLASS = cn(
   "hover:text-paper dark:hover:text-night inline-flex min-h-11 items-center gap-1.5 border border-red-700 px-4 text-xs font-bold text-red-700 transition-colors hover:bg-red-700 disabled:opacity-50 motion-reduce:transition-none dark:border-red-400 dark:text-red-400 dark:hover:bg-red-400",
   GAME_FOCUS_RING,
@@ -241,8 +229,6 @@ function NoteSetLibraryPanel({
       }}
       role="presentation"
     >
-      {/* Papier mit Tintenrahmen statt weißer Karte mit Schatten — dieselbe
-          Hülle, die der Teilnehmerbogen im Anmeldeformular schon trägt. */}
       <div
         ref={panelRef}
         role="dialog"
@@ -276,7 +262,6 @@ function NoteSetLibraryPanel({
         <div className="min-h-0 flex-1 overflow-y-auto">
           {view.kind === "list" ? (
             <div className="space-y-4 p-4 sm:p-6">
-              {/* Suche */}
               <input
                 type="search"
                 value={search}
@@ -343,7 +328,6 @@ function NoteSetLibraryPanel({
                 </div>
               </div>
 
-              {/* Liste */}
               {listQuery.isPending ? (
                 <div className="text-dark dark:text-night-muted flex items-center justify-center gap-2 py-10 text-sm">
                   <Loader2
@@ -465,9 +449,7 @@ function NoteSetLibraryPanel({
                           </div>
                         ) : (
                           <div className="mt-3 flex flex-wrap items-center gap-2">
-                            {/* Vorlese-Name nennt das Set, nicht nur die
-                                Handlung: „Verwenden" stand vorher viermal
-                                gleichlautend in der Liste. */}
+                            {/* Vorlese-Name nennt das Set, nicht nur die Handlung. */}
                             <Button
                               type="button"
                               className="min-h-11 text-xs"

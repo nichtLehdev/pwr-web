@@ -14,17 +14,10 @@ import {
   type ProgrammeEvent,
 } from "@/app/_components/programmheft/programme-data";
 
-/**
- * Zeilen im ersten Bildschirm — mehr schieben „Alle Termine“ und
- * „Chor finden“ auf 1440×900 unter die Falz.
- */
+/** Mehr schieben „Alle Termine“ und „Chor finden“ unter die Falz. */
 const MAX_ROWS = 3;
 
-/**
- * Zeilen für die Anmeldungen. Eine, weil eine Anmeldezeile mit Frist und
- * Schaltfläche auf 390px 309px hoch ist: Zwei davon füllen den Bildschirm des
- * Telefons, und von den eigentlichen nächsten Terminen bliebe nichts übrig.
- */
+/** Eine Anmeldezeile ist auf dem Telefon so hoch, dass zwei die nächsten Termine verdrängen. */
 const MAX_OFFEN = 1;
 
 interface ProgrammProps {
@@ -35,11 +28,7 @@ interface ProgrammProps {
   now: Date;
 }
 
-/**
- * Marke über einer Gruppe: leiser als die Abschnittsüberschrift, im Ton der
- * Monatszeile im Datumsfeld. Als Überschrift und nicht als Absatz, damit die
- * Gruppen auch für Vorlesegeräte zwei Gruppen sind.
- */
+/** Marke über einer Gruppe; als Überschrift, damit die Gruppen auch für Vorlesegeräte getrennt sind. */
 function Gruppenmarke({
   children,
   className,
@@ -59,21 +48,8 @@ function Gruppenmarke({
 }
 
 /**
- * „Kommende Termine“ als Programm, in zwei Gruppen: erst Kurse mit offener
- * Anmeldung (früheste Frist zuerst), dann die nächsten Termine nach Datum.
- *
- * Die Gruppen tragen eigene Marken, weil die Liste sonst als eine einzige
- * Reihe nach Datum gelesen wird und dann falsch aussieht: Auf dem Telefon
- * stand hier „29. Okt – 02. Okt – 08. Okt“, und weil die erste Zeile mit
- * Anmelde-Schaltfläche 309px hoch ist, sah man beim ersten Blick nur sie. Das
- * späteste Datum wirkte so wie der nächste Termin.
- *
- * Offen steht nur eine Zeile: Mehr wird zu voll, und die übrigen offenen
- * Anmeldungen führt eine Zeile darunter auf die Terminseite, gefiltert auf
- * offene Anmeldungen.
- *
- * Nur eine Gruppe vorhanden (nichts offen, oder nur Offenes) heißt: keine
- * Marken — dann erklärt die Abschnittsüberschrift die Liste bereits.
+ * „Kommende Termine“ in zwei Gruppen: erst offene Anmeldungen (früheste Frist zuerst), dann
+ * die nächsten Termine. Marken nur bei zwei Gruppen, sonst liest sich die Liste als eine Datumsreihe.
  */
 export default function Programm({
   events,
@@ -134,15 +110,12 @@ export default function Programm({
           <ProgrammeList entries={offene} now={now} titleAs="h4" />
           {weitereOffene > 0 ? (
             <p className="border-rule dark:border-night-rule text-dark dark:text-night-muted border-b px-1 py-3 text-[0.9375rem]">
-              {/* `view=list`: Der Verweis zeigt eine gefilterte Auswahl —
-                  im Kalender einer gespeicherten Vorliebe wären die Treffer
-                  über Monate verstreut und der Zweck des Links dahin. */}
+              {/* `view=list`: im Kalender wären die gefilterten Treffer über Monate verstreut. */}
               <Link
                 href="/termine?anmeldung=offen&view=list"
                 className="link-ink"
               >
-                {/* „Angebote“ statt „Lehrgänge“: Unter den Kursen stecken
-                    auch Workshops, Freizeiten und ein Komponistenporträt. */}
+                {/* „Angebote“: unter den Kursen stecken auch Workshops und Freizeiten. */}
                 {weitereOffene === 1
                   ? "Ein weiteres Angebot nimmt Anmeldungen an"
                   : `${weitereOffene} weitere Angebote nehmen Anmeldungen an`}

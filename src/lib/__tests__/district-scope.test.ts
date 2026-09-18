@@ -106,10 +106,8 @@ describe("districtScopeFilter", () => {
 });
 
 describe("assertDistrictChangeAllowed", () => {
-  // The edit forms submit their whole state, so the district arrives on every
-  // save. Checking the value would block saves rather than moves — and it would
-  // hit exactly the people who reached the record another way: the author of a
-  // legacy item and a delegated course organizer from a different Bezirk.
+  // Forms resubmit the district on every save, so only a change is checked — checking the
+  // value would block legacy authors and delegated organizers from other Bezirke.
   it("passes when the district is submitted unchanged", () => {
     expect(() =>
       assertDistrictChangeAllowed(bezirk12, "b03", "b03"),
@@ -162,9 +160,7 @@ describe("ensembleLinkNeedsDistrictCheck", () => {
     expect(ensembleLinkNeedsDistrictCheck(bezirk12, "e99", "e42")).toBe(true);
   });
 
-  // Same trap as assertDistrictChangeAllowed: the event form resubmits every
-  // field, so checking the value instead of the change would block every save
-  // on an event that an approver had linked across districts.
+  // Same trap as assertDistrictChangeAllowed: the event form resubmits every field.
   it("ignores a link that was already stored", () => {
     expect(ensembleLinkNeedsDistrictCheck(bezirk12, "e99", "e99")).toBe(false);
     expect(ensembleLinkNeedsDistrictCheck(bezirk12, undefined, "e99")).toBe(

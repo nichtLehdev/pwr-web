@@ -15,16 +15,8 @@ interface CourseInvoicesButtonProps {
 }
 
 /**
- * Der Sprung in die Rechnungsliste eines Kurses — auf jeder Kursseite derselbe
- * Knopf, damit man ihn nicht auf jeder Seite woanders suchen muss.
- *
- * Ob er erscheint, entscheidet der Server (`canManageCourseInvoices`), nicht die
- * Seite: sonst driften Knopf und Guard auseinander und es entsteht entweder ein
- * Knopf, der 403 wirft, oder eine Berechtigung ohne Knopf.
- *
- * Bewusst auch dann sichtbar, wenn für den Kurs `invoicingEnabled` aus ist: die
- * Rechnungsseite zeigt in dem Fall die bereits bestehenden Rechnungen samt
- * Hinweisbanner, und genau dorthin will man dann.
+ * Ob er erscheint, entscheidet der Server (`canManageCourseInvoices`), damit Knopf und Guard nicht
+ * auseinanderdriften. Auch bei `invoicingEnabled` aus sichtbar: dann zeigt die Seite bestehende Rechnungen.
  */
 export function CourseInvoicesButton({
   courseId,

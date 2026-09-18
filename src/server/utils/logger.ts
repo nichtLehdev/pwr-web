@@ -1,17 +1,6 @@
 /**
- * Minimal leveled logger for server-side output.
- *
- * Container logs are the only place production problems surface, so per-request
- * chatter has to stay out of them. Anything below the active threshold is
- * dropped instead of drowning the errors.
- *
- * Threshold: `debug` in development, `warn` in production. Override with the
- * LOG_LEVEL environment variable (`debug` | `info` | `warn` | `error` |
- * `silent`) to turn the detail back on while tracing a live issue — e.g.
- * `LOG_LEVEL=debug` on the app container for one deploy.
- *
- * Read straight from `process.env` rather than `@/env` on purpose: the logger
- * must work in every runtime and before env validation has run.
+ * Threshold: `debug` in development, `warn` in production, override with LOG_LEVEL.
+ * Reads `process.env` directly, not `@/env`: must work before env validation.
  */
 
 const LEVELS = {
@@ -29,8 +18,7 @@ function resolveThreshold(): number {
   if (configured && configured in LEVELS) {
     return LEVELS[configured as LogLevel];
   }
-  // Unrecognized values fall through to the default rather than crashing the
-  // app — a typo in LOG_LEVEL must never take the server down.
+  // A typo in LOG_LEVEL must never take the server down.
   return process.env.NODE_ENV === "production" ? LEVELS.warn : LEVELS.debug;
 }
 
@@ -64,10 +52,7 @@ export interface Logger {
   isLevelEnabled: (level: LogLevel) => boolean;
 }
 
-/**
- * Create a logger tagged with `scope`, which is printed as `[scope]` in front
- * of every line (e.g. `createLogger("Email")` -> `... INFO  [Email] ...`).
- */
+/** Prefixes every line with `[scope]`. */
 export function createLogger(scope: string): Logger {
   return {
     debug: (...args) => emit("debug", scope, args),

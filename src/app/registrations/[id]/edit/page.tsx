@@ -86,16 +86,12 @@ function getReturnToPath(searchParams: URLSearchParams): string | null {
   return path;
 }
 
-/**
- * Schaltflächen-Stimmen des Programmhefts, lokal wiederholt wie auf den
- * übrigen öffentlichen Formularseiten (z. B. /registrations).
- */
 const BTN_PRIMARY =
   "bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-primary dark:text-ink dark:hover:bg-paper semi-condensed inline-flex min-h-12 items-center justify-center gap-2 px-6 text-base font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60";
 const BTN_OUTLINE =
   "border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night semi-condensed inline-flex min-h-12 items-center justify-center gap-2 border-2 px-6 text-base font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60";
 
-/** Bezeichnung über einem schreibgeschützten Wert (wie `headMeta.label` als Kopf über Meta-Zeilen). */
+/** Bezeichnung über einem schreibgeschützten Wert. */
 function InfoField({
   label,
   children,
@@ -174,10 +170,8 @@ export default function EditRegistrationPage() {
       { id: registration?.course?.id ?? "" },
       { enabled: !!registration?.course?.id },
     );
-  // Die öffentlichen Plätze sind die, die eine neue Anmeldung nutzen dürfte —
-  // ohne die, die Wartende nutzen könnten. Das Kursteam darf freie Plätze trotzdem
-  // vergeben (etwa zwei Anmeldungen zusammenführen) und sieht deshalb die
-  // tatsächlichen; der Server hält es genauso.
+  // Öffentliche Plätze zählen ohne die, die Wartenden zustehen. Das Kursteam darf
+  // freie Plätze trotzdem vergeben und sieht die tatsächlichen (wie der Server).
   const { data: teamOverview, isLoading: teamOverviewLoading } =
     api.registrations.getWaitlistOverview.useQuery(
       { courseId: registration?.course?.id ?? "" },
@@ -239,9 +233,7 @@ export default function EditRegistrationPage() {
     if (registration?.participants && registration?.course?.priceOptions) {
       setParticipants(
         registration.participants.map((p) => {
-          // Über die id, nicht über das Label: bei zwei gleichnamigen
-          // Kategorien hätte der Label-Treffer die Anmeldung beim Speichern
-          // stillschweigend auf die andere (und deren Preis) umgestellt.
+          // Über die id, nicht über das Label: Zwei Kategorien dürfen gleich heißen.
           const priceOption = resolveParticipantPriceOption(
             p,
             registration.course.priceOptions,
@@ -309,10 +301,9 @@ export default function EditRegistrationPage() {
   const canEdit = management?.canEdit ?? (isOwner && canEditRegistration());
   const canCancel = management?.canCancel ?? isOwner;
 
-  // Mit Anzahlung bleibt die Teilnehmerzahl dem Kursteam vorbehalten — und
-  // hängt der Betrag an der Kategorie, auch die Kategorien. Eine Anmeldung ohne
-  // Anzahlung darf keine Kategorie mit Anzahlung dazubuchen. Der Server prüft
-  // dasselbe (registrantEditViolation).
+  // Mit Anzahlung ändert nur das Kursteam die Teilnehmerzahl (bei TICKET auch die
+  // Kategorien); ohne Anzahlung keine Kategorie mit Anzahlung dazubuchen.
+  // Der Server prüft dasselbe (registrantEditViolation).
   const hasDownPayment = !!registration?.downPaymentAmount;
   const participantsLocked = !isStaff && hasDownPayment;
   const ticketsLocked =
@@ -329,9 +320,8 @@ export default function EditRegistrationPage() {
 
   const activeParticipants = participants.filter((p) => !p.isDeleted);
 
-  // Plätze belegt nur eine bestätigte Anmeldung. Auf der Warteliste darf sie
-  // wachsen und jede Kategorie wählen — die Plätze prüft erst das Nachrücken.
-  // Der Server hält es genauso.
+  // Plätze belegt nur eine bestätigte Anmeldung; auf der Warteliste prüft sie erst
+  // das Nachrücken (wie der Server).
   const holdsSeats =
     registration?.registrationStatus === RegistrationStatus.CONFIRMED;
 
@@ -363,8 +353,7 @@ export default function EditRegistrationPage() {
     );
     if (!priceOption) return false;
 
-    // Nach id nachschlagen: zwei Kategorien dürfen dasselbe Label tragen, und
-    // über das Label bekam die eine die Restplätze der anderen.
+    // Nach id nachschlagen: Zwei Kategorien dürfen dasselbe Label tragen.
     const available = availability.capacityByPriceOption[priceOption.id];
     if (available === undefined) return true;
 
@@ -391,8 +380,7 @@ export default function EditRegistrationPage() {
         id,
         firstName: "",
         lastName: "",
-        // Not `new Date()`: today is never a valid birthdate, so prefilling it
-        // handed the registrant an invalid value they had not entered.
+        // Not `new Date()`: today is never a valid birthdate.
         birthDate: null,
         city: "",
         instrument: null,
@@ -432,13 +420,9 @@ export default function EditRegistrationPage() {
         if (p.id !== participantId) return p;
         const next = { ...p, [field]: value };
 
-        // Ein neues Geburtsdatum kann die gewählte Kategorie aus ihrer
-        // Altersgrenze fallen lassen. Bleibt genau eine passende übrig, wird
-        // sie gesetzt; sonst bleibt die bisherige und die Prüfung meldet es.
-        //
-        // Nicht für das Kursteam: dort ist eine Kategorie außerhalb der
-        // Altersgrenze eine Absicht, und ein korrigierter Tippfehler im
-        // Geburtsdatum soll nicht stillschweigend den Preis ändern.
+        // Passt nach neuem Geburtsdatum genau eine Kategorie, wird sie gesetzt; sonst
+        // meldet es die Prüfung. Nicht fürs Kursteam: Dort ist eine Kategorie außerhalb
+        // der Altersgrenze Absicht, der Preis soll sich nicht stillschweigend ändern.
         if (field === "birthDate" && !isStaff && registration?.course) {
           next.priceOptionId =
             priceOptionIdForAge(
@@ -477,10 +461,7 @@ export default function EditRegistrationPage() {
     }, 0);
   };
 
-  /**
-   * Same shared rule the server applies when it saves the edit, so the price
-   * shown here is the price that ends up on the registration.
-   */
+  /** Same shared rule the server applies on save, so the shown price is the saved one. */
   const siblingDiscountInput = () =>
     activeParticipants.map((participant) => ({
       birthDate: participant.birthDate,
@@ -576,11 +557,7 @@ export default function EditRegistrationPage() {
 
   const hasSiblingGroups = activeParticipants.some((p) => p.siblingGroupId);
 
-  /**
-   * Required fields a participant is still missing, in the key vocabulary
-   * `ParticipantEditor` uses for its red borders (`customField:<name>` for the
-   * course's own fields).
-   */
+  /** Missing required fields, in `ParticipantEditor`'s key vocabulary (`customField:<name>`). */
   const participantMissingFields = (participant: Participant): string[] => {
     const missing: string[] = [];
     if (!participant.firstName?.trim()) missing.push("firstName");
@@ -607,19 +584,16 @@ export default function EditRegistrationPage() {
   };
 
   /**
-   * Altersgrenze der gewählten Preiskategorie, oder undefined wenn sie passt.
-   * Für das Kursteam immer undefined: es darf eine Kategorie bewusst entgegen
-   * ihrer Grenze vergeben, genau wie der Server es zulässt.
+   * Altersgrenze der gewählten Preiskategorie, oder undefined wenn sie passt. Fürs
+   * Kursteam immer undefined: Es darf eine Kategorie bewusst entgegen ihrer Grenze vergeben.
    */
   const participantAgeError = (
     participant: Participant,
   ): string | undefined => {
     if (isStaff || !registration?.course) return undefined;
 
-    // Wer in dieser Kategorie schon angemeldet ist, bleibt es — auch wenn ihre
-    // Altersgrenze nachträglich enger gezogen wurde. Sonst ließe sich die
-    // Anmeldung nicht einmal mehr in einem anderen Feld ändern. Der Server
-    // lässt dieselbe Ausnahme zu.
+    // Wer schon in dieser Kategorie steht, bleibt es, auch bei nachträglich engerer
+    // Altersgrenze — sonst wäre die Anmeldung gar nicht mehr änderbar (wie der Server).
     const booked = registration.participants.find(
       (p) => p.id === participant.id,
     );
@@ -643,11 +617,7 @@ export default function EditRegistrationPage() {
     );
   };
 
-  /**
-   * One line describing what is wrong with a participant, or undefined when it
-   * is complete. Computed on every render rather than only on submit, so the
-   * card badges say which person still needs attention before you try to save.
-   */
+  /** What is wrong with a participant, or undefined; on every render so card badges show it before saving. */
   const participantError = (participant: Participant): string | undefined => {
     if (participant.birthDate && participant.birthDate >= new Date()) {
       return "Geburtsdatum muss in der Vergangenheit liegen";
@@ -669,12 +639,8 @@ export default function EditRegistrationPage() {
       : 1;
 
   /**
-   * The list split into sibling groups and lone participants, so members of a
-   * group sit together instead of wherever they happen to fall in the list.
-   *
-   * A group takes the position of its first member, which keeps the rest of
-   * the order as the registrant entered it. Display only — `participants`
-   * keeps its own order for saving.
+   * Sibling groups together, each at its first member's position. Display only —
+   * `participants` keeps its own order for saving.
    */
   const participantBlocks: { key: string; members: Participant[] }[] = [];
   const placed = new Set<string>();
@@ -706,11 +672,7 @@ export default function EditRegistrationPage() {
     setDoneAttempted(false);
   };
 
-  /**
-   * "Fertig" only closes a participant that is complete. On an incomplete one
-   * it reveals what is missing and stays put — the X, the backdrop and Escape
-   * still leave, so nobody is stuck with a half-filled form.
-   */
+  /** "Fertig" only closes a complete participant; X, backdrop and Escape always leave. */
   const finishEditing = () => {
     if (editingParticipant && participantError(editingParticipant)) {
       setDoneAttempted(true);
@@ -813,7 +775,7 @@ export default function EditRegistrationPage() {
       birthDate: p.birthDate as Date,
       city: p.city,
       instrument: p.instrument ?? undefined,
-      priceOptionId: p.priceOptionId || "", // Ensure priceOptionId is never undefined
+      priceOptionId: p.priceOptionId || "",
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       customFields: p.customFields as any,
       siblingGroupId: p.siblingGroupId ?? undefined,
@@ -951,7 +913,6 @@ export default function EditRegistrationPage() {
             </Note>
           )}
 
-          {/* Course Info */}
           <div>
             <Heading as="h2" size="list" rule>
               Kursdetails
@@ -979,7 +940,6 @@ export default function EditRegistrationPage() {
             </div>
           </div>
 
-          {/* Error/Success Messages */}
           {error && (
             <Note tone="error">
               <p>{error}</p>
@@ -991,9 +951,7 @@ export default function EditRegistrationPage() {
             </Note>
           )}
 
-          {/* Edit Form */}
           <form onSubmit={handleSubmit} className="space-y-10">
-            {/* Registrant Info Section */}
             <div>
               <Heading as="h2" size="list" rule>
                 Anmelder
@@ -1049,7 +1007,6 @@ export default function EditRegistrationPage() {
               </div>
             </div>
 
-            {/* Billing Address Section */}
             <div>
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <Heading as="h2" size="list" rule className="flex-1">
@@ -1208,7 +1165,6 @@ export default function EditRegistrationPage() {
               )}
             </div>
 
-            {/* Participants: a flat list of cards. */}
             <div>
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
@@ -1227,10 +1183,8 @@ export default function EditRegistrationPage() {
                     </p>
                   )}
                   {!isStaff && holdsSeats && availability?.hasWaitingList && (
-                    // Derselbe Vorrang, den der Server beim Speichern prüft —
-                    // hier vorab, damit niemand erst nach dem Absenden erfährt,
-                    // dass ein freier Platz schon den Wartenden zusteht. Die
-                    // Plätze oben sind bereits ohne sie gezählt.
+                    // Vorrang der Warteliste, wie ihn der Server prüft — hier vorab, damit
+                    // niemand es erst nach dem Absenden erfährt.
                     <p className="text-dark dark:text-night-muted mt-1 text-sm">
                       Für diesen Kurs warten Anmeldungen auf der Warteliste.
                       Freie Plätze, die sie nutzen könnten, gehen zuerst an sie;
@@ -1274,8 +1228,6 @@ export default function EditRegistrationPage() {
 
                   if (!isGroup) return <div key={block.key}>{cards}</div>;
 
-                  // Tighter spacing inside a group than between blocks, plus
-                  // one caption underneath.
                   const eligible = hasDiscountEligibleSiblingGroup(
                     block.members,
                   );
@@ -1309,7 +1261,6 @@ export default function EditRegistrationPage() {
                 })}
               </div>
 
-              {/* Sibling Discount Option: only if at least one group has 2+ siblings */}
               {registration.course.allowSiblingDiscount &&
                 activeParticipants.length > 1 &&
                 hasSiblingGroups && (
@@ -1353,7 +1304,6 @@ export default function EditRegistrationPage() {
                 )}
             </div>
 
-            {/* Price Summary */}
             <div>
               <Heading as="h2" size="list" rule>
                 Gesamtpreis
@@ -1411,10 +1361,7 @@ export default function EditRegistrationPage() {
               )}
             </div>
 
-            {/* Nicht klebend: Am Fensterboden festgeklebt legte sich die
-                Leiste beim Scrollen über die Eingabefelder — gemessen deckte
-                sie ein Feld zur Hälfte ab. Sie steht jetzt am Ende des
-                Formulars im normalen Fluss, wie überall sonst im Heft. */}
+            {/* Nicht klebend: Am Fensterboden verdeckte die Leiste beim Scrollen Eingabefelder. */}
             <div className="border-rule dark:border-night-rule -mx-1 flex flex-col gap-3 border-t-2 px-1 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:flex-row sm:items-center sm:justify-between">
               {canCancel ? (
                 <button
@@ -1471,8 +1418,7 @@ export default function EditRegistrationPage() {
                     value as Record<string, unknown>,
                   );
                 } else if (field === "instrument") {
-                  // Kept nullable in the database, so an emptied field must not
-                  // save as "".
+                  // Nullable in the database: an emptied field must not save as "".
                   updateParticipant(
                     editingParticipant.id,
                     "instrument",
@@ -1518,11 +1464,9 @@ export default function EditRegistrationPage() {
                     : "";
                 },
                 ageReferenceDate: registration.course.startDate,
-                // Das Kursteam darf eine Kategorie entgegen ihrer
-                // Altersgrenze vergeben — der Hinweis bleibt trotzdem stehen.
+                // Das Kursteam darf entgegen der Altersgrenze vergeben; der Hinweis bleibt.
                 allowAgeMismatch: isStaff,
-                // Und die Kategorie, in der jemand schon steckt, bleibt ihm
-                // erhalten, auch wenn ihre Grenze inzwischen enger ist.
+                // Die bisherige Kategorie bleibt, auch bei inzwischen engerer Grenze.
                 ageExemptOptionId:
                   registration.participants.find(
                     (p) => p.id === editingParticipant.id,
@@ -1571,7 +1515,6 @@ export default function EditRegistrationPage() {
           </ParticipantSheet>
         ) : null}
 
-        {/* Cancel Confirmation Modal */}
         {cancelModalOpen && (
           <ScrollableModal>
             <ScrollableModalCard

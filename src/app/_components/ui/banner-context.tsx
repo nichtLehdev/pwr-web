@@ -14,7 +14,6 @@ interface BannerContextValue {
   bannerHeight: number;
   /** Set the banner height (called by the banner component) */
   setBannerHeight: (height: number) => void;
-  /** Whether any banner is currently visible */
   isBannerVisible: boolean;
 }
 

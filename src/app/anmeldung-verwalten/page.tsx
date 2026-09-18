@@ -9,10 +9,8 @@ import PublicPage from "@/app/_components/general/public-page";
 import { Note } from "@/app/_components/programmheft/note";
 
 /**
- * Self-service entry point for people who registered for a course without a
- * user account: they enter their e-mail address and receive a magic link per
- * anmeldung. The mail itself carries the same links, so this page exists for
- * the "I deleted the mail" and "the link expired" cases.
+ * Self-service for course registrations without an account: sends a magic link
+ * per anmeldung, for when the original mail is gone or its link expired.
  */
 export default function ManageRegistrationPage() {
   const [email, setEmail] = useState("");

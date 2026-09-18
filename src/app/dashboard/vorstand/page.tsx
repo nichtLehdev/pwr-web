@@ -137,9 +137,8 @@ export default function DashboardVorstandPage() {
   const columns = useMemo<DataTableColumn<VorstandMember>[]>(
     () =>
       column.columns([
-        // Die gespeicherte Reihenfolge als eigene Spalte: nur so bleiben die
-        // Hoch/Runter-Pfeile nachvollziehbar, wenn nach etwas anderem sortiert
-        // wird — sie verschieben immer die gespeicherte Position, nie die Sicht.
+        // Eigene Spalte: Die Hoch/Runter-Pfeile verschieben immer die gespeicherte
+        // Position, nie die Sicht — auch wenn nach etwas anderem sortiert wird.
         column.accessor((member) => member.sortOrder, {
           id: "sortOrder",
           header: "#",
