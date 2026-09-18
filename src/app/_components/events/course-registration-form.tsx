@@ -551,8 +551,12 @@ export default function CourseRegistrationForm({
       return;
     }
 
+    // `splitPayload` gehört auch hierher: Ohne es verwarf der öffentliche
+    // Weg die Auswahl stillschweigend — die Anmeldenden hatten „freie Plätze
+    // nutzen" gewählt und bekamen trotzdem die ganze Gruppe auf die
+    // Warteliste. Nur der Team-Weg reichte die Auswahl weiter.
     registrationMutation.mutate(
-      { ...payload, downPaymentAcknowledged },
+      { ...payload, ...splitPayload, downPaymentAcknowledged },
       handlers,
     );
   };

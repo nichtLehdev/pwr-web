@@ -394,6 +394,25 @@ export function Step2Participants({
     </>
   );
 
+  /*
+   * Ohne Preiskategorie kann sich niemand anmelden: Der Server verlangt für
+   * jede Person eine Kategorie (`priceOptionId`). Bisher tat „Hinzufügen“ in
+   * diesem Fall schlicht nichts — die Begründung stand nur in der
+   * Entwicklerkonsole, „Weiter“ blieb gesperrt, und niemand erfuhr, warum.
+   * Betroffen sind im Bestand fünf freigegebene Kurse.
+   */
+  if (!course.priceOptions || course.priceOptions.length === 0) {
+    return (
+      <Note tone="error" title="Anmeldung noch nicht möglich" titleAs="h3">
+        <p>
+          Für diesen Kurs sind noch keine Preiskategorien hinterlegt, und ohne
+          sie lässt sich niemand anmelden. Bitte wenden Sie sich an das
+          Posaunenwerk.
+        </p>
+      </Note>
+    );
+  }
+
   return (
     <div className="flex flex-col">
       {/* Actions live in the header, like the edit page. They used to sit in a
