@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { BezirkLabel } from "./bezirk-label";
+import { Tag } from "./tag";
 import type { ProgrammeEntry, ProgrammeRegistration } from "./programme-data";
 import { berlinFormatter, berlinParts } from "@/lib/berlin-time";
 
@@ -135,6 +136,17 @@ export function ProgrammeRow({
             {entry.when}
             {entry.place ? ` · ${entry.place}` : ""}
           </p>
+          {entry.ensemble ? (
+            <p className="mt-2">
+              {/* Chornamen sind lang; `whitespace-normal` hebt das `nowrap` des Etiketts auf. */}
+              <Tag
+                tone={entry.ensemble.auswahlchor ? "inverse" : "muted"}
+                className="whitespace-normal"
+              >
+                {entry.ensemble.name}
+              </Tag>
+            </p>
+          ) : null}
           {entry.cancelled ? (
             <p className="mt-2 text-sm font-semibold text-red-700 dark:text-red-400">
               Abgesagt

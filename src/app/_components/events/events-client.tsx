@@ -59,6 +59,9 @@ function isViewMode(value: string | null): value is ViewMode {
 }
 type FilterType = "all" | "events" | "courses";
 
+/** Wert des Chorfilters für „alle Auswahlchöre"; sonst steht dort ein Chor-Slug. */
+const CHOR_ALLE = "auswahlchor";
+
 const TYPE_OPTIONS: { value: FilterType; label: string }[] = [
   { value: "all", label: "Alle" },
   { value: "events", label: "Termine" },
@@ -204,6 +207,10 @@ export default function EventsClient({
   const [nurOffeneAnmeldung, setNurOffeneAnmeldung] = useState(
     params.get("anmeldung") === "offen",
   );
+  /** `?chor=auswahlchor` für alle Auswahlchöre, `?chor=<slug>` für einen. */
+  const [selectedChor, setSelectedChor] = useState<string>(
+    params.get("chor") ?? "all",
+  );
   const [monthGrouping, setMonthGrouping] = useStoredPreference<MonthGrouping>(
     "termineMonthGrouping",
     "on",
@@ -242,6 +249,18 @@ export default function EventsClient({
           return false;
         }
 
+        if (selectedChor !== "all") {
+          if (item.type !== "event") return false;
+          if (item.performingEnsembleType !== "AUSWAHLCHOR") return false;
+          if (!item.auswahlChor) return false;
+          if (
+            selectedChor !== CHOR_ALLE &&
+            item.auswahlChor.slug !== selectedChor
+          ) {
+            return false;
+          }
+        }
+
         if (selectedDistrict !== "all") {
           if (selectedDistrict === "Bezirksübergreifend") {
             if (item.bezirk !== null) return false;
@@ -257,7 +276,7 @@ export default function EventsClient({
         return true;
       });
     },
-    [filterType, selectedDistrict, nurOffeneAnmeldung, now],
+    [filterType, selectedDistrict, selectedChor, nurOffeneAnmeldung, now],
   );
 
   const futureItems = useMemo(() => {
@@ -362,6 +381,19 @@ export default function EventsClient({
     <ProgrammeList entries={items.map(toProgrammeEntry)} now={now} />
   );
 
+  const chorSelectOptions = useMemo(() => {
+    const bySlug = new Map<string, string>();
+    for (const item of allItems) {
+      if (item.type !== "event") continue;
+      if (item.performingEnsembleType !== "AUSWAHLCHOR") continue;
+      if (item.auswahlChor)
+        bySlug.set(item.auswahlChor.slug, item.auswahlChor.name);
+    }
+    return [...bySlug]
+      .map(([slug, name]) => ({ slug, name }))
+      .sort((a, b) => a.name.localeCompare(b.name, "de"));
+  }, [allItems]);
+
   const districtSelectOptions = [
     "all",
     "Bezirksübergreifend",
@@ -371,11 +403,15 @@ export default function EventsClient({
   ];
 
   const hasActiveFilters =
-    filterType !== "all" || selectedDistrict !== "all" || nurOffeneAnmeldung;
+    filterType !== "all" ||
+    selectedDistrict !== "all" ||
+    selectedChor !== "all" ||
+    nurOffeneAnmeldung;
 
   const resetFilters = () => {
     setFilterType("all");
     setSelectedDistrict("all");
+    setSelectedChor("all");
     setNurOffeneAnmeldung(false);
   };
 
@@ -548,6 +584,32 @@ export default function EventsClient({
                       ))}
                     </Select>
                   </div>
+
+                  {/* Ohne Termine mit Auswahlchor hätte das Feld nur leere Auswahl. */}
+                  {chorSelectOptions.length > 0 && (
+                    <div>
+                      <label
+                        htmlFor="termine-chor"
+                        className="semi-condensed text-dark dark:text-night-muted mb-2 block text-sm font-semibold"
+                      >
+                        Auswahlchor
+                      </label>
+                      <Select
+                        id="termine-chor"
+                        value={selectedChor}
+                        onChange={(e) => setSelectedChor(e.target.value)}
+                        className={selectFieldClass}
+                      >
+                        <option value="all">Alle Termine</option>
+                        <option value={CHOR_ALLE}>Nur Auswahlchöre</option>
+                        {chorSelectOptions.map((chor) => (
+                          <option key={chor.slug} value={chor.slug}>
+                            {chor.name}
+                          </option>
+                        ))}
+                      </Select>
+                    </div>
+                  )}
                 </div>
 
                 <div className="border-rule dark:border-night-rule mt-4 flex flex-wrap items-center gap-x-8 gap-y-1 border-t pt-2">
