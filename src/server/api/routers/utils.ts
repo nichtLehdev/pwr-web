@@ -14,6 +14,7 @@ import {
 } from "@/server/email/templates/newsletter-html";
 import { maskEmail } from "@/lib/mask-email";
 import { getBaseUrl } from "@/server/utils/get-base-url";
+import { absolutizeHtmlLinks } from "@/lib/content-link";
 import { ContentStatus, type Prisma } from "~/generated/prisma/client";
 import { marked } from "marked";
 import { geocodeAddress } from "@/server/utils/geocoding";
@@ -488,7 +489,11 @@ export const newsletterRouter = createTRPCRouter({
         "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
       });
 
-      const htmlContent = String(await marked.parse(input.content));
+      // Wie in der Kursmail: relative Verweise trägt kein Mailprogramm auf.
+      const htmlContent = absolutizeHtmlLinks(
+        String(await marked.parse(input.content)),
+        getBaseUrl(),
+      );
 
       if (!htmlContent || htmlContent.trim().length === 0) {
         throw new TRPCError({
