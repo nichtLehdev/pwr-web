@@ -10,6 +10,7 @@ import {
   formatDate,
   formatEuro,
   formatLongDate,
+  INVOICE_CANCELLATION_NOTICE,
   invoicePaymentReference,
   invoiceTotal,
   lineItemTotal,
@@ -391,8 +392,19 @@ export async function renderInvoicePdf(
 
   const closing = (invoice.closingText ?? DEFAULT_INVOICE_CLOSING_TEXT).trim();
 
-  y = bankBlockY + bankBlockHeight + 5;
+  // Bedingung des Lehrgangs, kein Gruß: darum als Kleingedrucktes vor dem Schlusstext.
+  y = bankBlockY + bankBlockHeight + 6;
   doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(110);
+  const noticeLines = doc.splitTextToSize(
+    INVOICE_CANCELLATION_NOTICE,
+    pageWidth - 2 * margin,
+  );
+  checkPageBreak(noticeLines.length * 4.5);
+  doc.text(noticeLines, margin, y);
+  y += noticeLines.length * 4.5 + 5;
+  doc.setTextColor(0);
   doc.setFontSize(10);
   const closingLines = closing
     ? doc.splitTextToSize(closing, pageWidth - 2 * margin)
