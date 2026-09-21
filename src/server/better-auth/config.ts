@@ -34,6 +34,29 @@ const additionalOrigins = process.env.BETTER_AUTH_TRUSTED_ORIGINS
 
 const devOrigins = isProduction ? [] : ["http://localhost:3000"];
 
+const splitList = (value: string | undefined): string[] =>
+  value
+    ? value
+        .split(",")
+        .map((entry) => entry.trim())
+        .filter(Boolean)
+    : [];
+
+/**
+ * Ohne aufgelöste Client-IP zählt better-auth alle Besucher in einem einzigen
+ * Topf pro Pfad — dann sperren drei fremde Registrierungen die vierte Person.
+ * Eine mehrgliedrige `x-forwarded-for`-Kette verwirft es ohne `trustedProxies`,
+ * deshalb zuerst die einwertigen Header des Proxys. Das setzt voraus, dass die
+ * App nur über den Proxy erreichbar ist (Docker-Netz), sonst wären sie fälschbar.
+ */
+const ipAddressHeaders = splitList(
+  process.env.BETTER_AUTH_IP_HEADERS ??
+    "cf-connecting-ip,x-real-ip,x-forwarded-for",
+).map((header) => header.toLowerCase());
+
+/** Nötig, wenn nur `x-forwarded-for` ankommt: IPs/CIDRs der eigenen Proxys. */
+const trustedProxies = splitList(process.env.BETTER_AUTH_TRUSTED_PROXIES);
+
 const trustedOrigins = [
   normalizeOrigin(baseUrl),
   ...(process.env.NEXT_PUBLIC_APP_URL
@@ -105,6 +128,12 @@ export const auth = betterAuth({
     enabled: true,
     storage: "database",
     modelName: "rateLimit",
+    customRules: {
+      // Voreinstellung wären 3 Anfragen in 10 Sekunden. Hinter einer geteilten
+      // Adresse (Gemeindehaus, Mobilfunk) trifft das Nachbarn statt Angreifer;
+      // der Versand der Bestätigungsmail bleibt pro Adresse begrenzt.
+      "/sign-up/email": { window: 60, max: 10 },
+    },
   },
   appName: "Posaunenwerk Rheinland",
   plugins: [
@@ -201,6 +230,10 @@ export const auth = betterAuth({
     // Behind TLS termination a misconfigured BETTER_AUTH_URL (http://…) would
     // otherwise produce non-Secure session cookies in production.
     useSecureCookies: isProduction,
+    ipAddress: {
+      ipAddressHeaders,
+      ...(trustedProxies.length > 0 ? { trustedProxies } : {}),
+    },
   },
   databaseHooks: {
     session: {

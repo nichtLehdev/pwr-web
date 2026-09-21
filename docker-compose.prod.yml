@@ -66,7 +66,11 @@ services:
       NODE_ENV: production
       ADMIN_EMAIL: ${ADMIN_EMAIL:-}
     command:
-      ["node", "node_modules/tsx/dist/cli.mjs", "prisma/post-migration-setup.ts"]
+      [
+        "node",
+        "node_modules/tsx/dist/cli.mjs",
+        "prisma/post-migration-setup.ts",
+      ]
     restart: "no"
 
   # Re-run on demand (imports and duplicates leave the slug NULL); only touches NULL slugs:
@@ -87,7 +91,8 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@posaunenwerk-db:5432/${POSTGRES_DB:-posaunenwerk}
       NODE_ENV: production
       SKIP_ENV_VALIDATION: 1
-    command: ["node", "node_modules/tsx/dist/cli.mjs", "prisma/backfill-slugs.ts"]
+    command:
+      ["node", "node_modules/tsx/dist/cli.mjs", "prisma/backfill-slugs.ts"]
     restart: "no"
 
   db-seed:
@@ -179,6 +184,13 @@ services:
 
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?BETTER_AUTH_SECRET is required}
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
+      # Weitere erlaubte Herkünfte, kommagetrennt (z. B. die www-Variante);
+      # von einer fehlenden Herkunft lehnt better-auth jede Anmeldung ab.
+      BETTER_AUTH_TRUSTED_ORIGINS: ${BETTER_AUTH_TRUSTED_ORIGINS:-}
+      # Einwertige Proxy-Header zuerst; ohne aufgelöste Client-IP zählt das
+      # Rate-Limit alle Besucher gemeinsam in einen Topf.
+      BETTER_AUTH_IP_HEADERS: ${BETTER_AUTH_IP_HEADERS:-}
+      BETTER_AUTH_TRUSTED_PROXIES: ${BETTER_AUTH_TRUSTED_PROXIES:-}
 
       GITHUB_REPO: ${GITHUB_REPO:-}
       GITHUB_TOKEN: ${GITHUB_TOKEN:-}

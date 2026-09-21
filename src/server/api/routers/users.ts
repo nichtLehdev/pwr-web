@@ -10,6 +10,31 @@ import { permissionProcedure } from "../middleware/permissions";
 import { logAudit } from "../helpers/audit";
 import { invoicePaymentState } from "@/lib/invoice-payment";
 import { internationalPhoneSchema } from "@/lib/phone-number";
+import {
+  USERNAME_HINT,
+  USERNAME_MAX_LENGTH,
+  USERNAME_MIN_LENGTH,
+  describeUsernameProblem,
+  normalizeUsername,
+} from "@/lib/username";
+
+/**
+ * Kleingeschrieben und nach den Regeln von better-auth: ein Konto mit
+ * Großbuchstaben oder Bindestrich im Benutzernamen kann sich nie anmelden,
+ * weil das username-Plugin vor dem Vergleich kleinschreibt.
+ */
+const usernameSchema = z
+  .string()
+  .transform(normalizeUsername)
+  .refine((value) => describeUsernameProblem(value) === null, {
+    message: `Benutzername: ${USERNAME_MIN_LENGTH}–${USERNAME_MAX_LENGTH} Zeichen, ${USERNAME_HINT.toLowerCase()}`,
+  });
+
+/** Wie better-auth: Adressen werden kleingeschrieben gespeichert und gesucht. */
+const emailSchema = z
+  .string()
+  .email("Bitte gib eine gültige E-Mail-Adresse ein")
+  .transform((value) => value.trim().toLowerCase());
 
 export const usersRouter = createTRPCRouter({
   /**
@@ -144,12 +169,7 @@ export const usersRouter = createTRPCRouter({
     .input(
       z.object({
         name: z.string().min(1).max(100).optional(),
-        username: z
-          .string()
-          .min(3)
-          .max(30)
-          .regex(/^[a-zA-Z0-9_.-]+$/)
-          .optional(),
+        username: usernameSchema.optional(),
         bio: z.string().max(2000).optional(),
         profileImageId: z.string().optional().nullable(),
       }),
@@ -158,7 +178,7 @@ export const usersRouter = createTRPCRouter({
       if (input.username) {
         const existing = await ctx.db.user.findFirst({
           where: {
-            username: input.username,
+            username: { equals: input.username, mode: "insensitive" },
             NOT: { id: ctx.session.user.id },
           },
         });
@@ -189,12 +209,7 @@ export const usersRouter = createTRPCRouter({
         firstName: z.string().max(100).optional(),
         lastName: z.string().max(100).optional(),
         displayName: z.string().max(100).optional(),
-        username: z
-          .string()
-          .min(3)
-          .max(30)
-          .regex(/^[a-zA-Z0-9_.-]+$/)
-          .optional(),
+        username: usernameSchema.optional(),
         phone: internationalPhoneSchema.optional(),
         street: z.string().max(200).optional(),
         zipCode: z.string().max(20).optional(),
@@ -214,7 +229,7 @@ export const usersRouter = createTRPCRouter({
       if (input.username) {
         const existing = await ctx.db.user.findFirst({
           where: {
-            username: input.username,
+            username: { equals: input.username, mode: "insensitive" },
             NOT: { id: ctx.session.user.id },
           },
         });
@@ -387,16 +402,8 @@ export const usersRouter = createTRPCRouter({
         firstName: z.string().min(1, "Vorname ist erforderlich").max(100),
         lastName: z.string().min(1, "Nachname ist erforderlich").max(100),
         displayName: z.string().max(100).optional(),
-        email: z.string().email("Bitte gib eine gültige E-Mail-Adresse ein"),
-        username: z
-          .string()
-          .min(3, "Benutzername muss mindestens 3 Zeichen haben")
-          .max(30, "Benutzername darf maximal 30 Zeichen haben")
-          .regex(
-            /^[a-zA-Z0-9_.-]+$/,
-            "Benutzername darf nur Buchstaben, Zahlen, Unterstrich, Bindestrich und Punkt enthalten",
-          )
-          .optional(),
+        email: emailSchema,
+        username: usernameSchema.optional(),
         districtRoleName: z.string().max(100).optional(),
         bio: z.string().max(2000).optional(),
         bezirkId: z.string().optional().nullable(),
@@ -408,8 +415,8 @@ export const usersRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const existingEmail = await ctx.db.user.findUnique({
-        where: { email: input.email },
+      const existingEmail = await ctx.db.user.findFirst({
+        where: { email: { equals: input.email, mode: "insensitive" } },
       });
 
       if (existingEmail) {
@@ -420,8 +427,8 @@ export const usersRouter = createTRPCRouter({
       }
 
       if (input.username) {
-        const existingUsername = await ctx.db.user.findUnique({
-          where: { username: input.username },
+        const existingUsername = await ctx.db.user.findFirst({
+          where: { username: { equals: input.username, mode: "insensitive" } },
         });
 
         if (existingUsername) {
@@ -461,16 +468,8 @@ export const usersRouter = createTRPCRouter({
       z.object({
         id: z.string(),
         displayName: z.string().min(1).max(100).optional(),
-        email: z.string().email().optional(),
-        username: z
-          .string()
-          .min(3, "Benutzername muss mindestens 3 Zeichen haben")
-          .max(30, "Benutzername darf maximal 30 Zeichen haben")
-          .regex(
-            /^[a-zA-Z0-9_.-]+$/,
-            "Benutzername darf nur Buchstaben, Zahlen, Unterstrich, Bindestrich und Punkt enthalten",
-          )
-          .optional(),
+        email: emailSchema.optional(),
+        username: usernameSchema.optional(),
         bio: z.string().max(2000).optional(),
         // Nullable: `undefined` heißt "unverändert", `null` entfernt die Amtsbezeichnung.
         districtRoleName: z.string().max(100).optional().nullable(),
@@ -489,7 +488,7 @@ export const usersRouter = createTRPCRouter({
       if (updateData.email) {
         const existing = await ctx.db.user.findFirst({
           where: {
-            email: updateData.email,
+            email: { equals: updateData.email, mode: "insensitive" },
             NOT: { id },
           },
         });
@@ -505,7 +504,7 @@ export const usersRouter = createTRPCRouter({
       if (updateData.username) {
         const existing = await ctx.db.user.findFirst({
           where: {
-            username: updateData.username,
+            username: { equals: updateData.username, mode: "insensitive" },
             NOT: { id },
           },
         });
@@ -669,14 +668,28 @@ export const usersRouter = createTRPCRouter({
     maxRequests: 30,
     windowMs: 60 * 1000,
   })
-    .input(z.object({ username: z.string().min(3).max(30) }))
+    // Auch zu lange oder ungültige Eingaben annehmen: sonst scheitert die
+    // Abfrage still und das Formular meldet gar nichts.
+    .input(z.object({ username: z.string().min(1).max(100) }))
     .query(async ({ ctx, input }) => {
-      const existing = await ctx.db.user.findUnique({
-        where: { username: input.username },
+      const problem = describeUsernameProblem(input.username);
+      if (problem) {
+        return { available: false, problem };
+      }
+
+      // Unabhängig von der Schreibweise: better-auth vergleicht kleingeschrieben.
+      const existing = await ctx.db.user.findFirst({
+        where: {
+          username: {
+            equals: normalizeUsername(input.username),
+            mode: "insensitive",
+          },
+        },
       });
 
       return {
         available: !existing,
+        problem: null,
       };
     }),
 
@@ -690,8 +703,12 @@ export const usersRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
-      const existing = await ctx.db.user.findUnique({
-        where: { email: input.email },
+      // Konten liegen kleingeschrieben vor; ein exakter Vergleich würde
+      // "Max@web.de" als frei melden und die Registrierung dann ablehnen.
+      const existing = await ctx.db.user.findFirst({
+        where: {
+          email: { equals: input.email.trim(), mode: "insensitive" },
+        },
       });
 
       return {

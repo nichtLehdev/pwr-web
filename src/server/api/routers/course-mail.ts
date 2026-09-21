@@ -2,6 +2,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { readFile } from "fs/promises";
 import { marked } from "marked";
+import { absolutizeHtmlLinks } from "@/lib/content-link";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import {
   InvoiceStatus,
@@ -445,7 +446,12 @@ function exampleValues(): PlaceholderValues {
 }
 
 async function renderBody(markdown: string): Promise<string> {
-  const html = sanitizeHtml(String(await marked.parse(markdown)));
+  // Seiteneigene Verweise absolut setzen: Im Mailprogramm gibt es keine
+  // Basisadresse, „/termine/event/…" zeigte dort ins Leere.
+  const html = absolutizeHtmlLinks(
+    sanitizeHtml(String(await marked.parse(markdown))),
+    getBaseUrl(),
+  );
   if (!html.trim()) {
     throw new TRPCError({
       code: "BAD_REQUEST",

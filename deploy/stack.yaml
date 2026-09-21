@@ -46,6 +46,13 @@ services:
       NEXT_PUBLIC_APP_URL: "{{ .Env.APP_URL }}"
       BETTER_AUTH_SECRET: "{{ .Env.BETTER_AUTH_SECRET }}"
       BETTER_AUTH_URL: "{{ .Env.APP_URL }}"
+      # Weitere erlaubte Herkünfte, kommagetrennt (z. B. die www-Variante).
+      # Fehlt eine, lehnt better-auth Anmeldung und Registrierung von dort ab.
+      BETTER_AUTH_TRUSTED_ORIGINS: "{{ .Env.BETTER_AUTH_TRUSTED_ORIGINS }}"
+      # Einwertige Proxy-Header zuerst; ohne aufgelöste Client-IP zählt das
+      # Rate-Limit alle Besucher gemeinsam. Nur setzen, wenn der Proxy sie liefert.
+      BETTER_AUTH_IP_HEADERS: "{{ .Env.BETTER_AUTH_IP_HEADERS }}"
+      BETTER_AUTH_TRUSTED_PROXIES: "{{ .Env.BETTER_AUTH_TRUSTED_PROXIES }}"
       SMTP_HOST: "{{ .Env.SMTP_HOST }}"
       SMTP_PORT: "{{ .Env.SMTP_PORT }}"
       SMTP_SECURE: "{{ .Env.SMTP_SECURE }}"

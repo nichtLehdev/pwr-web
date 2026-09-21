@@ -1,8 +1,19 @@
 import { z } from "zod";
-import { createTRPCRouter, rateLimitedPublicProcedure } from "../trpc";
+import {
+  createTRPCRouter,
+  protectedProcedure,
+  rateLimitedPublicProcedure,
+} from "../trpc";
 import { ContentStatus } from "~/generated/prisma/client";
 import { GAMES } from "@/app/spiele/_lib/games";
 import { coursePath, eventPath, postPath } from "@/lib/slug";
+import {
+  auswahlchorLinkHref,
+  LINK_TARGET_TYPES,
+  type LinkTarget,
+  type LinkTargetType,
+  linkHref,
+} from "@/lib/content-link";
 import { markdownToSingleLine } from "@/lib/markdown-to-plain-text";
 
 export type SearchResultType =
@@ -974,5 +985,126 @@ export const searchRouter = createTRPCRouter({
         total: results.length,
         query: searchTerm,
       };
+    }),
+
+  /**
+   * Ziele für den Verlinken-Dialog im Editor. Getrennt von `global`: die Suche dort
+   * blendet vergangene Termine aus und kennt Downloads und statische Seiten, die
+   * hier nur Rauschen wären.
+   */
+  linkTargets: protectedProcedure
+    .input(
+      z.object({
+        query: z.string().trim().max(100).default(""),
+        type: z.enum(["all", ...LINK_TARGET_TYPES]).default("all"),
+        limit: z.number().min(1).max(20).default(8),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const q = input.query;
+      // Ohne Suchbegriff zeigt der Dialog die zuletzt bearbeiteten Inhalte.
+      const contains = q
+        ? { contains: q, mode: "insensitive" as const }
+        : undefined;
+      const wanted = (type: LinkTargetType) =>
+        input.type === "all" || input.type === type;
+      const take = input.limit;
+
+      const [posts, events, courses, ensembles, choere] = await Promise.all([
+        wanted("post")
+          ? ctx.db.post.findMany({
+              where: {
+                status: ContentStatus.APPROVED,
+                ...(contains && { title: contains }),
+              },
+              select: { id: true, title: true, publishedAt: true },
+              orderBy: { publishedAt: "desc" },
+              take,
+            })
+          : [],
+        wanted("event")
+          ? ctx.db.event.findMany({
+              where: {
+                status: ContentStatus.APPROVED,
+                ...(contains && { title: contains }),
+              },
+              select: { id: true, title: true, eventDate: true },
+              orderBy: { eventDate: "desc" },
+              take,
+            })
+          : [],
+        wanted("course")
+          ? ctx.db.course.findMany({
+              where: {
+                status: ContentStatus.APPROVED,
+                ...(contains && { title: contains }),
+              },
+              select: { id: true, title: true, startDate: true },
+              orderBy: { startDate: "desc" },
+              take,
+            })
+          : [],
+        wanted("ensemble")
+          ? ctx.db.ensemble.findMany({
+              where: contains ? { name: contains } : {},
+              select: {
+                id: true,
+                name: true,
+                location: { select: { city: true } },
+              },
+              orderBy: { name: "asc" },
+              take,
+            })
+          : [],
+        wanted("auswahlchor")
+          ? ctx.db.auswahlChor.findMany({
+              where: contains ? { name: contains } : {},
+              select: { id: true, name: true, slug: true, subtitle: true },
+              orderBy: { name: "asc" },
+              take,
+            })
+          : [],
+      ]);
+
+      const targets: LinkTarget[] = [
+        ...posts.map((post) => ({
+          id: post.id,
+          type: "post" as const,
+          title: post.title,
+          href: linkHref("post", post.id),
+          hint: post.publishedAt?.toISOString() ?? null,
+        })),
+        ...events.map((event) => ({
+          id: event.id,
+          type: "event" as const,
+          title: event.title,
+          href: linkHref("event", event.id),
+          hint: event.eventDate.toISOString(),
+        })),
+        ...courses.map((course) => ({
+          id: course.id,
+          type: "course" as const,
+          title: course.title,
+          href: linkHref("course", course.id),
+          hint: course.startDate.toISOString(),
+        })),
+        ...ensembles.map((ensemble) => ({
+          id: ensemble.id,
+          type: "ensemble" as const,
+          title: ensemble.name,
+          href: linkHref("ensemble", ensemble.id),
+          hint: ensemble.location?.city ?? null,
+        })),
+        ...choere.map((chor) => ({
+          id: chor.id,
+          type: "auswahlchor" as const,
+          title: chor.name,
+          // Kein eigener Detailpfad: der Anker auf der Sammelseite ist das Ziel.
+          href: auswahlchorLinkHref(chor.slug),
+          hint: chor.subtitle,
+        })),
+      ];
+
+      return { targets };
     }),
 });

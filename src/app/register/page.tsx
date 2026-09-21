@@ -16,6 +16,15 @@ import PublicPage from "@/app/_components/general/public-page";
 import { PageSection } from "@/app/_components/programmheft/page-section";
 import { Note } from "@/app/_components/programmheft/note";
 import { PASSWORD_MIN_LENGTH } from "@/lib/password-strength";
+import {
+  USERNAME_HINT,
+  USERNAME_INPUT_PATTERN,
+  USERNAME_MAX_LENGTH,
+  USERNAME_MIN_LENGTH,
+  describeUsernameProblem,
+  normalizeUsername,
+  suggestUsername,
+} from "@/lib/username";
 
 /** Statuszeile unter einem Feld: neutral schiefergrau, verfügbar grün, vergeben rot. */
 const STATUS_TEXT: Record<"checking" | "available" | "unavailable", string> = {
@@ -23,6 +32,65 @@ const STATUS_TEXT: Record<"checking" | "available" | "unavailable", string> = {
   available: "text-green-600 dark:text-green-400",
   unavailable: "text-red-600 dark:text-red-400",
 };
+
+/**
+ * Fehlercodes von better-auth. Ohne diese Zuordnung bleibt eine abgelehnte
+ * Registrierung unsichtbar: der Client wirft nicht, er liefert `error` zurück.
+ */
+const SIGN_UP_ERRORS: Record<string, string> = {
+  USERNAME_TOO_SHORT: `Der Benutzername braucht mindestens ${USERNAME_MIN_LENGTH} Zeichen.`,
+  USERNAME_TOO_LONG: `Der Benutzername darf höchstens ${USERNAME_MAX_LENGTH} Zeichen haben.`,
+  INVALID_USERNAME: `${USERNAME_HINT}.`,
+  USERNAME_IS_ALREADY_TAKEN: "Dieser Benutzername ist bereits vergeben.",
+  INVALID_DISPLAY_USERNAME: `${USERNAME_HINT}.`,
+  PASSWORD_TOO_SHORT: `Das Passwort braucht mindestens ${PASSWORD_MIN_LENGTH} Zeichen.`,
+  PASSWORD_TOO_LONG: "Das Passwort ist zu lang.",
+  INVALID_EMAIL: "Bitte gib eine gültige E-Mail-Adresse ein.",
+  INVALID_PASSWORD: "Bitte gib ein Passwort ein.",
+  USER_ALREADY_EXISTS: "Diese E-Mail-Adresse ist bereits registriert.",
+  USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL:
+    "Diese E-Mail-Adresse ist bereits registriert.",
+  INVALID_ORIGIN:
+    "Die Registrierung wurde aus Sicherheitsgründen abgelehnt, weil die Seite über eine unbekannte Adresse aufgerufen wurde. Bitte rufe die Seite direkt auf und versuche es erneut.",
+};
+
+type SignUpError = { code?: string; message?: string; status?: number };
+
+function describeSignUpError(error: SignUpError): string {
+  const known = error.code ? SIGN_UP_ERRORS[error.code] : undefined;
+  if (known) return known;
+
+  if (error.status === 429) {
+    return "Zu viele Registrierungsversuche. Bitte versuche es in einer Minute noch einmal.";
+  }
+  // Der Originaltext ist englisch, hilft aber bei einer Fehlermeldung an uns.
+  return error.message
+    ? `Registrierung fehlgeschlagen: ${error.message}`
+    : "Registrierung fehlgeschlagen. Bitte versuche es später erneut.";
+}
+
+type VerificationMailResult = "sent" | "failed" | "already-verified";
+
+async function sendVerificationMail(
+  email: string,
+): Promise<VerificationMailResult> {
+  try {
+    const response = await fetch("/api/auth/send-verification", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+
+    if (response.ok) return "sent";
+
+    const data = (await response.json().catch(() => ({}))) as {
+      code?: string;
+    };
+    return data.code === "ALREADY_VERIFIED" ? "already-verified" : "failed";
+  } catch {
+    return "failed";
+  }
+}
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -47,10 +115,12 @@ export default function RegisterPage() {
     return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(emailToCheck);
   };
 
+  // Nur gültige Namen abfragen: sonst lehnt die Prüfung die Eingabe ab und das
+  // Feld bleibt ohne Rückmeldung stehen.
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (formData.username.length >= 3) {
-        setDebouncedUsername(formData.username);
+      if (!describeUsernameProblem(formData.username)) {
+        setDebouncedUsername(normalizeUsername(formData.username));
       }
     }, 500);
     return () => clearTimeout(timer);
@@ -68,7 +138,7 @@ export default function RegisterPage() {
   const checkUsernameQuery = api.users.checkUsername.useQuery(
     { username: debouncedUsername },
     {
-      enabled: debouncedUsername.length >= 3,
+      enabled: debouncedUsername.length >= USERNAME_MIN_LENGTH,
       refetchOnWindowFocus: false,
     },
   );
@@ -81,16 +151,18 @@ export default function RegisterPage() {
     },
   );
 
+  const usernameProblem = describeUsernameProblem(formData.username);
+
   const usernameStatus = useMemo(() => {
-    if (formData.username.length < 3) {
+    if (usernameProblem) {
       return {
         checking: false,
         available: null as boolean | null,
-        message: formData.username.length > 0 ? "Mindestens 3 Zeichen" : "",
+        message: formData.username.length > 0 ? usernameProblem : "",
       };
     }
     if (
-      formData.username !== debouncedUsername ||
+      normalizeUsername(formData.username) !== debouncedUsername ||
       checkUsernameQuery.isLoading
     ) {
       return {
@@ -111,6 +183,7 @@ export default function RegisterPage() {
     return { checking: false, available: null as boolean | null, message: "" };
   }, [
     formData.username,
+    usernameProblem,
     debouncedUsername,
     checkUsernameQuery.isLoading,
     checkUsernameQuery.data,
@@ -158,7 +231,7 @@ export default function RegisterPage() {
   const canSubmit =
     formData.firstName.trim().length > 0 &&
     formData.lastName.trim().length > 0 &&
-    formData.username.trim().length >= 3 &&
+    !usernameProblem &&
     isValidEmail(formData.email) &&
     formData.password.length >= PASSWORD_MIN_LENGTH &&
     passwordsMatch &&
@@ -169,18 +242,17 @@ export default function RegisterPage() {
     const { name, value } = e.target;
 
     setFormData((prev) => {
-      const updated = { ...prev, [name]: value };
+      const updated = {
+        ...prev,
+        [name]: name === "username" ? normalizeUsername(value) : value,
+      };
 
       if ((name === "firstName" || name === "lastName") && !usernameEdited) {
         const firstName = name === "firstName" ? value : prev.firstName;
         const lastName = name === "lastName" ? value : prev.lastName;
 
         if (firstName && lastName) {
-          updated.username =
-            `${firstName.toLowerCase()}.${lastName.toLowerCase()}`
-              .normalize("NFD")
-              .replace(/[̀-ͯ]/g, "")
-              .replace(/[^a-z0-9.]/g, "");
+          updated.username = suggestUsername(firstName, lastName);
         }
       }
 
@@ -212,6 +284,11 @@ export default function RegisterPage() {
       return;
     }
 
+    if (usernameProblem) {
+      setError(usernameProblem);
+      return;
+    }
+
     if (usernameStatus.available === false) {
       setError("Bitte wähle einen verfügbaren Benutzernamen");
       return;
@@ -224,44 +301,42 @@ export default function RegisterPage() {
 
     setIsLoading(true);
 
+    const email = formData.email.trim().toLowerCase();
+
     try {
-      await signUp.email({
-        email: formData.email,
+      // better-auth wirft nicht, sondern liefert `error` zurück. Ohne diese
+      // Prüfung landet eine abgelehnte Registrierung auf der Bestätigungsseite,
+      // ohne dass ein Konto existiert.
+      const { error: signUpError } = await signUp.email({
+        email,
         password: formData.password,
         name: `${formData.firstName} ${formData.lastName}`.trim(),
-        username:
-          formData.username || `${formData.firstName}.${formData.lastName}`,
+        username: normalizeUsername(formData.username),
         firstName: formData.firstName,
         lastName: formData.lastName,
       });
 
-      console.log("Registration successful, sending verification email...");
-
-      try {
-        const response = await fetch("/api/auth/send-verification", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email: formData.email }),
-        });
-
-        if (!response.ok) {
-          console.error(
-            "Failed to send verification email:",
-            await response.text(),
-          );
-        } else {
-          console.log("Verification email sent successfully");
-        }
-      } catch (emailError) {
-        console.error("Error triggering verification email:", emailError);
+      if (signUpError) {
+        setError(describeSignUpError(signUpError));
+        return;
       }
 
-      router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`);
+      const mailSent = await sendVerificationMail(email);
+
+      if (mailSent === "already-verified") {
+        setError(
+          "Diese E-Mail-Adresse ist bereits registriert und bestätigt. Bitte melde dich an.",
+        );
+        return;
+      }
+
+      const params = new URLSearchParams({ email });
+      // Die Bestätigungsseite darf keinen Versand behaupten, den es nicht gab.
+      if (mailSent === "failed") params.set("mail", "failed");
+      router.push(`/verify-email?${params.toString()}`);
     } catch (err) {
       setError(
-        "Registrierung fehlgeschlagen. E-Mail könnte bereits verwendet werden.",
+        "Registrierung fehlgeschlagen. Bitte prüfe deine Internetverbindung und versuche es erneut.",
       );
       console.error(err);
     } finally {
@@ -330,12 +405,12 @@ export default function RegisterPage() {
                 autoComplete="username"
                 required
                 value={formData.username}
-                minLength={3}
-                maxLength={30}
-                pattern="[a-zA-Z0-9_.-]+"
-                title="Nur Buchstaben, Zahlen, Unterstrich, Bindestrich und Punkt erlaubt"
+                minLength={USERNAME_MIN_LENGTH}
+                maxLength={USERNAME_MAX_LENGTH}
+                pattern={USERNAME_INPUT_PATTERN}
+                title={USERNAME_HINT}
                 onChange={handleChange}
-                error={usernameStatus.available === false}
+                error={usernameStatus.available === false || !!usernameProblem}
                 className={
                   usernameStatus.available === true
                     ? "border-green-600 dark:border-green-400"
