@@ -27,7 +27,7 @@ function getBezirkInfo(id: number) {
     5: "Bergisches Land mit Wuppertal, Solingen, Remscheid und Wermelskirchen",
     6: "Stadtgebiet Köln und Umgebung mit Bergisch Gladbach",
     7: "Region Aachen-Jülich mit Aachen, Jülich, Düren und Heinsberg",
-    8: "Großraum Bonn mit Bad Godesberg und Siegburg",
+    8: "Großraum Bonn mit Bad Godesberg und Voreifel",
     9: "Oberbergischer Kreis mit Gummersbach, Waldbröl und Wiehl",
     10: "Wied-Region mit Neuwied, Altenkirchen und Asbach",
     11: "An Nahe und Glan mit Birkenfeld, Idar-Oberstein und Kusel",
