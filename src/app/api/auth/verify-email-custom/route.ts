@@ -14,9 +14,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Wie beim Versand kleingeschrieben: Mail-Programme dürfen die Adresse im
+    // Link anders schreiben, das Konto liegt immer kleingeschrieben vor.
+    const normalizedEmail = email.trim().toLowerCase();
+
     const verification = await db.verification.findFirst({
       where: {
-        identifier: email,
+        identifier: normalizedEmail,
         value: token,
         expiresAt: {
           gte: new Date(), // Token must not be expired
@@ -32,7 +36,7 @@ export async function GET(request: NextRequest) {
     }
 
     const user = await db.user.findUnique({
-      where: { email },
+      where: { email: normalizedEmail },
     });
 
     if (!user) {

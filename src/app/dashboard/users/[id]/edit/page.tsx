@@ -14,6 +14,12 @@ import { DashboardPage } from "@/app/_components/dashboard";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import { fieldControlClasses } from "@/app/_components/programmheft/field";
 import { User } from "lucide-react";
+import {
+  USERNAME_HINT,
+  USERNAME_INPUT_PATTERN,
+  USERNAME_MAX_LENGTH,
+  USERNAME_MIN_LENGTH,
+} from "@/lib/username";
 
 const UserPlaceholderIcon = ({ className }: { className?: string }) => (
   <User className={className} />
@@ -243,10 +249,8 @@ export default function EditUserPage() {
         setIsSubmitting(false);
         return;
       }
-      if (!/^[a-zA-Z0-9_.-]+$/.test(username.trim())) {
-        setError(
-          "Benutzername darf nur Buchstaben, Zahlen, Unterstrich, Bindestrich und Punkt enthalten.",
-        );
+      if (!/^[a-zA-Z0-9_.]+$/.test(username.trim())) {
+        setError(`${USERNAME_HINT}.`);
         setIsSubmitting(false);
         return;
       }
@@ -440,10 +444,10 @@ export default function EditUserPage() {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="benutzername"
-                  minLength={3}
-                  maxLength={30}
-                  pattern="[a-zA-Z0-9_.-]+"
-                  title="Nur Buchstaben, Zahlen, Unterstrich, Bindestrich und Punkt erlaubt"
+                  minLength={USERNAME_MIN_LENGTH}
+                  maxLength={USERNAME_MAX_LENGTH}
+                  pattern={USERNAME_INPUT_PATTERN}
+                  title={USERNAME_HINT}
                   className={cn(
                     fieldControlClasses,
                     usernameStatus.available === true

@@ -17,14 +17,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const rl = rateLimit(`resend-verification:${email.toLowerCase()}`, {
+    // better-auth legt Konten kleingeschrieben an; eine Suche mit der
+    // getippten Schreibweise findet sie sonst nicht.
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const rl = rateLimit(`resend-verification:${normalizedEmail}`, {
       maxRequests: 3,
       windowMs: 15 * 60 * 1000,
     });
     if (!rl.success) return rateLimitResponse();
 
     const user = await db.user.findUnique({
-      where: { email },
+      where: { email: normalizedEmail },
     });
 
     if (!user) {

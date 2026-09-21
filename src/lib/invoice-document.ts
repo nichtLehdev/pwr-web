@@ -110,6 +110,10 @@ export function invoicePaymentReference(
 export const DEFAULT_INVOICE_CLOSING_TEXT =
   "Wir freuen uns auf eine gemeinsame Zeit!";
 
+/** Steht auf jeder Rechnung, unabhängig vom frei editierbaren Schlusstext. */
+export const INVOICE_CANCELLATION_NOTICE =
+  "Sollte der/ die Teilnehmer/ in aus Gründen, die das Posaunenwerk nicht zu vertreten hat, den Lehrgang kurzfristig absagen, sind die von der Hausverwaltung in Rechnung gestellten Ausfallgebühren zu zahlen.";
+
 /** Negative sibling-discount line; exports find the discount amount by this name. */
 export const SIBLING_DISCOUNT_LINE_DESCRIPTION = "Geschwisterkindrabatt (20 %)";
 

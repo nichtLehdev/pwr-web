@@ -22,6 +22,7 @@ import {
 import { marked } from "marked";
 import MediaPickerModal from "./media-picker-modal";
 import DownloadPickerModal from "./download-picker-modal";
+import InhaltPickerModal from "./inhalt-picker-modal";
 import { Button, Input } from "@/app/_components/ui";
 import { cn } from "@/lib/utils";
 import "@/styles/article-content.css";
@@ -38,6 +39,7 @@ import {
   AlignRight,
   Quote,
   Link as LinkIcon,
+  Link2,
   Image as ImageIcon,
   FileText,
   Table as TableIcon,
@@ -394,11 +396,13 @@ function Toolbar({
   editor,
   onOpenMediaPicker,
   onOpenDownloadPicker,
+  onOpenInhaltPicker,
   variant = "voll",
 }: {
   editor: Editor | null;
   onOpenMediaPicker: () => void;
   onOpenDownloadPicker: () => void;
+  onOpenInhaltPicker: () => void;
   variant?: RichTextVariant;
 }) {
   const [showLinkInput, setShowLinkInput] = useState(false);
@@ -627,6 +631,14 @@ function Toolbar({
         )}
       </div>
 
+      {/* Neben dem Link-Knopf: derselbe Handgriff, nur ohne herauszusuchende Adresse. */}
+      <ToolbarButton
+        onClick={onOpenInhaltPicker}
+        title="Inhalt der Website verlinken"
+      >
+        <Link2 className="h-4 w-4" />
+      </ToolbarButton>
+
       {voll && (
         <ToolbarButton onClick={onOpenMediaPicker} title="Bild einfügen">
           <ImageIcon className="h-4 w-4" />
@@ -724,6 +736,9 @@ export default function RichTextEditor({
   const isInitialized = useRef(false);
   const [showMediaPicker, setShowMediaPicker] = useState(false);
   const [showDownloadPicker, setShowDownloadPicker] = useState(false);
+  const [showInhaltPicker, setShowInhaltPicker] = useState(false);
+  /** Zum Öffnen festgehalten: Im Dialog hat der Editor keine Auswahl mehr. */
+  const [inhaltAuswahlText, setInhaltAuswahlText] = useState("");
   const [contextMenu, setContextMenu] = useState<{
     x: number;
     y: number;
@@ -820,6 +835,40 @@ export default function RichTextEditor({
     [editor],
   );
 
+  const openInhaltPicker = useCallback(() => {
+    const selection = editor?.state.selection;
+    setInhaltAuswahlText(
+      selection && !selection.empty && editor
+        ? editor.state.doc.textBetween(selection.from, selection.to, " ").trim()
+        : "",
+    );
+    setShowInhaltPicker(true);
+  }, [editor]);
+
+  const handleInhaltSelect = useCallback(
+    (href: string, title: string) => {
+      if (!editor) return;
+      const selection = editor.state.selection;
+      if (selection.empty) {
+        // Ohne Auswahl ist der Titel der Linktext — als Knoten, nicht als HTML,
+        // damit spitze Klammern im Titel Text bleiben.
+        editor
+          .chain()
+          .focus()
+          .insertContent({
+            type: "text",
+            text: title,
+            marks: [{ type: "link", attrs: { href } }],
+          })
+          .run();
+      } else {
+        editor.chain().focus().extendMarkRange("link").setLink({ href }).run();
+      }
+      setShowInhaltPicker(false);
+    },
+    [editor],
+  );
+
   const handleContextMenu = useCallback(
     (e: MouseEvent<HTMLDivElement>) => {
       if (!editor) return;
@@ -860,6 +909,7 @@ export default function RichTextEditor({
           editor={editor}
           onOpenMediaPicker={() => setShowMediaPicker(true)}
           onOpenDownloadPicker={() => setShowDownloadPicker(true)}
+          onOpenInhaltPicker={openInhaltPicker}
           variant={variant}
         />
         <div
@@ -877,6 +927,15 @@ export default function RichTextEditor({
           onClose={() => setContextMenu(null)}
         />
       )}
+
+      {/* Anders als Bild und Download in jeder Variante: Ein Verweis auf einen
+          Termin gehört auch in eine Beschreibung oder eine Kursmail. */}
+      <InhaltPickerModal
+        isOpen={showInhaltPicker}
+        onClose={() => setShowInhaltPicker(false)}
+        selectedText={inhaltAuswahlText}
+        onSelect={handleInhaltSelect}
+      />
 
       {/* Bild- und Download-Auswahl gibt es nur im Beitragseditor. */}
       {voll && (

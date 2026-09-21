@@ -17,14 +17,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const rl = rateLimit(`send-verification:${email.toLowerCase()}`, {
+    // better-auth legt Konten kleingeschrieben an; eine Suche mit der
+    // getippten Schreibweise findet sie sonst nicht.
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const rl = rateLimit(`send-verification:${normalizedEmail}`, {
       maxRequests: 3,
       windowMs: 15 * 60 * 1000,
     });
     if (!rl.success) return rateLimitResponse();
 
     const user = await db.user.findUnique({
-      where: { email },
+      where: { email: normalizedEmail },
     });
 
     if (!user) {
@@ -39,7 +43,10 @@ export async function POST(request: NextRequest) {
 
     if (user.emailVerified) {
       return NextResponse.json(
-        { message: "Diese E-Mail-Adresse ist bereits verifiziert." },
+        {
+          code: "ALREADY_VERIFIED",
+          message: "Diese E-Mail-Adresse ist bereits verifiziert.",
+        },
         { status: 400 },
       );
     }
