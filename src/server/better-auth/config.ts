@@ -49,10 +49,17 @@ const splitList = (value: string | undefined): string[] =>
  * deshalb zuerst die einwertigen Header des Proxys. Das setzt voraus, dass die
  * App nur über den Proxy erreichbar ist (Docker-Netz), sonst wären sie fälschbar.
  */
-const ipAddressHeaders = splitList(
-  process.env.BETTER_AUTH_IP_HEADERS ??
-    "cf-connecting-ip,x-real-ip,x-forwarded-for",
-).map((header) => header.toLowerCase());
+const DEFAULT_IP_HEADERS = ["cf-connecting-ip", "x-real-ip", "x-forwarded-for"];
+
+// Leer zählt als „nicht gesetzt": Die Deployments reichen die Variable immer
+// durch (der mittwald-Stack scheitert sonst an der fehlenden Stelle) und liefern
+// dann "" statt undefined. Mit `??` bliebe die Liste leer und better-auth fände
+// erneut keine IP — genau der Fehler, den diese Einstellung beheben soll.
+const configuredIpHeaders = splitList(process.env.BETTER_AUTH_IP_HEADERS).map(
+  (header) => header.toLowerCase(),
+);
+const ipAddressHeaders =
+  configuredIpHeaders.length > 0 ? configuredIpHeaders : DEFAULT_IP_HEADERS;
 
 /** Nötig, wenn nur `x-forwarded-for` ankommt: IPs/CIDRs der eigenen Proxys. */
 const trustedProxies = splitList(process.env.BETTER_AUTH_TRUSTED_PROXIES);

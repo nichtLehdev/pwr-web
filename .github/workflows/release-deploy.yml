@@ -244,6 +244,12 @@ jobs:
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           APP_URL: ${{ vars.APP_URL }}
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          # Alle drei dürfen leer bleiben: APP_URL ist ohnehin vertraut, und ohne
+          # gesetzte Header nimmt better-auth die eigene Voreinstellung. Eine nicht
+          # angelegte Variable ergibt hier den leeren String.
+          BETTER_AUTH_TRUSTED_ORIGINS: ${{ vars.BETTER_AUTH_TRUSTED_ORIGINS }}
+          BETTER_AUTH_IP_HEADERS: ${{ vars.BETTER_AUTH_IP_HEADERS }}
+          BETTER_AUTH_TRUSTED_PROXIES: ${{ vars.BETTER_AUTH_TRUSTED_PROXIES }}
           SMTP_HOST: ${{ vars.SMTP_HOST }}
           SMTP_PORT: ${{ vars.SMTP_PORT }}
           SMTP_SECURE: ${{ vars.SMTP_SECURE }}
