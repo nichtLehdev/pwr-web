@@ -408,6 +408,11 @@ export default function DatenschutzPage() {
                 jederzeit löschen lassen. Gesetzliche Aufbewahrungsfristen
                 bleiben unberührt.
               </p>
+              <p>
+                Registrierungen, deren E-Mail-Adresse nicht innerhalb von 14
+                Tagen bestätigt wird, löschen wir automatisch. Ein solches Konto
+                ist nie nutzbar geworden.
+              </p>
             </div>
           </div>
         </Split>
