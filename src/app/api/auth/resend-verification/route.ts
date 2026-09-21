@@ -3,7 +3,11 @@ import { db } from "@/server/db";
 import { sendVerificationEmail } from "@/server/email";
 import { getBaseUrl } from "@/server/utils/get-base-url";
 import { randomBytes } from "crypto";
-import { rateLimit, rateLimitResponse } from "@/server/utils/rate-limit";
+import {
+  clientKeyFromHeaders,
+  rateLimit,
+  rateLimitResponse,
+} from "@/server/utils/rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,6 +24,14 @@ export async function POST(request: NextRequest) {
     // better-auth legt Konten kleingeschrieben an; eine Suche mit der
     // getippten Schreibweise findet sie sonst nicht.
     const normalizedEmail = email.trim().toLowerCase();
+
+    // Pro Adresse gegen wiederholte Mails an dieselbe Person, pro Herkunft
+    // gegen den Bot, der für jede Anfrage eine neue Adresse erfindet.
+    const perIp = rateLimit(
+      `resend-verification-ip:${clientKeyFromHeaders(request.headers)}`,
+      { maxRequests: 10, windowMs: 60 * 60 * 1000 },
+    );
+    if (!perIp.success) return rateLimitResponse();
 
     const rl = rateLimit(`resend-verification:${normalizedEmail}`, {
       maxRequests: 3,

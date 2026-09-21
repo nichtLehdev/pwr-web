@@ -5,6 +5,7 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 
 import { db } from "@/server/db";
 import { isEmailConfigured } from "@/server/email";
+import { signUpGuard } from "./sign-up-guard";
 
 import { createLogger } from "@/server/utils/logger";
 
@@ -138,11 +139,15 @@ export const auth = betterAuth({
     customRules: {
       // Voreinstellung wären 3 Anfragen in 10 Sekunden. Hinter einer geteilten
       // Adresse (Gemeindehaus, Mobilfunk) trifft das Nachbarn statt Angreifer;
-      // der Versand der Bestätigungsmail bleibt pro Adresse begrenzt.
-      "/sign-up/email": { window: 60, max: 10 },
+      // der Versand der Bestätigungsmail bleibt pro Adresse begrenzt. Zehn pro
+      // Stunde lassen einen ganzen Chor durch, aber keinen Bot.
+      "/sign-up/email": { window: 60 * 60, max: 10 },
     },
   },
   appName: "Posaunenwerk Rheinland",
+  hooks: {
+    before: signUpGuard,
+  },
   plugins: [
     username(),
     twoFactor({
