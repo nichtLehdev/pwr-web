@@ -44,6 +44,14 @@ import {
   fieldControlClasses,
 } from "@/app/_components/programmheft/field";
 import { berlinDayKey, formatBerlin } from "@/lib/berlin-time";
+import {
+  USERNAME_HINT,
+  USERNAME_INPUT_PATTERN,
+  USERNAME_MAX_LENGTH,
+  USERNAME_MIN_LENGTH,
+  describeUsernameProblem,
+  normalizeUsername,
+} from "@/lib/username";
 
 interface UserPreferences {
   termineDefaultView: "list" | "calendar";
@@ -250,29 +258,35 @@ export default function SettingsPage() {
   };
 
   const checkUsernameAvailability = async () => {
-    if (
-      !formData.username ||
-      formData.username.length < 3 ||
-      formData.username === profile?.username
-    ) {
+    const username = normalizeUsername(formData.username);
+
+    if (!username || username === profile?.username) {
+      return;
+    }
+
+    const problem = describeUsernameProblem(username);
+    if (problem) {
+      setUsernameStatus({
+        checking: false,
+        available: false,
+        message: problem,
+      });
       return;
     }
 
     setUsernameStatus({ checking: true, available: null, message: "" });
 
     try {
-      const response = await fetch(
-        `/api/trpc/users.checkUsername?input=${encodeURIComponent(JSON.stringify({ username: formData.username }))}`,
-      );
-      const data = await response.json();
-      const available = data.result.data.available;
+      // Über den tRPC-Client: der rohe fetch traf das superjson-Format nicht
+      // und lieferte nie ein Ergebnis.
+      const result = await utils.users.checkUsername.fetch({ username });
 
       setUsernameStatus({
         checking: false,
-        available,
-        message: available
+        available: result.available,
+        message: result.available
           ? "✓ Benutzername verfügbar"
-          : "✗ Benutzername bereits vergeben",
+          : (result.problem ?? "✗ Benutzername bereits vergeben"),
       });
     } catch {
       setUsernameStatus({
@@ -674,9 +688,10 @@ export default function SettingsPage() {
                       name="username"
                       type="text"
                       value={formData.username}
-                      minLength={3}
-                      maxLength={30}
-                      pattern="[a-zA-Z0-9_.-]+"
+                      minLength={USERNAME_MIN_LENGTH}
+                      maxLength={USERNAME_MAX_LENGTH}
+                      pattern={USERNAME_INPUT_PATTERN}
+                      title={USERNAME_HINT}
                       onChange={handleChange}
                       onBlur={checkUsernameAvailability}
                       aria-describedby="username-hint"

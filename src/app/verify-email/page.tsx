@@ -29,6 +29,8 @@ function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const toast = useToast();
   const email = searchParams.get("email");
+  /** Registrierung geglückt, Versand nicht — kein Versand behaupten. */
+  const mailFailed = searchParams.get("mail") === "failed";
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationStatus, setVerificationStatus] = useState<
     "pending" | "success" | "error"
@@ -148,7 +150,9 @@ function VerifyEmailContent() {
         {token
           ? "Bitte warte, während wir deine E-Mail-Adresse bestätigen..."
           : email
-            ? `Wir haben eine Bestätigungs-E-Mail an ${email} gesendet.`
+            ? mailFailed
+              ? `Dein Konto wurde angelegt, aber die Bestätigungs-E-Mail an ${email} konnte nicht gesendet werden.`
+              : `Wir haben eine Bestätigungs-E-Mail an ${email} gesendet.`
             : "Bitte bestätige deine E-Mail-Adresse."}
       </p>
 
@@ -170,13 +174,22 @@ function VerifyEmailContent() {
 
       {!token && (
         <div className="mt-8 space-y-6">
-          <Note tone="info" title="Nächste Schritte">
-            <ul className="list-inside list-disc space-y-1">
-              <li>Öffne dein E-Mail-Postfach</li>
-              <li>Klicke auf den Link in der E-Mail</li>
-              <li>Oder kopiere den Link in deinen Browser</li>
-            </ul>
-          </Note>
+          {mailFailed ? (
+            <Note tone="error" title="Nächste Schritte">
+              <p>
+                Bitte fordere die Bestätigungs-E-Mail gleich noch einmal an.
+                Klappt das nicht, melde dich bei uns.
+              </p>
+            </Note>
+          ) : (
+            <Note tone="info" title="Nächste Schritte">
+              <ul className="list-inside list-disc space-y-1">
+                <li>Öffne dein E-Mail-Postfach</li>
+                <li>Klicke auf den Link in der E-Mail</li>
+                <li>Oder kopiere den Link in deinen Browser</li>
+              </ul>
+            </Note>
+          )}
 
           {email && (
             <button

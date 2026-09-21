@@ -22,6 +22,12 @@ import {
   CardTitle,
   CardContent,
 } from "@/app/_components/ui";
+import {
+  USERNAME_HINT,
+  USERNAME_INPUT_PATTERN,
+  USERNAME_MAX_LENGTH,
+  USERNAME_MIN_LENGTH,
+} from "@/lib/username";
 
 export default function NewUserPage() {
   const router = useRouter();
@@ -261,10 +267,8 @@ export default function NewUserPage() {
         setIsSubmitting(false);
         return;
       }
-      if (!/^[a-zA-Z0-9_.-]+$/.test(username.trim())) {
-        setError(
-          "Benutzername darf nur Buchstaben, Zahlen, Unterstrich, Bindestrich und Punkt enthalten.",
-        );
+      if (!/^[a-zA-Z0-9_.]+$/.test(username.trim())) {
+        setError(`${USERNAME_HINT}.`);
         setIsSubmitting(false);
         return;
       }
@@ -406,10 +410,10 @@ export default function NewUserPage() {
                   value={username}
                   onChange={(e) => handleUsernameChange(e.target.value)}
                   placeholder="vorname.nachname"
-                  minLength={3}
-                  maxLength={30}
-                  pattern="[a-zA-Z0-9_.-]+"
-                  title="Nur Buchstaben, Zahlen, Unterstrich, Bindestrich und Punkt erlaubt"
+                  minLength={USERNAME_MIN_LENGTH}
+                  maxLength={USERNAME_MAX_LENGTH}
+                  pattern={USERNAME_INPUT_PATTERN}
+                  title={USERNAME_HINT}
                   error={usernameStatus.available === false}
                   className={
                     usernameStatus.available === true
