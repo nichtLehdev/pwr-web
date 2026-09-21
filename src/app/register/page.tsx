@@ -16,6 +16,8 @@ import PublicPage from "@/app/_components/general/public-page";
 import { PageSection } from "@/app/_components/programmheft/page-section";
 import { Note } from "@/app/_components/programmheft/note";
 import { PASSWORD_MIN_LENGTH } from "@/lib/password-strength";
+import { useBotTrap } from "@/lib/use-bot-trap";
+import { BotTrapField } from "@/app/_components/general/bot-trap-field";
 import {
   USERNAME_HINT,
   USERNAME_INPUT_PATTERN,
@@ -56,9 +58,19 @@ const SIGN_UP_ERRORS: Record<string, string> = {
 
 type SignUpError = { code?: string; message?: string; status?: number };
 
+/** Aus dem eigenen Formular-Schutz: die Meldung kommt fertig vom Server. */
+const OWN_ERROR_CODES = new Set([
+  "FORM_CHECK_FAILED",
+  "EMAIL_DOMAIN_UNDELIVERABLE",
+]);
+
 function describeSignUpError(error: SignUpError): string {
   const known = error.code ? SIGN_UP_ERRORS[error.code] : undefined;
   if (known) return known;
+
+  if (error.code && OWN_ERROR_CODES.has(error.code) && error.message) {
+    return error.message;
+  }
 
   if (error.status === 429) {
     return "Zu viele Registrierungsversuche. Bitte versuche es in einer Minute noch einmal.";
@@ -107,6 +119,7 @@ export default function RegisterPage() {
   const [confirmTouched, setConfirmTouched] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const botTrap = useBotTrap();
 
   const [debouncedUsername, setDebouncedUsername] = useState("");
   const [debouncedEmail, setDebouncedEmail] = useState("");
@@ -314,6 +327,9 @@ export default function RegisterPage() {
         username: normalizeUsername(formData.username),
         firstName: formData.firstName,
         lastName: formData.lastName,
+        // Der Endpunkt gehört better-auth, sein Body folgt einem festen
+        // Schema — die Signale des Formulars passen nur in eigene Header.
+        fetchOptions: { headers: botTrap.headers() },
       });
 
       if (signUpError) {
@@ -563,6 +579,8 @@ export default function RegisterPage() {
               </Link>{" "}
               zur Kenntnis.
             </p>
+
+            <BotTrapField value={botTrap.value} onChange={botTrap.setValue} />
           </form>
 
           <p className="border-rule dark:border-night-rule text-dark dark:text-night-muted mt-8 border-t pt-6 text-center text-sm">

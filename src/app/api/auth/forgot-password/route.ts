@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/server/better-auth/config";
 import { getBaseUrl } from "@/server/utils/get-base-url";
-import { rateLimit, rateLimitResponse } from "@/server/utils/rate-limit";
+import {
+  clientKeyFromHeaders,
+  rateLimit,
+  rateLimitResponse,
+} from "@/server/utils/rate-limit";
 
 import { createLogger } from "@/server/utils/logger";
 
@@ -18,6 +22,14 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
+
+    // Pro Adresse gegen wiederholte Mails an dieselbe Person, pro Herkunft
+    // gegen den Bot, der für jede Anfrage eine neue Adresse erfindet.
+    const perIp = rateLimit(
+      `forgot-password-ip:${clientKeyFromHeaders(request.headers)}`,
+      { maxRequests: 10, windowMs: 60 * 60 * 1000 },
+    );
+    if (!perIp.success) return rateLimitResponse();
 
     const rl = rateLimit(`forgot-password:${email.toLowerCase()}`, {
       maxRequests: 3,

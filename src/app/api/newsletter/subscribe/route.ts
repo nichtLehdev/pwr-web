@@ -1,14 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/server/db";
-import { rateLimit, rateLimitResponse } from "@/server/utils/rate-limit";
+import {
+  clientKeyFromHeaders,
+  rateLimit,
+  rateLimitResponse,
+} from "@/server/utils/rate-limit";
 import { getBaseUrl } from "@/server/utils/get-base-url";
 import { createNewsletterConfirmToken } from "@/server/utils/newsletter-confirm-token";
 import { clientIpFromHeaders } from "@/server/utils/client-ip";
+import { isDeliverableDomain } from "@/server/utils/email-domain";
 import { NEWSLETTER_CONSENT_VERSION } from "@/lib/newsletter-consent";
+import {
+  BOT_TRAP_ELAPSED_FIELD,
+  BOT_TRAP_FIELD,
+  inspectBotTrap,
+} from "@/lib/bot-trap";
 
 import { createLogger } from "@/server/utils/logger";
 
 const log = createLogger("Newsletter");
+
+/**
+ * Gleiche Antwort für echte Anmeldungen und abgewiesene Bots: Ein Bot soll aus
+ * der Antwort nicht lernen, welche Eingabe ihn verraten hat.
+ */
+const PENDING_RESPONSE = {
+  success: true,
+  pending: true,
+  message:
+    "Fast geschafft: Bitte bestätige deine Anmeldung über den Link in der E-Mail, die wir dir gerade geschickt haben.",
+};
 
 /**
  * Double opt-in, step one: the row stays unconfirmed until the mailed link is
@@ -25,6 +46,27 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
+
+    // Vor allem anderen: ohne die Signale des Formulars entsteht weder ein
+    // Datensatz noch eine Mail. Das Formular schickt sie immer mit.
+    const verdict = inspectBotTrap({
+      trap: body[BOT_TRAP_FIELD],
+      elapsedMs: body[BOT_TRAP_ELAPSED_FIELD],
+    });
+    if (verdict !== "ok") {
+      log.warn(
+        `Newsletter sign-up rejected (${verdict}) from ${clientKeyFromHeaders(request.headers)}`,
+      );
+      return NextResponse.json(PENDING_RESPONSE);
+    }
+
+    // Zwei Töpfe: pro Adresse gegen wiederholte Mails an dieselbe Person, pro
+    // Herkunft gegen den Bot, der für jede Anfrage eine neue Adresse erfindet.
+    const perIp = rateLimit(
+      `newsletter-subscribe-ip:${clientKeyFromHeaders(request.headers)}`,
+      { maxRequests: 5, windowMs: 60 * 60 * 1000 },
+    );
+    if (!perIp.success) return rateLimitResponse();
 
     const rl = rateLimit(`newsletter-subscribe:${email.toLowerCase()}`, {
       maxRequests: 3,
@@ -43,6 +85,19 @@ export async function POST(request: NextRequest) {
     if (!emailRegex.test(email)) {
       return NextResponse.json(
         { message: "Invalid email format" },
+        { status: 400 },
+      );
+    }
+
+    // Erfundene Domains gar nicht erst anschreiben: jede Bestätigungsmail an
+    // eine solche Adresse ist ein Bounce auf unserem Absender.
+    if (!(await isDeliverableDomain(email))) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Zu dieser E-Mail-Adresse gibt es keinen Posteingang. Bitte prüfe die Schreibweise.",
+        },
         { status: 400 },
       );
     }
@@ -119,10 +174,8 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({
-      success: true,
+      ...PENDING_RESPONSE,
       pending: !alreadySubscribed,
-      message:
-        "Fast geschafft: Bitte bestätige deine Anmeldung über den Link in der E-Mail, die wir dir gerade geschickt haben.",
     });
   } catch (error) {
     log.error("Error subscribing to newsletter:", error);

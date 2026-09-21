@@ -623,8 +623,10 @@ function CourseMailPageContent() {
                       <span className="dark:text-night-muted text-dark block text-xs">
                         Jede:r Empfänger:in bekommt die eigene ausgestellte
                         Rechnung als PDF. Wer keine hat, erhält die Nachricht
-                        ohne Anhang. Dazu passen die Platzhalter der Gruppe
-                        „Rechnung“.
+                        ohne Anhang. Ist eine abweichende Rechnungsadresse
+                        hinterlegt, geht die Nachricht dorthin — die anmeldende
+                        Person nur in Kopie. Dazu passen die Platzhalter der
+                        Gruppe „Rechnung“.
                       </span>
                     </span>
                   </label>
@@ -1007,10 +1009,21 @@ function CourseMailPageContent() {
                       </dt>
                       <dd className="dark:text-night-text text-ink">
                         {previewMail.data.recipient
-                          ? `${previewMail.data.recipient.name} <${previewMail.data.recipient.email}>`
+                          ? (previewMail.data.recipient.billingEmail ??
+                            `${previewMail.data.recipient.name} <${previewMail.data.recipient.email}>`)
                           : "Beispielempfänger"}
                       </dd>
                     </div>
+                    {previewMail.data.recipient?.billingEmail && (
+                      <div className="flex gap-2">
+                        <dt className="dark:text-night-muted text-dark shrink-0">
+                          Kopie an:
+                        </dt>
+                        <dd className="dark:text-night-text text-ink">
+                          {`${previewMail.data.recipient.name} <${previewMail.data.recipient.email}>`}
+                        </dd>
+                      </div>
+                    )}
                     <div className="flex gap-2">
                       <dt className="dark:text-night-muted text-dark shrink-0">
                         Antwort an:

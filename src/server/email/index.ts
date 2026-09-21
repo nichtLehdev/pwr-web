@@ -551,6 +551,8 @@ export async function sendContactMessageEmail(params: {
  */
 export async function sendCourseMailToRegistrant(params: {
   to: string;
+  /** Rechnungsmail: die anmeldende Person liest mit, geschickt wird an die Zahlstelle. */
+  cc?: string | string[];
   recipientName?: string;
   subject: string;
   /** Already sanitized HTML. */
@@ -578,6 +580,7 @@ export async function sendCourseMailToRegistrant(params: {
 
   return sendEmail({
     to: params.to,
+    ...(params.cc?.length && { cc: params.cc }),
     from: buildCourseMailFrom(params.senderName),
     replyTo: params.replyToEmail,
     subject: params.subject,

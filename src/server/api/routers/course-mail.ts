@@ -22,6 +22,13 @@ import { maskEmail } from "@/lib/mask-email";
 import { invoicePaymentReference } from "@/lib/invoice-document";
 import type { PermissionCache } from "../helpers/permissions";
 import {
+  groupRecipients,
+  invoiceBillingEmail,
+  mailToAddress,
+  type Recipient,
+  type RegistrationForMail,
+} from "../helpers/course-mail-recipients";
+import {
   applyPlaceholders,
   COURSE_MAIL_PLACEHOLDERS,
   findUnknownPlaceholders,
@@ -61,41 +68,26 @@ const recipientSelectionInput = {
   registrationIds: z.array(z.string()).optional(),
 };
 
-type Recipient = {
-  email: string;
-  firstName: string;
-  lastName: string;
-  street: string | null;
-  zipCode: string | null;
-  city: string | null;
-  registrationIds: string[];
-  participantNames: string[];
-  instruments: string[];
-  totalPrice: number;
-};
-
 /** The published invoices addressed to one recipient, resolved on demand. */
 type RecipientInvoice = {
   id: string;
   invoiceNumber: string;
   totalAmount: number;
   dueDate: Date | null;
+  /** Die Adresse auf dem Dokument; weicht sie ab, ist sie die Rechnungsadresse. */
+  recipientEmail: string | null;
   pdfPath: string;
   pdfFilename: string | null;
 };
 
-/**
- * One entry per address: someone who registered twice gets one mail, with the registrations
- * merged so {{teilnehmer.namen}} names every child.
- */
-async function resolveRecipients(
+async function loadRegistrationsForMailing(
   db: PrismaClient,
   courseId: string,
   selection: { statuses: RegistrationStatus[]; registrationIds?: string[] },
-): Promise<Recipient[]> {
+): Promise<RegistrationForMail[]> {
   const useSelection = (selection.registrationIds?.length ?? 0) > 0;
 
-  const registrations = await db.courseRegistration.findMany({
+  return db.courseRegistration.findMany({
     where: {
       courseId,
       ...(useSelection
@@ -117,42 +109,17 @@ async function resolveRecipients(
     },
     orderBy: { createdAt: "asc" },
   });
+}
 
-  const byEmail = new Map<string, Recipient>();
-  for (const registration of registrations) {
-    const email = registration.registrantEmail.trim();
-    if (!email) continue;
-    const key = email.toLowerCase();
-
-    const recipient = byEmail.get(key) ?? {
-      email,
-      firstName: registration.registrantFirstName,
-      lastName: registration.registrantLastName,
-      street: registration.registrantStreet,
-      zipCode: registration.registrantZipCode,
-      city: registration.registrantCity,
-      registrationIds: [],
-      participantNames: [],
-      instruments: [],
-      totalPrice: 0,
-    };
-
-    recipient.registrationIds.push(registration.id);
-    recipient.totalPrice += registration.totalPrice;
-    for (const participant of registration.participants) {
-      recipient.participantNames.push(
-        `${participant.firstName} ${participant.lastName}`.trim(),
-      );
-      const instrument = participant.instrument?.trim();
-      if (instrument && !recipient.instruments.includes(instrument)) {
-        recipient.instruments.push(instrument);
-      }
-    }
-
-    byEmail.set(key, recipient);
-  }
-
-  return [...byEmail.values()];
+/** Ohne Rechnungen im Umschlag entscheidet allein die Adresse der anmeldenden Person. */
+async function resolveRecipients(
+  db: PrismaClient,
+  courseId: string,
+  selection: { statuses: RegistrationStatus[]; registrationIds?: string[] },
+): Promise<Recipient[]> {
+  return groupRecipients(
+    await loadRegistrationsForMailing(db, courseId, selection),
+  );
 }
 
 const formatDate = (date: Date) => formatBerlin(date, "datumZweistellig");
@@ -184,6 +151,7 @@ async function loadPublishedInvoices(
       invoiceNumber: true,
       totalAmount: true,
       dueDate: true,
+      recipientEmail: true,
       pdfPath: true,
       pdfFilename: true,
       registrationId: true,
@@ -201,6 +169,7 @@ async function loadPublishedInvoices(
       invoiceNumber: invoice.invoiceNumber,
       totalAmount: invoice.totalAmount,
       dueDate: invoice.dueDate,
+      recipientEmail: invoice.recipientEmail,
       pdfPath: invoice.pdfPath,
       pdfFilename: invoice.pdfFilename,
     });
@@ -598,6 +567,8 @@ export const courseMailRouter = createTRPCRouter({
           ? {
               name: `${recipient.firstName} ${recipient.lastName}`.trim(),
               email: recipient.email,
+              /** Gesetzt heißt: dorthin geht die Mail, `email` nur in Kopie. */
+              billingEmail: invoiceBillingEmail(recipient.email, invoices),
             }
           : null,
         /** True when there was nobody to fill in and examples were used. */
@@ -717,15 +688,28 @@ export const courseMailRouter = createTRPCRouter({
       const personalize = (values: PlaceholderValues) =>
         personalizeMail(input.subject, bodyHtml, values);
 
-      const recipients = await resolveRecipients(ctx.db, input.courseId, input);
+      const registrations = await loadRegistrationsForMailing(
+        ctx.db,
+        input.courseId,
+        input,
+      );
 
       const invoicesByRegistration = input.attachInvoices
         ? await loadPublishedInvoices(
             ctx.db,
             course.id,
-            recipients.flatMap((recipient) => recipient.registrationIds),
+            registrations.map((registration) => registration.id),
           )
         : new Map<string, RecipientInvoice[]>();
+
+      // Die Rechnungsadresse gehört zum Umschlag: ohne sie lägen zwei Rechnungen
+      // an verschiedene Zahlstellen in derselben Nachricht.
+      const recipients = groupRecipients(registrations, (registration) =>
+        invoiceBillingEmail(
+          registration.registrantEmail,
+          invoicesByRegistration.get(registration.id) ?? [],
+        ),
+      );
 
       /** Every published invoice belonging to this recipient's registrations. */
       const invoicesFor = (recipient: Recipient) =>
@@ -803,7 +787,9 @@ export const courseMailRouter = createTRPCRouter({
               ...personalize(
                 placeholderValuesFor(recipient, course, recipientInvoices),
               ),
-              to: recipient.email,
+              to: mailToAddress(recipient),
+              // Die Rechnung geht an die Zahlstelle, die anmeldende Person liest mit.
+              cc: recipient.billingEmail ? recipient.email : undefined,
               recipientName: recipient.firstName,
               attachments: [...attachments, ...loaded.attachments],
             });
@@ -821,8 +807,9 @@ export const courseMailRouter = createTRPCRouter({
             skippedInvoices.push(...result.value.skipped);
           } else {
             failedCount++;
+            const failed = batch[index];
             log.error(
-              `[CourseMail] Failed to send to ${maskEmail(batch[index]?.email)}:`,
+              `[CourseMail] Failed to send to ${maskEmail(failed ? mailToAddress(failed) : undefined)}:`,
               result.reason,
             );
           }

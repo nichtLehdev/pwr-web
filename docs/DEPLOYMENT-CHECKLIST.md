@@ -154,6 +154,9 @@ beim ersten unbeantworteten Angebot stehen.
       (Vorschlag: alle 6 Stunden), Skript `scripts/trigger-registration-closed.mjs`
 - [ ] `newsletter-cleanup` — ruft `POST /api/cron/newsletter-cleanup` auf
       (Vorschlag: täglich), Skript `scripts/trigger-newsletter-cleanup.mjs`
+- [ ] `user-cleanup` — ruft `POST /api/cron/user-cleanup` auf
+      (Vorschlag: täglich), Skript `scripts/trigger-user-cleanup.mjs`; löscht
+      selbst angelegte Konten, die nach 14 Tagen nie bestätigt wurden
 - [ ] `waitlist-offers` — ruft `POST /api/cron/waitlist-offers` auf
       (Vorschlag: stündlich), Skript `scripts/trigger-waitlist-offers.mjs`;
       schließt abgelaufene Nachrück-Angebote und erinnert das Kursteam zwei

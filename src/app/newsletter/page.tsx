@@ -5,6 +5,8 @@ import Link from "next/link";
 import PublicPage from "../_components/general/public-page";
 import { PageSection } from "../_components/programmheft/page-section";
 import { Note } from "../_components/programmheft/note";
+import { useBotTrap } from "@/lib/use-bot-trap";
+import { BotTrapField } from "../_components/general/bot-trap-field";
 
 const FIELD =
   "border-ink dark:border-night-text text-ink dark:text-night-text bg-paper dark:bg-night w-full border-2 px-4 py-3 text-base";
@@ -19,6 +21,7 @@ export default function NewsletterPage() {
     "idle" | "loading" | "success" | "error"
   >("idle");
   const [message, setMessage] = useState("");
+  const botTrap = useBotTrap();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +34,11 @@ export default function NewsletterPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, name: name || undefined }),
+        body: JSON.stringify({
+          email,
+          name: name || undefined,
+          ...botTrap.fields(),
+        }),
       });
 
       const data = await response.json();
@@ -45,6 +52,7 @@ export default function NewsletterPage() {
         setEmail("");
         setName("");
         setConsent(false);
+        botTrap.setValue("");
       } else {
         setStatus("error");
         setMessage(data.message || "Ein Fehler ist aufgetreten.");
@@ -160,6 +168,11 @@ export default function NewsletterPage() {
                 >
                   {status === "loading" ? "Wird abonniert…" : "Abonnieren"}
                 </button>
+
+                <BotTrapField
+                  value={botTrap.value}
+                  onChange={botTrap.setValue}
+                />
               </form>
             )}
           </div>

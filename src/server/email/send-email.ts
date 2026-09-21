@@ -15,6 +15,8 @@ export interface EmailAttachment {
 
 export interface EmailOptions {
   to: string;
+  /** Sichtbare Mitleser:innen; die eigentliche Empfängerin bleibt `to`. */
+  cc?: string | string[];
   subject: string;
   html: string;
   text?: string;
@@ -40,6 +42,7 @@ export async function sendEmail(options: EmailOptions) {
   const mailOptions: SendMailOptions = {
     from: options.from || process.env.SMTP_FROM || process.env.SMTP_USER,
     to: options.to,
+    ...(options.cc?.length && { cc: options.cc }),
     subject: options.subject,
     html: options.html,
     ...(options.replyTo && { replyTo: options.replyTo }),
@@ -58,6 +61,9 @@ export async function sendEmail(options: EmailOptions) {
   try {
     log.debug("Attempting to send email:", {
       to: maskEmail(options.to),
+      ...(options.cc?.length && {
+        cc: [options.cc].flat().map(maskEmail).join(", "),
+      }),
       subject: options.subject,
       from: mailOptions.from,
     });
