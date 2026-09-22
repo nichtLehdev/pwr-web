@@ -11,6 +11,7 @@ import {
   type InvoiceRecipient,
 } from "@/lib/invoice-document";
 import { downPaymentCredit } from "@/lib/course-down-payment";
+import { hasBillingAddress, isFilled } from "@/lib/billing-address";
 import {
   participantPriceOptionLabel,
   resolveParticipantPriceOption,
@@ -68,30 +69,44 @@ export interface CourseForDraft {
 export function recipientFromRegistration(
   registration: RegistrationForDraft,
 ): InvoiceRecipient {
+  // Ohne Anschrift gibt es nichts, wohin die Rechnung abweichend ginge.
   const useBilling =
-    registration.useSeparateBilling &&
-    Boolean(registration.billingFirstName ?? registration.billingLastName);
+    registration.useSeparateBilling && hasBillingAddress(registration);
 
-  if (useBilling) {
+  if (!useBilling) {
     return {
-      company: registration.billingCompany,
-      firstName: registration.billingFirstName,
-      lastName: registration.billingLastName,
-      street: registration.billingStreet,
-      zipCode: registration.billingZipCode,
-      city: registration.billingCity,
-      email: registration.billingEmail ?? registration.registrantEmail,
+      company: null,
+      firstName: registration.registrantFirstName,
+      lastName: registration.registrantLastName,
+      street: registration.registrantStreet,
+      zipCode: registration.registrantZipCode,
+      city: registration.registrantCity,
+      email: registration.registrantEmail,
     };
   }
 
+  // Der Name gilt als Paar: Vorname der einen und Nachname der anderen Seite
+  // ergäben eine Person, die es nicht gibt.
+  const hasBillingName =
+    isFilled(registration.billingFirstName) ||
+    isFilled(registration.billingLastName);
+
   return {
-    company: null,
-    firstName: registration.registrantFirstName,
-    lastName: registration.registrantLastName,
-    street: registration.registrantStreet,
-    zipCode: registration.registrantZipCode,
-    city: registration.registrantCity,
-    email: registration.registrantEmail,
+    company: registration.billingCompany,
+    // Ohne Ansprechperson steht der Anmelder unter der Firma — sonst bliebe die
+    // Rechnung namenlos.
+    firstName: hasBillingName
+      ? registration.billingFirstName
+      : registration.registrantFirstName,
+    lastName: hasBillingName
+      ? registration.billingLastName
+      : registration.registrantLastName,
+    street: registration.billingStreet,
+    zipCode: registration.billingZipCode,
+    city: registration.billingCity,
+    email: isFilled(registration.billingEmail)
+      ? registration.billingEmail
+      : registration.registrantEmail,
   };
 }
 

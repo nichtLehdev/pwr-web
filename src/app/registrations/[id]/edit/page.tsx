@@ -40,6 +40,10 @@ import {
   priceOptionIdForAge,
 } from "@/lib/course-price-option-age";
 import { formatEuro } from "@/lib/invoice-document";
+import {
+  BILLING_ADDRESS_LABELS,
+  missingBillingAddressFields,
+} from "@/lib/billing-address";
 import PublicPage from "@/app/_components/general/public-page";
 import { headMeta } from "@/app/_components/programmheft/page-head";
 import { PageSection } from "@/app/_components/programmheft/page-section";
@@ -753,15 +757,15 @@ export default function EditRegistrationPage() {
     }
 
     if (useSeparateBilling) {
-      if (
-        !billingData.billingFirstName ||
-        !billingData.billingLastName ||
-        !billingData.billingStreet ||
-        !billingData.billingZipCode ||
-        !billingData.billingCity ||
-        !billingData.billingEmail
-      ) {
-        setError("Bitte fülle alle Pflichtfelder der Rechnungsadresse aus.");
+      // Wie im Anmeldeformular: Name und E-Mail sind freiwillig, eine Institution
+      // nennt oft keine Ansprechperson.
+      const missingBilling = missingBillingAddressFields(billingData);
+      if (missingBilling.length > 0) {
+        setError(
+          `Bitte ${missingBilling
+            .map((field) => BILLING_ADDRESS_LABELS[field])
+            .join(", ")} der Rechnungsadresse angeben.`,
+        );
         setIsSubmitting(false);
         return;
       }
@@ -790,12 +794,12 @@ export default function EditRegistrationPage() {
       siblingDiscountApplied,
       ...(useSeparateBilling && {
         billingCompany: billingData.billingCompany || undefined,
-        billingFirstName: billingData.billingFirstName,
-        billingLastName: billingData.billingLastName,
+        billingFirstName: billingData.billingFirstName || undefined,
+        billingLastName: billingData.billingLastName || undefined,
         billingStreet: billingData.billingStreet,
         billingZipCode: billingData.billingZipCode,
         billingCity: billingData.billingCity,
-        billingEmail: billingData.billingEmail,
+        billingEmail: billingData.billingEmail || undefined,
       }),
     });
   };
@@ -1044,9 +1048,7 @@ export default function EditRegistrationPage() {
                     />
                   </div>
                   <div>
-                    <FieldLabel htmlFor="billingFirstName" required>
-                      Vorname
-                    </FieldLabel>
+                    <FieldLabel htmlFor="billingFirstName">Vorname</FieldLabel>
                     <input
                       id="billingFirstName"
                       type="text"
@@ -1059,13 +1061,11 @@ export default function EditRegistrationPage() {
                       }
                       maxLength={100}
                       className={fieldControlClasses}
-                      required
+                      placeholder="Optional"
                     />
                   </div>
                   <div>
-                    <FieldLabel htmlFor="billingLastName" required>
-                      Nachname
-                    </FieldLabel>
+                    <FieldLabel htmlFor="billingLastName">Nachname</FieldLabel>
                     <input
                       id="billingLastName"
                       type="text"
@@ -1078,7 +1078,7 @@ export default function EditRegistrationPage() {
                       }
                       maxLength={100}
                       className={fieldControlClasses}
-                      required
+                      placeholder="Optional"
                     />
                   </div>
                   <div className="sm:col-span-2">
@@ -1139,7 +1139,7 @@ export default function EditRegistrationPage() {
                     />
                   </div>
                   <div className="sm:col-span-2">
-                    <FieldLabel htmlFor="billingEmail" required>
+                    <FieldLabel htmlFor="billingEmail">
                       E-Mail für Rechnung
                     </FieldLabel>
                     <input
@@ -1153,7 +1153,7 @@ export default function EditRegistrationPage() {
                         })
                       }
                       className={fieldControlClasses}
-                      required
+                      placeholder="Falls abweichend von der eigenen Adresse"
                     />
                   </div>
                 </div>

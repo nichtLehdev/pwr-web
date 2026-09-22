@@ -95,17 +95,81 @@ describe("recipientFromRegistration", () => {
         useSeparateBilling: true,
         billingFirstName: "Clara",
         billingLastName: "Beispiel",
+        billingStreet: "Kirchweg 3",
+        billingZipCode: "53111",
+        billingCity: "Bonn",
         billingEmail: null,
       }),
     );
     expect(recipient.email).toBe("anna@example.org");
   });
 
-  it("ignores the billing flag when no billing name was entered", () => {
+  it("keeps company and address when no contact person was named", () => {
     const recipient = recipientFromRegistration(
-      registration({ useSeparateBilling: true }),
+      registration({
+        useSeparateBilling: true,
+        billingCompany: "Kirchengemeinde Bonn",
+        billingStreet: "Kirchweg 3",
+        billingZipCode: "53111",
+        billingCity: "Bonn",
+      }),
     );
-    expect(recipient.lastName).toBe("Muster");
+    // Die Anschrift der Gemeinde, darüber der Anmelder als Ansprechperson.
+    expect(recipient).toEqual({
+      company: "Kirchengemeinde Bonn",
+      firstName: "Anna",
+      lastName: "Muster",
+      street: "Kirchweg 3",
+      zipCode: "53111",
+      city: "Bonn",
+      email: "anna@example.org",
+    });
+  });
+
+  it("takes the billing name as a pair, never half of each side", () => {
+    const recipient = recipientFromRegistration(
+      registration({
+        useSeparateBilling: true,
+        billingLastName: "Beispiel",
+        billingStreet: "Kirchweg 3",
+        billingZipCode: "53111",
+        billingCity: "Bonn",
+      }),
+    );
+    expect(recipient.firstName).toBeNull();
+    expect(recipient.lastName).toBe("Beispiel");
+  });
+
+  it("ignores the billing flag when there is no billing address", () => {
+    const recipient = recipientFromRegistration(
+      registration({
+        useSeparateBilling: true,
+        billingCompany: "Kirchengemeinde Bonn",
+        billingFirstName: "Clara",
+        billingLastName: "Beispiel",
+      }),
+    );
+    expect(recipient).toEqual({
+      company: null,
+      firstName: "Anna",
+      lastName: "Muster",
+      street: "Musterweg 1",
+      zipCode: "50667",
+      city: "Köln",
+      email: "anna@example.org",
+    });
+  });
+
+  it("ignores a billing address of blanks", () => {
+    const recipient = recipientFromRegistration(
+      registration({
+        useSeparateBilling: true,
+        billingStreet: "Kirchweg 3",
+        billingZipCode: "  ",
+        billingCity: "Bonn",
+      }),
+    );
+    expect(recipient.street).toBe("Musterweg 1");
   });
 });
 

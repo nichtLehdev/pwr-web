@@ -261,6 +261,11 @@ export function Step1RegistrantInfo({
                 placeholder="Evangelische Kirchengemeinde Düsseldorf"
               />
 
+              <p className="text-dark dark:text-night-muted -mb-1 text-xs md:col-span-2">
+                Name und E-Mail sind freiwillig. Ohne Ansprechperson steht Ihr
+                Name auf der Rechnung.
+              </p>
+
               <RegistrantField
                 {...bind("billingFirstName")}
                 label="Vorname"
