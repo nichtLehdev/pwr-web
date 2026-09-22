@@ -25,6 +25,8 @@ import {
   Step2Participants,
 } from "./course-registration-form/step-2-participants";
 import { Step3Summary } from "./course-registration-form/step-3-summary";
+import { useBotTrap } from "@/lib/use-bot-trap";
+import { BotTrapField } from "@/app/_components/general/bot-trap-field";
 import {
   problemSummary,
   registrantProblems,
@@ -88,6 +90,7 @@ export default function CourseRegistrationForm({
   capacityByPriceOption,
 }: CourseRegistrationFormProps) {
   const toast = useToast();
+  const botTrap = useBotTrap();
   const registrationMutation = api.registrations.create.useMutation();
   const staffRegistrationMutation =
     api.registrations.createByStaff.useMutation();
@@ -703,8 +706,14 @@ export default function CourseRegistrationForm({
     }
 
     // `splitPayload` auch hier, sonst landet trotz Auswahl die ganze Gruppe auf der Warteliste.
+    // Die Signale gegen Bots nur auf diesem Weg: Der Weg über das Team ist angemeldet.
     registrationMutation.mutate(
-      { ...payload, ...splitPayload, downPaymentAcknowledged },
+      {
+        ...payload,
+        ...splitPayload,
+        downPaymentAcknowledged,
+        ...botTrap.fields(),
+      },
       handlers,
     );
   };
@@ -950,6 +959,9 @@ export default function CourseRegistrationForm({
 
       <div className="sheet max-w-3xl py-5 pb-20 md:py-6 md:pb-24">
         {stepBody}
+        {/* Außerhalb von `stepBody`: Der Honigtopf muss über alle Schritte
+            hinweg stehen bleiben, nicht nur auf dem gerade sichtbaren. */}
+        <BotTrapField value={botTrap.value} onChange={botTrap.setValue} />
       </div>
 
       <div
