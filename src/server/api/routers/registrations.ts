@@ -30,6 +30,30 @@ import {
   downPaymentMailInfo,
   type DownPaymentMailInfo,
 } from "@/server/email/down-payment";
+import {
+  BILLING_ADDRESS_LABELS,
+  missingBillingAddressFields,
+  type BillingAddressFields,
+} from "@/lib/billing-address";
+
+/**
+ * Ohne Anschrift stünde die Rechnung ohne Adresse da: die abweichende
+ * Rechnungsadresse ist erst mit ihr eine.
+ */
+function assertBillingAddressComplete(
+  input: BillingAddressFields & { useSeparateBilling?: boolean },
+) {
+  if (!input.useSeparateBilling) return;
+  const missing = missingBillingAddressFields(input);
+  if (missing.length === 0) return;
+
+  throw new TRPCError({
+    code: "BAD_REQUEST",
+    message: `Bitte ${missing
+      .map((field) => BILLING_ADDRESS_LABELS[field])
+      .join(", ")} der Rechnungsadresse angeben.`,
+  });
+}
 
 function collaboratorsForViewer(userId: string | null) {
   return {
@@ -534,6 +558,8 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
+      assertBillingAddressComplete(registrationData);
+
       // An diese Adresse gehen Bestätigung und Änderungslink. Stimmt die Domain
       // nicht, erfährt die angemeldete Person von ihrem Platz nichts.
       if (!(await isDeliverableDomain(registrationData.registrantEmail))) {
@@ -837,6 +863,8 @@ export const registrationsRouter = createTRPCRouter({
         confirmedParticipantIndexes,
         ...registrationData
       } = input;
+
+      assertBillingAddressComplete(registrationData);
 
       const course = await ctx.db.course.findUnique({
         where: { id: input.courseId },
@@ -1774,6 +1802,8 @@ export const registrationsRouter = createTRPCRouter({
           message: "Cannot edit a cancelled registration",
         });
       }
+
+      assertBillingAddressComplete(registrationData);
 
       if (!isStaff) {
         const now = new Date();

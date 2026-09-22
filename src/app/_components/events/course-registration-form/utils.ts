@@ -1,5 +1,6 @@
 import type { RegistrationData, CourseWithRelations } from "./types";
 import { isPlausibleEmail } from "@/lib/email-address";
+import { isFilled } from "@/lib/billing-address";
 import { computeSiblingDiscounts, roundMoney } from "@/lib/sibling-discount";
 import { isRequiredCustomFieldEmpty } from "@/lib/course-custom-fields";
 import {
@@ -138,19 +139,21 @@ export function registrantProblems(
   // Mit abweichender Rechnungsadresse zählt deren Anschrift, sonst die
   // eigene — für das Kursteam ist die eigene optional.
   if (d.useSeparateBilling) {
-    if (!d.billingStreet)
+    // Name und Firma bleiben freiwillig: ohne Ansprechperson steht später der
+    // Anmelder auf der Rechnung, die Anschrift trägt sie.
+    if (!isFilled(d.billingStreet))
       missing(
         "billingStreet",
         "Straße und Hausnummer der Rechnungsadresse",
         "Bitte Straße und Hausnummer angeben.",
       );
-    if (!d.billingZipCode)
+    if (!isFilled(d.billingZipCode))
       missing(
         "billingZipCode",
         "PLZ der Rechnungsadresse",
         "Bitte Postleitzahl angeben.",
       );
-    if (!d.billingCity)
+    if (!isFilled(d.billingCity))
       missing(
         "billingCity",
         "Stadt der Rechnungsadresse",
