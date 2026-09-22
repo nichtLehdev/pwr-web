@@ -140,6 +140,14 @@ import {
 } from "../helpers/registration-access";
 import { internationalPhoneSchema } from "@/lib/phone-number";
 
+import {
+  BOT_TRAP_ELAPSED_FIELD,
+  BOT_TRAP_FIELD,
+  inspectBotTrap,
+} from "@/lib/bot-trap";
+import { isDeliverableDomain } from "@/server/utils/email-domain";
+import { clientKeyFromHeaders } from "@/server/utils/rate-limit";
+
 import { createLogger } from "@/server/utils/logger";
 
 const log = createLogger("Registrations");
@@ -488,6 +496,8 @@ export const registrationsRouter = createTRPCRouter({
          * verknüpfte Anmeldung. Ohne Angabe wartet die ganze Anmeldung.
          */
         confirmedParticipantIndexes: z.array(z.number().int()).optional(),
+        [BOT_TRAP_FIELD]: z.string().max(200).optional(),
+        [BOT_TRAP_ELAPSED_FIELD]: z.number().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -496,8 +506,43 @@ export const registrationsRouter = createTRPCRouter({
         paymentMethod: inputPaymentMethod,
         downPaymentAcknowledged,
         confirmedParticipantIndexes,
+        // Müssen hier heraus: `registrationData` geht unverändert an Prisma.
+        [BOT_TRAP_FIELD]: botTrap,
+        [BOT_TRAP_ELAPSED_FIELD]: botTrapElapsedMs,
         ...registrationData
       } = input;
+
+      /**
+       * Anders als beim Kontaktformular wird jeder Befund benannt: Eine
+       * Anmeldung, die scheinbar klappt, aber keinen Platz belegt, fiele erst
+       * auf, wenn die Bestätigung ausbleibt — und dann ist der Kurs voll.
+       */
+      const verdict = inspectBotTrap({
+        trap: botTrap,
+        elapsedMs: botTrapElapsedMs,
+      });
+      if (verdict !== "ok") {
+        log.warn(
+          `Registration rejected (${verdict}) from ${clientKeyFromHeaders(ctx.headers)}`,
+        );
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            verdict === "too-fast"
+              ? "Das ging zu schnell. Bitte warte einen Moment und sende die Anmeldung noch einmal ab."
+              : "Die Anmeldung konnte nicht geprüft werden. Bitte lade die Seite neu und fülle das Formular erneut aus.",
+        });
+      }
+
+      // An diese Adresse gehen Bestätigung und Änderungslink. Stimmt die Domain
+      // nicht, erfährt die angemeldete Person von ihrem Platz nichts.
+      if (!(await isDeliverableDomain(registrationData.registrantEmail))) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "Zu dieser E-Mail-Adresse gibt es keinen Posteingang. Bitte prüfe die Schreibweise — sonst erreicht dich die Bestätigung nicht.",
+        });
+      }
 
       const course = await ctx.db.course.findUnique({
         where: { id: input.courseId },
