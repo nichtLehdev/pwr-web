@@ -66,6 +66,10 @@ export interface CourseForDraft {
   }[];
 }
 
+/** Leeres bleibt `null`: ein leerer String käme an jedem `??`-Rückfall vorbei. */
+const orNull = (value: string | null | undefined) =>
+  isFilled(value) ? value : null;
+
 export function recipientFromRegistration(
   registration: RegistrationForDraft,
 ): InvoiceRecipient {
@@ -90,16 +94,19 @@ export function recipientFromRegistration(
   const hasBillingName =
     isFilled(registration.billingFirstName) ||
     isFilled(registration.billingLastName);
+  // Eine Firma ist für sich ein Empfänger — so sieht es auch die Prüfung beim
+  // Ausstellen. Erst ohne sie bliebe die Rechnung namenlos und der Anmelder
+  // tritt ein.
+  const nameFromBilling =
+    hasBillingName || isFilled(registration.billingCompany);
 
   return {
-    company: registration.billingCompany,
-    // Ohne Ansprechperson steht der Anmelder unter der Firma — sonst bliebe die
-    // Rechnung namenlos.
-    firstName: hasBillingName
-      ? registration.billingFirstName
+    company: orNull(registration.billingCompany),
+    firstName: nameFromBilling
+      ? orNull(registration.billingFirstName)
       : registration.registrantFirstName,
-    lastName: hasBillingName
-      ? registration.billingLastName
+    lastName: nameFromBilling
+      ? orNull(registration.billingLastName)
       : registration.registrantLastName,
     street: registration.billingStreet,
     zipCode: registration.billingZipCode,

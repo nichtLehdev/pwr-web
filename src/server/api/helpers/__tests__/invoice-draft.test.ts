@@ -104,7 +104,7 @@ describe("recipientFromRegistration", () => {
     expect(recipient.email).toBe("anna@example.org");
   });
 
-  it("keeps company and address when no contact person was named", () => {
+  it("leaves the name empty when the company is the recipient", () => {
     const recipient = recipientFromRegistration(
       registration({
         useSeparateBilling: true,
@@ -114,9 +114,29 @@ describe("recipientFromRegistration", () => {
         billingCity: "Bonn",
       }),
     );
-    // Die Anschrift der Gemeinde, darüber der Anmelder als Ansprechperson.
     expect(recipient).toEqual({
       company: "Kirchengemeinde Bonn",
+      firstName: null,
+      lastName: null,
+      street: "Kirchweg 3",
+      zipCode: "53111",
+      city: "Bonn",
+      email: "anna@example.org",
+    });
+  });
+
+  it("puts the registrant on it when neither company nor name was given", () => {
+    const recipient = recipientFromRegistration(
+      registration({
+        useSeparateBilling: true,
+        billingStreet: "Kirchweg 3",
+        billingZipCode: "53111",
+        billingCity: "Bonn",
+      }),
+    );
+    // Die Anschrift bleibt die abweichende, namenlos wäre die Rechnung nicht zustellbar.
+    expect(recipient).toEqual({
+      company: null,
       firstName: "Anna",
       lastName: "Muster",
       street: "Kirchweg 3",
@@ -124,6 +144,23 @@ describe("recipientFromRegistration", () => {
       city: "Bonn",
       email: "anna@example.org",
     });
+  });
+
+  it("keeps a blank name out of the way of the company fallback", () => {
+    // `invoiceFileName` greift per `??` auf die Firma zurück — "" käme daran vorbei.
+    const recipient = recipientFromRegistration(
+      registration({
+        useSeparateBilling: true,
+        billingCompany: "Kirchengemeinde Bonn",
+        billingFirstName: "  ",
+        billingLastName: "",
+        billingStreet: "Kirchweg 3",
+        billingZipCode: "53111",
+        billingCity: "Bonn",
+      }),
+    );
+    expect(recipient.firstName).toBeNull();
+    expect(recipient.lastName).toBeNull();
   });
 
   it("takes the billing name as a pair, never half of each side", () => {

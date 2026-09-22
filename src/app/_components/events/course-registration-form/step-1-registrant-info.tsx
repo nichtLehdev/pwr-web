@@ -262,8 +262,8 @@ export function Step1RegistrantInfo({
               />
 
               <p className="text-dark dark:text-night-muted -mb-1 text-xs md:col-span-2">
-                Name und E-Mail sind freiwillig. Ohne Ansprechperson steht Ihr
-                Name auf der Rechnung.
+                Name und E-Mail sind freiwillig. Ohne Ansprechperson trägt die
+                Rechnung nur die Firma, ohne beides Ihren Namen.
               </p>
 
               <RegistrantField
