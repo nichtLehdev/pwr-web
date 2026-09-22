@@ -10,6 +10,8 @@ import {
   fieldControlClasses,
 } from "@/app/_components/programmheft/field";
 import { CONTACT_SUBJECTS, type ContactSubject } from "@/lib/contact-subjects";
+import { useBotTrap } from "@/lib/use-bot-trap";
+import { BotTrapField } from "@/app/_components/general/bot-trap-field";
 
 const emptyForm = {
   name: "",
@@ -23,6 +25,7 @@ const emptyForm = {
 export function ContactForm() {
   const [form, setForm] = useState(emptyForm);
   const [sent, setSent] = useState(false);
+  const botTrap = useBotTrap();
 
   const sendMessage = api.contact.send.useMutation({
     onSuccess: () => setSent(true),
@@ -40,6 +43,7 @@ export function ContactForm() {
       subject: form.subject,
       message: form.message,
       privacyAccepted: true,
+      ...botTrap.fields(),
     });
   };
 
@@ -57,6 +61,7 @@ export function ContactForm() {
           type="button"
           onClick={() => {
             setForm(emptyForm);
+            botTrap.setValue("");
             sendMessage.reset();
             setSent(false);
           }}
@@ -205,6 +210,8 @@ export function ContactForm() {
           * Pflichtfelder
         </p>
       </div>
+
+      <BotTrapField value={botTrap.value} onChange={botTrap.setValue} />
     </form>
   );
 }
