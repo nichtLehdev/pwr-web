@@ -49,6 +49,7 @@ import { participantPriceOptionLabel } from "@/lib/course-price-options";
 import { priceOptionAgeLabel } from "@/lib/course-price-option-age";
 import { Tag, type TagTone } from "@/app/_components/programmheft/tag";
 import { formatBerlin } from "@/lib/berlin-time";
+import { needsUnoptimizedImage } from "@/lib/media-visibility";
 
 const courseTypeLabels: Record<CourseType, string> = {
   LEHRGANG: "Lehrgang",
@@ -643,6 +644,7 @@ export default function CourseDetailPage() {
                     <div className="relative aspect-video w-full">
                       <Image
                         src={course.image.url}
+                        unoptimized={needsUnoptimizedImage(course.image)}
                         alt={course.image.alt || course.title}
                         fill
                         className="object-cover"

@@ -50,6 +50,7 @@ import {
   type MediaItem,
 } from "@/app/_components/media/media-shared";
 import { Tag, type TagTone } from "@/app/_components/programmheft/tag";
+import { needsUnoptimizedImage } from "@/lib/media-visibility";
 
 const column = createDataTableColumnHelper<MediaItem>();
 
@@ -296,6 +297,7 @@ export default function DashboardMediaPage() {
               {row.original.mimeType.startsWith("image/") ? (
                 <ImageWithFallback
                   src={row.original.url}
+                  unoptimized={needsUnoptimizedImage(row.original)}
                   alt=""
                   fill
                   className="object-cover"

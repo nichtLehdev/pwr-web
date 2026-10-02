@@ -32,6 +32,7 @@ import {
 import { renderDescriptionHtml } from "@/lib/sanitize";
 import "@/styles/beschreibung.css";
 import { formatBerlin } from "@/lib/berlin-time";
+import { needsUnoptimizedImage } from "@/lib/media-visibility";
 
 const categoryLabels: Record<EventCategory, string> = {
   KONZERT: "Konzert",
@@ -420,6 +421,7 @@ export default function EventDetailPage() {
                 <div className="relative aspect-video w-full">
                   <Image
                     src={event.coverImage.url}
+                    unoptimized={needsUnoptimizedImage(event.coverImage)}
                     alt={event.coverImage.alt || event.title}
                     fill
                     className="object-cover"
@@ -461,6 +463,15 @@ export default function EventDetailPage() {
                       <span className="font-medium text-inherit">
                         {ed.download.title}
                       </span>
+                      {/* Der Termin lässt sich erst freigeben, wenn alle Downloads es sind. */}
+                      {ed.download.status !== ContentStatus.APPROVED && (
+                        <Tag
+                          tone={statusTones[ed.download.status]}
+                          className="shrink-0"
+                        >
+                          {statusLabels[ed.download.status]}
+                        </Tag>
+                      )}
                       {ed.download.description && (
                         <span className="text-dark dark:text-night-muted ml-auto text-sm">
                           {ed.download.description}

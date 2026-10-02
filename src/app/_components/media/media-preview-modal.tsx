@@ -13,6 +13,7 @@ import {
   getMimeTypeLabel,
   type MediaItem,
 } from "./media-shared";
+import { needsUnoptimizedImage } from "@/lib/media-visibility";
 
 export function MediaPreviewModal({
   media,
@@ -39,6 +40,7 @@ export function MediaPreviewModal({
               <ImageWithFallback
                 src={media.url}
                 alt={media.alt ?? media.name}
+                unoptimized={needsUnoptimizedImage(media)}
                 width={media.width ?? 1200}
                 height={media.height ?? 800}
                 className="max-h-[65vh] w-auto object-contain"
