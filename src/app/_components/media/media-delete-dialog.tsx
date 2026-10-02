@@ -15,6 +15,7 @@ import {
   getMimeTypeIcon,
   type MediaItem,
 } from "./media-shared";
+import { needsUnoptimizedImage } from "@/lib/media-visibility";
 
 /**
  * Löschdialog mit Verwendungsnachweis: zwei Beziehungen stehen auf `onDelete: Cascade`,
@@ -52,6 +53,7 @@ export function MediaDeleteDialog({
                 <ImageWithFallback
                   src={media.url}
                   alt={media.name}
+                  unoptimized={needsUnoptimizedImage(media)}
                   fill
                   className="object-cover"
                   sizes="56px"

@@ -548,6 +548,8 @@ export default function EditPostPage() {
                     <div className="dark:bg-night-raised bg-rule/25 relative aspect-video w-full overflow-hidden">
                       <Image
                         src={coverImageUrl}
+                        // Kann noch ungeprüft sein, siehe needsUnoptimizedImage.
+                        unoptimized
                         alt="Titelbild"
                         fill
                         className="object-cover"

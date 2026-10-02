@@ -16,6 +16,7 @@ import ImageCropEditor from "@/app/_components/posts/image-crop-editor";
 import { useToast } from "@/app/_components/ui/toast";
 import { Button, Input, Label } from "@/app/_components/ui";
 import { cn } from "@/lib/utils";
+import { needsUnoptimizedImage } from "@/lib/media-visibility";
 
 /** Unterstreichung in Tinte statt Orange — Orange markiert hier Zustände, nicht Navigation. */
 function tabClass(active: boolean) {
@@ -430,6 +431,7 @@ export default function MediaPickerModal({
                       <Image
                         src={media.url}
                         alt={media.alt || media.name}
+                        unoptimized={needsUnoptimizedImage(media)}
                         fill
                         className="object-cover"
                         style={

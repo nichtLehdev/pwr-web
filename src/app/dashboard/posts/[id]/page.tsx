@@ -38,6 +38,7 @@ import {
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
 import { formatBerlin } from "@/lib/berlin-time";
+import { needsUnoptimizedImage } from "@/lib/media-visibility";
 
 const categoryLabels: Record<PostCategory, string> = {
   MAGAZIN: "Magazin",
@@ -462,6 +463,7 @@ export default function PostDetailPage() {
                               <Image
                                 src={media.url}
                                 alt={media.name}
+                                unoptimized={needsUnoptimizedImage(media)}
                                 width={80}
                                 height={80}
                                 className="object-cover transition-opacity group-hover:opacity-75"
@@ -603,6 +605,7 @@ export default function PostDetailPage() {
                 <div className="border-rule dark:border-night-rule relative aspect-video w-full overflow-hidden border">
                   <Image
                     src={post.coverImage.url}
+                    unoptimized={needsUnoptimizedImage(post.coverImage)}
                     alt={post.coverImage.alt || post.title}
                     fill
                     className="object-cover"

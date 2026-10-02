@@ -49,6 +49,8 @@ export function FocalPointPicker({
       >
         <ImageWithFallback
           src={url}
+          // Kann noch ungeprüft sein, siehe needsUnoptimizedImage.
+          unoptimized
           alt={alt}
           fill
           className="object-contain"

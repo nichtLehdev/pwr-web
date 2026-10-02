@@ -927,6 +927,8 @@ export default function NewCoursePage() {
                         <div className="dark:border-night-rule border-rule relative aspect-video w-full overflow-hidden border">
                           <Image
                             src={imageUrl}
+                            // Kann noch ungeprüft sein, siehe needsUnoptimizedImage.
+                            unoptimized
                             alt="Kursbild"
                             fill
                             className="object-cover"

@@ -612,6 +612,8 @@ export default function NewEventPage() {
                           <div className="border-rule dark:border-night-rule relative aspect-video w-full overflow-hidden border">
                             <Image
                               src={coverImageUrl}
+                              // Kann noch ungeprüft sein, siehe needsUnoptimizedImage.
+                              unoptimized
                               alt="Titelbild"
                               fill
                               className="object-cover"

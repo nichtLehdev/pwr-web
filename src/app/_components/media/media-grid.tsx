@@ -19,6 +19,7 @@ import {
   getMimeTypeLabel,
   type MediaItem,
 } from "./media-shared";
+import { needsUnoptimizedImage } from "@/lib/media-visibility";
 
 /** Eine Aktion in der Fußzeile der Kachel, immer sichtbar statt erst bei Hover. */
 function CardAction({
@@ -115,6 +116,7 @@ export function MediaGrid({
               {isImage ? (
                 <ImageWithFallback
                   src={item.url}
+                  unoptimized={needsUnoptimizedImage(item)}
                   alt={item.alt ?? item.name}
                   fill
                   className="object-cover transition-transform group-hover:scale-105"
