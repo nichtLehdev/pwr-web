@@ -15,7 +15,8 @@ const SocialMediaExportModal = dynamic(
   { ssr: false },
 );
 import { DashboardPage } from "../../_components/dashboard";
-import { InstagramIcon, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
+import { SocialIcon } from "@/app/_components/ui/social-icon";
 
 export default function DashboardEventsPage() {
   const { data: session, isPending } = useSession();
@@ -75,7 +76,7 @@ export default function DashboardEventsPage() {
             onClick={() => setShowSocialMediaModal(true)}
             className="border-ink dark:border-night-text dark:bg-night dark:text-night-text text-ink bg-paper hover:bg-rule/25 dark:hover:bg-night-raised inline-flex min-h-11 items-center gap-2 border px-4 py-2.5 text-sm font-semibold transition-colors"
           >
-            <InstagramIcon className="h-4 w-4" />
+            <SocialIcon type="instagram" className="h-4 w-4" />
             Instagram Posts
           </button>
           <Link
