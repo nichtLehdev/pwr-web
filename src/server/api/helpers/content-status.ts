@@ -17,3 +17,14 @@ export function authorMayChangeStatus(
   }
   return to === ContentStatus.DRAFT && from === ContentStatus.REJECTED;
 }
+
+/** Beim Bearbeiten zusätzlich: Freigegebenes geht durch die Änderung zurück in die Prüfung. */
+export function authorMaySaveStatus(
+  from: ContentStatus,
+  to: ContentStatus,
+): boolean {
+  return (
+    authorMayChangeStatus(from, to) ||
+    (from === ContentStatus.APPROVED && to === ContentStatus.PENDING)
+  );
+}

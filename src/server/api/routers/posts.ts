@@ -3,8 +3,14 @@ import { TRPCError } from "@trpc/server";
 import { marked } from "marked";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { PostCategory, ContentStatus } from "~/generated/prisma/client";
-import { userHasPermission } from "../helpers/permissions";
-import { authorMayChangeStatus } from "../helpers/content-status";
+import {
+  userHasPermission,
+  type PermissionCache,
+} from "../helpers/permissions";
+import {
+  authorMayChangeStatus,
+  authorMaySaveStatus,
+} from "../helpers/content-status";
 import {
   assertDistrictAllowed,
   assertDistrictChangeAllowed,
@@ -110,6 +116,26 @@ async function enrichContentHtmlWithMediaCredits(
     result = result.replace(full, figure);
   }
   return result;
+}
+
+/**
+ * Andere Benutzer als Autor verknüpfen darf nur, wer sie auch auflisten darf (users.manage).
+ * Alle anderen dürfen nur sich selbst verknüpfen oder die eigene Verknüpfung lösen.
+ */
+async function assertAuthorLinkAllowed(
+  userId: string,
+  cache: PermissionCache,
+  current: string | null,
+  next: string | null | undefined,
+) {
+  if (next === undefined || next === current || next === userId) return;
+  if (next === null && current === userId) return;
+  if (await userHasPermission(userId, PERMISSIONS.USERS_MANAGE, cache)) return;
+  throw new TRPCError({
+    code: "FORBIDDEN",
+    message:
+      "Nur Administratoren können andere Benutzer als Autor verknüpfen. Nutze stattdessen einen eigenen Autorennamen.",
+  });
 }
 
 export const postsRouter = createTRPCRouter({
@@ -496,6 +522,13 @@ export const postsRouter = createTRPCRouter({
         });
       }
 
+      await assertAuthorLinkAllowed(
+        ctx.session.user.id,
+        ctx.permissionCache,
+        null,
+        input.authorId,
+      );
+
       const post = await ctx.db.post.create({
         data: {
           ...input,
@@ -555,6 +588,8 @@ export const postsRouter = createTRPCRouter({
           status: true,
           coverImageId: true,
           bezirkId: true,
+          pinned: true,
+          authorId: true,
         },
       });
 
@@ -592,7 +627,12 @@ export const postsRouter = createTRPCRouter({
         PERMISSIONS.HOMEPAGE_MANAGE,
         ctx.permissionCache,
       );
-      if (updateData.pinned !== undefined && !canPinPosts) {
+      // The edit form always sends `pinned`; only an actual change needs the right.
+      if (
+        updateData.pinned !== undefined &&
+        updateData.pinned !== post.pinned &&
+        !canPinPosts
+      ) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Insufficient permissions to pin posts",
@@ -608,6 +648,17 @@ export const postsRouter = createTRPCRouter({
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Insufficient permissions to approve posts",
+        });
+      }
+      if (
+        updateData.status !== undefined &&
+        !canApprovePosts &&
+        !authorMaySaveStatus(post.status, updateData.status)
+      ) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message:
+            "Als Autor kannst du nur zwischen Entwurf und „Zur Prüfung“ wechseln.",
         });
       }
 
@@ -627,6 +678,13 @@ export const postsRouter = createTRPCRouter({
           }
         }
       }
+
+      await assertAuthorLinkAllowed(
+        ctx.session.user.id,
+        ctx.permissionCache,
+        post.authorId,
+        updateData.authorId,
+      );
 
       const finalData: Record<string, unknown> = { ...updateData };
 
