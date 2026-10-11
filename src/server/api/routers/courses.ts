@@ -12,7 +12,10 @@ import {
 } from "~/generated/prisma/client";
 import type { Prisma, PrismaClient } from "~/generated/prisma/client";
 import { userHasPermission } from "../helpers/permissions";
-import { authorMayChangeStatus } from "../helpers/content-status";
+import {
+  authorMayChangeStatus,
+  authorMaySaveStatus,
+} from "../helpers/content-status";
 import {
   assertDistrictAllowed,
   assertDistrictChangeAllowed,
@@ -1336,7 +1339,7 @@ export const coursesRouter = createTRPCRouter({
 
       if (status !== undefined) {
         if (!canApproveContent) {
-          if (!authorMayChangeStatus(course.status, status)) {
+          if (!authorMaySaveStatus(course.status, status)) {
             throw new TRPCError({
               code: "FORBIDDEN",
               message:

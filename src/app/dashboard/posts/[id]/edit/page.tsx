@@ -73,6 +73,8 @@ export default function EditPostPage() {
 
   const hasApprovePermission = hasPermission("posts.approve" as PermissionKey);
   const isHigherRole = hasApprovePermission;
+  // users.list braucht users.manage; ohne das bleibt nur ein eigener Autorenname.
+  const canLinkAuthor = hasPermission("users.manage" as PermissionKey);
   const scopedBezirkIds = profile?.bezirkScopes?.map((s) => s.bezirkId) ?? [];
   // Zuständigkeit (bezirkScopes), nicht Zugehörigkeit (`profile.bezirkId`, trägt
   // öffentlich ein Amt) entscheidet, wofür jemand schreiben darf.
@@ -243,7 +245,7 @@ export default function EditPostPage() {
     : (bezirke ?? []);
   const { data: users } = api.users.list.useQuery(
     { page: 1, limit: 100 },
-    { enabled: !!session?.user },
+    { enabled: !!session?.user && canLinkAuthor },
   );
 
   const filteredUsers = users?.users.filter((user) => {
@@ -400,7 +402,7 @@ export default function EditPostPage() {
       coverImagePositionY: coverImagePositionY,
       pinned,
       status: finalStatus,
-      authorId: authorId || null,
+      authorId: canLinkAuthor ? authorId || null : undefined,
       authorName: authorName.trim() || null,
     });
   };
@@ -706,68 +708,82 @@ export default function EditPostPage() {
                 möchtest.
               </p>
               <div className="space-y-4">
-                <div className="author-dropdown-container relative">
-                  <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
-                    Autor suchen (Benutzer verknüpfen)
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={authorSearch}
-                      onChange={(e) => {
-                        setAuthorSearch(e.target.value);
-                        setShowAuthorDropdown(true);
-                        if (!e.target.value) {
-                          setAuthorId(null);
-                          setAuthorName("");
-                        }
-                      }}
-                      onFocus={() => setShowAuthorDropdown(true)}
-                      placeholder="Name oder E-Mail eingeben..."
-                      className="border-ink dark:border-night-text dark:bg-night dark:text-night-text text-ink bg-paper block w-full border px-3 py-2 pr-10"
-                    />
-                    {authorId && (
-                      <button
-                        type="button"
-                        onClick={handleClearAuthor}
-                        className="text-dark dark:text-night-muted hover:text-ink dark:hover:text-night-text absolute top-1/2 right-3 -translate-y-1/2"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    )}
-                  </div>
-
-                  {showAuthorDropdown &&
-                    authorSearch &&
-                    filteredUsers &&
-                    filteredUsers.length > 0 && (
-                      <div className="border-rule dark:border-night-rule dark:bg-night-raised bg-paper absolute z-10 mt-1 max-h-60 w-full overflow-auto border">
-                        {filteredUsers.slice(0, 10).map((user) => (
+                {!canLinkAuthor && post?.author && (
+                  <p className="text-dark dark:text-night-muted text-sm">
+                    Verknüpfter Autor:{" "}
+                    <span className="text-ink dark:text-night-text font-medium">
+                      {post.author.displayName || post.author.email}
+                    </span>{" "}
+                    – nur Administratoren können die Verknüpfung ändern. Ein
+                    eigener Autorenname wird stattdessen angezeigt.
+                  </p>
+                )}
+                {canLinkAuthor && (
+                  <>
+                    <div className="author-dropdown-container relative">
+                      <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
+                        Autor suchen (Benutzer verknüpfen)
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={authorSearch}
+                          onChange={(e) => {
+                            setAuthorSearch(e.target.value);
+                            setShowAuthorDropdown(true);
+                            if (!e.target.value) {
+                              setAuthorId(null);
+                              setAuthorName("");
+                            }
+                          }}
+                          onFocus={() => setShowAuthorDropdown(true)}
+                          placeholder="Name oder E-Mail eingeben..."
+                          className="border-ink dark:border-night-text dark:bg-night dark:text-night-text text-ink bg-paper block w-full border px-3 py-2 pr-10"
+                        />
+                        {authorId && (
                           <button
-                            key={user.id}
                             type="button"
-                            onClick={() => handleAuthorSelect(user)}
-                            className="hover:bg-rule/25 dark:hover:bg-night-rule w-full px-4 py-2 text-left text-sm transition-colors"
+                            onClick={handleClearAuthor}
+                            className="text-dark dark:text-night-muted hover:text-ink dark:hover:text-night-text absolute top-1/2 right-3 -translate-y-1/2"
                           >
-                            <div className="text-ink dark:text-night-text font-medium">
-                              {user.displayName || "Kein Name"}
-                            </div>
-                            <div className="text-dark dark:text-night-muted text-xs">
-                              {user.email}
-                            </div>
+                            <X className="h-4 w-4" />
                           </button>
-                        ))}
+                        )}
                       </div>
-                    )}
-                </div>
 
-                <div className="relative">
-                  <div className="border-rule dark:border-night-rule my-4 flex items-center gap-2 border-t">
-                    <span className="text-dark dark:text-night-muted dark:bg-night bg-paper px-2 text-sm">
-                      Oder
-                    </span>
-                  </div>
-                </div>
+                      {showAuthorDropdown &&
+                        authorSearch &&
+                        filteredUsers &&
+                        filteredUsers.length > 0 && (
+                          <div className="border-rule dark:border-night-rule dark:bg-night-raised bg-paper absolute z-10 mt-1 max-h-60 w-full overflow-auto border">
+                            {filteredUsers.slice(0, 10).map((user) => (
+                              <button
+                                key={user.id}
+                                type="button"
+                                onClick={() => handleAuthorSelect(user)}
+                                className="hover:bg-rule/25 dark:hover:bg-night-rule w-full px-4 py-2 text-left text-sm transition-colors"
+                              >
+                                <div className="text-ink dark:text-night-text font-medium">
+                                  {user.displayName || "Kein Name"}
+                                </div>
+                                <div className="text-dark dark:text-night-muted text-xs">
+                                  {user.email}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                    </div>
+
+                    <div className="relative">
+                      <div className="border-rule dark:border-night-rule my-4 flex items-center gap-2 border-t">
+                        <span className="text-dark dark:text-night-muted dark:bg-night bg-paper px-2 text-sm">
+                          Oder
+                        </span>
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 <div>
                   <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">

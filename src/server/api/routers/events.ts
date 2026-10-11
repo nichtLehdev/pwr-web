@@ -8,7 +8,10 @@ import {
 } from "~/generated/prisma/client";
 import type { Prisma } from "~/generated/prisma/client";
 import { userHasPermission } from "../helpers/permissions";
-import { authorMayChangeStatus } from "../helpers/content-status";
+import {
+  authorMayChangeStatus,
+  authorMaySaveStatus,
+} from "../helpers/content-status";
 import {
   assertDistrictAllowed,
   assertDistrictChangeAllowed,
@@ -650,15 +653,10 @@ export const eventsRouter = createTRPCRouter({
           message: "Keine Berechtigung, Veranstaltungen freizugeben",
         });
       }
-      // Editing a published event sends it back to review, hence APPROVED → PENDING.
       if (
         updateData.status !== undefined &&
         !canApprove &&
-        !authorMayChangeStatus(event.status, updateData.status) &&
-        !(
-          event.status === ContentStatus.APPROVED &&
-          updateData.status === ContentStatus.PENDING
-        )
+        !authorMaySaveStatus(event.status, updateData.status)
       ) {
         throw new TRPCError({
           code: "FORBIDDEN",
