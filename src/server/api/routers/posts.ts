@@ -555,6 +555,7 @@ export const postsRouter = createTRPCRouter({
           status: true,
           coverImageId: true,
           bezirkId: true,
+          pinned: true,
         },
       });
 
@@ -592,7 +593,12 @@ export const postsRouter = createTRPCRouter({
         PERMISSIONS.HOMEPAGE_MANAGE,
         ctx.permissionCache,
       );
-      if (updateData.pinned !== undefined && !canPinPosts) {
+      // The edit form always sends `pinned`; only an actual change needs the right.
+      if (
+        updateData.pinned !== undefined &&
+        updateData.pinned !== post.pinned &&
+        !canPinPosts
+      ) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Insufficient permissions to pin posts",
@@ -608,6 +614,22 @@ export const postsRouter = createTRPCRouter({
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Insufficient permissions to approve posts",
+        });
+      }
+      // Editing a published post sends it back to review, hence APPROVED → PENDING.
+      if (
+        updateData.status !== undefined &&
+        !canApprovePosts &&
+        !authorMayChangeStatus(post.status, updateData.status) &&
+        !(
+          post.status === ContentStatus.APPROVED &&
+          updateData.status === ContentStatus.PENDING
+        )
+      ) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message:
+            "Als Autor kannst du nur zwischen Entwurf und „Zur Prüfung“ wechseln.",
         });
       }
 

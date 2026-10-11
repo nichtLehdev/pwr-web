@@ -650,6 +650,22 @@ export const eventsRouter = createTRPCRouter({
           message: "Keine Berechtigung, Veranstaltungen freizugeben",
         });
       }
+      // Editing a published event sends it back to review, hence APPROVED → PENDING.
+      if (
+        updateData.status !== undefined &&
+        !canApprove &&
+        !authorMayChangeStatus(event.status, updateData.status) &&
+        !(
+          event.status === ContentStatus.APPROVED &&
+          updateData.status === ContentStatus.PENDING
+        )
+      ) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message:
+            "Als Autor kannst du nur zwischen Entwurf und „Zur Prüfung“ wechseln.",
+        });
+      }
 
       const scope = await resolveDistrictScope(
         ctx.db,
