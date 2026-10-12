@@ -108,7 +108,10 @@ export default function MitgliedschaftPage() {
             </h4>
             <ValueTable rows={BEITRAEGE} className="mt-3" />
 
-            <p className={`${PROSE} mt-6`}>
+            <p
+              id="jahresmeldung"
+              className={`${PROSE} mt-6 scroll-mt-[calc(var(--main-padding-top,5rem)+var(--kolumnentitel-hoehe,0px)+1.5rem)]`}
+            >
               Bitte melden Sie der{" "}
               <Link href="/kontakt" className="link-ink">
                 Geschäftsstelle

@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import Navigation from "@/app/_components/general/navigation";
 import Footer from "@/app/_components/general/footer";
-import { BetaBanner } from "@/app/_components/ui/banner";
+import { SiteBanner } from "@/app/_components/ui/banner";
 import { MainContent } from "@/app/_components/ui/main-content";
 import { isStandaloneGamePath } from "@/lib/standalone-game-route";
 
@@ -26,8 +26,8 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
       >
         Zum Inhalt springen
       </a>
-      {/* Blendet sich auf der öffentlichen Seite (APP_ENV=production) selbst aus. */}
-      <BetaBanner />
+      {/* Beta nur in der Vorab-Umgebung, sonst saisonale Hinweise. */}
+      <SiteBanner />
       <Navigation />
       <MainContent>{children}</MainContent>
       <Footer />
