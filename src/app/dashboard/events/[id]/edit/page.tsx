@@ -1555,28 +1555,24 @@ export default function EditEventPage() {
                 description="Redaktionsstatus, Sichtbarkeit und Freigabe im öffentlichen Kalender."
               />
               <DashboardFormBlock title="Status & Freigabe">
-                {(event?.status === ContentStatus.APPROVED ||
-                  event?.status === ContentStatus.REJECTED) &&
-                  !isHigherRole && (
-                    // Hinweis, kein Alarm: bewusst ohne Signalfarbe.
-                    <div className="border-ink dark:border-night-text mb-4 border-l-2 py-2 pl-4">
-                      <div className="flex items-start gap-3">
-                        <AlertTriangle className="dark:text-night-text text-ink mt-0.5 h-5 w-5 shrink-0" />
-                        <div>
-                          <p className="dark:text-night-text text-ink font-medium">
-                            {event?.status === ContentStatus.APPROVED
-                              ? "Hinweis zur erneuten Freigabe"
-                              : "Hinweis zur erneuten Prüfung"}
-                          </p>
-                          <p className="text-dark dark:text-night-muted mt-1 text-sm">
-                            {event?.status === ContentStatus.APPROVED
-                              ? "Diese Veranstaltung ist bereits freigegeben. Nach dem Speichern wird sie erneut zur Prüfung eingereicht und muss wieder freigegeben werden."
-                              : "Diese Veranstaltung wurde abgelehnt. Nach dem Speichern wird sie erneut zur Prüfung eingereicht."}
-                          </p>
-                        </div>
+                {event?.status === ContentStatus.APPROVED && !isHigherRole && (
+                  // Hinweis, kein Alarm: bewusst ohne Signalfarbe.
+                  <div className="border-ink dark:border-night-text mb-4 border-l-2 py-2 pl-4">
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle className="dark:text-night-text text-ink mt-0.5 h-5 w-5 shrink-0" />
+                      <div>
+                        <p className="dark:text-night-text text-ink font-medium">
+                          Hinweis zur erneuten Freigabe
+                        </p>
+                        <p className="text-dark dark:text-night-muted mt-1 text-sm">
+                          {
+                            "Diese Veranstaltung ist bereits freigegeben. Nach dem Speichern wird sie erneut zur Prüfung eingereicht und muss wieder freigegeben werden."
+                          }
+                        </p>
                       </div>
                     </div>
-                  )}
+                  </div>
+                )}
 
                 {isHigherRole ? (
                   <div className="space-y-3">
@@ -1608,14 +1604,50 @@ export default function EditEventPage() {
                       </label>
                     ))}
                   </div>
+                ) : event?.status === ContentStatus.DRAFT ||
+                  event?.status === ContentStatus.REJECTED ? (
+                  <div className="space-y-3">
+                    <p className="text-dark dark:text-night-muted text-sm">
+                      Lege fest, ob die Veranstaltung nur gespeichert oder zur
+                      redaktionellen Prüfung eingereicht werden soll.
+                    </p>
+                    <label className="flex cursor-pointer items-center gap-3">
+                      <input
+                        type="radio"
+                        name="status-author"
+                        checked={status === ContentStatus.DRAFT}
+                        onChange={() => setStatus(ContentStatus.DRAFT)}
+                        className="text-primary border-ink dark:border-night-text h-4 w-4"
+                      />
+                      <span className="text-ink dark:text-night-text text-sm">
+                        {statusLabels[ContentStatus.DRAFT]} (nur für dich
+                        sichtbar)
+                      </span>
+                    </label>
+                    <label className="flex cursor-pointer items-center gap-3">
+                      <input
+                        type="radio"
+                        name="status-author"
+                        // Speichern reicht Abgelehntes ohnehin erneut ein.
+                        checked={
+                          status === ContentStatus.PENDING ||
+                          status === ContentStatus.REJECTED
+                        }
+                        onChange={() => setStatus(ContentStatus.PENDING)}
+                        className="text-primary border-ink dark:border-night-text h-4 w-4"
+                      />
+                      <span className="text-ink dark:text-night-text text-sm">
+                        {statusLabels[ContentStatus.PENDING]}
+                      </span>
+                    </label>
+                  </div>
                 ) : (
                   <p className="text-dark dark:text-night-muted text-sm">
                     Aktueller Status:{" "}
                     <span className="font-medium">
                       {statusLabels[event?.status ?? ContentStatus.DRAFT]}
                     </span>
-                    {(event?.status === ContentStatus.APPROVED ||
-                      event?.status === ContentStatus.REJECTED) && (
+                    {event?.status === ContentStatus.APPROVED && (
                       <span className="ml-1">
                         → wird zu &quot;Ausstehend&quot;
                       </span>

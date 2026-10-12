@@ -1108,6 +1108,16 @@ export default function EditCoursePage() {
             }),
           );
 
+    let finalStatus = status;
+    if (
+      (course?.status === ContentStatus.APPROVED &&
+        status === ContentStatus.APPROVED) ||
+      (course?.status === ContentStatus.REJECTED &&
+        status === ContentStatus.REJECTED)
+    ) {
+      finalStatus = ContentStatus.PENDING;
+    }
+
     updateCourseMutation.mutate({
       id: courseId,
       title: title.trim(),
@@ -1170,7 +1180,7 @@ export default function EditCoursePage() {
       imageId: imageId || null,
       priceOptions: preparedPriceOptions,
       customFields: preparedCustomFields,
-      status,
+      status: finalStatus,
     });
   };
 
@@ -2905,28 +2915,24 @@ export default function EditCoursePage() {
               />
 
               <DashboardFormBlock title="Redaktionsstatus">
-                {(course?.status === ContentStatus.APPROVED ||
-                  course?.status === ContentStatus.REJECTED) &&
-                  !isHigherRole && (
-                    // Hinweis, kein Alarm: bewusst ohne Signalfarbe.
-                    <div className="border-ink dark:border-night-text mb-4 border-l-2 py-2 pl-4">
-                      <div className="flex items-start gap-3">
-                        <AlertTriangleIcon className="dark:text-night-text text-ink mt-0.5 h-5 w-5 shrink-0" />
-                        <div>
-                          <p className="dark:text-night-text text-ink font-medium">
-                            {course?.status === ContentStatus.APPROVED
-                              ? "Hinweis zur erneuten Freigabe"
-                              : "Hinweis zur erneuten Prüfung"}
-                          </p>
-                          <p className="text-dark dark:text-night-muted mt-1 text-sm">
-                            {course?.status === ContentStatus.APPROVED
-                              ? "Dieser Kurs ist bereits freigegeben. Nach dem Speichern wird er erneut zur Prüfung eingereicht und muss wieder freigegeben werden."
-                              : "Dieser Kurs wurde abgelehnt. Nach dem Speichern wird er erneut zur Prüfung eingereicht."}
-                          </p>
-                        </div>
+                {course?.status === ContentStatus.APPROVED && !isHigherRole && (
+                  // Hinweis, kein Alarm: bewusst ohne Signalfarbe.
+                  <div className="border-ink dark:border-night-text mb-4 border-l-2 py-2 pl-4">
+                    <div className="flex items-start gap-3">
+                      <AlertTriangleIcon className="dark:text-night-text text-ink mt-0.5 h-5 w-5 shrink-0" />
+                      <div>
+                        <p className="dark:text-night-text text-ink font-medium">
+                          Hinweis zur erneuten Freigabe
+                        </p>
+                        <p className="text-dark dark:text-night-muted mt-1 text-sm">
+                          {
+                            "Dieser Kurs ist bereits freigegeben. Nach dem Speichern wird er erneut zur Prüfung eingereicht und muss wieder freigegeben werden."
+                          }
+                        </p>
                       </div>
                     </div>
-                  )}
+                  </div>
+                )}
 
                 {isHigherRole ? (
                   <div className="space-y-3">
@@ -2982,7 +2988,11 @@ export default function EditCoursePage() {
                       <input
                         type="radio"
                         name="status-author"
-                        checked={status === ContentStatus.PENDING}
+                        // Speichern reicht Abgelehntes ohnehin erneut ein.
+                        checked={
+                          status === ContentStatus.PENDING ||
+                          status === ContentStatus.REJECTED
+                        }
                         onChange={() => setStatus(ContentStatus.PENDING)}
                         className="text-primary border-rule dark:border-night-text h-4 w-4"
                       />

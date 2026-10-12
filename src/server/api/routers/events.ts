@@ -8,7 +8,10 @@ import {
 } from "~/generated/prisma/client";
 import type { Prisma } from "~/generated/prisma/client";
 import { userHasPermission } from "../helpers/permissions";
-import { authorMayChangeStatus } from "../helpers/content-status";
+import {
+  authorMayChangeStatus,
+  authorMaySaveStatus,
+} from "../helpers/content-status";
 import {
   assertDistrictAllowed,
   assertDistrictChangeAllowed,
@@ -648,6 +651,17 @@ export const eventsRouter = createTRPCRouter({
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Keine Berechtigung, Veranstaltungen freizugeben",
+        });
+      }
+      if (
+        updateData.status !== undefined &&
+        !canApprove &&
+        !authorMaySaveStatus(event.status, updateData.status)
+      ) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message:
+            "Als Autor kannst du nur zwischen Entwurf und „Zur Prüfung“ wechseln.",
         });
       }
 

@@ -73,6 +73,8 @@ export default function EditPostPage() {
 
   const hasApprovePermission = hasPermission("posts.approve" as PermissionKey);
   const isHigherRole = hasApprovePermission;
+  // users.list braucht users.manage; ohne das bleibt nur ein eigener Autorenname.
+  const canLinkAuthor = hasPermission("users.manage" as PermissionKey);
   const scopedBezirkIds = profile?.bezirkScopes?.map((s) => s.bezirkId) ?? [];
   // Zuständigkeit (bezirkScopes), nicht Zugehörigkeit (`profile.bezirkId`, trägt
   // öffentlich ein Amt) entscheidet, wofür jemand schreiben darf.
@@ -243,7 +245,7 @@ export default function EditPostPage() {
     : (bezirke ?? []);
   const { data: users } = api.users.list.useQuery(
     { page: 1, limit: 100 },
-    { enabled: !!session?.user },
+    { enabled: !!session?.user && canLinkAuthor },
   );
 
   const filteredUsers = users?.users.filter((user) => {
@@ -400,7 +402,7 @@ export default function EditPostPage() {
       coverImagePositionY: coverImagePositionY,
       pinned,
       status: finalStatus,
-      authorId: authorId || null,
+      authorId: canLinkAuthor ? authorId || null : undefined,
       authorName: authorName.trim() || null,
     });
   };
@@ -708,68 +710,82 @@ export default function EditPostPage() {
                 möchtest.
               </p>
               <div className="space-y-4">
-                <div className="author-dropdown-container relative">
-                  <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
-                    Autor suchen (Benutzer verknüpfen)
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={authorSearch}
-                      onChange={(e) => {
-                        setAuthorSearch(e.target.value);
-                        setShowAuthorDropdown(true);
-                        if (!e.target.value) {
-                          setAuthorId(null);
-                          setAuthorName("");
-                        }
-                      }}
-                      onFocus={() => setShowAuthorDropdown(true)}
-                      placeholder="Name oder E-Mail eingeben..."
-                      className="border-ink dark:border-night-text dark:bg-night dark:text-night-text text-ink bg-paper block w-full border px-3 py-2 pr-10"
-                    />
-                    {authorId && (
-                      <button
-                        type="button"
-                        onClick={handleClearAuthor}
-                        className="text-dark dark:text-night-muted hover:text-ink dark:hover:text-night-text absolute top-1/2 right-3 -translate-y-1/2"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    )}
-                  </div>
-
-                  {showAuthorDropdown &&
-                    authorSearch &&
-                    filteredUsers &&
-                    filteredUsers.length > 0 && (
-                      <div className="border-rule dark:border-night-rule dark:bg-night-raised bg-paper absolute z-10 mt-1 max-h-60 w-full overflow-auto border">
-                        {filteredUsers.slice(0, 10).map((user) => (
+                {!canLinkAuthor && post?.author && (
+                  <p className="text-dark dark:text-night-muted text-sm">
+                    Verknüpfter Autor:{" "}
+                    <span className="text-ink dark:text-night-text font-medium">
+                      {post.author.displayName || post.author.email}
+                    </span>{" "}
+                    – nur Administratoren können die Verknüpfung ändern. Ein
+                    eigener Autorenname wird stattdessen angezeigt.
+                  </p>
+                )}
+                {canLinkAuthor && (
+                  <>
+                    <div className="author-dropdown-container relative">
+                      <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
+                        Autor suchen (Benutzer verknüpfen)
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={authorSearch}
+                          onChange={(e) => {
+                            setAuthorSearch(e.target.value);
+                            setShowAuthorDropdown(true);
+                            if (!e.target.value) {
+                              setAuthorId(null);
+                              setAuthorName("");
+                            }
+                          }}
+                          onFocus={() => setShowAuthorDropdown(true)}
+                          placeholder="Name oder E-Mail eingeben..."
+                          className="border-ink dark:border-night-text dark:bg-night dark:text-night-text text-ink bg-paper block w-full border px-3 py-2 pr-10"
+                        />
+                        {authorId && (
                           <button
-                            key={user.id}
                             type="button"
-                            onClick={() => handleAuthorSelect(user)}
-                            className="hover:bg-rule/25 dark:hover:bg-night-rule w-full px-4 py-2 text-left text-sm transition-colors"
+                            onClick={handleClearAuthor}
+                            className="text-dark dark:text-night-muted hover:text-ink dark:hover:text-night-text absolute top-1/2 right-3 -translate-y-1/2"
                           >
-                            <div className="text-ink dark:text-night-text font-medium">
-                              {user.displayName || "Kein Name"}
-                            </div>
-                            <div className="text-dark dark:text-night-muted text-xs">
-                              {user.email}
-                            </div>
+                            <X className="h-4 w-4" />
                           </button>
-                        ))}
+                        )}
                       </div>
-                    )}
-                </div>
 
-                <div className="relative">
-                  <div className="border-rule dark:border-night-rule my-4 flex items-center gap-2 border-t">
-                    <span className="text-dark dark:text-night-muted dark:bg-night bg-paper px-2 text-sm">
-                      Oder
-                    </span>
-                  </div>
-                </div>
+                      {showAuthorDropdown &&
+                        authorSearch &&
+                        filteredUsers &&
+                        filteredUsers.length > 0 && (
+                          <div className="border-rule dark:border-night-rule dark:bg-night-raised bg-paper absolute z-10 mt-1 max-h-60 w-full overflow-auto border">
+                            {filteredUsers.slice(0, 10).map((user) => (
+                              <button
+                                key={user.id}
+                                type="button"
+                                onClick={() => handleAuthorSelect(user)}
+                                className="hover:bg-rule/25 dark:hover:bg-night-rule w-full px-4 py-2 text-left text-sm transition-colors"
+                              >
+                                <div className="text-ink dark:text-night-text font-medium">
+                                  {user.displayName || "Kein Name"}
+                                </div>
+                                <div className="text-dark dark:text-night-muted text-xs">
+                                  {user.email}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                    </div>
+
+                    <div className="relative">
+                      <div className="border-rule dark:border-night-rule my-4 flex items-center gap-2 border-t">
+                        <span className="text-dark dark:text-night-muted dark:bg-night bg-paper px-2 text-sm">
+                          Oder
+                        </span>
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 <div>
                   <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
@@ -828,27 +844,23 @@ export default function EditPostPage() {
                 description="Pruef- und Veroeffentlichungsstatus festlegen."
               />
 
-              {(post?.status === ContentStatus.APPROVED ||
-                post?.status === ContentStatus.REJECTED) &&
-                !isHigherRole && (
-                  <div className="border-ink dark:border-night-text mb-4 border-l-2 py-2 pl-4">
-                    <div className="flex items-start gap-3">
-                      <AlertTriangle className="dark:text-night-text text-ink mt-0.5 h-5 w-5 shrink-0" />
-                      <div>
-                        <p className="dark:text-night-text text-ink font-medium">
-                          {post?.status === ContentStatus.APPROVED
-                            ? "Hinweis zur erneuten Freigabe"
-                            : "Hinweis zur erneuten Prüfung"}
-                        </p>
-                        <p className="text-dark dark:text-night-muted mt-1 text-sm">
-                          {post?.status === ContentStatus.APPROVED
-                            ? "Dieser Beitrag ist bereits freigegeben. Nach dem Speichern wird er erneut zur Prüfung eingereicht und muss wieder freigegeben werden."
-                            : "Dieser Beitrag wurde abgelehnt. Nach dem Speichern wird er erneut zur Prüfung eingereicht."}
-                        </p>
-                      </div>
+              {post?.status === ContentStatus.APPROVED && !isHigherRole && (
+                <div className="border-ink dark:border-night-text mb-4 border-l-2 py-2 pl-4">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="dark:text-night-text text-ink mt-0.5 h-5 w-5 shrink-0" />
+                    <div>
+                      <p className="dark:text-night-text text-ink font-medium">
+                        Hinweis zur erneuten Freigabe
+                      </p>
+                      <p className="text-dark dark:text-night-muted mt-1 text-sm">
+                        {
+                          "Dieser Beitrag ist bereits freigegeben. Nach dem Speichern wird er erneut zur Prüfung eingereicht und muss wieder freigegeben werden."
+                        }
+                      </p>
                     </div>
                   </div>
-                )}
+                </div>
+              )}
 
               {isHigherRole ? (
                 <div className="space-y-3">
@@ -880,14 +892,50 @@ export default function EditPostPage() {
                     </label>
                   ))}
                 </div>
+              ) : post?.status === ContentStatus.DRAFT ||
+                post?.status === ContentStatus.REJECTED ? (
+                <div className="space-y-3">
+                  <p className="text-dark dark:text-night-muted text-sm">
+                    Lege fest, ob der Beitrag nur gespeichert oder zur
+                    redaktionellen Prüfung eingereicht werden soll.
+                  </p>
+                  <label className="flex cursor-pointer items-center gap-3">
+                    <input
+                      type="radio"
+                      name="status-author"
+                      checked={status === ContentStatus.DRAFT}
+                      onChange={() => setStatus(ContentStatus.DRAFT)}
+                      className="text-primary border-ink dark:border-night-text h-4 w-4"
+                    />
+                    <span className="text-ink dark:text-night-text text-sm">
+                      {statusLabels[ContentStatus.DRAFT]} (nur für dich
+                      sichtbar)
+                    </span>
+                  </label>
+                  <label className="flex cursor-pointer items-center gap-3">
+                    <input
+                      type="radio"
+                      name="status-author"
+                      // Speichern reicht Abgelehntes ohnehin erneut ein.
+                      checked={
+                        status === ContentStatus.PENDING ||
+                        status === ContentStatus.REJECTED
+                      }
+                      onChange={() => setStatus(ContentStatus.PENDING)}
+                      className="text-primary border-ink dark:border-night-text h-4 w-4"
+                    />
+                    <span className="text-ink dark:text-night-text text-sm">
+                      {statusLabels[ContentStatus.PENDING]}
+                    </span>
+                  </label>
+                </div>
               ) : (
                 <p className="text-dark dark:text-night-muted text-sm">
                   Aktueller Status:{" "}
                   <span className="font-medium">
                     {statusLabels[post?.status ?? ContentStatus.DRAFT]}
                   </span>
-                  {(post?.status === ContentStatus.APPROVED ||
-                    post?.status === ContentStatus.REJECTED) && (
+                  {post?.status === ContentStatus.APPROVED && (
                     <span className="ml-1">
                       → wird zu &quot;Ausstehend&quot;
                     </span>

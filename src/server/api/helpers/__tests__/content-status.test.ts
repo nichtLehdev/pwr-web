@@ -1,6 +1,6 @@
 import { describe, expect, it } from "@jest/globals";
 import { ContentStatus } from "~/generated/prisma/client";
-import { authorMayChangeStatus } from "../content-status";
+import { authorMayChangeStatus, authorMaySaveStatus } from "../content-status";
 
 const { DRAFT, PENDING, APPROVED, REJECTED } = ContentStatus;
 
@@ -37,5 +37,23 @@ describe("authorMayChangeStatus", () => {
   it("refuses unpublishing", () => {
     expect(authorMayChangeStatus(APPROVED, DRAFT)).toBe(false);
     expect(authorMayChangeStatus(APPROVED, PENDING)).toBe(false);
+  });
+});
+
+describe("authorMaySaveStatus", () => {
+  // An edit changes what reviewers approved, so it has to go back to them.
+  it("sends an edited published item back to review", () => {
+    expect(authorMaySaveStatus(APPROVED, PENDING)).toBe(true);
+  });
+
+  it("allows everything authorMayChangeStatus allows", () => {
+    expect(authorMaySaveStatus(DRAFT, PENDING)).toBe(true);
+    expect(authorMaySaveStatus(REJECTED, DRAFT)).toBe(true);
+  });
+
+  it("still refuses approving, rejecting and unpublishing to draft", () => {
+    expect(authorMaySaveStatus(PENDING, APPROVED)).toBe(false);
+    expect(authorMaySaveStatus(PENDING, REJECTED)).toBe(false);
+    expect(authorMaySaveStatus(APPROVED, DRAFT)).toBe(false);
   });
 });
