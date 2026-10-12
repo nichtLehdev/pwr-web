@@ -1,6 +1,12 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useSyncExternalStore,
+} from "react";
 import Link from "next/link";
 import { useBanner } from "./banner-context";
 import { XIcon } from "lucide-react";
@@ -226,13 +232,49 @@ function useIsPreRelease() {
   return isPreRelease;
 }
 
-export function BetaBanner() {
-  const isPreRelease = useIsPreRelease();
+/** Jahr der laufenden Jahresmeldung (15. Oktober bis 30. November), sonst null. */
+function getJahresmeldungYear() {
+  const now = new Date();
+  const month = now.getMonth(); // 9 = Oktober, 10 = November
+  const inWindow = (month === 9 && now.getDate() >= 15) || month === 10;
+  return inWindow ? now.getFullYear() : null;
+}
 
-  if (!isPreRelease) {
+const noSubscribe = () => () => undefined;
+
+// Erst im Browser auswerten: Statische Seiten würden sonst das Build-Datum einfrieren.
+function useJahresmeldungYear() {
+  return useSyncExternalStore(noSubscribe, getJahresmeldungYear, () => null);
+}
+
+/** Ein fester Platz oben: Beta (nur Vorab-Umgebung) geht vor. */
+export function SiteBanner() {
+  const isPreRelease = useIsPreRelease();
+  const jahresmeldungYear = useJahresmeldungYear();
+
+  if (isPreRelease) {
+    return <BetaBanner />;
+  }
+
+  if (jahresmeldungYear === null) {
     return null;
   }
 
+  return (
+    <AnnouncementBanner
+      // Jahr in der ID, damit die Erinnerung im nächsten Herbst wiederkommt.
+      id={`jahresmeldung-${jahresmeldungYear}`}
+      message="Liebe Chorleiterinnen und Chorleiter, sind Ihre Mitgliederzahlen schon aktualisiert? Bitte bis 30. November an die Geschäftsstelle melden."
+      mobileMessage="Chorleitung: Mitgliederzahlen bis 30.11. melden"
+      link={{
+        href: "/mitmachen/mitgliedschaft#jahresmeldung",
+        label: "Mehr erfahren",
+      }}
+    />
+  );
+}
+
+function BetaBanner() {
   return (
     <AnnouncementBanner
       id="beta"
