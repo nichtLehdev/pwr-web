@@ -1,9 +1,6 @@
 import { describe, expect, it } from "@jest/globals";
 import { ContentStatus } from "~/generated/prisma/client";
-import {
-  authorMayChangeStatus,
-  authorMaySaveStatus,
-} from "../content-status";
+import { authorMayChangeStatus, authorMaySaveStatus } from "../content-status";
 
 const { DRAFT, PENDING, APPROVED, REJECTED } = ContentStatus;
 
