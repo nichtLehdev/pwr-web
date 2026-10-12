@@ -108,6 +108,19 @@ export default function MitgliedschaftPage() {
             </h4>
             <ValueTable rows={BEITRAEGE} className="mt-3" />
 
+            <p className={`${PROSE} mt-6`}>
+              Bitte melden Sie der{" "}
+              <Link href="/kontakt" className="link-ink">
+                Geschäftsstelle
+              </Link>{" "}
+              einmal jährlich die aktuelle Zahl Ihrer Chormitglieder und die
+              versicherten Instrumente – Stichtag ist der{" "}
+              <strong className="font-semibold whitespace-nowrap">
+                30. November
+              </strong>
+              .
+            </p>
+
             <WayList className="mt-10">
               <WayRow
                 href="/downloads/satzung-posaunenwerk.pdf"

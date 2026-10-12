@@ -1085,6 +1085,19 @@ function ChorFindenContent() {
               </div>
             )}
           </div>
+
+          <p className="border-rule dark:border-night-rule text-dark dark:text-night-muted mt-12 max-w-[65ch] border-t pt-4 leading-relaxed">
+            Fehlt ein Chor oder haben sich Angaben geändert? Dann melde dich
+            bitte bei der{" "}
+            <Link href="/kontakt" className="link-ink">
+              Geschäftsstelle
+            </Link>{" "}
+            und bei der zuständigen{" "}
+            <Link href="/ueber-uns/bezirke" className="link-ink">
+              Obfrau bzw. dem zuständigen Obmann
+            </Link>{" "}
+            des Bezirks.
+          </p>
         </div>
       </section>
     </PublicPage>
