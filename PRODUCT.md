@@ -64,7 +64,7 @@ Verbindlich sind nur diese Vorgaben, alles andere am Erscheinungsbild ist frei:
 ## Evidence on Hand
 
 - **Echte Organisationsdaten:** Anschrift, Telefon, E-Mail und Social-Media-Profile in `src/lib/structured-data.ts` (synchron mit dem Impressum).
-- **Offizielle Dokumente** in `public/downloads/`: Satzung, Ehrenordnung, Aufnahmeantrag für Chöre, Arbeitshilfe Jungbläser, Leistungsstempel, Förderverein-Flyer, Selbstverpflichtung Kinderschutz, Zusatzerklärung Minderjährige.
+- **Offizielle Dokumente** in `public/downloads/`: Satzung, Ehrenordnung, Aufnahmeantrag für Chöre, Arbeitshilfe Jungbläser, Leistungsstempel, Förderverein-Flyer, Mitgliedsantrag Förderverein, Selbstverpflichtung Kinderschutz, Zusatzerklärung Minderjährige.
 - **Bilder** von Personen und Gremien in `public/images/` (team, vorstand, posaunenwarte, bezirke, auswahlchoere, blaeserhefte). Hinzu kommen hochgeladene Medien in der Datenbank mit Bildnachweisen.
 - **Audio:** `public/audio/frankreich-2021-sample.mp3`.
 - **Live-Inhalte:** Termine, Lehrgänge, Beiträge, Chöre, Bezirke und Personen stehen in der Datenbank.

@@ -127,6 +127,12 @@ export default async function FoerdervereinPage() {
               title="Mitglied werden"
             />
             <WayRow
+              href="/downloads/foerderverein-mitgliedsantrag.pdf"
+              title="Mitgliedsantrag herunterladen"
+              kind="download"
+              fileType="PDF"
+            />
+            <WayRow
               href="/downloads/foerderverein-flyer.pdf"
               title="Flyer herunterladen"
               kind="download"
