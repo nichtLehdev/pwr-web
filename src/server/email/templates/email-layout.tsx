@@ -174,9 +174,7 @@ export function EmailLayout({ preview, children }: EmailLayoutProps) {
             <Text style={fusstext}>
               Posaunenwerk der Evangelischen Kirche im Rheinland e.V.
             </Text>
-            <Text style={fusstext}>
-              Buchenbitze 7a · 53773 Hennef
-            </Text>
+            <Text style={fusstext}>Buchenbitze 7a · 53773 Hennef</Text>
           </Section>
         </Container>
       </Body>
