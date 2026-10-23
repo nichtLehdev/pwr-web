@@ -16,7 +16,7 @@ export function emailText(zeilen: (string | null | undefined)[]): string {
     "",
     "-".repeat(52),
     "Posaunenwerk der Evangelischen Kirche im Rheinland e.V.",
-    "Rudolf-Harbig-Str. 20 · 56179 Vallendar",
+    "Buchenbitze 7a · 53773 Hennef",
     emailBaseUrl(),
   ];
 

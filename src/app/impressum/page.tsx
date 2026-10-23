@@ -38,9 +38,9 @@ export default function ImpressumPage() {
                   Posaunenwerk der Evangelischen Kirche im Rheinland e.V.
                 </strong>
                 <br />
-                Rudolf-Harbig-Str. 20
+                Buchenbitze 7a
                 <br />
-                56179 Vallendar
+                53773 Hennef
                 <br />
                 Deutschland
               </p>
@@ -54,8 +54,8 @@ export default function ImpressumPage() {
             <div className={`${PROSE} mt-5`}>
               <p>
                 <strong className="font-semibold">Telefon:</strong>{" "}
-                <a href="tel:02613000011" className="link-ink">
-                  0261 300 00 11
+                <a href="tel:022429627430" className="link-ink">
+                  02242 9627430
                 </a>
               </p>
               <p>
@@ -135,9 +135,9 @@ export default function ImpressumPage() {
                 <br />
                 Landesobmann Friedemann Schmidt-Eggert
                 <br />
-                Rudolf-Harbig-Str. 20
+                Buchenbitze 7a
                 <br />
-                56179 Vallendar
+                53773 Hennef
               </p>
             </div>
           </div>
@@ -323,7 +323,7 @@ export default function ImpressumPage() {
 
       <PageSection spacing="close" rule>
         <p className="text-dark dark:text-night-muted text-sm">
-          Stand dieser Impressumsangaben: August 2026
+          Stand dieser Impressumsangaben: Oktober 2026
         </p>
       </PageSection>
     </PublicPage>

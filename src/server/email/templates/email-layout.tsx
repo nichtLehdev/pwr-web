@@ -175,7 +175,7 @@ export function EmailLayout({ preview, children }: EmailLayoutProps) {
               Posaunenwerk der Evangelischen Kirche im Rheinland e.V.
             </Text>
             <Text style={fusstext}>
-              Rudolf-Harbig-Str. 20 · 56179 Vallendar
+              Buchenbitze 7a · 53773 Hennef
             </Text>
           </Section>
         </Container>

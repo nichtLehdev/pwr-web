@@ -121,7 +121,7 @@ export function generateCourseMailHtml({
                 Posaunenwerk der Evangelischen Kirche im Rheinland e.V.
               </p>
               <p style="font-family: ${htmlSchrift}; font-size: 12px; line-height: 18px; color: ${farben.muted}; margin: 0; text-align: center;">
-                Rudolf-Harbig-Str. 20 · 56179 Vallendar
+                Buchenbitze 7a · 53773 Hennef
               </p>
             </td>
           </tr>

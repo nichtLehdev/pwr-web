@@ -53,8 +53,8 @@ export default async function WartungPage() {
               info@posaunenwerk-rheinland.de
             </a>{" "}
             oder telefonisch unter{" "}
-            <a href="tel:02613000011" className="link-ink">
-              0261 3000011
+            <a href="tel:022429627430" className="link-ink">
+              02242 9627430
             </a>
             .
           </p>
