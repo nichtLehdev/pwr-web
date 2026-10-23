@@ -98,8 +98,6 @@ export default function EditEnsemblePage() {
   const [bezirkId, setBezirkId] = useState<string | null>("");
   const [imageId, setImageId] = useState<string | null>("");
   const [imageUrl, setImageUrl] = useState("");
-  const [rehearsalDay, setRehearsalDay] = useState("");
-  const [rehearsalTime, setRehearsalTime] = useState("");
   const [rehearsalSchedules, setRehearsalSchedules] = useState<
     Array<{ selectedDays: string[]; time: string }>
   >([]);
@@ -155,13 +153,17 @@ export default function EditEnsemblePage() {
       setImageId(ensemble.imageId);
       setImageUrl(ensemble.image?.url ?? "");
       setLocationId(ensemble.locationId);
-      setRehearsalDay(ensemble.rehearsalDay ?? "");
-      setRehearsalTime(ensemble.rehearsalTime ?? "");
       const schedulesByTime = new Map<string, string[]>();
       ensemble.rehearsalSchedules?.forEach((s) => {
-        const existing = schedulesByTime.get(s.time) || [];
+        // Ältere Einträge sind Freitext (z.B. "19:30-21:00 Uhr"); für das
+        // Zeitfeld nur die Startzeit als HH:MM übernehmen.
+        const match = /(\d{1,2})[:.](\d{2})/.exec(s.time);
+        const time = match
+          ? `${match[1]!.padStart(2, "0")}:${match[2]}`
+          : s.time;
+        const existing = schedulesByTime.get(time) || [];
         existing.push(s.day);
-        schedulesByTime.set(s.time, existing);
+        schedulesByTime.set(time, existing);
       });
       setRehearsalSchedules(
         Array.from(schedulesByTime.entries()).map(([time, days]) => ({
@@ -322,8 +324,6 @@ export default function EditEnsemblePage() {
       bezirkId: bezirkId || null,
       imageId: imageId || null,
       locationId: locationId || null,
-      rehearsalDay: rehearsalDay.trim() || undefined,
-      rehearsalTime: rehearsalTime.trim() || undefined,
       rehearsalSchedules:
         rehearsalSchedules.length > 0
           ? rehearsalSchedules
@@ -925,49 +925,22 @@ export default function EditEnsemblePage() {
                         </div>
 
                         <div>
-                          <Label>Probenzeit</Label>
+                          <Label>Beginn</Label>
                           <Input
-                            type="text"
+                            type="time"
                             value={schedule.time}
                             onChange={(e) => {
                               const updated = [...rehearsalSchedules];
                               updated[index]!.time = e.target.value;
                               setRehearsalSchedules(updated);
                             }}
-                            placeholder="z.B. 8:00-12:00 oder 19:30-21:00"
+                            className="w-auto"
                           />
                         </div>
                       </div>
                     ))}
                   </div>
                 )}
-
-                {/* Legacy fields (for backward compatibility) */}
-                <div className="border-rule dark:border-night-rule border-t pt-4">
-                  <p className="text-ink dark:text-night-text mb-2 text-sm font-medium">
-                    Legacy (veraltet - nur für Migration)
-                  </p>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <Label>Probentag (alt)</Label>
-                      <Input
-                        type="text"
-                        value={rehearsalDay}
-                        onChange={(e) => setRehearsalDay(e.target.value)}
-                        placeholder="z.B. Mittwoch"
-                      />
-                    </div>
-                    <div>
-                      <Label>Probenzeit (alt)</Label>
-                      <Input
-                        type="text"
-                        value={rehearsalTime}
-                        onChange={(e) => setRehearsalTime(e.target.value)}
-                        placeholder="z.B. 19:30 - 21:00 Uhr"
-                      />
-                    </div>
-                  </div>
-                </div>
 
                 <div className="relative" data-dropdown>
                   <Label>Probenort</Label>

@@ -354,7 +354,7 @@ export default function DashboardPostsList({}: DashboardPostsListProps) {
             )}
             <div className="min-w-0">
               <Link
-                href={`/dashboard/posts/${row.original.id}/edit`}
+                href={`/dashboard/posts/${row.original.id}`}
                 className="hover:text-primary-ink dark:hover:text-primary text-ink dark:text-night-text font-medium"
               >
                 {row.original.title}
