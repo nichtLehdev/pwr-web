@@ -371,7 +371,7 @@ export default function DashboardEventsList({}: DashboardEventsListProps) {
         cell: ({ row }) => (
           <div className="min-w-0">
             <Link
-              href={`/dashboard/events/${row.original.id}/edit`}
+              href={`/dashboard/events/${row.original.id}`}
               className="hover:text-primary-ink dark:hover:text-primary text-ink dark:text-night-text font-medium"
             >
               {row.original.title}

@@ -129,16 +129,16 @@ export default function DatenschutzPage() {
                 Posaunenwerk der Evangelischen Kirche im Rheinland e.V.
               </strong>
               <br />
-              Rudolf-Harbig-Str. 20
+              Buchenbitze 7a
               <br />
-              56179 Vallendar
+              53773 Hennef
               <br />
               Deutschland
             </p>
             <p>
               <strong className="font-semibold">Telefon:</strong>{" "}
-              <a href="tel:02613000011" className="link-ink">
-                0261 300 00 11
+              <a href="tel:022429627430" className="link-ink">
+                02242 9627430
               </a>
               <br />
               <strong className="font-semibold">E-Mail:</strong>{" "}
@@ -1087,9 +1087,9 @@ export default function DatenschutzPage() {
                 Posaunenwerk der Evangelischen Kirche im Rheinland e.V.
               </strong>
               <br />
-              Rudolf-Harbig-Str. 20
+              Buchenbitze 7a
               <br />
-              56179 Vallendar
+              53773 Hennef
             </p>
             <p>
               <strong className="font-semibold">E-Mail:</strong>{" "}
@@ -1101,8 +1101,8 @@ export default function DatenschutzPage() {
               </a>
               <br />
               <strong className="font-semibold">Telefon:</strong>{" "}
-              <a href="tel:02613000011" className="link-ink">
-                0261 300 00 11
+              <a href="tel:022429627430" className="link-ink">
+                02242 9627430
               </a>
             </p>
           </div>
@@ -1114,7 +1114,7 @@ export default function DatenschutzPage() {
 
       <PageSection spacing="close" rule>
         <p className="text-dark dark:text-night-muted text-sm">
-          Stand dieser Datenschutzerklärung: Februar 2026
+          Stand dieser Datenschutzerklärung: Oktober 2026
         </p>
       </PageSection>
     </PublicPage>

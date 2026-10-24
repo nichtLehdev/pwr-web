@@ -65,8 +65,8 @@ export interface InvoiceOrganization {
 
 export const DEFAULT_INVOICE_ORGANIZATION: InvoiceOrganization = {
   name: "Posaunenwerk der Evangelischen Kirche im Rheinland e.V.",
-  address: "Rudolf-Harbig-Str. 20, 56179 Vallendar",
-  contact: "Tel: 0261.300 00 11 | info@posaunenwerk-rheinland.de",
+  address: "Buchenbitze 7a, 53773 Hennef",
+  contact: "Tel: 02242 9627430 | info@posaunenwerk-rheinland.de",
   bankName: "Bank für Kirche und Diakonie eG Duisburg",
   iban: "DE57 3506 0190 1011 4590 10",
   bic: "GENODED1DKD",

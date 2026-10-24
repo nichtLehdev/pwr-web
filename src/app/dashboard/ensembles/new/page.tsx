@@ -91,8 +91,6 @@ export default function NewEnsemblePage() {
   const [bezirkId, setBezirkId] = useState("");
   const [imageId, setImageId] = useState("");
   const [imageUrl, setImageUrl] = useState("");
-  const [rehearsalDay, setRehearsalDay] = useState("");
-  const [rehearsalTime, setRehearsalTime] = useState("");
   const [rehearsalSchedules, setRehearsalSchedules] = useState<
     Array<{ selectedDays: string[]; time: string }>
   >([]);
@@ -826,49 +824,22 @@ export default function NewEnsemblePage() {
                       </div>
 
                       <div>
-                        <Label>Probenzeit</Label>
+                        <Label>Beginn</Label>
                         <Input
-                          type="text"
+                          type="time"
                           value={schedule.time}
                           onChange={(e) => {
                             const updated = [...rehearsalSchedules];
                             updated[index]!.time = e.target.value;
                             setRehearsalSchedules(updated);
                           }}
-                          placeholder="z.B. 8:00-12:00 oder 19:30-21:00"
+                          className="w-auto"
                         />
                       </div>
                     </div>
                   ))}
                 </div>
               )}
-
-              {/* Legacy fields (for backward compatibility) */}
-              <div className="border-rule dark:border-night-rule border-t pt-4">
-                <p className="text-ink dark:text-night-text mb-2 text-sm font-medium">
-                  Legacy (veraltet - nur für Migration)
-                </p>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <Label>Probentag (alt)</Label>
-                    <Input
-                      type="text"
-                      value={rehearsalDay}
-                      onChange={(e) => setRehearsalDay(e.target.value)}
-                      placeholder="z.B. Mittwoch"
-                    />
-                  </div>
-                  <div>
-                    <Label>Probenzeit (alt)</Label>
-                    <Input
-                      type="text"
-                      value={rehearsalTime}
-                      onChange={(e) => setRehearsalTime(e.target.value)}
-                      placeholder="z.B. 19:30 - 21:00 Uhr"
-                    />
-                  </div>
-                </div>
-              </div>
 
               <div className="relative" data-dropdown>
                 <Label>Probenort</Label>

@@ -15,7 +15,7 @@ import ZoomableImage from "@/app/_components/general/zoomable-image";
 export const metadata = buildPageMetadata({
   title: "Kontakt",
   description:
-    "Kontakt zum Posaunenwerk der Evangelischen Kirche im Rheinland — Geschäftsstelle in Vallendar, Ansprechpartner und Kontaktformular.",
+    "Kontakt zum Posaunenwerk der Evangelischen Kirche im Rheinland — Geschäftsstelle in Hennef, Ansprechpartner und Kontaktformular.",
   path: "/kontakt",
 });
 
@@ -172,13 +172,13 @@ export default async function KontaktPage() {
                   <p>
                     Posaunenwerk der Evangelischen Kirche im Rheinland e.V.
                     <br />
-                    Rudolf-Harbig-Str. 20
+                    Buchenbitze 7a
                     <br />
-                    56179 Vallendar
+                    53773 Hennef
                   </p>
                   <p>
-                    <a href="tel:02613000011" className="link-ink">
-                      0261 300 00 11
+                    <a href="tel:022429627430" className="link-ink">
+                      02242 9627430
                     </a>
                     <br />
                     <a

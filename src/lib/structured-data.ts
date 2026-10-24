@@ -11,10 +11,10 @@ export const ORGANIZATION_ID = "#organization";
 const ORGANIZATION = {
   legalName: "Posaunenwerk der Evangelischen Kirche im Rheinland e.V.",
   email: "info@posaunenwerk-rheinland.de",
-  telephone: "+49 261 3000011",
-  street: "Rudolf-Harbig-Str. 20",
-  postalCode: "56179",
-  city: "Vallendar",
+  telephone: "+49 2242 9627430",
+  street: "Buchenbitze 7a",
+  postalCode: "53773",
+  city: "Hennef",
   sameAs: [
     "https://facebook.com/posaunenwerkrheinland",
     "https://www.instagram.com/posaunenwerk_rheinland/",

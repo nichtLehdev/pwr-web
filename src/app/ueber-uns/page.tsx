@@ -214,9 +214,9 @@ export default function UeberUnsPage() {
                   <dd className="text-ink dark:text-night-text mt-1 text-lg leading-relaxed">
                     Posaunenwerk der Evangelischen Kirche im Rheinland e.V.
                     <br />
-                    Rudolf-Harbig-Str. 20
+                    Buchenbitze 7a
                     <br />
-                    56179 Vallendar
+                    53773 Hennef
                   </dd>
                 </div>
                 <div>
@@ -224,8 +224,8 @@ export default function UeberUnsPage() {
                     Telefon
                   </dt>
                   <dd className="mt-1">
-                    <a href="tel:02613000011" className="link-ink text-lg">
-                      0261 300 00 11
+                    <a href="tel:022429627430" className="link-ink text-lg">
+                      02242 9627430
                     </a>
                   </dd>
                 </div>
