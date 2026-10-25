@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { usePersistedState } from "@/lib/use-persisted-state";
+import { useMemo } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { api, type RouterOutputs } from "@/trpc/react";
@@ -102,32 +103,44 @@ export default function AdminRegistrationsPage() {
 
   // Vorbelegt über ?discount=PENDING (Freigabe-Kachel des Dashboards).
   const searchParams = useSearchParams();
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(() => {
-    const requested = searchParams.get("discount");
-    // NONE steht im Filter nicht zur Wahl und wird daher nicht aus der URL übernommen.
-    const initial =
-      requested &&
-      requested !== SiblingDiscountStatus.NONE &&
-      Object.values(SiblingDiscountStatus).includes(
-        requested as SiblingDiscountStatus,
-      )
-        ? requested
-        : discountOnly
-          ? SiblingDiscountStatus.PENDING
-          : null;
-    return initial ? [{ id: "discount", value: [initial] }] : [];
-  });
+  // Ein Link mit ?discount= gibt den Filter vor und überschreibt den gespeicherten.
+  const requested = searchParams.get("discount");
+  const [columnFilters, setColumnFilters] =
+    usePersistedState<ColumnFiltersState>(
+      requested ? null : "dashboard:registrations:columnFilters",
+      () => {
+        // NONE steht im Filter nicht zur Wahl und wird daher nicht aus der URL übernommen.
+        const initial =
+          requested &&
+          requested !== SiblingDiscountStatus.NONE &&
+          Object.values(SiblingDiscountStatus).includes(
+            requested as SiblingDiscountStatus,
+          )
+            ? requested
+            : discountOnly
+              ? SiblingDiscountStatus.PENDING
+              : null;
+        return initial ? [{ id: "discount", value: [initial] }] : [];
+      },
+    );
 
   // Serverseitig geblättert: Sortierung, Filter und Suche sind Abfrageparameter,
   // sonst beträfen sie nur die geladene Seite.
-  const [sorting, setSorting] = useState<SortingState>([
-    { id: "createdAt", desc: true },
-  ]);
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 25,
-  });
-  const [search, setSearch] = useState("");
+  const [sorting, setSorting] = usePersistedState<SortingState>(
+    "dashboard:registrations:sorting",
+    [{ id: "createdAt", desc: true }],
+  );
+  const [pagination, setPagination] = usePersistedState<PaginationState>(
+    "dashboard:registrations:pagination",
+    {
+      pageIndex: 0,
+      pageSize: 25,
+    },
+  );
+  const [search, setSearch] = usePersistedState(
+    "dashboard:registrations:search",
+    "",
+  );
 
   const courseFilter = setFilterValues(columnFilters, "course");
   const statusFilter = setFilterValues(columnFilters, "status");

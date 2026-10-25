@@ -1,5 +1,6 @@
 "use client";
 
+import { usePersistedState } from "@/lib/use-persisted-state";
 import { useSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -95,18 +96,34 @@ export default function DashboardMediaPage() {
 
   const [view, setView] = useDashboardListView("dashboard:media:view", "cards");
 
-  const [search, setSearch] = useState("");
-  const [mimeTypeFilter, setMimeTypeFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState<ContentStatus | "">("");
-  const [quickFilter, setQuickFilter] = useState<QuickFilter>("all");
-  const [folderFilter, setFolderFilter] = useState("");
-  const [sorting, setSorting] = useState<SortingState>([
-    { id: "createdAt", desc: true },
-  ]);
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 24,
-  });
+  const [search, setSearch] = usePersistedState("dashboard:media:search", "");
+  const [mimeTypeFilter, setMimeTypeFilter] = usePersistedState(
+    "dashboard:media:mimeTypeFilter",
+    "",
+  );
+  const [statusFilter, setStatusFilter] = usePersistedState<ContentStatus | "">(
+    "dashboard:media:statusFilter",
+    "",
+  );
+  const [quickFilter, setQuickFilter] = usePersistedState<QuickFilter>(
+    "dashboard:media:quickFilter",
+    "all",
+  );
+  const [folderFilter, setFolderFilter] = usePersistedState(
+    "dashboard:media:folderFilter",
+    "",
+  );
+  const [sorting, setSorting] = usePersistedState<SortingState>(
+    "dashboard:media:sorting",
+    [{ id: "createdAt", desc: true }],
+  );
+  const [pagination, setPagination] = usePersistedState<PaginationState>(
+    "dashboard:media:pagination",
+    {
+      pageIndex: 0,
+      pageSize: 24,
+    },
+  );
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 

@@ -1,8 +1,9 @@
 "use client";
 
+import { usePersistedState } from "@/lib/use-persisted-state";
 import { useSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { api, type RouterOutputs } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
 import { PERMISSIONS } from "@/lib/permissions";
@@ -73,15 +74,26 @@ export default function DashboardNewsletterSubscribersPage() {
   const hasRedirected = useRef(false);
   // Serverseitig geblättert: Sortierung, Filter und Suche sind Abfrageparameter,
   // sonst beträfen sie nur die geladene Seite.
-  const [sorting, setSorting] = useState<SortingState>([
-    { id: "subscribedAt", desc: true },
-  ]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 50,
-  });
-  const [search, setSearch] = useState("");
+  const [sorting, setSorting] = usePersistedState<SortingState>(
+    "dashboard:newsletter-subscribers:sorting",
+    [{ id: "subscribedAt", desc: true }],
+  );
+  const [columnFilters, setColumnFilters] =
+    usePersistedState<ColumnFiltersState>(
+      "dashboard:newsletter-subscribers:columnFilters",
+      [],
+    );
+  const [pagination, setPagination] = usePersistedState<PaginationState>(
+    "dashboard:newsletter-subscribers:pagination",
+    {
+      pageIndex: 0,
+      pageSize: 50,
+    },
+  );
+  const [search, setSearch] = usePersistedState(
+    "dashboard:newsletter-subscribers:search",
+    "",
+  );
 
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, {

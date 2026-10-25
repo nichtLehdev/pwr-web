@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { usePersistedState } from "@/lib/use-persisted-state";
+import { useMemo } from "react";
 import Link from "next/link";
 import { useSession } from "@/lib/auth";
 import { api, type RouterOutputs } from "@/trpc/react";
@@ -80,15 +81,26 @@ export default function InvoiceArchivePage() {
 
   // Paged on the server: sorting, filters and search are query input, otherwise
   // they would only ever see the 25 rows already fetched.
-  const [sorting, setSorting] = useState<SortingState>([
-    { id: "invoiceDate", desc: true },
-  ]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 25,
-  });
-  const [search, setSearch] = useState("");
+  const [sorting, setSorting] = usePersistedState<SortingState>(
+    "dashboard:invoices:sorting",
+    [{ id: "invoiceDate", desc: true }],
+  );
+  const [columnFilters, setColumnFilters] =
+    usePersistedState<ColumnFiltersState>(
+      "dashboard:invoices:columnFilters",
+      [],
+    );
+  const [pagination, setPagination] = usePersistedState<PaginationState>(
+    "dashboard:invoices:pagination",
+    {
+      pageIndex: 0,
+      pageSize: 25,
+    },
+  );
+  const [search, setSearch] = usePersistedState(
+    "dashboard:invoices:search",
+    "",
+  );
 
   const sortBy = (sorting[0]?.id ?? "invoiceDate") as SortableColumn;
   const courseFilter = setFilter(columnFilters, "course");

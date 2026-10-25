@@ -1,5 +1,6 @@
 "use client";
 
+import { usePersistedState } from "@/lib/use-persisted-state";
 import { useCallback, useMemo, useState } from "react";
 import { api, type RouterOutputs } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
@@ -137,14 +138,17 @@ export default function DashboardPostsList({}: DashboardPostsListProps) {
 
   const hasApprovePermission = hasPermission("posts.approve" as PermissionKey);
   const toast = useToast();
-  const [statusFilter, setStatusFilter] = useState<ContentStatus | "all">(
-    "all",
-  );
-  const [categoryFilter, setCategoryFilter] = useState<PostCategory | "all">(
-    "all",
-  );
+  const [statusFilter, setStatusFilter] = usePersistedState<
+    ContentStatus | "all"
+  >("dashboard:posts:statusFilter", "all");
+  const [categoryFilter, setCategoryFilter] = usePersistedState<
+    PostCategory | "all"
+  >("dashboard:posts:categoryFilter", "all");
   // Leere Sortierung = dritter Klick auf einen Spaltenkopf = Standardordnung.
-  const [sorting, setSorting] = useState<SortingState>([DEFAULT_SORTING]);
+  const [sorting, setSorting] = usePersistedState<SortingState>(
+    "dashboard:posts:sorting",
+    [DEFAULT_SORTING],
+  );
   const activeSort = sorting[0] ?? DEFAULT_SORTING;
   const sortBy = activeSort.id as TableSortColumn;
   const sortOrder = activeSort.desc ? "desc" : "asc";
@@ -152,14 +156,20 @@ export default function DashboardPostsList({}: DashboardPostsListProps) {
   const setSortBy = (next: TableSortColumn) =>
     setSorting([{ id: next, desc: activeSort.desc }]);
   /** Bezirks-Set-Filter; leer heißt "alle Bezirke". */
-  const [bezirkFilter, setBezirkFilter] = useState<string[]>([]);
-  const [page, setPage] = useState(1);
+  const [bezirkFilter, setBezirkFilter] = usePersistedState<string[]>(
+    "dashboard:posts:bezirkFilter",
+    [],
+  );
+  const [page, setPage] = usePersistedState("dashboard:posts:page", 1);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [view, setView] = useDashboardListView("dashboard-posts-view");
   // Nur die Tabellenansicht sucht: in der Kartenansicht gäbe es kein Feld dazu,
   // und ein Filter ohne sichtbaren Schalter ist ein Filter, den niemand findet.
-  const [search, setSearch] = useState("");
-  const [tablePageSize, setTablePageSize] = useState(25);
+  const [search, setSearch] = usePersistedState("dashboard:posts:search", "");
+  const [tablePageSize, setTablePageSize] = usePersistedState(
+    "dashboard:posts:tablePageSize",
+    25,
+  );
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);

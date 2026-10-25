@@ -375,6 +375,7 @@ export default function StatsPage() {
               <DataTable
                 data={showAllPaths ? stats.byPath : stats.byPath.slice(0, 5)}
                 columns={pathColumns}
+                persistKey="stats-paths"
                 getRowId={(row) => row.path}
                 searchable={false}
                 paginated={false}
@@ -413,6 +414,7 @@ export default function StatsPage() {
               <DataTable
                 data={stats.bySection}
                 columns={sectionColumns}
+                persistKey="stats-sections"
                 getRowId={(row) => row.section ?? ""}
                 searchable={false}
                 paginated={false}
