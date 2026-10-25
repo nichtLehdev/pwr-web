@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { usePersistedState } from "@/lib/use-persisted-state";
+import { useMemo } from "react";
 import { api, type RouterOutputs } from "@/trpc/react";
 import { DashboardPage } from "@/app/_components/dashboard";
 import {
@@ -48,15 +49,20 @@ export default function AuditLogPage() {
 
   // Serverseitig geblättert (das Log wächst unbegrenzt), daher sind Sortierung,
   // Filter und Suche Abfrageparameter statt nur auf die geladene Seite zu wirken.
-  const [sorting, setSorting] = useState<SortingState>([
-    { id: "createdAt", desc: true },
-  ]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 50,
-  });
-  const [search, setSearch] = useState("");
+  const [sorting, setSorting] = usePersistedState<SortingState>(
+    "dashboard:audit:sorting",
+    [{ id: "createdAt", desc: true }],
+  );
+  const [columnFilters, setColumnFilters] =
+    usePersistedState<ColumnFiltersState>("dashboard:audit:columnFilters", []);
+  const [pagination, setPagination] = usePersistedState<PaginationState>(
+    "dashboard:audit:pagination",
+    {
+      pageIndex: 0,
+      pageSize: 50,
+    },
+  );
+  const [search, setSearch] = usePersistedState("dashboard:audit:search", "");
 
   const sortBy = (sorting[0]?.id ?? "createdAt") as SortableColumn;
   const actionFilter = setFilter(columnFilters, "action");

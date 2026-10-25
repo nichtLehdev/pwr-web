@@ -1,5 +1,6 @@
 "use client";
 
+import { usePersistedState } from "@/lib/use-persisted-state";
 import { useMemo, useState } from "react";
 import { api, type RouterOutputs } from "@/trpc/react";
 import Link from "next/link";
@@ -86,14 +87,18 @@ export default function DashboardUsersList() {
   const { data: session } = useSession();
   // Serverseitig geblättert, daher Sortierung und Suche als Abfrageparameter —
   // sonst beträfen sie nur die geladene Seite.
-  const [sorting, setSorting] = useState<SortingState>([
-    { id: "createdAt", desc: true },
-  ]);
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 20,
-  });
-  const [search, setSearch] = useState("");
+  const [sorting, setSorting] = usePersistedState<SortingState>(
+    "dashboard:users:sorting",
+    [{ id: "createdAt", desc: true }],
+  );
+  const [pagination, setPagination] = usePersistedState<PaginationState>(
+    "dashboard:users:pagination",
+    {
+      pageIndex: 0,
+      pageSize: 20,
+    },
+  );
+  const [search, setSearch] = usePersistedState("dashboard:users:search", "");
   const [showDeleteModal, setShowDeleteModal] = useState<string | null>(null);
 
   const utils = api.useUtils();

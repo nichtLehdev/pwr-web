@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
+import { usePathname } from "next/navigation";
 import {
   columnFacetingFeature,
   columnFilteringFeature,
@@ -53,6 +54,7 @@ import {
   SearchIcon,
   XIcon,
 } from "lucide-react";
+import { usePersistedState } from "@/lib/use-persisted-state";
 
 /**
  * Filter behind a column's funnel. `set` lists only values still present after
@@ -558,6 +560,13 @@ export interface DataTableProps<TData extends RowData> {
    */
   renderMobileRow?: (row: TData) => ReactNode;
   className?: string;
+  /**
+   * Storage key for sorting, filters, search and page (per tab, so a detour to a
+   * detail page keeps them) and column visibility (per browser). Defaults to the
+   * pathname; pages with several tables need distinct keys. `false` disables it.
+   * Server-mode callers persist their controlled state themselves.
+   */
+  persistKey?: string | false;
 
   /*
    * Server-side mode: paged rows can't be sorted or filtered in the browser.
@@ -600,6 +609,7 @@ export function DataTable<TData extends RowData>({
   hideFooter = false,
   renderMobileRow,
   className,
+  persistKey,
   sorting: sortingProp,
   onSortingChange,
   manualSorting,
@@ -616,19 +626,67 @@ export function DataTable<TData extends RowData>({
   const rows = data ?? EMPTY_ROWS;
   const serverSearch = search !== undefined;
 
+  const pathname = usePathname();
+  const storageKey =
+    persistKey === false ? null : `data-table:${persistKey ?? pathname}`;
+  const slotKey = (slot: string) =>
+    storageKey ? `${storageKey}:${slot}` : null;
+
+  // Client-side state lives here rather than in the table's own atoms so it can
+  // be persisted; controlled props from server-mode callers take precedence.
+  const [ownSorting, setOwnSorting] = usePersistedState<SortingState>(
+    slotKey("sorting"),
+    initialSorting ?? [],
+  );
+  const [ownColumnFilters, setOwnColumnFilters] =
+    usePersistedState<ColumnFiltersState>(slotKey("filters"), []);
+  const [ownPagination, setOwnPagination] = usePersistedState<PaginationState>(
+    slotKey("pagination"),
+    { pageIndex: 0, pageSize },
+  );
+  const [globalFilter, setGlobalFilter] = usePersistedState(
+    slotKey("search"),
+    "",
+  );
+  const [storedColumnVisibility, setColumnVisibility] =
+    usePersistedState<ColumnVisibilityState>(slotKey("columns"), {}, "local");
+  // Defaults underneath, so a column added later still starts hidden.
+  const columnVisibility = useMemo(
+    () => ({ ...initialColumnVisibility, ...storedColumnVisibility }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [storedColumnVisibility],
+  );
+
+  const resetOwnPageIndex = useCallback(
+    () =>
+      setOwnPagination((current) =>
+        current.pageIndex === 0 ? current : { ...current, pageIndex: 0 },
+      ),
+    [setOwnPagination],
+  );
+
   // Debounced search: filtering on every keystroke is slow, and in server mode
   // each keystroke would be a request.
-  const [searchInput, setSearchInput] = useState(search ?? "");
-  const [globalFilter, setGlobalFilter] = useState(search ?? "");
+  const [searchInput, setSearchInput] = useState(search ?? globalFilter);
+  const latestSearch = useRef(search);
+  useEffect(() => {
+    latestSearch.current = search;
+  }, [search]);
   useEffect(() => {
     const timer = setTimeout(() => {
-      setGlobalFilter(searchInput);
-      if (serverSearch) onSearchChange?.(searchInput);
+      // Only real edits count: re-announcing a restored term would send the
+      // caller back to page one.
+      if (serverSearch) {
+        if (searchInput !== latestSearch.current) onSearchChange?.(searchInput);
+      } else if (searchInput !== globalFilter) {
+        setGlobalFilter(searchInput);
+        resetOwnPageIndex();
+      }
     }, 250);
     return () => clearTimeout(timer);
     // `onSearchChange` is a fresh closure on every render of most callers.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchInput, serverSearch]);
+  }, [searchInput, serverSearch, globalFilter]);
 
   const initialState = useMemo(
     () => ({
@@ -638,8 +696,7 @@ export function DataTable<TData extends RowData>({
         : {}),
       pagination: { pageIndex: 0, pageSize },
     }),
-    // Seeds the starting state only; re-running it on a data change would
-    // throw the reader back to page one mid-scroll.
+    // Seeds the reset targets only; the live state comes from `state` below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
@@ -654,6 +711,9 @@ export function DataTable<TData extends RowData>({
     // Dritter Klick hebt die Sortierung auf. Serverseitige `onSortingChange`
     // müssen die leere Sortierung annehmen, sonst hängt die Spalte fest.
     enableSortingRemoval: true,
+    // The page index is reset by hand on real filter changes: the automatic
+    // reset also fires when data arrives, which would discard a restored page.
+    autoResetPageIndex: false,
     manualSorting,
     manualFiltering,
     manualPagination,
@@ -662,15 +722,46 @@ export function DataTable<TData extends RowData>({
       // In server mode the table must not also filter the fetched page, or the
       // search term would be applied twice and hide matches the server found.
       globalFilter: serverSearch ? "" : globalFilter,
-      ...(sortingProp ? { sorting: sortingProp } : {}),
-      ...(columnFiltersProp ? { columnFilters: columnFiltersProp } : {}),
-      ...(paginationProp ? { pagination: paginationProp } : {}),
+      sorting: sortingProp ?? ownSorting,
+      columnFilters: columnFiltersProp ?? ownColumnFilters,
+      pagination: paginationProp ?? ownPagination,
+      columnVisibility,
     },
     onGlobalFilterChange: setGlobalFilter,
-    ...(onSortingChange ? { onSortingChange } : {}),
-    ...(onColumnFiltersChange ? { onColumnFiltersChange } : {}),
-    ...(onPaginationChange ? { onPaginationChange } : {}),
+    onSortingChange:
+      onSortingChange ??
+      ((updater) => {
+        setOwnSorting(updater);
+        resetOwnPageIndex();
+      }),
+    onColumnFiltersChange:
+      onColumnFiltersChange ??
+      ((updater) => {
+        setOwnColumnFilters(updater);
+        resetOwnPageIndex();
+      }),
+    onPaginationChange: onPaginationChange ?? setOwnPagination,
+    onColumnVisibilityChange: setColumnVisibility,
   });
+
+  // A restored page can lie past the end once rows were deleted elsewhere.
+  const pageCount = table.getPageCount();
+  useEffect(() => {
+    if (paginationProp || isLoading || data === undefined) return;
+    if (ownPagination.pageIndex > 0 && ownPagination.pageIndex >= pageCount) {
+      setOwnPagination((current) => ({
+        ...current,
+        pageIndex: Math.max(0, pageCount - 1),
+      }));
+    }
+  }, [
+    paginationProp,
+    isLoading,
+    data,
+    ownPagination.pageIndex,
+    pageCount,
+    setOwnPagination,
+  ]);
 
   const filteredCount = manualPagination
     ? (rowCount ?? rows.length)
@@ -687,8 +778,11 @@ export function DataTable<TData extends RowData>({
   const resetAll = useCallback(() => {
     table.resetColumnFilters();
     setSearchInput("");
-    setGlobalFilter("");
     if (serverSearch) onSearchChange?.("");
+    else {
+      setGlobalFilter("");
+      resetOwnPageIndex();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [table, serverSearch]);
 
@@ -929,7 +1023,7 @@ export function DataTable<TData extends RowData>({
                 Zurück
               </button>
               <span className="whitespace-nowrap">
-                Seite {pageIndex + 1} von {Math.max(1, table.getPageCount())}
+                Seite {pageIndex + 1} von {Math.max(1, pageCount)}
               </span>
               <button
                 type="button"

@@ -153,6 +153,20 @@ export default function DashboardEnsemblesPage() {
             );
           },
         }),
+        column.accessor((ensemble) => ensemble.internalId ?? "", {
+          id: "internalId",
+          header: "Interne ID",
+          cell: ({ getValue }) =>
+            getValue() ? (
+              <span className="font-mono text-sm whitespace-nowrap">
+                {getValue()}
+              </span>
+            ) : (
+              <span className="text-dark dark:text-night-muted text-sm italic">
+                –
+              </span>
+            ),
+        }),
         column.accessor((ensemble) => ensemble.bezirk?.shortName ?? "", {
           id: "bezirk",
           header: "Bezirk",
@@ -314,6 +328,7 @@ export default function DashboardEnsemblesPage() {
         rowNoun={["Ensemble", "Ensembles"]}
         searchPlaceholder="Ensemble, Ort oder Leitung suchen…"
         initialSorting={[{ id: "name", desc: false }]}
+        initialColumnVisibility={{ internalId: false }}
         emptyState={
           <>
             <MusicIcon className="text-dark dark:text-night-muted mx-auto h-12 w-12" />
