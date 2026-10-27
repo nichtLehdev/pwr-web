@@ -23,6 +23,7 @@ import {
   type ProgrammeEntry,
 } from "@/app/_components/programmheft/programme-data";
 import { ProgrammeList } from "@/app/_components/programmheft/programme";
+import { Note } from "@/app/_components/programmheft/note";
 import { isRegistrationOpen } from "@/app/_components/programmheft/programme-data";
 import { isNeuerTermin } from "@/lib/neue-termine";
 import { useStickyTop } from "@/lib/use-sticky-top";
@@ -299,6 +300,12 @@ export default function EventsClient({
       return itemDay >= now;
     });
   }, [allItems, now]);
+
+  /** Kommende neue Termine — der Hinweis über der Liste bietet sie als Filter an. */
+  const neueAnzahl = useMemo(
+    () => futureItems.filter((item) => isNeuerTermin(item, now)).length,
+    [futureItems, now],
+  );
 
   const filteredItems = useMemo(() => {
     return applyFilters(futureItems);
@@ -684,6 +691,24 @@ export default function EventsClient({
         </section>
 
         <section className="sheet py-8 md:py-12">
+          {neueAnzahl > 0 && !nurNeue && (
+            <Note tone="important" as="aside" className="mb-8 md:mb-10">
+              <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+                <p className="font-semibold">
+                  {neueAnzahl === 1
+                    ? "Ein neuer Termin ist hinzugekommen."
+                    : `${neueAnzahl} neue Termine sind hinzugekommen.`}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setNurNeue(true)}
+                  className="semi-condensed border-ink text-ink hover:bg-ink hover:text-primary inline-flex h-10 items-center border-2 px-4 text-base font-semibold transition-colors"
+                >
+                  Neue Termine ansehen
+                </button>
+              </div>
+            </Note>
+          )}
           {effectiveViewMode === "list" ? (
             <div className="space-y-10 md:space-y-14">
               {groupByMonth
