@@ -137,25 +137,28 @@ export default function Programm({
         </>
       )}
 
-      <div className="mt-auto lg:mt-4">
-        {hasNeueTermine ? (
-          <p className="text-dark dark:text-night-muted flex items-center gap-3 px-1 pb-3 text-[0.9375rem]">
-            <Tag tone="orange">Neu</Tag>
-            {/* `view=list`: im Kalender wären die neuen Termine über Monate verstreut. */}
-            <Link href="/termine?neu=1&view=list" className="link-ink">
-              Neue Termine ansehen
-            </Link>
-          </p>
-        ) : null}
-        <WayList>
-          <WayRow href="/termine" title="Alle Termine" size="compact" />
-          <WayRow
-            href="/mitmachen/chor-finden"
-            title="Chor finden"
-            size="compact"
-          />
-        </WayList>
-      </div>
+      <WayList className="mt-auto lg:mt-4">
+        {/* Die Terminseite bietet die neuen Termine dann oben als Filter an. */}
+        <WayRow
+          href="/termine"
+          title={
+            hasNeueTermine ? (
+              <span className="flex items-center gap-3">
+                Alle Termine
+                <Tag tone="orange">Neu</Tag>
+              </span>
+            ) : (
+              "Alle Termine"
+            )
+          }
+          size="compact"
+        />
+        <WayRow
+          href="/mitmachen/chor-finden"
+          title="Chor finden"
+          size="compact"
+        />
+      </WayList>
     </section>
   );
 }
