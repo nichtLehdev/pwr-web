@@ -220,6 +220,38 @@ export default async function FoerdervereinPage() {
                   title="Jetzt bestellen"
                 />
               </WayList>
+
+              <Heading as="h3" size="list" rule className="mt-14">
+                Spucktücher
+              </Heading>
+              <div className={`${PROSE} mt-5 space-y-4`}>
+                <p>
+                  Der Förderverein bietet allen Bläserinnen und Bläsern neue
+                  „Spucktücher“ an. Auch als Pflegetücher finden sie Verwendung.
+                  Auf jeden Fall geben die blauen Tücher in jedem Chor ein sehr
+                  schönes, einheitliches Erscheinungsbild ab.
+                </p>
+                <p>
+                  Natürlich können die Tücher auch bei verschiedenen
+                  Veranstaltungen des Posaunenwerks vor Ort einzeln erstanden
+                  werden.
+                </p>
+              </div>
+
+              <ValueTable
+                rows={[{ label: "Spucktuch je Exemplar", value: "5 €" }]}
+                className="mt-6 max-w-xs"
+              />
+              <p className="text-dark dark:text-night-muted mt-2 text-sm">
+                zzgl. 2 € Versandkostenpauschale
+              </p>
+
+              <WayList className="mt-8">
+                <WayRow
+                  href="mailto:foerderverein@posaunenwerk-rheinland.de?subject=Bestellung Spucktücher"
+                  title="Jetzt bestellen"
+                />
+              </WayList>
             </div>
           </div>
         </Split>

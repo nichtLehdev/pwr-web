@@ -9,6 +9,7 @@ import { formatDateRange } from "@/lib/format-date-range";
 import { formatAvailableSlots } from "@/lib/format-available-slots";
 import { isExternalCourse } from "@/lib/course-external";
 import { berlinFormatter } from "@/lib/berlin-time";
+import { isNeuerTermin } from "@/lib/neue-termine";
 
 export type ProgrammeEvent =
   RouterOutputs["events"]["getAll"]["events"][number];
@@ -42,6 +43,8 @@ export type ProgrammeEntry = {
   status: ProgrammeStatus | null;
   registration: ProgrammeRegistration | null;
   cancelled: boolean;
+  /** Bezirksübergreifend und frisch angelegt, siehe `isNeuerTermin`. */
+  neu: boolean;
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -155,7 +158,7 @@ export function ensembleFor(event: ProgrammeEvent): ProgrammeEnsemble | null {
   }
 }
 
-export function eventEntry(event: ProgrammeEvent): ProgrammeEntry {
+export function eventEntry(event: ProgrammeEvent, now: Date): ProgrammeEntry {
   const start = new Date(event.eventDate);
   return {
     key: `event-${event.id}`,
@@ -172,6 +175,7 @@ export function eventEntry(event: ProgrammeEvent): ProgrammeEntry {
     status: null,
     registration: null,
     cancelled: event.cancelled,
+    neu: isNeuerTermin(event, now),
   };
 }
 
@@ -199,6 +203,7 @@ export function courseEntry(
     status: open ? null : closedStatus(course, now),
     registration: open ? registrationFor(course, now) : null,
     cancelled: false,
+    neu: isNeuerTermin(course, now),
   };
 }
 

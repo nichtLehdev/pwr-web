@@ -3,6 +3,9 @@ import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { userHasPermission } from "../helpers/permissions";
 import { PERMISSIONS } from "@/lib/permissions";
+import { ContentStatus } from "~/generated/prisma/client";
+import { startOfBerlinDay } from "@/lib/berlin-time";
+import { neuSeit } from "@/lib/neue-termine";
 
 export const homepageRouter = createTRPCRouter({
   getCarouselItems: publicProcedure.query(async ({ ctx }) => {
@@ -20,6 +23,27 @@ export const homepageRouter = createTRPCRouter({
     });
 
     return items;
+  }),
+
+  /** Ob ein kommender bezirksübergreifender Termin oder Lehrgang neu ist — für das „Neu“ an „Alle Termine“. */
+  hasNeueTermine: publicProcedure.query(async ({ ctx }) => {
+    const now = new Date();
+    const where = {
+      status: ContentStatus.APPROVED,
+      bezirkId: null,
+      createdAt: { gte: neuSeit(now) },
+    };
+    const [event, course] = await Promise.all([
+      ctx.db.event.findFirst({
+        where: { ...where, eventDate: { gte: startOfBerlinDay(now) } },
+        select: { id: true },
+      }),
+      ctx.db.course.findFirst({
+        where: { ...where, endDate: { gte: startOfBerlinDay(now) } },
+        select: { id: true },
+      }),
+    ]);
+    return event !== null || course !== null;
   }),
 
   getAll: protectedProcedure.query(async ({ ctx }) => {

@@ -20,6 +20,7 @@ export default async function Home() {
 
   await Promise.all([
     api.homepage.getCarouselItems.prefetch(),
+    api.homepage.hasNeueTermine.prefetch(),
     api.events.getAll.prefetch({ page: 1, limit: 4, startDate }),
     api.posts.getAll.prefetch({ page: 1, limit: 3 }),
     api.courses.getAll.prefetch({ page: 1, limit: 100, upcoming: true }),

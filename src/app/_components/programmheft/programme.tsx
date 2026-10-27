@@ -129,6 +129,9 @@ export function ProgrammeRow({
             </Link>
           </Title>
           <p className="semi-condensed text-dark dark:text-night-muted mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-semibold">
+            {entry.neu && !entry.cancelled ? (
+              <Tag tone="orange">Neu</Tag>
+            ) : null}
             <span>{entry.kind}</span>
             <BezirkLabel bezirk={entry.bezirk} />
           </p>
