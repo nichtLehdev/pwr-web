@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Heading } from "@/app/_components/programmheft/section-head";
 import { ProgrammeList } from "@/app/_components/programmheft/programme";
 import { WayList, WayRow } from "@/app/_components/programmheft/way-list";
+import { Tag } from "@/app/_components/programmheft/tag";
 import {
   courseEntry,
   deadlineSortKey,
@@ -26,6 +27,8 @@ interface ProgrammProps {
   isLoading: boolean;
   /** Serverzeit — hält Fristtexte zwischen Server- und Client-Render gleich. */
   now: Date;
+  /** Kommt ein bezirksübergreifendes Angebot neu hinzu, trägt „Alle Termine“ ein „Neu“. */
+  hasNeueTermine: boolean;
 }
 
 /** Marke über einer Gruppe; als Überschrift, damit die Gruppen auch für Vorlesegeräte getrennt sind. */
@@ -56,6 +59,7 @@ export default function Programm({
   courses,
   isLoading,
   now,
+  hasNeueTermine,
 }: ProgrammProps) {
   const { offene, andere, weitereOffene } = useMemo(() => {
     const openCourses = courses
@@ -68,7 +72,7 @@ export default function Programm({
     const openIds = new Set(openCourses.map((course) => course.id));
 
     const rest = [
-      ...events.map(eventEntry),
+      ...events.map((event) => eventEntry(event, now)),
       ...courses
         .filter((course) => !openIds.has(course.id))
         .map((course) => courseEntry(course, now)),
@@ -133,14 +137,25 @@ export default function Programm({
         </>
       )}
 
-      <WayList className="mt-auto lg:mt-4">
-        <WayRow href="/termine" title="Alle Termine" size="compact" />
-        <WayRow
-          href="/mitmachen/chor-finden"
-          title="Chor finden"
-          size="compact"
-        />
-      </WayList>
+      <div className="mt-auto lg:mt-4">
+        {hasNeueTermine ? (
+          <p className="text-dark dark:text-night-muted flex items-center gap-3 px-1 pb-3 text-[0.9375rem]">
+            <Tag tone="orange">Neu</Tag>
+            {/* `view=list`: im Kalender wären die neuen Termine über Monate verstreut. */}
+            <Link href="/termine?neu=1&view=list" className="link-ink">
+              Neue Termine ansehen
+            </Link>
+          </p>
+        ) : null}
+        <WayList>
+          <WayRow href="/termine" title="Alle Termine" size="compact" />
+          <WayRow
+            href="/mitmachen/chor-finden"
+            title="Chor finden"
+            size="compact"
+          />
+        </WayList>
+      </div>
     </section>
   );
 }

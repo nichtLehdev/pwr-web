@@ -15,6 +15,8 @@ export default function HomepageClient({ startDate }: { startDate: Date }) {
   const { data: carouselItems, isLoading: isLoadingCarousel } =
     api.homepage.getCarouselItems.useQuery();
 
+  const { data: hasNeueTermine } = api.homepage.hasNeueTermine.useQuery();
+
   const { data: upcomingEvents, isLoading: isLoadingEvents } =
     api.events.getAll.useQuery({
       page: 1,
@@ -48,6 +50,7 @@ export default function HomepageClient({ startDate }: { startDate: Date }) {
           courses={upcomingCourses?.courses ?? []}
           isLoading={isLoadingEvents || isLoadingCourses}
           now={startDate}
+          hasNeueTermine={hasNeueTermine ?? false}
         />
       </div>
 

@@ -24,6 +24,7 @@ import {
 } from "@/app/_components/programmheft/programme-data";
 import { ProgrammeList } from "@/app/_components/programmheft/programme";
 import { isRegistrationOpen } from "@/app/_components/programmheft/programme-data";
+import { isNeuerTermin } from "@/lib/neue-termine";
 import { useStickyTop } from "@/lib/use-sticky-top";
 import { useTitelVorbei } from "@/lib/use-titel-vorbei";
 import CalendarView from "./calendar/calendar-view";
@@ -207,6 +208,8 @@ export default function EventsClient({
   const [nurOffeneAnmeldung, setNurOffeneAnmeldung] = useState(
     params.get("anmeldung") === "offen",
   );
+  /** `?neu=1` — das „Neu“ an „Alle Termine“ auf der Startseite führt hierher. */
+  const [nurNeue, setNurNeue] = useState(params.get("neu") === "1");
   /** `?chor=auswahlchor` für alle Auswahlchöre, `?chor=<slug>` für einen. */
   const [selectedChor, setSelectedChor] = useState<string>(
     params.get("chor") ?? "all",
@@ -249,6 +252,8 @@ export default function EventsClient({
           return false;
         }
 
+        if (nurNeue && !isNeuerTermin(item, now)) return false;
+
         if (selectedChor !== "all") {
           if (item.type !== "event") return false;
           if (item.performingEnsembleType !== "AUSWAHLCHOR") return false;
@@ -276,7 +281,14 @@ export default function EventsClient({
         return true;
       });
     },
-    [filterType, selectedDistrict, selectedChor, nurOffeneAnmeldung, now],
+    [
+      filterType,
+      selectedDistrict,
+      selectedChor,
+      nurOffeneAnmeldung,
+      nurNeue,
+      now,
+    ],
   );
 
   const futureItems = useMemo(() => {
@@ -365,7 +377,7 @@ export default function EventsClient({
   const toProgrammeEntry = useCallback(
     (item: CalendarItem): ProgrammeEntry => {
       if (item.type === "event") {
-        const entry = eventEntry(item);
+        const entry = eventEntry(item, now);
         if (!item.cancelled && item.openToParticipants) {
           entry.status = { text: "Mitspielen möglich!", tone: "muted" };
         }
@@ -406,13 +418,15 @@ export default function EventsClient({
     filterType !== "all" ||
     selectedDistrict !== "all" ||
     selectedChor !== "all" ||
-    nurOffeneAnmeldung;
+    nurOffeneAnmeldung ||
+    nurNeue;
 
   const resetFilters = () => {
     setFilterType("all");
     setSelectedDistrict("all");
     setSelectedChor("all");
     setNurOffeneAnmeldung(false);
+    setNurNeue(false);
   };
 
   // `min-h-12`: so hoch wie die Umschalter daneben samt 2px-Rahmen.
@@ -622,6 +636,18 @@ export default function EventsClient({
                     />
                     <span className="semi-condensed text-ink dark:text-night-text text-sm font-semibold">
                       Nur Angebote mit offener Anmeldung
+                    </span>
+                  </label>
+
+                  <label className="flex min-h-11 cursor-pointer items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={nurNeue}
+                      onChange={(e) => setNurNeue(e.target.checked)}
+                      className={CHECKBOX}
+                    />
+                    <span className="semi-condensed text-ink dark:text-night-text text-sm font-semibold">
+                      Nur neue
                     </span>
                   </label>
 

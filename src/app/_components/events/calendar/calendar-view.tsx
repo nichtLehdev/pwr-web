@@ -49,7 +49,7 @@ export default function CalendarView({ items }: CalendarViewProps) {
   /** Termin oder Kurs als Programmzeile; das Mitmachangebot steht mangels eigenem Platz als Statuszeile. */
   const toProgrammeEntry = (item: CalendarItem): ProgrammeEntry => {
     if (item.type === "event") {
-      const entry = eventEntry(item);
+      const entry = eventEntry(item, calendarNow);
       if (!item.cancelled && item.openToParticipants) {
         entry.status = { text: "Mitspielen möglich!", tone: "muted" };
       }
