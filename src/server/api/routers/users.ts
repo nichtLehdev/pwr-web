@@ -970,6 +970,7 @@ export const usersRouter = createTRPCRouter({
             city: p.city,
             instrument: p.instrument,
             customFields: p.customFields,
+            notes: p.notes,
           })),
           createdAt: reg.createdAt,
           updatedAt: reg.updatedAt,

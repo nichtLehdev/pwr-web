@@ -46,6 +46,18 @@ export type CourseCustomFieldRule = {
   helpText?: string | null;
 };
 
+/**
+ * Ältere Kurse führen „Anmerkungen“ als eigenes Zusatzfeld. Dort entfällt das
+ * eingebaute Anmerkungsfeld je Teilnehmer, sonst stünde es doppelt da.
+ */
+export function courseHasCustomNotesField(
+  customFields: readonly { fieldName: string }[] | null | undefined,
+): boolean {
+  return (customFields ?? []).some(
+    (field) => field.fieldName.trim().toLowerCase() === "anmerkungen",
+  );
+}
+
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 // Native <input type="time"> emits HH:MM (may include seconds in edge cases).
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/;

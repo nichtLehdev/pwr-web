@@ -36,12 +36,15 @@ export function prepareParticipantsForCourse<
     lastName: string;
     birthDate: Date;
     priceOptionId: string;
+    instrument?: string | undefined;
+    notes?: string | undefined;
     customFields?: Record<string, unknown> | undefined;
   },
 >(
   participantsInput: readonly T[],
   course: {
     startDate: Date | string;
+    instrumentRequired?: boolean;
     customFields?: readonly CourseCustomFieldRule[] | null;
     priceOptions: readonly PriceOption[];
   },
@@ -61,6 +64,13 @@ export function prepareParticipantsForCourse<
   const ageReferenceDate = priceOptionAgeReferenceDate(course);
 
   for (const participant of participantsInput) {
+    if (course.instrumentRequired && !participant.instrument?.trim()) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: `${participant.firstName} ${participant.lastName}: Bitte ein Instrument angeben.`,
+      });
+    }
+
     const resolved = resolveParticipantCustomFieldsForPersist(
       participant.customFields,
       course.customFields ?? [],
@@ -100,6 +110,7 @@ export function prepareParticipantsForCourse<
     total += priceOption.price;
     participants.push({
       ...participant,
+      notes: participant.notes?.trim() || undefined,
       customFields: resolved.customFields,
       priceOption: priceOption.label,
     });

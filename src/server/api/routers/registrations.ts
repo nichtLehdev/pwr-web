@@ -512,6 +512,7 @@ export const registrationsRouter = createTRPCRouter({
             instrument: z.string().max(100).optional(),
             priceOptionId: z.string().min(1),
             customFields: z.record(z.string(), z.any()).optional(),
+            notes: z.string().max(2000).optional(),
             siblingGroupId: z.string().optional(), // Groups siblings together for discount
           }),
         ),
@@ -836,6 +837,7 @@ export const registrationsRouter = createTRPCRouter({
               instrument: z.string().max(100).optional(),
               priceOptionId: z.string().min(1),
               customFields: z.record(z.string(), z.any()).optional(),
+              notes: z.string().max(2000).optional(),
               siblingGroupId: z.string().optional(),
             }),
           )
@@ -1225,6 +1227,7 @@ export const registrationsRouter = createTRPCRouter({
               maxParticipants: true,
               allowWaitingList: true,
               allowSiblingDiscount: true,
+              instrumentRequired: true,
               // Anzahlung: Kursnummer für den Verwendungszweck, Modus und
               // Beträge für die Bearbeitungsregeln, Hinweis zur Erstattung.
               courseNumber: true,
@@ -1728,6 +1731,7 @@ export const registrationsRouter = createTRPCRouter({
             instrument: z.string().max(100).optional(),
             priceOptionId: z.string().min(1),
             customFields: z.record(z.string(), z.any()).optional(),
+            notes: z.string().max(2000).optional(),
             siblingGroupId: z.string().optional(),
           }),
         ),
@@ -2056,6 +2060,7 @@ export const registrationsRouter = createTRPCRouter({
             priceOption: participantData.priceOption ?? null,
             customFields: (participantData.customFields ??
               {}) as Prisma.InputJsonValue,
+            notes: participantData.notes?.trim() || null,
             siblingGroupId: siblingGroupId ?? null,
           };
 

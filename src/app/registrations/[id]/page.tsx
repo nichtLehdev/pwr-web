@@ -542,6 +542,16 @@ export default function ViewRegistrationPage() {
                           )}
                         </InfoField>
                       )}
+                      {participant.notes && (
+                        <InfoField
+                          label="Anmerkungen"
+                          className="sm:col-span-2"
+                        >
+                          <span className="whitespace-pre-line">
+                            {participant.notes}
+                          </span>
+                        </InfoField>
+                      )}
                     </div>
                   </li>
                 );

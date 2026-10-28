@@ -6,7 +6,10 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "@/lib/auth";
 import { api, type RouterOutputs } from "@/trpc/react";
-import { formatCustomFieldValueForDisplay } from "@/lib/course-custom-fields";
+import {
+  courseHasCustomNotesField,
+  formatCustomFieldValueForDisplay,
+} from "@/lib/course-custom-fields";
 import { usePermissions } from "@/lib/use-permissions";
 import { PERMISSIONS, type PermissionKey } from "@/lib/permissions";
 import { useToast } from "@/app/_components/ui/toast";
@@ -689,6 +692,9 @@ export default function CourseParticipantsPage() {
     }
 
     const customFieldNames = course.customFields?.map((f) => f.fieldName) ?? [];
+    const includeParticipantNotes = !courseHasCustomNotesField(
+      course.customFields,
+    );
 
     const exportData = filteredRegistrations.flatMap((registration) =>
       registration.participants.map((participant) => {
@@ -718,6 +724,9 @@ export default function CourseParticipantsPage() {
           ),
           preis: participantPrice.toFixed(2),
           ...customFieldValues,
+          ...(includeParticipantNotes && {
+            anmerkungen_teilnehmer: participant.notes || "",
+          }),
           status: registrationStatusLabels[registration.registrationStatus],
           anmelder_vorname: registration.registrantFirstName,
           anmelder_nachname: registration.registrantLastName,

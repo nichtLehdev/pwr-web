@@ -24,6 +24,8 @@ export interface ParticipantFields {
   /** Legacy label, for registrations saved before ids were stored. */
   priceOption?: string | null;
   customFields?: unknown;
+  /** Freitext „Anmerkungen“ zu diesem Teilnehmer. */
+  notes?: string | null;
 }
 
 /** Extra decisions only the course team makes when it records a registration itself. */

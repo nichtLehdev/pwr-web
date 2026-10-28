@@ -92,6 +92,45 @@ describe("prepareParticipantsForCourse", () => {
     ).toThrow(/Stimme/);
   });
 
+  it("rejects a missing instrument when the course requires one", () => {
+    expect(() =>
+      prepareParticipantsForCourse(
+        [participant("po-adult", { instrument: "  " })],
+        course({ instrumentRequired: true }),
+      ),
+    ).toThrow(/Instrument/);
+  });
+
+  it("accepts a given instrument when the course requires one", () => {
+    const { participants } = prepareParticipantsForCourse(
+      [participant("po-adult", { instrument: "Posaune" })],
+      course({ instrumentRequired: true }),
+    );
+
+    expect(participants[0]!.instrument).toBe("Posaune");
+  });
+
+  it("leaves the instrument optional by default", () => {
+    expect(() =>
+      prepareParticipantsForCourse([participant("po-adult")], course()),
+    ).not.toThrow();
+  });
+
+  it("trims participant notes and drops blank ones", () => {
+    const { participants } = prepareParticipantsForCourse(
+      [
+        participant("po-adult", { notes: "  Vegetarisch  " }),
+        participant("po-adult", { notes: "   " }),
+      ],
+      course(),
+    );
+
+    expect(participants.map((p) => p.notes)).toEqual([
+      "Vegetarisch",
+      undefined,
+    ]);
+  });
+
   it("normalises custom field values against the course definition", () => {
     const { participants } = prepareParticipantsForCourse(
       [participant("po-adult", { customFields: { Stimme: "Trompete" } })],

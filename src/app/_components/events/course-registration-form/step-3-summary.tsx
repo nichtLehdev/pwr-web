@@ -269,6 +269,11 @@ export function Step3Summary({
                     {formatBerlin(participant.birthDate)}
                     {participant.instrument && ` • ${participant.instrument}`}
                   </span>
+                  {participant.notes?.trim() ? (
+                    <span className="text-dark dark:text-night-muted block text-sm whitespace-pre-line">
+                      Anmerkungen: {participant.notes.trim()}
+                    </span>
+                  ) : null}
                   <span className="text-dark dark:text-night-muted block text-sm">
                     {priceOption
                       ? priceOptionDisplayLabel(
