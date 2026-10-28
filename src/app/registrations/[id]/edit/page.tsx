@@ -5,7 +5,7 @@ import { ParticipantCard } from "@/app/_components/events/course-registration-fo
 import { ParticipantEditor } from "@/app/_components/events/course-registration-form/participant-editor";
 import { ParticipantSheet } from "@/app/_components/events/course-registration-form/participant-sheet";
 import {
-  isRequiredCustomFieldEmpty,
+  missingRequiredCustomFieldNames,
   normalizeParticipantCustomFieldsValues,
 } from "@/lib/course-custom-fields";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
@@ -585,13 +585,11 @@ export default function EditRegistrationPage() {
       !Array.isArray(participant.customFields)
         ? (participant.customFields as Record<string, unknown>)
         : {};
-    for (const field of registration?.course.customFields ?? []) {
-      if (
-        field.isRequired &&
-        isRequiredCustomFieldEmpty(field.fieldType, record[field.fieldName])
-      ) {
-        missing.push(`customField:${field.fieldName}`);
-      }
+    for (const fieldName of missingRequiredCustomFieldNames(
+      registration?.course.customFields ?? [],
+      record,
+    )) {
+      missing.push(`customField:${fieldName}`);
     }
     return missing;
   };
@@ -733,22 +731,14 @@ export default function EditRegistrationPage() {
         return;
       }
 
-      const missingCustomFields =
-        registration?.course.customFields
-          ?.filter((field) => {
-            if (!field.isRequired) return false;
-            const record =
-              p.customFields &&
-              typeof p.customFields === "object" &&
-              !Array.isArray(p.customFields)
-                ? (p.customFields as Record<string, unknown>)
-                : {};
-            return isRequiredCustomFieldEmpty(
-              field.fieldType,
-              record[field.fieldName],
-            );
-          })
-          .map((field) => field.fieldName) ?? [];
+      const missingCustomFields = missingRequiredCustomFieldNames(
+        registration?.course.customFields ?? [],
+        p.customFields &&
+          typeof p.customFields === "object" &&
+          !Array.isArray(p.customFields)
+          ? (p.customFields as Record<string, unknown>)
+          : {},
+      );
 
       if (missingCustomFields.length > 0) {
         setError(
