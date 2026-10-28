@@ -279,6 +279,10 @@ export default function CourseRegistrationForm({
           fieldErrors.push("Stadt");
           missingFieldKeys.push("city");
         }
+        if (course.instrumentRequired && !p.instrument?.trim()) {
+          fieldErrors.push("Instrument");
+          missingFieldKeys.push("instrument");
+        }
         if (!p.priceOptionId) {
           fieldErrors.push("Preisoption");
           missingFieldKeys.push("priceOptionId");
@@ -632,6 +636,7 @@ export default function CourseRegistrationForm({
         ...(p.instrument && { instrument: p.instrument }),
         priceOptionId: p.priceOptionId,
         ...(p.customFields && { customFields: p.customFields }),
+        ...(p.notes?.trim() && { notes: p.notes.trim() }),
         ...(p.siblingGroupId && { siblingGroupId: p.siblingGroupId }),
       })),
       siblingDiscountApplied: registrationData.siblingDiscountApplied,

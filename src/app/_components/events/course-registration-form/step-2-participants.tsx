@@ -218,6 +218,7 @@ export function Step2Participants({
           instrument: "",
           priceOptionId: firstPriceOption,
           customFields: {},
+          notes: "",
           siblingGroupId: undefined,
         },
       ],
@@ -257,6 +258,7 @@ export function Step2Participants({
             firstPriceOption,
           ),
           customFields: {},
+          notes: "",
           siblingGroupId: undefined,
         },
       ],
@@ -290,6 +292,7 @@ export function Step2Participants({
             firstPriceOption,
           ),
           customFields: (saved.customFields as Record<string, any>) || {},
+          notes: "",
           siblingGroupId: undefined,
         },
       ],
@@ -637,6 +640,7 @@ export function Step2Participants({
           <ParticipantEditor
             priceOptions={course.priceOptions}
             customFields={course.customFields ?? []}
+            instrumentRequired={course.instrumentRequired}
             priceOptionField={{
               isOptionDisabled: (optionId) =>
                 !staffMode &&

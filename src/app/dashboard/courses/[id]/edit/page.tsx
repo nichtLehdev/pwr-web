@@ -45,6 +45,7 @@ import {
   type DashboardSectionNavItem,
   NewLocationForm,
 } from "@/app/_components/dashboard";
+import { ParticipantFormPreview } from "@/app/_components/events/course-registration-form/participant-form-preview";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import RichTextEditor from "@/app/_components/editor/rich-text-editor-lazy";
 import { MAX_DESCRIPTION_LENGTH } from "@/lib/description";
@@ -148,6 +149,7 @@ export default function EditCoursePage() {
   const [externalRegistrationUrl, setExternalRegistrationUrl] = useState("");
   const [maxParticipants, setMaxParticipants] = useState("");
   const [allowWaitingList, setAllowWaitingList] = useState(false);
+  const [instrumentRequired, setInstrumentRequired] = useState(false);
   const [allowSiblingDiscount, setAllowSiblingDiscount] = useState(false);
   const [isFree, setIsFree] = useState(true);
   const [paymentCashAllowed, setPaymentCashAllowed] = useState(true);
@@ -199,6 +201,7 @@ export default function EditCoursePage() {
     maxParticipants: string;
     registrationOpen: boolean;
     allowWaitingList: boolean;
+    instrumentRequired: boolean;
     allowSiblingDiscount: boolean;
     isFree: boolean;
     paymentCashAllowed: boolean;
@@ -259,6 +262,7 @@ export default function EditCoursePage() {
       maxParticipants,
       registrationOpen,
       allowWaitingList,
+      instrumentRequired,
       allowSiblingDiscount,
       isFree,
       paymentCashAllowed,
@@ -301,6 +305,7 @@ export default function EditCoursePage() {
       maxParticipants,
       registrationOpen,
       allowWaitingList,
+      instrumentRequired,
       allowSiblingDiscount,
       isFree,
       paymentCashAllowed,
@@ -385,6 +390,7 @@ export default function EditCoursePage() {
       setMaxParticipants(saved.maxParticipants || "");
       setRegistrationOpen(saved.registrationOpen || false);
       setAllowWaitingList(saved.allowWaitingList || false);
+      setInstrumentRequired(saved.instrumentRequired || false);
       setAllowSiblingDiscount(saved.allowSiblingDiscount || false);
       setIsFree(saved.isFree ?? true);
       setPaymentCashAllowed(saved.paymentCashAllowed ?? true);
@@ -443,6 +449,7 @@ export default function EditCoursePage() {
         maxParticipants: course.maxParticipants?.toString() || "",
         registrationOpen: course.registrationOpen || false,
         allowWaitingList: course.allowWaitingList || false,
+        instrumentRequired: course.instrumentRequired || false,
         allowSiblingDiscount: course.allowSiblingDiscount || false,
         isFree: course.isFree ?? true,
         paymentCashAllowed: course.paymentCashAllowed ?? true,
@@ -642,6 +649,7 @@ export default function EditCoursePage() {
         setExternalRegistrationUrl(course.externalRegistrationUrl || "");
         setMaxParticipants(course.maxParticipants?.toString() || "");
         setAllowWaitingList(course.allowWaitingList);
+        setInstrumentRequired(course.instrumentRequired);
         setAllowSiblingDiscount(course.allowSiblingDiscount ?? false);
 
         setIsFree(course.isFree);
@@ -1146,6 +1154,7 @@ export default function EditCoursePage() {
         : null,
       maxParticipants: isExternalProvider ? null : parseInt(maxParticipants),
       allowWaitingList: isExternalProvider ? false : allowWaitingList,
+      instrumentRequired: isExternalProvider ? false : instrumentRequired,
       // Omitted without permission: a hardcoded false would switch the discount
       // off behind the user's back.
       ...(canManageSiblingDiscount
@@ -2048,6 +2057,24 @@ export default function EditCoursePage() {
                       </div>
                     )}
 
+                    <div className="mb-4 flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        id="instrumentRequired"
+                        checked={instrumentRequired}
+                        onChange={(e) =>
+                          setInstrumentRequired(e.target.checked)
+                        }
+                        className="text-primary border-rule dark:border-night-text h-4 w-4"
+                      />
+                      <label
+                        htmlFor="instrumentRequired"
+                        className="dark:text-night-text text-ink text-sm font-medium"
+                      >
+                        Instrument ist Pflichtfeld
+                      </label>
+                    </div>
+
                     <CourseCustomFieldsEditor
                       fields={customFields}
                       onChange={(next) => {
@@ -2056,6 +2083,14 @@ export default function EditCoursePage() {
                       }}
                       disabled={hasRegistrations}
                     />
+                    <div className="mt-4">
+                      <ParticipantFormPreview
+                        customFields={customFields}
+                        instrumentRequired={instrumentRequired}
+                        priceOptions={isFree ? [] : priceOptions}
+                        startDate={startDate}
+                      />
+                    </div>
                   </DashboardFormBlock>
                 ) : null}
               </div>

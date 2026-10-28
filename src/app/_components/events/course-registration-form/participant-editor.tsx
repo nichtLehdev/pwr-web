@@ -2,7 +2,10 @@
 
 import { useEffect, useId, useRef } from "react";
 import { Link as LinkIcon, Link2Off } from "lucide-react";
-import type { CourseCustomFieldRule } from "@/lib/course-custom-fields";
+import {
+  courseHasCustomNotesField,
+  type CourseCustomFieldRule,
+} from "@/lib/course-custom-fields";
 import type { ParticipantFields } from "./types";
 import { ParticipantCustomFields } from "./participant-custom-fields";
 import {
@@ -25,6 +28,8 @@ export interface SiblingCandidate {
 interface ParticipantEditorProps {
   priceOptions: PriceOptionChoice[];
   customFields: readonly CourseCustomFieldRule[];
+  /** Der Kurs verlangt für jeden Teilnehmer ein Instrument. */
+  instrumentRequired?: boolean;
   participant: ParticipantFields;
   onChange: (
     field: string,
@@ -72,6 +77,7 @@ function RequiredMark() {
 export function ParticipantEditor({
   priceOptions,
   customFields,
+  instrumentRequired = false,
   participant,
   onChange,
   missingFields,
@@ -103,6 +109,8 @@ export function ParticipantEditor({
       )
       ?.focus();
   }, [focusProblemSignal]);
+
+  const showNotes = !courseHasCustomNotesField(customFields);
 
   const flagged = (field: string) =>
     showProblems && missingFields.includes(field);
@@ -224,14 +232,21 @@ export function ParticipantEditor({
         <div>
           <label htmlFor={`${uid}-instrument`} className={LABEL_CLASS}>
             Instrument
+            {instrumentRequired ? <RequiredMark /> : null}
           </label>
           <input
-            id={`${uid}-instrument`}
+            {...fieldA11y(
+              "instrument",
+              flagged("instrument"),
+              instrumentRequired,
+            )}
             type="text"
             value={participant.instrument ?? ""}
             onChange={(e) => onChange("instrument", e.target.value)}
             maxLength={100}
-            className={fieldClass({})}
+            className={fieldClass({
+              error: flagged("instrument"),
+            })}
             placeholder="Instrument"
           />
         </div>
@@ -274,6 +289,22 @@ export function ParticipantEditor({
           inputClassName={FIELD_SIZE_CLASS}
           selectFieldSize={FIELD_SELECT_SIZE}
         />
+
+        {showNotes ? (
+          <div className="md:col-span-2">
+            <label htmlFor={`${uid}-notes`} className={LABEL_CLASS}>
+              Anmerkungen
+            </label>
+            <textarea
+              id={`${uid}-notes`}
+              value={participant.notes ?? ""}
+              onChange={(e) => onChange("notes", e.target.value)}
+              maxLength={2000}
+              rows={3}
+              className={fieldClass({ className: "resize-y" })}
+            />
+          </div>
+        ) : null}
       </div>
 
       {siblings && siblings.candidates.length > 0 ? (

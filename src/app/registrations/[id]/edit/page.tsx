@@ -67,6 +67,7 @@ interface Participant {
   instrument: string | null;
   priceOptionId: string | null;
   customFields: unknown;
+  notes: string | null;
   siblingGroupId?: string | null;
   isNew?: boolean;
   isDeleted?: boolean;
@@ -78,6 +79,7 @@ const PARTICIPANT_FIELD_LABELS: Record<string, string> = {
   lastName: "Nachname",
   birthDate: "Geburtsdatum",
   city: "Wohnort",
+  instrument: "Instrument",
   priceOptionId: "Preisoption",
 };
 
@@ -390,6 +392,7 @@ export default function EditRegistrationPage() {
         instrument: null,
         priceOptionId: availablePriceOption?.id ?? null,
         customFields: {},
+        notes: null,
         isNew: true,
         isDeleted: false,
       },
@@ -568,6 +571,12 @@ export default function EditRegistrationPage() {
     if (!participant.lastName?.trim()) missing.push("lastName");
     if (!participant.birthDate) missing.push("birthDate");
     if (!participant.city?.trim()) missing.push("city");
+    if (
+      registration?.course.instrumentRequired &&
+      !participant.instrument?.trim()
+    ) {
+      missing.push("instrument");
+    }
     if (!participant.priceOptionId) missing.push("priceOptionId");
 
     const record =
@@ -716,7 +725,8 @@ export default function EditRegistrationPage() {
         !p.lastName ||
         !p.birthDate ||
         !p.city ||
-        !p.priceOptionId
+        !p.priceOptionId ||
+        (registration?.course.instrumentRequired && !p.instrument?.trim())
       ) {
         setError("Bitte fülle alle Pflichtfelder für jeden Teilnehmer aus.");
         setIsSubmitting(false);
@@ -782,6 +792,7 @@ export default function EditRegistrationPage() {
       priceOptionId: p.priceOptionId || "",
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       customFields: p.customFields as any,
+      notes: p.notes ?? undefined,
       siblingGroupId: p.siblingGroupId ?? undefined,
     }));
 
@@ -1410,6 +1421,7 @@ export default function EditRegistrationPage() {
             <ParticipantEditor
               priceOptions={registration.course.priceOptions}
               customFields={registration.course.customFields ?? []}
+              instrumentRequired={registration.course.instrumentRequired}
               participant={editingParticipant}
               onChange={(field, value) => {
                 if (field === "customFields") {
@@ -1417,11 +1429,11 @@ export default function EditRegistrationPage() {
                     editingParticipant.id,
                     value as Record<string, unknown>,
                   );
-                } else if (field === "instrument") {
+                } else if (field === "instrument" || field === "notes") {
                   // Nullable in the database: an emptied field must not save as "".
                   updateParticipant(
                     editingParticipant.id,
-                    "instrument",
+                    field,
                     (value as string) || null,
                   );
                 } else if (field === "birthDate") {

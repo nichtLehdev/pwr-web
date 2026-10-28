@@ -224,6 +224,7 @@ export async function GET(
           city: p.city,
           instrument: p.instrument,
           customFields: p.customFields,
+          notes: p.notes,
         })),
         createdAt: reg.createdAt,
         updatedAt: reg.updatedAt,

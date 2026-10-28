@@ -588,6 +588,10 @@ model Course {
   registrationClosedNotifiedAt DateTime?
   maxParticipants              Int? // optional hard cap
   allowWaitingList             Boolean   @default(false)
+  /**
+   * Ob bei der Anmeldung für jeden Teilnehmer ein Instrument angegeben werden muss.
+   */
+  instrumentRequired           Boolean   @default(false)
 
   isFree                Boolean @default(false)
   priceInfo             String?
@@ -1006,6 +1010,12 @@ model Participant {
    */
   priceOption    String?
   customFields   Json? // JSON for custom field values
+  /**
+   * Freitext „Anmerkungen“ zu diesem Teilnehmer — steht in jedem Anmeldeformular
+   * unter den Zusatzfeldern. Getrennt von CourseRegistration.notes, das für die
+   * ganze Anmeldung gilt.
+   */
+  notes          String?
   siblingGroupId String? // Groups siblings together for discount calculation (same ID = siblings)
 
   createdAt DateTime @default(now())

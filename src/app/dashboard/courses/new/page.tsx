@@ -24,6 +24,7 @@ import {
   type DashboardSectionNavItem,
   NewLocationForm,
 } from "@/app/_components/dashboard";
+import { ParticipantFormPreview } from "@/app/_components/events/course-registration-form/participant-form-preview";
 import { getErrorMessage } from "@/lib/utils";
 import { datedSlugBase, slugify } from "@/lib/slug";
 import { customFieldTypeNeedsOptions } from "@/lib/course-custom-fields";
@@ -147,6 +148,7 @@ export default function NewCoursePage() {
   const [maxParticipants, setMaxParticipants] = useState<number>(20);
   const [registrationOpen, setRegistrationOpen] = useState(false);
   const [allowWaitingList, setAllowWaitingList] = useState(false);
+  const [instrumentRequired, setInstrumentRequired] = useState(false);
   const [allowSiblingDiscount, setAllowSiblingDiscount] = useState(false);
 
   const [isFree, setIsFree] = useState(false);
@@ -205,6 +207,7 @@ export default function NewCoursePage() {
       maxParticipants,
       registrationOpen,
       allowWaitingList,
+      instrumentRequired,
       allowSiblingDiscount,
       isFree,
       paymentCashAllowed,
@@ -248,6 +251,7 @@ export default function NewCoursePage() {
       maxParticipants,
       registrationOpen,
       allowWaitingList,
+      instrumentRequired,
       allowSiblingDiscount,
       isFree,
       paymentCashAllowed,
@@ -342,6 +346,7 @@ export default function NewCoursePage() {
       setMaxParticipants(saved.maxParticipants || 20);
       setRegistrationOpen(saved.registrationOpen || false);
       setAllowWaitingList(saved.allowWaitingList || false);
+      setInstrumentRequired(saved.instrumentRequired || false);
       setAllowSiblingDiscount(saved.allowSiblingDiscount || false);
       setIsFree(saved.isFree ?? false);
       setPaymentCashAllowed(saved.paymentCashAllowed ?? true);
@@ -703,6 +708,7 @@ export default function NewCoursePage() {
       maxParticipants: isExternalProvider ? undefined : maxParticipants,
       registrationOpen,
       allowWaitingList: isExternalProvider ? false : allowWaitingList,
+      instrumentRequired: isExternalProvider ? false : instrumentRequired,
       allowSiblingDiscount:
         isExternalProvider || !canManageSiblingDiscount
           ? false
@@ -1547,10 +1553,34 @@ export default function NewCoursePage() {
                   title="Zusätzliche Anmeldefelder"
                   description="Felder, die direkt beim Ausfüllen der Anmeldung abgefragt werden."
                 >
+                  <div className="mb-4 flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      id="instrumentRequired"
+                      checked={instrumentRequired}
+                      onChange={(e) => setInstrumentRequired(e.target.checked)}
+                      className="text-primary border-rule dark:border-night-text h-4 w-4"
+                    />
+                    <label
+                      htmlFor="instrumentRequired"
+                      className="dark:text-night-text text-ink text-sm font-medium"
+                    >
+                      Instrument ist Pflichtfeld
+                    </label>
+                  </div>
+
                   <CourseCustomFieldsEditor
                     fields={customFields}
                     onChange={setCustomFields}
                   />
+                  <div className="mt-4">
+                    <ParticipantFormPreview
+                      customFields={customFields}
+                      instrumentRequired={instrumentRequired}
+                      priceOptions={isFree ? [] : priceOptions}
+                      startDate={startDate}
+                    />
+                  </div>
                 </DashboardFormBlock>
               ) : null}
             </div>

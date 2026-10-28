@@ -1005,6 +1005,9 @@ export default function RegistrationDetailPage() {
                   label: field.fieldName,
                   value: getCustomFieldValue(participant, field.fieldName),
                 })),
+                ...(participant.notes
+                  ? [{ label: "Anmerkungen", value: participant.notes }]
+                  : []),
               ];
 
               return (
@@ -1032,7 +1035,7 @@ export default function RegistrationDetailPage() {
                         <dt className="dark:text-night-text text-ink font-medium">
                           {detail.label}
                         </dt>
-                        <dd className="text-dark dark:text-night-muted">
+                        <dd className="text-dark dark:text-night-muted whitespace-pre-line">
                           {detail.value}
                         </dd>
                       </div>

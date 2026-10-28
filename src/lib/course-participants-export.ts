@@ -3,7 +3,10 @@ import {
   RegistrationStatus,
   SiblingDiscountStatus,
 } from "~/generated/prisma/client";
-import { formatCustomFieldValueForDisplay } from "@/lib/course-custom-fields";
+import {
+  courseHasCustomNotesField,
+  formatCustomFieldValueForDisplay,
+} from "@/lib/course-custom-fields";
 import { invoicePaidAmount } from "@/lib/invoice-payment";
 import {
   DOWN_PAYMENT_STATE_LABELS,
@@ -60,6 +63,7 @@ type ExportParticipant = {
   priceOptionId?: string | null;
   priceOption: string | null;
   customFields?: unknown;
+  notes?: string | null;
 };
 
 type ExportRegistration = {
@@ -148,6 +152,15 @@ export function courseParticipantsColumns(
     { header: "Preiskategorie", key: "preiskategorie" },
     { header: "Preis", key: "preis", format: "currency", total: true },
     ...customFieldColumns,
+    ...(courseHasCustomNotesField(course.customFields)
+      ? []
+      : [
+          {
+            header: "Anmerkungen Teilnehmer",
+            key: "anmerkungen_teilnehmer",
+            wrap: true,
+          },
+        ]),
     { header: "Status", key: "status" },
     { header: "Anmelder:in Vorname", key: "anmelder_vorname" },
     { header: "Anmelder:in Nachname", key: "anmelder_nachname" },
@@ -241,6 +254,7 @@ export function buildCourseParticipantsExportRows(
         ),
         preis: priceOption?.price ?? 0,
         ...customFieldValues,
+        anmerkungen_teilnehmer: participant.notes ?? "",
         status: registrationStatusLabels[registration.registrationStatus],
         anmelder_vorname: registration.registrantFirstName,
         anmelder_nachname: registration.registrantLastName,

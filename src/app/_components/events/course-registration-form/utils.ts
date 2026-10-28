@@ -262,7 +262,8 @@ export function validateStep(
           !p.lastName?.trim() ||
           !p.birthDate ||
           !p.city?.trim() ||
-          !p.priceOptionId
+          !p.priceOptionId ||
+          (course.instrumentRequired && !p.instrument?.trim())
         ) {
           return false;
         }
