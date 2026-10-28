@@ -38,10 +38,6 @@ describe("summarizeProfile", () => {
     expect(summarizeProfile(fullProfile)).toEqual({
       id: "u1",
       displayName: "Erika Muster",
-      firstName: "Erika",
-      lastName: "Muster",
-      username: "erika.muster",
-      email: "erika@example.test",
       bezirk: { id: "b1", name: "Bezirk 01" },
       bezirkScopes: [{ id: "b2", name: "Bezirk 02" }],
       posaunenwartBezirke: [{ id: "b3", name: "Bezirk 03" }],
@@ -57,6 +53,8 @@ describe("summarizeProfile", () => {
   it("gibt keine Privatdaten heraus", () => {
     const text = JSON.stringify(summarizeProfile(fullProfile));
     for (const secret of [
+      "erika@example.test",
+      "erika.muster",
       "Musterweg",
       "12345",
       "Musterstadt",

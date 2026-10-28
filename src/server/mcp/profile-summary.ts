@@ -2,11 +2,7 @@ type Named = { id?: string; name?: string | null } | null | undefined;
 
 type ProfileLike = {
   id?: string;
-  username?: string | null;
   displayName?: string | null;
-  firstName?: string | null;
-  lastName?: string | null;
-  email?: string | null;
   districtRoleName?: string | null;
   bezirk?: Named;
   bezirkScopes?: { bezirk?: Named }[] | null;
@@ -29,9 +25,9 @@ function bezirkRef(bezirk: Named) {
 }
 
 /**
- * Was ein KI-Client über die angemeldete Person wissen muss: wer sie ist und
- * in welchen Ämtern und Bezirken sie handelt. Anschrift, Geburtsdatum,
- * Telefon, Bio und Einstellungen aus `users.getMyProfile` bleiben draußen.
+ * Was ein KI-Client über die angemeldete Person wissen muss: wie sie heißt
+ * und in welchen Ämtern und Bezirken sie handelt. Kontakt-, Anschrift- und
+ * Kontodaten aus `users.getMyProfile` bleiben draußen.
  */
 export function summarizeProfile(result: unknown): unknown {
   if (typeof result !== "object" || result === null) return result;
@@ -52,10 +48,6 @@ export function summarizeProfile(result: unknown): unknown {
   return {
     id: profile.id,
     displayName: profile.displayName ?? null,
-    firstName: profile.firstName ?? null,
-    lastName: profile.lastName ?? null,
-    username: profile.username ?? null,
-    email: profile.email ?? null,
     bezirk: bezirkRef(profile.bezirk),
     /** Zusätzliche Bezirke, für die die Person schreiben darf. */
     bezirkScopes: (profile.bezirkScopes ?? [])

@@ -5,6 +5,11 @@ import { summarizeProfile } from "./profile-summary";
  * Werkzeuge des MCP-Servers. Jedes ruft genau eine bestehende tRPC-Prozedur
  * auf – mit deren Eingabeschema und deren Rechteprüfung. Neue Werkzeuge also
  * hier eintragen, nicht nachbauen.
+ *
+ * Nie aufnehmen: Prozeduren für Anmeldungen, Teilnehmende, Rechnungen oder
+ * Kursmails (`registrations.*`, `invoices.*`, `courseMail.*`,
+ * `savedParticipants.*`, `courses.getRegistrations`). Deren Daten dürfen nicht
+ * an KI-Clients gehen; `personal-data.ts` filtert sie zusätzlich heraus.
  */
 export interface McpToolDefinition {
   name: string;
@@ -38,7 +43,7 @@ export const MCP_TOOLS: McpToolDefinition[] = [
     name: "get_my_profile",
     title: "Eigenes Profil",
     description:
-      "Wer angemeldet ist: Name, E-Mail, Bezirk(e) und Ämter. Gut als erster Schritt, um zu wissen, in wessen Namen gearbeitet wird.",
+      "Wer angemeldet ist: Name, Bezirk(e) und Ämter. Gut als erster Schritt, um zu wissen, in wessen Namen gearbeitet wird.",
     procedure: "users.getMyProfile",
     mapResult: summarizeProfile,
     scope: READ,
@@ -340,6 +345,7 @@ Arbeitsweise:
 - Vor dem Ändern das Objekt mit get_ lesen; beim Ändern nur die Felder schicken, die sich ändern sollen.
 - Neue Inhalte standardmäßig zur Freigabe einreichen (status PENDING) oder als Entwurf (DRAFT), es sei denn, die Person will ausdrücklich sofort veröffentlichen und hat das Recht dazu.
 - Löschen nur nach ausdrücklicher Bestätigung.
+- Persönliche Daten (E-Mail, Telefon, Anschrift von Personen, Geburtsdatum usw.) gibt der Server nicht heraus. Kontaktfelder beim Ändern nur setzen, wenn die Person sie ausdrücklich nennt.
 - ${DATE_NOTE}
 - ${MARKDOWN_NOTE}
 - Texte auf Deutsch, in der Sprache der Webseite (du-Form, freundlich, sachlich).`;
