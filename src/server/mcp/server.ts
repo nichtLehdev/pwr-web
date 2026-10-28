@@ -125,7 +125,9 @@ async function callTool(
 
   try {
     const result = await caller[routerKey]![procedureKey]!(input);
-    return textResult(serialize(result));
+    return textResult(
+      serialize(tool.mapResult ? tool.mapResult(result) : result),
+    );
   } catch (error) {
     if (
       !(error instanceof TRPCError) ||

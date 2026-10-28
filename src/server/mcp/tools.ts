@@ -1,4 +1,5 @@
 import { MCP_SCOPES, type McpScope } from "@/lib/mcp-scopes";
+import { summarizeProfile } from "./profile-summary";
 
 /**
  * Werkzeuge des MCP-Servers. Jedes ruft genau eine bestehende tRPC-Prozedur
@@ -15,6 +16,8 @@ export interface McpToolDefinition {
   scope: McpScope;
   /** Löscht oder verwirft etwas unwiderruflich. */
   destructive?: boolean;
+  /** Kürzt das Ergebnis, bevor es an den Client geht (z. B. ohne Privatdaten). */
+  mapResult?: (result: unknown) => unknown;
 }
 
 const READ = MCP_SCOPES.READ;
@@ -35,8 +38,9 @@ export const MCP_TOOLS: McpToolDefinition[] = [
     name: "get_my_profile",
     title: "Eigenes Profil",
     description:
-      "Profil der angemeldeten Person (Name, E-Mail, Bezirk, Ämter). Gut als erster Schritt, um zu wissen, in wessen Namen gearbeitet wird.",
+      "Wer angemeldet ist: Name, E-Mail, Bezirk(e) und Ämter. Gut als erster Schritt, um zu wissen, in wessen Namen gearbeitet wird.",
     procedure: "users.getMyProfile",
+    mapResult: summarizeProfile,
     scope: READ,
   },
   {
