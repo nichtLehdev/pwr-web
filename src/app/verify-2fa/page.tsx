@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { resolvePostLoginTarget } from "@/lib/post-login-redirect";
+import { oauthContinueUrl } from "@/lib/oauth-flow";
 import { api } from "@/trpc/react";
 import Link from "next/link";
 import { useToast } from "@/app/_components/ui/toast";
@@ -39,7 +40,13 @@ function Verify2FAContent() {
 
   // Same routing rule as the password login and the OAuth callback: an
   // explicit redirect target wins, dashboard only as permission fallback.
-  const finishLogin = async () => {
+  const finishLogin = async (data: unknown) => {
+    // KI-Client-Freigabe: weiter zur Zustimmung bzw. zurück zum Client.
+    const oauthTarget = oauthContinueUrl(data);
+    if (oauthTarget) {
+      window.location.href = oauthTarget;
+      return;
+    }
     toast.success("Erfolgreich verifiziert!");
     let hasDashboardAccess = false;
     try {
@@ -77,7 +84,7 @@ function Verify2FAContent() {
               "Ungültiger Backup-Code. Bitte versuche es erneut.",
           );
         } else {
-          await finishLogin();
+          await finishLogin(result.data);
         }
       } catch (error) {
         setError(
@@ -108,7 +115,7 @@ function Verify2FAContent() {
               "Ungültiger Code. Bitte versuche es erneut.",
           );
         } else {
-          await finishLogin();
+          await finishLogin(result.data);
         }
       } catch (error) {
         setError(

@@ -27,6 +27,11 @@ export const MAINTENANCE_ALLOWED_PREFIXES = [
   "/verify-email",
   "/verify-2fa",
   "/settings",
+  // KI-Clients: MCP-Server, OAuth-Zustimmung und die Metadaten zur Anmeldung.
+  // Schreiben darf dort ohnehin nur, wer angemeldet ist (wie im Dashboard).
+  "/api/mcp",
+  "/oauth",
+  "/.well-known",
 ] as const;
 
 export function isInfrastructurePath(pathname: string): boolean {

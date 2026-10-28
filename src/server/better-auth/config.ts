@@ -1,25 +1,31 @@
 import { betterAuth } from "better-auth";
 import { username } from "better-auth/plugins/username";
-import { twoFactor } from "better-auth/plugins";
+import { jwt, twoFactor } from "better-auth/plugins";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { oauthProvider } from "@better-auth/oauth-provider";
 
 import { db } from "@/server/db";
 import { isEmailConfigured } from "@/server/email";
+import { MCP_SCOPES } from "@/lib/mcp-scopes";
 import { signUpGuard } from "./sign-up-guard";
+import { nativeLoopbackRegistration } from "./oauth-registration";
+import { AUTH_BASE_URL, AUTH_ISSUER, MCP_RESOURCE } from "./urls";
 
 import { createLogger } from "@/server/utils/logger";
 
 const log = createLogger("Better Auth");
 
-const getBaseUrl = () => {
-  return (
-    process.env.BETTER_AUTH_URL ||
-    process.env.NEXT_PUBLIC_APP_URL ||
-    "http://localhost:3000"
-  );
-};
+const baseUrl = AUTH_BASE_URL;
 
-const baseUrl = getBaseUrl();
+/** Was ein KI-Client am MCP-Server anfragen darf (siehe `src/app/api/mcp`). */
+const MCP_CLIENT_SCOPES = [
+  "openid",
+  "profile",
+  "email",
+  "offline_access",
+  MCP_SCOPES.READ,
+  MCP_SCOPES.WRITE,
+];
 
 const normalizeOrigin = (origin: string): string => {
   return origin.trim().replace(/\/+$/, "");
@@ -148,11 +154,44 @@ export const auth = betterAuth({
   hooks: {
     before: signUpGuard,
   },
+  // `/token` gehört dem JWT-Plugin und gäbe zu jeder Sitzung ein JWT heraus;
+  // gebraucht werden die Schlüssel nur für die Zugriffstoken des MCP-Servers.
+  disabledPaths: ["/token"],
   plugins: [
     username(),
     twoFactor({
       issuer: "Posaunenwerk Rheinland",
     }),
+    jwt({
+      jwt: { issuer: AUTH_ISSUER },
+      disableSettingJwtHeader: true,
+    }),
+    // OAuth 2.1 für KI-Clients (Claude & Co.) am MCP-Server unter /api/mcp.
+    // Die Clients registrieren sich selbst (RFC 7591), wie MCP es vorsieht;
+    // Zugriff bekommen sie erst, wenn die angemeldete Person zustimmt.
+    oauthProvider({
+      loginPage: "/login",
+      consentPage: "/oauth/zustimmung",
+      scopes: MCP_CLIENT_SCOPES,
+      grantTypes: ["authorization_code", "refresh_token"],
+      resources: [
+        {
+          identifier: MCP_RESOURCE,
+          name: "MCP-Server",
+          allowedScopes: MCP_CLIENT_SCOPES,
+        },
+      ],
+      clientRegistrationDefaultResources: [MCP_RESOURCE],
+      clientRegistrationDefaultScopes: MCP_CLIENT_SCOPES,
+      clientRegistrationAllowedScopes: MCP_CLIENT_SCOPES,
+      allowDynamicClientRegistration: true,
+      allowUnauthenticatedClientRegistration: true,
+      // Clients entstehen nur über die Registrierung; Verbindungen trennt man
+      // unter Einstellungen (tRPC `oauth`), nicht über die Plugin-Endpunkte.
+      clientPrivileges: () => false,
+      resourcePrivileges: () => false,
+    }),
+    nativeLoopbackRegistration(),
   ],
   user: {
     fields: {

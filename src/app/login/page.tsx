@@ -6,6 +6,7 @@ import Link from "next/link";
 import { api } from "@/trpc/react";
 import { signIn } from "@/lib/auth";
 import { resolvePostLoginTarget } from "@/lib/post-login-redirect";
+import { isOAuthAuthorizeQuery, oauthContinueUrl } from "@/lib/oauth-flow";
 import { Button, Input, Label, Checkbox } from "@/app/_components/ui";
 import PublicPage from "@/app/_components/general/public-page";
 import { PageSection } from "@/app/_components/programmheft/page-section";
@@ -87,6 +88,14 @@ function LoginForm() {
         return;
       }
 
+      // KI-Client-Freigabe: better-auth hat die OAuth-Anfrage fortgesetzt und
+      // nennt das nächste Ziel (Zustimmungsseite oder zurück zum Client).
+      const oauthTarget = oauthContinueUrl(signInResult.data);
+      if (oauthTarget) {
+        window.location.href = oauthTarget;
+        return;
+      }
+
       // Warm both caches so the dashboard guard doesn't re-fetch, and so
       // the redirect decision knows about dashboard access.
       const profile = await utils.users.getMyProfile.fetch();
@@ -106,8 +115,18 @@ function LoginForm() {
     }
   };
 
+  const isOAuthFlow = isOAuthAuthorizeQuery(searchParams.toString());
+
   return (
     <div className="mx-auto max-w-md">
+      {isOAuthFlow && (
+        <Note className="mb-6">
+          <p>
+            Eine KI-Anwendung möchte sich mit deinem Konto verbinden. Melde dich
+            an; danach fragen wir dich, ob du den Zugriff erlaubst.
+          </p>
+        </Note>
+      )}
       {error && (
         <Note tone="error" className="mb-6">
           <p>{error}</p>

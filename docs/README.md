@@ -8,9 +8,9 @@
 - [Deployment](./deployment.md) - Production deployment, Docker, reverse proxy
 - [Email Testing](../EMAIL_TESTING.md) - SMTP configuration and testing
 - [Social Media Export](./social-media-export.md) - Instagram post generation
+- [MCP-Server](./mcp.md) - KI-Assistenten (Claude & Co.) per OAuth anbinden
 
 ## Quick Links
 
 - [Main README](../README.md) - Project overview and quick start
 - [Prisma Schema](../prisma/schema.prisma) - Database models and relationships
-
