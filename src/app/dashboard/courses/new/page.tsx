@@ -24,6 +24,7 @@ import {
   type DashboardSectionNavItem,
   NewLocationForm,
 } from "@/app/_components/dashboard";
+import { ParticipantFormPreview } from "@/app/_components/events/course-registration-form/participant-form-preview";
 import { getErrorMessage } from "@/lib/utils";
 import { datedSlugBase, slugify } from "@/lib/slug";
 import { customFieldTypeNeedsOptions } from "@/lib/course-custom-fields";
@@ -1572,6 +1573,14 @@ export default function NewCoursePage() {
                     fields={customFields}
                     onChange={setCustomFields}
                   />
+                  <div className="mt-4">
+                    <ParticipantFormPreview
+                      customFields={customFields}
+                      instrumentRequired={instrumentRequired}
+                      priceOptions={isFree ? [] : priceOptions}
+                      startDate={startDate}
+                    />
+                  </div>
                 </DashboardFormBlock>
               ) : null}
             </div>

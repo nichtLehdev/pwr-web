@@ -45,6 +45,7 @@ import {
   type DashboardSectionNavItem,
   NewLocationForm,
 } from "@/app/_components/dashboard";
+import { ParticipantFormPreview } from "@/app/_components/events/course-registration-form/participant-form-preview";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import RichTextEditor from "@/app/_components/editor/rich-text-editor-lazy";
 import { MAX_DESCRIPTION_LENGTH } from "@/lib/description";
@@ -2082,6 +2083,14 @@ export default function EditCoursePage() {
                       }}
                       disabled={hasRegistrations}
                     />
+                    <div className="mt-4">
+                      <ParticipantFormPreview
+                        customFields={customFields}
+                        instrumentRequired={instrumentRequired}
+                        priceOptions={isFree ? [] : priceOptions}
+                        startDate={startDate}
+                      />
+                    </div>
                   </DashboardFormBlock>
                 ) : null}
               </div>
