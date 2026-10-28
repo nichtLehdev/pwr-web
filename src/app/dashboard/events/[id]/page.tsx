@@ -19,6 +19,7 @@ import {
   DashboardOverflowMenu,
   DashboardPage,
   EntryExportButton,
+  ReviewChangesPanel,
   useEntryExport,
 } from "@/app/_components/dashboard";
 import { Tag, type TagTone } from "@/app/_components/programmheft/tag";
@@ -357,6 +358,7 @@ export default function EventDetailPage() {
               Prüfung
             </h2>
             <div className="space-y-4">
+              <ReviewChangesPanel contentType="event" contentId={event.id} />
               <div>
                 <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
                   Anmerkungen (optional für Genehmigung, erforderlich für
