@@ -26,6 +26,7 @@ import { noteSetsRouter } from "./routers/note-sets";
 import { gamesRouter } from "./routers/games";
 import { customFieldTemplatesRouter } from "./routers/custom-field-templates";
 import { maintenanceRouter } from "./routers/maintenance";
+import { oauthConnectionsRouter } from "./routers/oauth-connections";
 
 export const appRouter = createTRPCRouter({
   maintenance: maintenanceRouter,
@@ -55,6 +56,7 @@ export const appRouter = createTRPCRouter({
   noteSets: noteSetsRouter,
   games: gamesRouter,
   customFieldTemplates: customFieldTemplatesRouter,
+  oauthConnections: oauthConnectionsRouter,
 });
 
 export type AppRouter = typeof appRouter;
