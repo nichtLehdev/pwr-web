@@ -28,6 +28,11 @@ import {
   notifyCreatorOfReviewResult,
   notifySubmittedForReview,
 } from "../helpers/review-notifications";
+import {
+  deleteReviewSnapshots,
+  recordReviewSnapshot,
+  recordReviewSnapshots,
+} from "../helpers/review-snapshot";
 import { PERMISSIONS } from "@/lib/permissions";
 import { MAX_DESCRIPTION_LENGTH } from "@/lib/description";
 import {
@@ -177,6 +182,16 @@ const priceOptionAgesMustBeValid = (
  * Altersgrenze einer Preiskategorie, in vollendeten Jahren am ersten Kurstag.
  * `null` löscht eine gesetzte Grenze wieder.
  */
+/** Feld erscheint nur bei bestimmten Werten eines anderen Felds (per Name). */
+const customFieldConditionSchema = z
+  .object({
+    fieldName: z.string().trim().min(1),
+    values: z.array(z.string().min(1)).min(1),
+  })
+  .nullish()
+  // Prisma nimmt für Json-Spalten kein nacktes null an.
+  .transform((condition) => condition ?? undefined);
+
 const priceOptionAgeSchema = z
   .number()
   .int()
@@ -788,6 +803,7 @@ export const coursesRouter = createTRPCRouter({
                 isRequired: z.boolean().default(false),
                 helpText: z.string().optional(),
                 sortOrder: z.number().default(0),
+                showIf: customFieldConditionSchema,
               }),
             )
             .optional(),
@@ -1036,6 +1052,12 @@ export const coursesRouter = createTRPCRouter({
           actorId: ctx.session.user.id,
         });
       }
+      await recordReviewSnapshot(ctx.db, {
+        contentType: "course",
+        contentId: course.id,
+        status: course.status,
+        reviewerId: ctx.session.user.id,
+      });
 
       return course;
     }),
@@ -1104,6 +1126,7 @@ export const coursesRouter = createTRPCRouter({
                 isRequired: z.boolean().default(false),
                 helpText: z.string().optional(),
                 sortOrder: z.number().default(0),
+                showIf: customFieldConditionSchema,
               }),
             )
             .optional(),
@@ -1685,6 +1708,7 @@ export const coursesRouter = createTRPCRouter({
             isRequired: field.isRequired,
             helpText: field.helpText,
             sortOrder: field.sortOrder,
+            showIf: field.showIf,
           })),
         });
       }
@@ -1715,6 +1739,16 @@ export const coursesRouter = createTRPCRouter({
 
       if (updated.status === ContentStatus.APPROVED) {
         await promoteCustomFieldTemplatesForCourses(ctx.db, [updated.id]);
+      }
+      // Authors may keep an approved course approved while editing; only a
+      // reviewer saving it as approved signs off on this state.
+      if (status === ContentStatus.APPROVED && canApproveContent) {
+        await recordReviewSnapshot(ctx.db, {
+          contentType: "course",
+          contentId: updated.id,
+          status: updated.status,
+          reviewerId: ctx.session.user.id,
+        });
       }
 
       return updated;
@@ -1767,6 +1801,7 @@ export const coursesRouter = createTRPCRouter({
       await ctx.db.course.delete({
         where: { id: input.id },
       });
+      await deleteReviewSnapshots(ctx.db, "course", [input.id]);
 
       return { success: true };
     }),
@@ -1815,6 +1850,12 @@ export const coursesRouter = createTRPCRouter({
           publishedAt: new Date(),
         },
       });
+      await recordReviewSnapshot(ctx.db, {
+        contentType: "course",
+        contentId: approved.id,
+        status: ContentStatus.APPROVED,
+        reviewerId: ctx.session.user.id,
+      });
 
       await notifyCreatorOfReviewResult({
         db: ctx.db,
@@ -1848,6 +1889,12 @@ export const coursesRouter = createTRPCRouter({
           reviewDate: new Date(),
           reviewNotes: input.reviewNotes,
         },
+      });
+      await recordReviewSnapshot(ctx.db, {
+        contentType: "course",
+        contentId: rejected.id,
+        status: ContentStatus.REJECTED,
+        reviewerId: ctx.session.user.id,
       });
 
       await notifyCreatorOfReviewResult({
@@ -2254,6 +2301,7 @@ export const coursesRouter = createTRPCRouter({
       await ctx.db.course.deleteMany({
         where: { id: { in: canDeleteIds } },
       });
+      await deleteReviewSnapshots(ctx.db, "course", canDeleteIds);
 
       return { success: true, deletedCount: canDeleteIds.length };
     }),
@@ -2331,6 +2379,7 @@ export const coursesRouter = createTRPCRouter({
               isRequired: cf.isRequired,
               helpText: cf.helpText,
               sortOrder: cf.sortOrder,
+              showIf: cf.showIf ?? undefined,
             })),
           },
         },
@@ -2416,6 +2465,7 @@ export const coursesRouter = createTRPCRouter({
                   isRequired: cf.isRequired,
                   helpText: cf.helpText,
                   sortOrder: cf.sortOrder,
+                  showIf: cf.showIf ?? undefined,
                 })),
               },
             },
@@ -2480,6 +2530,12 @@ export const coursesRouter = createTRPCRouter({
       if (input.status === ContentStatus.APPROVED) {
         await promoteCustomFieldTemplatesForCourses(ctx.db, canUpdateIds);
       }
+      await recordReviewSnapshots(ctx.db, {
+        contentType: "course",
+        contentIds: canUpdateIds,
+        status: input.status,
+        reviewerId: userId,
+      });
 
       return { success: true, updatedCount: canUpdateIds.length };
     }),

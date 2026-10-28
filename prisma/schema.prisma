@@ -923,6 +923,9 @@ model CourseCustomField {
   isRequired Boolean         @default(false)
   helpText   String?
   sortOrder  Int             @default(0)
+  /// Nur anzeigen, wenn ein anderes Feld bestimmte Werte hat: { fieldName, values }.
+  /// Verweist per Feldname, weil die Felder beim Speichern neu angelegt werden.
+  showIf     Json?
 
   @@index([courseId])
 }
@@ -1898,6 +1901,28 @@ model AuditLog {
   @@index([entityType, entityId])
   @@index([action])
   @@map("audit_log")
+}
+
+/// Stand eines Beitrags, Termins oder Kurses bei seiner letzten Prüfung
+/// (Freigabe oder Ablehnung). Reicht der Autor danach eine Änderung ein, zeigt
+/// die Prüfansicht nur die Felder, die sich seitdem geändert haben.
+/// Eine Zeile pro Inhalt, bei jeder Prüfung überschrieben.
+model ContentReviewSnapshot {
+  id          String        @id @default(uuid())
+  /// "post" | "event" | "course" — wie in review-notifications.
+  contentType String
+  /// Plain id (no FK): one table for three content models.
+  contentId   String
+  /// Ergebnis der Prüfung, zu der dieser Stand gehört (APPROVED oder REJECTED).
+  status      ContentStatus
+  /// Field key → display value (string, list of strings or null); see review-snapshot.ts.
+  fields      Json
+  /// Plain id (no FK), as in AuditLog.
+  reviewerId  String?
+  reviewedAt  DateTime      @default(now())
+
+  @@unique([contentType, contentId])
+  @@map("content_review_snapshot")
 }
 
 /// In-app notifications shown in the header bell. One row per recipient.
