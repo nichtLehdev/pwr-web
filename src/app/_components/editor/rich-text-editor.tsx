@@ -1,6 +1,11 @@
 "use client";
 
-import { useEditor, EditorContent, type Editor } from "@tiptap/react";
+import {
+  useEditor,
+  EditorContent,
+  getMarkRange,
+  type Editor,
+} from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import { ArtikelBild } from "./bild-erweiterung";
@@ -11,6 +16,7 @@ import { Table } from "@tiptap/extension-table";
 import { TableRow } from "@tiptap/extension-table-row";
 import { TableCell } from "@tiptap/extension-table-cell";
 import { TableHeader } from "@tiptap/extension-table-header";
+import { TextSelection } from "@tiptap/pm/state";
 import TurndownService from "turndown";
 import {
   useCallback,
@@ -23,7 +29,7 @@ import { marked } from "marked";
 import MediaPickerModal from "./media-picker-modal";
 import DownloadPickerModal from "./download-picker-modal";
 import InhaltPickerModal from "./inhalt-picker-modal";
-import { Button, Input } from "@/app/_components/ui";
+import LinkPopover, { type LinkPopoverState } from "./link-popover";
 import { cn } from "@/lib/utils";
 import "@/styles/article-content.css";
 import "@/styles/beschreibung.css";
@@ -45,7 +51,6 @@ import {
   Table as TableIcon,
   Undo,
   Redo,
-  X,
   Plus,
   Rows3,
   Columns3,
@@ -397,16 +402,16 @@ function Toolbar({
   onOpenMediaPicker,
   onOpenDownloadPicker,
   onOpenInhaltPicker,
+  onOpenLinkPopover,
   variant = "voll",
 }: {
   editor: Editor | null;
   onOpenMediaPicker: () => void;
   onOpenDownloadPicker: () => void;
   onOpenInhaltPicker: () => void;
+  onOpenLinkPopover: () => void;
   variant?: RichTextVariant;
 }) {
-  const [showLinkInput, setShowLinkInput] = useState(false);
-  const [linkUrl, setLinkUrl] = useState("");
   const [showTableMenu, setShowTableMenu] = useState(false);
 
   const [, forceUpdate] = useState(0);
@@ -426,23 +431,6 @@ function Toolbar({
       editor.off("selectionUpdate", updateHandler);
     };
   }, [editor]);
-
-  const setLink = useCallback(() => {
-    if (!editor) return;
-
-    if (linkUrl === "") {
-      editor.chain().focus().extendMarkRange("link").unsetLink().run();
-    } else {
-      editor
-        .chain()
-        .focus()
-        .extendMarkRange("link")
-        .setLink({ href: linkUrl })
-        .run();
-    }
-    setShowLinkInput(false);
-    setLinkUrl("");
-  }, [editor, linkUrl]);
 
   const voll = variant === "voll";
   // Die Beschreibung steht unter einem h2 der Seite; ihre erste Stufe ist
@@ -587,49 +575,13 @@ function Toolbar({
 
       <ToolbarSeparator />
 
-      <div className="relative">
-        <ToolbarButton
-          onClick={() => {
-            if (editor.isActive("link")) {
-              editor.chain().focus().unsetLink().run();
-            } else {
-              setShowLinkInput(!showLinkInput);
-            }
-          }}
-          isActive={editor.isActive("link")}
-          title="Link einfügen"
-        >
-          <LinkIcon className="h-4 w-4" />
-        </ToolbarButton>
-        {showLinkInput && (
-          <div className="border-ink bg-paper dark:border-night-text dark:bg-night-raised absolute top-full right-0 z-50 mt-1 flex items-center gap-2 border-2 p-2">
-            <Input
-              type="url"
-              placeholder="https://…"
-              aria-label="Link-URL"
-              value={linkUrl}
-              onChange={(e) => setLinkUrl(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && setLink()}
-              className="w-64 py-1 text-sm"
-              autoFocus
-            />
-            <Button type="button" onClick={setLink} size="sm">
-              OK
-            </Button>
-            <button
-              type="button"
-              onClick={() => {
-                setShowLinkInput(false);
-                setLinkUrl("");
-              }}
-              aria-label="Abbrechen"
-              className="text-dark hover:bg-rule/60 hover:text-ink dark:text-night-muted dark:hover:bg-night-rule dark:hover:text-night-text px-2 py-1 text-sm transition-colors"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        )}
-      </div>
+      <ToolbarButton
+        onClick={onOpenLinkPopover}
+        isActive={editor.isActive("link")}
+        title={editor.isActive("link") ? "Link bearbeiten" : "Link einfügen"}
+      >
+        <LinkIcon className="h-4 w-4" />
+      </ToolbarButton>
 
       {/* Neben dem Link-Knopf: derselbe Handgriff, nur ohne herauszusuchende Adresse. */}
       <ToolbarButton
@@ -739,6 +691,7 @@ export default function RichTextEditor({
   const [showInhaltPicker, setShowInhaltPicker] = useState(false);
   /** Zum Öffnen festgehalten: Im Dialog hat der Editor keine Auswahl mehr. */
   const [inhaltAuswahlText, setInhaltAuswahlText] = useState("");
+  const [linkPopover, setLinkPopover] = useState<LinkPopoverState | null>(null);
   const [contextMenu, setContextMenu] = useState<{
     x: number;
     y: number;
@@ -754,6 +707,9 @@ export default function RichTextEditor({
         heading: {
           levels: voll ? [2, 3, 4] : [3, 4],
         },
+        // Seit Tiptap 3 bringt das StarterKit einen eigenen Link mit, der beim
+        // Anklicken öffnet; konfiguriert wird der Link unten.
+        link: false,
       }),
       // Ohne eigene Klasse: Links gestaltet article-content.css. Eine Klasse hier
       // würde in jeden gespeicherten Beitrag geschrieben.
@@ -796,6 +752,32 @@ export default function RichTextEditor({
           : "beschreibung p-4 min-h-[180px] focus:outline-none",
         ...(ariaLabel ? { "aria-label": ariaLabel } : {}),
         ...(ariaRequired ? { "aria-required": "true" } : {}),
+      },
+      // Ein Klick auf einen Link öffnet ihn nicht, sondern zum Bearbeiten.
+      handleClick: (view, pos, event) => {
+        if (event.button !== 0) return false;
+        const anchor = (event.target as HTMLElement).closest("a");
+        if (!anchor || !view.dom.contains(anchor)) return false;
+        const linkType = view.state.schema.marks.link;
+        if (!linkType) return false;
+        const range = getMarkRange(view.state.doc.resolve(pos), linkType);
+        if (!range) return false;
+        // Selbst setzen: Das Fenster holt sich den Fokus, bevor der Editor
+        // die Klickstelle aus der DOM-Auswahl liest.
+        view.dispatch(
+          view.state.tr.setSelection(TextSelection.create(view.state.doc, pos)),
+        );
+        const rect = anchor.getBoundingClientRect();
+        setLinkPopover({
+          x: rect.left,
+          y: rect.bottom + 6,
+          from: range.from,
+          to: range.to,
+          text: view.state.doc.textBetween(range.from, range.to, " "),
+          href: anchor.getAttribute("href") ?? "",
+          editing: true,
+        });
+        return true;
       },
     },
     onUpdate: ({ editor }) => {
@@ -869,6 +851,95 @@ export default function RichTextEditor({
     [editor],
   );
 
+  /** Vom Toolbar-Knopf: steht der Cursor in einem Link, wird dieser bearbeitet. */
+  const openLinkPopover = useCallback(() => {
+    if (!editor) return;
+    const { state, view } = editor;
+    const { from, to, empty } = state.selection;
+    const linkType = state.schema.marks.link;
+    const range =
+      linkType && editor.isActive("link")
+        ? getMarkRange(state.doc.resolve(from), linkType)
+        : undefined;
+    let start = range?.from ?? from;
+    let end = range?.to ?? to;
+    if (!range) {
+      // Ein Doppelklick markiert unter Windows das Leerzeichen dahinter mit;
+      // es gehört nicht in den Link.
+      const selected = state.doc.textBetween(start, end, " ");
+      start += selected.length - selected.trimStart().length;
+      end -= selected.length - selected.trimEnd().length;
+      if (end < start) end = start;
+    }
+    const coords = view.coordsAtPos(start);
+    setLinkPopover({
+      x: coords.left,
+      y: coords.bottom + 6,
+      from: start,
+      to: end,
+      text: range || !empty ? state.doc.textBetween(start, end, " ") : "",
+      href: range ? String(editor.getAttributes("link").href ?? "") : "",
+      editing: !!range,
+    });
+  }, [editor]);
+
+  const applyLink = useCallback(
+    (text: string, href: string) => {
+      if (!editor || !linkPopover) return;
+      const { from, to } = linkPopover;
+      const label = text.trim() || href;
+      const original = editor.state.doc.textBetween(from, to, " ");
+      if (from !== to && label === original) {
+        // Unveränderter Text behält seine übrigen Auszeichnungen (fett, kursiv …).
+        editor
+          .chain()
+          .focus()
+          .setTextSelection({ from, to })
+          .setLink({ href })
+          .setTextSelection(to)
+          .run();
+      } else {
+        // Als Knoten, nicht als HTML, damit spitze Klammern im Text Text bleiben.
+        editor
+          .chain()
+          .focus()
+          .insertContentAt(
+            { from, to },
+            {
+              type: "text",
+              text: label,
+              marks: [{ type: "link", attrs: { href } }],
+            },
+          )
+          .unsetMark("link")
+          .run();
+      }
+      setLinkPopover(null);
+    },
+    [editor, linkPopover],
+  );
+
+  const removeLink = useCallback(() => {
+    if (!editor || !linkPopover) return;
+    const { from, to } = linkPopover;
+    editor
+      .chain()
+      .focus()
+      .setTextSelection({ from, to })
+      .unsetLink()
+      .setTextSelection(to)
+      .run();
+    setLinkPopover(null);
+  }, [editor, linkPopover]);
+
+  const closeLinkPopover = useCallback(
+    (refocus: boolean) => {
+      setLinkPopover(null);
+      if (refocus) editor?.commands.focus();
+    },
+    [editor],
+  );
+
   const handleContextMenu = useCallback(
     (e: MouseEvent<HTMLDivElement>) => {
       if (!editor) return;
@@ -910,6 +981,7 @@ export default function RichTextEditor({
           onOpenMediaPicker={() => setShowMediaPicker(true)}
           onOpenDownloadPicker={() => setShowDownloadPicker(true)}
           onOpenInhaltPicker={openInhaltPicker}
+          onOpenLinkPopover={openLinkPopover}
           variant={variant}
         />
         <div
@@ -919,6 +991,17 @@ export default function RichTextEditor({
           <EditorContent editor={editor} />
         </div>
       </div>
+
+      {linkPopover && editor && (
+        <LinkPopover
+          // Neu aufgebaut für jeden Link, damit die Felder dessen Werte zeigen.
+          key={`${linkPopover.from}-${linkPopover.to}`}
+          state={linkPopover}
+          onApply={applyLink}
+          onRemove={removeLink}
+          onClose={closeLinkPopover}
+        />
+      )}
 
       {contextMenu && editor && (
         <TableContextMenu

@@ -26,6 +26,7 @@ import { noteSetsRouter } from "./routers/note-sets";
 import { gamesRouter } from "./routers/games";
 import { customFieldTemplatesRouter } from "./routers/custom-field-templates";
 import { maintenanceRouter } from "./routers/maintenance";
+import { oauthConnectionsRouter } from "./routers/oauth-connections";
 import { reviewChangesRouter } from "./routers/review-changes";
 
 export const appRouter = createTRPCRouter({
@@ -56,6 +57,7 @@ export const appRouter = createTRPCRouter({
   noteSets: noteSetsRouter,
   games: gamesRouter,
   customFieldTemplates: customFieldTemplatesRouter,
+  oauthConnections: oauthConnectionsRouter,
   reviewChanges: reviewChangesRouter,
 });
 
