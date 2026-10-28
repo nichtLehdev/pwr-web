@@ -27,6 +27,7 @@ import {
   DashboardOverflowMenu,
   DashboardPage,
   EntryExportButton,
+  ReviewChangesPanel,
   useEntryExport,
 } from "@/app/_components/dashboard";
 import { Tag, type TagTone } from "@/app/_components/programmheft/tag";
@@ -308,6 +309,7 @@ export default function PostDetailPage() {
               Prüfung
             </h2>
             <div className="space-y-4">
+              <ReviewChangesPanel contentType="post" contentId={post.id} />
               {hasUnapprovedContent && (
                 <div className="flex items-start gap-3 border border-red-300 bg-red-50 p-3 dark:border-red-700 dark:bg-red-900/20">
                   <AlertTriangleIcon className="h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />

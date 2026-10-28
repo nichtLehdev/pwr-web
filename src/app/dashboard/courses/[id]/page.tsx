@@ -34,6 +34,7 @@ import {
   DashboardOverflowMenu,
   DashboardPage,
   EntryExportButton,
+  ReviewChangesPanel,
   useEntryExport,
 } from "@/app/_components/dashboard";
 import {
@@ -584,6 +585,10 @@ export default function CourseDetailPage() {
                   Kurs prüfen
                 </h2>
                 <div className="space-y-4">
+                  <ReviewChangesPanel
+                    contentType="course"
+                    contentId={course.id}
+                  />
                   <div>
                     <label className="dark:text-night-text text-ink mb-2 block text-sm font-medium">
                       Anmerkungen (optional bei Genehmigung, erforderlich bei

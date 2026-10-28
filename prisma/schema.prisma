@@ -1704,6 +1704,28 @@ model AuditLog {
   @@map("audit_log")
 }
 
+/// Stand eines Beitrags, Termins oder Kurses bei seiner letzten Prüfung
+/// (Freigabe oder Ablehnung). Reicht der Autor danach eine Änderung ein, zeigt
+/// die Prüfansicht nur die Felder, die sich seitdem geändert haben.
+/// Eine Zeile pro Inhalt, bei jeder Prüfung überschrieben.
+model ContentReviewSnapshot {
+  id          String        @id @default(uuid())
+  /// "post" | "event" | "course" — wie in review-notifications.
+  contentType String
+  /// Plain id (no FK): one table for three content models.
+  contentId   String
+  /// Ergebnis der Prüfung, zu der dieser Stand gehört (APPROVED oder REJECTED).
+  status      ContentStatus
+  /// Field key → display value (string, list of strings or null); see review-snapshot.ts.
+  fields      Json
+  /// Plain id (no FK), as in AuditLog.
+  reviewerId  String?
+  reviewedAt  DateTime      @default(now())
+
+  @@unique([contentType, contentId])
+  @@map("content_review_snapshot")
+}
+
 /// In-app notifications shown in the header bell. One row per recipient.
 model Notification {
   id     String @id @default(uuid())

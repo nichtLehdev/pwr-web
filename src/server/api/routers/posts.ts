@@ -22,6 +22,11 @@ import {
   notifyCreatorOfReviewResult,
   notifySubmittedForReview,
 } from "../helpers/review-notifications";
+import {
+  deleteReviewSnapshots,
+  recordReviewSnapshot,
+  recordReviewSnapshots,
+} from "../helpers/review-snapshot";
 import { PERMISSIONS } from "@/lib/permissions";
 import { permissionProcedure } from "../middleware/permissions";
 import { createPostSlug, updatePostSlug } from "../helpers/content-slug";
@@ -554,6 +559,12 @@ export const postsRouter = createTRPCRouter({
           actorId: ctx.session.user.id,
         });
       }
+      await recordReviewSnapshot(ctx.db, {
+        contentType: "post",
+        contentId: post.id,
+        status: post.status,
+        reviewerId: ctx.session.user.id,
+      });
 
       return post;
     }),
@@ -729,6 +740,15 @@ export const postsRouter = createTRPCRouter({
           actorId: ctx.session.user.id,
         });
       }
+      // Saving it as approved is signing off on this state.
+      if (updateData.status === ContentStatus.APPROVED) {
+        await recordReviewSnapshot(ctx.db, {
+          contentType: "post",
+          contentId: updated.id,
+          status: updated.status,
+          reviewerId: ctx.session.user.id,
+        });
+      }
 
       return updated;
     }),
@@ -766,6 +786,7 @@ export const postsRouter = createTRPCRouter({
       await ctx.db.post.delete({
         where: { id: input.id },
       });
+      await deleteReviewSnapshots(ctx.db, "post", [input.id]);
 
       return { success: true };
     }),
@@ -860,6 +881,12 @@ export const postsRouter = createTRPCRouter({
           publishedAt: new Date(),
         },
       });
+      await recordReviewSnapshot(ctx.db, {
+        contentType: "post",
+        contentId: approved.id,
+        status: ContentStatus.APPROVED,
+        reviewerId: ctx.session.user.id,
+      });
 
       await notifyCreatorOfReviewResult({
         db: ctx.db,
@@ -891,6 +918,12 @@ export const postsRouter = createTRPCRouter({
           reviewDate: new Date(),
           reviewNotes: input.reviewNotes,
         },
+      });
+      await recordReviewSnapshot(ctx.db, {
+        contentType: "post",
+        contentId: rejected.id,
+        status: ContentStatus.REJECTED,
+        reviewerId: ctx.session.user.id,
       });
 
       await notifyCreatorOfReviewResult({
@@ -1073,6 +1106,7 @@ export const postsRouter = createTRPCRouter({
       await ctx.db.post.deleteMany({
         where: { id: { in: canDeleteIds } },
       });
+      await deleteReviewSnapshots(ctx.db, "post", canDeleteIds);
 
       return { success: true, deletedCount: canDeleteIds.length };
     }),
@@ -1268,6 +1302,12 @@ export const postsRouter = createTRPCRouter({
       await ctx.db.post.updateMany({
         where: { id: { in: canUpdateIds } },
         data: updateData,
+      });
+      await recordReviewSnapshots(ctx.db, {
+        contentType: "post",
+        contentIds: canUpdateIds,
+        status: input.status,
+        reviewerId: userId,
       });
 
       return { success: true, updatedCount: canUpdateIds.length };
