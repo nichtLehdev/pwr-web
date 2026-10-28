@@ -44,7 +44,146 @@ export type CourseCustomFieldRule = {
   options: unknown;
   isRequired: boolean;
   helpText?: string | null;
+  /** Rohwert aus Prisma Json; siehe `parseCustomFieldCondition`. */
+  showIf?: unknown;
 };
+
+/**
+ * Bedingung eines Zusatzfelds: Es erscheint nur, wenn das Feld `fieldName`
+ * einen der `values` hat. Checkboxen vergleichen gegen "true" / "false".
+ */
+export type CustomFieldCondition = {
+  fieldName: string;
+  values: string[];
+};
+
+/** Feldtypen, von deren Wert andere Felder abhängen können. */
+export function customFieldTypeCanControl(
+  fieldType: CourseCustomFieldTypeName | string,
+): boolean {
+  return (
+    fieldType === "SELECT" ||
+    fieldType === "MULTISELECT" ||
+    fieldType === "CHECKBOX"
+  );
+}
+
+/** Werte, die eine Bedingung auf dieses Feld wählen kann. */
+export function customFieldConditionValues(field: {
+  fieldType: CourseCustomFieldTypeName | string;
+  options: unknown;
+}): { value: string; label: string }[] {
+  if (field.fieldType === "CHECKBOX") {
+    return [
+      { value: "true", label: "angehakt" },
+      { value: "false", label: "nicht angehakt" },
+    ];
+  }
+  if (customFieldTypeNeedsOptions(field.fieldType)) {
+    return parseSelectOptionValues(field.options).map((value) => ({
+      value,
+      label: value,
+    }));
+  }
+  return [];
+}
+
+/** Liest `showIf` aus Prisma Json; alles Unvollständige heißt: immer sichtbar. */
+export function parseCustomFieldCondition(
+  raw: unknown,
+): CustomFieldCondition | null {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const { fieldName, values } = raw as Record<string, unknown>;
+  if (typeof fieldName !== "string" || !fieldName.trim()) return null;
+  if (!Array.isArray(values)) return null;
+  const cleaned = values.map((v) => String(v)).filter((v) => v.length > 0);
+  if (cleaned.length === 0) return null;
+  return { fieldName, values: cleaned };
+}
+
+function conditionMatches(
+  controller: CourseCustomFieldRule,
+  value: unknown,
+  values: readonly string[],
+): boolean {
+  if (controller.fieldType === "CHECKBOX") {
+    const checked = value === true || value === "true";
+    return values.includes(checked ? "true" : "false");
+  }
+  if (controller.fieldType === "MULTISELECT") {
+    return (
+      Array.isArray(value) && value.some((v) => values.includes(String(v)))
+    );
+  }
+  if (value === undefined || value === null || value === "") return false;
+  return values.includes(String(value));
+}
+
+/**
+ * Felder, die bei diesen Werten angezeigt werden, in Kursreihenfolge. Ein
+ * Feld ist nur sichtbar, wenn auch sein auslösendes Feld sichtbar ist; fehlt
+ * das auslösende Feld, bleibt das abhängige verborgen.
+ */
+export function visibleCustomFields<T extends CourseCustomFieldRule>(
+  fields: readonly T[],
+  values: Record<string, unknown> | undefined,
+): T[] {
+  const byName = new Map(fields.map((f) => [f.fieldName, f]));
+  const memo = new Map<string, boolean>();
+  const isVisible = (field: T, seen: Set<string>): boolean => {
+    const cached = memo.get(field.fieldName);
+    if (cached !== undefined) return cached;
+    const condition = parseCustomFieldCondition(field.showIf);
+    let visible = true;
+    if (condition) {
+      const controller = byName.get(condition.fieldName);
+      visible =
+        !!controller &&
+        !seen.has(controller.fieldName) &&
+        isVisible(controller, new Set(seen).add(field.fieldName)) &&
+        conditionMatches(
+          controller,
+          values?.[controller.fieldName],
+          condition.values,
+        );
+    }
+    memo.set(field.fieldName, visible);
+    return visible;
+  };
+  return fields.filter((f) => isVisible(f, new Set()));
+}
+
+/** Namen der sichtbaren Pflichtfelder ohne Wert. */
+export function missingRequiredCustomFieldNames(
+  fields: readonly CourseCustomFieldRule[],
+  values: Record<string, unknown> | undefined,
+): string[] {
+  return visibleCustomFields(fields, values)
+    .filter(
+      (f) =>
+        f.isRequired &&
+        isRequiredCustomFieldEmpty(f.fieldType, values?.[f.fieldName]),
+    )
+    .map((f) => f.fieldName);
+}
+
+/** Entfernt Werte von Feldern, die bei den übrigen Werten verborgen sind. */
+export function dropHiddenCustomFieldValues(
+  values: Record<string, unknown>,
+  fields: readonly CourseCustomFieldRule[],
+): Record<string, unknown> {
+  const visible = new Set(
+    visibleCustomFields(fields, values).map((f) => f.fieldName),
+  );
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(values)) {
+    const field = fields.find((f) => f.fieldName === key);
+    // Unbekannte Schlüssel (alte Felder) bleiben wie bisher erhalten.
+    if (field && !visible.has(key)) continue;
+    out[key] = value;
+  }
+  return out;
+}
 
 /**
  * Ältere Kurse führen „Anmerkungen“ als eigenes Zusatzfeld. Dort entfällt das
@@ -191,12 +330,13 @@ export function resolveParticipantCustomFieldsForPersist(
 ):
   | { ok: true; customFields: Record<string, unknown> }
   | { ok: false; message: string } {
-  const normalized = normalizeParticipantCustomFieldsValues(
-    customFields,
+  // Verborgene Felder zählen nicht: weder Pflicht noch gespeicherter Wert.
+  const normalized = dropHiddenCustomFieldValues(
+    normalizeParticipantCustomFieldsValues(customFields, courseFields),
     courseFields,
   );
 
-  for (const cf of courseFields) {
+  for (const cf of visibleCustomFields(courseFields, normalized)) {
     const value = normalized[cf.fieldName];
     if (cf.isRequired && isRequiredCustomFieldEmpty(cf.fieldType, value)) {
       return {

@@ -182,6 +182,16 @@ const priceOptionAgesMustBeValid = (
  * Altersgrenze einer Preiskategorie, in vollendeten Jahren am ersten Kurstag.
  * `null` löscht eine gesetzte Grenze wieder.
  */
+/** Feld erscheint nur bei bestimmten Werten eines anderen Felds (per Name). */
+const customFieldConditionSchema = z
+  .object({
+    fieldName: z.string().trim().min(1),
+    values: z.array(z.string().min(1)).min(1),
+  })
+  .nullish()
+  // Prisma nimmt für Json-Spalten kein nacktes null an.
+  .transform((condition) => condition ?? undefined);
+
 const priceOptionAgeSchema = z
   .number()
   .int()
@@ -793,6 +803,7 @@ export const coursesRouter = createTRPCRouter({
                 isRequired: z.boolean().default(false),
                 helpText: z.string().optional(),
                 sortOrder: z.number().default(0),
+                showIf: customFieldConditionSchema,
               }),
             )
             .optional(),
@@ -1115,6 +1126,7 @@ export const coursesRouter = createTRPCRouter({
                 isRequired: z.boolean().default(false),
                 helpText: z.string().optional(),
                 sortOrder: z.number().default(0),
+                showIf: customFieldConditionSchema,
               }),
             )
             .optional(),
@@ -1696,6 +1708,7 @@ export const coursesRouter = createTRPCRouter({
             isRequired: field.isRequired,
             helpText: field.helpText,
             sortOrder: field.sortOrder,
+            showIf: field.showIf,
           })),
         });
       }
@@ -2366,6 +2379,7 @@ export const coursesRouter = createTRPCRouter({
               isRequired: cf.isRequired,
               helpText: cf.helpText,
               sortOrder: cf.sortOrder,
+              showIf: cf.showIf ?? undefined,
             })),
           },
         },
@@ -2451,6 +2465,7 @@ export const coursesRouter = createTRPCRouter({
                   isRequired: cf.isRequired,
                   helpText: cf.helpText,
                   sortOrder: cf.sortOrder,
+                  showIf: cf.showIf ?? undefined,
                 })),
               },
             },

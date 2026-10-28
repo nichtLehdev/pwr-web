@@ -1,6 +1,7 @@
 import { ContentStatus, type Prisma } from "~/generated/prisma/client";
 import type { db as database } from "@/server/db";
 import { formatBerlin } from "@/lib/berlin-time";
+import { parseCustomFieldCondition } from "@/lib/course-custom-fields";
 import { courseTypeLabel, eventCategoryLabel } from "@/lib/termine-labels";
 
 import { createLogger } from "@/server/utils/logger";
@@ -371,10 +372,14 @@ async function loadCourseFields(
     // Order is what registrants see, so it stays as sorted in the form.
     customFields: course.customFields.map((field) => {
       const options = formatOptions(field.options);
+      const condition = parseCustomFieldCondition(field.showIf);
       return [
         `${field.fieldName} (${field.fieldType}${field.isRequired ? ", Pflicht" : ""})`,
         options ? `Optionen: ${options}` : null,
         field.helpText ? `Hilfe: ${field.helpText}` : null,
+        condition
+          ? `Nur wenn ${condition.fieldName}: ${condition.values.join(", ")}`
+          : null,
       ]
         .filter(Boolean)
         .join(" · ");

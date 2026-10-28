@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useEffect, useId, useRef, useMemo } from "react";
@@ -6,7 +5,7 @@ import { api } from "@/trpc/react";
 import { useToast } from "@/app/_components/ui/toast";
 import { cn } from "@/lib/utils";
 import { hasDiscountEligibleSiblingGroup } from "@/lib/sibling-discount";
-import { isRequiredCustomFieldEmpty } from "@/lib/course-custom-fields";
+import { missingRequiredCustomFieldNames } from "@/lib/course-custom-fields";
 import {
   ageOnDate,
   priceOptionAgeMismatchMessage,
@@ -288,18 +287,12 @@ export default function CourseRegistrationForm({
           missingFieldKeys.push("priceOptionId");
         }
 
-        if (course.customFields) {
-          for (const field of course.customFields) {
-            if (field.isRequired) {
-              const customFields = p.customFields as
-                Record<string, any> | undefined;
-              const fieldValue = customFields?.[field.fieldName];
-              if (isRequiredCustomFieldEmpty(field.fieldType, fieldValue)) {
-                fieldErrors.push(field.fieldName);
-                missingFieldKeys.push(`customField:${field.fieldName}`);
-              }
-            }
-          }
+        for (const fieldName of missingRequiredCustomFieldNames(
+          course.customFields ?? [],
+          p.customFields as Record<string, unknown> | undefined,
+        )) {
+          fieldErrors.push(fieldName);
+          missingFieldKeys.push(`customField:${fieldName}`);
         }
 
         if (fieldErrors.length > 0) {

@@ -727,6 +727,9 @@ model CourseCustomField {
   isRequired Boolean         @default(false)
   helpText   String?
   sortOrder  Int             @default(0)
+  /// Nur anzeigen, wenn ein anderes Feld bestimmte Werte hat: { fieldName, values }.
+  /// Verweist per Feldname, weil die Felder beim Speichern neu angelegt werden.
+  showIf     Json?
 
   @@index([courseId])
 }
