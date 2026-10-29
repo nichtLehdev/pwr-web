@@ -10,6 +10,10 @@ import { lateRegistrationLinkStateForToken } from "../helpers/late-registration-
 import { logAudit } from "../helpers/audit";
 import { isExternalCourse } from "@/lib/course-external";
 import {
+  COURSE_NOT_PUBLISHED_MESSAGE,
+  isCoursePublished,
+} from "@/lib/course-published";
+import {
   LATE_REGISTRATION_PARAM,
   lateRegistrationLinkExpiry,
   lateRegistrationLinkState,
@@ -37,6 +41,7 @@ async function loadManageableCourse(
       slug: true,
       title: true,
       endDate: true,
+      status: true,
       createdById: true,
       externalProviderName: true,
       externalRegistrationUrl: true,
@@ -112,6 +117,12 @@ export const lateRegistrationLinksRouter = createTRPCRouter({
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Dieser Kurs wird über einen externen Anbieter angemeldet.",
+        });
+      }
+      if (!isCoursePublished(course)) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: COURSE_NOT_PUBLISHED_MESSAGE,
         });
       }
       const now = new Date();

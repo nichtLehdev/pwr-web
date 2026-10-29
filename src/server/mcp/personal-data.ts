@@ -14,8 +14,13 @@
 const PERSONAL_KEY =
   /email|phone|^(registrant|billing|guardian)|^(firstName|lastName|username|displayUsername|birthDate|bio|preferences|password|token|ipAddress|userAgent|twoFactorEnabled|lastLoginAt|iban|bic|accountHolder)$/i;
 
-/** Anschriftsfelder: bei Personen privat, bei Veranstaltungsorten öffentlich. */
-const ADDRESS_KEY = /^(street|zipCode|city|address)$/;
+/**
+ * Anschriftsfelder: bei Personen privat, bei Veranstaltungsorten öffentlich.
+ * Auch mit Präfix (`conductorStreet`, `representativeZipCode`); die
+ * Großschreibung verhindert Treffer wie `capacity`.
+ */
+const ADDRESS_KEY =
+  /^(street|zipCode|city|address)$|(Street|ZipCode|City|Address)$/;
 
 /**
  * Relationen, die Anmeldungen, Teilnehmende, Rechnungen oder Mails an sie

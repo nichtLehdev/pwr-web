@@ -31,6 +31,11 @@ describe("stripPersonalData", () => {
       conductorEmail: "max@example.test",
       conductorPhone: "0123",
       representativeEmail: "rep@example.test",
+      conductorStreet: "Weg 1",
+      conductorZipCode: "12345",
+      conductorCity: "Stadt",
+      representativeStreet: "Gasse 2",
+      maxCapacity: 40,
       conductor: {
         displayName: "Max",
         street: "Weg 1",
@@ -44,6 +49,7 @@ describe("stripPersonalData", () => {
       name: "Posaunenchor",
       contactWebsite: "https://chor.example",
       conductorName: "Max",
+      maxCapacity: 40,
       conductor: { displayName: "Max" },
     });
   });
