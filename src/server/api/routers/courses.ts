@@ -15,6 +15,7 @@ import { userHasPermission } from "../helpers/permissions";
 import {
   authorMayChangeStatus,
   authorMaySaveStatus,
+  statusAfterEdit,
 } from "../helpers/content-status";
 import {
   assertDistrictAllowed,
@@ -1362,20 +1363,27 @@ export const coursesRouter = createTRPCRouter({
         await ctx.db.courseCustomField.deleteMany({ where: { courseId: id } });
       }
 
-      if (status !== undefined) {
-        if (!canApproveContent) {
-          if (!authorMaySaveStatus(course.status, status)) {
-            throw new TRPCError({
-              code: "FORBIDDEN",
-              message:
-                "Nur Redakteure können den Status frei ändern. Als Autor kannst du zwischen Entwurf und „Zur Prüfung“ wechseln oder nach Ablehnung wieder einen Entwurf anlegen.",
-            });
-          }
-        }
+      if (
+        status !== undefined &&
+        !canApproveContent &&
+        !authorMaySaveStatus(course.status, status)
+      ) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message:
+            "Nur Redakteure können den Status frei ändern. Als Autor kannst du zwischen Entwurf und „Zur Prüfung“ wechseln oder nach Ablehnung wieder einen Entwurf anlegen.",
+        });
+      }
+      const nextStatus = statusAfterEdit(
+        course.status,
+        status,
+        canApproveContent,
+      );
 
-        data.status = status;
+      if (nextStatus !== undefined) {
+        data.status = nextStatus;
 
-        if (status === ContentStatus.APPROVED) {
+        if (nextStatus === ContentStatus.APPROVED) {
           const courseWithImage = await ctx.db.course.findUnique({
             where: { id },
             include: {
@@ -1725,7 +1733,7 @@ export const coursesRouter = createTRPCRouter({
       });
 
       if (
-        status === ContentStatus.PENDING &&
+        nextStatus === ContentStatus.PENDING &&
         course.status !== ContentStatus.PENDING
       ) {
         await notifySubmittedForReview({
@@ -1740,9 +1748,8 @@ export const coursesRouter = createTRPCRouter({
       if (updated.status === ContentStatus.APPROVED) {
         await promoteCustomFieldTemplatesForCourses(ctx.db, [updated.id]);
       }
-      // Authors may keep an approved course approved while editing; only a
-      // reviewer saving it as approved signs off on this state.
-      if (status === ContentStatus.APPROVED && canApproveContent) {
+      // Only a reviewer saving it as approved signs off on this state.
+      if (nextStatus === ContentStatus.APPROVED) {
         await recordReviewSnapshot(ctx.db, {
           contentType: "course",
           contentId: updated.id,
