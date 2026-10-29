@@ -28,6 +28,10 @@ import {
 } from "lucide-react";
 import { isExternalCourse } from "@/lib/course-external";
 import {
+  COURSE_NOT_PUBLISHED_MESSAGE,
+  isCoursePublished,
+} from "@/lib/course-published";
+import {
   CourseInvoicesButton,
   DashboardFormMediaSplit,
   DashboardFormSectionLayout,
@@ -254,10 +258,12 @@ export default function CourseDetailPage() {
   const canViewParticipants =
     isOwner || hasViewParticipantsPermission || hasCourseTeamAccess;
   // Registrations the team received by mail, phone or on paper are entered by
-  // hand — the public form is closed once the deadline passes.
-  const canAddRegistrations =
+  // hand — the public form is closed once the deadline passes. Only once the
+  // course is approved, though: before that, nobody can register for it.
+  const mayAddRegistrations =
     !isExternalCourse(course) &&
     (isOwner || hasCourseTeamAccess || hasManageRegistrationsPermission);
+  const canAddRegistrations = mayAddRegistrations && isCoursePublished(course);
 
   const startDate = new Date(course.startDate);
   const endDate = new Date(course.endDate);
@@ -935,6 +941,11 @@ export default function CourseDetailPage() {
 
       {activeTab === "participants" && canViewParticipants && (
         <div className="space-y-6">
+          {mayAddRegistrations && !canAddRegistrations && (
+            <p className="text-dark dark:text-night-muted text-sm">
+              {COURSE_NOT_PUBLISHED_MESSAGE}
+            </p>
+          )}
           <div className="flex flex-wrap justify-end gap-2">
             {canMailRegistrants && (
               <Link
