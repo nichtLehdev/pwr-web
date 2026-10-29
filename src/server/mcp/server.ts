@@ -12,6 +12,7 @@ import { appRouter, createCaller } from "@/server/api/root";
 import { createLogger } from "@/server/utils/logger";
 import type { McpAuth } from "./auth";
 import { createMcpTrpcContext } from "./context";
+import { stripPersonalData } from "./personal-data";
 import { reviveDates, toToolInputSchema } from "./schema";
 import {
   MCP_SERVER_INSTRUCTIONS,
@@ -125,7 +126,8 @@ async function callTool(
 
   try {
     const result = await caller[routerKey]![procedureKey]!(input);
-    return textResult(serialize(result));
+    const shaped = tool.mapResult ? tool.mapResult(result) : result;
+    return textResult(serialize(stripPersonalData(shaped)));
   } catch (error) {
     if (
       !(error instanceof TRPCError) ||
