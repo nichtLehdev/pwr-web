@@ -1,4 +1,7 @@
+import type { z } from "zod";
+
 import { MCP_SCOPES, type McpScope } from "@/lib/mcp-scopes";
+import { restrictEnsembleInput } from "./ensemble-input";
 import { summarizeProfile } from "./profile-summary";
 
 /**
@@ -23,6 +26,11 @@ export interface McpToolDefinition {
   destructive?: boolean;
   /** Kürzt das Ergebnis, bevor es an den Client geht (z. B. ohne Privatdaten). */
   mapResult?: (result: unknown) => unknown;
+  /**
+   * Strengere Eingabe als die der Prozedur, wenn das Formular mehr vorgibt
+   * als die Prozedur prüft. Gilt für das angezeigte Schema und die Prüfung.
+   */
+  restrictInput?: (input: z.ZodObject) => z.ZodObject;
 }
 
 const READ = MCP_SCOPES.READ;
@@ -36,6 +44,9 @@ const MARKDOWN_NOTE =
 
 const DATE_NOTE =
   "Zeitangaben als ISO 8601 mit Zeitzone, z. B. 2026-11-14T19:30:00+01:00 (deutsche Zeit: +01:00 im Winter, +02:00 im Sommer).";
+
+const REHEARSAL_NOTE =
+  "Probenzeiten über rehearsalSchedules: je Eintrag ein Wochentag (Montag … Sonntag) und nur der Probenbeginn als HH:MM, z. B. 19:30 – keine Spanne wie „19:30 - 21:30“, kein „Uhr“. Probiert ein Chor an mehreren Tagen, ein Eintrag pro Tag.";
 
 export const MCP_TOOLS: McpToolDefinition[] = [
   // ── Kontext ────────────────────────────────────────────────────────────
@@ -314,17 +325,17 @@ export const MCP_TOOLS: McpToolDefinition[] = [
   {
     name: "create_ensemble",
     title: "Ensemble anlegen",
-    description:
-      "Neues Ensemble anlegen (Recht zur Ensembleverwaltung nötig). Probezeiten über rehearsalSchedules (day/time als Text).",
+    description: `Neues Ensemble anlegen (Recht zur Ensembleverwaltung nötig). ${REHEARSAL_NOTE}`,
     procedure: "ensembles.create",
+    restrictInput: restrictEnsembleInput,
     scope: WRITE,
   },
   {
     name: "update_ensemble",
     title: "Ensemble ändern",
-    description:
-      "Ensemble ändern; nur übergebene Felder ändern sich. Chorleitungen und Vertretungen dürfen ihr eigenes Ensemble pflegen.",
+    description: `Ensemble ändern; nur übergebene Felder ändern sich. Chorleitungen und Vertretungen dürfen ihr eigenes Ensemble pflegen. ${REHEARSAL_NOTE}`,
     procedure: "ensembles.update",
+    restrictInput: restrictEnsembleInput,
     scope: WRITE,
   },
   {

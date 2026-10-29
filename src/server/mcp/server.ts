@@ -6,7 +6,7 @@ import {
   type Tool,
 } from "@modelcontextprotocol/sdk/types.js";
 import { TRPCError } from "@trpc/server";
-import { ZodError } from "zod";
+import { z, ZodError } from "zod";
 
 import { appRouter, createCaller } from "@/server/api/root";
 import { createLogger } from "@/server/utils/logger";
@@ -35,7 +35,10 @@ function getProcedure(path: string): ProcedureDef | undefined {
 }
 
 function inputParserOf(tool: McpToolDefinition): unknown {
-  return getProcedure(tool.procedure)?._def.inputs[0];
+  const input = getProcedure(tool.procedure)?._def.inputs[0];
+  return tool.restrictInput && input instanceof z.ZodObject
+    ? tool.restrictInput(input)
+    : input;
 }
 
 /** Das Schema hängt nur am Code, also einmal pro Prozess berechnen. */
@@ -114,7 +117,14 @@ async function callTool(
   const ctx = await createMcpTrpcContext(mcpAuth, headers);
   if (!ctx) return textResult("Konto nicht gefunden.", true);
 
-  const input = reviveDates(inputParserOf(tool), args ?? {});
+  const parser = inputParserOf(tool);
+  let input = reviveDates(parser, args ?? {});
+  if (tool.restrictInput && parser instanceof z.ZodType) {
+    const checked = parser.safeParse(input);
+    if (!checked.success) return textResult(describeError(checked.error), true);
+    input = checked.data;
+  }
+
   const caller = createCaller(ctx) as unknown as Record<
     string,
     Record<string, (input: unknown) => Promise<unknown>>
