@@ -13,6 +13,7 @@ import PublicPage from "@/app/_components/general/public-page";
 import { BezirkLabel } from "@/app/_components/programmheft/bezirk-label";
 import { headMeta } from "@/app/_components/programmheft/page-head";
 import { Tag } from "@/app/_components/programmheft/tag";
+import { Note } from "@/app/_components/programmheft/note";
 import { courseTypeLabel } from "@/lib/termine-labels";
 import CourseRegistrationForm from "@/app/_components/events/course-registration-form";
 import { CourseExistingRegistrationOptions } from "@/app/_components/events/course-existing-registration-options";
@@ -35,9 +36,12 @@ function formatCourseSchedule(course: Course): string {
 export default function CourseRegistrationPage({
   course,
   spots,
+  lateRegistrationToken,
 }: {
   course: Course;
   spots: Spots;
+  /** Gültiger Nachmeldelink: die Anmeldung geht trotz Frist bzw. geschlossener Anmeldung durch. */
+  lateRegistrationToken?: string;
 }) {
   const router = useRouter();
   const { data: session } = useSession();
@@ -114,6 +118,7 @@ export default function CourseRegistrationPage({
           </span>
         )}
         {isWaitlist && <Tag tone="orange">Nur Warteliste</Tag>}
+        {lateRegistrationToken && <Tag tone="orange">Nachmeldung</Tag>}
       </div>
       <div className={headMeta.line}>
         <span className="flex items-center gap-2">
@@ -182,6 +187,17 @@ export default function CourseRegistrationPage({
             <p className="text-ink dark:text-night-text">Laden…</p>
           </div>
         )}
+        {lateRegistrationToken && (
+          <div className="sheet max-w-3xl pt-8">
+            <Note tone="important" title="Nachmeldung über persönlichen Link">
+              <p>
+                Das Kursteam hat Ihnen diesen Link für eine Anmeldung außerhalb
+                der regulären Anmeldezeit gegeben. Er gilt für genau eine
+                Anmeldung und ist danach verbraucht.
+              </p>
+            </Note>
+          </div>
+        )}
         {showForm && !existingRegistrationLoading && (
           <CourseRegistrationForm
             course={course}
@@ -191,6 +207,7 @@ export default function CourseRegistrationPage({
             availableSlots={spots.availableSlots}
             capacityByPriceOption={spots.capacityByPriceOption}
             currentUser={userProfile ?? null}
+            lateRegistrationToken={lateRegistrationToken}
           />
         )}
       </div>

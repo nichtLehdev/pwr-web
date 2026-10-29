@@ -143,6 +143,10 @@ import {
   siblingDiscountWithinGroup,
 } from "@/lib/registration-split";
 import { createRegistrationAccessToken } from "@/server/utils/registration-access-token";
+import {
+  assertLateRegistrationLinkUsable,
+  claimLateRegistrationLink,
+} from "../helpers/late-registration-link";
 import { logAudit } from "../helpers/audit";
 import {
   createNotification,
@@ -521,6 +525,11 @@ export const registrationsRouter = createTRPCRouter({
          * verknüpfte Anmeldung. Ohne Angabe wartet die ganze Anmeldung.
          */
         confirmedParticipantIndexes: z.array(z.number().int()).optional(),
+        /**
+         * Token eines Nachmeldelinks: hebt die Zeit-Sperren (geschlossen, noch nicht
+         * geöffnet, Frist vorbei) für genau eine Anmeldung auf.
+         */
+        lateRegistrationToken: z.string().max(200).optional(),
         [BOT_TRAP_FIELD]: z.string().max(200).optional(),
         [BOT_TRAP_ELAPSED_FIELD]: z.number().optional(),
       }),
@@ -531,6 +540,7 @@ export const registrationsRouter = createTRPCRouter({
         paymentMethod: inputPaymentMethod,
         downPaymentAcknowledged,
         confirmedParticipantIndexes,
+        lateRegistrationToken,
         // Müssen hier heraus: `registrationData` geht unverändert an Prisma.
         [BOT_TRAP_FIELD]: botTrap,
         [BOT_TRAP_ELAPSED_FIELD]: botTrapElapsedMs,
@@ -593,28 +603,48 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      if (!course.registrationOpen) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Registration is closed for this course",
-        });
-      }
+      // Ein Nachmeldelink ersetzt nur die Zeit-Sperren; Kapazität, Preise und
+      // Pflichtfelder prüft der Rest wie sonst. Eingelöst wird er erst in der
+      // Transaktion, damit eine gescheiterte Anmeldung ihn nicht verbraucht.
+      const lateRegistrationLinkId = lateRegistrationToken
+        ? await assertLateRegistrationLinkUsable(
+            ctx.db,
+            course.id,
+            lateRegistrationToken,
+          )
+        : null;
 
-      if (
-        course.registrationOpensAt &&
-        new Date() < course.registrationOpensAt
-      ) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Registration is not yet open for this course",
-        });
-      }
+      if (lateRegistrationLinkId) {
+        if (course.endDate < new Date()) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Der Kurs ist bereits vorbei.",
+          });
+        }
+      } else {
+        if (!course.registrationOpen) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Registration is closed for this course",
+          });
+        }
 
-      if (isRegistrationDeadlinePassed(course.registrationDeadline)) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Registration deadline has passed",
-        });
+        if (
+          course.registrationOpensAt &&
+          new Date() < course.registrationOpensAt
+        ) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Registration is not yet open for this course",
+          });
+        }
+
+        if (isRegistrationDeadlinePassed(course.registrationDeadline)) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Registration deadline has passed",
+          });
+        }
       }
 
       if (input.siblingDiscountApplied && !course.allowSiblingDiscount) {
@@ -778,10 +808,18 @@ export const registrationsRouter = createTRPCRouter({
           return { registration, part };
         };
 
-        return {
+        const created = {
           primary: await createPart(plan.primary),
           waitlist: plan.waitlist ? await createPart(plan.waitlist) : null,
         };
+        if (lateRegistrationLinkId) {
+          await claimLateRegistrationLink(
+            tx,
+            lateRegistrationLinkId,
+            created.primary.registration.id,
+          );
+        }
+        return created;
       });
 
       await sendRegistrationPartsEmail(parts, course);
@@ -795,6 +833,20 @@ export const registrationsRouter = createTRPCRouter({
         registrationStatus: parts.primary.part.status,
         waitlistRegistration: parts.waitlist?.registration,
       });
+
+      if (lateRegistrationLinkId) {
+        void logAudit(ctx.db, {
+          actorId: ctx.session?.user.id ?? null,
+          actorEmail: parts.primary.registration.registrantEmail,
+          action: "course.late_registration_link.use",
+          entityType: "registration",
+          entityId: parts.primary.registration.id,
+          details: {
+            summary: `Nachmeldung für „${course.title}“ über Nachmeldelink`,
+            linkId: lateRegistrationLinkId,
+          },
+        });
+      }
 
       return withWaitlistPart(parts);
     }),

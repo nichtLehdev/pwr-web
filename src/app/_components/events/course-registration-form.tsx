@@ -87,6 +87,7 @@ export default function CourseRegistrationForm({
   staffMode = false,
   availableSlots,
   capacityByPriceOption,
+  lateRegistrationToken,
 }: CourseRegistrationFormProps) {
   const toast = useToast();
   const botTrap = useBotTrap();
@@ -710,6 +711,7 @@ export default function CourseRegistrationForm({
         ...payload,
         ...splitPayload,
         downPaymentAcknowledged,
+        ...(lateRegistrationToken && { lateRegistrationToken }),
         ...botTrap.fields(),
       },
       handlers,
