@@ -46,6 +46,7 @@ import {
 import { renderDescriptionHtml } from "@/lib/sanitize";
 import "@/styles/beschreibung.css";
 import { RegistrationPaymentBadge } from "@/app/_components/dashboard/invoice-payment-badge";
+import { LateRegistrationLinks } from "@/app/_components/dashboard/late-registration-links";
 import { participantPriceOptionLabel } from "@/lib/course-price-options";
 import { priceOptionAgeLabel } from "@/lib/course-price-option-age";
 import { Tag, type TagTone } from "@/app/_components/programmheft/tag";
@@ -1003,6 +1004,13 @@ export default function CourseDetailPage() {
               </div>
             </div>
           </section>
+
+          {canAddRegistrations && (
+            <LateRegistrationLinks
+              courseId={courseId}
+              courseEnded={endDate < new Date()}
+            />
+          )}
 
           <section className="dark:border-night-rule border-rule border-t pt-10">
             <h2 className="dark:text-night-text text-ink mb-4 text-lg font-semibold">

@@ -33,25 +33,26 @@ model User {
   bio         String?
   preferences Json?
 
-  accounts              Account[]
-  sessions              Session[]
-  twoFactor             TwoFactor?           @relation("UserTwoFactor")
-  bezirk                Bezirk?              @relation("BezirkUsers", fields: [bezirkId], references: [id], onDelete: SetNull)
-  uploadedMedia         Media[]              @relation("MediaUploadedBy")
-  uploadedDownloads     Download[]           @relation("DownloadUploadedBy")
-  posaunenwart          Posaunenwart?        @relation("PosaunenwartUser")
-  createdEvents         Event[]              @relation("EventCreator")
-  createdCourses        Course[]             @relation("CourseCreator")
-  createdPosts          Post[]               @relation("PostCreator")
-  authoredPosts         Post[]               @relation("PostAuthor")
-  reviewedEvents        Event[]              @relation("EventReviewer")
-  reviewedCourses       Course[]             @relation("CourseReviewer")
-  reviewedPosts         Post[]               @relation("PostReviewer")
-  courseCollaborations  CourseCollaborator[]
-  sentCourseMails       CourseMail[]         @relation("CourseMailSender")
-  conductedEnsembles    Ensemble[]           @relation("EnsembleConductor")
-  representedEnsembles  Ensemble[]           @relation("EnsembleRepresentative")
-  conductedAuswahlChors AuswahlChor[]        @relation("AuswahlChorConductor")
+  accounts                     Account[]
+  sessions                     Session[]
+  twoFactor                    TwoFactor?             @relation("UserTwoFactor")
+  bezirk                       Bezirk?                @relation("BezirkUsers", fields: [bezirkId], references: [id], onDelete: SetNull)
+  uploadedMedia                Media[]                @relation("MediaUploadedBy")
+  uploadedDownloads            Download[]             @relation("DownloadUploadedBy")
+  posaunenwart                 Posaunenwart?          @relation("PosaunenwartUser")
+  createdEvents                Event[]                @relation("EventCreator")
+  createdCourses               Course[]               @relation("CourseCreator")
+  createdLateRegistrationLinks LateRegistrationLink[] @relation("LateRegistrationLinkCreator")
+  createdPosts                 Post[]                 @relation("PostCreator")
+  authoredPosts                Post[]                 @relation("PostAuthor")
+  reviewedEvents               Event[]                @relation("EventReviewer")
+  reviewedCourses              Course[]               @relation("CourseReviewer")
+  reviewedPosts                Post[]                 @relation("PostReviewer")
+  courseCollaborations         CourseCollaborator[]
+  sentCourseMails              CourseMail[]           @relation("CourseMailSender")
+  conductedEnsembles           Ensemble[]             @relation("EnsembleConductor")
+  representedEnsembles         Ensemble[]             @relation("EnsembleRepresentative")
+  conductedAuswahlChors        AuswahlChor[]          @relation("AuswahlChorConductor")
 
   bezirkPersons       BezirkPerson[]       @relation("BezirkPersonUser")
   teamMember          TeamMember?          @relation("TeamMemberUser")
@@ -120,7 +121,6 @@ model GameResult {
   @@index([game, score])
   @@map("game_result")
 }
-
 
 /**
  * Custom Role model for flexible role-based permissions
@@ -470,7 +470,6 @@ model TwoFactor {
   @@map("twoFactor")
 }
 
-
 enum EventEnsembleType {
   AUSWAHLCHOR
   ENSEMBLE
@@ -570,7 +569,9 @@ enum DownPaymentMode {
   TICKET
 }
 
-/** Welcher Hinweis zur Erstattung bei der Anmeldung bestätigt werden muss. */
+/**
+ * Welcher Hinweis zur Erstattung bei der Anmeldung bestätigt werden muss.
+ */
 enum DownPaymentRefundPolicy {
   NON_REFUNDABLE
   REFUNDABLE
@@ -648,7 +649,6 @@ enum ContentStatus {
   REJECTED // Rejected, needs revision
   ARCHIVED // No longer active
 }
-
 
 model Event {
   id          String  @id @default(uuid())
@@ -811,10 +811,14 @@ model Course {
    * Bei TICKET trägt jede Preiskategorie ihren eigenen Betrag.
    */
   downPaymentMode         DownPaymentMode         @default(NONE)
-  /** Betrag pro Teilnehmer bei DownPaymentMode.COURSE. */
+  /**
+   * Betrag pro Teilnehmer bei DownPaymentMode.COURSE.
+   */
   downPaymentAmount       Float?
   downPaymentRefundPolicy DownPaymentRefundPolicy @default(NON_REFUNDABLE)
-  /** Eigener Erstattungshinweis bei DownPaymentRefundPolicy.CUSTOM. */
+  /**
+   * Eigener Erstattungshinweis bei DownPaymentRefundPolicy.CUSTOM.
+   */
   downPaymentRefundText   String?
 
   prerequisites String?
@@ -832,6 +836,8 @@ model Course {
   registrations    CourseRegistration[]
   mails            CourseMail[]
   invoices         Invoice[]
+
+  lateRegistrationLinks LateRegistrationLink[]
 
   createdById String?
   createdBy   User?     @relation("CourseCreator", fields: [createdById], references: [id], onDelete: SetNull)
@@ -993,14 +999,20 @@ model CourseRegistration {
    * üblichen Regeln zum Bearbeiten und Stornieren.
    */
   downPaymentAmount     Float?
-  /** null genau dann, wenn downPaymentAmount null ist. */
+  /**
+   * null genau dann, wenn downPaymentAmount null ist.
+   */
   downPaymentStatus     DownPaymentStatus?
   downPaymentPaidAt     DateTime?
-  /** Tatsächlich eingegangener Betrag; null heißt "voller Betrag" (wie Invoice.paidAmount). */
+  /**
+   * Tatsächlich eingegangener Betrag; null heißt "voller Betrag" (wie Invoice.paidAmount).
+   */
   downPaymentPaidAmount Float?
   downPaymentPaidById   String?
   downPaymentPaidBy     User?              @relation("DownPaymentBooker", fields: [downPaymentPaidById], references: [id], onDelete: SetNull)
-  /** Interner Vermerk (Kontoauszug, Absprache mit der Kasse zur Erstattung). */
+  /**
+   * Interner Vermerk (Kontoauszug, Absprache mit der Kasse zur Erstattung).
+   */
   downPaymentNote       String?
 
   invoiceGenerated Boolean   @default(false)
@@ -1022,7 +1034,9 @@ model CourseRegistration {
    * Anmeldenden, wer nachrückt — so lange hält die Warteliste an.
    */
   promotionOfferExpiresAt      DateTime?
-  /** Wann das Kursteam an das auslaufende Angebot erinnert wurde. */
+  /**
+   * Wann das Kursteam an das auslaufende Angebot erinnert wurde.
+   */
   promotionOfferReminderSentAt DateTime?
   /**
    * Angebot abgelehnt oder verfallen, als so viele Plätze nutzbar waren: bis
@@ -1030,9 +1044,13 @@ model CourseRegistration {
    */
   promotionOfferPassedSeats    Int?
 
-  participants Participant[]
-  invoices     Invoice[]
-  registrant   User?         @relation(fields: [registrantId], references: [id], onDelete: SetNull)
+  participants         Participant[]
+  invoices             Invoice[]
+  registrant           User?                 @relation(fields: [registrantId], references: [id], onDelete: SetNull)
+  /**
+   * Nachmeldelink, über den die Anmeldung nach der Frist kam.
+   */
+  lateRegistrationLink LateRegistrationLink?
 
   notes     String?
   createdAt DateTime @default(now())
@@ -1044,6 +1062,33 @@ model CourseRegistration {
   @@index([registrantId])
   @@index([registrationGroupId])
   @@index([promotionOfferExpiresAt])
+}
+
+/// Einmal nutzbarer Link, mit dem sich jemand außerhalb des Anmeldezeitraums
+/// (meist nach der Frist) über das öffentliche Formular anmelden kann. Kapazität,
+/// Preise und Pflichtfelder gelten wie sonst; nur die Zeit-Sperren entfallen.
+model LateRegistrationLink {
+  id       String @id @default(uuid())
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  /// SHA-256 des Tokens im Link. Der Token selbst wird nur einmal beim Erstellen gezeigt.
+  tokenHash String   @unique
+  /// Interne Notiz, für wen der Link gedacht ist.
+  note      String?
+  expiresAt DateTime
+
+  createdById String?
+  createdBy   User?    @relation("LateRegistrationLinkCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+
+  usedAt         DateTime?
+  registrationId String?             @unique
+  registration   CourseRegistration? @relation(fields: [registrationId], references: [id], onDelete: SetNull)
+  revokedAt      DateTime?
+
+  @@index([courseId])
+  @@map("late_registration_link")
 }
 
 /// Archived e-mail from an organizer to a course's registrants. Recipient addresses are
