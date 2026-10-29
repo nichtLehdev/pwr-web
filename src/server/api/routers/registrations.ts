@@ -17,6 +17,10 @@ import {
 import type { Prisma } from "~/generated/prisma/client";
 import type { db as database } from "@/server/db";
 import { isExternalCourse } from "@/lib/course-external";
+import {
+  COURSE_NOT_PUBLISHED_MESSAGE,
+  isCoursePublished,
+} from "@/lib/course-published";
 import { isRegistrationDeadlinePassed } from "@/lib/registration-deadline";
 import { bookedAmountFor, invoiceOpenAmount } from "@/lib/invoice-payment";
 import {
@@ -589,7 +593,8 @@ export const registrationsRouter = createTRPCRouter({
         },
       });
 
-      if (!course) {
+      // Unveröffentlichte Kurse gibt es öffentlich nicht: wie nicht vorhanden.
+      if (!course || !isCoursePublished(course)) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Course not found",
@@ -949,6 +954,13 @@ export const registrationsRouter = createTRPCRouter({
           code: "FORBIDDEN",
           message:
             "Keine Berechtigung, Anmeldungen für diesen Kurs zu erfassen.",
+        });
+      }
+
+      if (!isCoursePublished(course)) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: COURSE_NOT_PUBLISHED_MESSAGE,
         });
       }
 
