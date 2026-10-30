@@ -11,6 +11,7 @@ import { userHasPermission } from "../helpers/permissions";
 import {
   authorMayChangeStatus,
   authorMaySaveStatus,
+  statusAfterEdit,
 } from "../helpers/content-status";
 import {
   assertDistrictAllowed,
@@ -675,6 +676,11 @@ export const eventsRouter = createTRPCRouter({
             "Als Autor kannst du nur zwischen Entwurf und „Zur Prüfung“ wechseln.",
         });
       }
+      const status = statusAfterEdit(
+        event.status,
+        updateData.status,
+        canApprove,
+      );
 
       const scope = await resolveDistrictScope(
         ctx.db,
@@ -724,6 +730,7 @@ export const eventsRouter = createTRPCRouter({
         where: { id },
         data: {
           ...updateData,
+          status,
           // A blank field is "keep the current slug", not "clear it".
           ...(requestedSlug?.trim()
             ? { slug: await updateEventSlug(ctx.db, id, requestedSlug) }
@@ -742,7 +749,7 @@ export const eventsRouter = createTRPCRouter({
       });
 
       if (
-        updateData.status === ContentStatus.PENDING &&
+        status === ContentStatus.PENDING &&
         event.status !== ContentStatus.PENDING
       ) {
         await notifySubmittedForReview({
@@ -754,7 +761,7 @@ export const eventsRouter = createTRPCRouter({
         });
       }
       // Saving it as approved is signing off on this state.
-      if (updateData.status === ContentStatus.APPROVED) {
+      if (status === ContentStatus.APPROVED) {
         await recordReviewSnapshot(ctx.db, {
           contentType: "event",
           contentId: updated.id,
