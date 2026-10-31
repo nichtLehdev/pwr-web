@@ -10,6 +10,7 @@ import {
 import {
   authorMayChangeStatus,
   authorMaySaveStatus,
+  statusAfterEdit,
 } from "../helpers/content-status";
 import {
   assertDistrictAllowed,
@@ -672,8 +673,13 @@ export const postsRouter = createTRPCRouter({
             "Als Autor kannst du nur zwischen Entwurf und „Zur Prüfung“ wechseln.",
         });
       }
+      const status = statusAfterEdit(
+        post.status,
+        updateData.status,
+        canApprovePosts,
+      );
 
-      if (updateData.status === ContentStatus.APPROVED) {
+      if (status === ContentStatus.APPROVED) {
         const coverImageId = updateData.coverImageId ?? post.coverImageId;
         if (coverImageId) {
           const coverImage = await ctx.db.media.findUnique({
@@ -697,18 +703,18 @@ export const postsRouter = createTRPCRouter({
         updateData.authorId,
       );
 
-      const finalData: Record<string, unknown> = { ...updateData };
+      const finalData: Record<string, unknown> = { ...updateData, status };
 
       // A blank field is "keep the current slug", not "clear it".
       if (requestedSlug?.trim()) {
         finalData.slug = await updatePostSlug(ctx.db, id, requestedSlug);
       }
       if (
-        updateData.status === ContentStatus.APPROVED &&
+        status === ContentStatus.APPROVED &&
         post.status !== ContentStatus.APPROVED
       ) {
         finalData.publishedAt = new Date();
-      } else if (updateData.status === ContentStatus.DRAFT) {
+      } else if (status === ContentStatus.DRAFT) {
         finalData.publishedAt = null;
       }
 
@@ -729,7 +735,7 @@ export const postsRouter = createTRPCRouter({
       });
 
       if (
-        updateData.status === ContentStatus.PENDING &&
+        status === ContentStatus.PENDING &&
         post.status !== ContentStatus.PENDING
       ) {
         await notifySubmittedForReview({
@@ -741,7 +747,7 @@ export const postsRouter = createTRPCRouter({
         });
       }
       // Saving it as approved is signing off on this state.
-      if (updateData.status === ContentStatus.APPROVED) {
+      if (status === ContentStatus.APPROVED) {
         await recordReviewSnapshot(ctx.db, {
           contentType: "post",
           contentId: updated.id,
