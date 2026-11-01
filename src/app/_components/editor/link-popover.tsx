@@ -30,6 +30,11 @@ export function normalizeHref(raw: string): string {
   return `https://${href}`;
 }
 
+/** Nur diese Ziele darf „Öffnen“ ansteuern — kein `javascript:` oder `data:`. */
+function isSafeHref(href: string): boolean {
+  return /^(https?:|mailto:|tel:|[/#?])/i.test(href);
+}
+
 export default function LinkPopover({
   state,
   onApply,
@@ -88,6 +93,7 @@ export default function LinkPopover({
   }, [state.x, state.y]);
 
   const normalized = normalizeHref(href);
+  const openHref = normalized || state.href;
 
   // Ins `body`: Der Editor steht selbst in einem Formular, und sein Rahmen
   // scrollt — verschachtelt würde das Fenster abgeschnitten.
@@ -150,16 +156,18 @@ export default function LinkPopover({
         </Button>
         {state.editing && (
           <>
-            <a
-              href={normalized || state.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              title="Link in neuem Tab öffnen"
-              aria-label="Link in neuem Tab öffnen"
-              className="text-ink hover:bg-rule/60 dark:text-night-text dark:hover:bg-night-rule p-2 transition-colors"
-            >
-              <ExternalLink className="h-4 w-4" />
-            </a>
+            {isSafeHref(openHref) && (
+              <a
+                href={openHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Link in neuem Tab öffnen"
+                aria-label="Link in neuem Tab öffnen"
+                className="text-ink hover:bg-rule/60 dark:text-night-text dark:hover:bg-night-rule p-2 transition-colors"
+              >
+                <ExternalLink className="h-4 w-4" />
+              </a>
+            )}
             <button
               type="button"
               onClick={onRemove}
