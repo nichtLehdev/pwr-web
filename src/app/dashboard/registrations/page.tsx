@@ -1,7 +1,7 @@
 "use client";
 
 import { usePersistedState } from "@/lib/use-persisted-state";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { api, type RouterOutputs } from "@/trpc/react";
@@ -105,6 +105,8 @@ export default function AdminRegistrationsPage() {
   const searchParams = useSearchParams();
   // Ein Link mit ?discount= gibt den Filter vor und überschreibt den gespeicherten.
   const requested = searchParams.get("discount");
+  // ?open=1 (ebenfalls von der Kachel): nur Rabatte, deren Prüfung noch etwas bewirkt.
+  const [onlyOpen, setOnlyOpen] = useState(searchParams.get("open") === "1");
   const [columnFilters, setColumnFilters] =
     usePersistedState<ColumnFiltersState>(
       requested ? null : "dashboard:registrations:columnFilters",
@@ -161,6 +163,7 @@ export default function AdminRegistrationsPage() {
       siblingDiscountStatus: discountFilter.length
         ? (discountFilter as SiblingDiscountStatus[])
         : undefined,
+      siblingDiscountOpen: onlyOpen || undefined,
       courseId: courseFilter.length ? courseFilter : undefined,
       sortBy:
         SORTABLE_COLUMNS[(sorting[0]?.id ?? "createdAt") as SortableColumn],
@@ -387,6 +390,20 @@ export default function AdminRegistrationsPage() {
         <div className="border-ink dark:border-night-text text-dark dark:text-night-muted mb-6 border-l-2 py-1 pl-4 text-sm">
           Wähle im Spaltenfilter „Rabatt“ einen Status aus — deine Berechtigung
           gilt nur für Anmeldungen mit Geschwisterkindrabatt.
+        </div>
+      )}
+
+      {onlyOpen && (
+        <div className="border-ink dark:border-night-text text-dark dark:text-night-muted mb-6 border-l-2 py-1 pl-4 text-sm">
+          Nur offene Rabattprüfungen: ohne stornierte Anmeldungen, bereits
+          ausgestellte Rechnungen und vergangene Kurse.{" "}
+          <button
+            type="button"
+            onClick={() => setOnlyOpen(false)}
+            className="text-ink dark:text-night-text font-medium underline underline-offset-2"
+          >
+            Alle anzeigen
+          </button>
         </div>
       )}
 
