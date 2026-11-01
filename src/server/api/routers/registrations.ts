@@ -1541,6 +1541,12 @@ export const registrationsRouter = createTRPCRouter({
         siblingDiscountStatus: z
           .array(z.nativeEnum(SiblingDiscountStatus))
           .optional(),
+        /**
+         * Nur Rabatte, bei denen eine Prüfung noch etwas bewirkt: Anmeldung nicht
+         * storniert, noch keine Rechnung ausgestellt (auch keine stornierte) und
+         * der Kurs nicht vorbei. Sonst wurde der Rabatt schon abgerechnet oder ist hinfällig.
+         */
+        siblingDiscountOpen: z.boolean().optional(),
         courseId: z.array(z.string()).optional(),
         sortBy: z
           .enum(["createdAt", "registrant", "course", "totalPrice", "status"])
@@ -1601,6 +1607,21 @@ export const registrationsRouter = createTRPCRouter({
                 },
               }),
         ...(courseIds && { courseId: { in: courseIds } }),
+        ...(input.siblingDiscountOpen && {
+          AND: [
+            { registrationStatus: { not: RegistrationStatus.CANCELLED } },
+            {
+              invoices: {
+                none: {
+                  status: {
+                    in: [InvoiceStatus.PUBLISHED, InvoiceStatus.CANCELLED],
+                  },
+                },
+              },
+            },
+            { course: { endDate: { gte: new Date() } } },
+          ],
+        }),
         ...(search && {
           OR: [
             { registrantEmail: { contains: search, mode: "insensitive" } },
