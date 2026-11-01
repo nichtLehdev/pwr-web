@@ -20,6 +20,7 @@ export { CourseFormEditMetaBar } from "./course-form-edit-meta-bar";
 export {
   CourseCustomFieldsEditor,
   customFieldTypeLabels,
+  resolveDraftCondition,
   type CourseCustomFieldDraft,
 } from "./course-custom-fields-editor";
 export {
@@ -32,6 +33,7 @@ export {
   type DashboardOverflowItem,
 } from "./dashboard-overflow-menu";
 export { DraftRestorePrompt } from "./draft-restore-prompt";
+export { ReviewChangesPanel } from "./review-changes-panel";
 export { default as SlugField } from "./slug-field";
 export {
   PersonDetailsFields,

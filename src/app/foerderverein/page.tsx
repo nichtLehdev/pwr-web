@@ -144,6 +144,7 @@ export default async function FoerdervereinPage() {
 
       <PageSection labelledBy="unterstuetzung-heading" rule>
         <Split
+          stickyHead
           head={
             <Heading id="unterstuetzung-heading" className="hyphens-manual">
               Weitere Unterstützungs&shy;möglichkeiten
@@ -156,11 +157,21 @@ export default async function FoerdervereinPage() {
               <Heading as="h3" size="list" rule>
                 Spenden &amp; Kollekten
               </Heading>
-              <p className={`${PROSE} mt-5`}>
-                Gerne werden wir bei freudigen oder traurigen Anlässen als
-                Spendenempfänger benannt. Wir stellen Spendenbescheinigungen aus
-                und sind als steuerbegünstigt anerkannt.
-              </p>
+              <div className={`${PROSE} mt-5 space-y-4`}>
+                <p>
+                  Gerne werden wir bei freudigen oder traurigen Anlässen als
+                  Spendenempfänger benannt. Wir stellen Spendenbescheinigungen
+                  aus und sind als steuerbegünstigt anerkannt.
+                </p>
+                <p>
+                  Spenderinnen und Spender haben die Möglichkeit, dem
+                  Förderverein Geld für den Vermögensstock zukommen zu lassen.
+                  Diese Mittel sind dann langfristig gebunden. Alle anderen
+                  Spenden ohne Verwendungszweck sowie die Mitgliedsbeiträge
+                  müssen zeitnah für den Vereinszweck, die Förderung der
+                  Aufgaben des Posaunenwerks, ausgegeben werden.
+                </p>
+              </div>
 
               <Panel
                 as="section"

@@ -28,12 +28,17 @@ import {
 } from "lucide-react";
 import { isExternalCourse } from "@/lib/course-external";
 import {
+  COURSE_NOT_PUBLISHED_MESSAGE,
+  isCoursePublished,
+} from "@/lib/course-published";
+import {
   CourseInvoicesButton,
   DashboardFormMediaSplit,
   DashboardFormSectionLayout,
   DashboardOverflowMenu,
   DashboardPage,
   EntryExportButton,
+  ReviewChangesPanel,
   useEntryExport,
 } from "@/app/_components/dashboard";
 import {
@@ -45,6 +50,7 @@ import {
 import { renderDescriptionHtml } from "@/lib/sanitize";
 import "@/styles/beschreibung.css";
 import { RegistrationPaymentBadge } from "@/app/_components/dashboard/invoice-payment-badge";
+import { LateRegistrationLinks } from "@/app/_components/dashboard/late-registration-links";
 import { participantPriceOptionLabel } from "@/lib/course-price-options";
 import { priceOptionAgeLabel } from "@/lib/course-price-option-age";
 import { Tag, type TagTone } from "@/app/_components/programmheft/tag";
@@ -252,10 +258,12 @@ export default function CourseDetailPage() {
   const canViewParticipants =
     isOwner || hasViewParticipantsPermission || hasCourseTeamAccess;
   // Registrations the team received by mail, phone or on paper are entered by
-  // hand — the public form is closed once the deadline passes.
-  const canAddRegistrations =
+  // hand — the public form is closed once the deadline passes. Only once the
+  // course is approved, though: before that, nobody can register for it.
+  const mayAddRegistrations =
     !isExternalCourse(course) &&
     (isOwner || hasCourseTeamAccess || hasManageRegistrationsPermission);
+  const canAddRegistrations = mayAddRegistrations && isCoursePublished(course);
 
   const startDate = new Date(course.startDate);
   const endDate = new Date(course.endDate);
@@ -584,6 +592,10 @@ export default function CourseDetailPage() {
                   Kurs prüfen
                 </h2>
                 <div className="space-y-4">
+                  <ReviewChangesPanel
+                    contentType="course"
+                    contentId={course.id}
+                  />
                   <div>
                     <label className="dark:text-night-text text-ink mb-2 block text-sm font-medium">
                       Anmerkungen (optional bei Genehmigung, erforderlich bei
@@ -929,6 +941,11 @@ export default function CourseDetailPage() {
 
       {activeTab === "participants" && canViewParticipants && (
         <div className="space-y-6">
+          {mayAddRegistrations && !canAddRegistrations && (
+            <p className="text-dark dark:text-night-muted text-sm">
+              {COURSE_NOT_PUBLISHED_MESSAGE}
+            </p>
+          )}
           <div className="flex flex-wrap justify-end gap-2">
             {canMailRegistrants && (
               <Link
@@ -998,6 +1015,13 @@ export default function CourseDetailPage() {
               </div>
             </div>
           </section>
+
+          {canAddRegistrations && (
+            <LateRegistrationLinks
+              courseId={courseId}
+              courseEnded={endDate < new Date()}
+            />
+          )}
 
           <section className="dark:border-night-rule border-rule border-t pt-10">
             <h2 className="dark:text-night-text text-ink mb-4 text-lg font-semibold">

@@ -18,7 +18,10 @@ import {
   ContentStatus,
   CourseCollaboratorRole,
 } from "~/generated/prisma/enums";
-import { customFieldTypeNeedsOptions } from "@/lib/course-custom-fields";
+import {
+  customFieldTypeNeedsOptions,
+  parseCustomFieldCondition,
+} from "@/lib/course-custom-fields";
 import {
   Lock,
   AlertTriangle,
@@ -38,6 +41,7 @@ import {
   CourseFormEditMetaBar,
   CourseInvoicesButton,
   CourseCustomFieldsEditor,
+  resolveDraftCondition,
   DraftRestorePrompt,
   PriceOptionAgeLimits,
   SlugField,
@@ -487,6 +491,7 @@ export default function EditCoursePage() {
             isRequired: cf.isRequired,
             helpText: cf.helpText || "",
             sortOrder: cf.sortOrder,
+            showIf: parseCustomFieldCondition(cf.showIf),
           })) || [],
         status: course.status || ContentStatus.DRAFT,
       };
@@ -695,6 +700,7 @@ export default function EditCoursePage() {
             isRequired: cf.isRequired,
             helpText: cf.helpText || "",
             sortOrder: cf.sortOrder,
+            showIf: parseCustomFieldCondition(cf.showIf),
           }));
           setCustomFields(fields);
           setOriginalCustomFields(fields);
@@ -1094,8 +1100,8 @@ export default function EditCoursePage() {
       ? []
       : customFields
           .filter((cf) => cf.fieldName.trim())
-          .map(
-            ({
+          .map((field, _index, named) => {
+            const {
               id,
               fieldName,
               fieldType,
@@ -1103,7 +1109,8 @@ export default function EditCoursePage() {
               isRequired,
               helpText,
               sortOrder,
-            }) => ({
+            } = field;
+            return {
               id: id.startsWith("new-") ? undefined : id,
               fieldName: fieldName.trim(),
               fieldType,
@@ -1113,8 +1120,9 @@ export default function EditCoursePage() {
               isRequired,
               helpText: helpText.trim() || undefined,
               sortOrder,
-            }),
-          );
+              showIf: resolveDraftCondition(named, field),
+            };
+          });
 
     let finalStatus = status;
     if (

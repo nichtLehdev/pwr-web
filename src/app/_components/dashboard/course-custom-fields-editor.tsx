@@ -6,6 +6,7 @@ import {
   ArrowUpIcon,
   BookmarkCheck,
   BookmarkPlus,
+  CornerDownRight,
   Library,
   TrashIcon,
   X,
@@ -14,8 +15,11 @@ import { api } from "@/trpc/react";
 import { useToast } from "@/app/_components/ui/toast";
 import { getErrorMessage } from "@/lib/utils";
 import {
+  customFieldConditionValues,
+  customFieldTypeCanControl,
   customFieldTypeNeedsOptions,
   parseSelectOptionValues,
+  type CustomFieldCondition,
 } from "@/lib/course-custom-fields";
 import { Select } from "@/app/_components/ui";
 import { Tag } from "@/app/_components/programmheft/tag";
@@ -43,6 +47,46 @@ export interface CourseCustomFieldDraft {
   isRequired: boolean;
   helpText: string;
   sortOrder: number;
+  /** Fehlt in Entwürfen, die vor den Bedingungen gespeichert wurden. */
+  showIf?: CustomFieldCondition | null;
+}
+
+/** Earlier fields with a name whose value another field can depend on. */
+function conditionCandidates(
+  fields: readonly CourseCustomFieldDraft[],
+  index: number,
+): CourseCustomFieldDraft[] {
+  return fields
+    .slice(0, index)
+    .filter(
+      (f) =>
+        f.fieldName.trim() &&
+        customFieldTypeCanControl(f.fieldType) &&
+        customFieldConditionValues(f).length > 0,
+    );
+}
+
+/**
+ * Die Bedingung, wie sie gespeichert wird: nur gegen ein früheres, passendes
+ * Feld und nur mit Werten, die es noch gibt. Sonst null (immer sichtbar).
+ */
+export function resolveDraftCondition(
+  fields: readonly CourseCustomFieldDraft[],
+  field: CourseCustomFieldDraft,
+): CustomFieldCondition | null {
+  const condition = field.showIf;
+  if (!condition) return null;
+  const index = fields.findIndex((f) => f.id === field.id);
+  const controller = conditionCandidates(fields, index).find(
+    (f) => f.fieldName.trim() === condition.fieldName.trim(),
+  );
+  if (!controller) return null;
+  const available = new Set(
+    customFieldConditionValues(controller).map((v) => v.value),
+  );
+  const values = condition.values.filter((v) => available.has(v));
+  if (values.length === 0) return null;
+  return { fieldName: controller.fieldName.trim(), values };
 }
 
 type CourseCustomFieldsEditorProps = {
@@ -156,13 +200,40 @@ export function CourseCustomFieldsEditor({
     field: keyof CourseCustomFieldDraft,
     value: string | boolean | number | CustomFieldType,
   ) => {
+    const before = fields.find((cf) => cf.id === id);
+    const renamedFrom =
+      field === "fieldName" && before ? before.fieldName.trim() : null;
     onChange(
-      fields.map((cf) => (cf.id === id ? { ...cf, [field]: value } : cf)),
+      fields.map((cf) => {
+        if (cf.id === id) return { ...cf, [field]: value };
+        // Bedingungen verweisen per Name und ziehen bei Umbenennung mit.
+        if (
+          renamedFrom &&
+          typeof value === "string" &&
+          cf.showIf?.fieldName.trim() === renamedFrom
+        ) {
+          return { ...cf, showIf: { ...cf.showIf, fieldName: value.trim() } };
+        }
+        return cf;
+      }),
     );
   };
 
+  const setCondition = (id: string, showIf: CustomFieldCondition | null) => {
+    onChange(fields.map((cf) => (cf.id === id ? { ...cf, showIf } : cf)));
+  };
+
   const removeField = (id: string) => {
-    onChange(fields.filter((cf) => cf.id !== id));
+    const removedName = fields.find((cf) => cf.id === id)?.fieldName.trim();
+    onChange(
+      fields
+        .filter((cf) => cf.id !== id)
+        .map((cf) =>
+          removedName && cf.showIf?.fieldName.trim() === removedName
+            ? { ...cf, showIf: null }
+            : cf,
+        ),
+    );
   };
 
   const moveField = (id: string, direction: "up" | "down") => {
@@ -336,6 +407,30 @@ export function CourseCustomFieldsEditor({
         <div className="space-y-4">
           {fields.map((field, index) => {
             const inLibrary = templateNames.has(normalizeName(field.fieldName));
+            const candidates = conditionCandidates(fields, index);
+            const condition = field.showIf ?? null;
+            const controller = condition
+              ? candidates.find(
+                  (f) => f.fieldName.trim() === condition.fieldName.trim(),
+                )
+              : undefined;
+            const resolved = resolveDraftCondition(fields, field);
+            // z.B. „Ernährung“ = „Vegan“ oder „Andere“; Checkboxen: „X“ angehakt.
+            const conditionSummary =
+              resolved && controller
+                ? controller.fieldType === "CHECKBOX"
+                  ? `„${resolved.fieldName}“ ${resolved.values
+                      .map(
+                        (v) =>
+                          customFieldConditionValues(controller).find(
+                            (o) => o.value === v,
+                          )?.label ?? v,
+                      )
+                      .join(" oder ")}`
+                  : `„${resolved.fieldName}“ ${
+                      controller.fieldType === "MULTISELECT" ? "enthält" : "="
+                    } ${resolved.values.map((v) => `„${v}“`).join(" oder ")}`
+                : null;
             return (
               <div
                 key={field.id}
@@ -346,8 +441,19 @@ export function CourseCustomFieldsEditor({
                 }`}
               >
                 <div className="mb-3 flex items-center justify-between">
-                  <span className="text-dark dark:text-night-muted text-sm font-medium">
+                  <span className="text-dark dark:text-night-muted flex min-w-0 items-center gap-1.5 text-sm font-medium">
                     Feld {index + 1}
+                    {conditionSummary ? (
+                      <span
+                        className="inline-flex min-w-0 items-center gap-1 text-xs font-normal"
+                        title={`nur wenn ${conditionSummary}`}
+                      >
+                        <CornerDownRight className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate">
+                          nur wenn {conditionSummary}
+                        </span>
+                      </span>
+                    ) : null}
                   </span>
                   {!disabled && (
                     <div className="flex items-center gap-1">
@@ -491,6 +597,119 @@ export function CourseCustomFieldsEditor({
                       </span>
                     </label>
                   </div>
+
+                  {candidates.length > 0 || condition ? (
+                    <div className="sm:col-span-2">
+                      <label className="flex cursor-pointer items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={!!condition}
+                          onChange={(e) =>
+                            setCondition(
+                              field.id,
+                              e.target.checked && candidates[0]
+                                ? {
+                                    fieldName: candidates[0].fieldName.trim(),
+                                    values: [],
+                                  }
+                                : null,
+                            )
+                          }
+                          disabled={disabled}
+                          className="text-primary border-rule dark:border-night-rule h-4 w-4"
+                        />
+                        <span className="text-ink dark:text-night-text text-sm">
+                          Nur anzeigen, wenn ein anderes Feld passt
+                        </span>
+                      </label>
+
+                      {condition ? (
+                        <div className="border-rule dark:border-night-rule mt-2 space-y-2 border-l-2 pl-3">
+                          <div>
+                            <label className="text-dark dark:text-night-muted mb-1 block text-xs font-medium">
+                              Anzeigen, wenn Feld
+                            </label>
+                            <Select
+                              value={
+                                controller ? controller.fieldName.trim() : ""
+                              }
+                              onChange={(e) =>
+                                setCondition(field.id, {
+                                  fieldName: e.target.value,
+                                  values: [],
+                                })
+                              }
+                              disabled={disabled}
+                              className="w-full text-sm"
+                            >
+                              {!controller ? (
+                                <option value="">Bitte wählen</option>
+                              ) : null}
+                              {candidates.map((c) => (
+                                <option key={c.id} value={c.fieldName.trim()}>
+                                  {c.fieldName.trim()}
+                                </option>
+                              ))}
+                            </Select>
+                          </div>
+                          {controller ? (
+                            <fieldset>
+                              <legend className="text-dark dark:text-night-muted mb-1 block text-xs font-medium">
+                                {controller.fieldType === "CHECKBOX"
+                                  ? "so gesetzt ist"
+                                  : controller.fieldType === "MULTISELECT"
+                                    ? "einen dieser Werte enthält"
+                                    : "einen dieser Werte hat"}
+                              </legend>
+                              <div className="flex flex-wrap gap-x-4 gap-y-1">
+                                {customFieldConditionValues(controller).map(
+                                  (option) => (
+                                    <label
+                                      key={option.value}
+                                      className="flex min-h-8 cursor-pointer items-center gap-2"
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        checked={condition.values.includes(
+                                          option.value,
+                                        )}
+                                        onChange={(e) =>
+                                          setCondition(field.id, {
+                                            fieldName:
+                                              controller.fieldName.trim(),
+                                            values: e.target.checked
+                                              ? [
+                                                  ...condition.values,
+                                                  option.value,
+                                                ]
+                                              : condition.values.filter(
+                                                  (v) => v !== option.value,
+                                                ),
+                                          })
+                                        }
+                                        disabled={disabled}
+                                        className="text-primary border-rule dark:border-night-rule h-4 w-4"
+                                      />
+                                      <span className="text-ink dark:text-night-text text-sm">
+                                        {option.label}
+                                      </span>
+                                    </label>
+                                  ),
+                                )}
+                              </div>
+                            </fieldset>
+                          ) : null}
+                          {!resolved ? (
+                            <p className="text-xs text-red-700 dark:text-red-400">
+                              {!controller
+                                ? "Das auslösende Feld muss weiter oben stehen und eine Auswahl oder Checkbox sein."
+                                : "Bitte mindestens einen Wert wählen – sonst wird das Feld immer angezeigt."}
+                            </p>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
                 </div>
               </div>
             );

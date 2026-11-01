@@ -2,12 +2,12 @@ name: CI - Database Validation
 
 on:
   pull_request:
-    branches: [main, develop]
+    branches: [main, dev, "release/**"]
     paths:
       - "prisma/**"
       - "prisma.config.ts"
   push:
-    branches: [main, develop]
+    branches: [main, dev]
     paths:
       - "prisma/**"
       - "prisma.config.ts"

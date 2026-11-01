@@ -101,6 +101,16 @@ export default function MitgliedschaftPage() {
                 Kirche im Rheinland e.V. kann schriftlich bei der
                 Geschäftsstelle beantragt werden.
               </p>
+              <p>
+                Bitte füllen Sie dazu den Aufnahmeantrag und zusätzlich den
+                Mitglieder-Fragebogen aus und senden Sie beides unterschrieben
+                an die{" "}
+                <Link href="/kontakt" className="link-ink">
+                  Geschäftsstelle
+                </Link>
+                . Im Fragebogen geben Sie Chorleitung, Probenzeiten und
+                Mitgliederzahl Ihres Chores an, so lernen wir Ihren Chor kennen.
+              </p>
             </div>
 
             <h4 className={`${LABEL_HEAD} mt-8`}>
@@ -131,9 +141,14 @@ export default function MitgliedschaftPage() {
                 title="Satzung herunterladen"
               />
               <WayRow
-                href="/downloads/aufnahmeantrag-choere.pdf"
+                href="/downloads/aufnahmeantrag-choere-2026.pdf"
                 kind="download"
                 title="Aufnahmeantrag herunterladen"
+              />
+              <WayRow
+                href="/downloads/mitglieder-fragebogen-2026.pdf"
+                kind="download"
+                title="Mitglieder-Fragebogen herunterladen"
               />
             </WayList>
           </div>

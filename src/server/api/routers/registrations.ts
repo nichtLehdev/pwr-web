@@ -17,6 +17,10 @@ import {
 import type { Prisma } from "~/generated/prisma/client";
 import type { db as database } from "@/server/db";
 import { isExternalCourse } from "@/lib/course-external";
+import {
+  COURSE_NOT_PUBLISHED_MESSAGE,
+  isCoursePublished,
+} from "@/lib/course-published";
 import { isRegistrationDeadlinePassed } from "@/lib/registration-deadline";
 import { bookedAmountFor, invoiceOpenAmount } from "@/lib/invoice-payment";
 import {
@@ -143,6 +147,10 @@ import {
   siblingDiscountWithinGroup,
 } from "@/lib/registration-split";
 import { createRegistrationAccessToken } from "@/server/utils/registration-access-token";
+import {
+  assertLateRegistrationLinkUsable,
+  claimLateRegistrationLink,
+} from "../helpers/late-registration-link";
 import { logAudit } from "../helpers/audit";
 import {
   createNotification,
@@ -521,6 +529,11 @@ export const registrationsRouter = createTRPCRouter({
          * verknüpfte Anmeldung. Ohne Angabe wartet die ganze Anmeldung.
          */
         confirmedParticipantIndexes: z.array(z.number().int()).optional(),
+        /**
+         * Token eines Nachmeldelinks: hebt die Zeit-Sperren (geschlossen, noch nicht
+         * geöffnet, Frist vorbei) für genau eine Anmeldung auf.
+         */
+        lateRegistrationToken: z.string().max(200).optional(),
         [BOT_TRAP_FIELD]: z.string().max(200).optional(),
         [BOT_TRAP_ELAPSED_FIELD]: z.number().optional(),
       }),
@@ -531,6 +544,7 @@ export const registrationsRouter = createTRPCRouter({
         paymentMethod: inputPaymentMethod,
         downPaymentAcknowledged,
         confirmedParticipantIndexes,
+        lateRegistrationToken,
         // Müssen hier heraus: `registrationData` geht unverändert an Prisma.
         [BOT_TRAP_FIELD]: botTrap,
         [BOT_TRAP_ELAPSED_FIELD]: botTrapElapsedMs,
@@ -579,7 +593,8 @@ export const registrationsRouter = createTRPCRouter({
         },
       });
 
-      if (!course) {
+      // Unveröffentlichte Kurse gibt es öffentlich nicht: wie nicht vorhanden.
+      if (!course || !isCoursePublished(course)) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Course not found",
@@ -593,28 +608,48 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      if (!course.registrationOpen) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Registration is closed for this course",
-        });
-      }
+      // Ein Nachmeldelink ersetzt nur die Zeit-Sperren; Kapazität, Preise und
+      // Pflichtfelder prüft der Rest wie sonst. Eingelöst wird er erst in der
+      // Transaktion, damit eine gescheiterte Anmeldung ihn nicht verbraucht.
+      const lateRegistrationLinkId = lateRegistrationToken
+        ? await assertLateRegistrationLinkUsable(
+            ctx.db,
+            course.id,
+            lateRegistrationToken,
+          )
+        : null;
 
-      if (
-        course.registrationOpensAt &&
-        new Date() < course.registrationOpensAt
-      ) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Registration is not yet open for this course",
-        });
-      }
+      if (lateRegistrationLinkId) {
+        if (course.endDate < new Date()) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Der Kurs ist bereits vorbei.",
+          });
+        }
+      } else {
+        if (!course.registrationOpen) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Registration is closed for this course",
+          });
+        }
 
-      if (isRegistrationDeadlinePassed(course.registrationDeadline)) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Registration deadline has passed",
-        });
+        if (
+          course.registrationOpensAt &&
+          new Date() < course.registrationOpensAt
+        ) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Registration is not yet open for this course",
+          });
+        }
+
+        if (isRegistrationDeadlinePassed(course.registrationDeadline)) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Registration deadline has passed",
+          });
+        }
       }
 
       if (input.siblingDiscountApplied && !course.allowSiblingDiscount) {
@@ -778,10 +813,18 @@ export const registrationsRouter = createTRPCRouter({
           return { registration, part };
         };
 
-        return {
+        const created = {
           primary: await createPart(plan.primary),
           waitlist: plan.waitlist ? await createPart(plan.waitlist) : null,
         };
+        if (lateRegistrationLinkId) {
+          await claimLateRegistrationLink(
+            tx,
+            lateRegistrationLinkId,
+            created.primary.registration.id,
+          );
+        }
+        return created;
       });
 
       await sendRegistrationPartsEmail(parts, course);
@@ -795,6 +838,20 @@ export const registrationsRouter = createTRPCRouter({
         registrationStatus: parts.primary.part.status,
         waitlistRegistration: parts.waitlist?.registration,
       });
+
+      if (lateRegistrationLinkId) {
+        void logAudit(ctx.db, {
+          actorId: ctx.session?.user.id ?? null,
+          actorEmail: parts.primary.registration.registrantEmail,
+          action: "course.late_registration_link.use",
+          entityType: "registration",
+          entityId: parts.primary.registration.id,
+          details: {
+            summary: `Nachmeldung für „${course.title}“ über Nachmeldelink`,
+            linkId: lateRegistrationLinkId,
+          },
+        });
+      }
 
       return withWaitlistPart(parts);
     }),
@@ -897,6 +954,13 @@ export const registrationsRouter = createTRPCRouter({
           code: "FORBIDDEN",
           message:
             "Keine Berechtigung, Anmeldungen für diesen Kurs zu erfassen.",
+        });
+      }
+
+      if (!isCoursePublished(course)) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: COURSE_NOT_PUBLISHED_MESSAGE,
         });
       }
 
@@ -1477,6 +1541,12 @@ export const registrationsRouter = createTRPCRouter({
         siblingDiscountStatus: z
           .array(z.nativeEnum(SiblingDiscountStatus))
           .optional(),
+        /**
+         * Nur Rabatte, bei denen eine Prüfung noch etwas bewirkt: Anmeldung nicht
+         * storniert, noch keine Rechnung ausgestellt (auch keine stornierte) und
+         * der Kurs nicht vorbei. Sonst wurde der Rabatt schon abgerechnet oder ist hinfällig.
+         */
+        siblingDiscountOpen: z.boolean().optional(),
         courseId: z.array(z.string()).optional(),
         sortBy: z
           .enum(["createdAt", "registrant", "course", "totalPrice", "status"])
@@ -1537,6 +1607,21 @@ export const registrationsRouter = createTRPCRouter({
                 },
               }),
         ...(courseIds && { courseId: { in: courseIds } }),
+        ...(input.siblingDiscountOpen && {
+          AND: [
+            { registrationStatus: { not: RegistrationStatus.CANCELLED } },
+            {
+              invoices: {
+                none: {
+                  status: {
+                    in: [InvoiceStatus.PUBLISHED, InvoiceStatus.CANCELLED],
+                  },
+                },
+              },
+            },
+            { course: { endDate: { gte: new Date() } } },
+          ],
+        }),
         ...(search && {
           OR: [
             { registrantEmail: { contains: search, mode: "insensitive" } },

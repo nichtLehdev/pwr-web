@@ -4,7 +4,9 @@ import { useId } from "react";
 import { Input, Label, Textarea, Select } from "@/app/_components/ui";
 import type { SelectProps } from "@/app/_components/ui/select";
 import {
+  dropHiddenCustomFieldValues,
   parseSelectOptionValues,
+  visibleCustomFields,
   YEAR_MAX,
   YEAR_MIN,
   type CourseCustomFieldRule,
@@ -91,13 +93,20 @@ export function ParticipantCustomFields({
 
   const values = asCustomFieldsRecord(customFields);
 
+  // Verborgene Felder verlieren ihren Wert, damit nichts Unsichtbares
+  // mitgeschickt wird, wenn die auslösende Auswahl wieder wechselt.
   const setField = (fieldName: string, value: unknown) => {
-    onChange({ ...values, [fieldName]: value });
+    onChange(
+      dropHiddenCustomFieldValues({ ...values, [fieldName]: value }, fields),
+    );
   };
+
+  const shown = new Set(visibleCustomFields(fields, values));
 
   return (
     <>
       {fields.map((field, index) => {
+        if (!shown.has(field)) return null;
         const isInvalid = invalidFieldNames.includes(field.fieldName);
         const fieldValue = getCustomFieldValue(customFields, field.fieldName);
         const optionValues = parseSelectOptionValues(field.options);

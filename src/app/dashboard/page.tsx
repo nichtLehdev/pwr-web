@@ -115,12 +115,13 @@ export default function DashboardPageRoute() {
     { enabled: ready && canManageRegistrations },
   );
   // Auf den Rabattstatus eingegrenzt: nur dafür lässt getAllAdmin auch die reine
-  // Rabattberechtigung zu.
+  // Rabattberechtigung zu. Abgerechnete, stornierte und vergangene zählen nicht mehr.
   const { data: pendingDiscounts } = api.registrations.getAllAdmin.useQuery(
     {
       page: 1,
       limit: 1,
       siblingDiscountStatus: [SiblingDiscountStatus.PENDING],
+      siblingDiscountOpen: true,
     },
     { enabled: ready && (canManageRegistrations || canManageSiblingDiscount) },
   );
@@ -274,7 +275,7 @@ export default function DashboardPageRoute() {
                     <ReviewRow
                       label="Geschwisterrabatte"
                       count={pendingDiscounts?.total ?? 0}
-                      href={`/dashboard/registrations?discount=${SiblingDiscountStatus.PENDING}`}
+                      href={`/dashboard/registrations?discount=${SiblingDiscountStatus.PENDING}&open=1`}
                     />
                   )}
               </ul>

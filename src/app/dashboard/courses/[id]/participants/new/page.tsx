@@ -9,6 +9,10 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { CourseCollaboratorRole } from "~/generated/prisma/enums";
 import { isRegistrationDeadlinePassed } from "@/lib/registration-deadline";
 import { isExternalCourse } from "@/lib/course-external";
+import {
+  COURSE_NOT_PUBLISHED_MESSAGE,
+  isCoursePublished,
+} from "@/lib/course-published";
 import CourseRegistrationForm from "@/app/_components/events/course-registration-form";
 import { DashboardPage } from "@/app/_components/dashboard";
 import { Note } from "@/app/_components/programmheft/note";
@@ -94,6 +98,27 @@ export default function NewCourseRegistrationPage() {
             className="text-primary-ink dark:text-primary mt-4 inline-block font-semibold underline-offset-4 hover:underline"
           >
             Zurück zur Teilnehmerverwaltung
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isCoursePublished(course)) {
+    return (
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center px-4">
+        <div className="text-center">
+          <h1 className="condensed text-ink dark:text-night-text text-xl font-bold">
+            Noch nicht veröffentlicht
+          </h1>
+          <p className="text-dark dark:text-night-muted mt-2 max-w-md">
+            {COURSE_NOT_PUBLISHED_MESSAGE}
+          </p>
+          <Link
+            href={`/dashboard/courses/${courseId}`}
+            className="text-primary-ink dark:text-primary mt-4 inline-block font-semibold underline-offset-4 hover:underline"
+          >
+            Zurück zum Kurs
           </Link>
         </div>
       </div>

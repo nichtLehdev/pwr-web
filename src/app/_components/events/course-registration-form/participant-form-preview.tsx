@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Eye } from "lucide-react";
 import {
-  isRequiredCustomFieldEmpty,
+  missingRequiredCustomFieldNames,
   type CourseCustomFieldRule,
 } from "@/lib/course-custom-fields";
 import type { ParticipantFields } from "./types";
@@ -63,13 +63,8 @@ export function ParticipantFormPreview({
       missing.push("priceOptionId");
     }
     const values = (participant.customFields ?? {}) as Record<string, unknown>;
-    for (const field of fields) {
-      if (
-        field.isRequired &&
-        isRequiredCustomFieldEmpty(field.fieldType, values[field.fieldName])
-      ) {
-        missing.push(`customField:${field.fieldName}`);
-      }
+    for (const fieldName of missingRequiredCustomFieldNames(fields, values)) {
+      missing.push(`customField:${fieldName}`);
     }
     return missing;
   })();

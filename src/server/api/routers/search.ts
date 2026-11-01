@@ -336,6 +336,8 @@ const staticPages = [
       "beiträge",
       "satzung",
       "aufnahmeantrag",
+      "mitglieder-fragebogen",
+      "fragebogen",
       "chor anmelden",
       "ehrungen",
       "ehrenordnung",

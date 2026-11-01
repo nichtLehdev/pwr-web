@@ -155,3 +155,31 @@ export async function userCanManageSiblingDiscount(
 
   return { allowed: canDecide || ownsCourse, canDecide };
 }
+
+/**
+ * Wie `assertMayManageCourseRegistrations` im Anmelde-Router: Kursersteller, jedes
+ * Teammitglied oder `courses.manage_registrations`.
+ */
+export async function userCanManageCourseRegistrations(
+  db: PrismaClient,
+  userId: string,
+  course: {
+    id: string;
+    createdById: string | null;
+  },
+  permissionCache?: PermissionCache,
+): Promise<boolean> {
+  if (course.createdById === userId) return true;
+
+  const [perms, collaborator] = await Promise.all([
+    resolveUserPermissionsCached(userId, permissionCache),
+    db.courseCollaborator.findUnique({
+      where: {
+        courseId_userId: { courseId: course.id, userId },
+      },
+      select: { role: true },
+    }),
+  ]);
+
+  return !!collaborator || perms.has(PERMISSIONS.COURSES_MANAGE_REGISTRATIONS);
+}

@@ -2,9 +2,9 @@ name: CI - Lint & Type Check
 
 on:
   pull_request:
-    branches: [main, develop]
+    branches: [main, dev, "release/**"]
   push:
-    branches: [main, develop]
+    branches: [main, dev]
 
 jobs:
   read-pnpm-version:

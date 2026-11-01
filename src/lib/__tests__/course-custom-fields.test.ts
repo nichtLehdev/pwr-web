@@ -1,12 +1,16 @@
 import { describe, expect, it } from "@jest/globals";
 import {
   customFieldTypeNeedsOptions,
+  dropHiddenCustomFieldValues,
   formatCustomFieldValueForDisplay,
   isRequiredCustomFieldEmpty,
   isValidCustomFieldValueFormat,
+  missingRequiredCustomFieldNames,
   normalizeParticipantCustomFieldsValues,
+  parseCustomFieldCondition,
   parseSelectOptionValues,
   resolveParticipantCustomFieldsForPersist,
+  visibleCustomFields,
   type CourseCustomFieldRule,
 } from "../course-custom-fields";
 
@@ -191,5 +195,135 @@ describe("parseSelectOptionValues", () => {
     expect(parseSelectOptionValues("A, B ,C,")).toEqual(["A", "B", "C"]);
     expect(parseSelectOptionValues(["A", " B "])).toEqual(["A", "B"]);
     expect(parseSelectOptionValues(null)).toEqual([]);
+  });
+});
+
+describe("conditional custom fields", () => {
+  const diet = rule({
+    fieldName: "Ernährung",
+    fieldType: "SELECT",
+    options: "Keine, Vegetarisch, Vegan, Andere",
+  });
+  const dietOther = rule({
+    fieldName: "Ernährung (Andere)",
+    fieldType: "TEXT",
+    isRequired: true,
+    showIf: { fieldName: "Ernährung", values: ["Andere"] },
+  });
+  const allergyDetails = rule({
+    fieldName: "Welche Allergie?",
+    fieldType: "TEXT",
+    showIf: { fieldName: "Ernährung (Andere)", values: ["x"] },
+  });
+  const fields = [diet, dietOther];
+
+  it("parses only complete conditions", () => {
+    expect(parseCustomFieldCondition(null)).toBeNull();
+    expect(
+      parseCustomFieldCondition({ fieldName: "A", values: [] }),
+    ).toBeNull();
+    expect(
+      parseCustomFieldCondition({ fieldName: " ", values: ["x"] }),
+    ).toBeNull();
+    expect(
+      parseCustomFieldCondition({ fieldName: "A", values: ["x", ""] }),
+    ).toEqual({ fieldName: "A", values: ["x"] });
+  });
+
+  it("shows a dependent field only for matching values", () => {
+    const names = (values: Record<string, unknown>) =>
+      visibleCustomFields(fields, values).map((f) => f.fieldName);
+    expect(names({})).toEqual(["Ernährung"]);
+    expect(names({ Ernährung: "Vegan" })).toEqual(["Ernährung"]);
+    expect(names({ Ernährung: "Andere" })).toEqual([
+      "Ernährung",
+      "Ernährung (Andere)",
+    ]);
+  });
+
+  it("hides a field whose controlling field is missing or hidden", () => {
+    const orphan = rule({
+      fieldName: "Waise",
+      fieldType: "TEXT",
+      showIf: { fieldName: "Gibt es nicht", values: ["x"] },
+    });
+    expect(
+      visibleCustomFields([diet, dietOther, allergyDetails, orphan], {
+        Ernährung: "Vegan",
+        "Ernährung (Andere)": "x",
+      }).map((f) => f.fieldName),
+    ).toEqual(["Ernährung"]);
+  });
+
+  it("matches checkboxes and multi-selects", () => {
+    const box = rule({ fieldName: "Übernachtung", fieldType: "CHECKBOX" });
+    const multi = rule({
+      fieldName: "Tage",
+      fieldType: "MULTISELECT",
+      options: "Fr, Sa, So",
+    });
+    const ifUnchecked = rule({
+      fieldName: "Warum nicht?",
+      fieldType: "TEXT",
+      showIf: { fieldName: "Übernachtung", values: ["false"] },
+    });
+    const ifSunday = rule({
+      fieldName: "Abreise",
+      fieldType: "TIME",
+      showIf: { fieldName: "Tage", values: ["So"] },
+    });
+    const all = [box, multi, ifUnchecked, ifSunday];
+    const names = (values: Record<string, unknown>) =>
+      visibleCustomFields(all, values).map((f) => f.fieldName);
+    expect(names({})).toContain("Warum nicht?");
+    expect(names({ Übernachtung: true })).not.toContain("Warum nicht?");
+    expect(names({ Tage: ["Fr"] })).not.toContain("Abreise");
+    expect(names({ Tage: ["Fr", "So"] })).toContain("Abreise");
+  });
+
+  it("does not loop on circular conditions", () => {
+    const a = rule({
+      fieldName: "A",
+      fieldType: "SELECT",
+      options: "x",
+      showIf: { fieldName: "B", values: ["x"] },
+    });
+    const b = rule({
+      fieldName: "B",
+      fieldType: "SELECT",
+      options: "x",
+      showIf: { fieldName: "A", values: ["x"] },
+    });
+    expect(visibleCustomFields([a, b], { A: "x", B: "x" })).toEqual([]);
+  });
+
+  it("requires hidden fields only while they are shown", () => {
+    expect(
+      missingRequiredCustomFieldNames(fields, { Ernährung: "Vegan" }),
+    ).toEqual([]);
+    expect(
+      missingRequiredCustomFieldNames(fields, { Ernährung: "Andere" }),
+    ).toEqual(["Ernährung (Andere)"]);
+  });
+
+  it("drops values of hidden fields before persisting", () => {
+    expect(
+      dropHiddenCustomFieldValues(
+        { Ernährung: "Vegan", "Ernährung (Andere)": "Glutenfrei", Alt: 1 },
+        fields,
+      ),
+    ).toEqual({ Ernährung: "Vegan", Alt: 1 });
+    expect(
+      resolveParticipantCustomFieldsForPersist(
+        { Ernährung: "Vegan", "Ernährung (Andere)": "Glutenfrei" },
+        fields,
+      ),
+    ).toEqual({ ok: true, customFields: { Ernährung: "Vegan" } });
+    expect(
+      resolveParticipantCustomFieldsForPersist({ Ernährung: "Andere" }, fields),
+    ).toEqual({
+      ok: false,
+      message: "Required field missing: Ernährung (Andere)",
+    });
   });
 });

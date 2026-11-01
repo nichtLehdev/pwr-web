@@ -28,3 +28,19 @@ export function authorMaySaveStatus(
     (from === ContentStatus.APPROVED && to === ContentStatus.PENDING)
   );
 }
+
+/**
+ * Status, mit dem eine Bearbeitung gespeichert wird. Ohne Freigaberecht geht
+ * Freigegebenes zurück in die Prüfung, auch wenn der Aufruf (z. B. über MCP)
+ * keinen Status mitschickt. `undefined` heißt: Status bleibt.
+ */
+export function statusAfterEdit(
+  current: ContentStatus,
+  requested: ContentStatus | undefined,
+  canApprove: boolean,
+): ContentStatus | undefined {
+  if (!canApprove && current === ContentStatus.APPROVED) {
+    return ContentStatus.PENDING;
+  }
+  return requested;
+}

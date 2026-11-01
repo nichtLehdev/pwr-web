@@ -10,6 +10,7 @@ import {
 import {
   authorMayChangeStatus,
   authorMaySaveStatus,
+  statusAfterEdit,
 } from "../helpers/content-status";
 import {
   assertDistrictAllowed,
@@ -22,6 +23,11 @@ import {
   notifyCreatorOfReviewResult,
   notifySubmittedForReview,
 } from "../helpers/review-notifications";
+import {
+  deleteReviewSnapshots,
+  recordReviewSnapshot,
+  recordReviewSnapshots,
+} from "../helpers/review-snapshot";
 import { PERMISSIONS } from "@/lib/permissions";
 import { permissionProcedure } from "../middleware/permissions";
 import { createPostSlug, updatePostSlug } from "../helpers/content-slug";
@@ -554,6 +560,12 @@ export const postsRouter = createTRPCRouter({
           actorId: ctx.session.user.id,
         });
       }
+      await recordReviewSnapshot(ctx.db, {
+        contentType: "post",
+        contentId: post.id,
+        status: post.status,
+        reviewerId: ctx.session.user.id,
+      });
 
       return post;
     }),
@@ -661,8 +673,13 @@ export const postsRouter = createTRPCRouter({
             "Als Autor kannst du nur zwischen Entwurf und „Zur Prüfung“ wechseln.",
         });
       }
+      const status = statusAfterEdit(
+        post.status,
+        updateData.status,
+        canApprovePosts,
+      );
 
-      if (updateData.status === ContentStatus.APPROVED) {
+      if (status === ContentStatus.APPROVED) {
         const coverImageId = updateData.coverImageId ?? post.coverImageId;
         if (coverImageId) {
           const coverImage = await ctx.db.media.findUnique({
@@ -686,18 +703,18 @@ export const postsRouter = createTRPCRouter({
         updateData.authorId,
       );
 
-      const finalData: Record<string, unknown> = { ...updateData };
+      const finalData: Record<string, unknown> = { ...updateData, status };
 
       // A blank field is "keep the current slug", not "clear it".
       if (requestedSlug?.trim()) {
         finalData.slug = await updatePostSlug(ctx.db, id, requestedSlug);
       }
       if (
-        updateData.status === ContentStatus.APPROVED &&
+        status === ContentStatus.APPROVED &&
         post.status !== ContentStatus.APPROVED
       ) {
         finalData.publishedAt = new Date();
-      } else if (updateData.status === ContentStatus.DRAFT) {
+      } else if (status === ContentStatus.DRAFT) {
         finalData.publishedAt = null;
       }
 
@@ -718,7 +735,7 @@ export const postsRouter = createTRPCRouter({
       });
 
       if (
-        updateData.status === ContentStatus.PENDING &&
+        status === ContentStatus.PENDING &&
         post.status !== ContentStatus.PENDING
       ) {
         await notifySubmittedForReview({
@@ -727,6 +744,15 @@ export const postsRouter = createTRPCRouter({
           contentId: updated.id,
           title: updated.title,
           actorId: ctx.session.user.id,
+        });
+      }
+      // Saving it as approved is signing off on this state.
+      if (status === ContentStatus.APPROVED) {
+        await recordReviewSnapshot(ctx.db, {
+          contentType: "post",
+          contentId: updated.id,
+          status: updated.status,
+          reviewerId: ctx.session.user.id,
         });
       }
 
@@ -766,6 +792,7 @@ export const postsRouter = createTRPCRouter({
       await ctx.db.post.delete({
         where: { id: input.id },
       });
+      await deleteReviewSnapshots(ctx.db, "post", [input.id]);
 
       return { success: true };
     }),
@@ -860,6 +887,12 @@ export const postsRouter = createTRPCRouter({
           publishedAt: new Date(),
         },
       });
+      await recordReviewSnapshot(ctx.db, {
+        contentType: "post",
+        contentId: approved.id,
+        status: ContentStatus.APPROVED,
+        reviewerId: ctx.session.user.id,
+      });
 
       await notifyCreatorOfReviewResult({
         db: ctx.db,
@@ -891,6 +924,12 @@ export const postsRouter = createTRPCRouter({
           reviewDate: new Date(),
           reviewNotes: input.reviewNotes,
         },
+      });
+      await recordReviewSnapshot(ctx.db, {
+        contentType: "post",
+        contentId: rejected.id,
+        status: ContentStatus.REJECTED,
+        reviewerId: ctx.session.user.id,
       });
 
       await notifyCreatorOfReviewResult({
@@ -1073,6 +1112,7 @@ export const postsRouter = createTRPCRouter({
       await ctx.db.post.deleteMany({
         where: { id: { in: canDeleteIds } },
       });
+      await deleteReviewSnapshots(ctx.db, "post", canDeleteIds);
 
       return { success: true, deletedCount: canDeleteIds.length };
     }),
@@ -1268,6 +1308,12 @@ export const postsRouter = createTRPCRouter({
       await ctx.db.post.updateMany({
         where: { id: { in: canUpdateIds } },
         data: updateData,
+      });
+      await recordReviewSnapshots(ctx.db, {
+        contentType: "post",
+        contentIds: canUpdateIds,
+        status: input.status,
+        reviewerId: userId,
       });
 
       return { success: true, updatedCount: canUpdateIds.length };

@@ -17,6 +17,7 @@ import {
   DashboardFormZoneHeader,
   DashboardFormBlock,
   CourseCustomFieldsEditor,
+  resolveDraftCondition,
   DraftRestorePrompt,
   PriceOptionAgeLimits,
   SlugField,
@@ -659,15 +660,16 @@ export default function NewCoursePage() {
       ? []
       : customFields
           .filter((cf) => cf.fieldName.trim())
-          .map(
-            ({
+          .map((field, _index, named) => {
+            const {
               fieldName,
               fieldType,
               options,
               isRequired,
               helpText,
               sortOrder,
-            }) => ({
+            } = field;
+            return {
               fieldName: fieldName.trim(),
               fieldType,
               options: customFieldTypeNeedsOptions(fieldType)
@@ -676,8 +678,9 @@ export default function NewCoursePage() {
               isRequired,
               helpText: helpText.trim() || undefined,
               sortOrder,
-            }),
-          );
+              showIf: resolveDraftCondition(named, field),
+            };
+          });
 
     // Der Entwurf wird erst in onSuccess verworfen — schlägt das Anlegen
     // fehl, bleibt er als Sicherung erhalten.

@@ -921,6 +921,21 @@ export default function SettingsPage() {
                     )}
                   </div>
 
+                  <div className="border-rule dark:border-night-rule border-t pt-6">
+                    <Heading as="h3" size="list" className="text-[1.375rem]">
+                      KI-Verbindungen
+                    </Heading>
+                    <div className="mt-4 space-y-4">
+                      <p className="text-dark dark:text-night-muted text-sm">
+                        Inhalte mit einem KI-Assistenten wie Claude pflegen und
+                        verbundene Anwendungen verwalten.
+                      </p>
+                      <ArrowLink href="/settings/ki-verbindungen">
+                        KI-Verbindungen verwalten
+                      </ArrowLink>
+                    </div>
+                  </div>
+
                   <div className="border-rule dark:border-night-rule flex justify-end border-t pt-6">
                     <button
                       type="submit"

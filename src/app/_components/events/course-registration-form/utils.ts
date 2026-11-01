@@ -2,7 +2,7 @@ import type { RegistrationData, CourseWithRelations } from "./types";
 import { isPlausibleEmail } from "@/lib/email-address";
 import { isFilled } from "@/lib/billing-address";
 import { computeSiblingDiscounts, roundMoney } from "@/lib/sibling-discount";
-import { isRequiredCustomFieldEmpty } from "@/lib/course-custom-fields";
+import { missingRequiredCustomFieldNames } from "@/lib/course-custom-fields";
 import {
   ageOnDate,
   isAgeWithinPriceOption,
@@ -298,17 +298,13 @@ export function validateStep(
             return false;
           }
         }
-        if (course.customFields) {
-          for (const field of course.customFields) {
-            if (field.isRequired) {
-              const customFields = p.customFields as
-                Record<string, unknown> | undefined;
-              const fieldValue = customFields?.[field.fieldName];
-              if (isRequiredCustomFieldEmpty(field.fieldType, fieldValue)) {
-                return false;
-              }
-            }
-          }
+        if (
+          missingRequiredCustomFieldNames(
+            course.customFields ?? [],
+            p.customFields as Record<string, unknown> | undefined,
+          ).length > 0
+        ) {
+          return false;
         }
         return true;
       });

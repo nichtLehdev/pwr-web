@@ -4,7 +4,7 @@ import type { User } from "~/generated/prisma/client";
 export type CourseWithRelations = RouterOutputs["courses"]["getById"];
 export type RegistrationData = Omit<
   RouterInputs["registrations"]["create"],
-  "courseId" | "totalPrice"
+  "courseId" | "totalPrice" | "lateRegistrationToken"
 >;
 
 /** One entry of the participant list while the form is being filled in. */
@@ -57,6 +57,8 @@ export interface CourseRegistrationFormProps {
   availableSlots?: number;
   /** Free seats per price option (by id), as `getAvailableSlots` reports them. */
   capacityByPriceOption?: Record<string, number> | null;
+  /** Token eines Nachmeldelinks; geht mit der öffentlichen Anmeldung an den Server. */
+  lateRegistrationToken?: string;
 }
 
 export type Step = 1 | 2 | 3;

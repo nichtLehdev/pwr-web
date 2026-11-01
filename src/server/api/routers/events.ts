@@ -11,6 +11,7 @@ import { userHasPermission } from "../helpers/permissions";
 import {
   authorMayChangeStatus,
   authorMaySaveStatus,
+  statusAfterEdit,
 } from "../helpers/content-status";
 import {
   assertDistrictAllowed,
@@ -24,6 +25,11 @@ import {
   notifyCreatorOfReviewResult,
   notifySubmittedForReview,
 } from "../helpers/review-notifications";
+import {
+  deleteReviewSnapshots,
+  recordReviewSnapshot,
+  recordReviewSnapshots,
+} from "../helpers/review-snapshot";
 import { PERMISSIONS } from "@/lib/permissions";
 import { MAX_DESCRIPTION_LENGTH } from "@/lib/description";
 import { permissionProcedure } from "../middleware/permissions";
@@ -557,6 +563,12 @@ export const eventsRouter = createTRPCRouter({
           actorId: ctx.session.user.id,
         });
       }
+      await recordReviewSnapshot(ctx.db, {
+        contentType: "event",
+        contentId: event.id,
+        status: event.status,
+        reviewerId: ctx.session.user.id,
+      });
 
       return event;
     }),
@@ -664,6 +676,11 @@ export const eventsRouter = createTRPCRouter({
             "Als Autor kannst du nur zwischen Entwurf und „Zur Prüfung“ wechseln.",
         });
       }
+      const status = statusAfterEdit(
+        event.status,
+        updateData.status,
+        canApprove,
+      );
 
       const scope = await resolveDistrictScope(
         ctx.db,
@@ -713,6 +730,7 @@ export const eventsRouter = createTRPCRouter({
         where: { id },
         data: {
           ...updateData,
+          status,
           // A blank field is "keep the current slug", not "clear it".
           ...(requestedSlug?.trim()
             ? { slug: await updateEventSlug(ctx.db, id, requestedSlug) }
@@ -731,7 +749,7 @@ export const eventsRouter = createTRPCRouter({
       });
 
       if (
-        updateData.status === ContentStatus.PENDING &&
+        status === ContentStatus.PENDING &&
         event.status !== ContentStatus.PENDING
       ) {
         await notifySubmittedForReview({
@@ -740,6 +758,15 @@ export const eventsRouter = createTRPCRouter({
           contentId: updated.id,
           title: updated.title,
           actorId: ctx.session.user.id,
+        });
+      }
+      // Saving it as approved is signing off on this state.
+      if (status === ContentStatus.APPROVED) {
+        await recordReviewSnapshot(ctx.db, {
+          contentType: "event",
+          contentId: updated.id,
+          status: updated.status,
+          reviewerId: ctx.session.user.id,
         });
       }
 
@@ -779,6 +806,7 @@ export const eventsRouter = createTRPCRouter({
       await ctx.db.event.delete({
         where: { id: input.id },
       });
+      await deleteReviewSnapshots(ctx.db, "event", [input.id]);
 
       return { success: true };
     }),
@@ -847,6 +875,12 @@ export const eventsRouter = createTRPCRouter({
           publishedAt: new Date(),
         },
       });
+      await recordReviewSnapshot(ctx.db, {
+        contentType: "event",
+        contentId: approved.id,
+        status: ContentStatus.APPROVED,
+        reviewerId: ctx.session.user.id,
+      });
 
       await notifyCreatorOfReviewResult({
         db: ctx.db,
@@ -878,6 +912,12 @@ export const eventsRouter = createTRPCRouter({
           reviewDate: new Date(),
           reviewNotes: input.reviewNotes,
         },
+      });
+      await recordReviewSnapshot(ctx.db, {
+        contentType: "event",
+        contentId: rejected.id,
+        status: ContentStatus.REJECTED,
+        reviewerId: ctx.session.user.id,
       });
 
       await notifyCreatorOfReviewResult({
@@ -923,6 +963,7 @@ export const eventsRouter = createTRPCRouter({
       await ctx.db.event.deleteMany({
         where: { id: { in: canDeleteIds } },
       });
+      await deleteReviewSnapshots(ctx.db, "event", canDeleteIds);
 
       return { success: true, deletedCount: canDeleteIds.length };
     }),
@@ -1186,6 +1227,12 @@ export const eventsRouter = createTRPCRouter({
       await ctx.db.event.updateMany({
         where: { id: { in: canUpdateIds } },
         data: updateData,
+      });
+      await recordReviewSnapshots(ctx.db, {
+        contentType: "event",
+        contentIds: canUpdateIds,
+        status: input.status,
+        reviewerId: userId,
       });
 
       return { success: true, updatedCount: canUpdateIds.length };
