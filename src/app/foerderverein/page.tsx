@@ -144,6 +144,7 @@ export default async function FoerdervereinPage() {
 
       <PageSection labelledBy="unterstuetzung-heading" rule>
         <Split
+          stickyHead
           head={
             <Heading id="unterstuetzung-heading" className="hyphens-manual">
               Weitere Unterstützungs&shy;möglichkeiten
