@@ -109,8 +109,7 @@ export default function MitgliedschaftPage() {
                   Geschäftsstelle
                 </Link>
                 . Im Fragebogen geben Sie Chorleitung, Probenzeiten und
-                Mitgliederzahl Ihres Chores an, so lernen wir Ihren Chor
-                kennen.
+                Mitgliederzahl Ihres Chores an, so lernen wir Ihren Chor kennen.
               </p>
             </div>
 
