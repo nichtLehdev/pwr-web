@@ -30,6 +30,17 @@ const config = {
     ],
   },
 
+  async redirects() {
+    return [
+      {
+        // Alter Pfad steht noch im Download-Eintrag der DB (Materialien) und in externen Links.
+        source: "/downloads/aufnahmeantrag-choere.pdf",
+        destination: "/downloads/aufnahmeantrag-choere-2026.pdf",
+        permanent: true,
+      },
+    ];
+  },
+
   async rewrites() {
     return [
       {

@@ -74,10 +74,21 @@ export const downloadsData = [
     description:
       "Offizielles Formular zur Beantragung der Mitgliedschaft im Posaunenwerk der Evangelischen Kirche im Rheinland e.V.",
     category: "FORMULARE" as DownloadCategory,
-    fileUrl: "/downloads/aufnahmeantrag-choere.pdf",
+    fileUrl: "/downloads/aufnahmeantrag-choere-2026.pdf",
     fileType: "PDF" as FileType,
-    fileSize: 142000,
+    fileSize: 129863,
     tags: ["Mitgliedschaft", "Antrag", "Chor"],
+    isPublic: true,
+  },
+  {
+    title: "Mitglieder-Fragebogen",
+    description:
+      "Fragebogen zu Chorleitung, Proben und Mitgliederzahl, den jeder Chor zusammen mit dem Aufnahmeantrag ausfüllt.",
+    category: "FORMULARE" as DownloadCategory,
+    fileUrl: "/downloads/mitglieder-fragebogen-2026.pdf",
+    fileType: "PDF" as FileType,
+    fileSize: 100932,
+    tags: ["Mitgliedschaft", "Fragebogen", "Chor"],
     isPublic: true,
   },
   {
