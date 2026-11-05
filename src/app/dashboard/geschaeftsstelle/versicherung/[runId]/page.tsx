@@ -1,451 +1,88 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import {
-  AlertTriangle,
-  ArrowDown,
-  ArrowUp,
-  ChevronLeft,
-  ChevronRight,
-  Download,
-  DownloadIcon,
-  Loader2,
-  Mail,
-  Pencil,
-  Send,
-  Stamp,
-  Trash2,
-} from "lucide-react";
+import { useCallback, useState } from "react";
+import { useParams } from "next/navigation";
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { api, type RouterOutputs } from "@/trpc/react";
-import { useSession } from "@/lib/auth";
 import { usePermissions } from "@/lib/use-permissions";
 import { PERMISSIONS } from "@/lib/permissions";
-import { useToast } from "@/app/_components/ui/toast";
 import { DashboardPage } from "@/app/_components/dashboard";
-import { Tag } from "@/app/_components/programmheft/tag";
 import {
-  Button,
-  Card,
-  Checkbox,
-  DataTable,
-  Input,
-  Label,
   createDataTableColumnHelper,
   type DataTableColumn,
 } from "@/app/_components/ui";
-import { formatBerlin } from "@/lib/berlin-time";
-import { formatDate, formatEuro } from "@/lib/invoice-document";
+import { formatEuro } from "@/lib/invoice-document";
 import {
   formatTaxRate,
+  grossPremium,
   insuranceCategoryLabel,
-  splitEmailList,
 } from "@/lib/insurance-billing";
+import { RunRateTiles } from "@/app/_components/dashboard/office-billing/run-rate-tiles";
+import { INSURANCE_SECTION } from "@/app/_components/dashboard/office-billing-ui";
 import {
-  INSURANCE_BASE_PATH,
-  INSURANCE_BREADCRUMBS,
-  LINK_OUTLINE,
-  TABLE,
-  TABLE_WRAP,
-  TBODY,
-  TD,
-  TD_NUM,
-  TH,
-  TH_NUM,
-  THEAD,
-  dateFromInput,
-  dateInputValue,
-} from "@/app/_components/dashboard/insurance-billing-ui";
+  BillingRunView,
+  type BillingRunActions,
+  type ExcludedReason,
+} from "@/app/_components/dashboard/office-billing/billing-run-view";
 
 type Run = RouterOutputs["insuranceBilling"]["getRun"];
 type RunInvoice = Run["invoices"][number];
 
-/** Wie die Vorschau-Schaltfläche der Kursrechnungen. */
-const PREVIEW_LINK =
-  "border-rule dark:border-night-rule text-ink dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-raised inline-flex min-h-9 items-center gap-2 border px-3 py-1.5 text-sm font-medium whitespace-nowrap";
-
-function plural(count: number, one: string, many: string): string {
-  return count === 1 ? `1 ${one}` : `${count} ${many}`;
-}
-
-function StatusTag({ invoice }: { invoice: RunInvoice }) {
-  if (invoice.excluded) return <Tag tone="muted">nicht abgerechnet</Tag>;
-  if (invoice.mailedAt) {
-    return (
-      <Tag tone="inverse">
-        versendet {formatBerlin(invoice.mailedAt, "mittelKurz")}
-      </Tag>
-    );
-  }
-  if (invoice.mailError) {
-    return <Tag tone="cancelled">Versand fehlgeschlagen</Tag>;
-  }
-  if (!invoice.email) return <Tag tone="orange">keine E-Mail</Tag>;
-  return <Tag tone="muted">offen</Tag>;
-}
-
-function EmailCell({
-  invoice,
-  onSaved,
-}: {
-  invoice: RunInvoice;
-  onSaved: () => Promise<void>;
-}) {
-  const toast = useToast();
-  const [editing, setEditing] = useState(false);
-  const [value, setValue] = useState(invoice.email ?? "");
-  const update = api.insuranceBilling.updateInvoice.useMutation({
-    onSuccess: async () => {
-      setEditing(false);
-      await onSaved();
-    },
-    onError: (error) => toast.error(error.message),
-  });
-
-  if (!editing) {
-    return (
-      <div className="flex items-start gap-1">
-        {/* Je Adresse eine Zeile; umbrochen wird nur, wenn eine allein nicht passt. */}
-        <span className="min-w-0 [overflow-wrap:anywhere]">
-          {invoice.email
-            ? splitEmailList(invoice.email).map((address) => (
-                <span key={address} className="block">
-                  {address}
-                </span>
-              ))
-            : "—"}
-        </span>
-        <button
-          type="button"
-          className="text-dark hover:text-ink dark:text-night-muted dark:hover:text-night-text -mt-1 inline-flex min-h-8 min-w-8 shrink-0 items-center justify-center"
-          aria-label={`E-Mail für Chor ${invoice.choirNumber} ändern`}
-          onClick={() => {
-            setValue(invoice.email ?? "");
-            setEditing(true);
-          }}
-        >
-          <Pencil className="h-3.5 w-3.5" aria-hidden />
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <form
-      className="flex min-w-56 flex-col gap-2"
-      onSubmit={(event) => {
-        event.preventDefault();
-        update.mutate({ id: invoice.id, email: value });
-      }}
-    >
-      <Input
-        autoFocus
-        value={value}
-        aria-label="E-Mail-Adressen, durch Komma getrennt"
-        onChange={(event) => setValue(event.target.value)}
-      />
-      <div className="flex gap-2">
-        <Button type="submit" size="sm" isLoading={update.isPending}>
-          Speichern
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          onClick={() => setEditing(false)}
-        >
-          Abbrechen
-        </Button>
-      </div>
-    </form>
-  );
-}
-
 const invoiceColumn = createDataTableColumnHelper<RunInvoice>();
 
-function recipientLines(invoice: RunInvoice): string[] {
-  return [
-    invoice.recipientName1,
-    invoice.recipientName2,
-    invoice.recipientStreet,
-    invoice.recipientCity,
-  ].filter((line): line is string => Boolean(line));
-}
-
-function differsFromSheet(invoice: RunInvoice): boolean {
-  return (
-    invoice.sheetTotal !== null &&
-    Math.abs(invoice.sheetTotal - invoice.total) > 0.005
-  );
-}
-
-type InvoiceStatusKey = "excluded" | "mailed" | "failed" | "noEmail" | "open";
-
-function statusKey(invoice: RunInvoice): InvoiceStatusKey {
-  if (invoice.excluded) return "excluded";
-  if (invoice.mailedAt) return "mailed";
-  if (invoice.mailError) return "failed";
-  if (!invoice.email) return "noEmail";
-  return "open";
-}
-
-const STATUS_OPTIONS: { value: InvoiceStatusKey; label: string }[] = [
-  { value: "open", label: "offen" },
-  { value: "mailed", label: "versendet" },
-  { value: "failed", label: "fehlgeschlagen" },
-  { value: "noEmail", label: "keine E-Mail" },
-  { value: "excluded", label: "nicht abgerechnet" },
-];
-
 /** Warum ein Chor keine Rechnung bekommt — zum Nachprüfen der zweiten Liste. */
-function excludedReasons(invoice: RunInvoice): string[] {
-  const reasons: string[] = [];
-  if (invoice.sheetMarkedRed) reasons.push("in der Tabelle rot markiert");
-  if (invoice.quantities.every((quantity) => quantity === 0)) {
-    reasons.push("keine Instrumente");
+function excludedReasons(invoice: RunInvoice): ExcludedReason[] {
+  const reasons: ExcludedReason[] = [];
+  if (invoice.sheetMarkedRed) {
+    reasons.push({ label: "in der Tabelle rot markiert", tone: "cancelled" });
   }
-  return reasons.length > 0 ? reasons : ["von Hand verschoben"];
+  if (invoice.quantities.every((quantity) => quantity === 0)) {
+    reasons.push({ label: "keine Instrumente", tone: "muted" });
+  }
+  return reasons.length > 0
+    ? reasons
+    : [{ label: "von Hand verschoben", tone: "muted" }];
 }
 
-type InvoiceListVariant = "billed" | "excluded";
+function InsuranceRun({ run }: { run: Run }) {
+  const utils = api.useUtils();
+  // Gilt für beide Listen, damit sie gleich aufgebaut bleiben.
+  const [showCategories, setShowCategories] = useState(false);
 
-/**
- * Eine der beiden Listen eines Laufs. Häkchen wählen nur aus; verschoben wird
- * über die Schaltfläche in der Zeile oder für die ganze Auswahl darüber.
- */
-function RunInvoicesTable({
-  run,
-  variant,
-  invoices,
-  pdfBase,
-  selected,
-  onSelect,
-  onSelectAll,
-  sending,
-  updating,
-  onSend,
-  onMove,
-  onSaved,
-  showCategories,
-  onToggleCategories,
-}: {
-  run: Run;
-  variant: InvoiceListVariant;
-  invoices: RunInvoice[];
-  pdfBase: string;
-  selected: Set<string>;
-  onSelect: (id: string, value: boolean) => void;
-  onSelectAll: (value: boolean) => void;
-  sending: boolean;
-  updating: boolean;
-  onSend: (invoice: RunInvoice) => void;
-  onMove: (invoices: RunInvoice[], excluded: boolean) => void;
-  onSaved: () => Promise<void>;
-  showCategories: boolean;
-  onToggleCategories: () => void;
-}) {
-  const { draft, categories } = run;
-  const excludedList = variant === "excluded";
-  const allSelected =
-    invoices.length > 0 &&
-    invoices.every((invoice) => selected.has(invoice.id));
-  const noneSelected = !invoices.some((invoice) => selected.has(invoice.id));
+  const updateRun = api.insuranceBilling.updateRun.useMutation();
+  const updateInvoice = api.insuranceBilling.updateInvoice.useMutation();
+  const setExcluded = api.insuranceBilling.setExcluded.useMutation();
+  const send = api.insuranceBilling.send.useMutation();
+  const issueRun = api.insuranceBilling.issueRun.useMutation();
+  const deleteRun = api.insuranceBilling.deleteRun.useMutation();
+  const setRunRates = api.insuranceBilling.setRunRates.useMutation();
 
-  const columns = useMemo<DataTableColumn<RunInvoice>[]>(() => {
-    const actions = (invoice: RunInvoice) => (
-      <div className="flex flex-wrap justify-end gap-1">
-        <a
-          href={`${pdfBase}?invoice=${invoice.id}`}
-          target="_blank"
-          rel="noreferrer"
-          className={PREVIEW_LINK}
-        >
-          <DownloadIcon className="h-4 w-4" aria-hidden />
-          {draft ? "Vorschau" : "PDF"}
-        </a>
-        {!draft && !excludedList && invoice.email && (
-          <Button
-            size="sm"
-            variant="ghost"
-            disabled={sending}
-            onClick={() => onSend(invoice)}
-          >
-            <Send className="h-4 w-4" aria-hidden />
-            {invoice.mailedAt ? "Erneut" : "Senden"}
-          </Button>
-        )}
-        {/* Versendete bleiben, wo sie sind — sie liegen beim Empfänger. */}
-        {!invoice.mailedAt && (
-          <Button
-            size="sm"
-            variant="ghost"
-            disabled={updating}
-            onClick={() => onMove([invoice], !excludedList)}
-          >
-            {excludedList ? (
-              <>
-                <ArrowUp className="h-4 w-4" aria-hidden />
-                Abrechnen
-              </>
-            ) : (
-              <>
-                <ArrowDown className="h-4 w-4" aria-hidden />
-                Nicht abrechnen
-              </>
-            )}
-          </Button>
-        )}
-      </div>
-    );
+  const after = async <T,>(promise: Promise<T>) => {
+    const result = await promise;
+    await Promise.all([
+      utils.insuranceBilling.getRun.invalidate({ id: run.id }),
+      utils.insuranceBilling.listRuns.invalidate(),
+    ]);
+    return result;
+  };
+  const actions: BillingRunActions = {
+    updateRun: (input) =>
+      after(updateRun.mutateAsync({ id: run.id, ...input })),
+    updateEmail: (id, email) => after(updateInvoice.mutateAsync({ id, email })),
+    setExcluded: (invoiceIds, excluded) =>
+      after(setExcluded.mutateAsync({ runId: run.id, invoiceIds, excluded })),
+    send: (input) => after(send.mutateAsync({ runId: run.id, ...input })),
+    issue: () => after(issueRun.mutateAsync({ id: run.id })),
+    remove: async () => {
+      await deleteRun.mutateAsync({ id: run.id });
+      await utils.insuranceBilling.listRuns.invalidate();
+    },
+  };
 
-    return invoiceColumn.columns([
-      invoiceColumn.display({
-        id: "select",
-        header: () => (
-          <Checkbox
-            aria-label="Alle in dieser Liste auswählen"
-            checked={allSelected}
-            ref={(element) => {
-              if (element) {
-                element.indeterminate = !allSelected && !noneSelected;
-              }
-            }}
-            onChange={(event) => onSelectAll(event.target.checked)}
-          />
-        ),
-        meta: { alwaysVisible: true, label: "Auswahl" },
-        cell: ({ row }) => (
-          <Checkbox
-            aria-label={`Chor ${row.original.choirNumber} auswählen`}
-            checked={selected.has(row.original.id)}
-            onChange={(event) =>
-              onSelect(row.original.id, event.target.checked)
-            }
-          />
-        ),
-      }),
-      invoiceColumn.accessor(
-        (invoice) => `${invoice.choirNumber} ${invoice.choirName ?? ""}`,
-        {
-          id: "choir",
-          header: "Chor",
-          enableColumnFilter: false,
-          meta: { alwaysVisible: true },
-          // Reihenfolge der Tabelle, nicht alphabetisch nach Nummer.
-          sortFn: (a, b) => a.original.sheetRow - b.original.sheetRow,
-          cell: ({ row }) => (
-            <>
-              <span className="font-semibold">{row.original.choirNumber}</span>
-              {row.original.choirName && (
-                <span className="block">{row.original.choirName}</span>
-              )}
-              <span className="text-dark dark:text-night-muted block text-xs">
-                {draft || excludedList
-                  ? `Zeile ${row.original.sheetRow}${row.original.sheetNote ? ` · ${row.original.sheetNote}` : ""}`
-                  : `Verwendungszweck ${row.original.paymentReference}`}
-              </span>
-              {draft && !excludedList && row.original.warnings.length > 0 && (
-                <ul className="mt-1 space-y-0.5 text-xs text-red-700 dark:text-red-400">
-                  {row.original.warnings.map((warning) => (
-                    <li key={warning}>{warning}</li>
-                  ))}
-                </ul>
-              )}
-            </>
-          ),
-        },
-      ),
-      ...(excludedList
-        ? [
-            invoiceColumn.accessor(
-              (invoice) => excludedReasons(invoice).join(", "),
-              {
-                id: "reason",
-                header: "Grund",
-                enableColumnFilter: false,
-                cell: ({ row }) => (
-                  <div className="flex flex-wrap gap-1">
-                    {excludedReasons(row.original).map((reason) => (
-                      <Tag
-                        key={reason}
-                        tone={
-                          reason === "in der Tabelle rot markiert"
-                            ? "cancelled"
-                            : "muted"
-                        }
-                      >
-                        {reason}
-                      </Tag>
-                    ))}
-                  </div>
-                ),
-              },
-            ),
-          ]
-        : []),
-      invoiceColumn.accessor((invoice) => recipientLines(invoice).join(" "), {
-        id: "recipient",
-        header: "Rechnungsempfänger",
-        enableColumnFilter: false,
-        cell: ({ row }) =>
-          recipientLines(row.original).map((line, index) => (
-            <span key={index} className="block">
-              {line}
-            </span>
-          )),
-      }),
-      invoiceColumn.accessor((invoice) => invoice.email ?? "", {
-        id: "email",
-        header: "E-Mail",
-        enableColumnFilter: false,
-        // Neben sechs Zahlenspalten würde sie sonst auf Buchstabenbreite gequetscht.
-        meta: { headerClassName: "min-w-72", cellClassName: "min-w-72" },
-        cell: ({ row }) => (
-          <EmailCell invoice={row.original} onSaved={onSaved} />
-        ),
-      }),
-      invoiceColumn.accessor((invoice) => invoice.total, {
-        id: "total",
-        header: "Betrag",
-        enableColumnFilter: false,
-        meta: {
-          align: "right",
-          cellClassName: "whitespace-nowrap font-medium tabular-nums",
-        },
-        cell: ({ row }) => formatEuro(row.original.total),
-      }),
-      ...(draft
-        ? [
-            invoiceColumn.accessor((invoice) => invoice.sheetTotal ?? 0, {
-              id: "sheetTotal",
-              header: "Laut Tabelle",
-              enableColumnFilter: false,
-              meta: {
-                align: "right",
-                cellClassName: "whitespace-nowrap tabular-nums",
-              },
-              cell: ({ row }) => (
-                <span
-                  className={
-                    differsFromSheet(row.original)
-                      ? "text-red-700 dark:text-red-400"
-                      : "text-dark dark:text-night-muted"
-                  }
-                  title={
-                    differsFromSheet(row.original)
-                      ? "Weicht vom berechneten Betrag ab (andere Prämie oder Steuersatz?)"
-                      : undefined
-                  }
-                >
-                  {row.original.sheetTotal === null
-                    ? "—"
-                    : formatEuro(row.original.sheetTotal)}
-                </span>
-              ),
-            }),
-          ]
-        : []),
-      // Zusammengeklappt nur die Summe; die Überschrift klappt die Wertklassen auf.
+  const { categories } = run;
+  // Zusammengeklappt nur die Summe; die Überschrift klappt die Wertklassen auf.
+  const extraColumns = useCallback(
+    (): DataTableColumn<RunInvoice>[] => [
       invoiceColumn.accessor(
         (invoice) =>
           invoice.quantities.reduce((sum, quantity) => sum + quantity, 0),
@@ -455,7 +92,7 @@ function RunInvoicesTable({
             <button
               type="button"
               aria-expanded={showCategories}
-              onClick={onToggleCategories}
+              onClick={() => setShowCategories((current) => !current)}
               className="hover:text-ink dark:hover:text-night-text inline-flex items-center gap-1 uppercase"
               title={
                 showCategories
@@ -499,356 +136,83 @@ function RunInvoicesTable({
             ),
           )
         : []),
-      ...(!draft && !excludedList
-        ? [
-            invoiceColumn.accessor(statusKey, {
-              id: "status",
-              header: "Status",
-              meta: {
-                filterVariant: "set",
-                label: "Status",
-                filterOptions: STATUS_OPTIONS.filter(
-                  (option) => option.value !== "excluded",
-                ),
-              },
-              cell: ({ row }) => (
-                <>
-                  <StatusTag invoice={row.original} />
-                  {row.original.mailedAt && row.original.mailedTo && (
-                    <span className="text-dark dark:text-night-muted mt-1 block text-xs [overflow-wrap:anywhere]">
-                      an {row.original.mailedTo}
-                    </span>
-                  )}
-                  {!row.original.mailedAt && row.original.mailError && (
-                    <span className="mt-1 block text-xs text-red-700 dark:text-red-400">
-                      {row.original.mailError}
-                    </span>
-                  )}
-                </>
-              ),
-            }),
-          ]
-        : []),
-      invoiceColumn.display({
-        id: "actions",
-        header: () => <span className="sr-only">Aktionen</span>,
-        meta: { alwaysVisible: true, label: "Aktionen", align: "right" },
-        cell: ({ row }) => actions(row.original),
-      }),
-    ]);
-  }, [
-    draft,
-    excludedList,
-    categories,
-    allSelected,
-    noneSelected,
-    selected,
-    sending,
-    updating,
-    pdfBase,
-    onSelect,
-    onSelectAll,
-    onSend,
-    onMove,
-    onSaved,
-    showCategories,
-    onToggleCategories,
-  ]);
+    ],
+    [categories, showCategories],
+  );
 
   return (
-    <DataTable
-      data={invoices}
-      columns={columns}
-      getRowId={(invoice) => invoice.id}
-      rowNoun={["Chor", "Chöre"]}
-      searchPlaceholder="Chor-Nr., Name, Empfänger oder E-Mail"
-      persistKey={`insurance-run-${variant}`}
-      initialSorting={[{ id: "choir", desc: false }]}
-      emptyState={
-        <p className="text-dark dark:text-night-muted text-sm">
-          {excludedList
-            ? "Alle Chöre werden abgerechnet."
-            : "Kein Chor wird abgerechnet."}
-        </p>
+    <BillingRunView
+      section={INSURANCE_SECTION}
+      run={run}
+      actions={actions}
+      extraColumns={extraColumns}
+      excludedReasons={excludedReasons}
+      draftExplanation={
+        <>
+          Vorschauen tragen den Stempel „ENTWURF“ und rechnen mit den Prämien
+          dieser Abrechnung, dem Steuersatz ({formatTaxRate(run.taxRate)}) und
+          den Texten aus den Einstellungen. Beim Ausstellen wird das
+          festgeschrieben; danach kannst du versenden.
+        </>
       }
-      renderMobileRow={(invoice) => (
-        <div className="flex gap-3">
-          <div className="pt-1">
-            <Checkbox
-              aria-label={`Chor ${invoice.choirNumber} auswählen`}
-              checked={selected.has(invoice.id)}
-              onChange={(event) => onSelect(invoice.id, event.target.checked)}
-            />
-          </div>
-          <div className="min-w-0 flex-1 space-y-1 text-sm">
-            <div className="flex items-baseline justify-between gap-2">
-              <span className="font-semibold">
-                {invoice.choirNumber}
-                {invoice.choirName ? ` · ${invoice.choirName}` : ""}
-              </span>
-              <span className="font-medium whitespace-nowrap tabular-nums">
-                {formatEuro(invoice.total)}
-              </span>
-            </div>
-            <p className="text-dark dark:text-night-muted">
-              {recipientLines(invoice).join(", ")}
-            </p>
-            <EmailCell invoice={invoice} onSaved={onSaved} />
-            {excludedList ? (
-              <div className="flex flex-wrap gap-1">
-                {excludedReasons(invoice).map((reason) => (
-                  <Tag key={reason} tone="muted">
-                    {reason}
-                  </Tag>
-                ))}
-              </div>
-            ) : (
-              !draft && <StatusTag invoice={invoice} />
-            )}
-            <div className="flex flex-wrap gap-1">
-              <a
-                href={`${pdfBase}?invoice=${invoice.id}`}
-                target="_blank"
-                rel="noreferrer"
-                className={PREVIEW_LINK}
+      draftNotices={
+        run.missingRates.length > 0 && (
+          <ul className="space-y-1">
+            {run.missingRates.map((maxValue) => (
+              <li
+                key={maxValue}
+                className="font-semibold text-red-700 dark:text-red-400"
               >
-                <DownloadIcon className="h-4 w-4" aria-hidden />
-                {draft ? "Vorschau" : "PDF"}
-              </a>
-              {!invoice.mailedAt && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  disabled={updating}
-                  onClick={() => onMove([invoice], !excludedList)}
-                >
-                  {excludedList ? "Abrechnen" : "Nicht abrechnen"}
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-    />
-  );
-}
-
-/** Jahr und Daten, solange die Abrechnung Entwurf ist. */
-function DraftDetailsCard({
-  run,
-  onSaved,
-}: {
-  run: Run;
-  onSaved: () => Promise<void>;
-}) {
-  const toast = useToast();
-  const [year, setYear] = useState(String(run.year));
-  const [invoiceDate, setInvoiceDate] = useState(
-    dateInputValue(new Date(run.invoiceDate)),
-  );
-  const [dueDate, setDueDate] = useState(dateInputValue(new Date(run.dueDate)));
-  const save = api.insuranceBilling.updateRun.useMutation({
-    onSuccess: async () => {
-      await onSaved();
-      toast.success("Rechnungsangaben gespeichert.");
-    },
-    onError: (error) => toast.error(error.message),
-  });
-
-  const parsedYear = Number(year);
-  const parsedInvoiceDate = dateFromInput(invoiceDate);
-  const parsedDueDate = dateFromInput(dueDate);
-  const valid =
-    Number.isInteger(parsedYear) && !!parsedInvoiceDate && !!parsedDueDate;
-  const changed =
-    year !== String(run.year) ||
-    invoiceDate !== dateInputValue(new Date(run.invoiceDate)) ||
-    dueDate !== dateInputValue(new Date(run.dueDate));
-
-  return (
-    <Card>
-      <div className="space-y-4 p-6">
-        <h2 className="text-ink dark:text-night-text text-lg font-semibold">
-          Rechnungsangaben
-        </h2>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <div>
-            <Label htmlFor="year">Beitragsjahr</Label>
-            <Input
-              id="year"
-              inputMode="numeric"
-              value={year}
-              onChange={(event) => setYear(event.target.value)}
-            />
-          </div>
-          <div>
-            <Label htmlFor="invoiceDate">Rechnungsdatum</Label>
-            <Input
-              id="invoiceDate"
-              type="date"
-              value={invoiceDate}
-              onChange={(event) => setInvoiceDate(event.target.value)}
-            />
-          </div>
-          <div>
-            <Label htmlFor="dueDate">Zahlbar bis</Label>
-            <Input
-              id="dueDate"
-              type="date"
-              value={dueDate}
-              onChange={(event) => setDueDate(event.target.value)}
-            />
-          </div>
-        </div>
-        <Button
-          variant="outline"
-          disabled={!changed || !valid}
-          isLoading={save.isPending}
-          onClick={() =>
-            parsedInvoiceDate &&
-            parsedDueDate &&
-            save.mutate({
-              id: run.id,
-              year: parsedYear,
-              invoiceDate: parsedInvoiceDate,
-              dueDate: parsedDueDate,
-            })
-          }
-        >
-          Angaben speichern
-        </Button>
-      </div>
-    </Card>
-  );
-}
-
-function RatesTable({ run }: { run: Run }) {
-  return (
-    <section className="space-y-3">
-      <h2 className="text-ink dark:text-night-text text-lg font-semibold">
-        Prämien
-      </h2>
-      <div className={TABLE_WRAP}>
-        <table className={TABLE}>
-          <thead className={THEAD}>
-            <tr>
-              <th className={TH}>Wertklasse</th>
-              <th className={TH_NUM}>Netto laut Tabelle</th>
-              <th className={TH_NUM}>Netto verwendet</th>
-              <th className={TH_NUM}>Brutto je Stück</th>
-              <th className={TH}>Quelle</th>
-            </tr>
-          </thead>
-          <tbody className={TBODY}>
-            {run.categories.map((category) => (
-              <tr key={category.maxValue}>
-                <td className={TD}>
-                  {insuranceCategoryLabel(category.maxValue)}
-                </td>
-                <td className={TD_NUM}>
-                  {category.sheetNetPremium === null
-                    ? "—"
-                    : formatEuro(category.sheetNetPremium)}
-                </td>
-                <td className={TD_NUM}>
-                  {category.netPremium === null
-                    ? "—"
-                    : formatEuro(category.netPremium)}
-                </td>
-                <td className={TD_NUM}>
-                  {category.grossPremium === null
-                    ? "—"
-                    : formatEuro(category.grossPremium)}
-                </td>
-                <td className={TD}>
-                  {category.source === "settings" ? (
-                    <Tag tone="orange">Einstellungen</Tag>
-                  ) : category.source === "sheet" ? (
-                    <Tag tone="muted">Tabelle</Tag>
-                  ) : (
-                    <Tag tone="cancelled">fehlt</Tag>
-                  )}
-                </td>
-              </tr>
+                Für „{insuranceCategoryLabel(maxValue)}“ fehlt eine Prämie —
+                trage sie unten unter „Prämien je Wertklasse“ ein.
+              </li>
             ))}
-          </tbody>
-        </table>
-      </div>
-    </section>
+          </ul>
+        )
+      }
+      draftAside={
+        <RunRateTiles
+          title="Prämien je Wertklasse"
+          description={`Nettoprämie je Instrument für diese Abrechnung, beim Hochladen aus der Tabelle übernommen. Auf der Rechnung steht der Bruttobetrag mit ${formatTaxRate(run.taxRate)} Versicherungssteuer.`}
+          unit="€ netto"
+          preview={(net) =>
+            `${formatEuro(grossPremium(net, run.taxRate))} brutto`
+          }
+          tiles={run.categories.map((category) => ({
+            key: String(category.maxValue),
+            label: insuranceCategoryLabel(category.maxValue),
+            sheetValue: category.sheetNetPremium,
+            value: category.netPremium,
+            manual: category.source === "manual",
+          }))}
+          onSave={(changes) =>
+            after(
+              setRunRates.mutateAsync({
+                id: run.id,
+                rates: Object.entries(changes).map(([key, netPremium]) => ({
+                  maxValue: Number(key),
+                  netPremium,
+                })),
+              }),
+            )
+          }
+        />
+      }
+      canIssue={run.missingRates.length === 0}
+      issueConfirm="Prämien, Steuersatz und Texte werden dabei festgeschrieben und lassen sich danach nicht mehr ändern."
+      sheetTotalTitle="Weicht vom berechneten Betrag ab (andere Prämie oder Steuersatz?)"
+    />
   );
 }
 
 export default function InsuranceRunPage() {
   const { runId } = useParams<{ runId: string }>();
-  const router = useRouter();
-  const toast = useToast();
-  const utils = api.useUtils();
-  const { data: session } = useSession();
   const { hasPermission, isLoading: permissionsLoading } = usePermissions();
   const canManage = hasPermission(PERMISSIONS.BILLING_MANAGE);
-
   const run = api.insuranceBilling.getRun.useQuery(
     { id: runId },
     { enabled: canManage },
   );
-  const [testEmail, setTestEmail] = useState("");
-  const [selectedBilled, setSelectedBilled] = useState<Set<string>>(new Set());
-  const [selectedExcluded, setSelectedExcluded] = useState<Set<string>>(
-    new Set(),
-  );
-  // Gilt für beide Listen, damit sie gleich aufgebaut bleiben.
-  const [showCategories, setShowCategories] = useState(false);
-  const toggleCategories = () => setShowCategories((current) => !current);
-
-  const refresh = async () => {
-    await Promise.all([
-      utils.insuranceBilling.getRun.invalidate({ id: runId }),
-      utils.insuranceBilling.listRuns.invalidate(),
-    ]);
-  };
-
-  const send = api.insuranceBilling.send.useMutation({
-    onSuccess: async (result) => {
-      await refresh();
-      if (result.test) {
-        toast.success("Testmail verschickt.");
-        return;
-      }
-      const parts = [`${result.sentCount} versendet`];
-      if (result.failedCount) {
-        parts.push(`${result.failedCount} fehlgeschlagen`);
-      }
-      if (result.skippedCount) {
-        parts.push(`${result.skippedCount} ohne E-Mail`);
-      }
-      if (result.failedCount) toast.error(parts.join(", "));
-      else toast.success(parts.join(", "));
-    },
-    onError: (error) => toast.error(error.message),
-  });
-
-  const setExcluded = api.insuranceBilling.setExcluded.useMutation({
-    onSuccess: refresh,
-    onError: (error) => toast.error(error.message),
-  });
-
-  const issueRun = api.insuranceBilling.issueRun.useMutation({
-    onSuccess: async () => {
-      setSelectedBilled(new Set());
-      await refresh();
-      toast.success("Abrechnung ausgestellt — jetzt kann versendet werden.");
-    },
-    onError: (error) => toast.error(error.message),
-  });
-
-  const deleteRun = api.insuranceBilling.deleteRun.useMutation({
-    onSuccess: async () => {
-      await utils.insuranceBilling.listRuns.invalidate();
-      toast.success("Abrechnung gelöscht.");
-      router.push(INSURANCE_BASE_PATH);
-    },
-    onError: (error) => toast.error(error.message),
-  });
 
   if (permissionsLoading || (canManage && run.isLoading)) {
     return (
@@ -860,7 +224,10 @@ export default function InsuranceRunPage() {
 
   if (!canManage || !run.data) {
     return (
-      <DashboardPage title="Abrechnung" breadcrumbs={INSURANCE_BREADCRUMBS}>
+      <DashboardPage
+        title="Abrechnung"
+        breadcrumbs={INSURANCE_SECTION.breadcrumbs}
+      >
         <p className="text-dark dark:text-night-muted">
           {canManage
             ? "Diese Abrechnung gibt es nicht."
@@ -870,423 +237,5 @@ export default function InsuranceRunPage() {
     );
   }
 
-  const data = run.data;
-  const draft = data.draft;
-  const billed = data.invoices.filter((invoice) => !invoice.excluded);
-  const pending = billed.filter(
-    (invoice) => !invoice.mailedAt && invoice.email,
-  );
-  const withoutEmail = billed.filter(
-    (invoice) => !invoice.mailedAt && !invoice.email,
-  );
-  const mailedCount = billed.filter((invoice) => invoice.mailedAt).length;
-  const total = billed.reduce((sum, invoice) => sum + invoice.total, 0);
-  const pdfBase = `/api/geschaeftsstelle/versicherung/${data.id}/pdf`;
-  const sending = send.isPending;
-
-  const excludedInvoices = data.invoices.filter((invoice) => invoice.excluded);
-  const redCount = data.invoices.filter(
-    (invoice) => invoice.sheetMarkedRed,
-  ).length;
-
-  const toggleIn =
-    (setter: typeof setSelectedBilled) => (id: string, value: boolean) =>
-      setter((current) => {
-        const next = new Set(current);
-        if (value) next.add(id);
-        else next.delete(id);
-        return next;
-      });
-  const selectAllIn =
-    (setter: typeof setSelectedBilled, list: RunInvoice[]) =>
-    (value: boolean) =>
-      setter(value ? new Set(list.map((invoice) => invoice.id)) : new Set());
-
-  /** Verschiebt zwischen den Listen; Versendete bleiben stehen. */
-  const move = (invoices: RunInvoice[], excluded: boolean) => {
-    const movable = invoices.filter((invoice) => !invoice.mailedAt);
-    if (movable.length === 0) return;
-    setExcluded.mutate(
-      {
-        runId: data.id,
-        invoiceIds: movable.map((invoice) => invoice.id),
-        excluded,
-      },
-      {
-        onSuccess: () => {
-          const moved = new Set(movable.map((invoice) => invoice.id));
-          const drop = (current: Set<string>) =>
-            new Set([...current].filter((id) => !moved.has(id)));
-          setSelectedBilled(drop);
-          setSelectedExcluded(drop);
-          toast.success(
-            `${plural(movable.length, "Chor", "Chöre")} ${excluded ? "nach „Nicht abrechnen“" : "nach „Abrechnen“"} verschoben.`,
-          );
-        },
-      },
-    );
-  };
-
-  const selectedBilledInvoices = billed.filter((invoice) =>
-    selectedBilled.has(invoice.id),
-  );
-  const selectedExcludedInvoices = excludedInvoices.filter((invoice) =>
-    selectedExcluded.has(invoice.id),
-  );
-  const selectedSendable = selectedBilledInvoices.filter(
-    (invoice) => invoice.email,
-  );
-  const selectedMovableBilled = selectedBilledInvoices.filter(
-    (invoice) => !invoice.mailedAt,
-  );
-
-  const sendAll = () => {
-    if (
-      !window.confirm(
-        `${plural(pending.length, "Rechnung", "Rechnungen")} jetzt per E-Mail versenden? Das lässt sich nicht zurücknehmen.`,
-      )
-    ) {
-      return;
-    }
-    send.mutate({ runId: data.id });
-  };
-
-  const sendSelected = () => {
-    const resend = selectedSendable.filter(
-      (invoice) => invoice.mailedAt,
-    ).length;
-    if (
-      !window.confirm(
-        `${plural(selectedSendable.length, "Rechnung", "Rechnungen")} jetzt per E-Mail versenden?${resend > 0 ? ` ${resend} davon gingen schon einmal raus.` : ""}`,
-      )
-    ) {
-      return;
-    }
-    send.mutate(
-      {
-        runId: data.id,
-        invoiceIds: selectedSendable.map((invoice) => invoice.id),
-      },
-      { onSuccess: () => setSelectedBilled(new Set()) },
-    );
-  };
-
-  const sendOne = (invoice: RunInvoice) => {
-    if (
-      invoice.mailedAt &&
-      !window.confirm(
-        `Die Rechnung an ${invoice.mailedTo ?? invoice.email} wurde schon versendet. Noch einmal schicken?`,
-      )
-    ) {
-      return;
-    }
-    send.mutate({ runId: data.id, invoiceIds: [invoice.id] });
-  };
-
-  const issue = () => {
-    if (
-      !window.confirm(
-        `${plural(billed.length, "Rechnung", "Rechnungen")} über ${formatEuro(total)} ausstellen? Prämien, Steuersatz und Texte werden dabei festgeschrieben und lassen sich danach nicht mehr ändern.`,
-      )
-    ) {
-      return;
-    }
-    issueRun.mutate({ id: data.id });
-  };
-
-  return (
-    <DashboardPage
-      title={`Versicherungsbeiträge ${data.year}`}
-      description={`Aus „${data.sourceFilename}“, angelegt ${formatDate(data.createdAt)}${data.createdByName ? ` von ${data.createdByName}` : ""}${data.issuedAt ? `, ausgestellt ${formatDate(data.issuedAt)}` : ""}.`}
-      breadcrumbs={[
-        ...INSURANCE_BREADCRUMBS,
-        { label: draft ? `${data.year} (Entwurf)` : String(data.year) },
-      ]}
-      actions={
-        <div className="flex flex-wrap gap-2">
-          <a href={pdfBase} className={LINK_OUTLINE}>
-            <Download className="h-4 w-4" aria-hidden />
-            {draft ? "Vorschauen als ZIP" : "Alle als ZIP"}
-          </a>
-          {!draft && withoutEmail.length > 0 && (
-            <a href={`${pdfBase}?filter=unmailed`} className={LINK_OUTLINE}>
-              <Download className="h-4 w-4" aria-hidden />
-              Unversendete als ZIP
-            </a>
-          )}
-        </div>
-      }
-    >
-      <div className="space-y-8">
-        <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          {[
-            ["Status", draft ? "Entwurf" : "Ausgestellt"],
-            ["Rechnungsdatum", formatDate(data.invoiceDate)],
-            ["Zahlbar bis", formatDate(data.dueDate)],
-            ["Summe", formatEuro(total)],
-            draft
-              ? ["Rechnungen", String(billed.length)]
-              : ["Versendet", `${mailedCount} von ${billed.length}`],
-          ].map(([label, value]) => (
-            <div
-              key={label}
-              className="border-rule dark:border-night-rule border-t-2 pt-2"
-            >
-              <dt className="text-dark dark:text-night-muted text-xs font-medium tracking-wider uppercase">
-                {label}
-              </dt>
-              <dd className="text-ink dark:text-night-text text-lg font-semibold tabular-nums">
-                {value}
-              </dd>
-            </div>
-          ))}
-        </dl>
-
-        {draft && (
-          <div className="border-ink dark:border-night-text flex gap-3 border-l-2 py-2 pl-4">
-            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
-            <div className="text-dark dark:text-night-muted space-y-1 text-sm">
-              <p className="text-ink dark:text-night-text font-semibold">
-                Entwurf — noch nichts ist festgeschrieben.
-              </p>
-              <p>
-                Vorschauen tragen den Stempel „ENTWURF“ und rechnen mit den
-                aktuellen Prämien, dem Steuersatz ({formatTaxRate(data.taxRate)}
-                ) und den Texten aus den Einstellungen. Beim Ausstellen wird das
-                festgeschrieben; danach kannst du versenden.
-              </p>
-              <ul className="space-y-1">
-                {data.missingRates.map((maxValue) => (
-                  <li
-                    key={maxValue}
-                    className="font-semibold text-red-700 dark:text-red-400"
-                  >
-                    Für „{insuranceCategoryLabel(maxValue)}“ fehlt eine Prämie —
-                    trage sie unter „Prämien je Wertklasse“ ein.
-                  </li>
-                ))}
-                {data.warnings.map((warning) => (
-                  <li key={warning}>{warning}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        )}
-
-        {draft ? (
-          <>
-            <DraftDetailsCard
-              key={`${data.year}-${String(data.invoiceDate)}-${String(data.dueDate)}`}
-              run={data}
-              onSaved={refresh}
-            />
-            <RatesTable run={data} />
-          </>
-        ) : (
-          <Card>
-            <div className="space-y-4 p-6">
-              <h2 className="text-ink dark:text-night-text text-lg font-semibold">
-                Versand
-              </h2>
-              <p className="text-dark dark:text-night-muted text-sm">
-                Jede Rechnung geht als PDF-Anhang an die E-Mail-Adresse aus der
-                Tabelle; weitere Adressen lesen in Kopie mit. Betreff und Text
-                stehen unter „Texte & Einstellungen“.
-                {withoutEmail.length > 0 &&
-                  ` ${withoutEmail.length === 1 ? "Ein Chor hat" : `${withoutEmail.length} Chöre haben`} keine E-Mail-Adresse — trage sie unten nach oder lade die Rechnungen als ZIP für den Postversand.`}
-              </p>
-              <div>
-                <Label htmlFor="testEmail">Testmail an</Label>
-                {/* Eine Zeile, eine Höhe: Feld und beide Knöpfe sind 40 px hoch. */}
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                  <div className="flex flex-1 gap-2">
-                    <Input
-                      id="testEmail"
-                      type="email"
-                      className="h-10"
-                      placeholder={session?.user.email ?? "name@example.org"}
-                      value={testEmail}
-                      onChange={(event) => setTestEmail(event.target.value)}
-                    />
-                    <Button
-                      variant="outline"
-                      className="shrink-0"
-                      disabled={sending || billed.length === 0}
-                      onClick={() =>
-                        send.mutate({
-                          runId: data.id,
-                          invoiceIds: billed[0] ? [billed[0].id] : undefined,
-                          testEmail:
-                            testEmail.trim() ||
-                            session?.user.email ||
-                            undefined,
-                        })
-                      }
-                    >
-                      <Mail className="h-4 w-4" aria-hidden />
-                      Test
-                    </Button>
-                  </div>
-                  <Button
-                    className="shrink-0 sm:ml-4"
-                    disabled={sending || pending.length === 0}
-                    isLoading={sending}
-                    onClick={sendAll}
-                  >
-                    <Send className="h-4 w-4" aria-hidden />
-                    {pending.length === 0
-                      ? "Alles versendet"
-                      : pending.length === 1
-                        ? "1 Rechnung versenden"
-                        : `Alle ${pending.length} offenen versenden`}
-                  </Button>
-                </div>
-                <p className="text-dark dark:text-night-muted mt-1 text-xs">
-                  Schickt die erste Rechnung mit „[TEST]“ im Betreff; nichts
-                  wird als versendet markiert.
-                </p>
-              </div>
-            </div>
-          </Card>
-        )}
-
-        <section className="space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-ink dark:text-night-text text-lg font-semibold">
-              Abrechnen ({billed.length})
-            </h2>
-            <div className="flex flex-wrap gap-2">
-              {selectedMovableBilled.length > 0 && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={setExcluded.isPending}
-                  onClick={() => move(selectedMovableBilled, true)}
-                >
-                  <ArrowDown className="h-4 w-4" aria-hidden />
-                  {plural(
-                    selectedMovableBilled.length,
-                    "ausgewählten",
-                    "ausgewählte",
-                  )}{" "}
-                  nicht abrechnen
-                </Button>
-              )}
-              {!draft && selectedSendable.length > 0 && (
-                <Button
-                  size="sm"
-                  disabled={sending}
-                  isLoading={sending}
-                  onClick={sendSelected}
-                >
-                  <Send className="h-4 w-4" aria-hidden />
-                  {selectedSendable.length === 1
-                    ? "Ausgewählte Rechnung versenden"
-                    : `${selectedSendable.length} ausgewählte versenden`}
-                </Button>
-              )}
-            </div>
-          </div>
-          <RunInvoicesTable
-            run={data}
-            variant="billed"
-            invoices={billed}
-            pdfBase={pdfBase}
-            selected={selectedBilled}
-            onSelect={toggleIn(setSelectedBilled)}
-            onSelectAll={selectAllIn(setSelectedBilled, billed)}
-            sending={sending}
-            updating={setExcluded.isPending}
-            onSend={sendOne}
-            onMove={move}
-            onSaved={refresh}
-            showCategories={showCategories}
-            onToggleCategories={toggleCategories}
-          />
-        </section>
-
-        <section className="space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <h2 className="text-ink dark:text-night-text text-lg font-semibold">
-                Nicht abrechnen ({excludedInvoices.length})
-              </h2>
-              <p className="text-dark dark:text-night-muted text-sm">
-                Diese Chöre bekommen keine Rechnung
-                {redCount > 0 &&
-                  ` — ${plural(redCount, "Zeile ist", "Zeilen sind")} in der Tabelle rot markiert`}
-                . Prüfe, ob alle hierher gehören, und verschiebe Fehler mit
-                „Abrechnen“.
-              </p>
-            </div>
-            {selectedExcludedInvoices.length > 0 && (
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={setExcluded.isPending}
-                onClick={() => move(selectedExcludedInvoices, false)}
-              >
-                <ArrowUp className="h-4 w-4" aria-hidden />
-                {plural(
-                  selectedExcludedInvoices.length,
-                  "ausgewählten",
-                  "ausgewählte",
-                )}{" "}
-                abrechnen
-              </Button>
-            )}
-          </div>
-          <RunInvoicesTable
-            run={data}
-            variant="excluded"
-            invoices={excludedInvoices}
-            pdfBase={pdfBase}
-            selected={selectedExcluded}
-            onSelect={toggleIn(setSelectedExcluded)}
-            onSelectAll={selectAllIn(setSelectedExcluded, excludedInvoices)}
-            sending={sending}
-            updating={setExcluded.isPending}
-            onSend={sendOne}
-            onMove={move}
-            onSaved={refresh}
-            showCategories={showCategories}
-            onToggleCategories={toggleCategories}
-          />
-        </section>
-
-        <div className="border-rule dark:border-night-rule flex flex-wrap gap-3 border-t pt-6">
-          {draft && (
-            <Button
-              disabled={data.missingRates.length > 0 || billed.length === 0}
-              isLoading={issueRun.isPending}
-              onClick={issue}
-            >
-              <Stamp className="h-4 w-4" aria-hidden />
-              {plural(billed.length, "Rechnung", "Rechnungen")} ausstellen
-            </Button>
-          )}
-          {mailedCount === 0 && (
-            <Button
-              variant="danger"
-              isLoading={deleteRun.isPending}
-              onClick={() => {
-                if (
-                  window.confirm(
-                    draft
-                      ? "Diesen Entwurf löschen?"
-                      : "Diese Abrechnung mit allen Rechnungen löschen? Es wurde noch nichts versendet.",
-                  )
-                ) {
-                  deleteRun.mutate({ id: data.id });
-                }
-              }}
-            >
-              <Trash2 className="h-4 w-4" aria-hidden />
-              {draft ? "Entwurf löschen" : "Abrechnung löschen"}
-            </Button>
-          )}
-        </div>
-      </div>
-    </DashboardPage>
-  );
+  return <InsuranceRun run={run.data} />;
 }

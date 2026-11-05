@@ -1,6 +1,18 @@
 import "server-only";
 
-import ExcelJS from "exceljs";
+import type ExcelJS from "exceljs";
+import {
+  SheetError,
+  cellEmails,
+  cellFormula,
+  cellNumber,
+  cellText,
+  hasRedFill,
+  hasRedText,
+  headerKey,
+  loadWorkbook,
+  textOrNull,
+} from "./sheet-cells";
 import type { InsuranceQuantity } from "@/lib/insurance-billing";
 
 /**
@@ -15,7 +27,8 @@ import type { InsuranceQuantity } from "@/lib/insurance-billing";
  *   ab Zeile 3: ein Chor je Zeile; Zeilen ohne Chor-Nr. werden übergangen.
  */
 
-export class InsuranceSheetError extends Error {}
+/** Dieselbe Klasse wie `SheetError`; der Name bleibt für die Aufrufer. */
+export const InsuranceSheetError = SheetError;
 
 export interface ParsedInsuranceCategory {
   maxValue: number;
@@ -48,81 +61,10 @@ export interface ParsedInsuranceSheet {
   rows: ParsedInsuranceRow[];
 }
 
-const EMAIL_PATTERN = /[^\s@<>"';,:()]+@[^\s@<>"';,:()]+\.[A-Za-z]{2,}/g;
 const CATEGORY_PATTERN = /bis\s*([\d.\s]+)\s*(?:eur|€)/i;
 const PRICE_PATTERN = /(\d+(?:[.,]\d+)?)\s*(?:eur|€)/i;
 /** "SUM(I3*6*1.19)" → Preis 6, Faktor 1.19 */
 const FORMULA_PATTERN = /\*\s*(\d+(?:\.\d+)?)\s*\*\s*(1\.\d+)/;
-
-/** Eine Excel-Zelle als Text — Hyperlinks, Rich Text und Formelergebnisse eingeschlossen. */
-function cellText(value: ExcelJS.CellValue): string {
-  if (value === null || value === undefined) return "";
-  if (typeof value === "string") return value.trim();
-  if (typeof value === "number" || typeof value === "boolean") {
-    return String(value);
-  }
-  if (value instanceof Date) return value.toISOString();
-  if (typeof value === "object") {
-    if ("richText" in value) {
-      return value.richText
-        .map((part) => part.text)
-        .join("")
-        .trim();
-    }
-    if ("text" in value && typeof value.text === "string") {
-      return value.text.trim();
-    }
-    if ("result" in value) return cellText(value.result as ExcelJS.CellValue);
-    if ("error" in value) return "";
-  }
-  return "";
-}
-
-function cellNumber(value: ExcelJS.CellValue): number | null {
-  if (value === null || value === undefined) return null;
-  if (typeof value === "number") return value;
-  if (typeof value === "object" && !(value instanceof Date)) {
-    if ("result" in value) return cellNumber(value.result as ExcelJS.CellValue);
-    if ("formula" in value || "sharedFormula" in value) return null;
-  }
-  const text = cellText(value).replace(/\s|€/g, "");
-  if (!text) return null;
-  // Deutsche Schreibweise: Punkt als Tausender-, Komma als Dezimaltrenner.
-  const normalized = text.includes(",")
-    ? text.replace(/\./g, "").replace(",", ".")
-    : text;
-  const number = Number(normalized);
-  return Number.isFinite(number) ? number : null;
-}
-
-function cellFormula(value: ExcelJS.CellValue): string | null {
-  if (value && typeof value === "object" && "formula" in value) {
-    return typeof value.formula === "string" ? value.formula : null;
-  }
-  return null;
-}
-
-/** Rot aus Excels alter Indexpalette: 2 und 10 sind #FF0000, 16 ist #800000. */
-const RED_INDEXED_COLORS = new Set([2, 10, 16]);
-
-/**
- * Rot, Dunkelrot und das blasse Rot von „Schlecht“ — aber nicht Orange, Rosa-Violett
- * oder Grau. Designfarben (`theme`) bleiben außen vor: ohne das Design der Mappe
- * ist nicht zu sagen, welche Farbe sie sind.
- */
-/** ExcelJS liest `indexed` mit, kennt es aber nicht im Typ. */
-type SheetColor = { argb?: string; indexed?: number };
-
-function isRedColor(color: unknown, minLead: number): boolean {
-  if (!color || typeof color !== "object") return false;
-  const { argb, indexed } = color as SheetColor;
-  if (indexed !== undefined) return RED_INDEXED_COLORS.has(indexed);
-  if (!argb || !/^[0-9a-f]{8}$/i.test(argb)) return false;
-  const r = parseInt(argb.slice(2, 4), 16);
-  const g = parseInt(argb.slice(4, 6), 16);
-  const b = parseInt(argb.slice(6, 8), 16);
-  return r >= 0x80 && r - Math.max(g, b) >= minLead && Math.abs(g - b) <= 0x40;
-}
 
 /**
  * Sichtbar rot: rote Schrift in einer Zelle mit Inhalt oder eine rote Füllung.
@@ -132,43 +74,9 @@ function isRedColor(color: unknown, minLead: number): boolean {
 function isMarkedRed(row: ExcelJS.Row): boolean {
   let red = false;
   row.eachCell({ includeEmpty: true }, (cell) => {
-    if (red) return;
-    const fill = cell.fill;
-    if (
-      fill?.type === "pattern" &&
-      fill.pattern !== "none" &&
-      isRedColor(fill.fgColor, 0x30)
-    ) {
-      red = true;
-      return;
-    }
-    if (cellText(cell.value) && isRedColor(cell.font?.color, 0x50)) {
-      red = true;
-    }
+    if (!red && (hasRedFill(cell) || hasRedText(cell))) red = true;
   });
   return red;
-}
-
-function cellEmails(value: ExcelJS.CellValue): string[] {
-  const parts: string[] = [cellText(value)];
-  if (value && typeof value === "object" && "hyperlink" in value) {
-    parts.push(String(value.hyperlink ?? "").replace(/^mailto:/i, ""));
-  }
-  const found = parts.flatMap((part) => part.match(EMAIL_PATTERN) ?? []);
-  return [...new Set(found.map((email) => email.toLowerCase()))];
-}
-
-/** "Rg_Strasse" → "rgstrasse", "Chor-Nr." → "chornr" */
-function headerKey(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/ß/g, "ss")
-    .replace(/[^a-z0-9]/g, "");
-}
-
-function textOrNull(text: string): string | null {
-  const collapsed = text.replace(/\s+/g, " ").trim();
-  return collapsed === "" ? null : collapsed;
 }
 
 interface ColumnMap {
@@ -329,21 +237,7 @@ function pickSheet(workbook: ExcelJS.Workbook): {
 export async function parseInsuranceSheet(
   buffer: ArrayBuffer | Uint8Array,
 ): Promise<ParsedInsuranceSheet> {
-  const workbook = new ExcelJS.Workbook();
-  try {
-    await workbook.xlsx.load(
-      buffer instanceof Uint8Array
-        ? (buffer.buffer.slice(
-            buffer.byteOffset,
-            buffer.byteOffset + buffer.byteLength,
-          ) as ArrayBuffer)
-        : buffer,
-    );
-  } catch {
-    throw new InsuranceSheetError(
-      "Die Datei konnte nicht als Excel-Tabelle (.xlsx) gelesen werden.",
-    );
-  }
+  const workbook = await loadWorkbook(buffer);
 
   const { sheet, headerRow } = pickSheet(workbook);
   const columns = mapColumns(sheet, headerRow);

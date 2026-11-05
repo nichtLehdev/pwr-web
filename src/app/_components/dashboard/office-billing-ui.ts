@@ -1,12 +1,45 @@
-/** Gemeinsame Bausteine der Seiten unter /dashboard/geschaeftsstelle/versicherung. */
+/** Gemeinsame Bausteine der Abrechnungsseiten unter /dashboard/geschaeftsstelle. */
 
-export const INSURANCE_BASE_PATH = "/dashboard/geschaeftsstelle/versicherung";
+export interface BillingSection {
+  /** "Versicherungsbeiträge" */
+  title: string;
+  basePath: string;
+  breadcrumbs: { label: string; href?: string }[];
+  /** Basis der PDF-Route, ohne Lauf-ID. */
+  pdfApiBase: string;
+  /** Schlüssel für gemerkte Tabelleneinstellungen. */
+  persistKey: string;
+}
 
-export const INSURANCE_BREADCRUMBS = [
-  { label: "Dashboard", href: "/dashboard" },
-  { label: "Geschäftsstelle" },
-  { label: "Versicherungsbeiträge", href: INSURANCE_BASE_PATH },
-];
+function section(
+  title: string,
+  slug: string,
+  persistKey: string,
+): BillingSection {
+  const basePath = `/dashboard/geschaeftsstelle/${slug}`;
+  return {
+    title,
+    basePath,
+    breadcrumbs: [
+      { label: "Dashboard", href: "/dashboard" },
+      { label: "Geschäftsstelle" },
+      { label: title, href: basePath },
+    ],
+    pdfApiBase: `/api/geschaeftsstelle/${slug}`,
+    persistKey,
+  };
+}
+
+export const INSURANCE_SECTION = section(
+  "Versicherungsbeiträge",
+  "versicherung",
+  "insurance-run",
+);
+export const MEMBERSHIP_SECTION = section(
+  "Mitgliedsbeiträge",
+  "mitgliedsbeitraege",
+  "membership-run",
+);
 
 export const LINK_PRIMARY =
   "bg-ink text-paper hover:bg-dark dark:bg-night-text dark:text-night dark:hover:bg-night-muted semi-condensed inline-flex min-h-11 items-center gap-2 px-4 py-2.5 font-semibold transition-colors";

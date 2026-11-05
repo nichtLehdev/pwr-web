@@ -44,6 +44,7 @@ model User {
   createdCourses               Course[]               @relation("CourseCreator")
   createdLateRegistrationLinks LateRegistrationLink[] @relation("LateRegistrationLinkCreator")
   createdInsuranceBillingRuns  InsuranceBillingRun[]  @relation("InsuranceBillingRunCreator")
+  createdMembershipBillingRuns MembershipBillingRun[] @relation("MembershipBillingRunCreator")
   createdPosts                 Post[]                 @relation("PostCreator")
   authoredPosts                Post[]                 @relation("PostAuthor")
   reviewedEvents               Event[]                @relation("EventReviewer")
@@ -2042,25 +2043,16 @@ model InsuranceBillingSettings {
   @@map("insurance_billing_settings")
 }
 
-/// Hinterlegte Nettoprämie je Wertklasse. Fehlt eine Klasse hier, gilt der Preis aus der Tabelle.
-model InsurancePremiumRate {
-  /// Obergrenze der Wertklasse in Euro, z.B. 1250 für "bis 1.250 EUR".
-  maxValue   Int      @id
-  netPremium Float
-  updatedAt  DateTime @updatedAt
-
-  @@map("insurance_premium_rate")
-}
-
 enum InsuranceBillingRunStatus {
   DRAFT
   ISSUED
 }
 
 /// Ein Abrechnungslauf: eine hochgeladene Tabelle, daraus je Chor eine Rechnung.
-/// Wie bei den Kursrechnungen erst Entwurf (Vorschau mit "ENTWURF", rechnet mit den
-/// aktuellen Einstellungen), dann ausgestellt: Preise, Steuersatz und Texte werden
-/// dabei eingefroren, damit eine versendete Rechnung bei erneutem Download gleich aussieht.
+/// Die Prämien gehören zum Lauf: beim Hochladen aus der Tabelle übernommen, im
+/// Entwurf anpassbar. Wie bei den Kursrechnungen erst Entwurf (Vorschau mit
+/// "ENTWURF"), dann ausgestellt: Steuersatz und Texte werden dabei eingefroren,
+/// damit eine versendete Rechnung bei erneutem Download gleich aussieht.
 model InsuranceBillingRun {
   id String @id @default(uuid())
 
@@ -2077,11 +2069,13 @@ model InsuranceBillingRun {
   /// Steuersatz aus den Formeln der Tabelle, nur zum Abgleich.
   sheetTaxRate Float?
 
+  /// Nettoprämien dieses Laufs: [{ maxValue, netPremium, source: "sheet" | "manual" }],
+  /// aufsteigend. Wertklassen ohne Eintrag haben keine Prämie und blockieren das Ausstellen.
+  rates Json @default("[]")
+
   // Erst beim Ausstellen gesetzt; Entwürfe rechnen mit den aktuellen Einstellungen.
   taxRate                Float?
   paymentReferencePrefix String?
-  /// [{ maxValue, netPremium, source: "settings" | "sheet" }], aufsteigend nach Wertklasse.
-  rates                  Json?
   introText              String?
   closingText            String?
   signatureName          String?
@@ -2140,4 +2134,122 @@ model InsuranceInvoice {
 
   @@index([runId, sheetRow])
   @@map("insurance_invoice")
+}
+
+/// Einstellungen der Mitgliedsbeitragsabrechnung (eine Zeile, id = 1).
+model MembershipBillingSettings {
+  id Int @id @default(1)
+
+  /// Steht vor der Chor-Nr. im Verwendungszweck, z.B. "1174" → "1174/02-07".
+  paymentReferencePrefix String @default("1174")
+
+  /// Texte auf der Rechnung und in der Mail; leer heißt Standardtext. Platzhalter siehe membership-billing.ts.
+  introText     String?
+  closingText   String?
+  signatureName String?
+  emailSubject  String?
+  emailBody     String?
+
+  updatedAt DateTime @updatedAt
+
+  @@map("membership_billing_settings")
+}
+
+enum MembershipBillingRunStatus {
+  DRAFT
+  ISSUED
+}
+
+/// Ein Abrechnungslauf der Mitgliedsbeiträge: eine hochgeladene Mitgliedertabelle,
+/// daraus je Chor bzw. Einzelmitglied eine Rechnung. Die Beitragssätze gehören zum
+/// Lauf (aus den Formeln der Tabelle, im Entwurf anpassbar); Ablauf wie bei der Versicherung.
+model MembershipBillingRun {
+  id String @id @default(uuid())
+
+  status   MembershipBillingRunStatus @default(DRAFT)
+  issuedAt DateTime?
+
+  year           Int
+  sourceFilename String
+  invoiceDate    DateTime
+  dueDate        DateTime
+
+  /// Sätze laut Formeln der Tabelle: { baseFee, rateWithIncome, rateWithoutIncome, magazinePrice }, je Zahl oder null.
+  sheetRates Json
+
+  /// Sätze dieses Laufs: wie sheetRates (null = unbekannt, blockiert das Ausstellen),
+  /// dazu `sources` je Satz: "sheet" | "manual".
+  rates Json @default("{}")
+
+  // Erst beim Ausstellen gesetzt; Entwürfe rechnen mit den aktuellen Einstellungen.
+  paymentReferencePrefix String?
+  introText              String?
+  closingText            String?
+  signatureName          String?
+
+  createdById String?
+  createdBy   User?    @relation("MembershipBillingRunCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+
+  invoices MembershipInvoice[]
+
+  @@index([status, year])
+  @@map("membership_billing_run")
+}
+
+/// Rechnung über den Mitgliedsbeitrag eines Chors oder Einzelmitglieds (eine Zeile der Tabelle).
+model MembershipInvoice {
+  id    String               @id @default(uuid())
+  runId String
+  run   MembershipBillingRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  /// Zeile in der Tabelle, für Rückfragen und die Sortierung.
+  sheetRow    Int
+  /// Chor-Nr. wie in der Tabelle, mit Zusatz, z.B. "02-07" oder "05-12 (EZ)".
+  choirNumber String
+  choirName   String?
+
+  // Rechnungsempfänger wie in der Tabelle (Rgn_Name1, Rg_Name2, Rg_Strasse, Rgn_Ort)
+  recipientName1  String?
+  recipientName2  String?
+  recipientStreet String?
+  recipientCity   String?
+  /// Aus „Email Versand“; mehrere durch Komma getrennt, die erste ist der Empfänger.
+  email           String?
+
+  /// Mitglieder mit / ohne eigenes Einkommen (MitEink, OhneEink); null wenn leer.
+  membersWithIncome    Int?
+  membersWithoutIncome Int?
+  /// Staffelbeitrag von Hand eingetragen statt per Formel — meist der Vorjahresbetrag,
+  /// wenn keine Mitgliederzahlen gemeldet sind.
+  graduatedFeeFixed    Float?
+  /// Bestellte Hefte „POSAUNENCHOR“ (PosMag).
+  magazineCount        Int    @default(0)
+  /// Rückständiger Beitrag für das Vorjahr (RückstBeitrag).
+  arrears              Float  @default(0)
+
+  totalAmount     Float
+  /// Gesamt laut Tabelle (Formelergebnis oder von Hand eingetragen).
+  sheetTotal      Float?
+  /// Gesamt von Hand statt per Formel eingetragen: dieser Betrag gilt.
+  sheetTotalFixed Boolean @default(false)
+  /// Die Zeile hat überhaupt einen Gesamtbetrag; ohne bekommt sie keine Rechnung.
+  sheetHasTotal   Boolean @default(true)
+  /// Kommentar aus der Tabelle, nur intern.
+  sheetNote       String?
+  /// Ganze Zeile rot — so kennzeichnet die Geschäftsstelle, wer keine Rechnung bekommt.
+  sheetMarkedRed  Boolean @default(false)
+  /// Hinweise beim Einlesen, string[].
+  warnings        Json    @default("[]")
+
+  excluded  Boolean   @default(false)
+  mailedAt  DateTime?
+  mailedTo  String?
+  mailError String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([runId, sheetRow])
+  @@map("membership_invoice")
 }

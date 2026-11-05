@@ -140,6 +140,13 @@ export const DASHBOARD_NAV_GROUPS: DashboardNavGroup[] = [
         icon: ShieldCheck,
         visible: (ctx) => ctx.hasPermission(PERMISSIONS.BILLING_MANAGE),
       },
+      {
+        title: "Mitgliedsbeiträge",
+        description: "Jahresbeiträge der Chöre abrechnen",
+        href: "/dashboard/geschaeftsstelle/mitgliedsbeitraege",
+        icon: Users,
+        visible: (ctx) => ctx.hasPermission(PERMISSIONS.BILLING_MANAGE),
+      },
     ],
   },
   {

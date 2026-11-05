@@ -10,7 +10,7 @@ import {
   loadInsuranceSettings,
   parseSheetRates,
   renderInsuranceInvoice,
-  resolveInsuranceRates,
+  sheetInsuranceRates,
 } from "../helpers/insurance-billing";
 import {
   DEFAULT_INSURANCE_CLOSING_TEXT,
@@ -20,20 +20,24 @@ import {
   DEFAULT_INSURANCE_SIGNATURE,
   fillInsurancePlaceholders,
   formatTaxRate,
+  parseInsuranceRates,
   grossPremium,
   insuranceInvoiceLines,
   insuranceInvoiceTotal,
-  splitEmailList,
 } from "@/lib/insurance-billing";
-import { berlinParts } from "@/lib/berlin-time";
+import { parseInsuranceSheet } from "@/server/utils/insurance-sheet";
 import {
-  InsuranceSheetError,
-  parseInsuranceSheet,
-  type ParsedInsuranceSheet,
-} from "@/server/utils/insurance-sheet";
-import { sendInsuranceInvoiceEmail } from "@/server/email";
-import { maskEmail } from "@/lib/mask-email";
-import { env } from "@/env";
+  CREATOR_SELECT,
+  billingTextsInput,
+  creatorName,
+  defaultRunDates,
+  normalizeEmailInput,
+  parseWarnings,
+  readUploadedSheet,
+  sendInvoiceMails,
+  sendTestMail,
+  sheetUploadInput,
+} from "../helpers/office-billing";
 import { createLogger } from "@/server/utils/logger";
 import {
   InsuranceBillingRunStatus,
@@ -43,47 +47,6 @@ import {
 const log = createLogger("Insurance Billing");
 
 const billingProcedure = permissionProcedure(PERMISSIONS.BILLING_MANAGE);
-
-/** Die Tabelle der Geschäftsstelle hat ~50 KB; alles darüber ist kein Versehen mehr. */
-const MAX_SHEET_BYTES = 5 * 1024 * 1024;
-const DEFAULT_REPLY_TO = "info@posaunenwerk-rheinland.de";
-/** Vier Wochen Zahlungsziel, wie bisher grob von Januar bis Mitte Februar. */
-const DEFAULT_DUE_DAYS = 28;
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-const sheetInput = z.object({
-  filename: z.string().trim().min(1).max(255),
-  /** Inhalt der .xlsx als Base64. */
-  fileBase64: z.string().min(1),
-});
-
-function decodeSheet(fileBase64: string): Buffer {
-  const buffer = Buffer.from(fileBase64, "base64");
-  if (buffer.byteLength === 0) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: "Die Datei ist leer.",
-    });
-  }
-  if (buffer.byteLength > MAX_SHEET_BYTES) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: "Die Datei ist größer als 5 MB.",
-    });
-  }
-  return buffer;
-}
-
-async function readSheet(fileBase64: string): Promise<ParsedInsuranceSheet> {
-  try {
-    return await parseInsuranceSheet(decodeSheet(fileBase64));
-  } catch (error) {
-    if (error instanceof InsuranceSheetError) {
-      throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
-    }
-    throw error;
-  }
-}
 
 async function requireDraft(db: PrismaClient, id: string) {
   const run = await db.insuranceBillingRun.findUnique({ where: { id } });
@@ -97,59 +60,10 @@ async function requireDraft(db: PrismaClient, id: string) {
   return run;
 }
 
-function parseWarnings(value: unknown): string[] {
-  return Array.isArray(value)
-    ? value.filter((entry): entry is string => typeof entry === "string")
-    : [];
-}
-
-function creatorName(
-  user: {
-    displayName: string | null;
-    firstName: string | null;
-    lastName: string | null;
-  } | null,
-): string | null {
-  if (!user) return null;
-  return (
-    user.displayName?.trim() ||
-    `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() ||
-    null
-  );
-}
-
-/** Leerer Text heißt "Standard" und wird als null gespeichert. */
-const optionalText = (max: number) =>
-  z
-    .string()
-    .max(max)
-    .nullish()
-    .transform((value) => (value?.trim() ? value.trim() : null));
-
 export const insuranceBillingRouter = createTRPCRouter({
   getSettings: billingProcedure.query(async ({ ctx }) => {
-    const [settings, rates, latestRun] = await Promise.all([
-      loadInsuranceSettings(ctx.db),
-      ctx.db.insurancePremiumRate.findMany({ orderBy: { maxValue: "asc" } }),
-      ctx.db.insuranceBillingRun.findFirst({
-        orderBy: { createdAt: "desc" },
-        select: { sourceFilename: true, sheetRates: true },
-      }),
-    ]);
     return {
-      settings,
-      rates: rates.map((rate) => ({
-        maxValue: rate.maxValue,
-        netPremium: rate.netPremium,
-        updatedAt: rate.updatedAt,
-      })),
-      // Damit „aus Tabelle“ eine Zahl bekommt: die Preise der letzten Tabelle.
-      latestSheet: latestRun
-        ? {
-            filename: latestRun.sourceFilename,
-            rates: parseSheetRates(latestRun.sheetRates),
-          }
-        : null,
+      settings: await loadInsuranceSettings(ctx.db),
       defaults: {
         introText: DEFAULT_INSURANCE_INTRO_TEXT,
         closingText: DEFAULT_INSURANCE_CLOSING_TEXT,
@@ -165,11 +79,7 @@ export const insuranceBillingRouter = createTRPCRouter({
       z.object({
         taxRate: z.number().min(0).max(1),
         paymentReferencePrefix: z.string().trim().max(20),
-        introText: optionalText(4000),
-        closingText: optionalText(2000),
-        signatureName: optionalText(200),
-        emailSubject: optionalText(200),
-        emailBody: optionalText(8000),
+        ...billingTextsInput,
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -191,10 +101,15 @@ export const insuranceBillingRouter = createTRPCRouter({
       return loadInsuranceSettings(ctx.db);
     }),
 
-  /** `netPremium: null` entfernt den hinterlegten Preis, dann gilt wieder die Tabelle. */
-  setRates: billingProcedure
+  /**
+   * Prämien eines Entwurfs ändern. `netPremium: null` nimmt wieder die
+   * Tabellenprämie (oder lässt die Wertklasse ohne Prämie, wenn die Tabelle
+   * keine kennt).
+   */
+  setRunRates: billingProcedure
     .input(
       z.object({
+        id: z.string(),
         rates: z
           .array(
             z.object({
@@ -206,32 +121,51 @@ export const insuranceBillingRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      await ctx.db.$transaction(
-        input.rates.map((rate) =>
-          rate.netPremium === null
-            ? ctx.db.insurancePremiumRate.deleteMany({
-                where: { maxValue: rate.maxValue },
-              })
-            : ctx.db.insurancePremiumRate.upsert({
-                where: { maxValue: rate.maxValue },
-                update: { netPremium: rate.netPremium },
-                create: {
-                  maxValue: rate.maxValue,
-                  netPremium: rate.netPremium,
-                },
-              }),
-        ),
+      const run = await requireDraft(ctx.db, input.id);
+      const sheetRates = parseSheetRates(run.sheetRates);
+      const byValue = new Map(
+        parseInsuranceRates(run.rates).map((rate) => [rate.maxValue, rate]),
       );
+      for (const change of input.rates) {
+        const sheet = sheetRates.find((r) => r.maxValue === change.maxValue);
+        if (!sheet) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Die Wertklasse bis ${change.maxValue} € steht nicht in der Tabelle.`,
+          });
+        }
+        if (change.netPremium !== null) {
+          byValue.set(change.maxValue, {
+            maxValue: change.maxValue,
+            netPremium: change.netPremium,
+            source: "manual",
+          });
+        } else if (sheet.netPremium !== null) {
+          byValue.set(change.maxValue, {
+            maxValue: change.maxValue,
+            netPremium: sheet.netPremium,
+            source: "sheet",
+          });
+        } else {
+          byValue.delete(change.maxValue);
+        }
+      }
+      const rates = [...byValue.values()].sort(
+        (a, b) => a.maxValue - b.maxValue,
+      );
+      await ctx.db.insuranceBillingRun.update({
+        where: { id: run.id },
+        data: { rates: rates.map((rate) => ({ ...rate })) },
+      });
       void logAudit(ctx.db, {
         actorId: ctx.session.user.id,
         actorEmail: ctx.session.user.email,
         action: "insurance_billing.rates",
-        entityType: "insurance_premium_rate",
+        entityType: "insurance_billing_run",
+        entityId: run.id,
         details: { rates: input.rates },
       });
-      return ctx.db.insurancePremiumRate.findMany({
-        orderBy: { maxValue: "asc" },
-      });
+      return { id: run.id };
     }),
 
   /**
@@ -240,9 +174,12 @@ export const insuranceBillingRouter = createTRPCRouter({
    * aktuellen Einstellungen.
    */
   createRun: billingProcedure
-    .input(sheetInput)
+    .input(sheetUploadInput)
     .mutation(async ({ ctx, input }) => {
-      const sheet = await readSheet(input.fileBase64);
+      const sheet = await readUploadedSheet(
+        input.fileBase64,
+        parseInsuranceSheet,
+      );
       if (sheet.rows.length === 0) {
         throw new TRPCError({
           code: "BAD_REQUEST",
@@ -250,23 +187,19 @@ export const insuranceBillingRouter = createTRPCRouter({
         });
       }
 
-      const today = new Date();
-      const { year: currentYear, month } = berlinParts(today);
       const sheetRates = sheet.categories.map((category) => ({
         maxValue: category.maxValue,
         netPremium: category.sheetNetPremium,
       }));
-      const { rates } = await resolveInsuranceRates(ctx.db, sheetRates);
+      const rates = sheetInsuranceRates(sheetRates);
       const settings = await loadInsuranceSettings(ctx.db);
 
       const run = await ctx.db.insuranceBillingRun.create({
         data: {
-          // Ab Oktober wird schon fürs nächste Jahr abgerechnet.
-          year: currentYear + (month >= 10 ? 1 : 0),
+          ...defaultRunDates(),
           sourceFilename: input.filename,
-          invoiceDate: today,
-          dueDate: new Date(today.getTime() + DEFAULT_DUE_DAYS * DAY_MS),
           sheetRates,
+          rates: rates.map((rate) => ({ ...rate })),
           sheetTaxRate: sheet.sheetTaxRate,
           createdById: ctx.session.user.id,
           invoices: {
@@ -415,9 +348,7 @@ export const insuranceBillingRouter = createTRPCRouter({
     const runs = await ctx.db.insuranceBillingRun.findMany({
       orderBy: { createdAt: "desc" },
       include: {
-        createdBy: {
-          select: { displayName: true, firstName: true, lastName: true },
-        },
+        createdBy: CREATOR_SELECT,
         invoices: {
           select: {
             excluded: true,
@@ -471,9 +402,7 @@ export const insuranceBillingRouter = createTRPCRouter({
       const run = await ctx.db.insuranceBillingRun.findUnique({
         where: { id: input.id },
         include: {
-          createdBy: {
-            select: { displayName: true, firstName: true, lastName: true },
-          },
+          createdBy: CREATOR_SELECT,
           invoices: { orderBy: { sheetRow: "asc" } },
         },
       });
@@ -556,17 +485,7 @@ export const insuranceBillingRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      let email: string | null | undefined = undefined;
-      if (input.email !== undefined) {
-        const addresses = splitEmailList(input.email);
-        if (input.email && addresses.length === 0) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Keine gültige E-Mail-Adresse.",
-          });
-        }
-        email = addresses.length > 0 ? addresses.join(", ") : null;
-      }
+      const email = normalizeEmailInput(input.email);
       return ctx.db.insuranceInvoice.update({
         where: { id: input.id },
         data: { ...(email !== undefined && { email }) },
@@ -661,97 +580,37 @@ export const insuranceBillingRouter = createTRPCRouter({
       });
 
       const settings = await loadInsuranceSettings(ctx.db);
-      const replyTo = env.CONTACT_EMAIL ?? DEFAULT_REPLY_TO;
-
-      const sendOne = async (
-        invoice: (typeof invoices)[number],
-        to: string,
-        cc: string[],
-        subjectPrefix = "",
-      ) => {
+      const compose = async (invoice: (typeof invoices)[number]) => {
         const { placeholders } = insuranceInvoiceSummary(effective, invoice);
-        const pdf = await renderInsuranceInvoice(effective, invoice);
-        await sendInsuranceInvoiceEmail({
-          to,
-          cc,
-          replyTo,
-          subject:
-            subjectPrefix +
-            fillInsurancePlaceholders(settings.emailSubject, placeholders),
+        return {
+          subject: fillInsurancePlaceholders(
+            settings.emailSubject,
+            placeholders,
+          ),
           body: fillInsurancePlaceholders(settings.emailBody, placeholders),
-          pdf: { filename: pdf.filename, content: Buffer.from(pdf.bytes) },
-        });
+          pdf: await renderInsuranceInvoice(effective, invoice),
+        };
       };
 
       if (input.testEmail) {
-        const sample = invoices[0];
-        if (!sample) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Keine Rechnung für den Testversand vorhanden.",
-          });
-        }
-        try {
-          await sendOne(sample, input.testEmail, [], "[TEST] ");
-        } catch (error) {
-          log.error("Test send failed:", error);
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: `Testversand fehlgeschlagen: ${error instanceof Error ? error.message : String(error)}`,
-          });
-        }
-        return { test: true, sentCount: 1, failedCount: 0, skippedCount: 0 };
+        return sendTestMail(invoices, input.testEmail, compose, log);
       }
 
-      const sendable = invoices.filter(
-        (invoice) => splitEmailList(invoice.email).length > 0,
-      );
-      const skippedCount = invoices.length - sendable.length;
-
-      let sentCount = 0;
-      let failedCount = 0;
-      // Begrenzte Bündel wie beim Kursmailversand: nacheinander dauerte zu
-      // lange, alle auf einmal überrollt den SMTP-Server.
-      const BATCH_SIZE = 10;
-      for (let i = 0; i < sendable.length; i += BATCH_SIZE) {
-        const batch = sendable.slice(i, i + BATCH_SIZE);
-        const results = await Promise.allSettled(
-          batch.map(async (invoice) => {
-            const [to, ...cc] = splitEmailList(invoice.email);
-            await sendOne(invoice, to!, cc);
-            return [to!, ...cc].join(", ");
+      const { sentCount, failedCount, skippedCount } = await sendInvoiceMails({
+        invoices,
+        compose,
+        log,
+        markSent: (invoice, mailedTo) =>
+          ctx.db.insuranceInvoice.update({
+            where: { id: invoice.id },
+            data: { mailedAt: new Date(), mailedTo, mailError: null },
           }),
-        );
-        await Promise.all(
-          results.map((result, index) => {
-            const invoice = batch[index]!;
-            if (result.status === "fulfilled") {
-              sentCount++;
-              return ctx.db.insuranceInvoice.update({
-                where: { id: invoice.id },
-                data: {
-                  mailedAt: new Date(),
-                  mailedTo: result.value,
-                  mailError: null,
-                },
-              });
-            }
-            failedCount++;
-            const reason =
-              result.reason instanceof Error
-                ? result.reason.message
-                : String(result.reason);
-            log.error(
-              `Failed to send insurance invoice to ${maskEmail(invoice.email ?? undefined)}:`,
-              reason,
-            );
-            return ctx.db.insuranceInvoice.update({
-              where: { id: invoice.id },
-              data: { mailError: reason.slice(0, 500) },
-            });
+        markFailed: (invoice, reason) =>
+          ctx.db.insuranceInvoice.update({
+            where: { id: invoice.id },
+            data: { mailError: reason },
           }),
-        );
-      }
+      });
 
       void logAudit(ctx.db, {
         actorId: ctx.session.user.id,
