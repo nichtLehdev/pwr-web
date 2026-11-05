@@ -4,6 +4,10 @@ import { useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   AlertTriangle,
+  ArrowDown,
+  ArrowUp,
+  ChevronLeft,
+  ChevronRight,
   Download,
   DownloadIcon,
   Loader2,
@@ -194,40 +198,59 @@ const STATUS_OPTIONS: { value: InvoiceStatusKey; label: string }[] = [
   { value: "excluded", label: "nicht abgerechnet" },
 ];
 
+/** Warum ein Chor keine Rechnung bekommt — zum Nachprüfen der zweiten Liste. */
+function excludedReasons(invoice: RunInvoice): string[] {
+  const reasons: string[] = [];
+  if (invoice.sheetMarkedRed) reasons.push("in der Tabelle rot markiert");
+  if (invoice.quantities.every((quantity) => quantity === 0)) {
+    reasons.push("keine Instrumente");
+  }
+  return reasons.length > 0 ? reasons : ["von Hand verschoben"];
+}
+
+type InvoiceListVariant = "billed" | "excluded";
+
 /**
- * Im Entwurf heißt das Häkchen "abrechnen" und wird sofort gespeichert; nach
- * dem Ausstellen wählt es Rechnungen für den Versand aus.
+ * Eine der beiden Listen eines Laufs. Häkchen wählen nur aus; verschoben wird
+ * über die Schaltfläche in der Zeile oder für die ganze Auswahl darüber.
  */
 function RunInvoicesTable({
   run,
+  variant,
+  invoices,
   pdfBase,
-  checked,
-  onCheck,
-  onCheckAll,
+  selected,
+  onSelect,
+  onSelectAll,
   sending,
   updating,
   onSend,
-  onToggleExcluded,
+  onMove,
   onSaved,
+  showCategories,
+  onToggleCategories,
 }: {
   run: Run;
+  variant: InvoiceListVariant;
+  invoices: RunInvoice[];
   pdfBase: string;
-  checked: (invoice: RunInvoice) => boolean;
-  onCheck: (invoice: RunInvoice, value: boolean) => void;
-  onCheckAll: (value: boolean) => void;
+  selected: Set<string>;
+  onSelect: (id: string, value: boolean) => void;
+  onSelectAll: (value: boolean) => void;
   sending: boolean;
   updating: boolean;
   onSend: (invoice: RunInvoice) => void;
-  onToggleExcluded: (invoice: RunInvoice) => void;
+  onMove: (invoices: RunInvoice[], excluded: boolean) => void;
   onSaved: () => Promise<void>;
+  showCategories: boolean;
+  onToggleCategories: () => void;
 }) {
-  const { draft, invoices, categories } = run;
-  const checkable = draft
-    ? invoices.filter((invoice) => !invoice.mailedAt)
-    : invoices;
-  const allChecked = checkable.length > 0 && checkable.every(checked);
-  const noneChecked = !checkable.some(checked);
-  const checkLabel = draft ? "abrechnen" : "auswählen";
+  const { draft, categories } = run;
+  const excludedList = variant === "excluded";
+  const allSelected =
+    invoices.length > 0 &&
+    invoices.every((invoice) => selected.has(invoice.id));
+  const noneSelected = !invoices.some((invoice) => selected.has(invoice.id));
 
   const columns = useMemo<DataTableColumn<RunInvoice>[]>(() => {
     const actions = (invoice: RunInvoice) => (
@@ -241,7 +264,7 @@ function RunInvoicesTable({
           <DownloadIcon className="h-4 w-4" aria-hidden />
           {draft ? "Vorschau" : "PDF"}
         </a>
-        {!draft && !invoice.excluded && invoice.email && (
+        {!draft && !excludedList && invoice.email && (
           <Button
             size="sm"
             variant="ghost"
@@ -252,14 +275,25 @@ function RunInvoicesTable({
             {invoice.mailedAt ? "Erneut" : "Senden"}
           </Button>
         )}
-        {!draft && !invoice.mailedAt && (
+        {/* Versendete bleiben, wo sie sind — sie liegen beim Empfänger. */}
+        {!invoice.mailedAt && (
           <Button
             size="sm"
             variant="ghost"
             disabled={updating}
-            onClick={() => onToggleExcluded(invoice)}
+            onClick={() => onMove([invoice], !excludedList)}
           >
-            {invoice.excluded ? "Abrechnen" : "Ausnehmen"}
+            {excludedList ? (
+              <>
+                <ArrowUp className="h-4 w-4" aria-hidden />
+                Abrechnen
+              </>
+            ) : (
+              <>
+                <ArrowDown className="h-4 w-4" aria-hidden />
+                Nicht abrechnen
+              </>
+            )}
           </Button>
         )}
       </div>
@@ -267,30 +301,27 @@ function RunInvoicesTable({
 
     return invoiceColumn.columns([
       invoiceColumn.display({
-        id: "check",
+        id: "select",
         header: () => (
           <Checkbox
-            aria-label={draft ? "Alle Chöre abrechnen" : "Alle auswählen"}
-            checked={allChecked}
-            disabled={updating}
+            aria-label="Alle in dieser Liste auswählen"
+            checked={allSelected}
             ref={(element) => {
               if (element) {
-                element.indeterminate = !allChecked && !noneChecked;
+                element.indeterminate = !allSelected && !noneSelected;
               }
             }}
-            onChange={(event) => onCheckAll(event.target.checked)}
+            onChange={(event) => onSelectAll(event.target.checked)}
           />
         ),
-        meta: {
-          alwaysVisible: true,
-          label: draft ? "Abrechnen" : "Auswahl",
-        },
+        meta: { alwaysVisible: true, label: "Auswahl" },
         cell: ({ row }) => (
           <Checkbox
-            aria-label={`Chor ${row.original.choirNumber} ${checkLabel}`}
-            checked={checked(row.original)}
-            disabled={updating || (draft && !!row.original.mailedAt)}
-            onChange={(event) => onCheck(row.original, event.target.checked)}
+            aria-label={`Chor ${row.original.choirNumber} auswählen`}
+            checked={selected.has(row.original.id)}
+            onChange={(event) =>
+              onSelect(row.original.id, event.target.checked)
+            }
           />
         ),
       }),
@@ -310,11 +341,11 @@ function RunInvoicesTable({
                 <span className="block">{row.original.choirName}</span>
               )}
               <span className="text-dark dark:text-night-muted block text-xs">
-                {draft
+                {draft || excludedList
                   ? `Zeile ${row.original.sheetRow}${row.original.sheetNote ? ` · ${row.original.sheetNote}` : ""}`
                   : `Verwendungszweck ${row.original.paymentReference}`}
               </span>
-              {draft && row.original.warnings.length > 0 && (
+              {draft && !excludedList && row.original.warnings.length > 0 && (
                 <ul className="mt-1 space-y-0.5 text-xs text-red-700 dark:text-red-400">
                   {row.original.warnings.map((warning) => (
                     <li key={warning}>{warning}</li>
@@ -325,6 +356,34 @@ function RunInvoicesTable({
           ),
         },
       ),
+      ...(excludedList
+        ? [
+            invoiceColumn.accessor(
+              (invoice) => excludedReasons(invoice).join(", "),
+              {
+                id: "reason",
+                header: "Grund",
+                enableColumnFilter: false,
+                cell: ({ row }) => (
+                  <div className="flex flex-wrap gap-1">
+                    {excludedReasons(row.original).map((reason) => (
+                      <Tag
+                        key={reason}
+                        tone={
+                          reason === "in der Tabelle rot markiert"
+                            ? "cancelled"
+                            : "muted"
+                        }
+                      >
+                        {reason}
+                      </Tag>
+                    ))}
+                  </div>
+                ),
+              },
+            ),
+          ]
+        : []),
       invoiceColumn.accessor((invoice) => recipientLines(invoice).join(" "), {
         id: "recipient",
         header: "Rechnungsempfänger",
@@ -346,20 +405,6 @@ function RunInvoicesTable({
           <EmailCell invoice={row.original} onSaved={onSaved} />
         ),
       }),
-      ...(draft
-        ? categories.map((category, index) =>
-            invoiceColumn.accessor(
-              (invoice) => invoice.quantities[index] ?? 0,
-              {
-                id: `qty-${category.maxValue}`,
-                header: `bis ${category.maxValue.toLocaleString("de-DE")}`,
-                enableColumnFilter: false,
-                meta: { align: "right", cellClassName: "tabular-nums" },
-                cell: ({ getValue }) => (getValue() as number) || "",
-              },
-            ),
-          )
-        : []),
       invoiceColumn.accessor((invoice) => invoice.total, {
         id: "total",
         header: "Betrag",
@@ -400,14 +445,72 @@ function RunInvoicesTable({
               ),
             }),
           ]
-        : [
+        : []),
+      // Zusammengeklappt nur die Summe; die Überschrift klappt die Wertklassen auf.
+      invoiceColumn.accessor(
+        (invoice) =>
+          invoice.quantities.reduce((sum, quantity) => sum + quantity, 0),
+        {
+          id: "instruments",
+          header: () => (
+            <button
+              type="button"
+              aria-expanded={showCategories}
+              onClick={onToggleCategories}
+              className="hover:text-ink dark:hover:text-night-text inline-flex items-center gap-1 uppercase"
+              title={
+                showCategories
+                  ? "Wertklassen zuklappen"
+                  : "Anzahl je Wertklasse aufklappen"
+              }
+            >
+              {showCategories ? (
+                <ChevronLeft className="h-3.5 w-3.5" aria-hidden />
+              ) : (
+                <ChevronRight className="h-3.5 w-3.5" aria-hidden />
+              )}
+              Instrumente
+            </button>
+          ),
+          enableColumnFilter: false,
+          enableSorting: false,
+          meta: {
+            align: "right",
+            label: "Instrumente",
+            cellClassName: "tabular-nums",
+          },
+          cell: ({ getValue }) => (getValue() as number) || "–",
+        },
+      ),
+      ...(showCategories
+        ? categories.map((category, index) =>
+            invoiceColumn.accessor(
+              (invoice) => invoice.quantities[index] ?? 0,
+              {
+                id: `qty-${category.maxValue}`,
+                header: `bis ${category.maxValue.toLocaleString("de-DE")}`,
+                enableColumnFilter: false,
+                meta: {
+                  align: "right",
+                  headerClassName: "bg-rule/25 dark:bg-night-raised",
+                  cellClassName: "tabular-nums bg-rule/25 dark:bg-night-raised",
+                },
+                cell: ({ getValue }) => (getValue() as number) || "",
+              },
+            ),
+          )
+        : []),
+      ...(!draft && !excludedList
+        ? [
             invoiceColumn.accessor(statusKey, {
               id: "status",
               header: "Status",
               meta: {
                 filterVariant: "set",
                 label: "Status",
-                filterOptions: STATUS_OPTIONS,
+                filterOptions: STATUS_OPTIONS.filter(
+                  (option) => option.value !== "excluded",
+                ),
               },
               cell: ({ row }) => (
                 <>
@@ -425,7 +528,8 @@ function RunInvoicesTable({
                 </>
               ),
             }),
-          ]),
+          ]
+        : []),
       invoiceColumn.display({
         id: "actions",
         header: () => <span className="sr-only">Aktionen</span>,
@@ -435,19 +539,21 @@ function RunInvoicesTable({
     ]);
   }, [
     draft,
+    excludedList,
     categories,
-    allChecked,
-    noneChecked,
-    checkLabel,
-    checked,
+    allSelected,
+    noneSelected,
+    selected,
     sending,
     updating,
     pdfBase,
-    onCheck,
-    onCheckAll,
+    onSelect,
+    onSelectAll,
     onSend,
-    onToggleExcluded,
+    onMove,
     onSaved,
+    showCategories,
+    onToggleCategories,
   ]);
 
   return (
@@ -455,18 +561,24 @@ function RunInvoicesTable({
       data={invoices}
       columns={columns}
       getRowId={(invoice) => invoice.id}
-      rowNoun={["Rechnung", "Rechnungen"]}
+      rowNoun={["Chor", "Chöre"]}
       searchPlaceholder="Chor-Nr., Name, Empfänger oder E-Mail"
+      persistKey={`insurance-run-${variant}`}
       initialSorting={[{ id: "choir", desc: false }]}
-      rowClassName={(invoice) => (invoice.excluded ? "opacity-60" : undefined)}
+      emptyState={
+        <p className="text-dark dark:text-night-muted text-sm">
+          {excludedList
+            ? "Alle Chöre werden abgerechnet."
+            : "Kein Chor wird abgerechnet."}
+        </p>
+      }
       renderMobileRow={(invoice) => (
         <div className="flex gap-3">
           <div className="pt-1">
             <Checkbox
-              aria-label={`Chor ${invoice.choirNumber} ${checkLabel}`}
-              checked={checked(invoice)}
-              disabled={updating || (draft && !!invoice.mailedAt)}
-              onChange={(event) => onCheck(invoice, event.target.checked)}
+              aria-label={`Chor ${invoice.choirNumber} auswählen`}
+              checked={selected.has(invoice.id)}
+              onChange={(event) => onSelect(invoice.id, event.target.checked)}
             />
           </div>
           <div className="min-w-0 flex-1 space-y-1 text-sm">
@@ -483,26 +595,38 @@ function RunInvoicesTable({
               {recipientLines(invoice).join(", ")}
             </p>
             <EmailCell invoice={invoice} onSaved={onSaved} />
-            {draft ? (
-              invoice.warnings.length > 0 && (
-                <ul className="text-xs text-red-700 dark:text-red-400">
-                  {invoice.warnings.map((warning) => (
-                    <li key={warning}>{warning}</li>
-                  ))}
-                </ul>
-              )
+            {excludedList ? (
+              <div className="flex flex-wrap gap-1">
+                {excludedReasons(invoice).map((reason) => (
+                  <Tag key={reason} tone="muted">
+                    {reason}
+                  </Tag>
+                ))}
+              </div>
             ) : (
-              <StatusTag invoice={invoice} />
+              !draft && <StatusTag invoice={invoice} />
             )}
-            <a
-              href={`${pdfBase}?invoice=${invoice.id}`}
-              target="_blank"
-              rel="noreferrer"
-              className={PREVIEW_LINK}
-            >
-              <DownloadIcon className="h-4 w-4" aria-hidden />
-              {draft ? "Vorschau" : "PDF"}
-            </a>
+            <div className="flex flex-wrap gap-1">
+              <a
+                href={`${pdfBase}?invoice=${invoice.id}`}
+                target="_blank"
+                rel="noreferrer"
+                className={PREVIEW_LINK}
+              >
+                <DownloadIcon className="h-4 w-4" aria-hidden />
+                {draft ? "Vorschau" : "PDF"}
+              </a>
+              {!invoice.mailedAt && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={updating}
+                  onClick={() => onMove([invoice], !excludedList)}
+                >
+                  {excludedList ? "Abrechnen" : "Nicht abrechnen"}
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -669,7 +793,13 @@ export default function InsuranceRunPage() {
     { enabled: canManage },
   );
   const [testEmail, setTestEmail] = useState("");
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selectedBilled, setSelectedBilled] = useState<Set<string>>(new Set());
+  const [selectedExcluded, setSelectedExcluded] = useState<Set<string>>(
+    new Set(),
+  );
+  // Gilt für beide Listen, damit sie gleich aufgebaut bleiben.
+  const [showCategories, setShowCategories] = useState(false);
+  const toggleCategories = () => setShowCategories((current) => !current);
 
   const refresh = async () => {
     await Promise.all([
@@ -705,7 +835,7 @@ export default function InsuranceRunPage() {
 
   const issueRun = api.insuranceBilling.issueRun.useMutation({
     onSuccess: async () => {
-      setSelected(new Set());
+      setSelectedBilled(new Set());
       await refresh();
       toast.success("Abrechnung ausgestellt — jetzt kann versendet werden.");
     },
@@ -755,47 +885,60 @@ export default function InsuranceRunPage() {
   const pdfBase = `/api/geschaeftsstelle/versicherung/${data.id}/pdf`;
   const sending = send.isPending;
 
-  // Entwurf: Häkchen = abrechnen, sofort gespeichert. Ausgestellt: Auswahl für den Versand.
-  const isChecked = (invoice: RunInvoice) =>
-    draft ? !invoice.excluded : selected.has(invoice.id);
-  const onCheck = (invoice: RunInvoice, value: boolean) => {
-    if (draft) {
-      setExcluded.mutate({
-        runId: data.id,
-        invoiceIds: [invoice.id],
-        excluded: !value,
+  const excludedInvoices = data.invoices.filter((invoice) => invoice.excluded);
+  const redCount = data.invoices.filter(
+    (invoice) => invoice.sheetMarkedRed,
+  ).length;
+
+  const toggleIn =
+    (setter: typeof setSelectedBilled) => (id: string, value: boolean) =>
+      setter((current) => {
+        const next = new Set(current);
+        if (value) next.add(id);
+        else next.delete(id);
+        return next;
       });
-      return;
-    }
-    setSelected((current) => {
-      const next = new Set(current);
-      if (value) next.add(invoice.id);
-      else next.delete(invoice.id);
-      return next;
-    });
-  };
-  const onCheckAll = (value: boolean) => {
-    if (draft) {
-      setExcluded.mutate({
+  const selectAllIn =
+    (setter: typeof setSelectedBilled, list: RunInvoice[]) =>
+    (value: boolean) =>
+      setter(value ? new Set(list.map((invoice) => invoice.id)) : new Set());
+
+  /** Verschiebt zwischen den Listen; Versendete bleiben stehen. */
+  const move = (invoices: RunInvoice[], excluded: boolean) => {
+    const movable = invoices.filter((invoice) => !invoice.mailedAt);
+    if (movable.length === 0) return;
+    setExcluded.mutate(
+      {
         runId: data.id,
-        invoiceIds: data.invoices.map((invoice) => invoice.id),
-        excluded: !value,
-      });
-      return;
-    }
-    setSelected(
-      value ? new Set(data.invoices.map((invoice) => invoice.id)) : new Set(),
+        invoiceIds: movable.map((invoice) => invoice.id),
+        excluded,
+      },
+      {
+        onSuccess: () => {
+          const moved = new Set(movable.map((invoice) => invoice.id));
+          const drop = (current: Set<string>) =>
+            new Set([...current].filter((id) => !moved.has(id)));
+          setSelectedBilled(drop);
+          setSelectedExcluded(drop);
+          toast.success(
+            `${plural(movable.length, "Chor", "Chöre")} ${excluded ? "nach „Nicht abrechnen“" : "nach „Abrechnen“"} verschoben.`,
+          );
+        },
+      },
     );
   };
-  const toggleExcluded = (invoice: RunInvoice) =>
-    setExcluded.mutate({
-      runId: data.id,
-      invoiceIds: [invoice.id],
-      excluded: !invoice.excluded,
-    });
 
-  const selectedSendable = data.invoices.filter(
-    (invoice) => selected.has(invoice.id) && !invoice.excluded && invoice.email,
+  const selectedBilledInvoices = billed.filter((invoice) =>
+    selectedBilled.has(invoice.id),
+  );
+  const selectedExcludedInvoices = excludedInvoices.filter((invoice) =>
+    selectedExcluded.has(invoice.id),
+  );
+  const selectedSendable = selectedBilledInvoices.filter(
+    (invoice) => invoice.email,
+  );
+  const selectedMovableBilled = selectedBilledInvoices.filter(
+    (invoice) => !invoice.mailedAt,
   );
 
   const sendAll = () => {
@@ -825,7 +968,7 @@ export default function InsuranceRunPage() {
         runId: data.id,
         invoiceIds: selectedSendable.map((invoice) => invoice.id),
       },
-      { onSuccess: () => setSelected(new Set()) },
+      { onSuccess: () => setSelectedBilled(new Set()) },
     );
   };
 
@@ -1007,35 +1150,104 @@ export default function InsuranceRunPage() {
         <section className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-ink dark:text-night-text text-lg font-semibold">
-              {draft
-                ? `Chöre (${billed.length} von ${data.invoices.length} abrechnen)`
-                : "Rechnungen"}
+              Abrechnen ({billed.length})
             </h2>
-            {!draft && selectedSendable.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {selectedMovableBilled.length > 0 && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={setExcluded.isPending}
+                  onClick={() => move(selectedMovableBilled, true)}
+                >
+                  <ArrowDown className="h-4 w-4" aria-hidden />
+                  {plural(
+                    selectedMovableBilled.length,
+                    "ausgewählten",
+                    "ausgewählte",
+                  )}{" "}
+                  nicht abrechnen
+                </Button>
+              )}
+              {!draft && selectedSendable.length > 0 && (
+                <Button
+                  size="sm"
+                  disabled={sending}
+                  isLoading={sending}
+                  onClick={sendSelected}
+                >
+                  <Send className="h-4 w-4" aria-hidden />
+                  {selectedSendable.length === 1
+                    ? "Ausgewählte Rechnung versenden"
+                    : `${selectedSendable.length} ausgewählte versenden`}
+                </Button>
+              )}
+            </div>
+          </div>
+          <RunInvoicesTable
+            run={data}
+            variant="billed"
+            invoices={billed}
+            pdfBase={pdfBase}
+            selected={selectedBilled}
+            onSelect={toggleIn(setSelectedBilled)}
+            onSelectAll={selectAllIn(setSelectedBilled, billed)}
+            sending={sending}
+            updating={setExcluded.isPending}
+            onSend={sendOne}
+            onMove={move}
+            onSaved={refresh}
+            showCategories={showCategories}
+            onToggleCategories={toggleCategories}
+          />
+        </section>
+
+        <section className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 className="text-ink dark:text-night-text text-lg font-semibold">
+                Nicht abrechnen ({excludedInvoices.length})
+              </h2>
+              <p className="text-dark dark:text-night-muted text-sm">
+                Diese Chöre bekommen keine Rechnung
+                {redCount > 0 &&
+                  ` — ${plural(redCount, "Zeile ist", "Zeilen sind")} in der Tabelle rot markiert`}
+                . Prüfe, ob alle hierher gehören, und verschiebe Fehler mit
+                „Abrechnen“.
+              </p>
+            </div>
+            {selectedExcludedInvoices.length > 0 && (
               <Button
                 size="sm"
-                disabled={sending}
-                isLoading={sending}
-                onClick={sendSelected}
+                variant="outline"
+                disabled={setExcluded.isPending}
+                onClick={() => move(selectedExcludedInvoices, false)}
               >
-                <Send className="h-4 w-4" aria-hidden />
-                {selectedSendable.length === 1
-                  ? "Ausgewählte Rechnung versenden"
-                  : `${selectedSendable.length} ausgewählte versenden`}
+                <ArrowUp className="h-4 w-4" aria-hidden />
+                {plural(
+                  selectedExcludedInvoices.length,
+                  "ausgewählten",
+                  "ausgewählte",
+                )}{" "}
+                abrechnen
               </Button>
             )}
           </div>
           <RunInvoicesTable
             run={data}
+            variant="excluded"
+            invoices={excludedInvoices}
             pdfBase={pdfBase}
-            checked={isChecked}
-            onCheck={onCheck}
-            onCheckAll={onCheckAll}
+            selected={selectedExcluded}
+            onSelect={toggleIn(setSelectedExcluded)}
+            onSelectAll={selectAllIn(setSelectedExcluded, excludedInvoices)}
             sending={sending}
             updating={setExcluded.isPending}
             onSend={sendOne}
-            onToggleExcluded={toggleExcluded}
+            onMove={move}
             onSaved={refresh}
+            showCategories={showCategories}
+            onToggleCategories={toggleCategories}
           />
         </section>
 

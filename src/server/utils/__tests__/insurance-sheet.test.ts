@@ -14,7 +14,12 @@ const CATEGORIES = [
 /** Baut eine Tabelle im Aufbau der Geschäftsstelle (Blatt "Aktuell"). */
 async function buildSheet(
   rows: ExcelJS.CellValue[][],
-  options: { priceRow?: boolean; extraSheetFirst?: boolean } = {},
+  options: {
+    priceRow?: boolean;
+    extraSheetFirst?: boolean;
+    /** Formatiert eine Datenzeile (0-basiert) nach dem Einfügen. */
+    style?: (row: ExcelJS.Row, index: number) => void;
+  } = {},
 ): Promise<Buffer> {
   const workbook = new ExcelJS.Workbook();
   if (options.extraSheetFirst) {
@@ -51,7 +56,10 @@ async function buildSheet(
       "brutto",
     ]);
   }
-  for (const row of rows) sheet.addRow(row);
+  rows.forEach((values, index) => {
+    const row = sheet.addRow(values);
+    options.style?.(row, index);
+  });
   return Buffer.from(await workbook.xlsx.writeBuffer());
 }
 
@@ -247,6 +255,80 @@ describe("parseInsuranceSheet", () => {
       { extraSheetFirst: true },
     );
     expect((await parseInsuranceSheet(buffer)).sheetName).toBe("Aktuell");
+  });
+
+  describe("rote Markierung", () => {
+    const line = (number: string): ExcelJS.CellValue[] => [
+      number,
+      "Gemeinde",
+      null,
+      "Weg 1",
+      "11111 Ort",
+      "a@example.org",
+      null,
+      null,
+      1,
+    ];
+
+    async function markedRows(
+      style: (row: ExcelJS.Row, index: number) => void,
+    ) {
+      const buffer = await buildSheet(
+        [line("01-01"), line("02-02"), line("03-03")],
+        { style },
+      );
+      return (await parseInsuranceSheet(buffer)).rows.map(
+        (row) => row.markedRed,
+      );
+    }
+
+    it("erkennt rote Schrift als RGB und als Indexfarbe", async () => {
+      expect(
+        await markedRows((row, index) => {
+          if (index === 0) row.font = { color: { argb: "FFC00000" } };
+          if (index === 2) {
+            // ExcelJS kennt `indexed` nicht im Typ, schreibt es aber.
+            row.getCell(2).font = {
+              color: { indexed: 2 } as unknown as ExcelJS.Color,
+            };
+          }
+        }),
+      ).toEqual([true, false, true]);
+    });
+
+    it("erkennt die blassrote Füllung von „Schlecht“", async () => {
+      expect(
+        await markedRows((row, index) => {
+          if (index === 1) {
+            row.getCell(1).fill = {
+              type: "pattern",
+              pattern: "solid",
+              fgColor: { argb: "FFFFC7CE" },
+            };
+          }
+        }),
+      ).toEqual([false, true, false]);
+    });
+
+    it("übergeht rot formatierte, aber leere Zellen", async () => {
+      expect(
+        await markedRows((row, index) => {
+          if (index === 0) {
+            row.getCell(20).font = { color: { argb: "FFFF0000" } };
+          }
+        }),
+      ).toEqual([false, false, false]);
+    });
+
+    it("hält Orange, Schwarz und Designfarben nicht für Rot", async () => {
+      expect(
+        await markedRows((row, index) => {
+          if (index === 0) row.font = { color: { argb: "FFFFC000" } };
+          if (index === 1) row.font = { color: { argb: "FF000000" } };
+          if (index === 2) row.font = { color: { theme: 5 } };
+        }),
+      ).toEqual([false, false, false]);
+    });
   });
 
   it("lehnt Dateien ohne Wertklassen ab", async () => {

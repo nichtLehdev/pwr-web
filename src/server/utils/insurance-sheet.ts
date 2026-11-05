@@ -35,6 +35,8 @@ export interface ParsedInsuranceRow {
   quantities: InsuranceQuantity[];
   sheetTotal: number | null;
   sheetNote: string | null;
+  /** Rot markiert: so kennzeichnet die Geschäftsstelle Chöre ohne Rechnung. */
+  markedRed: boolean;
   warnings: string[];
 }
 
@@ -98,6 +100,53 @@ function cellFormula(value: ExcelJS.CellValue): string | null {
     return typeof value.formula === "string" ? value.formula : null;
   }
   return null;
+}
+
+/** Rot aus Excels alter Indexpalette: 2 und 10 sind #FF0000, 16 ist #800000. */
+const RED_INDEXED_COLORS = new Set([2, 10, 16]);
+
+/**
+ * Rot, Dunkelrot und das blasse Rot von „Schlecht“ — aber nicht Orange, Rosa-Violett
+ * oder Grau. Designfarben (`theme`) bleiben außen vor: ohne das Design der Mappe
+ * ist nicht zu sagen, welche Farbe sie sind.
+ */
+/** ExcelJS liest `indexed` mit, kennt es aber nicht im Typ. */
+type SheetColor = { argb?: string; indexed?: number };
+
+function isRedColor(color: unknown, minLead: number): boolean {
+  if (!color || typeof color !== "object") return false;
+  const { argb, indexed } = color as SheetColor;
+  if (indexed !== undefined) return RED_INDEXED_COLORS.has(indexed);
+  if (!argb || !/^[0-9a-f]{8}$/i.test(argb)) return false;
+  const r = parseInt(argb.slice(2, 4), 16);
+  const g = parseInt(argb.slice(4, 6), 16);
+  const b = parseInt(argb.slice(6, 8), 16);
+  return r >= 0x80 && r - Math.max(g, b) >= minLead && Math.abs(g - b) <= 0x40;
+}
+
+/**
+ * Sichtbar rot: rote Schrift in einer Zelle mit Inhalt oder eine rote Füllung.
+ * Eine rot formatierte, aber leere Zelle zählt nicht — in der echten Tabelle
+ * gibt es solche Reste, die niemand sieht.
+ */
+function isMarkedRed(row: ExcelJS.Row): boolean {
+  let red = false;
+  row.eachCell({ includeEmpty: true }, (cell) => {
+    if (red) return;
+    const fill = cell.fill;
+    if (
+      fill?.type === "pattern" &&
+      fill.pattern !== "none" &&
+      isRedColor(fill.fgColor, 0x30)
+    ) {
+      red = true;
+      return;
+    }
+    if (cellText(cell.value) && isRedColor(cell.font?.color, 0x50)) {
+      red = true;
+    }
+  });
+  return red;
 }
 
 function cellEmails(value: ExcelJS.CellValue): string[] {
@@ -390,6 +439,7 @@ export async function parseInsuranceSheet(
       quantities,
       sheetTotal: cellNumber(get(columns.total)),
       sheetNote: textOrNull(cellText(get(columns.note))),
+      markedRed: isMarkedRed(row),
       warnings,
     });
   }

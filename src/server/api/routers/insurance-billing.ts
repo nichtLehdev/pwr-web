@@ -275,8 +275,13 @@ export const insuranceBillingRouter = createTRPCRouter({
               sheetTotal: row.sheetTotal,
               sheetNote: row.sheetNote,
               warnings: row.warnings,
-              // Chöre ohne Instrumente sind meist gekündigt — vorab abgewählt.
-              excluded: row.quantities.every((entry) => entry.quantity === 0),
+              sheetMarkedRed: row.markedRed,
+              // Rot markiert heißt "keine Rechnung"; ohne Instrumente ist der
+              // Chor meist gekündigt. Beides landet zum Nachprüfen in der
+              // Liste "Nicht abrechnen".
+              excluded:
+                row.markedRed ||
+                row.quantities.every((entry) => entry.quantity === 0),
             })),
           },
         },
@@ -519,6 +524,7 @@ export const insuranceBillingRouter = createTRPCRouter({
             sheetTotal: invoice.sheetTotal,
             sheetNote: invoice.sheetNote,
             warnings: parseWarnings(invoice.warnings),
+            sheetMarkedRed: invoice.sheetMarkedRed,
             excluded: invoice.excluded,
             mailedAt: invoice.mailedAt,
             mailedTo: invoice.mailedTo,

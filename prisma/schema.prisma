@@ -2117,14 +2117,17 @@ model InsuranceInvoice {
   email           String?
 
   /// [{ maxValue, quantity }] — Preise stehen im Lauf.
-  quantities  Json
-  totalAmount Float
+  quantities     Json
+  totalAmount    Float
   /// Gesamtbetrag laut Tabelle, zum Abgleich mit dem berechneten Betrag.
-  sheetTotal  Float?
+  sheetTotal     Float?
   /// Bemerkung aus der Tabelle (LetzteMeldung), nur intern.
-  sheetNote   String?
+  sheetNote      String?
+  /// In der Tabelle rot markiert — so kennzeichnet die Geschäftsstelle Chöre, die
+  /// keine Rechnung bekommen. Solche Zeilen starten als „nicht abrechnen“.
+  sheetMarkedRed Boolean @default(false)
   /// Hinweise beim Einlesen (fehlende E-Mail, unlesbare Anzahl …), string[].
-  warnings    Json    @default("[]")
+  warnings       Json    @default("[]")
 
   /// Nicht abrechnen (z.B. gekündigt, keine Instrumente).
   excluded  Boolean   @default(false)
