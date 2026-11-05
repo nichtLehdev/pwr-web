@@ -175,6 +175,7 @@ function InsuranceRun({ run }: { run: Run }) {
           title="Prämien je Wertklasse"
           description={`Nettoprämie je Instrument für diese Abrechnung, beim Hochladen aus der Tabelle übernommen. Auf der Rechnung steht der Bruttobetrag mit ${formatTaxRate(run.taxRate)} Versicherungssteuer.`}
           unit="€ netto"
+          editLabel="Prämien anpassen"
           preview={(net) =>
             `${formatEuro(grossPremium(net, run.taxRate))} brutto`
           }
