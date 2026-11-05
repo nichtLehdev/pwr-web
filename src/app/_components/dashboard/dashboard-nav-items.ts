@@ -16,6 +16,7 @@ import {
   Music,
   ReceiptText,
   Shield,
+  ShieldCheck,
   User,
   Users,
   Wrench,
@@ -123,6 +124,21 @@ export const DASHBOARD_NAV_GROUPS: DashboardNavGroup[] = [
         href: "/dashboard/invoices",
         icon: ReceiptText,
         visible: (ctx) => ctx.hasPermission(PERMISSIONS.INVOICES_VIEW),
+      },
+    ],
+  },
+  {
+    title: "Geschäftsstelle",
+    description:
+      "Beitragsrechnungen aus den Excel-Tabellen erstellen und versenden",
+    cardColumns: 3,
+    items: [
+      {
+        title: "Versicherungsbeiträge",
+        description: "Instrumentenversicherung abrechnen",
+        href: "/dashboard/geschaeftsstelle/versicherung",
+        icon: ShieldCheck,
+        visible: (ctx) => ctx.hasPermission(PERMISSIONS.BILLING_MANAGE),
       },
     ],
   },
