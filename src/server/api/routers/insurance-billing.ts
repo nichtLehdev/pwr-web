@@ -128,9 +128,13 @@ const optionalText = (max: number) =>
 
 export const insuranceBillingRouter = createTRPCRouter({
   getSettings: billingProcedure.query(async ({ ctx }) => {
-    const [settings, rates] = await Promise.all([
+    const [settings, rates, latestRun] = await Promise.all([
       loadInsuranceSettings(ctx.db),
       ctx.db.insurancePremiumRate.findMany({ orderBy: { maxValue: "asc" } }),
+      ctx.db.insuranceBillingRun.findFirst({
+        orderBy: { createdAt: "desc" },
+        select: { sourceFilename: true, sheetRates: true },
+      }),
     ]);
     return {
       settings,
@@ -139,6 +143,13 @@ export const insuranceBillingRouter = createTRPCRouter({
         netPremium: rate.netPremium,
         updatedAt: rate.updatedAt,
       })),
+      // Damit „aus Tabelle“ eine Zahl bekommt: die Preise der letzten Tabelle.
+      latestSheet: latestRun
+        ? {
+            filename: latestRun.sourceFilename,
+            rates: parseSheetRates(latestRun.sheetRates),
+          }
+        : null,
       defaults: {
         introText: DEFAULT_INSURANCE_INTRO_TEXT,
         closingText: DEFAULT_INSURANCE_CLOSING_TEXT,

@@ -12,8 +12,6 @@ import { DashboardPage } from "@/app/_components/dashboard";
 import { Tag } from "@/app/_components/programmheft/tag";
 import {
   Button,
-  Card,
-  CardContent,
   DataTable,
   Input,
   createDataTableColumnHelper,
@@ -25,14 +23,6 @@ import {
   INSURANCE_BREADCRUMBS,
   LINK_OUTLINE,
   LINK_PRIMARY,
-  TABLE,
-  TABLE_WRAP,
-  TBODY,
-  TD,
-  TD_NUM,
-  TH,
-  TH_NUM,
-  THEAD,
   euroInput,
   parseEuroInput,
 } from "@/app/_components/dashboard/insurance-billing-ui";
@@ -129,7 +119,7 @@ const RUN_COLUMNS: DataTableColumn<RunRow>[] = runColumn.columns([
   }),
 ]);
 
-function RatesCard({ taxRate }: { taxRate: number }) {
+function RatesSection({ taxRate }: { taxRate: number }) {
   const toast = useToast();
   const utils = api.useUtils();
   const settings = api.insuranceBilling.getSettings.useQuery();
@@ -144,6 +134,17 @@ function RatesCard({ taxRate }: { taxRate: number }) {
         ]),
       ),
     [settings.data],
+  );
+  const latestSheet = settings.data?.latestSheet ?? null;
+  const sheetPrices = useMemo(
+    () =>
+      new Map(
+        (latestSheet?.rates ?? []).map((rate) => [
+          rate.maxValue,
+          rate.netPremium,
+        ]),
+      ),
+    [latestSheet],
   );
   const categories = useMemo(
     () =>
@@ -165,8 +166,15 @@ function RatesCard({ taxRate }: { taxRate: number }) {
   const valueFor = (maxValue: number) =>
     drafts[maxValue] ??
     (stored.has(maxValue) ? euroInput(stored.get(maxValue)!) : "");
+  const setValue = (maxValue: number, value: string) =>
+    setDrafts((current) => ({ ...current, [maxValue]: value }));
 
-  const changed = Object.keys(drafts).length > 0;
+  const changedCount = categories.filter((maxValue) => {
+    if (!(maxValue in drafts)) return false;
+    const before = stored.get(maxValue) ?? null;
+    const after = parseEuroInput(drafts[maxValue]!);
+    return before !== after;
+  }).length;
   const invalid = categories.some((maxValue) =>
     Number.isNaN(parseEuroInput(valueFor(maxValue))),
   );
@@ -180,90 +188,115 @@ function RatesCard({ taxRate }: { taxRate: number }) {
     });
 
   return (
-    <Card>
-      <CardContent className="space-y-4 p-6">
-        <div>
-          <h2 className="text-ink dark:text-night-text text-lg font-semibold">
-            Prämien je Wertklasse
-          </h2>
-          <p className="text-dark dark:text-night-muted mt-1 text-sm">
-            Nettoprämie je Instrument. Ist hier nichts eingetragen, gilt der
-            Preis aus der hochgeladenen Tabelle. Auf der Rechnung steht der
-            Bruttobetrag inklusive {formatTaxRate(taxRate)} Versicherungssteuer.
-            Änderungen gelten für neue Abrechnungen; bestehende behalten ihre
-            Preise.
-          </p>
-        </div>
-        <div className={TABLE_WRAP}>
-          <table className={TABLE}>
-            <thead className={THEAD}>
-              <tr>
-                <th className={TH}>Wertklasse</th>
-                <th className={TH}>Netto je Stück</th>
-                <th className={TH_NUM}>Brutto je Stück</th>
-              </tr>
-            </thead>
-            <tbody className={TBODY}>
-              {categories.map((maxValue) => {
-                const value = valueFor(maxValue);
-                const net = parseEuroInput(value);
-                return (
-                  <tr key={maxValue}>
-                    <td className={TD}>{insuranceCategoryLabel(maxValue)}</td>
-                    <td className={TD}>
-                      <div className="flex items-center gap-2">
-                        <Input
-                          inputMode="decimal"
-                          className="w-28"
-                          aria-label={`Nettoprämie ${insuranceCategoryLabel(maxValue)}`}
-                          placeholder="aus Tabelle"
-                          value={value}
-                          error={Number.isNaN(net)}
-                          onChange={(event) =>
-                            setDrafts((current) => ({
-                              ...current,
-                              [maxValue]: event.target.value,
-                            }))
-                          }
-                        />
-                        <span className="text-dark dark:text-night-muted text-sm">
-                          €
-                        </span>
-                      </div>
-                    </td>
-                    <td className={TD_NUM}>
-                      {net === null ? (
-                        <span className="text-dark dark:text-night-muted">
-                          aus Tabelle
-                        </span>
-                      ) : Number.isNaN(net) ? (
-                        "—"
-                      ) : (
-                        formatEuro(grossPremium(net, taxRate))
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          <Button
-            onClick={save}
-            disabled={!changed || invalid}
-            isLoading={setRates.isPending}
-          >
-            Prämien speichern
+    <section className="space-y-4">
+      <div>
+        <h2 className="text-ink dark:text-night-text text-lg font-semibold">
+          Prämien je Wertklasse
+        </h2>
+        <p className="text-dark dark:text-night-muted mt-1 max-w-3xl text-sm">
+          Nettoprämie je Instrument. Leere Felder nehmen den Preis aus der
+          hochgeladenen Tabelle. Auf der Rechnung steht der Bruttobetrag mit{" "}
+          {formatTaxRate(taxRate)} Versicherungssteuer. Änderungen gelten für
+          Entwürfe und neue Abrechnungen; ausgestellte behalten ihre Preise.
+        </p>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {categories.map((maxValue) => {
+          const value = valueFor(maxValue);
+          const net = parseEuroInput(value);
+          const sheetNet = sheetPrices.get(maxValue) ?? null;
+          const own = net !== null && !Number.isNaN(net);
+          const effective = own ? net : sheetNet;
+          const label = insuranceCategoryLabel(maxValue);
+          const inputId = `rate-${maxValue}`;
+          return (
+            <div
+              key={maxValue}
+              className={`border p-4 transition-colors ${
+                own
+                  ? "border-ink dark:border-night-text"
+                  : "border-rule dark:border-night-rule"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <label
+                  htmlFor={inputId}
+                  className="text-ink dark:text-night-text font-semibold"
+                >
+                  {label}
+                </label>
+                <Tag tone={own ? "inverse" : "muted"}>
+                  {own ? "Eigener Preis" : "Aus Tabelle"}
+                </Tag>
+              </div>
+
+              <div className="mt-3 flex items-center gap-2">
+                <div className="relative flex-1">
+                  <Input
+                    id={inputId}
+                    inputMode="decimal"
+                    className="pr-20 text-right tabular-nums"
+                    placeholder={
+                      sheetNet !== null ? euroInput(sheetNet) : "aus Tabelle"
+                    }
+                    value={value}
+                    error={Number.isNaN(net)}
+                    onChange={(event) => setValue(maxValue, event.target.value)}
+                  />
+                  <span className="text-dark dark:text-night-muted pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm">
+                    € netto
+                  </span>
+                </div>
+              </div>
+
+              <div className="text-dark dark:text-night-muted mt-2 flex min-h-6 flex-wrap items-center justify-between gap-x-3 text-sm">
+                <span className="tabular-nums">
+                  {Number.isNaN(net)
+                    ? "Kein gültiger Betrag"
+                    : effective !== null
+                      ? `${formatEuro(grossPremium(effective, taxRate))} brutto`
+                      : "Preis kommt aus der Tabelle"}
+                </span>
+                {own && (
+                  <button
+                    type="button"
+                    className="hover:text-ink dark:hover:text-night-text underline underline-offset-4"
+                    onClick={() => setValue(maxValue, "")}
+                  >
+                    {sheetNet !== null
+                      ? `Tabelle nutzen (${euroInput(sheetNet)} €)`
+                      : "Tabellenpreis nutzen"}
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3">
+        <Button
+          onClick={save}
+          disabled={changedCount === 0 || invalid}
+          isLoading={setRates.isPending}
+        >
+          {changedCount > 1
+            ? `${changedCount} Prämien speichern`
+            : "Prämien speichern"}
+        </Button>
+        {Object.keys(drafts).length > 0 && (
+          <Button variant="ghost" onClick={() => setDrafts({})}>
+            Verwerfen
           </Button>
-          {changed && (
-            <Button variant="ghost" onClick={() => setDrafts({})}>
-              Verwerfen
-            </Button>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+        )}
+        {latestSheet && (
+          <span className="text-dark dark:text-night-muted text-xs">
+            Tabellenpreise aus {latestSheet.filename}
+          </span>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -368,7 +401,7 @@ export default function InsuranceBillingPage() {
           />
         </section>
 
-        <RatesCard taxRate={taxRate} />
+        <RatesSection taxRate={taxRate} />
       </div>
     </DashboardPage>
   );

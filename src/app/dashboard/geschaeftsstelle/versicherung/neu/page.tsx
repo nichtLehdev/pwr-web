@@ -7,7 +7,7 @@ import { usePermissions } from "@/lib/use-permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 import { useToast } from "@/app/_components/ui/toast";
 import { DashboardPage } from "@/app/_components/dashboard";
-import { Card, CardContent, Label } from "@/app/_components/ui";
+import { Card, Label } from "@/app/_components/ui";
 import {
   INSURANCE_BASE_PATH,
   INSURANCE_BREADCRUMBS,
@@ -80,7 +80,7 @@ export default function NewInsuranceRunPage() {
       maxWidth="4xl"
     >
       <Card>
-        <CardContent className="space-y-4 p-6">
+        <div className="space-y-4 p-6">
           <div>
             <Label htmlFor="sheet">Versicherungstabelle (.xlsx)</Label>
             <p className="text-dark dark:text-night-muted mt-1 text-sm">
@@ -116,7 +116,7 @@ export default function NewInsuranceRunPage() {
               event.target.value = "";
             }}
           />
-        </CardContent>
+        </div>
       </Card>
     </DashboardPage>
   );
