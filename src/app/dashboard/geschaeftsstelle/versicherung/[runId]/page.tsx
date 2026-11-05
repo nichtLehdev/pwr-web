@@ -27,7 +27,6 @@ import { Tag } from "@/app/_components/programmheft/tag";
 import {
   Button,
   Card,
-  CardContent,
   Checkbox,
   DataTable,
   Input,
@@ -668,7 +667,7 @@ function DraftDetailsCard({
 
   return (
     <Card>
-      <CardContent className="space-y-4 p-6">
+      <div className="space-y-4 p-6">
         <h2 className="text-ink dark:text-night-text text-lg font-semibold">
           Rechnungsangaben
         </h2>
@@ -718,7 +717,7 @@ function DraftDetailsCard({
         >
           Angaben speichern
         </Button>
-      </CardContent>
+      </div>
     </Card>
   );
 }
@@ -1085,7 +1084,7 @@ export default function InsuranceRunPage() {
           </>
         ) : (
           <Card>
-            <CardContent className="space-y-4 p-6">
+            <div className="space-y-4 p-6">
               <h2 className="text-ink dark:text-night-text text-lg font-semibold">
                 Versand
               </h2>
@@ -1096,19 +1095,22 @@ export default function InsuranceRunPage() {
                 {withoutEmail.length > 0 &&
                   ` ${withoutEmail.length === 1 ? "Ein Chor hat" : `${withoutEmail.length} Chöre haben`} keine E-Mail-Adresse — trage sie unten nach oder lade die Rechnungen als ZIP für den Postversand.`}
               </p>
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-end">
-                <div className="flex-1">
-                  <Label htmlFor="testEmail">Testmail an</Label>
-                  <div className="flex gap-2">
+              <div>
+                <Label htmlFor="testEmail">Testmail an</Label>
+                {/* Eine Zeile, eine Höhe: Feld und beide Knöpfe sind 40 px hoch. */}
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <div className="flex flex-1 gap-2">
                     <Input
                       id="testEmail"
                       type="email"
+                      className="h-10"
                       placeholder={session?.user.email ?? "name@example.org"}
                       value={testEmail}
                       onChange={(event) => setTestEmail(event.target.value)}
                     />
                     <Button
                       variant="outline"
+                      className="shrink-0"
                       disabled={sending || billed.length === 0}
                       onClick={() =>
                         send.mutate({
@@ -1125,25 +1127,26 @@ export default function InsuranceRunPage() {
                       Test
                     </Button>
                   </div>
-                  <p className="text-dark dark:text-night-muted mt-1 text-xs">
-                    Schickt die erste Rechnung mit „[TEST]“ im Betreff; nichts
-                    wird als versendet markiert.
-                  </p>
+                  <Button
+                    className="shrink-0 sm:ml-4"
+                    disabled={sending || pending.length === 0}
+                    isLoading={sending}
+                    onClick={sendAll}
+                  >
+                    <Send className="h-4 w-4" aria-hidden />
+                    {pending.length === 0
+                      ? "Alles versendet"
+                      : pending.length === 1
+                        ? "1 Rechnung versenden"
+                        : `Alle ${pending.length} offenen versenden`}
+                  </Button>
                 </div>
-                <Button
-                  disabled={sending || pending.length === 0}
-                  isLoading={sending}
-                  onClick={sendAll}
-                >
-                  <Send className="h-4 w-4" aria-hidden />
-                  {pending.length === 0
-                    ? "Alles versendet"
-                    : pending.length === 1
-                      ? "1 Rechnung versenden"
-                      : `Alle ${pending.length} offenen versenden`}
-                </Button>
+                <p className="text-dark dark:text-night-muted mt-1 text-xs">
+                  Schickt die erste Rechnung mit „[TEST]“ im Betreff; nichts
+                  wird als versendet markiert.
+                </p>
               </div>
-            </CardContent>
+            </div>
           </Card>
         )}
 

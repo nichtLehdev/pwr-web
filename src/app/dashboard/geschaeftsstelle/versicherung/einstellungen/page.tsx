@@ -7,14 +7,7 @@ import { usePermissions } from "@/lib/use-permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 import { useToast } from "@/app/_components/ui/toast";
 import { DashboardPage } from "@/app/_components/dashboard";
-import {
-  Button,
-  Card,
-  CardContent,
-  Input,
-  Label,
-  Textarea,
-} from "@/app/_components/ui";
+import { Button, Card, Input, Label, Textarea } from "@/app/_components/ui";
 import {
   INSURANCE_PLACEHOLDERS,
   insurancePaymentReference,
@@ -89,7 +82,7 @@ function SettingsForm({ data }: { data: SettingsData }) {
       }}
     >
       <Card>
-        <CardContent className="grid gap-4 p-6 sm:grid-cols-2">
+        <div className="grid gap-4 p-6 sm:grid-cols-2">
           <div>
             <Label htmlFor="taxRate">Versicherungssteuer in %</Label>
             <Input
@@ -111,11 +104,11 @@ function SettingsForm({ data }: { data: SettingsData }) {
               Beispiel: {insurancePaymentReference(prefix, "02-07")}
             </p>
           </div>
-        </CardContent>
+        </div>
       </Card>
 
       <Card>
-        <CardContent className="space-y-5 p-6">
+        <div className="space-y-5 p-6">
           <div>
             <h2 className="text-ink dark:text-night-text text-lg font-semibold">
               Texte
@@ -178,7 +171,7 @@ function SettingsForm({ data }: { data: SettingsData }) {
               )}
             </div>
           ))}
-        </CardContent>
+        </div>
       </Card>
 
       <Button type="submit" disabled={!taxValid} isLoading={save.isPending}>
