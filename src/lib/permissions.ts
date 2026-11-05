@@ -68,6 +68,8 @@ export const PERMISSIONS = {
   INVOICES_VIEW: "invoices.view",
   INVOICES_MANAGE: "invoices.manage",
 
+  BILLING_MANAGE: "billing.manage",
+
   SYSTEM_MANAGE: "system.manage",
   SYSTEM_VIEW_LOGS: "system.view_logs",
   SYSTEM_BACKUP: "system.backup",
@@ -436,6 +438,14 @@ export const PERMISSION_DEFINITIONS: Array<{
     name: "Rechnungen verwalten",
     description: "Berechtigung zum Verwalten von Rechnungen und Zahlungsstatus",
     category: "invoices",
+  },
+
+  {
+    key: PERMISSIONS.BILLING_MANAGE,
+    name: "Beitragsrechnungen der Geschäftsstelle",
+    description:
+      "Berechtigung, Versicherungs- und Mitgliedsbeiträge aus Excel-Tabellen abzurechnen, die Prämien zu pflegen und die Rechnungen per E-Mail zu versenden",
+    category: "billing",
   },
 
   {

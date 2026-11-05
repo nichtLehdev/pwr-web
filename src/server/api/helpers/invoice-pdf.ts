@@ -17,7 +17,7 @@ export const INVOICE_UPLOAD_FOLDER = "invoices";
 let cachedLogo: string | null | undefined;
 
 /** Read once per process; a missing file is cached as absent (renderer falls back to a text header). */
-async function loadLogoBase64(): Promise<string | undefined> {
+export async function loadLogoBase64(): Promise<string | undefined> {
   if (cachedLogo !== undefined) return cachedLogo ?? undefined;
   try {
     const logoPath = resolve(

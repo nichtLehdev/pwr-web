@@ -43,6 +43,7 @@ model User {
   createdEvents                Event[]                @relation("EventCreator")
   createdCourses               Course[]               @relation("CourseCreator")
   createdLateRegistrationLinks LateRegistrationLink[] @relation("LateRegistrationLinkCreator")
+  createdInsuranceBillingRuns  InsuranceBillingRun[]  @relation("InsuranceBillingRunCreator")
   createdPosts                 Post[]                 @relation("PostCreator")
   authoredPosts                Post[]                 @relation("PostAuthor")
   reviewedEvents               Event[]                @relation("EventReviewer")
@@ -2019,4 +2020,121 @@ model GameNoteSet {
   @@index([createdAt])
   @@index([timesUsed])
   @@map("game_note_set")
+}
+
+/// Einstellungen der Versicherungsabrechnung der Geschäftsstelle. Genau eine Zeile (id = 1).
+model InsuranceBillingSettings {
+  id Int @id @default(1)
+
+  /// Versicherungssteuer als Anteil, z.B. 0.19. Die Prämien in Tabelle und Einstellungen sind netto.
+  taxRate                Float   @default(0.19)
+  /// Steht vor der Chor-Nr. im Verwendungszweck, z.B. "0130" → "0130/02-07".
+  paymentReferencePrefix String  @default("0130")
+  /// Texte auf der Rechnung und in der Mail; leer heißt Standardtext. Platzhalter siehe insurance-billing.ts.
+  introText              String?
+  closingText            String?
+  signatureName          String?
+  emailSubject           String?
+  emailBody              String?
+
+  updatedAt DateTime @updatedAt
+
+  @@map("insurance_billing_settings")
+}
+
+/// Hinterlegte Nettoprämie je Wertklasse. Fehlt eine Klasse hier, gilt der Preis aus der Tabelle.
+model InsurancePremiumRate {
+  /// Obergrenze der Wertklasse in Euro, z.B. 1250 für "bis 1.250 EUR".
+  maxValue   Int      @id
+  netPremium Float
+  updatedAt  DateTime @updatedAt
+
+  @@map("insurance_premium_rate")
+}
+
+enum InsuranceBillingRunStatus {
+  DRAFT
+  ISSUED
+}
+
+/// Ein Abrechnungslauf: eine hochgeladene Tabelle, daraus je Chor eine Rechnung.
+/// Wie bei den Kursrechnungen erst Entwurf (Vorschau mit "ENTWURF", rechnet mit den
+/// aktuellen Einstellungen), dann ausgestellt: Preise, Steuersatz und Texte werden
+/// dabei eingefroren, damit eine versendete Rechnung bei erneutem Download gleich aussieht.
+model InsuranceBillingRun {
+  id String @id @default(uuid())
+
+  status   InsuranceBillingRunStatus @default(DRAFT)
+  issuedAt DateTime?
+
+  year           Int
+  sourceFilename String
+  invoiceDate    DateTime
+  dueDate        DateTime
+
+  /// Nettoprämien laut Tabelle: [{ maxValue, netPremium | null }], aufsteigend.
+  sheetRates   Json
+  /// Steuersatz aus den Formeln der Tabelle, nur zum Abgleich.
+  sheetTaxRate Float?
+
+  // Erst beim Ausstellen gesetzt; Entwürfe rechnen mit den aktuellen Einstellungen.
+  taxRate                Float?
+  paymentReferencePrefix String?
+  /// [{ maxValue, netPremium, source: "settings" | "sheet" }], aufsteigend nach Wertklasse.
+  rates                  Json?
+  introText              String?
+  closingText            String?
+  signatureName          String?
+
+  createdById String?
+  createdBy   User?    @relation("InsuranceBillingRunCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+
+  invoices InsuranceInvoice[]
+
+  @@index([status, year])
+  @@map("insurance_billing_run")
+}
+
+/// Rechnung über den Versicherungsbeitrag eines Chors (eine Zeile der Tabelle).
+model InsuranceInvoice {
+  id    String              @id @default(uuid())
+  runId String
+  run   InsuranceBillingRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  /// Zeile in der Tabelle, für Rückfragen und die Sortierung.
+  sheetRow    Int
+  choirNumber String
+  choirName   String?
+
+  // Rechnungsempfänger wie in der Tabelle (Rgn_Name1, Rg_Name2, Rg_Strasse, Rgn_Ort)
+  recipientName1  String?
+  recipientName2  String?
+  recipientStreet String?
+  /// PLZ und Ort in einer Zeile, so wie die Tabelle sie führt.
+  recipientCity   String?
+  /// Eine oder mehrere Adressen, durch Komma getrennt; die erste ist der Empfänger.
+  email           String?
+
+  /// [{ maxValue, quantity }] — Preise stehen im Lauf.
+  quantities  Json
+  totalAmount Float
+  /// Gesamtbetrag laut Tabelle, zum Abgleich mit dem berechneten Betrag.
+  sheetTotal  Float?
+  /// Bemerkung aus der Tabelle (LetzteMeldung), nur intern.
+  sheetNote   String?
+  /// Hinweise beim Einlesen (fehlende E-Mail, unlesbare Anzahl …), string[].
+  warnings    Json    @default("[]")
+
+  /// Nicht abrechnen (z.B. gekündigt, keine Instrumente).
+  excluded  Boolean   @default(false)
+  mailedAt  DateTime?
+  mailedTo  String?
+  mailError String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([runId, sheetRow])
+  @@map("insurance_invoice")
 }
