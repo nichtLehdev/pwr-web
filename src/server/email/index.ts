@@ -611,6 +611,7 @@ function buildCourseMailFrom(senderName: string): string | undefined {
 
 export { sendEmail } from "./send-email";
 export { sendCourseRegistrationSplitEmail } from "./registration-split-email";
+export { sendOfficeInvoiceEmail } from "./office-invoice-email";
 export {
   sendWaitlistPromotionOfferEmail,
   sendWaitlistPromotionOfferExpiredEmail,
