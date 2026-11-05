@@ -1,15 +1,15 @@
 import { render } from "@react-email/components";
 import { sendEmail } from "./send-email";
 import {
-  InsuranceInvoiceMail,
-  insuranceInvoiceMailText,
-} from "./templates/insurance-invoice";
+  OfficeInvoiceMail,
+  officeInvoiceMailText,
+} from "./templates/office-invoice";
 
 /**
  * Antworten sollen bei der Geschäftsstelle landen, nicht beim noreply-Absender.
  * Weitere Adressen aus der Tabelle lesen in Kopie mit.
  */
-export async function sendInsuranceInvoiceEmail(params: {
+export async function sendOfficeInvoiceEmail(params: {
   to: string;
   cc?: string[];
   replyTo?: string;
@@ -18,7 +18,7 @@ export async function sendInsuranceInvoiceEmail(params: {
   pdf: { filename: string; content: Buffer };
 }) {
   const props = { body: params.body, attachmentName: params.pdf.filename };
-  const html = await render(InsuranceInvoiceMail(props));
+  const html = await render(OfficeInvoiceMail(props));
 
   return sendEmail({
     to: params.to,
@@ -26,7 +26,7 @@ export async function sendInsuranceInvoiceEmail(params: {
     ...(params.replyTo && { replyTo: params.replyTo }),
     subject: params.subject,
     html,
-    text: insuranceInvoiceMailText(props),
+    text: officeInvoiceMailText(props),
     attachments: [
       {
         filename: params.pdf.filename,

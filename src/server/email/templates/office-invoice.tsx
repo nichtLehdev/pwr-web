@@ -2,7 +2,7 @@ import { Text } from "@react-email/components";
 import { EmailLayout, Regel, grundtext, kleintext } from "./email-layout";
 import { emailText } from "./email-text";
 
-interface InsuranceInvoiceMailProps {
+interface OfficeInvoiceMailProps {
   /** Platzhalter bereits ersetzt; Absätze durch Leerzeilen getrennt. */
   body: string;
   attachmentName: string;
@@ -15,11 +15,11 @@ function absaetze(body: string): string[] {
     .filter(Boolean);
 }
 
-/** Begleitmail zur Versicherungsbeitragsrechnung; die Rechnung hängt als PDF an. */
-export function InsuranceInvoiceMail({
+/** Begleitmail zu einer Beitragsrechnung der Geschäftsstelle (Versicherung, Mitgliedsbeitrag); die Rechnung hängt als PDF an. */
+export function OfficeInvoiceMail({
   body,
   attachmentName,
-}: InsuranceInvoiceMailProps) {
+}: OfficeInvoiceMailProps) {
   return (
     <EmailLayout preview={absaetze(body)[1] ?? absaetze(body)[0]}>
       {absaetze(body).map((absatz, i) => (
@@ -34,9 +34,9 @@ export function InsuranceInvoiceMail({
   );
 }
 
-export function insuranceInvoiceMailText({
+export function officeInvoiceMailText({
   body,
   attachmentName,
-}: InsuranceInvoiceMailProps): string {
+}: OfficeInvoiceMailProps): string {
   return emailText([body.trim(), "", `Anhang: ${attachmentName}`]);
 }

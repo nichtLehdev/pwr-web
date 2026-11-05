@@ -23,11 +23,6 @@ import {
 import { renderInsuranceInvoicePdf } from "@/lib/insurance-invoice-render";
 import { loadLogoBase64 } from "./invoice-pdf";
 
-type Db = Pick<
-  PrismaClient,
-  "insuranceBillingSettings" | "insurancePremiumRate"
->;
-
 /** Einstellungen mit eingesetzten Standardtexten; legt nichts an. */
 export async function loadInsuranceSettings(
   db: Pick<PrismaClient, "insuranceBillingSettings">,
@@ -73,39 +68,19 @@ export function parseSheetRates(value: unknown): SheetRate[] {
     .sort((a, b) => a.maxValue - b.maxValue);
 }
 
-/**
- * Hinterlegter Preis vor Tabellenpreis. Klassen ohne beides fehlen im Ergebnis
- * und werden als `missing` gemeldet.
- */
-export async function resolveInsuranceRates(
-  db: Pick<PrismaClient, "insurancePremiumRate">,
-  sheetRates: SheetRate[],
-): Promise<{ rates: InsuranceRate[]; missing: number[] }> {
-  const stored = await db.insurancePremiumRate.findMany();
-  const byValue = new Map(
-    stored.map((rate) => [rate.maxValue, rate.netPremium]),
+/** Startwerte eines neuen Laufs: jede Wertklasse mit lesbarer Tabellenprämie. */
+export function sheetInsuranceRates(sheetRates: SheetRate[]): InsuranceRate[] {
+  return sheetRates.flatMap((sheet) =>
+    sheet.netPremium === null
+      ? []
+      : [
+          {
+            maxValue: sheet.maxValue,
+            netPremium: sheet.netPremium,
+            source: "sheet" as const,
+          },
+        ],
   );
-  const rates: InsuranceRate[] = [];
-  const missing: number[] = [];
-  for (const sheet of sheetRates) {
-    const override = byValue.get(sheet.maxValue);
-    if (override !== undefined) {
-      rates.push({
-        maxValue: sheet.maxValue,
-        netPremium: override,
-        source: "settings",
-      });
-    } else if (sheet.netPremium !== null) {
-      rates.push({
-        maxValue: sheet.maxValue,
-        netPremium: sheet.netPremium,
-        source: "sheet",
-      });
-    } else {
-      missing.push(sheet.maxValue);
-    }
-  }
-  return { rates, missing };
 }
 
 /** Was PDF, Mail und Beträge von einem Lauf brauchen — eingefroren oder live. */
@@ -117,7 +92,7 @@ export interface EffectiveInsuranceRun {
   taxRate: number;
   paymentReferencePrefix: string;
   rates: InsuranceRate[];
-  /** Nur bei Entwürfen möglich: Wertklassen ohne Prämie. */
+  /** Wertklassen der Tabelle ohne Prämie im Lauf; blockieren das Ausstellen. */
   missingRates: number[];
   introText: string;
   closingText: string;
@@ -139,18 +114,24 @@ export interface InsuranceRunRecord {
 }
 
 /**
- * Ausgestellte Läufe rechnen mit dem, was beim Ausstellen galt. Entwürfe wie
- * Kursrechnungs-Entwürfe mit dem aktuellen Stand — Einstellungen wirken sofort
- * auf die Vorschau.
+ * Prämien kommen immer aus dem Lauf. Steuersatz und Texte: ausgestellt wie beim
+ * Ausstellen eingefroren, im Entwurf wie Kursrechnungs-Entwürfe die aktuellen
+ * Einstellungen.
  */
 export async function effectiveInsuranceRun(
-  db: Db,
+  db: Pick<PrismaClient, "insuranceBillingSettings">,
   run: InsuranceRunRecord,
 ): Promise<EffectiveInsuranceRun> {
+  const rates = parseInsuranceRates(run.rates);
+  const missingRates = parseSheetRates(run.sheetRates)
+    .map((sheet) => sheet.maxValue)
+    .filter((maxValue) => !rates.some((rate) => rate.maxValue === maxValue));
   const base = {
     year: run.year,
     invoiceDate: run.invoiceDate,
     dueDate: run.dueDate,
+    rates,
+    missingRates,
   };
   if (run.status === "ISSUED") {
     return {
@@ -159,24 +140,17 @@ export async function effectiveInsuranceRun(
       taxRate: run.taxRate ?? DEFAULT_INSURANCE_TAX_RATE,
       paymentReferencePrefix:
         run.paymentReferencePrefix ?? DEFAULT_INSURANCE_REFERENCE_PREFIX,
-      rates: parseInsuranceRates(run.rates),
-      missingRates: [],
       introText: run.introText ?? DEFAULT_INSURANCE_INTRO_TEXT,
       closingText: run.closingText ?? DEFAULT_INSURANCE_CLOSING_TEXT,
       signatureName: run.signatureName?.trim() || DEFAULT_INSURANCE_SIGNATURE,
     };
   }
-  const [settings, resolved] = await Promise.all([
-    loadInsuranceSettings(db),
-    resolveInsuranceRates(db, parseSheetRates(run.sheetRates)),
-  ]);
+  const settings = await loadInsuranceSettings(db);
   return {
     ...base,
     draft: true,
     taxRate: settings.taxRate,
     paymentReferencePrefix: settings.paymentReferencePrefix,
-    rates: resolved.rates,
-    missingRates: resolved.missing,
     introText: settings.introText,
     closingText: settings.closingText,
     signatureName: settings.signatureName.trim() || DEFAULT_INSURANCE_SIGNATURE,

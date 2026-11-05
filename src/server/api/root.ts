@@ -7,6 +7,7 @@ import { lateRegistrationLinksRouter } from "./routers/late-registration-links";
 import { courseMailRouter } from "./routers/course-mail";
 import { invoicesRouter } from "./routers/invoices";
 import { insuranceBillingRouter } from "./routers/insurance-billing";
+import { membershipBillingRouter } from "./routers/membership-billing";
 import { postsRouter } from "./routers/posts";
 import { ensemblesRouter } from "./routers/ensembles";
 import { auswahlchoereRouter } from "./routers/auswahlchoere";
@@ -41,6 +42,7 @@ export const appRouter = createTRPCRouter({
   courseMail: courseMailRouter,
   invoices: invoicesRouter,
   insuranceBilling: insuranceBillingRouter,
+  membershipBilling: membershipBillingRouter,
   posts: postsRouter,
   ensembles: ensemblesRouter,
   auswahlchoere: auswahlchoereRouter,

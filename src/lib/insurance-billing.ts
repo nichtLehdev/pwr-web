@@ -3,8 +3,20 @@
  * Abhängigkeitsfrei, damit Dashboard, Router und PDF dieselbe Rechnung rechnen.
  */
 
+import {
+  DEFAULT_OFFICE_SIGNATURE,
+  OFFICE_PLACEHOLDERS,
+  fillPlaceholders,
+  officeInvoiceFilename,
+  officeMemberLabel,
+  officePaymentReference,
+  round2,
+} from "./office-billing";
+
+export { splitEmailList } from "./office-billing";
+
 /** Woher die Nettoprämie einer Wertklasse in einem Lauf stammt. */
-export type InsuranceRateSource = "settings" | "sheet";
+export type InsuranceRateSource = "manual" | "sheet";
 
 export interface InsuranceRate {
   /** Obergrenze der Wertklasse in Euro, z.B. 1250. */
@@ -41,8 +53,7 @@ export const DEFAULT_INSURANCE_INTRO_TEXT =
 export const DEFAULT_INSURANCE_CLOSING_TEXT =
   "Vielen Dank für Ihre Unterstützung!";
 
-export const DEFAULT_INSURANCE_SIGNATURE =
-  "Ihr Posaunenwerk der Evangelischen Kirche im Rheinland e.V.";
+export const DEFAULT_INSURANCE_SIGNATURE = DEFAULT_OFFICE_SIGNATURE;
 
 export const DEFAULT_INSURANCE_EMAIL_SUBJECT =
   "Versicherungsbeitrag {jahr} – {chor}";
@@ -60,12 +71,7 @@ Ihr Posaunenwerk der Evangelischen Kirche im Rheinland e.V.`;
 
 /** Platzhalter für Rechnungs- und Mailtexte, mit Erklärung für das Dashboard. */
 export const INSURANCE_PLACEHOLDERS = [
-  { key: "jahr", label: "Beitragsjahr" },
-  { key: "chor", label: "Name des Chors" },
-  { key: "chornummer", label: "Chor-Nr." },
-  { key: "betrag", label: "Gesamtbetrag" },
-  { key: "faellig", label: "Zahlungsziel" },
-  { key: "verwendungszweck", label: "Verwendungszweck" },
+  ...OFFICE_PLACEHOLDERS,
   { key: "steuersatz", label: "Versicherungssteuer, z. B. 19 %" },
 ] as const;
 
@@ -77,13 +83,7 @@ export function fillInsurancePlaceholders(
   template: string,
   values: Record<InsurancePlaceholderKey, string>,
 ): string {
-  return template.replace(/\{(\w+)\}/g, (match, key: string) =>
-    key in values ? values[key as InsurancePlaceholderKey] : match,
-  );
-}
-
-function round2(value: number): number {
-  return Math.round((value + Number.EPSILON) * 100) / 100;
+  return fillPlaceholders(template, values);
 }
 
 /** Bruttoprämie je Stück — so steht sie auf der Rechnung, so wird multipliziert. */
@@ -128,44 +128,15 @@ export function formatTaxRate(taxRate: number): string {
 }
 
 /** Verwendungszweck wie bisher: "0130/02-07". */
-export function insurancePaymentReference(
-  prefix: string,
-  choirNumber: string,
-): string {
-  const trimmed = prefix.trim();
-  return trimmed ? `${trimmed}/${choirNumber}` : choirNumber;
-}
+export const insurancePaymentReference = officePaymentReference;
 
-/** Erste Adresse ist der Empfänger, weitere gehen in Kopie. */
-export function splitEmailList(value: string | null | undefined): string[] {
-  return (value ?? "")
-    .split(/[\s,;]+/)
-    .map((part) => part.trim())
-    .filter((part) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(part));
-}
+export const insuranceChoirLabel = officeMemberLabel;
 
-/** Rechnungsname für den Chor: die Bezeichnung aus der Tabelle, sonst der Empfänger. */
-export function insuranceChoirLabel(invoice: {
-  choirName?: string | null;
-  recipientName1?: string | null;
-  choirNumber: string;
-}): string {
-  return (
-    invoice.choirName?.trim() ||
-    invoice.recipientName1?.trim() ||
-    `Chor ${invoice.choirNumber}`
-  );
-}
-
-/** Dateiname, der Mailprogramme und Windows übersteht. */
 export function insuranceInvoiceFilename(
   year: number,
   choirNumber: string,
 ): string {
-  const safe = choirNumber
-    .replace(/[^A-Za-z0-9-]+/g, "_")
-    .replace(/^_+|_+$/g, "");
-  return `Versicherungsbeitrag_${year}_${safe || "Chor"}.pdf`;
+  return officeInvoiceFilename("Versicherungsbeitrag", year, choirNumber);
 }
 
 /** Die im Lauf gespeicherten Wertklassen, nach Prüfung. */
@@ -182,7 +153,11 @@ export function parseInsuranceRates(value: unknown): InsuranceRate[] {
         {
           maxValue,
           netPremium,
-          source: entry.source === "settings" ? "settings" : "sheet",
+          // "settings" stammt aus der Zeit globaler Prämien.
+          source:
+            entry.source === "manual" || entry.source === "settings"
+              ? "manual"
+              : "sheet",
         },
       ];
     })
