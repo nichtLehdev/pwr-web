@@ -33,7 +33,11 @@ import {
 } from "@/app/_components/ui";
 import { formatBerlin } from "@/lib/berlin-time";
 import { formatDate, formatEuro } from "@/lib/invoice-document";
-import { formatTaxRate, insuranceCategoryLabel } from "@/lib/insurance-billing";
+import {
+  formatTaxRate,
+  insuranceCategoryLabel,
+  splitEmailList,
+} from "@/lib/insurance-billing";
 import {
   INSURANCE_BASE_PATH,
   INSURANCE_BREADCRUMBS,
@@ -98,7 +102,16 @@ function EmailCell({
   if (!editing) {
     return (
       <div className="flex items-start gap-1">
-        <span className="break-all">{invoice.email ?? "—"}</span>
+        {/* Je Adresse eine Zeile; umbrochen wird nur, wenn eine allein nicht passt. */}
+        <span className="min-w-0 [overflow-wrap:anywhere]">
+          {invoice.email
+            ? splitEmailList(invoice.email).map((address) => (
+                <span key={address} className="block">
+                  {address}
+                </span>
+              ))
+            : "—"}
+        </span>
         <button
           type="button"
           className="text-dark hover:text-ink dark:text-night-muted dark:hover:text-night-text -mt-1 inline-flex min-h-8 min-w-8 shrink-0 items-center justify-center"
@@ -327,6 +340,8 @@ function RunInvoicesTable({
         id: "email",
         header: "E-Mail",
         enableColumnFilter: false,
+        // Neben sechs Zahlenspalten würde sie sonst auf Buchstabenbreite gequetscht.
+        meta: { headerClassName: "min-w-72", cellClassName: "min-w-72" },
         cell: ({ row }) => (
           <EmailCell invoice={row.original} onSaved={onSaved} />
         ),
@@ -398,7 +413,7 @@ function RunInvoicesTable({
                 <>
                   <StatusTag invoice={row.original} />
                   {row.original.mailedAt && row.original.mailedTo && (
-                    <span className="text-dark dark:text-night-muted mt-1 block text-xs break-all">
+                    <span className="text-dark dark:text-night-muted mt-1 block text-xs [overflow-wrap:anywhere]">
                       an {row.original.mailedTo}
                     </span>
                   )}
