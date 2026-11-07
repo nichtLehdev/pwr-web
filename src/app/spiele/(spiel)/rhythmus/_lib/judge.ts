@@ -171,6 +171,8 @@ export class LiveJudge {
         : note.nextIsRest && ms > this.lateReleaseLimit(note)
           ? "long"
           : "ok";
+    // Falsch gehalten ist kein sauberer Ton: Die Serie beginnt von vorn.
+    if (note.length !== "ok") this.streak = 0;
     return { type: "length", segmentId, note };
   }
 
@@ -200,6 +202,7 @@ export class LiveJudge {
       ms > this.lateReleaseLimit(active.note)
     ) {
       active.note.length = "long";
+      this.streak = 0;
       events.push({
         type: "length",
         segmentId: active.segmentId,
