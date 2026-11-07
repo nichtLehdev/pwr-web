@@ -1,15 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  Check,
-  ChevronDown,
-  Music,
-  RotateCcw,
-  Settings2,
-  SlidersHorizontal,
-  X,
-} from "lucide-react";
+import { Check, ChevronDown, Settings2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/react";
 import { Button } from "@/app/_components/ui/button";
@@ -59,7 +51,13 @@ import {
   STAFF_LAYOUT_EXPLICIT,
   type StaffAccidentalLayout,
 } from "../_lib/staff-accidental-layout";
-import { GameStepIndicator } from "../../../_components/game-step-indicator";
+import { ArcadeButton } from "../../../_components/arcade-button";
+import {
+  GameHero,
+  ToniCoach,
+  useGameSounds,
+} from "../../../_components/game-kit";
+import { praiseFor } from "../../../_lib/rewards";
 import { GameBarSlot, GameDock } from "../../../_components/game-shell-context";
 import { useGameStats } from "../../../_lib/stats/use-game-stats";
 import { InstrumentSelector } from "./instrument-selector";
@@ -167,6 +165,7 @@ function readStoredSettings(): Partial<StoredSettings> {
 
 export function NoteReadingGame() {
   const { aggregates, recordResult } = useGameStats("noten-lesen");
+  const { correct: soundCorrect, wrong: soundWrong } = useGameSounds();
   const [instrument, setInstrument] = useState<InstrumentId>("trumpet_c");
   const [mode, setMode] = useState<GameModeId>("learn");
   /* Bleibt auch bei aktivem eigenem Set die zuletzt gewählte Preset-Stufe —
@@ -739,6 +738,12 @@ export function NoteReadingGame() {
     setCustomNotice(null);
   }, []);
 
+  // Klang aus dem Urteil abgeleitet: So bleibt die Spiellogik unberührt.
+  useEffect(() => {
+    if (flash === "correct") soundCorrect(streakRef.current);
+    else if (flash === "wrong") soundWrong();
+  }, [flash, soundCorrect, soundWrong]);
+
   const insLabel = INSTRUMENTS.find((i) => i.id === instrument)?.shortLabel;
   const setupBarLabel = customSet
     ? customSet.name
@@ -758,27 +763,13 @@ export function NoteReadingGame() {
     mode === "learn" ? "Lernen" : mode === "quiz" ? "Quiz" : "Endlos";
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-[clamp(0.625rem,1.8dvh,1.5rem)]">
-      <GameStepIndicator
-        steps={["Setup", "Spielen", "Auswertung"]}
-        current={phase === "setup" ? 0 : phase === "play" ? 1 : 2}
-      />
-
+    <div className="spiel-runde mx-auto flex w-full max-w-5xl flex-col gap-[clamp(0.625rem,1.8dvh,1.5rem)]">
       {phase === "setup" && (
         <div className="flex flex-col gap-[clamp(0.75rem,2.2dvh,1.75rem)]">
-          <div className="text-center">
-            <Music
-              className="text-primary-ink dark:text-primary mx-auto h-10 w-10 stroke-[1.45] md:h-14 md:w-14 md:stroke-[1.35]"
-              aria-hidden
-            />
-            <h2 className="condensed text-ink dark:text-night-text mt-2 text-xl font-bold tracking-tight md:text-3xl">
-              Noten lesen
-            </h2>
-            <p className="text-dark dark:text-night-muted mx-auto mt-2 max-w-lg text-sm md:text-base">
-              Eine Note im richtigen Schlüssel — schnell den Tonnamen wählen.
-              Geschriebene Tonhöhe (wie in der Stimme), ohne Audio.
-            </p>
-          </div>
+          <GameHero
+            title="Noten lesen"
+            text="Schau dir die Note an und finde schnell ihren Namen!"
+          />
 
           <InstrumentSelector
             instrument={instrument}
@@ -803,14 +794,7 @@ export function NoteReadingGame() {
       {/* Hauptaktion im Dock, sonst liegt sie auf kurzen Fenstern unter dem Setup. */}
       {phase === "setup" && !libraryOpen && (
         <GameDock>
-          <Button
-            type="button"
-            size="lg"
-            className="w-full"
-            onClick={startGame}
-          >
-            Los geht&apos;s!
-          </Button>
+          <ArcadeButton onClick={startGame}>Los geht&apos;s!</ArcadeButton>
         </GameDock>
       )}
 
@@ -896,14 +880,33 @@ export function NoteReadingGame() {
             />
           </GameBarSlot>
 
-          <div className="relative">
+          <ToniCoach
+            mood={
+              flash === "correct"
+                ? "happy"
+                : flash === "wrong"
+                  ? "oops"
+                  : "listen"
+            }
+            message={
+              flash === "correct"
+                ? praiseFor(streak)
+                : flash === "wrong"
+                  ? "Hoppla!"
+                  : "Wie heißt diese Note?"
+            }
+            streak={streak}
+            progress={mode === "quiz" ? quizIndex / QUIZ_ROUND_LEN : null}
+          />
+
+          <div className="bg-paper dark:bg-night relative overflow-hidden rounded-2xl">
             <StaffDisplay
               clef={clef}
               pitch={pitch}
               staffAccidentalLayout={staffAccidentalLayout}
               flash={flash}
               /* Höhe nach Fensterhöhe — die Notenschrift wächst mit. */
-              className="h-[clamp(9.5rem,40dvh,28rem)]"
+              className="h-[clamp(9rem,30dvh,24rem)]"
               /* Positionsbeschreibung statt Tonname, sonst verrät das Label die Antwort. */
               ariaLabel={`Notensystem — ${describeWrittenNote(pitch, clef)}`}
             />
@@ -954,78 +957,36 @@ export function NoteReadingGame() {
       )}
 
       {phase === "result" && roundResult && (
-        <div className="flex flex-col gap-4">
-          <div className="text-center">
-            <Music
-              className="text-primary-ink dark:text-primary mx-auto h-10 w-10 stroke-[1.4]"
-              aria-hidden
-            />
-            <p className="text-ink dark:text-night-text mt-2 text-lg font-bold">
-              Runde zu Ende
-            </p>
-          </div>
-          <NoteReadingResultView result={roundResult} />
-          {aggregates && aggregates.plays > 0 && (
-            <p className="text-dark dark:text-night-muted text-center text-sm">
-              Persönlicher Rekord:{" "}
-              <span className="text-ink dark:text-night-text font-bold">
-                {aggregates.bestScore}/{QUIZ_ROUND_LEN} richtig
-              </span>
-              {aggregates.bestStreak > 0 && (
-                <> · beste Serie: {aggregates.bestStreak}</>
-              )}
-            </p>
-          )}
-        </div>
+        <NoteReadingResultView
+          result={roundResult}
+          bestScore={aggregates?.bestScore ?? 0}
+          plays={aggregates?.plays ?? 0}
+        />
       )}
 
       {/* „Weiter“ steht auch vor der Antwort (gesperrt), damit der Inhalt beim
        * Erscheinen nicht springt. */}
       {phase === "play" && pitch && mode === "learn" && !libraryOpen && (
         <GameDock>
-          <Button
-            type="button"
-            size="lg"
-            variant={awaitingNext ? "primary" : "secondary"}
-            className="w-full"
-            onClick={handleLearnNext}
-            disabled={!awaitingNext}
-          >
+          <ArcadeButton onClick={handleLearnNext} disabled={!awaitingNext}>
             Weiter
-            <span className="ml-2 hidden text-xs font-bold opacity-80 md:inline">
-              (Enter oder Leertaste)
-            </span>
-          </Button>
+          </ArcadeButton>
         </GameDock>
       )}
 
       {phase === "result" && roundResult && !libraryOpen && (
         <GameDock>
-          <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
-            <Button
-              type="button"
-              size="lg"
-              className="gap-2 sm:min-w-64"
+          <div className="flex flex-col gap-2">
+            <ArcadeButton
               onClick={() => {
                 setRoundResult(null);
                 startGame();
               }}
             >
-              <RotateCcw className="h-5 w-5 shrink-0 stroke-[2]" aria-hidden />
               Nochmal spielen
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="lg"
-              className="gap-2 sm:min-w-64"
-              onClick={openSetup}
-            >
-              <SlidersHorizontal
-                className="h-5 w-5 shrink-0 stroke-[2]"
-                aria-hidden
-              />
-              Schwierigkeit / Modus
+            </ArcadeButton>
+            <Button type="button" variant="outline" onClick={openSetup}>
+              Schwierigkeit und Modus
             </Button>
           </div>
         </GameDock>
