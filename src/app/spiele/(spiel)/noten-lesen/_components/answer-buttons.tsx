@@ -61,7 +61,7 @@ export function AnswerButtons({
               onClick={() => onPick(label)}
               /* Höhe wächst mit dem Fenster, fällt aber nie unter 44 px. */
               className={cn(
-                "relative flex min-h-[clamp(2.75rem,7dvh,4rem)] w-full items-center justify-center gap-1.5 border px-2 py-2 transition active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100",
+                "spiel-answer relative flex min-h-[clamp(2.75rem,7dvh,4rem)] w-full items-center justify-center gap-1.5 border-2 px-2 py-2 transition active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100",
                 GAME_FOCUS_RING,
                 marked ? "disabled:opacity-100" : "disabled:opacity-40",
                 /* Richtig ist Tinte, nicht Grün (keine Farbe des Hefts). */
@@ -83,7 +83,7 @@ export function AnswerButtons({
               <span
                 className={cn(
                   "font-bold",
-                  isAdvanced ? "text-base md:text-lg" : "text-lg md:text-xl",
+                  isAdvanced ? "text-lg md:text-xl" : "text-xl md:text-2xl",
                 )}
               >
                 {label}

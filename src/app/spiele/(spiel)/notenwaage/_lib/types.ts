@@ -14,8 +14,6 @@ export type NoteValueId =
   | "restEighth"
   | "restSixteenth";
 
-export type DifficultyId = "beginner" | "intermediate" | "advanced";
-
 export type NoteValueDef = {
   id: NoteValueId;
   label: string;
@@ -55,59 +53,11 @@ export const NOTE_VALUES: Record<NoteValueId, NoteValueDef> = {
   },
   restSixteenth: {
     id: "restSixteenth",
-    label: "Sechzehntelpause",
+    label: "Sechzehntel\u00ADpause",
     units: 6,
     isRest: true,
   },
 };
-
-export const DIFFICULTY_LABELS: Record<
-  DifficultyId,
-  { title: string; hint: string }
-> = {
-  beginner: {
-    title: "Anfänger",
-    hint: "Ganze, Halbe, Viertel",
-  },
-  intermediate: {
-    title: "Mittel",
-    hint: "plus Achtel sowie punktierte Viertel/Halbe",
-  },
-  advanced: {
-    title: "Fortgeschritten",
-    hint: "inkl. punktierte Achtel/Sechzehntel, 32tel und Pausen-Challenges",
-  },
-};
-
-export const DIFFICULTY_VALUES: Record<DifficultyId, NoteValueId[]> = {
-  beginner: ["whole", "half", "quarter"],
-  intermediate: [
-    "whole",
-    "half",
-    "quarter",
-    "eighth",
-    "dottedQuarter",
-    "dottedHalf",
-  ],
-  advanced: [
-    "whole",
-    "dottedWhole",
-    "half",
-    "dottedHalf",
-    "quarter",
-    "eighth",
-    "dottedEighth",
-    "dottedQuarter",
-    "sixteenth",
-    "dottedSixteenth",
-    "thirtySecond",
-    "restQuarter",
-    "restEighth",
-    "restSixteenth",
-  ],
-};
-
-export const STORAGE_DIFFICULTY_KEY = "pwr-notenwaage-difficulty";
 
 export type Puzzle = {
   targetUnits: number;
