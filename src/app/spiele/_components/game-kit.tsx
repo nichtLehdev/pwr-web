@@ -9,6 +9,7 @@ import {
 } from "react";
 import { Flame, Heart, Plus, Star, Volume2, VolumeX, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { api } from "@/trpc/react";
 import { GAME_FOCUS_RING } from "../_lib/focus-ring";
 import { GAMES } from "../_lib/games";
 import { dailyStreak } from "../_lib/stats/daily-streak";
@@ -18,6 +19,7 @@ import { resultHeadline, starsFor, type Stars } from "../_lib/rewards";
 import { JINGLE_NOTES, RhythmAudio } from "../_lib/rhythm/audio";
 import { Confetti } from "./confetti";
 import { useSkipGesture } from "./use-skip-gesture";
+import { useOptionalProfiles } from "./profiles";
 import { Toni, type ToniMood } from "./toni";
 
 const SOUND_KEY = "pwr.spiele.v1.sound";
@@ -107,7 +109,8 @@ function cheerful(text: string): string {
 
 /** Tagesserie und XP über alle Spiele, aus den echten Runden berechnet. */
 export function DailyStats() {
-  const [stats, setStats] = useState({ days: 0, xp: 0 });
+  const [local, setStats] = useState({ days: 0, xp: 0 });
+  const stats = { ...local };
   useEffect(() => {
     const events = GAMES.flatMap(
       (game) => loadGameState(game.slug).recentEvents,
@@ -122,6 +125,16 @@ export function DailyStats() {
       xp: xpToday(events, now),
     });
   }, []);
+  // Mit Profil zählt der Server, sonst nur dieses Gerät.
+  const active = useOptionalProfiles()?.active ?? null;
+  const server = api.gameProfiles.summary.useQuery(
+    { id: active?.id ?? "" },
+    { enabled: Boolean(active) },
+  );
+  if (active && server.data) {
+    stats.days = server.data.streak;
+    stats.xp = server.data.xpToday;
+  }
   return (
     <p className="text-ink dark:text-night-text mt-1.5 flex flex-wrap gap-x-4 font-extrabold tabular-nums">
       <span className="flex items-center gap-1">

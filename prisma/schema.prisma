@@ -143,7 +143,10 @@ model GameProfile {
   instruments   String[]
   /// Lernpfad-Fortschritt je Spiel; der Sync führt Geräte zusammen, bessere Werte gewinnen.
   progress      Json         @default("{}")
+  /// Liga-Stufe 0 (Piano) bis 4 (Fortissimo), gilt ab der nächsten Woche.
+  tier          Int          @default(0)
   results       GameResult[] @relation("GameProfileResults")
+  leagueWeeks   GameLeagueMember[]
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
@@ -2048,4 +2051,26 @@ model GameNoteSet {
   @@index([createdAt])
   @@index([timesUsed])
   @@map("game_note_set")
+}
+
+/**
+ * Ein Profil in einer Wochenliga. Die XP kommen aus game_result, gezählt nach
+ * Eingang beim Server zwischen Montag und Sonntag (deutsche Zeit).
+ */
+model GameLeagueMember {
+  id        String      @id @default(uuid())
+  profileId String
+  profile   GameProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  weekStart DateTime
+  groupId   String
+  tier      Int
+  /// Nach Wochenende: 1 auf, -1 ab, 0 bleibt; null, solange die Woche läuft.
+  outcome   Int?
+  /// Von der Moderation ausgeblendet, zählt dann nicht mit.
+  hidden    Boolean     @default(false)
+  createdAt DateTime    @default(now())
+
+  @@unique([profileId, weekStart])
+  @@index([weekStart, groupId])
+  @@map("game_league_member")
 }

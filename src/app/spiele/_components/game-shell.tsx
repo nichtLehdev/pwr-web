@@ -19,7 +19,9 @@ export function GameShell({ children }: { children: ReactNode }) {
   const isProfilePage = segment === "profile";
   const title = isProfilePage
     ? "Profile"
-    : (gameBySlug(segment)?.title ?? "Spiel");
+    : segment === "liga"
+      ? "Liga"
+      : (gameBySlug(segment)?.title ?? "Spiel");
 
   const [barSlotEl, setBarSlotEl] = useState<HTMLElement | null>(null);
   const [dockEl, setDockEl] = useState<HTMLElement | null>(null);

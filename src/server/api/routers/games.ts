@@ -3,6 +3,7 @@ import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { GAMES, type GameId } from "@/app/spiele/_lib/games";
 import type { Prisma, PrismaClient } from "~/generated/prisma/client";
 import { berlinParts } from "@/lib/berlin-time";
+import { ensureLeagueMembership } from "@/server/games/leagues";
 import { starsFor } from "@/app/spiele/_lib/rewards";
 import {
   capToDay,
@@ -152,6 +153,7 @@ export const gamesRouter = createTRPCRouter({
 
       let total = 0;
       let accepted = 0;
+      const earning = new Set<string>();
       for (const r of fresh) {
         const profileId =
           r.profileId && owned.has(r.profileId) ? r.profileId : null;
@@ -176,6 +178,10 @@ export const gamesRouter = createTRPCRouter({
         });
         accepted += created.count;
         if (created.count) total += xp;
+        if (created.count && xp > 0 && profileId) earning.add(profileId);
+      }
+      for (const profileId of earning) {
+        await ensureLeagueMembership(ctx.db, profileId);
       }
       return { accepted, xp: total };
     }),

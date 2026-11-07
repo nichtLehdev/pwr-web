@@ -12,6 +12,15 @@ import {
   type ProgressValue,
 } from "@/app/spiele/_lib/profiles/progress-merge";
 import type { Prisma } from "~/generated/prisma/client";
+import { berlinParts } from "@/lib/berlin-time";
+
+function berlinDay(date: Date): string {
+  const { year, month, day } = berlinParts(date);
+  return `${year}-${month}-${day}`;
+}
+
+const STREAK_WINDOW_DAYS = 120;
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** Fortschritt aller Spiele eines Kindes passt locker hinein. */
 const MAX_PROGRESS_BYTES = 128 * 1024;
@@ -130,6 +139,36 @@ export const gameProfilesRouter = createTRPCRouter({
       });
       if (count === 0) throw new TRPCError({ code: "NOT_FOUND" });
       return { deleted: true };
+    }),
+
+  /** XP heute und Tage in Folge, wie der Server sie zählt: gleich auf jedem Gerät. */
+  summary: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const rows = await ctx.db.gameResult.findMany({
+        where: {
+          userId: ctx.session.user.id,
+          profileId: input.id,
+          createdAt: {
+            gte: new Date(Date.now() - STREAK_WINDOW_DAYS * DAY_MS),
+          },
+        },
+        select: { createdAt: true, xp: true },
+      });
+      const now = new Date();
+      const today = berlinDay(now);
+      const days = new Set(rows.map((r) => berlinDay(r.createdAt)));
+      const xpToday = rows
+        .filter((r) => berlinDay(r.createdAt) === today)
+        .reduce((sum, r) => sum + r.xp, 0);
+      // Heute darf noch fehlen, gestern nicht.
+      let offset = days.has(today) ? 0 : 1;
+      let streak = 0;
+      while (days.has(berlinDay(new Date(now.getTime() - offset * DAY_MS)))) {
+        streak++;
+        offset++;
+      }
+      return { xpToday, streak };
     }),
 
   /** Gleicht in beide Richtungen ab: Der Server führt zusammen und schickt das Ergebnis zurück. */

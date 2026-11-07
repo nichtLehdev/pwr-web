@@ -99,6 +99,11 @@ type ProfilesValue = {
 
 const ProfilesContext = createContext<ProfilesValue | null>(null);
 
+/** Für Bausteine, die auch ohne Profil-Hülle vorkommen. */
+export function useOptionalProfiles(): ProfilesValue | null {
+  return useContext(ProfilesContext);
+}
+
 export function useProfiles(): ProfilesValue {
   const value = useContext(ProfilesContext);
   if (!value) throw new Error("useProfiles braucht einen ProfilesProvider");
