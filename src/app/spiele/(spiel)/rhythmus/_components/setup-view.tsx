@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { Infinity as InfinityIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/app/_components/ui/button";
 import { GameHead } from "../../../_components/game-kit";
+import { LearningPathMap } from "../../../_components/learning-path-map";
+import { usePathCelebration } from "../../../_components/use-path-celebration";
 import { GameDock } from "../../../_components/game-shell-context";
 import { GAME_FOCUS_RING } from "../../../_lib/focus-ring";
 import { LEVELS, levelById } from "../../../_lib/rhythm/levels";
@@ -12,6 +15,7 @@ import { ENDLESS_ID, type EndlessRecords } from "../_lib/endless";
 import {
   CHALLENGE_PASS_PERCENT,
   parseChallengeId,
+  RHYTHM_PATH,
   type Celebration,
 } from "../_lib/path";
 import {
@@ -21,8 +25,6 @@ import {
   type Progress,
 } from "../_lib/prefs";
 import { MAX_STARS, rankFor, totalStars } from "../_lib/ranks";
-import { LevelMap } from "./level-map";
-import { usePathCelebration } from "./use-path-celebration";
 
 const MIN_BPM = 40;
 const MAX_BPM = 200;
@@ -173,7 +175,8 @@ export function SetupView({
         />
       </div>
 
-      <LevelMap
+      <LearningPathMap
+        path={RHYTHM_PATH}
         selectedId={prefs.levelId}
         celebration={
           celebration && celebrating.stage
@@ -184,16 +187,38 @@ export function SetupView({
               }
             : null
         }
-        isEndless={isEndless}
+        offPath={isEndless}
         progress={progress}
-        endlessHint={
-          endlessRecord
-            ? `Immer schwerer, bis die Puste weg ist. Dein Rekord: ${endlessRecord.points} Punkte.`
-            : "Immer schwerer, bis die Puste weg ist."
-        }
         selectedRef={selectedRef}
         onPick={pick}
-        onPickEndless={() => pick(ENDLESS_ID)}
+        after={
+          <section aria-label="Endlos">
+            <button
+              ref={isEndless ? selectedRef : undefined}
+              type="button"
+              aria-pressed={isEndless}
+              onClick={() => pick(ENDLESS_ID)}
+              className={cn(
+                "spiel-tile flex w-full items-center gap-3 p-4 text-left",
+                GAME_FOCUS_RING,
+                isEndless && "on-orange bg-primary text-ink",
+              )}
+            >
+              <InfinityIcon
+                className="h-8 w-8 shrink-0 stroke-[2.5]"
+                aria-hidden
+              />
+              <span className="min-w-0 flex-1">
+                <span className="block text-lg font-bold">Endlos</span>
+                <span className="mt-0.5 block text-sm leading-snug">
+                  {endlessRecord
+                    ? `Immer schwerer, bis die Puste weg ist. Dein Rekord: ${endlessRecord.points} Punkte.`
+                    : "Immer schwerer, bis die Puste weg ist."}
+                </span>
+              </span>
+            </button>
+          </section>
+        }
       />
 
       <details className="border-ink dark:border-night-text border-t-2">

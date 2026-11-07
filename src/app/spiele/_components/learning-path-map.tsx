@@ -1,22 +1,25 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, type Ref } from "react";
-import { Check, Infinity as InfinityIcon, Lock, Trophy } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { StarMarks } from "../../../_components/game-kit";
-import { Toni, type ToniMood } from "../../../_components/toni";
-import { spawnBurst } from "../../../_components/note-burst";
-import { GAME_FOCUS_RING } from "../../../_lib/focus-ring";
-import { LEVELS } from "../../../_lib/rhythm/levels";
 import {
-  challengeId,
-  isChallengePassed,
-  isSectionUnlocked,
-  SECTIONS,
-  type Celebration,
-  type CelebrationStage,
-} from "../_lib/path";
-import type { Progress } from "../_lib/prefs";
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  type ReactNode,
+  type Ref,
+} from "react";
+import { Check, Lock, Trophy } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { StarMarks } from "./game-kit";
+import { Toni, type ToniMood } from "./toni";
+import { spawnBurst } from "./note-burst";
+import { GAME_FOCUS_RING } from "../_lib/focus-ring";
+import type {
+  Celebration,
+  CelebrationStage,
+  LearningPath,
+  PathProgress,
+  PathStage,
+} from "../_lib/learning-path";
 
 const NODE_STEP_Y = 92;
 const NODE_SIZE = 72;
@@ -62,25 +65,27 @@ function hopFrames(dx: number, dy: number): Keyframe[] {
 }
 
 /** Der Lernpfad: Abschnitte öffnen sich nacheinander, jeder endet mit einer Challenge. */
-export function LevelMap({
+export function LearningPathMap<S extends PathStage>({
+  path,
   selectedId,
   celebration,
-  isEndless,
+  offPath = false,
   progress,
-  endlessHint,
   selectedRef,
   onPick,
-  onPickEndless,
+  after,
 }: {
+  path: LearningPath<S>;
   selectedId: string;
   celebration:
     (Celebration & { stage: CelebrationStage; revealed: number }) | null;
-  isEndless: boolean;
-  progress: Progress;
-  endlessHint: string;
+  /** Etwas außerhalb des Pfads ist gewählt, etwa Endlos: Toni steht dann bei keiner Stufe. */
+  offPath?: boolean;
+  progress: PathProgress;
   selectedRef: Ref<HTMLButtonElement>;
   onPick: (id: string) => void;
-  onPickEndless: () => void;
+  /** Was unter dem Pfad folgt, etwa Endlos. */
+  after?: ReactNode;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const toniRef = useRef<HTMLDivElement>(null);
@@ -113,7 +118,7 @@ export function LevelMap({
       { duration: WALK_MS },
     );
     return () => walk.cancel();
-  }, [stage, selectedId, isEndless]);
+  }, [stage, selectedId, offPath]);
 
   useEffect(() => {
     const root = rootRef.current;
@@ -138,14 +143,14 @@ export function LevelMap({
 
   return (
     <div ref={rootRef} className="relative flex flex-col gap-5">
-      {SECTIONS.map((section) => {
-        const unlocked = isSectionUnlocked(section.index, locks);
-        const passed = isChallengePassed(section.index, shown);
-        const challenge = challengeId(section.index);
-        const challengeActive = selectedId === challenge;
-        const firstNumber = LEVELS.indexOf(section.levels[0]!) + 1;
+      {path.sections.map((section) => {
+        const unlocked = path.isSectionUnlocked(section.index, locks);
+        const passed = path.isChallengePassed(section.index, shown);
+        const challenge = path.challengeId(section.index);
+        const challengeActive = !offPath && selectedId === challenge;
+        const firstNumber = path.stages.indexOf(section.stages[0]!) + 1;
         const challengeOffset = nodeOffset(
-          firstNumber - 1 + section.levels.length,
+          firstNumber - 1 + section.stages.length,
         );
         return (
           <section
@@ -170,7 +175,7 @@ export function LevelMap({
                 </h3>
                 <p className="text-sm">
                   {unlocked
-                    ? section.levels[0]!.hint
+                    ? (section.hint ?? section.stages[0]!.hint)
                     : `Schaffe die Challenge von Abschnitt ${section.index}, dann geht es hier weiter.`}
                 </p>
               </div>
@@ -179,17 +184,17 @@ export function LevelMap({
             <div
               className="relative mt-5"
               style={{
-                height: (section.levels.length + 1) * NODE_STEP_Y + 24,
+                height: (section.stages.length + 1) * NODE_STEP_Y + 24,
               }}
             >
-              {section.levels.map((level, i) => {
+              {section.stages.map((level, i) => {
                 const number = firstNumber + i;
                 const isCelebrated = level.id === fromId;
                 const earned =
                   isCelebrated && revealing && celebration
                     ? celebration.revealed
                     : (shown[level.id]?.stars ?? 0);
-                const active = !isEndless && level.id === selectedId;
+                const active = !offPath && level.id === selectedId;
                 const offset = nodeOffset(number - 1);
                 return (
                   <div
@@ -257,7 +262,7 @@ export function LevelMap({
               <div
                 className="absolute flex flex-col items-center"
                 style={{
-                  top: section.levels.length * NODE_STEP_Y,
+                  top: section.stages.length * NODE_STEP_Y,
                   left: `calc(50% + ${challengeOffset}px - 3rem)`,
                   width: "6rem",
                 }}
@@ -320,27 +325,7 @@ export function LevelMap({
         );
       })}
 
-      <section aria-label="Endlos">
-        <button
-          ref={isEndless ? selectedRef : undefined}
-          type="button"
-          aria-pressed={isEndless}
-          onClick={onPickEndless}
-          className={cn(
-            "spiel-tile flex w-full items-center gap-3 p-4 text-left",
-            GAME_FOCUS_RING,
-            isEndless && "on-orange bg-primary text-ink",
-          )}
-        >
-          <InfinityIcon className="h-8 w-8 shrink-0 stroke-[2.5]" aria-hidden />
-          <span className="min-w-0 flex-1">
-            <span className="block text-lg font-bold">Endlos</span>
-            <span className="mt-0.5 block text-sm leading-snug">
-              {endlessHint}
-            </span>
-          </span>
-        </button>
-      </section>
+      {after}
     </div>
   );
 }

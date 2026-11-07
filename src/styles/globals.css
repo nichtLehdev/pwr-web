@@ -732,6 +732,12 @@ body {
     animation: none;
   }
 }
+.spiel-weight {
+  outline: none;
+}
+.spiel-weight:focus-visible circle {
+  stroke-width: 6;
+}
 .spiel-node[data-celebrate="true"] {
   animation: spiel-node-pop 0.4s ease-out;
 }

@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useSkipGesture } from "../../../_components/use-skip-gesture";
-import { celebrationSteps, type Celebration } from "../_lib/path";
+import { useSkipGesture } from "./use-skip-gesture";
+import { celebrationSteps, type Celebration } from "../_lib/learning-path";
 
 /** Spielt die Schritte auf dem Pfad ab; überspringen springt direkt zum Endzustand. */
 export function usePathCelebration(

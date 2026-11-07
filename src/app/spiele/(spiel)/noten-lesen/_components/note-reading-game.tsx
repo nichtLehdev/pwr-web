@@ -6,6 +6,15 @@ import { cn } from "@/lib/utils";
 import { api } from "@/trpc/react";
 import { Button } from "@/app/_components/ui/button";
 import { NoteSetLibrary } from "../../../_components/note-set-library";
+import { PathResult } from "../../../_components/path-result";
+import {
+  FreePractice,
+  LeaveRunButton,
+  PathChoice,
+  PathScreen,
+} from "../../../_components/path-screen";
+import { usePathState } from "../../../_lib/use-path-state";
+import { buildNotenRun, NOTEN_PATH, type NotenRun } from "../_lib/path-stages";
 import { GAME_FOCUS_RING } from "../../../_lib/focus-ring";
 import { toNoteSetSummary, type NoteSetSummary } from "../../../_lib/note-sets";
 import {
@@ -95,6 +104,7 @@ const QUIZ_ROUND_LEN = 15;
 const HEARTS_EMPTY_DELAY_MS = 900;
 
 type Phase = "setup" | "play" | "result";
+type LessonOutcome = { percent: number; passed: boolean };
 
 /** Persistierter Verweis auf ein eigenes Set (Name nur für die „Lädt …“-Kachel). */
 type StoredCustomSet = { publicId: string; name: string };
@@ -170,7 +180,14 @@ export function NoteReadingGame() {
   const { aggregates, recordResult } = useGameStats("noten-lesen");
   const { correct: soundCorrect, wrong: soundWrong } = useGameSounds();
   const [instrument, setInstrument] = useState<InstrumentId>("trumpet_c");
-  const [mode, setMode] = useState<GameModeId>("learn");
+  const [freeMode, setMode] = useState<GameModeId>("learn");
+  /** Eine Stufe oder Challenge des Lernpfads läuft; sonst gilt das freie Üben. */
+  const [lesson, setLesson] = useState<NotenRun | null>(null);
+  const lessonRef = useRef<NotenRun | null>(null);
+  const mode: GameModeId = lesson ? "quiz" : freeMode;
+  const pathState = usePathState(NOTEN_PATH, `noten-lesen.${instrument}`);
+  const [outcome, setOutcome] = useState<LessonOutcome | null>(null);
+  const [freeOpen, setFreeOpen] = useState(false);
   /* Bleibt auch bei aktivem eigenem Set die zuletzt gewählte Preset-Stufe —
    * „Entfernen“ fällt genau dorthin zurück. */
   const [difficulty, setDifficulty] = useState<DifficultyId>("beginner");
@@ -230,18 +247,22 @@ export function NoteReadingGame() {
   const [playClef, setPlayClef] = useState<ClefKind>("treble");
   const learnClef = fixedLearningClef(difficulty);
   /* Eigenes Set: dessen Schlüssel schlägt den instrumentabhängigen. */
-  const clef: ClefKind = customSet
-    ? customSet.clef
-    : difficulty === "expert" || difficulty === "hardcore"
-      ? playClef
-      : (learnClef ?? instrumentClef);
+  const clef: ClefKind = lesson
+    ? lesson.clef
+    : customSet
+      ? customSet.clef
+      : difficulty === "expert" || difficulty === "hardcore"
+        ? playClef
+        : (learnClef ?? instrumentClef);
 
   /* Eigenes Set: 12er-Raster, sobald irgendein Ton ein Vorzeichen trägt. */
-  const answerLayout: AnswerLayout = customSet
-    ? answerLayoutForPitches(customSet.pitches)
-    : isChromaticDifficulty(difficulty)
-      ? "chromatic"
-      : "diatonic";
+  const answerLayout: AnswerLayout = lesson
+    ? answerLayoutForPitches(lesson.pitches)
+    : customSet
+      ? answerLayoutForPitches(customSet.pitches)
+      : isChromaticDifficulty(difficulty)
+        ? "chromatic"
+        : "diatonic";
 
   const clearTimers = useCallback(() => {
     timersRef.current.forEach((id) => window.clearTimeout(id));
@@ -317,7 +338,7 @@ export function NoteReadingGame() {
         STORAGE_SETTINGS_KEY,
         JSON.stringify({
           instrument,
-          mode,
+          mode: freeMode,
           difficulty: customSet ? "custom" : difficulty,
           ...(customSet
             ? {
@@ -333,7 +354,12 @@ export function NoteReadingGame() {
     } catch {
       /* ignore */
     }
-  }, [hydrated, instrument, mode, difficulty, customSet, pendingSet]);
+  }, [hydrated, instrument, freeMode, difficulty, customSet, pendingSet]);
+
+  useEffect(() => {
+    // Ein Link auf ein Set gehört ins freie Üben.
+    if (pendingSet?.fromLink) queueMicrotask(() => setFreeOpen(true));
+  }, [pendingSet]);
 
   /* Persistiertes oder verlinktes Set auflösen; NOT_FOUND fällt mit Hinweis
    * auf die Preset-Stufe zurück. */
@@ -400,19 +426,15 @@ export function NoteReadingGame() {
 
   const spawnNote = useCallback(() => {
     let p: WrittenPitch;
-    if (customSet) {
+    const pool = lessonRef.current?.pitches ?? customSet?.pitches;
+    if (pool) {
       /* Eigenes Set: Pool und Schlüssel kommen aus dem Set; Vorzeichen
        * immer explizit an der Note (keine zufälligen Tonarten). */
-      p = pickPitchFromPool(customSet.pitches, lastMidiRef.current, {
+      p = pickPitchFromPool(pool, lastMidiRef.current, {
         missCounts: missTrackerRef.current,
       });
       setStaffAccidentalLayout(STAFF_LAYOUT_EXPLICIT);
-      setOptions(
-        buildAnswerLabelsForLayout(
-          p,
-          answerLayoutForPitches(customSet.pitches),
-        ),
-      );
+      setOptions(buildAnswerLabelsForLayout(p, answerLayoutForPitches(pool)));
     } else {
       /* Schlüssel ZUERST ziehen — der Ton kommt dann aus dem (bei
        * Experte/Hardcore geklemmten) Pool dieses Schlüssels. */
@@ -455,7 +477,7 @@ export function NoteReadingGame() {
     setAnswerLocked(false);
     setAwaitingNext(false);
     awaitingNextRef.current = false;
-    if (mode === "quiz") {
+    if (mode === "quiz" && !lessonRef.current) {
       const secs = customSet
         ? CUSTOM_QUIZ_NOTE_SECONDS
         : QUIZ_NOTE_SECONDS[difficulty];
@@ -468,22 +490,34 @@ export function NoteReadingGame() {
     }
   }, [instrument, difficulty, mode, customSet]);
 
-  const goToQuizResult = useCallback(() => {
-    clearTimers();
-    setRoundResult({
-      correct: quizCorrectRef.current,
-      total: QUIZ_ROUND_LEN,
-      bestStreakRound: bestStreakRoundRef.current,
-      missed: [...missedNotesRef.current.values()],
-    });
-    recordResult({
-      score: quizCorrectRef.current,
-      maxScore: QUIZ_ROUND_LEN,
-      streak: bestStreakRoundRef.current,
-      meta: { instrument, difficulty, mode },
-    });
-    setPhase("result");
-  }, [clearTimers, recordResult, instrument, difficulty, mode]);
+  const goToQuizResult = useCallback(
+    (completed: boolean = true) => {
+      clearTimers();
+      const active = lessonRef.current;
+      const total = active?.total ?? QUIZ_ROUND_LEN;
+      if (active) {
+        const percent = Math.round((100 * quizCorrectRef.current) / total);
+        const { passed } = pathState.record(active.id, { percent, completed });
+        setOutcome({ percent, passed });
+      }
+      setRoundResult({
+        correct: quizCorrectRef.current,
+        total,
+        bestStreakRound: bestStreakRoundRef.current,
+        missed: [...missedNotesRef.current.values()],
+      });
+      recordResult({
+        score: quizCorrectRef.current,
+        maxScore: total,
+        streak: bestStreakRoundRef.current,
+        meta: active
+          ? { instrument, stage: active.id }
+          : { instrument, difficulty, mode },
+      });
+      setPhase("result");
+    },
+    [clearTimers, pathState, recordResult, instrument, difficulty, mode],
+  );
 
   const scheduleAfter = useCallback((ms: number, fn: () => void) => {
     const id = window.setTimeout(fn, ms);
@@ -496,7 +530,7 @@ export function NoteReadingGame() {
     lose: loseHeart,
     reset: resetHearts,
   } = useLessonHearts(() =>
-    scheduleAfter(HEARTS_EMPTY_DELAY_MS, goToQuizResult),
+    scheduleAfter(HEARTS_EMPTY_DELAY_MS, () => goToQuizResult(false)),
   );
 
   const advanceAfterAnswer = useCallback(
@@ -511,7 +545,7 @@ export function NoteReadingGame() {
       if (mode === "quiz") {
         scheduleAfter(wasCorrect ? NEXT_MS : WRONG_MS, () => {
           const nextIdx = quizIndexRef.current + 1;
-          if (nextIdx >= QUIZ_ROUND_LEN) {
+          if (nextIdx >= (lessonRef.current?.total ?? QUIZ_ROUND_LEN)) {
             goToQuizResult();
             return;
           }
@@ -621,6 +655,27 @@ export function NoteReadingGame() {
     missedNotesRef.current = new Map();
     spawnNote();
   }, [resetHearts, clearTimers, spawnNote]);
+
+  const startLesson = useCallback(
+    (id: string) => {
+      const run = buildNotenRun(id, instrument);
+      lessonRef.current = run;
+      setLesson(run);
+      setOutcome(null);
+      setRoundResult(null);
+      pathState.clearCelebration();
+      startGame();
+    },
+    [instrument, pathState, startGame],
+  );
+
+  const startFree = useCallback(() => {
+    lessonRef.current = null;
+    setLesson(null);
+    setOutcome(null);
+    setRoundResult(null);
+    startGame();
+  }, [startGame]);
 
   const handleAnswer = useCallback(
     (label: string) => {
@@ -734,6 +789,8 @@ export function NoteReadingGame() {
 
   const openSetup = useCallback(() => {
     clearTimers();
+    lessonRef.current = null;
+    setLesson(null);
     setPhase("setup");
     setPitch(null);
     pitchRef.current = null;
@@ -791,77 +848,96 @@ export function NoteReadingGame() {
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-[clamp(0.625rem,1.8dvh,1.5rem)]">
-      {phase === "setup" && (
-        <div className="flex flex-col gap-[clamp(0.75rem,2.2dvh,1.75rem)]">
-          <GameHead
-            title="Noten lesen"
-            text="Schau dir die Note an und finde schnell ihren Namen."
-          />
-
-          <InstrumentSelector
-            instrument={instrument}
-            mode={mode}
-            difficulty={difficulty}
-            customSet={
-              customSet
-                ? { name: customSet.name, noteCount: customSet.pitches.length }
-                : null
-            }
-            customPending={pendingSet ? { name: pendingSet.name } : null}
-            customNotice={customNotice}
-            onInstrument={setInstrument}
-            onMode={setMode}
-            onDifficulty={handleDifficulty}
-            onOpenLibrary={() => setLibraryOpen(true)}
-            onRemoveCustomSet={handleRemoveCustomSet}
-          />
-        </div>
-      )}
-
-      {/* Hauptaktion im Dock, sonst liegt sie auf kurzen Fenstern unter dem Setup. */}
       {phase === "setup" && !libraryOpen && (
-        <GameDock>
-          <Button
-            type="button"
-            size="lg"
-            className="spiel-action w-full"
-            onClick={startGame}
-          >
-            Los geht&apos;s
-          </Button>
-        </GameDock>
+        <PathScreen
+          path={NOTEN_PATH}
+          state={pathState}
+          head={
+            <>
+              <GameHead
+                title="Noten lesen"
+                text="Schau dir die Note an und finde schnell ihren Namen."
+              />
+              <PathChoice
+                label="Instrument"
+                options={INSTRUMENTS.map(({ id, label }) => ({ id, label }))}
+                value={instrument}
+                onChange={setInstrument}
+              />
+            </>
+          }
+          onStart={() => startLesson(pathState.selectedId)}
+          below={
+            <FreePractice
+              open={freeOpen}
+              onToggle={setFreeOpen}
+              onStart={startFree}
+            >
+              <InstrumentSelector
+                instrument={instrument}
+                mode={freeMode}
+                difficulty={difficulty}
+                customSet={
+                  customSet
+                    ? {
+                        name: customSet.name,
+                        noteCount: customSet.pitches.length,
+                      }
+                    : null
+                }
+                customPending={pendingSet ? { name: pendingSet.name } : null}
+                customNotice={customNotice}
+                onInstrument={setInstrument}
+                onMode={setMode}
+                onDifficulty={handleDifficulty}
+                onOpenLibrary={() => setLibraryOpen(true)}
+                onRemoveCustomSet={handleRemoveCustomSet}
+              />
+            </FreePractice>
+          }
+        />
       )}
 
       {phase === "play" && pitch && (
         <div className="flex flex-col gap-[clamp(0.5rem,1.6dvh,1.25rem)]">
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setSetupOpen((o) => !o)}
-              aria-expanded={setupOpen}
-              aria-label={`Einstellungen: ${setupBarLabel} · ${modeLabel}`}
-              className={cn(
-                "border-rule text-ink hover:bg-rule/25 dark:border-night-rule dark:text-night-text dark:hover:bg-night-raised inline-flex min-h-11 items-center gap-2 border px-3 py-2 text-sm font-bold transition-colors active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100",
-                GAME_FOCUS_RING,
-              )}
-            >
-              <Settings2 className="h-4 w-4 shrink-0 stroke-[2]" aria-hidden />
-              <span aria-hidden>
-                {setupBarLabel}
-                {" · "}
-                {modeLabel}
-              </span>
-              <ChevronDown
+          {lesson && (
+            <GameBarSlot>
+              <LeaveRunButton onLeave={openSetup} />
+            </GameBarSlot>
+          )}
+          {!lesson && (
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setSetupOpen((o) => !o)}
+                aria-expanded={setupOpen}
+                aria-label={`Einstellungen: ${setupBarLabel} · ${modeLabel}`}
                 className={cn(
-                  "h-4 w-4 shrink-0 transition-transform motion-reduce:transition-none",
-                  setupOpen && "rotate-180",
+                  "border-rule text-ink hover:bg-rule/25 dark:border-night-rule dark:text-night-text dark:hover:bg-night-raised inline-flex min-h-11 items-center gap-2 border px-3 py-2 text-sm font-bold transition-colors active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100",
+                  GAME_FOCUS_RING,
                 )}
-                aria-hidden
-              />
-            </button>
-          </div>
+              >
+                <Settings2
+                  className="h-4 w-4 shrink-0 stroke-[2]"
+                  aria-hidden
+                />
+                <span aria-hidden>
+                  {setupBarLabel}
+                  {" · "}
+                  {modeLabel}
+                </span>
+                <ChevronDown
+                  className={cn(
+                    "h-4 w-4 shrink-0 transition-transform motion-reduce:transition-none",
+                    setupOpen && "rotate-180",
+                  )}
+                  aria-hidden
+                />
+              </button>
+            </div>
+          )}
 
-          {setupOpen && (
+          {setupOpen && !lesson && (
             <div className="border-rule dark:border-night-rule dark:bg-night-raised bg-rule/25 border p-4">
               <InstrumentSelector
                 instrument={instrument}
@@ -902,17 +978,19 @@ export function NoteReadingGame() {
             </div>
           )}
 
-          <GameBarSlot>
-            <ScoreBar
-              mode={mode}
-              streak={streak}
-              bestStreak={bestStreak}
-              quizCorrect={mode === "quiz" ? quizCorrect : undefined}
-              quizIndex={mode === "quiz" ? quizIndex : undefined}
-              quizTotal={mode === "quiz" ? QUIZ_ROUND_LEN : undefined}
-              secondsLeft={mode === "quiz" ? quizSecondsLeft : null}
-            />
-          </GameBarSlot>
+          {!lesson && (
+            <GameBarSlot>
+              <ScoreBar
+                mode={mode}
+                streak={streak}
+                bestStreak={bestStreak}
+                quizCorrect={mode === "quiz" ? quizCorrect : undefined}
+                quizIndex={mode === "quiz" ? quizIndex : undefined}
+                quizTotal={mode === "quiz" ? QUIZ_ROUND_LEN : undefined}
+                secondsLeft={mode === "quiz" ? quizSecondsLeft : null}
+              />
+            </GameBarSlot>
+          )}
 
           <GameStatus
             mood={
@@ -932,7 +1010,11 @@ export function NoteReadingGame() {
             question="Wie heißt diese Note?"
             hearts={mode === "quiz" ? hearts : undefined}
             streak={streak}
-            progress={mode === "quiz" ? quizIndex / QUIZ_ROUND_LEN : null}
+            progress={
+              mode === "quiz"
+                ? quizIndex / (lesson?.total ?? QUIZ_ROUND_LEN)
+                : null
+            }
           />
           {flash !== "none" && (
             <LessonFeedback
@@ -1009,7 +1091,45 @@ export function NoteReadingGame() {
         </div>
       )}
 
-      {phase === "result" && roundResult && (
+      {phase === "result" && roundResult && lesson && outcome && (
+        <PathResult
+          percent={outcome.percent}
+          value={`${roundResult.correct}/${roundResult.total}`}
+          valueLabel="richtig"
+          rows={[["Beste Serie", String(roundResult.bestStreakRound)]]}
+          challenge={
+            lesson.challengeSection === null
+              ? null
+              : {
+                  passed: outcome.passed,
+                  nextSection: NOTEN_PATH.sections[lesson.challengeSection + 1]
+                    ? lesson.challengeSection + 2
+                    : null,
+                }
+          }
+          detailsLabel="Diese Noten nochmal anschauen"
+          onAgain={() => startLesson(lesson.id)}
+          onContinue={openSetup}
+        >
+          {roundResult.missed && roundResult.missed.length > 0 ? (
+            <ul className="space-y-1.5">
+              {roundResult.missed.map((m) => (
+                <li
+                  key={`${m.label}|${m.description}`}
+                  className="text-dark dark:text-night-muted text-sm leading-snug"
+                >
+                  <span className="text-ink dark:text-night-text font-bold">
+                    {m.label}
+                  </span>{" "}
+                  — {m.description}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </PathResult>
+      )}
+
+      {phase === "result" && roundResult && !lesson && (
         <NoteReadingResultView
           result={roundResult}
           bestScore={aggregates?.bestScore ?? 0}
@@ -1033,7 +1153,7 @@ export function NoteReadingGame() {
         </GameDock>
       )}
 
-      {phase === "result" && roundResult && !libraryOpen && (
+      {phase === "result" && roundResult && !lesson && !libraryOpen && (
         <GameDock>
           <div className="flex flex-col gap-2">
             <Button
@@ -1042,7 +1162,7 @@ export function NoteReadingGame() {
               className="spiel-action w-full"
               onClick={() => {
                 setRoundResult(null);
-                startGame();
+                startFree();
               }}
             >
               Nochmal spielen

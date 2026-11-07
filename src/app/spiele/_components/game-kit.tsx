@@ -480,6 +480,9 @@ export function GameResult({
   rows,
   badge,
   detailsLabel,
+  headline,
+  celebrate,
+  note,
   children,
 }: {
   percent: number;
@@ -488,6 +491,10 @@ export function GameResult({
   rows?: [string, string][];
   badge?: string | null;
   detailsLabel?: string;
+  /** Standard: nach Sternen. */
+  headline?: string;
+  celebrate?: boolean;
+  note?: string | null;
   children?: ReactNode;
 }) {
   const stars = starsFor(percent);
@@ -499,11 +506,17 @@ export function GameResult({
       <ResultField
         value={value}
         valueLabel={valueLabel}
-        headline={resultHeadline(stars)}
+        headline={headline ?? resultHeadline(stars)}
         stars={stars}
         badge={badge}
         percent={percent}
+        celebrate={celebrate}
       />
+      {note && (
+        <p className="text-ink dark:text-night-text text-center text-lg leading-snug font-bold">
+          {note}
+        </p>
+      )}
       {rows && <FactRows rows={rows} />}
       {children && (
         <DetailRow label={detailsLabel ?? "Genauer ansehen"}>

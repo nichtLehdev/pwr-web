@@ -280,7 +280,7 @@ export function RhythmGame() {
         script = new AnswerScript(
           plan,
           plan.total,
-          hasSteadyPitch(SECTIONS[challengeSection]!.levels[0]!),
+          hasSteadyPitch(SECTIONS[challengeSection]!.stages[0]!),
         );
       } else if (level === null) {
         if (mode === "band") {

@@ -42,12 +42,12 @@ describe("section locks", () => {
   });
 
   it("keeps sections open for players who already earned stars there", () => {
-    const old: Progress = { [SECTIONS[2]!.levels[0]!.id]: entry({ stars: 2 }) };
+    const old: Progress = { [SECTIONS[2]!.stages[0]!.id]: entry({ stars: 2 }) };
     expect(isSectionUnlocked(2, old)).toBe(true);
   });
 
   it("moves a stored selection out of locked sections", () => {
-    const locked = SECTIONS[1]!.levels[0]!.id;
+    const locked = SECTIONS[1]!.stages[0]!.id;
     expect(clampSelection(locked, {})).toBe(LEVELS[0]!.id);
     expect(clampSelection(challengeId(1), {})).toBe(LEVELS[0]!.id);
     expect(clampSelection(challengeId(0), {})).toBe(challengeId(0));
@@ -62,8 +62,8 @@ describe("section locks", () => {
 
   it("leads from the last lesson of a section to its challenge", () => {
     const section = SECTIONS[0]!;
-    expect(nextAfterLevel(section.levels[0]!)).toBe(section.levels[1]!.id);
-    expect(nextAfterLevel(section.levels.at(-1)!)).toBe(challengeId(0));
+    expect(nextAfterLevel(section.stages[0]!)).toBe(section.stages[1]!.id);
+    expect(nextAfterLevel(section.stages.at(-1)!)).toBe(challengeId(0));
   });
 });
 
@@ -73,18 +73,18 @@ describe.each(SECTIONS.map((s) => [s.title, s] as const))(
     const steps = buildChallengeSteps(section.index);
 
     it("covers every level of the section", () => {
-      for (const level of section.levels) {
+      for (const level of section.stages) {
         expect(steps.some((step) => step.level === level)).toBe(true);
       }
     });
 
     it("reflects earlier sections and nothing from later ones", () => {
       const allowed = SECTIONS.slice(0, section.index + 1).flatMap(
-        (s) => s.levels,
+        (s) => s.stages,
       );
       for (const step of steps) expect(allowed).toContain(step.level);
       for (const earlier of SECTIONS.slice(0, section.index)) {
-        expect(steps.some((s) => earlier.levels.includes(s.level))).toBe(true);
+        expect(steps.some((s) => earlier.stages.includes(s.level))).toBe(true);
       }
       expect(steps.length).toBeLessThanOrEqual(12);
       expect(steps.length).toBeGreaterThanOrEqual(8);
@@ -208,8 +208,8 @@ describe("whole challenges", () => {
 
 describe("celebration on the path", () => {
   const section = SECTIONS[0]!;
-  const level = section.levels[0]!;
-  const last = section.levels.at(-1)!;
+  const level = section.stages[0]!;
+  const last = section.stages.at(-1)!;
   const earned = (id: string, stars: 1 | 2 | 3): Progress => ({
     [id]: entry({ stars }),
   });
@@ -221,7 +221,7 @@ describe("celebration on the path", () => {
 
   it("walks to the next stage from two stars on", () => {
     expect(levelCelebration(level, {}, earned(level.id, 2), 2)?.toId).toBe(
-      section.levels[1]!.id,
+      section.stages[1]!.id,
     );
     expect(
       levelCelebration(level, {}, earned(level.id, 1), 1)?.toId,
@@ -247,7 +247,7 @@ describe("celebration on the path", () => {
 
   it("opens the next section after a passed challenge", () => {
     const first = challengeCelebration(0, {}, true)!;
-    expect(first.toId).toBe(SECTIONS[1]!.levels[0]!.id);
+    expect(first.toId).toBe(SECTIONS[1]!.stages[0]!.id);
     expect(first.unlockedSection).toBe(1);
     const again = challengeCelebration(
       0,

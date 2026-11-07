@@ -7,13 +7,21 @@ import { Button } from "@/app/_components/ui/button";
 import type { ToniMood } from "../../../_components/toni";
 import { GameBarSlot, GameDock } from "../../../_components/game-shell-context";
 import {
-  FactRows,
   GameHead,
   GameStatus,
   LessonFeedback,
-  ResultField,
   useLessonHearts,
 } from "../../../_components/game-kit";
+import { PathResult } from "../../../_components/path-result";
+import { LeaveRunButton, PathScreen } from "../../../_components/path-screen";
+import { usePathState } from "../../../_lib/use-path-state";
+import {
+  buildDictationRun,
+  createRound,
+  DICTATION_PATH,
+  type DictationRound,
+  type DictationRun,
+} from "./dictation-path";
 import { RhythmFigureLoader } from "../../../_components/rhythm-figure-loader";
 import {
   harmonyAt,
@@ -21,12 +29,7 @@ import {
   RhythmAudio,
 } from "../../../_lib/rhythm/audio";
 import { describeFigure } from "../../../_lib/rhythm/describe";
-import {
-  generateDistractors,
-  generateFigure,
-  pickMeter,
-} from "../../../_lib/rhythm/generator";
-import { levelById, type Level } from "../../../_lib/rhythm/levels";
+import type { Level } from "../../../_lib/rhythm/levels";
 import {
   barTicks,
   figureKey,
@@ -35,75 +38,13 @@ import {
   secPerTick,
 } from "../../../_lib/rhythm/ticks";
 import type { Figure } from "../../../_lib/rhythm/types";
-import { resultHeadline, starsFor } from "../../../_lib/rewards";
 import { useGameStats } from "../../../_lib/stats/use-game-stats";
 
-type Stage = "beginner" | "intermediate" | "advanced";
 type Phase = "setup" | "play" | "result";
 
-const ROUNDS = 10;
 const HEARTS_EMPTY_DELAY_MS = 1200;
 const POINTS_FIRST_TRY = 10;
 const POINTS_SECOND_TRY = 5;
-
-const STAGES: {
-  id: Stage;
-  title: string;
-  hint: string;
-  levels: string[];
-  options: number;
-}[] = [
-  {
-    id: "beginner",
-    title: "Leicht",
-    hint: "Viertel, Halbe, Pausen und Achtel, drei Antworten",
-    levels: ["viertel-halbe", "ganze-pausen", "dreier", "achtel"],
-    options: 3,
-  },
-  {
-    id: "intermediate",
-    title: "Mittel",
-    hint: "Achtelpausen, Punktierungen und Synkopen, vier Antworten",
-    levels: ["achtelpausen", "punktiert", "synkopen", "sechzehntel"],
-    options: 4,
-  },
-  {
-    id: "advanced",
-    title: "Schwer",
-    hint: "Sechzehntel-Figuren, Triolen und 6/8, vier Antworten",
-    levels: [
-      "achtel-sechzehntel",
-      "punktierte-achtel",
-      "sechzehntel-synkopen",
-      "triolen",
-      "sechsachtel",
-      "sechsachtel-sechzehntel",
-    ],
-    options: 4,
-  },
-];
-
-type Round = {
-  level: Level;
-  target: Figure;
-  options: Figure[];
-  correctIndex: number;
-};
-
-function createRound(
-  stage: (typeof STAGES)[number],
-  avoid: Set<string>,
-): Round {
-  const id = stage.levels[Math.floor(Math.random() * stage.levels.length)]!;
-  const level = levelById(id)!;
-  const ts = pickMeter(level);
-  const target = generateFigure(level, ts, { avoid });
-  const wrong = generateDistractors(target, level, stage.options - 1);
-  const correctIndex = Math.floor(Math.random() * (wrong.length + 1));
-  const options = [...wrong];
-  options.splice(correctIndex, 0, target);
-  return { level, target, options, correctIndex };
-}
 
 /** Einzähltakt, dann die Figur. Tempo mittig im Bereich der Stufe, gut mitzuhören. */
 function playFigure(
@@ -145,11 +86,16 @@ function playFigure(
 }
 
 export function DictationGame() {
-  const { aggregates, recordResult } = useGameStats("diktat");
+  const { recordResult } = useGameStats("diktat");
+  const pathState = usePathState(DICTATION_PATH, "diktat");
+  const [run, setRun] = useState<DictationRun | null>(null);
+  const [outcome, setOutcome] = useState<{
+    percent: number;
+    passed: boolean;
+  } | null>(null);
   const [audio] = useState(() => new RhythmAudio());
   const [phase, setPhase] = useState<Phase>("setup");
-  const [stageId, setStageId] = useState<Stage>("beginner");
-  const [round, setRound] = useState<Round | null>(null);
+  const [round, setRound] = useState<DictationRound | null>(null);
   const [roundIndex, setRoundIndex] = useState(0);
   const [wrongPicks, setWrongPicks] = useState<number[]>([]);
   const [solved, setSolved] = useState(false);
@@ -159,15 +105,14 @@ export function DictationGame() {
   const [firstTryCount, setFirstTryCount] = useState(0);
   const recent = useRef(new Set<string>());
 
-  const finishRef = useRef<() => void>(() => undefined);
+  const finishRef = useRef<(completed: boolean) => void>(() => undefined);
   const {
     hearts,
     lose: loseHeart,
     reset: resetHearts,
   } = useLessonHearts(() =>
-    window.setTimeout(() => finishRef.current(), HEARTS_EMPTY_DELAY_MS),
+    window.setTimeout(() => finishRef.current(false), HEARTS_EMPTY_DELAY_MS),
   );
-  const stage = STAGES.find((s) => s.id === stageId)!;
   const mood: ToniMood = solved
     ? "happy"
     : wrongPicks.length > 0
@@ -182,8 +127,12 @@ export function DictationGame() {
   );
 
   const beginRound = useCallback(
-    async (nextStage: (typeof STAGES)[number]) => {
-      const next = createRound(nextStage, recent.current);
+    async (active: DictationRun, index: number) => {
+      const next = createRound(
+        active.levels[index]!,
+        active.options,
+        recent.current,
+      );
       recent.current.add(figureKey(next.target));
       setRound(next);
       setWrongPicks([]);
@@ -194,7 +143,11 @@ export function DictationGame() {
     [audio],
   );
 
-  const startGame = () => {
+  const startRun = (id: string) => {
+    const active = buildDictationRun(id);
+    setRun(active);
+    setOutcome(null);
+    pathState.clearCelebration();
     resetHearts.current();
     recent.current.clear();
     setRoundIndex(0);
@@ -203,7 +156,7 @@ export function DictationGame() {
     setBestStreak(0);
     setFirstTryCount(0);
     setPhase("play");
-    void beginRound(stage);
+    void beginRound(active, 0);
   };
 
   const pick = (index: number) => {
@@ -238,13 +191,18 @@ export function DictationGame() {
     }
   };
 
-  const finish = () => {
+  const finish = (completed: boolean) => {
     audio.cancelScheduled();
+    if (!run) return;
+    const maxScore = run.levels.length * POINTS_FIRST_TRY;
+    const percent = Math.round((100 * score) / maxScore);
+    const { passed } = pathState.record(run.id, { percent, completed });
+    setOutcome({ percent, passed });
     recordResult({
       score,
-      maxScore: ROUNDS * POINTS_FIRST_TRY,
+      maxScore,
       streak: bestStreak,
-      meta: { difficulty: stageId },
+      meta: { stage: run.id },
     });
     setPhase("result");
   };
@@ -253,13 +211,14 @@ export function DictationGame() {
   });
 
   const advance = () => {
+    if (!run) return;
     const next = roundIndex + 1;
-    if (next >= ROUNDS) {
-      finish();
+    if (next >= run.levels.length) {
+      finish(true);
       return;
     }
     setRoundIndex(next);
-    void beginRound(stage);
+    void beginRound(run, next);
   };
 
   const backToSetup = () => {
@@ -271,75 +230,25 @@ export function DictationGame() {
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-[clamp(0.5rem,1.8svh,1.25rem)]">
       {phase === "setup" && (
-        <div className="flex flex-col gap-5">
-          <GameHead
-            title="Rhythmus-Diktat"
-            text={`Hör genau hin und finde die passenden Noten. Sofort richtig gibt ${POINTS_FIRST_TRY} Punkte, beim zweiten Versuch ${POINTS_SECOND_TRY}.`}
-            weltTitle="Spitz die Ohren!"
-            aside={null}
-          />
-
-          <section aria-labelledby="diktat-schwierigkeit">
-            <h3
-              id="diktat-schwierigkeit"
-              className="spiel-section-label condensed text-ink dark:text-night-text border-ink dark:border-night-text border-b-2 pb-1 text-[1.75rem] leading-none font-extrabold"
-            >
-              Schwierigkeit
-            </h3>
-            <ul className="spiel-rows">
-              {STAGES.map((s) => {
-                const active = s.id === stageId;
-                return (
-                  <li key={s.id}>
-                    <button
-                      type="button"
-                      aria-pressed={active}
-                      onClick={() => setStageId(s.id)}
-                      className={cn(
-                        "border-rule dark:border-night-rule group flex min-h-14 w-full flex-col border-b px-2 py-2 text-left transition-colors focus-visible:outline-3 focus-visible:-outline-offset-3",
-                        active
-                          ? "on-orange bg-primary text-ink"
-                          : "hover:bg-primary hover:text-ink text-ink dark:text-night-text",
-                      )}
-                    >
-                      <span className="text-[1.125rem] leading-tight font-bold">
-                        {s.title}
-                      </span>
-                      <span
-                        className={cn(
-                          "mt-0.5 text-sm leading-snug",
-                          !active &&
-                            "text-dark dark:text-night-muted group-hover:text-ink",
-                        )}
-                      >
-                        {s.hint}
-                      </span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
-
-          <GameDock>
-            <Button
-              type="button"
-              size="lg"
-              className="spiel-action w-full"
-              onClick={startGame}
-            >
-              Los geht&apos;s
-            </Button>
-          </GameDock>
-        </div>
+        <PathScreen
+          path={DICTATION_PATH}
+          state={pathState}
+          head={
+            <GameHead
+              title="Rhythmus-Diktat"
+              text={`Hör genau hin und finde die passenden Noten. Sofort richtig gibt ${POINTS_FIRST_TRY} Punkte, beim zweiten Versuch ${POINTS_SECOND_TRY}.`}
+              weltTitle="Spitz die Ohren!"
+              aside={null}
+            />
+          }
+          onStart={() => startRun(pathState.selectedId)}
+        />
       )}
 
-      {phase === "play" && round && (
+      {phase === "play" && round && run && (
         <div className="flex flex-col gap-3 pb-2">
           <GameBarSlot>
-            <span className="semi-condensed text-dark dark:text-night-muted text-sm font-semibold tabular-nums">
-              {roundIndex + 1}/{ROUNDS} · {score} Punkte
-            </span>
+            <LeaveRunButton onLeave={backToSetup} />
           </GameBarSlot>
 
           <div role="status">
@@ -356,7 +265,7 @@ export function DictationGame() {
               }
               question="Welche Noten hörst du?"
               hearts={hearts}
-              progress={roundIndex / ROUNDS}
+              progress={roundIndex / run.levels.length}
             />
           </div>
 
@@ -454,7 +363,7 @@ export function DictationGame() {
                 }
               >
                 {solved
-                  ? roundIndex + 1 >= ROUNDS
+                  ? roundIndex + 1 >= run.levels.length
                     ? "Zum Ergebnis"
                     : "Weiter"
                   : "Nochmal hören"}
@@ -464,45 +373,31 @@ export function DictationGame() {
         </div>
       )}
 
-      {phase === "result" && (
-        <div className="flex flex-col gap-4">
-          <ResultField
-            value={String(score)}
-            valueLabel={`von ${ROUNDS * POINTS_FIRST_TRY} Punkten`}
-            headline={resultHeadline(
-              starsFor((100 * score) / (ROUNDS * POINTS_FIRST_TRY)),
-            )}
-            stars={starsFor((100 * score) / (ROUNDS * POINTS_FIRST_TRY))}
-            percent={(100 * score) / (ROUNDS * POINTS_FIRST_TRY)}
-          />
-          <FactRows
-            rows={[
-              ["Beim ersten Hören erkannt", `${firstTryCount} von ${ROUNDS}`],
-              ["Beste Serie", String(bestStreak)],
-              ...(aggregates && aggregates.plays > 0
-                ? ([["Dein Rekord", `${aggregates.bestScore} Punkte`]] as [
-                    string,
-                    string,
-                  ][])
-                : []),
-            ]}
-          />
-          <GameDock>
-            <div className="flex flex-col gap-2">
-              <Button
-                type="button"
-                size="lg"
-                className="spiel-action w-full"
-                onClick={startGame}
-              >
-                Nochmal spielen
-              </Button>
-              <Button type="button" variant="outline" onClick={backToSetup}>
-                Schwierigkeit wählen
-              </Button>
-            </div>
-          </GameDock>
-        </div>
+      {phase === "result" && run && outcome && (
+        <PathResult
+          percent={outcome.percent}
+          value={String(score)}
+          valueLabel={`von ${run.levels.length * POINTS_FIRST_TRY} Punkten`}
+          rows={[
+            [
+              "Beim ersten Hören erkannt",
+              `${firstTryCount} von ${run.levels.length}`,
+            ],
+            ["Beste Serie", String(bestStreak)],
+          ]}
+          challenge={
+            run.challengeSection === null
+              ? null
+              : {
+                  passed: outcome.passed,
+                  nextSection: DICTATION_PATH.sections[run.challengeSection + 1]
+                    ? run.challengeSection + 2
+                    : null,
+                }
+          }
+          onAgain={() => startRun(run.id)}
+          onContinue={backToSetup}
+        />
       )}
     </div>
   );

@@ -1,113 +1,88 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useId,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import { Settings2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/app/_components/ui/button";
-import { GAME_FOCUS_RING } from "../../../_lib/focus-ring";
-import {
-  createPuzzle,
-  puzzleSignature,
-  totalUnits,
-} from "../_lib/puzzle-generator";
-import { unitsToBeatLabel } from "../_lib/beat-label";
-import {
-  DIFFICULTY_LABELS,
-  DIFFICULTY_VALUES,
-  NOTE_VALUES,
-  STORAGE_DIFFICULTY_KEY,
-  type DifficultyId,
-  type NoteValueId,
-  type Puzzle,
-} from "../_lib/types";
-import { GameBarSlot, GameDock } from "../../../_components/game-shell-context";
 import {
   GameHead,
   GameStatus,
   LessonFeedback,
   useGameSounds,
+  useLessonHearts,
 } from "../../../_components/game-kit";
+import { GameBarSlot, GameDock } from "../../../_components/game-shell-context";
+import { PathResult } from "../../../_components/path-result";
+import { LeaveRunButton, PathScreen } from "../../../_components/path-screen";
+import { Toni } from "../../../_components/toni";
 import { praiseFor } from "../../../_lib/rewards";
 import { useGameStats } from "../../../_lib/stats/use-game-stats";
-import { ScaleSVG } from "./scale-svg";
-import { NotePan, type PanEntry } from "./note-pan";
+import { usePathState } from "../../../_lib/use-path-state";
+import {
+  createPuzzle,
+  puzzleSignature,
+  totalUnits,
+} from "../_lib/puzzle-generator";
+import { buildRun, WAAGE_PATH, type WaageRun } from "../_lib/stages";
+import { NOTE_VALUES, type NoteValueId, type Puzzle } from "../_lib/types";
+import { BalanceScale, NoteWeight, type PanEntry } from "./balance-scale";
 import { NotePalette } from "./note-palette";
-import { NoteGlyph } from "./note-glyph-loader";
-import { NoteWaageResultView } from "./result-view";
 
-type Phase = "setup" | "play" | "result";
-const ROUND_LEN = 10;
+type Phase = "path" | "lesson" | "play" | "result";
+
 const SUCCESS_ADVANCE_MS = 1600;
+const HEARTS_EMPTY_DELAY_MS = 1400;
+const POINTS_BY_ATTEMPT = [100, 70, 40] as const;
 
-/*
- * `calc(… dvh - …px)` = „Fensterhöhe minus feste Zeilen“; eine reine dvh-Quote passt nicht,
- * weil die festen Zeilen bei flachen Fenstern fast alles, bei hohen nur ein Viertel füllen.
- */
-const WAAGE_HOEHE =
-  "h-[max(130px,min(calc(40dvh_-_108px),260px))] md:h-[max(110px,min(calc(65.7dvh_-_317px),440px))]";
-/* Setup-Waage: fällt bei flachen Fenstern über `max(0px, …)` auf 0, dort braucht die Auswahl den Platz. */
-const SETUP_WAAGE =
-  "h-[max(0px,min(calc(50dvh_-_440px),200px))] md:h-[max(0px,min(calc(70dvh_-_460px),320px))]";
-const STUFEN_KARTE =
-  "min-h-11 md:min-h-[max(76px,min(calc(14dvh_-_38px),150px))]";
-const VORSCHAU_FELD =
-  "min-h-[max(76px,min(calc(14dvh_-_20px),130px))] md:min-h-[max(88px,min(calc(20dvh_-_60px),180px))]";
-const VORSCHAU_GLYPH =
-  "h-[max(26px,min(calc(5dvh_-_14px),44px))] w-[max(26px,min(calc(5dvh_-_14px),44px))] md:h-[max(32px,min(calc(8dvh_-_26px),72px))] md:w-[max(32px,min(calc(8dvh_-_26px),72px))]";
-// Genau die halbe Glyphengröße: Das VexFlow-SVG ragt anteilig unter sein
-// Kästchen, der Abstand zur Beschriftung muss also mitwachsen.
-const VORSCHAU_ABSTAND =
-  "mt-[max(13px,min(calc(2.5dvh_-_7px),22px))] md:mt-[max(16px,min(calc(4dvh_-_13px),36px))]";
-
-// Stabile Schlüssel für Einträge in der rechten Schale: beim Entfernen einer
-// Note bleiben alle anderen NoteGlyphs gemountet (kein VexFlow-Re-Render).
+// Stabile Schlüssel: beim Entfernen bleibt jedes andere Gewicht liegen.
 let nextEntryUid = 1;
 
-function readStoredDifficulty(): DifficultyId | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = localStorage.getItem(STORAGE_DIFFICULTY_KEY);
-    return raw === "beginner" || raw === "intermediate" || raw === "advanced"
-      ? raw
-      : null;
-  } catch {
-    return null;
-  }
+function plural(count: number, one: string, many: string): string {
+  return `${count} ${count === 1 ? one : many}`;
 }
 
+function restRule(puzzle: Puzzle): string | null {
+  if (puzzle.requiredRests == null) return null;
+  const notes = puzzle.rightCount - puzzle.requiredRests;
+  return `Genau ${plural(notes, "Note", "Noten")} und ${plural(puzzle.requiredRests, "Pause", "Pausen")}`;
+}
+
+type RoundResult = {
+  solved: number;
+  total: number;
+  percent: number;
+  score: number;
+  bestStreak: number;
+  completed: boolean;
+  passed: boolean;
+};
+
 export function NoteValueGame() {
-  const { aggregates, recordResult } = useGameStats("notenwaage");
+  const { recordResult } = useGameStats("notenwaage");
   const { correct: soundCorrect, wrong: soundWrong } = useGameSounds();
-  const [difficulty, setDifficulty] = useState<DifficultyId>("beginner");
-  const [phase, setPhase] = useState<Phase>("setup");
+  const pathState = usePathState(WAAGE_PATH, "notenwaage");
+
+  const [phase, setPhase] = useState<Phase>("path");
+  const [run, setRun] = useState<WaageRun | null>(null);
+  const [roundIdx, setRoundIdx] = useState(0);
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
   const [right, setRight] = useState<PanEntry[]>([]);
   const [attempts, setAttempts] = useState(0);
   const [feedback, setFeedback] = useState<string | null>(null);
-  const [flashBalanced, setFlashBalanced] = useState(false);
-  const [pendingAdvance, setPendingAdvance] = useState(false);
+  const [solvedNow, setSolvedNow] = useState(false);
+  /** Ergebnis des letzten Wiegens; jede Änderung auf der Waage verwirft es. */
+  const [weighed, setWeighed] = useState<-1 | 0 | 1 | null>(null);
+  const [streak, setStreak] = useState(0);
+  const [result, setResult] = useState<RoundResult | null>(null);
 
-  const [roundIdx, setRoundIdx] = useState(0);
-  const [score, setScore] = useState(0);
-  const [solved, setSolved] = useState(0);
-  const [firstTryStreak, setFirstTryStreak] = useState(0);
-  const [bestFirstTry, setBestFirstTry] = useState(0);
-
+  const totals = useRef({ score: 0, solved: 0, bestStreak: 0 });
   const advanceTimer = useRef<number | null>(null);
   const lastSignature = useRef<string | null>(null);
-  const hintBaseId = useId();
+  const runRef = useRef<WaageRun | null>(null);
 
-  // Gespeicherte Schwierigkeit erst nach dem Mount lesen (SSR-sicher).
   useEffect(() => {
-    const stored = readStoredDifficulty();
-    if (stored) setDifficulty(stored);
+    // Lädt Bravura für die Gewichte, auch bevor die erste Note gezeichnet ist.
+    void import("../../../_lib/vexflow-compact").then((m) =>
+      m.ensureVexFlowFonts(),
+    );
   }, []);
 
   const clearAdvance = useCallback(() => {
@@ -115,362 +90,309 @@ export function NoteValueGame() {
       window.clearTimeout(advanceTimer.current);
       advanceTimer.current = null;
     }
-    setPendingAdvance(false);
+  }, []);
+  useEffect(() => clearAdvance, [clearAdvance]);
+
+  const finish = useCallback(
+    (completed: boolean) => {
+      clearAdvance();
+      const active = runRef.current;
+      if (!active) return;
+      const total = active.steps.length;
+      const { score, solved, bestStreak } = totals.current;
+      const percent = Math.round((score / (total * 100)) * 100);
+      const recorded = pathState.record(active.id, { percent, completed });
+      recordResult({
+        score,
+        maxScore: total * 100,
+        streak: bestStreak,
+        meta: { stage: active.id, solved, total },
+      });
+      setResult({
+        solved,
+        total,
+        percent,
+        score,
+        bestStreak,
+        completed,
+        passed: recorded.passed,
+      });
+      setPhase("result");
+    },
+    [clearAdvance, pathState, recordResult],
+  );
+
+  const {
+    hearts,
+    lose: loseHeart,
+    reset: resetHearts,
+  } = useLessonHearts(() => {
+    advanceTimer.current = window.setTimeout(
+      () => finish(false),
+      HEARTS_EMPTY_DELAY_MS,
+    );
+  });
+
+  const rollPuzzle = useCallback((active: WaageRun, index: number) => {
+    const config = active.steps[index]!;
+    let next = createPuzzle(config);
+    for (let i = 0; i < 8; i++) {
+      if (puzzleSignature(next) !== lastSignature.current) break;
+      next = createPuzzle(config);
+    }
+    lastSignature.current = puzzleSignature(next);
+    return next;
   }, []);
 
-  // Laufender Auto-Advance-Timer darf den Unmount nicht überleben.
-  useEffect(
-    () => () => {
-      if (advanceTimer.current != null)
-        window.clearTimeout(advanceTimer.current);
+  const showRound = useCallback(
+    (active: WaageRun, index: number) => {
+      setRoundIdx(index);
+      setPuzzle(rollPuzzle(active, index));
+      setRight([]);
+      setAttempts(0);
+      setFeedback(null);
+      setWeighed(null);
+      setSolvedNow(false);
+    },
+    [rollPuzzle],
+  );
+
+  const beginPlay = useCallback(
+    (active: WaageRun) => {
+      totals.current = { score: 0, solved: 0, bestStreak: 0 };
+      setStreak(0);
+      resetHearts.current();
+      showRound(active, 0);
+      setPhase("play");
+    },
+    [resetHearts, showRound],
+  );
+
+  const start = useCallback(
+    (id: string) => {
+      clearAdvance();
+      pathState.clearCelebration();
+      const active = buildRun(id);
+      runRef.current = active;
+      setRun(active);
+      setResult(null);
+      // Die Merkhilfe nur, bis die Stufe einmal Sterne gebracht hat.
+      if (active.lesson && !pathState.progress[id]?.stars) {
+        setPhase("lesson");
+        return;
+      }
+      beginPlay(active);
+    },
+    [beginPlay, clearAdvance, pathState],
+  );
+
+  const palette = useMemo(
+    () =>
+      [...(run?.palette ?? [])].sort(
+        (a, b) => NOTE_VALUES[b].units - NOTE_VALUES[a].units,
+      ),
+    [run],
+  );
+  const leftEntries = useMemo<PanEntry[]>(
+    () => puzzle?.left.map((id, i) => ({ uid: `L${i}`, id })) ?? [],
+    [puzzle],
+  );
+
+  const changeRight = useCallback(
+    (change: (prev: PanEntry[]) => PanEntry[]) => {
+      setRight(change);
+      setWeighed(null);
+      setFeedback(null);
     },
     [],
   );
 
-  const selectDifficulty = useCallback((id: DifficultyId) => {
-    setDifficulty(id);
-    try {
-      localStorage.setItem(STORAGE_DIFFICULTY_KEY, id);
-    } catch {
-      /* ignore */
-    }
-  }, []);
-
-  // Klang aus dem Urteil abgeleitet: So bleibt die Spiellogik unberührt.
-  useEffect(() => {
-    if (attempts === 0) return;
-    if (pendingAdvance) soundCorrect(firstTryStreak);
-    else soundWrong();
-    // Nur je Antwort klingen, nicht beim Zurücksetzen der Runde.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [attempts]);
-
-  const leftUnits = useMemo(
-    () => (puzzle ? totalUnits(puzzle.left) : 0),
-    [puzzle],
-  );
-  const rightUnits = useMemo(() => totalUnits(right.map((e) => e.id)), [right]);
-  const diffUnits = rightUnits - leftUnits;
-
-  const leftEntries = useMemo<PanEntry[]>(
-    () => (puzzle ? puzzle.left.map((id, i) => ({ uid: `L${i}`, id })) : []),
-    [puzzle],
-  );
-
-  // Direkt aufeinanderfolgende identische Aufgaben (begrenzt) neu würfeln.
-  const rollPuzzle = useCallback(() => {
-    let p = createPuzzle(difficulty);
-    for (let i = 0; i < 8; i++) {
-      if (puzzleSignature(p) !== lastSignature.current) break;
-      p = createPuzzle(difficulty);
-    }
-    lastSignature.current = puzzleSignature(p);
-    return p;
-  }, [difficulty]);
-
-  const startGame = useCallback(() => {
-    clearAdvance();
-    setRoundIdx(0);
-    setScore(0);
-    setSolved(0);
-    setFirstTryStreak(0);
-    setBestFirstTry(0);
-    setPhase("play");
-    setPuzzle(rollPuzzle());
-    setRight([]);
-    setAttempts(0);
-    setFeedback(null);
-    setFlashBalanced(false);
-  }, [clearAdvance, rollPuzzle]);
-
-  const nextPuzzle = useCallback(() => {
-    clearAdvance();
-    const next = roundIdx + 1;
-    if (next >= ROUND_LEN) {
-      setPhase("result");
-      return;
-    }
-    setRoundIdx(next);
-    setPuzzle(rollPuzzle());
-    setRight([]);
-    setAttempts(0);
-    setFeedback(null);
-    setFlashBalanced(false);
-  }, [clearAdvance, roundIdx, rollPuzzle]);
+  const locked = solvedNow || hearts === 0;
 
   const addNote = useCallback(
     (id: NoteValueId) => {
-      if (!puzzle || pendingAdvance) return;
-      if (right.length >= puzzle.rightCount) {
-        setFeedback("Deine Seite ist voll — entferne zuerst ein Symbol.");
-        return;
-      }
-      setRight((prev) =>
-        prev.length >= puzzle.rightCount
-          ? prev
-          : [...prev, { uid: nextEntryUid++, id }],
-      );
+      if (!puzzle || locked || right.length >= puzzle.rightCount) return;
+      changeRight((prev) => [...prev, { uid: nextEntryUid++, id }]);
     },
-    [pendingAdvance, puzzle, right.length],
+    [changeRight, locked, puzzle, right.length],
   );
-
   const removeLastOf = useCallback(
     (id: NoteValueId) => {
-      if (pendingAdvance) return;
-      setRight((prev) => {
-        const idx = [...prev].reverse().findIndex((e) => e.id === id);
-        if (idx < 0) return prev;
-        const real = prev.length - 1 - idx;
-        return prev.filter((_, i) => i !== real);
+      if (locked) return;
+      changeRight((prev) => {
+        const index = prev.map((entry) => entry.id).lastIndexOf(id);
+        return index < 0 ? prev : prev.filter((_, i) => i !== index);
       });
     },
-    [pendingAdvance],
+    [changeRight, locked],
   );
-
   const removeAt = useCallback(
-    (idx: number) => {
-      if (pendingAdvance) return;
-      setRight((prev) => prev.filter((_, i) => i !== idx));
+    (index: number) => {
+      if (locked) return;
+      changeRight((prev) => prev.filter((_, i) => i !== index));
     },
-    [pendingAdvance],
+    [changeRight, locked],
   );
 
-  const submit = useCallback(() => {
-    if (!puzzle || pendingAdvance) return;
+  const weigh = useCallback(() => {
+    if (!puzzle || !run || locked || right.length !== puzzle.rightCount) return;
+    const ids = right.map((entry) => entry.id);
+    const difference = totalUnits(ids) - totalUnits(puzzle.left);
     const nextAttempts = attempts + 1;
     setAttempts(nextAttempts);
-    const requiredRests = puzzle.requiredRests;
-    const rightIds = right.map((e) => e.id);
-    const selectedRests = rightIds.filter(
-      (id) => NOTE_VALUES[id].isRest,
-    ).length;
-    const selectedNotes = rightIds.length - selectedRests;
-    const requiredNotes =
-      requiredRests == null ? null : puzzle.rightCount - requiredRests;
+    setWeighed(difference === 0 ? 0 : difference > 0 ? 1 : -1);
 
-    if (rightIds.length === puzzle.rightCount && rightUnits === leftUnits) {
-      if (requiredRests != null && selectedRests !== requiredRests) {
-        setFirstTryStreak(0);
-        setFeedback(
-          selectedRests < requiredRests
-            ? `Challenge: noch ${requiredRests - selectedRests} ${requiredRests - selectedRests === 1 ? "Pause" : "Pausen"} hinzufügen`
-            : `Challenge: ${selectedRests - requiredRests} ${selectedRests - requiredRests === 1 ? "Pause" : "Pausen"} zu viel`,
-        );
-        return;
-      }
-      if (requiredNotes != null && selectedNotes !== requiredNotes) {
-        setFirstTryStreak(0);
-        setFeedback(
-          selectedNotes < requiredNotes
-            ? `Challenge: noch ${requiredNotes - selectedNotes} ${requiredNotes - selectedNotes === 1 ? "Note" : "Noten"} hinzufügen`
-            : `Challenge: ${selectedNotes - requiredNotes} ${selectedNotes - requiredNotes === 1 ? "Note" : "Noten"} zu viel`,
-        );
-        return;
-      }
-      setFlashBalanced(true);
-      setTimeout(() => setFlashBalanced(false), 450);
-      setSolved((s) => s + 1);
-      const gained = nextAttempts === 1 ? 100 : nextAttempts === 2 ? 70 : 40;
-      setScore((s) => s + gained);
-      if (nextAttempts === 1) {
-        setFirstTryStreak((s) => {
-          const ns = s + 1;
-          setBestFirstTry((b) => Math.max(b, ns));
-          return ns;
-        });
-      } else {
-        setFirstTryStreak(0);
-      }
-      setFeedback(`Richtig! +${gained} Punkte`);
-      setPendingAdvance(true);
+    const rests = ids.filter((id) => NOTE_VALUES[id].isRest).length;
+    const rule = restRule(puzzle);
+    const rulesMet =
+      puzzle.requiredRests == null || rests === puzzle.requiredRests;
+
+    if (difference === 0 && rulesMet) {
+      const gained = POINTS_BY_ATTEMPT[nextAttempts - 1] ?? 40;
+      totals.current.score += gained;
+      totals.current.solved += 1;
+      const nextStreak = nextAttempts === 1 ? streak + 1 : 0;
+      setStreak(nextStreak);
+      totals.current.bestStreak = Math.max(
+        totals.current.bestStreak,
+        nextStreak,
+      );
+      setSolvedNow(true);
+      setFeedback("Beide Seiten wiegen gleich.");
+      soundCorrect(nextStreak);
       advanceTimer.current = window.setTimeout(() => {
         advanceTimer.current = null;
-        nextPuzzle();
+        const active = runRef.current!;
+        if (roundIdx + 1 >= active.steps.length) finish(true);
+        else showRound(active, roundIdx + 1);
       }, SUCCESS_ADVANCE_MS);
       return;
     }
-    if (rightIds.length !== puzzle.rightCount) {
-      setFirstTryStreak(0);
-      setFeedback(
-        rightIds.length < puzzle.rightCount
-          ? `Noch ${puzzle.rightCount - rightIds.length} ${puzzle.rightCount - rightIds.length === 1 ? "Note" : "Noten"} ergänzen`
-          : `Zu viele Noten gewählt`,
-      );
-      return;
-    }
-    const diff = rightUnits - leftUnits;
-    const abs = Math.abs(diff);
-    setFirstTryStreak(0);
+
+    setStreak(0);
+    soundWrong();
     setFeedback(
-      diff > 0
-        ? `${unitsToBeatLabel(abs)} zu viel`
-        : `${unitsToBeatLabel(abs)} zu wenig`,
+      difference === 0
+        ? `Gleich schwer, aber: ${rule ?? ""}.`
+        : `${difference > 0 ? "Deine Seite ist zu schwer" : "Deine Seite ist zu leicht"}.${
+            run.lesson ? ` ${run.lesson.text}` : ""
+          }`,
     );
+    loseHeart.current();
   }, [
     attempts,
-    leftUnits,
-    nextPuzzle,
-    pendingAdvance,
+    finish,
+    locked,
+    loseHeart,
     puzzle,
     right,
-    rightUnits,
+    roundIdx,
+    run,
+    showRound,
+    soundCorrect,
+    soundWrong,
+    streak,
   ]);
 
-  const skip = useCallback(() => {
-    if (pendingAdvance) return;
-    setFirstTryStreak(0);
-    nextPuzzle();
-  }, [nextPuzzle, pendingAdvance]);
-
-  const goToSetup = useCallback(() => {
+  const toPath = useCallback(() => {
     clearAdvance();
-    setPhase("setup");
+    setPhase("path");
   }, [clearAdvance]);
 
-  const palette = useMemo(
-    () =>
-      [...DIFFICULTY_VALUES[difficulty]].sort(
-        (a, b) => NOTE_VALUES[b].units - NOTE_VALUES[a].units,
-      ),
-    [difficulty],
-  );
-
-  /** Ergebnis einmal pro Runde festhalten — erst nach dem Commit von `score`. */
-  const resultRecordedRef = useRef(false);
-  useEffect(() => {
-    if (phase !== "result") {
-      resultRecordedRef.current = false;
-      return;
-    }
-    if (resultRecordedRef.current) return;
-    resultRecordedRef.current = true;
-    recordResult({
-      score,
-      maxScore: ROUND_LEN * 100,
-      streak: bestFirstTry,
-      meta: { difficulty, solved, total: ROUND_LEN },
-    });
-  }, [phase, score, bestFirstTry, difficulty, solved, recordResult]);
-
-  if (phase === "result") {
+  if (phase === "path") {
     return (
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
-        <NoteWaageResultView
-          score={score}
-          solved={solved}
-          total={ROUND_LEN}
-          bestStreak={bestFirstTry}
-          maxScore={ROUND_LEN * 100}
-          bestScore={aggregates?.bestScore ?? 0}
-          plays={aggregates?.plays ?? 0}
-          onRetry={startGame}
-          onSetup={goToSetup}
+        <PathScreen
+          path={WAAGE_PATH}
+          state={pathState}
+          head={
+            <GameHead
+              title="Notenwaage"
+              text="Leg Noten auf die Waage, bis beide Seiten gleich schwer sind."
+            />
+          }
+          challengeText="Alle Noten bis hierher, drei Mal Puste. Schaffe 70 %."
+          onStart={() => start(pathState.selectedId)}
         />
       </div>
     );
   }
 
-  if (phase === "setup") {
+  if (phase === "result" && result && run) {
+    const section = run.challengeSection;
     return (
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 md:gap-5">
-        <GameHead
-          title="Notenwaage"
-          text="Leg Noten auf die Waage, bis beide Seiten gleich schwer sind."
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
+        <PathResult
+          percent={result.percent}
+          value={`${result.solved}/${result.total}`}
+          valueLabel="gelöst"
+          rows={[
+            ["Punkte", String(result.score)],
+            ["Beste Serie", String(result.bestStreak)],
+          ]}
+          challenge={
+            section === null
+              ? null
+              : {
+                  passed: result.passed,
+                  nextSection: WAAGE_PATH.sections[section + 1]
+                    ? section + 2
+                    : null,
+                }
+          }
+          onAgain={() => start(run.id)}
+          onContinue={toPath}
         />
-        {/* Rein schmückend, daher für Vorleseprogramme unsichtbar. */}
-        <div className={cn("shrink-0 overflow-hidden", SETUP_WAAGE)}>
-          <ScaleSVG diffUnits={0} decorative />
-        </div>
-        <div className="grid grid-cols-1 gap-2 md:grid-cols-3 md:gap-3">
-          {(["beginner", "intermediate", "advanced"] as DifficultyId[]).map(
-            (id) => {
-              const selected = difficulty === id;
-              const hintId = `${hintBaseId}-${id}`;
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => selectDifficulty(id)}
-                  // Eigener Name, sonst liest ein Vorleseprogramm Titel und Hinweis als ein Wort.
-                  aria-label={DIFFICULTY_LABELS[id].title}
-                  aria-describedby={hintId}
-                  aria-pressed={selected}
-                  className={cn(
-                    "flex flex-col items-center justify-center gap-1 border p-3 text-center transition-colors motion-safe:active:scale-[0.99]",
-                    STUFEN_KARTE,
-                    GAME_FOCUS_RING,
-                    selected
-                      ? // Druckfeld: Orange ist die Fläche, alles darauf Tinte.
-                        "on-orange border-primary bg-primary"
-                      : "border-rule dark:border-night-rule",
-                  )}
-                >
-                  <span
-                    className={cn(
-                      "font-bold",
-                      selected ? "text-ink" : "text-ink dark:text-night-text",
-                    )}
-                  >
-                    {DIFFICULTY_LABELS[id].title}
-                  </span>
-                  <span
-                    id={hintId}
-                    className={cn(
-                      "text-xs",
-                      selected ? "text-ink" : "text-dark dark:text-night-muted",
-                    )}
-                  >
-                    {DIFFICULTY_LABELS[id].hint}
-                  </span>
-                </button>
-              );
-            },
-          )}
-        </div>
+      </div>
+    );
+  }
 
-        <section className="flex flex-col gap-2 md:gap-3">
-          <h3 className="border-rule dark:border-night-rule text-dark dark:text-night-muted border-b pb-1 text-center text-xs font-bold md:text-sm">
-            Diese Werte liegen bereit
-          </h3>
-          <ul
-            className={cn(
-              "grid gap-1.5 md:gap-2",
-              palette.length <= 6
-                ? "grid-cols-3"
-                : "grid-cols-4 md:grid-cols-7",
-            )}
+  if (phase === "lesson" && run?.lesson) {
+    const { heavy, light, text } = run.lesson;
+    const width = (heavy.length + light.length + 1) * 84;
+    return (
+      <div className="mx-auto flex w-full max-w-xl flex-col items-center gap-5 pt-4 text-center">
+        <Toni mood="happy" className="h-24 w-24" />
+        <p className="text-primary-ink dark:text-primary text-sm font-extrabold">
+          Neu in dieser Stufe
+        </p>
+        <svg
+          viewBox={`0 -44 ${width} 92`}
+          className="text-ink dark:text-night-text w-full max-w-md overflow-visible"
+          role="img"
+          aria-label={text}
+        >
+          {heavy.map((id, i) => (
+            <NoteWeight key={i} id={id} x={42 + i * 84} y={0} />
+          ))}
+          <text
+            x={42 + heavy.length * 84}
+            y="14"
+            textAnchor="middle"
+            fontSize="44"
+            fontWeight="800"
+            fill="currentColor"
           >
-            {palette.map((id) => (
-              <li
-                key={id}
-                className={cn(
-                  "border-rule dark:border-night-rule flex flex-col items-center justify-center border p-1.5 text-center md:p-2",
-                  VORSCHAU_FELD,
-                )}
-              >
-                <NoteGlyph id={id} className={VORSCHAU_GLYPH} />
-                <span
-                  className={cn(
-                    "text-ink dark:text-night-text text-[9px] leading-tight font-bold md:text-[11px]",
-                    VORSCHAU_ABSTAND,
-                  )}
-                >
-                  {NOTE_VALUES[id].label}
-                </span>
-                <span className="text-dark dark:text-night-muted text-[9px] font-semibold md:text-[10px]">
-                  {unitsToBeatLabel(NOTE_VALUES[id].units)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
-
+            =
+          </text>
+          {light.map((id, i) => (
+            <NoteWeight
+              key={i}
+              id={id}
+              x={42 + (heavy.length + 1 + i) * 84}
+              y={0}
+            />
+          ))}
+        </svg>
+        <p className="text-ink dark:text-night-text text-2xl leading-snug font-extrabold">
+          {text}
+        </p>
         <GameDock>
           <Button
             type="button"
             size="lg"
             className="spiel-action w-full"
-            onClick={startGame}
+            onClick={() => beginPlay(run)}
           >
             Los geht&apos;s
           </Button>
@@ -479,143 +401,87 @@ export function NoteValueGame() {
     );
   }
 
-  if (!puzzle) return null;
+  if (!puzzle || !run) return null;
 
   const openSlots = Math.max(0, puzzle.rightCount - right.length);
+  const liveDifference =
+    totalUnits(right.map((e) => e.id)) - totalUnits(puzzle.left);
+  const tilt: -1 | 0 | 1 = run.liveScale
+    ? ((Math.sign(liveDifference) as -1 | 0 | 1) ?? 0)
+    : (weighed ?? 0);
+  const rule = restRule(puzzle);
+  const wrong = feedback !== null && !solvedNow;
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-2 md:gap-3">
-      {/* Spielstand im Status-Platz der Hülle, damit keine eigene Zeile Höhe kostet. */}
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-2 md:gap-3">
       <GameBarSlot>
-        <p className="text-ink dark:text-night-text text-xs font-bold tabular-nums md:text-sm">
-          <span className="sr-only sm:not-sr-only">Runde </span>
-          {roundIdx + 1}/{ROUND_LEN}
-          <span className="text-dark dark:text-night-muted hidden sm:inline">
-            {" "}
-            · Serie: {firstTryStreak}
-          </span>
-        </p>
+        <LeaveRunButton onLeave={toPath} />
       </GameBarSlot>
-
       <GameStatus
-        mood={pendingAdvance ? "happy" : feedback ? "oops" : "listen"}
+        mood={solvedNow ? "happy" : wrong ? "oops" : "listen"}
         message={
-          pendingAdvance
-            ? praiseFor(firstTryStreak || 1)
-            : (feedback ?? "Mach beide Seiten gleich schwer")
+          solvedNow
+            ? praiseFor(streak || 1)
+            : wrong
+              ? "Noch nicht"
+              : "Mach sie gleich schwer"
         }
-        question="Mach beide Seiten gleich schwer"
-        note={`Mit genau ${puzzle.rightCount} Symbolen`}
-        streak={firstTryStreak}
-        progress={roundIdx / ROUND_LEN}
-        aside={
-          <button
-            type="button"
-            onClick={goToSetup}
-            aria-label="Zurück zum Setup"
-            className={cn(
-              "border-rule text-ink dark:border-night-rule dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-rule inline-flex min-h-11 shrink-0 items-center gap-1.5 border px-3 text-xs font-bold transition-colors motion-safe:active:scale-[0.98] md:gap-2",
-              GAME_FOCUS_RING,
-            )}
-          >
-            <Settings2 className="h-4 w-4" aria-hidden />
-            <span className="hidden sm:inline">Setup</span>
-          </button>
-        }
+        question="Mach sie gleich schwer"
+        note={rule ?? `Mit genau ${plural(puzzle.rightCount, "Note", "Noten")}`}
+        hearts={hearts}
+        streak={streak}
+        progress={roundIdx / run.steps.length}
       />
-      {puzzle.requiredRests != null && (
-        <p className="text-primary-ink dark:text-primary text-[11px] font-bold md:text-xs">
-          Challenge: genau {puzzle.rightCount - puzzle.requiredRests}{" "}
-          {puzzle.rightCount - puzzle.requiredRests === 1 ? "Note" : "Noten"} +{" "}
-          {puzzle.requiredRests}{" "}
-          {puzzle.requiredRests === 1 ? "Pause" : "Pausen"}
-        </p>
-      )}
 
-      <div className={cn("shrink-0", WAAGE_HOEHE)}>
-        <ScaleSVG
-          diffUnits={diffUnits}
-          balancedFlash={flashBalanced}
-          openSlots={openSlots}
-        />
-      </div>
+      <BalanceScale
+        left={leftEntries}
+        right={right}
+        slotCount={puzzle.rightCount}
+        tilt={tilt}
+        celebrate={solvedNow}
+        status={
+          tilt === 0
+            ? solvedNow
+              ? "Die Waage ist im Gleichgewicht"
+              : `Noch ${plural(openSlots, "Feld", "Felder")} frei`
+            : tilt > 0
+              ? "Rechts ist schwerer"
+              : "Links ist schwerer"
+        }
+        onRemoveAt={locked ? undefined : removeAt}
+      />
 
-      <div className="grid shrink-0 grid-cols-2 gap-1.5 md:gap-2">
-        <NotePan title="Vorgegeben" notes={leftEntries} />
-        <NotePan
-          title="Deine Seite"
-          notes={right}
-          editable={!pendingAdvance}
-          onRemoveAt={removeAt}
-          slotCount={puzzle.rightCount}
-          headerHint={`Noch ${openSlots} ${openSlots === 1 ? "Symbol" : "Symbole"}`}
-        />
-      </div>
-
-      <div className="flex flex-1 flex-col gap-1.5 md:gap-2">
-        <NotePalette
-          ids={palette}
-          onAdd={addNote}
-          onRemoveLastOf={removeLastOf}
-          disabled={pendingAdvance}
-        />
-        <div
-          role="status"
-          aria-live="polite"
-          className={cn(
-            "spiel-inline-feedback shrink-0 text-xs md:text-sm",
-            feedback
-              ? "border-rule bg-rule/25 dark:border-night-rule dark:bg-night-raised border px-2.5 py-1.5 md:px-3 md:py-2"
-              : "sr-only",
-          )}
-        >
-          {feedback && (
-            <p className="text-ink dark:text-night-text">{feedback}</p>
-          )}
-          {pendingAdvance && (
-            <p className="text-primary-ink dark:text-primary mt-0.5 font-bold">
-              Beide Seiten wiegen {unitsToBeatLabel(leftUnits)}
-            </p>
-          )}
-        </div>
-        <p className="text-dark dark:text-night-muted shrink-0 text-center text-[11px] font-semibold">
-          Tipp: Tippe ein Symbol in deiner Schale an, um es zu entfernen —
-          langes Drücken auf ein Palette-Feld entfernt die zuletzt gelegte
-          gleiche Note.
-        </p>
-      </div>
+      <NotePalette
+        ids={palette}
+        onAdd={addNote}
+        onRemoveLastOf={removeLastOf}
+        disabled={locked}
+      />
+      <p className="text-dark dark:text-night-muted text-center text-xs font-semibold">
+        Tippe ein Gewicht in deiner Schale an, um es wieder wegzunehmen.
+      </p>
 
       <GameDock>
         {feedback && (
           <div className="mb-2">
             <LessonFeedback
-              tone={pendingAdvance ? "right" : "wrong"}
-              title={pendingAdvance ? "Richtig!" : "Noch nicht"}
+              tone={solvedNow ? "right" : "wrong"}
+              title={solvedNow ? "Richtig!" : "Noch nicht"}
               text={feedback}
             />
           </div>
         )}
-        <div className="flex items-start gap-2">
-          <Button
-            type="button"
-            size="lg"
-            className="spiel-action flex-[2]"
-            disabled={pendingAdvance}
-            onClick={submit}
-          >
-            Fertig
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="lg"
-            className="flex-1"
-            disabled={pendingAdvance}
-            onClick={skip}
-          >
-            Überspringen
-          </Button>
-        </div>
+        <Button
+          type="button"
+          size="lg"
+          className="spiel-action w-full"
+          disabled={locked || openSlots > 0}
+          onClick={weigh}
+        >
+          {openSlots > 0
+            ? `Noch ${plural(openSlots, "Feld", "Felder")} frei`
+            : "Wiegen"}
+        </Button>
       </GameDock>
     </div>
   );
