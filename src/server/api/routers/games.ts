@@ -4,6 +4,7 @@ import { GAMES, type GameId } from "@/app/spiele/_lib/games";
 import type { Prisma, PrismaClient } from "~/generated/prisma/client";
 import { berlinParts } from "@/lib/berlin-time";
 import { ensureLeagueMembership } from "@/server/games/leagues";
+import { evaluateTasks } from "@/server/games/tasks";
 import { starsFor } from "@/app/spiele/_lib/rewards";
 import {
   capToDay,
@@ -182,6 +183,7 @@ export const gamesRouter = createTRPCRouter({
       }
       for (const profileId of earning) {
         await ensureLeagueMembership(ctx.db, profileId);
+        await evaluateTasks(ctx.db, profileId);
       }
       return { accepted, xp: total };
     }),

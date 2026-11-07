@@ -10,7 +10,7 @@ import { InstallHintCard } from "./_components/install-hint-card";
 import { OfflineReadyCard } from "./_components/offline-ready-card";
 import { StatsSyncRunner } from "./_components/stats-sync-runner";
 import { ProfilesProvider } from "./_components/profiles";
-import { LeagueCard } from "./_components/league";
+import { LeagueCard, WeeklyTasksCard } from "./_components/league";
 import { buildPageMetadata } from "@/lib/seo";
 
 export const metadata = buildPageMetadata({
@@ -37,6 +37,7 @@ export default function SpielePage() {
         <ProfilesProvider>
           <GameHub />
           <LeagueCard />
+          <WeeklyTasksCard />
           <Note tone="info" className="mb-8">
             Alle Spiele befinden sich derzeit in einer frühen Entwicklungsphase
             und können sich noch ändern. Schwierigkeitsstufen werden später

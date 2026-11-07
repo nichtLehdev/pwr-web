@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowDown, ArrowUp, Trophy } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, Target, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/react";
 import { MIN_GROUP_FOR_MOVEMENT, MOVE_COUNT, tierName } from "../_lib/leagues";
@@ -213,5 +213,71 @@ export function LeagueTable() {
         meisten.
       </p>
     </div>
+  );
+}
+
+/** Drei Aufgaben für diese Woche, mit Fortschritt und Bonus. */
+export function WeeklyTasksCard() {
+  const { active } = useProfiles();
+  const tasks = api.gameLeagues.tasks.useQuery(
+    { profileId: active?.id ?? "" },
+    { enabled: Boolean(active), refetchOnWindowFocus: true },
+  );
+  if (!active || !tasks.data || tasks.data.length === 0) return null;
+  return (
+    <section
+      aria-labelledby="aufgaben-titel"
+      className="mb-8 flex flex-col gap-3"
+    >
+      <h2
+        id="aufgaben-titel"
+        className="condensed text-ink dark:text-night-text text-[1.75rem] leading-none font-extrabold"
+      >
+        Wochenaufgaben
+      </h2>
+      <ul className="flex flex-col gap-2">
+        {tasks.data.map((task) => (
+          <li
+            key={task.key}
+            className={cn(
+              "spiel-tile flex items-center gap-3 p-3",
+              task.done && "on-orange bg-primary text-ink",
+            )}
+          >
+            {task.done ? (
+              <Check className="h-6 w-6 shrink-0 stroke-[3]" aria-hidden />
+            ) : (
+              <Target
+                className="text-primary-ink dark:text-primary h-6 w-6 shrink-0"
+                aria-hidden
+              />
+            )}
+            <span className="min-w-0 flex-1">
+              <span className="block leading-snug font-bold">{task.title}</span>
+              {task.target > 1 && (
+                <span
+                  className="bg-rule dark:bg-night-rule mt-1.5 block h-2 overflow-hidden rounded-full"
+                  role="progressbar"
+                  aria-valuemin={0}
+                  aria-valuemax={task.target}
+                  aria-valuenow={task.progress}
+                  aria-label={`${task.progress} von ${task.target}`}
+                >
+                  <span
+                    className="bg-primary-ink dark:bg-primary block h-full rounded-full"
+                    style={{ width: `${(100 * task.progress) / task.target}%` }}
+                  />
+                </span>
+              )}
+            </span>
+            <span className="shrink-0 text-sm font-extrabold tabular-nums">
+              {task.done
+                ? `+${task.reward} XP`
+                : `${task.progress}/${task.target}`}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

@@ -147,6 +147,7 @@ model GameProfile {
   tier          Int          @default(0)
   results       GameResult[] @relation("GameProfileResults")
   leagueWeeks   GameLeagueMember[]
+  taskRewards   GameTaskReward[]
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
@@ -2073,4 +2074,18 @@ model GameLeagueMember {
   @@unique([profileId, weekStart])
   @@index([weekStart, groupId])
   @@map("game_league_member")
+}
+
+/** Bonus für eine geschaffte Wochenaufgabe; zählt in der Liga mit, einmal je Aufgabe. */
+model GameTaskReward {
+  id        String      @id @default(uuid())
+  profileId String
+  profile   GameProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  weekStart DateTime
+  taskKey   String
+  xp        Int
+  createdAt DateTime    @default(now())
+
+  @@unique([profileId, weekStart, taskKey])
+  @@map("game_task_reward")
 }

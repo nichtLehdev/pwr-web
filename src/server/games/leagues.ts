@@ -12,7 +12,11 @@ import {
 
 type Db = Pick<
   PrismaClient,
-  "gameLeagueMember" | "gameResult" | "gameProfile" | "$transaction"
+  | "gameLeagueMember"
+  | "gameResult"
+  | "gameProfile"
+  | "gameTaskReward"
+  | "$transaction"
 >;
 
 async function weeklyXp(
@@ -29,7 +33,17 @@ async function weeklyXp(
     },
     _sum: { xp: true },
   });
-  return new Map(rows.map((r) => [r.profileId!, r._sum.xp ?? 0]));
+  const xp = new Map(rows.map((r) => [r.profileId!, r._sum.xp ?? 0]));
+  // Boni der Wochenaufgaben zählen mit.
+  const rewards = await db.gameTaskReward.groupBy({
+    by: ["profileId"],
+    where: { profileId: { in: profileIds }, weekStart },
+    _sum: { xp: true },
+  });
+  for (const r of rewards) {
+    xp.set(r.profileId, (xp.get(r.profileId) ?? 0) + (r._sum.xp ?? 0));
+  }
+  return xp;
 }
 
 type Ranked = {
