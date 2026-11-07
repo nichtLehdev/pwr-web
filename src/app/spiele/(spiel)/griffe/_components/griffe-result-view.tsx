@@ -1,12 +1,9 @@
 "use client";
 
-import {
-  PartyPopper,
-  RotateCcw,
-  SlidersHorizontal,
-  Trophy,
-} from "lucide-react";
 import { Button } from "@/app/_components/ui/button";
+import { ArcadeButton } from "../../../_components/arcade-button";
+import { Celebration } from "../../../_components/game-kit";
+import { GameDock } from "../../../_components/game-shell-context";
 
 export type GriffeMissedRow = {
   /** Stabiler Schlüssel (pitchKey) — Label allein wäre nicht eindeutig. */
@@ -23,23 +20,20 @@ export type GriffeRoundResult = {
   missed: GriffeMissedRow[];
 };
 
-function cheer(percent: number): string {
-  if (percent >= 90) return "Starke Runde — Griffe sitzen!";
-  if (percent >= 70) return "Sehr gut, weiter üben!";
-  if (percent >= 50) return "Solide — die häufigsten Fehler unten merken.";
-  return "Übung macht die Meisterin / den Meister!";
-}
-
 export type GriffeResultViewProps = {
   result: GriffeRoundResult;
   onRetry: () => void;
   onChangeSetup: () => void;
+  bestScore: number;
+  plays: number;
 };
 
 export function GriffeResultView({
   result,
   onRetry,
   onChangeSetup,
+  bestScore,
+  plays,
 }: GriffeResultViewProps) {
   const percent =
     result.total > 0 ? Math.round((100 * result.correct) / result.total) : 0;
@@ -47,39 +41,20 @@ export function GriffeResultView({
     .filter((m) => m.count > 0)
     .sort((a, b) => b.count - a.count)
     .slice(0, 8);
+  const isBest = plays > 1 && result.correct > 0 && result.correct >= bestScore;
 
   return (
-    <div className="border-rule dark:border-night-rule space-y-[clamp(0.75rem,2.4dvh,1.5rem)] border-t pt-[clamp(0.75rem,2.4dvh,1.5rem)]">
-      <div className="text-center">
-        {percent >= 75 ? (
-          <Trophy
-            className="text-primary-ink dark:text-primary mx-auto h-[clamp(2.5rem,6dvh,4rem)] w-[clamp(2.5rem,6dvh,4rem)] stroke-[1.35]"
-            aria-hidden
-          />
-        ) : (
-          <PartyPopper
-            className="text-primary-ink dark:text-primary mx-auto h-[clamp(2.5rem,6dvh,4rem)] w-[clamp(2.5rem,6dvh,4rem)] stroke-[1.35]"
-            aria-hidden
-          />
-        )}
-        <p className="text-ink dark:text-night-text mt-[clamp(0.5rem,1.6dvh,0.75rem)] text-[clamp(1rem,2.4dvh,1.25rem)] font-bold">
-          {cheer(percent)}
-        </p>
-        <p className="text-primary-ink dark:text-primary mt-1 text-[clamp(2rem,6dvh,3rem)] leading-tight font-bold tabular-nums">
-          {result.correct}/{result.total}
-        </p>
-        <p className="text-dark dark:text-night-muted mt-2 text-sm font-medium">
-          {percent}% richtig · Beste Serie in der Runde:{" "}
-          {result.bestStreakRound}
-        </p>
-      </div>
-
-      {topMissed.length > 0 && (
-        <div className="border-rule bg-rule/25 dark:border-night-rule dark:bg-night-raised border p-[clamp(0.75rem,2dvh,1rem)]">
-          <p className="text-ink dark:text-night-text mb-2 text-sm font-bold">
-            Am häufigsten daneben
-          </p>
-          <ul className="text-ink dark:text-night-text space-y-[clamp(0.25rem,0.8dvh,0.375rem)] text-sm">
+    <>
+      <Celebration
+        percent={percent}
+        value={`${result.correct}/${result.total}`}
+        valueLabel="richtig"
+        stats={`Beste Serie: ${result.bestStreakRound} · Dein Rekord: ${bestScore}`}
+        badge={isBest ? "Bestleistung!" : null}
+        detailsLabel="Das übst du am besten noch"
+      >
+        {topMissed.length > 0 ? (
+          <ul className="text-ink dark:text-night-text space-y-1 text-sm">
             {topMissed.map((row) => (
               <li
                 key={row.key}
@@ -90,28 +65,16 @@ export function GriffeResultView({
               </li>
             ))}
           </ul>
+        ) : null}
+      </Celebration>
+      <GameDock>
+        <div className="flex flex-col gap-2">
+          <ArcadeButton onClick={onRetry}>Nochmal spielen</ArcadeButton>
+          <Button type="button" variant="outline" onClick={onChangeSetup}>
+            Schwierigkeit und Modus
+          </Button>
         </div>
-      )}
-
-      <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-        <Button type="button" size="lg" className="gap-2" onClick={onRetry}>
-          <RotateCcw className="h-5 w-5 shrink-0 stroke-[2]" aria-hidden />
-          Nochmal spielen
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="lg"
-          className="gap-2"
-          onClick={onChangeSetup}
-        >
-          <SlidersHorizontal
-            className="h-5 w-5 shrink-0 stroke-[2]"
-            aria-hidden
-          />
-          Setup ändern
-        </Button>
-      </div>
-    </div>
+      </GameDock>
+    </>
   );
 }

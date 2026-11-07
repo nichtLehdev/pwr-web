@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Check, ChevronDown, Music, Settings2, X } from "lucide-react";
+import { Check, ChevronDown, Settings2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/react";
 import { Button } from "@/app/_components/ui/button";
@@ -56,7 +56,13 @@ import {
   type StoredCustomSetRef,
 } from "../_lib/types";
 import { GameBarSlot, GameDock } from "../../../_components/game-shell-context";
-import { GameStepIndicator } from "../../../_components/game-step-indicator";
+import { ArcadeButton } from "../../../_components/arcade-button";
+import {
+  GameHero,
+  ToniCoach,
+  useGameSounds,
+} from "../../../_components/game-kit";
+import { praiseFor } from "../../../_lib/rewards";
 import { useGameStats } from "../../../_lib/stats/use-game-stats";
 import { FingeringText } from "./fingering-text";
 import { GriffeInstrumentSelector } from "./griffe-instrument-selector";
@@ -183,6 +189,7 @@ type PendingSetResolve = { publicId: string; source: "storage" | "link" };
 
 export function FingeringGame() {
   const { aggregates, recordResult } = useGameStats("griffe");
+  const { correct: soundCorrect, wrong: soundWrong } = useGameSounds();
   const [instrument, setInstrument] = useState<GriffeInstrumentId>("trumpet_c");
   const [mode, setMode] = useState<GameModeId>("learn");
   const [difficulty, setDifficulty] =
@@ -982,41 +989,32 @@ export function FingeringGame() {
   const modeLabel =
     mode === "learn" ? "Lernen" : mode === "quiz" ? "Quiz" : "Endlos";
 
-  // Lernen/Endlos erreichen nie eine Auswertung — dritten Schritt ausblenden.
-  const stepLabels =
-    mode === "quiz" ? ["Setup", "Spielen", "Auswertung"] : ["Setup", "Spielen"];
-
   const valveCount = inputKind === "valves4" ? 4 : 3;
 
   const feedbackText =
     learnLine ??
     (flash === "correct" ? "Richtig!" : flash === "wrong" ? "Falsch." : "");
 
+  // Klang aus dem Urteil abgeleitet: So bleibt die Spiellogik unberührt.
+  useEffect(() => {
+    if (flash === "correct") soundCorrect(streakRef.current);
+    else if (flash === "wrong") soundWrong();
+  }, [flash, soundCorrect, soundWrong]);
+
   const actionButton =
     mode === "learn" && answerLocked ? (
-      <Button type="button" size="lg" className="w-full" onClick={advanceLearn}>
-        Weiter
-      </Button>
+      <ArcadeButton onClick={advanceLearn}>Weiter</ArcadeButton>
     ) : inputKind === "slide" ? (
-      <Button
-        type="button"
-        size="lg"
-        className="w-full"
+      <ArcadeButton
         disabled={answerLocked || slidePosition == null}
         onClick={handleConfirmSlide}
       >
         Antwort bestätigen
-      </Button>
+      </ArcadeButton>
     ) : (
-      <Button
-        type="button"
-        size="lg"
-        className="w-full"
-        disabled={answerLocked}
-        onClick={handleConfirmValves}
-      >
+      <ArcadeButton disabled={answerLocked} onClick={handleConfirmValves}>
         Antwort bestätigen
-      </Button>
+      </ArcadeButton>
     );
 
   if (!hydrated) {
@@ -1028,27 +1026,13 @@ export function FingeringGame() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 md:gap-6">
-      <GameStepIndicator
-        steps={stepLabels}
-        current={phase === "setup" ? 0 : phase === "play" ? 1 : 2}
-      />
-
+    <div className="spiel-runde mx-auto flex w-full max-w-5xl flex-col gap-3 md:gap-4">
       {phase === "setup" && (
         <div className="space-y-[clamp(0.75rem,2.4dvh,1.5rem)]">
-          <div className="text-center">
-            <Music
-              className="text-primary-ink dark:text-primary mx-auto h-[clamp(2.25rem,5dvh,4rem)] w-[clamp(2.25rem,5dvh,4rem)] stroke-[1.4]"
-              aria-hidden
-            />
-            <h2 className="text-ink dark:text-night-text mt-2 text-[clamp(1.25rem,3dvh,1.875rem)] leading-tight font-bold tracking-tight">
-              Griffe
-            </h2>
-            <p className="text-dark dark:text-night-muted mx-auto mt-2 max-w-lg text-sm md:text-base">
-              Note lesen — Ventile oder Zug wählen. Sofortiges Feedback,
-              Merkhilfen und Modi wie beim Noten-Lesen.
-            </p>
-          </div>
+          <GameHero
+            title="Griffe"
+            text="Lies die Note und zeig mir den richtigen Griff!"
+          />
 
           {setupHint && (
             <p
@@ -1077,14 +1061,9 @@ export function FingeringGame() {
             onRemoveCustomSet={() => deactivateCustomSet(null)}
           />
 
-          <Button
-            type="button"
-            size="lg"
-            className="w-full"
-            onClick={startGame}
-          >
-            Los geht&apos;s!
-          </Button>
+          <GameDock>
+            <ArcadeButton onClick={startGame}>Los geht&apos;s!</ArcadeButton>
+          </GameDock>
         </div>
       )}
 
@@ -1210,6 +1189,24 @@ export function FingeringGame() {
             )}
           >
             <div className="flex min-w-0 flex-col gap-[clamp(0.5rem,1.6dvh,1rem)]">
+              <ToniCoach
+                mood={
+                  flash === "correct"
+                    ? "happy"
+                    : flash === "wrong"
+                      ? "oops"
+                      : "listen"
+                }
+                message={
+                  flash === "correct"
+                    ? praiseFor(streak)
+                    : flash === "wrong"
+                      ? "Hoppla!"
+                      : "Welcher Griff passt?"
+                }
+                streak={streak}
+                progress={mode === "quiz" ? quizIndex / QUIZ_ROUND_LEN : null}
+              />
               {/* Kastenhöhe über `className`, die Notenschrift skaliert darin mit. */}
               <StaffDisplay
                 clef={clef}
@@ -1221,8 +1218,8 @@ export function FingeringGame() {
                   // Das Zugdiagramm braucht mehr Höhe als Ventilknöpfe, daher
                   // bei der Posaune eine niedrigere Notenzeile.
                   inputKind === "slide"
-                    ? "h-[clamp(8rem,24dvh,17rem)]"
-                    : "h-[clamp(9rem,30dvh,22rem)]",
+                    ? "h-[clamp(7rem,20dvh,15rem)]"
+                    : "h-[clamp(8rem,24dvh,20rem)]",
                 )}
               />
 
@@ -1289,36 +1286,16 @@ export function FingeringGame() {
       )}
 
       {phase === "result" && roundResult && (
-        <div className="flex flex-col gap-4">
-          <div className="text-center">
-            <Music
-              className="text-primary-ink dark:text-primary mx-auto h-10 w-10 stroke-[1.4]"
-              aria-hidden
-            />
-            <p className="text-ink dark:text-night-text mt-2 text-lg font-bold">
-              Runde zu Ende
-            </p>
-          </div>
-          <GriffeResultView
-            result={roundResult}
-            onRetry={() => {
-              setRoundResult(null);
-              startGame();
-            }}
-            onChangeSetup={openSetup}
-          />
-          {aggregates && aggregates.plays > 0 && (
-            <p className="text-dark dark:text-night-muted text-center text-sm">
-              Persönlicher Rekord:{" "}
-              <span className="text-ink dark:text-night-text font-bold">
-                {aggregates.bestScore}/{QUIZ_ROUND_LEN} richtig
-              </span>
-              {aggregates.bestStreak > 0 && (
-                <> · beste Serie: {aggregates.bestStreak}</>
-              )}
-            </p>
-          )}
-        </div>
+        <GriffeResultView
+          result={roundResult}
+          onRetry={() => {
+            setRoundResult(null);
+            startGame();
+          }}
+          onChangeSetup={openSetup}
+          bestScore={aggregates?.bestScore ?? 0}
+          plays={aggregates?.plays ?? 0}
+        />
       )}
 
       <NoteSetLibrary

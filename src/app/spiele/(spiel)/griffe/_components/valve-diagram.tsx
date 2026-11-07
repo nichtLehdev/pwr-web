@@ -53,7 +53,7 @@ export function ValveDiagram({
       role="group"
       aria-label={`Griffdiagramm: ${valveCount} Ventile`}
       className={cn(
-        "border p-[clamp(0.75rem,2dvh,1.5rem)] transition-colors duration-200",
+        "spiel-karte border p-[clamp(0.75rem,2dvh,1.5rem)] transition-colors duration-200",
         diagramShellClass(flash),
         className,
       )}
