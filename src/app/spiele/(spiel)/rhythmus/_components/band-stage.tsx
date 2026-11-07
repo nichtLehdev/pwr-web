@@ -1,0 +1,201 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { useTheme } from "@/app/_components/general/theme-provider";
+import {
+  BAR_LEAD,
+  drawBar,
+  prepareNotation,
+  QUARTER_WIDTH,
+  VIEW_HEIGHT,
+  type BarHandle,
+} from "../../../_lib/rhythm/draw-bar";
+import {
+  barTicks,
+  pulseOf,
+  secPerTick,
+  TICKS_PER_QUARTER,
+} from "../../../_lib/rhythm/ticks";
+import type { RhythmEvent, TimeSignature } from "../../../_lib/rhythm/types";
+import type { Conductor, Press, Segment } from "../_lib/conductor";
+import { spawnBurst } from "../../../_components/confetti";
+import { ballHop, CountOverlay, StageHud, useCountIn } from "./stage-parts";
+
+/** Lesekante: links genug Platz fürs Gespielte, rechts der Blick voraus. */
+const READ_LINE = 0.22;
+const MIN_SCALE = 0.72;
+
+type DrawnBar = { host: HTMLDivElement; handle: BarHandle };
+
+/**
+ * Laufband vom Blatt. Takte entstehen erst kurz vor der Sichtbarkeit und werden danach
+ * entfernt: Ein durchgehendes SVG wäre als Ebene für mobile Browser zu groß.
+ */
+export function BandStage({
+  conductor,
+  bars,
+  timeSignature,
+  bpm,
+}: {
+  conductor: Conductor;
+  bars: RhythmEvent[][];
+  timeSignature: TimeSignature;
+  bpm: number;
+}) {
+  const { resolvedTheme } = useTheme();
+  const dark = resolvedTheme === "dark";
+  const boxRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const ballRef = useRef<HTMLDivElement>(null);
+  const drawn = useRef(new Map<number, DrawnBar>());
+  const [barNumber, setBarNumber] = useState<number | null>(null);
+  const countNumber = useCountIn(conductor);
+
+  useEffect(() => {
+    const barSec = barTicks(timeSignature) * secPerTick(bpm);
+    const barWidth =
+      (barTicks(timeSignature) / TICKS_PER_QUARTER) * QUARTER_WIDTH;
+    let ready = false;
+    void prepareNotation().then(() => {
+      ready = true;
+    });
+    const drawnBars = drawn.current;
+
+    const ensureBar = (index: number, scale: number) => {
+      const track = trackRef.current;
+      const events = bars[index];
+      if (!track || !events || drawnBars.has(index)) return;
+      const host = document.createElement("div");
+      host.style.position = "absolute";
+      host.style.top = "0";
+      host.style.height = "100%";
+      track.appendChild(host);
+      const handle = drawBar(host, {
+        events,
+        timeSignature,
+        showPrefix: index === 0,
+        dark,
+      });
+      const prefixWidth = handle.width - barWidth;
+      host.style.left = `${(index * barWidth - BAR_LEAD - prefixWidth) * scale}px`;
+      host.style.width = `${handle.width * scale}px`;
+      drawnBars.set(index, { host, handle });
+    };
+
+    const unsubscribe = conductor.subscribe({
+      onSegment: (segment: Segment) => {
+        if (segment.kind === "read") setBarNumber(segment.index + 1);
+      },
+      onFrame: (songSec) => {
+        const box = boxRef.current;
+        const track = trackRef.current;
+        if (!box || !track || !ready) return;
+        const width = box.clientWidth;
+        const scale = Math.min(
+          box.clientHeight / VIEW_HEIGHT,
+          Math.max(MIN_SCALE, width / 640),
+        );
+        // Der erste Takt beginnt nach dem Einzähltakt.
+        const position = (songSec - conductor.startSec - barSec) / barSec;
+        const x = width * READ_LINE - position * barWidth * scale;
+        track.style.transform = `translate3d(${x}px, 0, 0)`;
+        if (ballRef.current) {
+          const pulseSec = pulseOf(timeSignature).pulseTicks * secPerTick(bpm);
+          const hop = ballHop((songSec - conductor.startSec) / pulseSec, 16);
+          ballRef.current.style.transform = `translate(-50%, ${hop}px)`;
+        }
+
+        const visibleBars = Math.ceil(width / (barWidth * scale)) + 1;
+        const first = Math.floor(position);
+        for (let i = Math.max(0, first); i <= first + visibleBars; i++) {
+          ensureBar(i, scale);
+        }
+        for (const [index, bar] of drawnBars) {
+          if (index < first - 1) {
+            bar.host.remove();
+            drawnBars.delete(index);
+          }
+        }
+      },
+      onJudge: (event) => {
+        if (event.type === "extra") return;
+        const { note } = event;
+        const segmentIndex = conductor.indexOfSegment(event.segmentId);
+        drawnBars
+          .get(segmentIndex)
+          ?.handle.mark(
+            note.eventIndex,
+            note.verdict ?? "missed",
+            note.length === "short" || note.length === "long",
+          );
+        const box = boxRef.current;
+        if (
+          box &&
+          event.type === "note" &&
+          (note.verdict === "exact" || note.verdict === "close")
+        ) {
+          spawnBurst(
+            box,
+            box.clientWidth * READ_LINE,
+            box.clientHeight * 0.55,
+            note.verdict === "exact" ? 7 : 3,
+          );
+        }
+      },
+      onRelease: (press: Press, owner: Segment | null) => {
+        if (!owner) return;
+        const tickSec = secPerTick(owner.bpm);
+        const from = (press.atMs / 1000 - owner.startSec) / tickSec;
+        drawnBars
+          .get(owner.index)
+          ?.handle.addTake(
+            from,
+            from + (press.durationMs ?? 0) / 1000 / tickSec,
+            false,
+          );
+      },
+    });
+
+    return () => {
+      unsubscribe();
+      for (const bar of drawnBars.values()) bar.host.remove();
+      drawnBars.clear();
+    };
+  }, [conductor, bars, timeSignature, bpm, dark]);
+
+  return (
+    <div className="spiel-buehne flex flex-col gap-2 rounded-3xl p-3 sm:p-4">
+      <StageHud
+        conductor={conductor}
+        baseText={barNumber === null ? "Mitzählen!" : "Lies und spiel!"}
+        baseMood={barNumber === null ? "idle" : "play"}
+        progressText={
+          barNumber !== null
+            ? `Takt ${barNumber} von ${bars.length} · ${bpm} BPM`
+            : ""
+        }
+        progress={(barNumber ?? 0) / bars.length}
+      />
+      <div
+        ref={boxRef}
+        className="bg-paper dark:bg-night relative h-[clamp(7.5rem,22svh,12rem)] overflow-hidden rounded-2xl md:h-[clamp(11rem,34svh,20rem)]"
+        aria-hidden
+      >
+        <div
+          ref={trackRef}
+          className="absolute inset-0 will-change-transform"
+        />
+        <div
+          className="bg-primary/70 pointer-events-none absolute top-0 bottom-0 z-10 w-1"
+          style={{ left: `${READ_LINE * 100}%` }}
+        >
+          <div
+            ref={ballRef}
+            className="bg-primary border-ink absolute top-2 left-1/2 h-5 w-5 rounded-full border-2"
+          />
+        </div>
+        <CountOverlay number={countNumber} />
+      </div>
+    </div>
+  );
+}
