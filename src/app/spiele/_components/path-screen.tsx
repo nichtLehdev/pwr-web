@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { isDailyDone } from "../_lib/daily";
-import { CalendarCheck, CalendarDays, X } from "lucide-react";
+import { Lock, X, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/app/_components/ui/button";
 import { GAME_FOCUS_RING } from "../_lib/focus-ring";
@@ -30,7 +30,7 @@ export function PathScreen<S extends PathStage>({
   state,
   head,
   below,
-  daily,
+  modes,
   challengeText = `Alles, was du bisher gelernt hast, drei Mal Puste. Schaffe ${CHALLENGE_PASS_PERCENT} %.`,
   onStart,
 }: {
@@ -38,8 +38,8 @@ export function PathScreen<S extends PathStage>({
   state: ReturnType<typeof usePathState<S>>;
   head: ReactNode;
   below?: ReactNode;
-  /** Tagestraining unter dem Pfad; `game` ist der Speicherschlüssel. */
-  daily?: { game: string; onStart: () => void };
+  /** Kleine Knöpfe über dem Pfad: Tagestraining, Endlos, Bestenliste. */
+  modes?: ReactNode;
   challengeText?: string;
   onStart: () => void;
 }) {
@@ -75,6 +75,7 @@ export function PathScreen<S extends PathStage>({
   return (
     <div className="flex flex-col gap-5 pb-2">
       {head}
+      {modes}
       <LearningPathMap
         path={path}
         selectedId={selectedId}
@@ -94,15 +95,6 @@ export function PathScreen<S extends PathStage>({
           state.select(id);
         }}
       />
-      {daily && (
-        <DailyTile
-          game={daily.game}
-          onStart={() => {
-            scrollGameToTop(selectedRef.current);
-            daily.onStart();
-          }}
-        />
-      )}
       {below}
       <GameDock>
         <div className="flex flex-col gap-1.5">
@@ -242,41 +234,67 @@ export function LeaveRunButton({ onLeave }: { onLeave: () => void }) {
   );
 }
 
-/** Jeden Tag neu gemischt; nach dem ersten Mal bleibt es spielbar, bringt aber weniger. */
-export function DailyTile({
-  game,
-  onStart,
-}: {
-  game: string;
-  onStart: () => void;
-}) {
+/** Hat das Profil das heutige Tagestraining schon gemacht? */
+export function useDailyDone(game: string, refresh?: unknown): boolean {
   const [done, setDone] = useState(false);
   // eslint-disable-next-line react-hooks/set-state-in-effect -- Serverbild kennt den Speicher nicht
-  useEffect(() => setDone(isDailyDone(game)), [game]);
-  const Icon = done ? CalendarCheck : CalendarDays;
+  useEffect(() => setDone(isDailyDone(game)), [game, refresh]);
+  return done;
+}
+
+export type ModeButtonSpec = {
+  key: string;
+  label: string;
+  icon: LucideIcon;
+  /** Kurzer Zustand unter dem Namen. */
+  status: string;
+  /** Warum der Knopf noch zu ist; `null`, wenn er offen ist. */
+  locked?: string | null;
+  /** Hervorgehoben, etwa ein noch offenes Tagestraining. */
+  highlight?: boolean;
+  onClick: () => void;
+};
+
+/** Die Spielarten neben dem Pfad als kleine Knöpfe, damit der Pfad die Hauptsache bleibt. */
+export function ModeButtons({ buttons }: { buttons: ModeButtonSpec[] }) {
   return (
-    <section aria-label="Tagestraining">
-      <button
-        type="button"
-        onClick={onStart}
-        className={cn(
-          "spiel-tile flex w-full items-center gap-3 p-4 text-left",
-          GAME_FOCUS_RING,
-          !done && "on-orange bg-primary text-ink",
-        )}
-      >
-        <Icon className="h-8 w-8 shrink-0 stroke-[2.25]" aria-hidden />
-        <span className="min-w-0 flex-1">
-          <span className="block text-lg font-bold">
-            Tagestraining{done && ": heute geschafft"}
-          </span>
-          <span className="mt-0.5 block text-sm leading-snug">
-            {done
-              ? "Morgen gibt es eine neue Mischung. Üben geht trotzdem."
-              : "Jeden Tag neu gemischt aus allem, was du kannst. Doppelte XP."}
-          </span>
-        </span>
-      </button>
-    </section>
+    <div
+      className={cn(
+        "grid gap-2",
+        buttons.length >= 3
+          ? "grid-cols-3"
+          : buttons.length === 2
+            ? "grid-cols-2"
+            : "grid-cols-1",
+      )}
+    >
+      {buttons.map(
+        ({ key, label, icon: Icon, status, locked, highlight, onClick }) => (
+          <button
+            key={key}
+            type="button"
+            disabled={Boolean(locked)}
+            onClick={onClick}
+            aria-label={`${label}: ${locked ?? status}`}
+            className={cn(
+              "spiel-tile flex min-h-11 flex-col items-center gap-1 px-2 py-3 text-center disabled:cursor-not-allowed",
+              GAME_FOCUS_RING,
+              highlight && !locked && "on-orange bg-primary text-ink",
+              locked && "opacity-60",
+            )}
+          >
+            {locked ? (
+              <Lock className="h-6 w-6" aria-hidden />
+            ) : (
+              <Icon className="h-6 w-6 stroke-[2.25]" aria-hidden />
+            )}
+            <span className="text-sm leading-tight font-extrabold">
+              {label}
+            </span>
+            <span className="text-xs leading-tight">{locked ?? status}</span>
+          </button>
+        ),
+      )}
+    </div>
   );
 }

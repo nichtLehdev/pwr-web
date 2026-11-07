@@ -61,6 +61,7 @@ import {
   buildDailySteps,
   ChallengePlan,
   clampSelection,
+  RHYTHM_PATH,
   levelCelebration,
   parseChallengeId,
   SECTIONS,
@@ -70,11 +71,22 @@ import { rankFor, totalStars } from "../_lib/ranks";
 import {
   endlessScript,
   RecordingScript,
+  RHYTHM_VARIANTS,
   relativePresses,
   type RhythmVariant,
 } from "../_lib/replay";
 import { activeProfileId } from "../../../_lib/profiles/scope";
-import { RankedResult, type RankedOutcome } from "../../../_components/ranked";
+import {
+  LeaderboardView,
+  RankedResult,
+  UnrankedNotice,
+  unrankedReason,
+  type RankedOutcome,
+} from "../../../_components/ranked";
+import {
+  ENDLESS_AFTER_SECTION,
+  sectionFinished,
+} from "../../../_lib/learning-path";
 import { api } from "@/trpc/react";
 
 /** So oft meldet ein Bestenlisten-Lauf seine Drücke. */
@@ -88,7 +100,7 @@ import { PlayPad } from "./play-pad";
 import { ResultView } from "./result-view";
 import { SetupView } from "./setup-view";
 
-type View = "setup" | "calibrate" | "play" | "result";
+type View = "setup" | "calibrate" | "play" | "result" | "board";
 
 type Session = {
   conductor: Conductor;
@@ -159,6 +171,8 @@ export function RhythmGame() {
   const [rankedVariant, setRankedVariant] = useState<RhythmVariant | null>(
     null,
   );
+  /** Warum ein Endlos-Lauf nicht in die Liste kommt; `null`, wenn er zählt. */
+  const [unranked, setUnranked] = useState<string | null>(null);
   const startRhythmRun = api.gameEndless.startRhythm.useMutation();
   const reportRhythm = api.gameEndless.reportRhythm.useMutation();
   const reportRef = useRef(reportRhythm.mutateAsync);
@@ -212,10 +226,12 @@ export function RhythmGame() {
   useEffect(() => {
     const storedProgress = loadProgress();
     const storedPrefs = loadPrefs();
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- Serverbild und Speicher unterscheiden sich
     setPrefs({
       ...storedPrefs,
-      levelId: clampSelection(storedPrefs.levelId, storedProgress),
+      levelId:
+        storedPrefs.levelId === ENDLESS_ID
+          ? LEVELS[0]!.id
+          : clampSelection(storedPrefs.levelId, storedProgress),
     });
     setProgress(storedProgress);
     setLatencyMs(loadLatencyMs());
@@ -477,19 +493,22 @@ export function RhythmGame() {
     [audio, finish, latencyMs, sendRanked],
   );
 
-  const startRanked = useCallback(async () => {
+  /** Mit Profil zählt Endlos für die Bestenliste, sonst läuft es nur auf dem Gerät. */
+  const startEndless = useCallback(async () => {
     const profileId = activeProfileId();
-    if (!profileId) return;
     const { mode, input } = prefsRef.current;
+    setRankedOutcome(null);
     try {
+      if (!profileId) throw new Error("ohne Profil");
       const run = await startRhythmRun.mutateAsync({
         profileId,
         variant: `${mode}:${input}`,
       });
-      setRankedOutcome(null);
+      setUnranked(null);
       await start(ENDLESS_ID, { ...run, profileId });
     } catch {
-      setNotice("Für die Bestenliste brauchst du Internet.");
+      setUnranked(unrankedReason(Boolean(profileId)));
+      await start(ENDLESS_ID);
     }
   }, [start, startRhythmRun]);
 
@@ -523,6 +542,13 @@ export function RhythmGame() {
   );
 
   const isEndless = prefs.levelId === ENDLESS_ID;
+  const endlessLocked = sectionFinished(
+    RHYTHM_PATH,
+    ENDLESS_AFTER_SECTION,
+    progress,
+  )
+    ? null
+    : "Schaff erst Abschnitt 3";
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-[clamp(0.5rem,1.8svh,1.25rem)]">
@@ -537,8 +563,31 @@ export function RhythmGame() {
           onChange={changePrefs}
           onStart={() => void start(prefs.levelId)}
           onStartDaily={() => void start(DAILY_ID)}
-          onStartRanked={() => void startRanked()}
+          onStartEndless={() => void startEndless()}
+          onOpenBoard={() => setView("board")}
           onCalibrate={() => setView("calibrate")}
+        />
+      )}
+
+      {view === "board" && (
+        <LeaderboardView
+          game="rhythmus"
+          variants={RHYTHM_VARIANTS.map((id) => ({
+            id,
+            label: `${id.startsWith("band") ? "Notenband" : "Nachspielen"}, ${id.endsWith("hold") ? "Halten" : "Tippen"}`,
+          }))}
+          variant={`${prefs.mode}:${prefs.input}`}
+          onVariant={(id) => {
+            const [mode, input] = id.split(":") as [
+              Prefs["mode"],
+              Prefs["input"],
+            ];
+            changePrefs({ ...prefs, mode, input });
+          }}
+          unit="Punkte"
+          playLocked={endlessLocked}
+          onPlay={() => void startEndless()}
+          onBack={() => setView("setup")}
         />
       )}
 
@@ -566,6 +615,9 @@ export function RhythmGame() {
               Abbrechen
             </button>
           </GameBarSlot>
+          {session.level === null && !session.challenge && !session.ranked && (
+            <UnrankedNotice reason={unranked} />
+          )}
           {session.band ? (
             <BandStage
               conductor={session.conductor}
@@ -601,7 +653,7 @@ export function RhythmGame() {
           variant={rankedVariant}
           outcome={rankedOutcome}
           unit="Punkte"
-          onAgain={() => void startRanked()}
+          onAgain={() => void startEndless()}
           onContinue={() => {
             audio.cancelScheduled();
             setRankedVariant(null);

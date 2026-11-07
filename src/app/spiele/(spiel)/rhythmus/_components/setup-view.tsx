@@ -1,13 +1,17 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Infinity as InfinityIcon } from "lucide-react";
+import { CalendarDays, Infinity as InfinityIcon, Medal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/app/_components/ui/button";
 import { GameHead } from "../../../_components/game-kit";
 import { LearningPathMap } from "../../../_components/learning-path-map";
-import { DailyTile } from "../../../_components/path-screen";
-import { RankedTile } from "../../../_components/ranked";
+import { ModeButtons, useDailyDone } from "../../../_components/path-screen";
+import {
+  DAILY_AFTER_SECTION,
+  ENDLESS_AFTER_SECTION,
+  sectionFinished,
+} from "../../../_lib/learning-path";
 import { usePathCelebration } from "../../../_components/use-path-celebration";
 import { GameDock } from "../../../_components/game-shell-context";
 import { GAME_FOCUS_RING } from "../../../_lib/focus-ring";
@@ -76,7 +80,8 @@ export function SetupView({
   onChange,
   onStart,
   onStartDaily,
-  onStartRanked,
+  onStartEndless,
+  onOpenBoard,
   onCalibrate,
 }: {
   prefs: Prefs;
@@ -88,10 +93,12 @@ export function SetupView({
   onChange: (next: Prefs) => void;
   onStart: () => void;
   onStartDaily: () => void;
-  onStartRanked: () => void;
+  onStartEndless: () => void;
+  onOpenBoard: () => void;
   onCalibrate: () => void;
 }) {
   const isEndless = prefs.levelId === ENDLESS_ID;
+  const dailyDone = useDailyDone("rhythmus");
   const challengeSection = parseChallengeId(prefs.levelId);
   const level = levelById(prefs.levelId) ?? LEVELS[0]!;
   const levelNumber = LEVELS.indexOf(level) + 1;
@@ -181,6 +188,44 @@ export function SetupView({
         />
       </div>
 
+      <ModeButtons
+        buttons={[
+          {
+            key: "daily",
+            label: "Tagestraining",
+            icon: CalendarDays,
+            status: dailyDone ? "Heute geschafft" : "Doppelte XP",
+            highlight: !dailyDone,
+            locked: sectionFinished(RHYTHM_PATH, DAILY_AFTER_SECTION, progress)
+              ? null
+              : "Schaff erst Abschnitt 2",
+            onClick: onStartDaily,
+          },
+          {
+            key: "endless",
+            label: "Endlos",
+            icon: InfinityIcon,
+            status: endlessRecord
+              ? `Rekord ${endlessRecord.points}`
+              : "Drei Mal Puste",
+            locked: sectionFinished(
+              RHYTHM_PATH,
+              ENDLESS_AFTER_SECTION,
+              progress,
+            )
+              ? null
+              : "Schaff erst Abschnitt 3",
+            onClick: onStartEndless,
+          },
+          {
+            key: "board",
+            label: "Bestenliste",
+            icon: Medal,
+            status: "Ansehen",
+            onClick: onOpenBoard,
+          },
+        ]}
+      />
       <LearningPathMap
         path={RHYTHM_PATH}
         selectedId={prefs.levelId}
@@ -197,44 +242,6 @@ export function SetupView({
         progress={progress}
         selectedRef={selectedRef}
         onPick={pick}
-        after={
-          <>
-            <DailyTile game="rhythmus" onStart={onStartDaily} />
-            <RankedTile
-              game="rhythmus"
-              variant={`${prefs.mode}:${prefs.input}`}
-              variantLabel={`${prefs.mode === "band" ? "Notenband" : "Nachspielen"}, ${prefs.input === "hold" ? "Halten" : "Tippen"}`}
-              rules="Drei Mal Puste, der Server zählt nach."
-              onStart={onStartRanked}
-            />
-            <section aria-label="Endlos">
-              <button
-                ref={isEndless ? selectedRef : undefined}
-                type="button"
-                aria-pressed={isEndless}
-                onClick={() => pick(ENDLESS_ID)}
-                className={cn(
-                  "spiel-tile flex w-full items-center gap-3 p-4 text-left",
-                  GAME_FOCUS_RING,
-                  isEndless && "on-orange bg-primary text-ink",
-                )}
-              >
-                <InfinityIcon
-                  className="h-8 w-8 shrink-0 stroke-[2.5]"
-                  aria-hidden
-                />
-                <span className="min-w-0 flex-1">
-                  <span className="block text-lg font-bold">Endlos</span>
-                  <span className="mt-0.5 block text-sm leading-snug">
-                    {endlessRecord
-                      ? `Immer schwerer, bis die Puste weg ist. Dein Rekord: ${endlessRecord.points} Punkte.`
-                      : "Immer schwerer, bis die Puste weg ist."}
-                  </span>
-                </span>
-              </button>
-            </section>
-          </>
-        }
       />
 
       <details className="border-ink dark:border-night-text border-t-2">

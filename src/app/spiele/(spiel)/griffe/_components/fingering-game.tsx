@@ -12,8 +12,17 @@ import {
   LeaveRunButton,
   PathChoice,
   PathScreen,
+  ModeButtons,
+  useDailyDone,
 } from "../../../_components/path-screen";
 import { usePathState } from "../../../_lib/use-path-state";
+import { CalendarDays, Infinity as InfinityIcon, Medal } from "lucide-react";
+import {
+  DAILY_AFTER_SECTION,
+  ENDLESS_AFTER_SECTION,
+  sectionFinished,
+} from "../../../_lib/learning-path";
+
 import { gameInstruments } from "../../../_lib/profiles/options";
 import { activeProfileInstruments } from "../../../_lib/profiles/scope";
 import {
@@ -28,8 +37,11 @@ import {
 } from "../../../_lib/endless-rules";
 import { activeProfileId } from "../../../_lib/profiles/scope";
 import {
+  LeaderboardView,
   RankedResult,
-  RankedTile,
+  UNRANKED_NO_PROFILE,
+  UnrankedNotice,
+  unrankedReason,
   type RankedOutcome,
 } from "../../../_components/ranked";
 import { loadWeak, markDailyDone, saveWeak } from "../../../_lib/daily";
@@ -127,7 +139,7 @@ function quizSecondsFor(difficulty: GriffeDifficultyChoice): number {
     : QUIZ_SECONDS_BY_DIFFICULTY[difficulty];
 }
 
-type Phase = "setup" | "play" | "result";
+type Phase = "setup" | "play" | "result" | "board";
 type LessonOutcome = { percent: number; passed: boolean };
 
 type StoredGriffeSettings = {
@@ -219,6 +231,19 @@ function allValidFingeringsLine(
 /** Woher die aufzulösende Set-Referenz stammt — bestimmt die Fehlertexte. */
 type PendingSetResolve = { publicId: string; source: "storage" | "link" };
 
+/** Endlos ohne Server: zufällig, nie zweimal derselbe Ton hintereinander. */
+function pickLocal(
+  pool: readonly WrittenPitch[],
+  count: number,
+): WrittenPitch[] {
+  const out: WrittenPitch[] = [];
+  for (let i = 0; i < count; i++) {
+    const options = pool.filter((p) => p !== out.at(-1));
+    out.push(options[Math.floor(Math.random() * options.length)]!);
+  }
+  return out;
+}
+
 export function FingeringGame() {
   const { aggregates, recordResult } = useGameStats("griffe");
   const { correct: soundCorrect, wrong: soundWrong } = useGameSounds();
@@ -230,6 +255,12 @@ export function FingeringGame() {
   const [rankedOutcome, setRankedOutcome] = useState<RankedOutcome | null>(
     null,
   );
+  /** Warum der laufende Endlos-Lauf nicht in die Liste kommt; `null`, wenn er zählt. */
+  const [unranked, setUnranked] = useState<string | null>(null);
+  const unrankedRef = useRef<string | null>(null);
+  useEffect(() => {
+    unrankedRef.current = unranked;
+  }, [unranked]);
   /** Laufender Bestenlisten-Lauf: Warteschlange vom Server und noch nicht gemeldete Griffe. */
   const rankedRef = useRef<{
     runId: string;
@@ -240,6 +271,8 @@ export function FingeringGame() {
     buffer: EndlessAnswer[];
     sending: Promise<void> | null;
     invalid: string | null;
+    local: boolean;
+    pool: WrittenPitch[];
   } | null>(null);
   const shownAtRef = useRef(0);
   const finishRankedRef = useRef<() => Promise<void>>(async () => undefined);
@@ -252,6 +285,14 @@ export function FingeringGame() {
   const [difficulty, setDifficulty] =
     useState<GriffeDifficultyChoice>("beginner");
   const [phase, setPhase] = useState<Phase>("setup");
+  const dailyDone = useDailyDone("griffe", phase);
+  const endlessLocked = sectionFinished(
+    GRIFFE_PATH,
+    ENDLESS_AFTER_SECTION,
+    pathState.progress,
+  )
+    ? null
+    : "Schaff erst Abschnitt 3";
   const [hydrated, setHydrated] = useState(false);
 
   /** Aktives Notenset („Eigenes Set"), voll aufgelöst inkl. Tonliste. */
@@ -846,6 +887,9 @@ export function FingeringGame() {
         else setRankedOutcome(result);
       })
       .catch(() => {
+        setUnranked(
+          "Die Verbindung ist weg. Dieser Lauf zählt nicht für die Bestenliste.",
+        );
         ranked.invalid =
           "Die Verbindung ist abgerissen. Dieser Lauf zählt leider nicht.";
       })
@@ -864,6 +908,13 @@ export function FingeringGame() {
         ms: Math.round(performance.now() - shownAtRef.current),
       });
       ranked.index++;
+      if (ranked.local) {
+        ranked.buffer.length = 0;
+        if (ranked.queue.length - ranked.index < 10) {
+          ranked.queue.push(...pickLocal(ranked.pool, 20));
+        }
+        return;
+      }
       if (ranked.buffer.length >= ENDLESS_REPORT_EVERY) void flushRanked();
     },
     [flushRanked],
@@ -1156,6 +1207,15 @@ export function FingeringGame() {
   const finishRanked = useCallback(async () => {
     const ranked = rankedRef.current;
     if (!ranked) return;
+    if (ranked.local) {
+      setRankedOutcome({
+        status: "unranked",
+        score: quizCorrectRef.current,
+        reason: unrankedRef.current ?? UNRANKED_NO_PROFILE,
+      });
+      setPhase("result");
+      return;
+    }
     setRankedOutcome({ status: "checking" });
     setPhase("result");
     await flushRanked();
@@ -1172,10 +1232,49 @@ export function FingeringGame() {
     finishRankedRef.current = finishRanked;
   });
 
+  const beginEndless = useCallback(
+    (pitches: WrittenPitch[]) => {
+      const lessonRun: GriffeRun = {
+        id: "ranked",
+        pitches: pitches,
+        total: Number.POSITIVE_INFINITY,
+        challengeSection: null,
+        daily: false,
+        ranked: true,
+      };
+      lessonRef.current = lessonRun;
+      setLesson(lessonRun);
+      setRankedOutcome(null);
+      setOutcome(null);
+      setRoundResult(null);
+      startGame();
+    },
+    [startGame],
+  );
+
   const startRanked = useCallback(async () => {
     const profileId = activeProfileId();
-    if (!profileId) return;
+    // Ohne Profil oder Netz läuft Endlos auf dem Gerät und zählt nicht für die Liste.
+    const local = (reason: string) => {
+      setUnranked(reason);
+      const pool = buildGriffeRun("alle-zusammen", instrument).pitches;
+      rankedRef.current = {
+        runId: "",
+        profileId: "",
+        queue: pickLocal(pool, 40),
+        index: 0,
+        reported: 0,
+        buffer: [],
+        sending: null,
+        invalid: null,
+        local: true,
+        pool,
+      };
+      return { pitches: rankedRef.current.queue };
+    };
     try {
+      if (!profileId) throw new Error("ohne Profil");
+      setUnranked(null);
       const run = await startRankedRun.mutateAsync({
         profileId,
         game: "griffe",
@@ -1190,25 +1289,15 @@ export function FingeringGame() {
         buffer: [],
         sending: null,
         invalid: null,
+        local: false,
+        pool: [],
       };
-      const lessonRun: GriffeRun = {
-        id: "ranked",
-        pitches: run.pitches,
-        total: Number.POSITIVE_INFINITY,
-        challengeSection: null,
-        daily: false,
-        ranked: true,
-      };
-      lessonRef.current = lessonRun;
-      setLesson(lessonRun);
-      setRankedOutcome(null);
-      setOutcome(null);
-      setRoundResult(null);
-      startGame();
+      beginEndless(run.pitches);
     } catch {
-      setSetupHint("Für die Bestenliste brauchst du Internet.");
+      const run = local(unrankedReason(Boolean(profileId)));
+      beginEndless(run.pitches);
     }
-  }, [instrument, startGame, startRankedRun]);
+  }, [beginEndless, instrument, startRankedRun]);
 
   const startLesson = useCallback(
     (id: string) => {
@@ -1347,16 +1436,44 @@ export function FingeringGame() {
             </>
           }
           onStart={() => startLesson(pathState.selectedId)}
-          daily={{ game: "griffe", onStart: () => startLesson(DAILY_ID) }}
+          modes={
+            <ModeButtons
+              buttons={[
+                {
+                  key: "daily",
+                  label: "Tagestraining",
+                  icon: CalendarDays,
+                  status: dailyDone ? "Heute geschafft" : "Doppelte XP",
+                  highlight: !dailyDone,
+                  locked: sectionFinished(
+                    GRIFFE_PATH,
+                    DAILY_AFTER_SECTION,
+                    pathState.progress,
+                  )
+                    ? null
+                    : "Schaff erst Abschnitt 2",
+                  onClick: () => startLesson(DAILY_ID),
+                },
+                {
+                  key: "endless",
+                  label: "Endlos",
+                  icon: InfinityIcon,
+                  status: "Drei Herzen",
+                  locked: endlessLocked,
+                  onClick: () => void startRanked(),
+                },
+                {
+                  key: "board",
+                  label: "Bestenliste",
+                  icon: Medal,
+                  status: "Ansehen",
+                  onClick: () => setPhase("board"),
+                },
+              ]}
+            />
+          }
           below={
             <>
-              <RankedTile
-                game="griffe"
-                variant={instrument}
-                variantLabel={insConfig?.label ?? ""}
-                rules={`${GRIFFE_NOTE_TIME_MS / 1000} Sekunden je Note, 3 Herzen.`}
-                onStart={() => void startRanked()}
-              />
               <FreePractice
                 open={freeOpen}
                 onToggle={setFreeOpen}
@@ -1390,6 +1507,18 @@ export function FingeringGame() {
               </FreePractice>
             </>
           }
+        />
+      )}
+
+      {phase === "board" && (
+        <LeaderboardView
+          game="griffe"
+          variants={GRIFFE_INSTRUMENTS.map(({ id, label }) => ({ id, label }))}
+          variant={instrument}
+          onVariant={(id) => handleInstrumentChange(id as typeof instrument)}
+          playLocked={endlessLocked}
+          onPlay={() => void startRanked()}
+          onBack={() => setPhase("setup")}
         />
       )}
 
@@ -1551,6 +1680,7 @@ export function FingeringGame() {
                     : null
                 }
               />
+              {lesson?.ranked && <UnrankedNotice reason={unranked} />}
               {/* Kastenhöhe über `className`, die Notenschrift skaliert darin mit. */}
               <StaffDisplay
                 clef={clef}

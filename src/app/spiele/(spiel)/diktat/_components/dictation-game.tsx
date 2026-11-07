@@ -13,8 +13,18 @@ import {
   useLessonHearts,
 } from "../../../_components/game-kit";
 import { PathResult } from "../../../_components/path-result";
-import { LeaveRunButton, PathScreen } from "../../../_components/path-screen";
+import {
+  LeaveRunButton,
+  PathScreen,
+  ModeButtons,
+  useDailyDone,
+} from "../../../_components/path-screen";
 import { usePathState } from "../../../_lib/use-path-state";
+import { CalendarDays } from "lucide-react";
+import {
+  DAILY_AFTER_SECTION,
+  sectionFinished,
+} from "../../../_lib/learning-path";
 import { markDailyDone } from "../../../_lib/daily";
 import { DAILY_ID, runKindOf } from "../../../_lib/learning-path";
 import {
@@ -97,6 +107,7 @@ export function DictationGame() {
   } | null>(null);
   const [audio] = useState(() => new RhythmAudio());
   const [phase, setPhase] = useState<Phase>("setup");
+  const dailyDone = useDailyDone("diktat", phase);
   const [round, setRound] = useState<DictationRound | null>(null);
   const [roundIndex, setRoundIndex] = useState(0);
   const [wrongPicks, setWrongPicks] = useState<number[]>([]);
@@ -247,7 +258,27 @@ export function DictationGame() {
             />
           }
           onStart={() => startRun(pathState.selectedId)}
-          daily={{ game: "diktat", onStart: () => startRun(DAILY_ID) }}
+          modes={
+            <ModeButtons
+              buttons={[
+                {
+                  key: "daily",
+                  label: "Tagestraining",
+                  icon: CalendarDays,
+                  status: dailyDone ? "Heute geschafft" : "Doppelte XP",
+                  highlight: !dailyDone,
+                  locked: sectionFinished(
+                    DICTATION_PATH,
+                    DAILY_AFTER_SECTION,
+                    pathState.progress,
+                  )
+                    ? null
+                    : "Schaff erst Abschnitt 2",
+                  onClick: () => startRun(DAILY_ID),
+                },
+              ]}
+            />
+          }
         />
       )}
 

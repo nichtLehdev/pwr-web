@@ -306,3 +306,20 @@ export function pickDailyStages<S extends PathStage>(
     return pool[pool.length - 1]!;
   });
 }
+
+/** Abschnitt geschafft: Challenge bestanden oder der nächste Abschnitt schon offen. */
+export function sectionFinished<S extends PathStage>(
+  path: LearningPath<S>,
+  sectionIndex: number,
+  progress: PathProgress,
+): boolean {
+  if (path.isChallengePassed(sectionIndex, progress)) return true;
+  return (
+    sectionIndex + 1 < path.sections.length &&
+    path.isSectionUnlocked(sectionIndex + 1, progress)
+  );
+}
+
+/** Tagestraining nach Abschnitt 2, Endlos nach Abschnitt 3; vorher fehlt dafür das Handwerk. */
+export const DAILY_AFTER_SECTION = 1;
+export const ENDLESS_AFTER_SECTION = 2;

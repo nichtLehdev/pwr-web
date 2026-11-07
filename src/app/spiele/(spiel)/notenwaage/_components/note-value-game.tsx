@@ -11,11 +11,21 @@ import {
 } from "../../../_components/game-kit";
 import { GameBarSlot, GameDock } from "../../../_components/game-shell-context";
 import { PathResult } from "../../../_components/path-result";
-import { LeaveRunButton, PathScreen } from "../../../_components/path-screen";
+import {
+  LeaveRunButton,
+  PathScreen,
+  ModeButtons,
+  useDailyDone,
+} from "../../../_components/path-screen";
 import { Toni } from "../../../_components/toni";
 import { praiseFor } from "../../../_lib/rewards";
 import { useGameStats } from "../../../_lib/stats/use-game-stats";
 import { usePathState } from "../../../_lib/use-path-state";
+import { CalendarDays } from "lucide-react";
+import {
+  DAILY_AFTER_SECTION,
+  sectionFinished,
+} from "../../../_lib/learning-path";
 import { markDailyDone } from "../../../_lib/daily";
 import { DAILY_ID, runKindOf } from "../../../_lib/learning-path";
 import {
@@ -63,6 +73,7 @@ export function NoteValueGame() {
   const pathState = usePathState(WAAGE_PATH, "notenwaage");
 
   const [phase, setPhase] = useState<Phase>("path");
+  const dailyDone = useDailyDone("notenwaage", phase);
   const [run, setRun] = useState<WaageRun | null>(null);
   const [roundIdx, setRoundIdx] = useState(0);
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
@@ -323,7 +334,27 @@ export function NoteValueGame() {
             />
           }
           challengeText="Alle Noten bis hierher, drei Mal Puste. Schaffe 70 %."
-          daily={{ game: "notenwaage", onStart: () => start(DAILY_ID) }}
+          modes={
+            <ModeButtons
+              buttons={[
+                {
+                  key: "daily",
+                  label: "Tagestraining",
+                  icon: CalendarDays,
+                  status: dailyDone ? "Heute geschafft" : "Doppelte XP",
+                  highlight: !dailyDone,
+                  locked: sectionFinished(
+                    WAAGE_PATH,
+                    DAILY_AFTER_SECTION,
+                    pathState.progress,
+                  )
+                    ? null
+                    : "Schaff erst Abschnitt 2",
+                  onClick: () => start(DAILY_ID),
+                },
+              ]}
+            />
+          }
           onStart={() => start(pathState.selectedId)}
         />
       </div>
