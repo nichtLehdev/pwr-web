@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
-import { X } from "lucide-react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { isDailyDone } from "../_lib/daily";
+import { CalendarCheck, CalendarDays, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/app/_components/ui/button";
 import { GAME_FOCUS_RING } from "../_lib/focus-ring";
@@ -29,6 +30,7 @@ export function PathScreen<S extends PathStage>({
   state,
   head,
   below,
+  daily,
   challengeText = `Alles, was du bisher gelernt hast, drei Mal Puste. Schaffe ${CHALLENGE_PASS_PERCENT} %.`,
   onStart,
 }: {
@@ -36,6 +38,8 @@ export function PathScreen<S extends PathStage>({
   state: ReturnType<typeof usePathState<S>>;
   head: ReactNode;
   below?: ReactNode;
+  /** Tagestraining unter dem Pfad; `game` ist der Speicherschlüssel. */
+  daily?: { game: string; onStart: () => void };
   challengeText?: string;
   onStart: () => void;
 }) {
@@ -90,6 +94,15 @@ export function PathScreen<S extends PathStage>({
           state.select(id);
         }}
       />
+      {daily && (
+        <DailyTile
+          game={daily.game}
+          onStart={() => {
+            scrollGameToTop(selectedRef.current);
+            daily.onStart();
+          }}
+        />
+      )}
       {below}
       <GameDock>
         <div className="flex flex-col gap-1.5">
@@ -226,5 +239,44 @@ export function LeaveRunButton({ onLeave }: { onLeave: () => void }) {
       <X className="h-4 w-4" aria-hidden />
       Abbrechen
     </button>
+  );
+}
+
+/** Jeden Tag neu gemischt; nach dem ersten Mal bleibt es spielbar, bringt aber weniger. */
+export function DailyTile({
+  game,
+  onStart,
+}: {
+  game: string;
+  onStart: () => void;
+}) {
+  const [done, setDone] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- Serverbild kennt den Speicher nicht
+  useEffect(() => setDone(isDailyDone(game)), [game]);
+  const Icon = done ? CalendarCheck : CalendarDays;
+  return (
+    <section aria-label="Tagestraining">
+      <button
+        type="button"
+        onClick={onStart}
+        className={cn(
+          "spiel-tile flex w-full items-center gap-3 p-4 text-left",
+          GAME_FOCUS_RING,
+          !done && "on-orange bg-primary text-ink",
+        )}
+      >
+        <Icon className="h-8 w-8 shrink-0 stroke-[2.25]" aria-hidden />
+        <span className="min-w-0 flex-1">
+          <span className="block text-lg font-bold">
+            Tagestraining{done && ": heute geschafft"}
+          </span>
+          <span className="mt-0.5 block text-sm leading-snug">
+            {done
+              ? "Morgen gibt es eine neue Mischung. Üben geht trotzdem."
+              : "Jeden Tag neu gemischt aus allem, was du kannst. Doppelte XP."}
+          </span>
+        </span>
+      </button>
+    </section>
   );
 }

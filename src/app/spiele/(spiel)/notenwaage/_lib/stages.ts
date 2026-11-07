@@ -1,5 +1,8 @@
 import {
   createLearningPath,
+  DAILY_ID,
+  pickDailyStages,
+  type PathProgress,
   type PathStage,
 } from "../../../_lib/learning-path";
 import type { PuzzleConfig } from "./puzzle-generator";
@@ -284,9 +287,22 @@ export type WaageRun = {
   lesson: WaageLesson | null;
   liveScale: boolean;
   challengeSection: number | null;
+  daily: boolean;
 };
 
-export function buildRun(id: string): WaageRun {
+export function buildRun(id: string, progress: PathProgress = {}): WaageRun {
+  if (id === DAILY_ID) {
+    const steps = pickDailyStages(WAAGE_PATH, progress, LESSON_ROUNDS);
+    return {
+      id,
+      steps,
+      palette: [...new Set(steps.flatMap((step) => step.values))],
+      lesson: null,
+      liveScale: false,
+      challengeSection: null,
+      daily: true,
+    };
+  }
   const challengeSection = WAAGE_PATH.parseChallengeId(id);
   const stageOfRun = WAAGE_PATH.stageById(id);
   const steps =
@@ -306,5 +322,6 @@ export function buildRun(id: string): WaageRun {
     lesson: challengeSection === null ? (stageOfRun?.lesson ?? null) : null,
     liveScale: challengeSection === null && stageOfRun?.liveScale === true,
     challengeSection,
+    daily: false,
   };
 }

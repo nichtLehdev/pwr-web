@@ -116,6 +116,8 @@ model GameResult {
   playedAt   DateTime
   clientId   String
   createdAt  DateTime @default(now())
+  /// Vom Server berechnet (siehe xp-rules); Grundlage für Ligen.
+  xp         Int      @default(0)
   /// Wer an einem geteilten Konto gespielt hat; ältere Ergebnisse haben kein Profil.
   profileId  String?
   profile    GameProfile? @relation("GameProfileResults", fields: [profileId], references: [id], onDelete: SetNull)

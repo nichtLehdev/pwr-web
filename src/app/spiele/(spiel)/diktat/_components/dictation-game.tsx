@@ -15,6 +15,8 @@ import {
 import { PathResult } from "../../../_components/path-result";
 import { LeaveRunButton, PathScreen } from "../../../_components/path-screen";
 import { usePathState } from "../../../_lib/use-path-state";
+import { markDailyDone } from "../../../_lib/daily";
+import { DAILY_ID, runKindOf } from "../../../_lib/learning-path";
 import {
   buildDictationRun,
   createRound,
@@ -144,7 +146,7 @@ export function DictationGame() {
   );
 
   const startRun = (id: string) => {
-    const active = buildDictationRun(id);
+    const active = buildDictationRun(id, pathState.progress);
     setRun(active);
     setOutcome(null);
     pathState.clearCelebration();
@@ -196,13 +198,16 @@ export function DictationGame() {
     if (!run) return;
     const maxScore = run.levels.length * POINTS_FIRST_TRY;
     const percent = Math.round((100 * score) / maxScore);
-    const { passed } = pathState.record(run.id, { percent, completed });
+    const { passed } = run.daily
+      ? { passed: false }
+      : pathState.record(run.id, { percent, completed });
+    if (run.daily) markDailyDone("diktat");
     setOutcome({ percent, passed });
     recordResult({
       score,
       maxScore,
       streak: bestStreak,
-      meta: { stage: run.id },
+      meta: { stage: run.id, kind: runKindOf(DICTATION_PATH, run.id), passed },
     });
     setPhase("result");
   };
@@ -242,6 +247,7 @@ export function DictationGame() {
             />
           }
           onStart={() => startRun(pathState.selectedId)}
+          daily={{ game: "diktat", onStart: () => startRun(DAILY_ID) }}
         />
       )}
 

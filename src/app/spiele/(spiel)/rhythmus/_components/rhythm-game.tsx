@@ -58,6 +58,7 @@ import {
   challengeCelebration,
   challengeId,
   challengePassed,
+  buildDailySteps,
   ChallengePlan,
   clampSelection,
   levelCelebration,
@@ -66,6 +67,8 @@ import {
   type Celebration,
 } from "../_lib/path";
 import { rankFor, totalStars } from "../_lib/ranks";
+import { markDailyDone } from "../../../_lib/daily";
+import { DAILY_ID } from "../../../_lib/learning-path";
 import { AnswerStage } from "./answer-stage";
 import { BandStage } from "./band-stage";
 import { CalibrationView } from "./calibration-view";
@@ -84,7 +87,8 @@ type Session = {
   /** Nur Endlos: wie weit der Lauf gekommen ist. */
   reached: (() => number) | null;
   /** Nur Challenges. */
-  challenge: { section: number; plan: ChallengePlan } | null;
+  /** `section: null` ist das Tagestraining. */
+  challenge: { section: number | null; plan: ChallengePlan } | null;
   startedAt: number;
 };
 
@@ -177,8 +181,22 @@ export function RhythmGame() {
         streak: active.conductor.judge.bestStreak,
         durationMs: Math.round(performance.now() - active.startedAt),
         meta: {
+          kind: active.challenge
+            ? active.challenge.section === null
+              ? "daily"
+              : "challenge"
+            : isEndless
+              ? "endless"
+              : awardsStars
+                ? "lesson"
+                : "free",
+          passed:
+            active.challenge?.section != null &&
+            challengePassed(active.challenge.plan.completed, result.percent),
           level: active.challenge
-            ? challengeId(active.challenge.section)
+            ? active.challenge.section === null
+              ? DAILY_ID
+              : challengeId(active.challenge.section)
             : (active.level?.id ?? ENDLESS_ID),
           mode,
           input,
@@ -196,8 +214,11 @@ export function RhythmGame() {
       setEndlessResult(null);
       setChallengeResult(null);
       setCelebration(null);
-      if (active.challenge) {
-        const { section, plan } = active.challenge;
+      if (active.challenge?.section === null) {
+        markDailyDone("rhythmus");
+      } else if (active.challenge) {
+        const { plan } = active.challenge;
+        const section = active.challenge.section;
         const passed = challengePassed(plan.completed, result.percent);
         const merged = mergeProgress(
           progressRef.current,
@@ -264,8 +285,9 @@ export function RhythmGame() {
       const { mode, input, fixedBpm } = prefsRef.current;
       const latencySec = latencyMs === null ? null : latencyMs / 1000;
       const challengeSection = parseChallengeId(selectionId);
+      const daily = selectionId === DAILY_ID;
       const level =
-        selectionId === ENDLESS_ID || challengeSection !== null
+        selectionId === ENDLESS_ID || challengeSection !== null || daily
           ? null
           : (levelById(selectionId) ?? LEVELS[0]!);
 
@@ -273,7 +295,11 @@ export function RhythmGame() {
       let reached: Session["reached"] = null;
       let challenge: Session["challenge"] = null;
       let script: SessionScript;
-      if (challengeSection !== null) {
+      if (daily) {
+        const plan = new ChallengePlan(buildDailySteps(progressRef.current));
+        challenge = { section: null, plan };
+        script = new AnswerScript(plan, plan.total);
+      } else if (challengeSection !== null) {
         // Immer Nachspielen: Taktarten und Tempi wechseln, das geht nur mit Vorspielen.
         const plan = new ChallengePlan(challengeSection);
         challenge = { section: challengeSection, plan };
@@ -380,6 +406,7 @@ export function RhythmGame() {
           onCelebrationEnd={() => setCelebration(null)}
           onChange={changePrefs}
           onStart={() => void start(prefs.levelId)}
+          onStartDaily={() => void start(DAILY_ID)}
           onCalibrate={() => setView("calibrate")}
         />
       )}

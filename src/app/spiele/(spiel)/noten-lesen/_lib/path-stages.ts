@@ -1,5 +1,8 @@
 import {
   createLearningPath,
+  DAILY_ID,
+  unlockedStages,
+  type PathProgress,
   type PathStage,
 } from "../../../_lib/learning-path";
 import { writtenPitchToMidi } from "./pitch";
@@ -180,14 +183,21 @@ export type NotenRun = {
   clef: ClefKind;
   total: number;
   challengeSection: number | null;
+  daily: boolean;
 };
 
-/** Eine Challenge zieht aus allen bisherigen Stufen. */
-export function buildNotenRun(id: string, instrument: InstrumentId): NotenRun {
+/** Eine Challenge zieht aus allen bisherigen Stufen, das Tagestraining aus allen offenen. */
+export function buildNotenRun(
+  id: string,
+  instrument: InstrumentId,
+  progress: PathProgress = {},
+): NotenRun {
   const places = placesFor(instrument);
+  const daily = id === DAILY_ID;
   const challengeSection = NOTEN_PATH.parseChallengeId(id);
-  const stages =
-    challengeSection !== null
+  const stages = daily
+    ? unlockedStages(NOTEN_PATH, progress)
+    : challengeSection !== null
       ? NOTEN_PATH.sections
           .slice(0, challengeSection + 1)
           .flatMap((section) => section.stages)
@@ -202,5 +212,6 @@ export function buildNotenRun(id: string, instrument: InstrumentId): NotenRun {
     clef: places.clef,
     total: challengeSection !== null ? CHALLENGE_NOTES : LESSON_NOTES,
     challengeSection,
+    daily,
   };
 }

@@ -17,6 +17,8 @@ import { usePathState } from "../../../_lib/use-path-state";
 import { gameInstruments } from "../../../_lib/profiles/options";
 import { activeProfileInstruments } from "../../../_lib/profiles/scope";
 import { buildNotenRun, NOTEN_PATH, type NotenRun } from "../_lib/path-stages";
+import { loadWeak, markDailyDone, saveWeak } from "../../../_lib/daily";
+import { DAILY_ID, runKindOf } from "../../../_lib/learning-path";
 import { GAME_FOCUS_RING } from "../../../_lib/focus-ring";
 import { toNoteSetSummary, type NoteSetSummary } from "../../../_lib/note-sets";
 import {
@@ -508,7 +510,11 @@ export function NoteReadingGame() {
       const total = active?.total ?? QUIZ_ROUND_LEN;
       if (active) {
         const percent = Math.round((100 * quizCorrectRef.current) / total);
-        const { passed } = pathState.record(active.id, { percent, completed });
+        const { passed } = active.daily
+          ? { passed: false }
+          : pathState.record(active.id, { percent, completed });
+        if (active.daily) markDailyDone("noten-lesen");
+        saveWeak(`noten-lesen.${instrument}`, missTrackerRef.current);
         setOutcome({ percent, passed });
       }
       setRoundResult({
@@ -522,8 +528,16 @@ export function NoteReadingGame() {
         maxScore: total,
         streak: bestStreakRoundRef.current,
         meta: active
-          ? { instrument, stage: active.id }
-          : { instrument, difficulty, mode },
+          ? {
+              instrument,
+              stage: active.id,
+              kind: runKindOf(NOTEN_PATH, active.id),
+              passed:
+                active.challengeSection !== null &&
+                quizCorrectRef.current / total >= 0.7 &&
+                completed,
+            }
+          : { instrument, difficulty, mode, kind: "free" },
       });
       setPhase("result");
     },
@@ -669,7 +683,9 @@ export function NoteReadingGame() {
 
   const startLesson = useCallback(
     (id: string) => {
-      const run = buildNotenRun(id, instrument);
+      const run = buildNotenRun(id, instrument, pathState.progress);
+      // Verfehlte Töne aus früheren Tagen kommen öfter dran.
+      missTrackerRef.current = loadWeak(`noten-lesen.${instrument}`);
       lessonRef.current = run;
       setLesson(run);
       setOutcome(null);
@@ -878,6 +894,7 @@ export function NoteReadingGame() {
             </>
           }
           onStart={() => startLesson(pathState.selectedId)}
+          daily={{ game: "noten-lesen", onStart: () => startLesson(DAILY_ID) }}
           below={
             <FreePractice
               open={freeOpen}

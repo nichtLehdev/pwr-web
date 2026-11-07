@@ -1,5 +1,8 @@
 import {
   createLearningPath,
+  DAILY_ID,
+  unlockedStages,
+  type PathProgress,
   type PathStage,
 } from "../../../_lib/learning-path";
 import { pitchKey } from "../../noten-lesen/_lib/ranges";
@@ -123,16 +126,20 @@ export type GriffeRun = {
   pitches: WrittenPitch[];
   total: number;
   challengeSection: number | null;
+  daily: boolean;
 };
 
 /** Nur Töne mit bekanntem Griff; eine Challenge zieht aus allen bisherigen Stufen. */
 export function buildGriffeRun(
   id: string,
   instrument: GriffeInstrumentId,
+  progress: PathProgress = {},
 ): GriffeRun {
+  const daily = id === DAILY_ID;
   const challengeSection = GRIFFE_PATH.parseChallengeId(id);
-  const stages =
-    challengeSection !== null
+  const stages = daily
+    ? unlockedStages(GRIFFE_PATH, progress)
+    : challengeSection !== null
       ? GRIFFE_PATH.sections
           .slice(0, challengeSection + 1)
           .flatMap((section) => section.stages)
@@ -150,5 +157,6 @@ export function buildGriffeRun(
     pitches: [...unique.values()],
     total: challengeSection !== null ? CHALLENGE_NOTES : LESSON_NOTES,
     challengeSection,
+    daily,
   };
 }

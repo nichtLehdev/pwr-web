@@ -21,6 +21,8 @@ import {
   GRIFFE_PATH,
   type GriffeRun,
 } from "../_lib/path-stages";
+import { loadWeak, markDailyDone, saveWeak } from "../../../_lib/daily";
+import { DAILY_ID, runKindOf } from "../../../_lib/learning-path";
 import { GAME_FOCUS_RING } from "../../../_lib/focus-ring";
 import { toNoteSetSummary, type NoteSetSummary } from "../../../_lib/note-sets";
 import {
@@ -660,7 +662,19 @@ export function FingeringGame() {
       const total = active?.total ?? QUIZ_ROUND_LEN;
       if (active) {
         const percent = Math.round((100 * quizCorrectRef.current) / total);
-        const { passed } = pathState.record(active.id, { percent, completed });
+        const { passed } = active.daily
+          ? { passed: false }
+          : pathState.record(active.id, { percent, completed });
+        if (active.daily) markDailyDone("griffe");
+        saveWeak(
+          `griffe.${instrument}`,
+          new Map(
+            [...adaptiveRef.current].map(([midi, left]) => [
+              String(midi),
+              left,
+            ]),
+          ),
+        );
         setOutcome({ percent, passed });
       }
       const missedRows = [...missedMapRef.current.entries()]
@@ -677,8 +691,16 @@ export function FingeringGame() {
         maxScore: total,
         streak: bestStreakRoundRef.current,
         meta: active
-          ? { instrument, stage: active.id }
-          : { instrument, difficulty, mode },
+          ? {
+              instrument,
+              stage: active.id,
+              kind: runKindOf(GRIFFE_PATH, active.id),
+              passed:
+                active.challengeSection !== null &&
+                quizCorrectRef.current / total >= 0.7 &&
+                completed,
+            }
+          : { instrument, difficulty, mode, kind: "free" },
       });
       setPhase("result");
     },
@@ -1046,7 +1068,14 @@ export function FingeringGame() {
 
   const startLesson = useCallback(
     (id: string) => {
-      const run = buildGriffeRun(id, instrument);
+      const run = buildGriffeRun(id, instrument, pathState.progress);
+      // Verfehlte Griffe aus früheren Tagen kommen öfter dran.
+      adaptiveRef.current = new Map(
+        [...loadWeak(`griffe.${instrument}`)].map(([midi, left]) => [
+          Number(midi),
+          left,
+        ]),
+      );
       lessonRef.current = run;
       setLesson(run);
       setOutcome(null);
@@ -1171,6 +1200,7 @@ export function FingeringGame() {
             </>
           }
           onStart={() => startLesson(pathState.selectedId)}
+          daily={{ game: "griffe", onStart: () => startLesson(DAILY_ID) }}
           below={
             <FreePractice
               open={freeOpen}

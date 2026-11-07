@@ -16,6 +16,8 @@ import { Toni } from "../../../_components/toni";
 import { praiseFor } from "../../../_lib/rewards";
 import { useGameStats } from "../../../_lib/stats/use-game-stats";
 import { usePathState } from "../../../_lib/use-path-state";
+import { markDailyDone } from "../../../_lib/daily";
+import { DAILY_ID, runKindOf } from "../../../_lib/learning-path";
 import {
   createPuzzle,
   puzzleSignature,
@@ -101,12 +103,21 @@ export function NoteValueGame() {
       const total = active.steps.length;
       const { score, solved, bestStreak } = totals.current;
       const percent = Math.round((score / (total * 100)) * 100);
-      const recorded = pathState.record(active.id, { percent, completed });
+      const recorded = active.daily
+        ? { passed: false }
+        : pathState.record(active.id, { percent, completed });
+      if (active.daily) markDailyDone("notenwaage");
       recordResult({
         score,
         maxScore: total * 100,
         streak: bestStreak,
-        meta: { stage: active.id, solved, total },
+        meta: {
+          stage: active.id,
+          kind: runKindOf(WAAGE_PATH, active.id),
+          passed: recorded.passed,
+          solved,
+          total,
+        },
       });
       setResult({
         solved,
@@ -172,7 +183,7 @@ export function NoteValueGame() {
     (id: string) => {
       clearAdvance();
       pathState.clearCelebration();
-      const active = buildRun(id);
+      const active = buildRun(id, pathState.progress);
       runRef.current = active;
       setRun(active);
       setResult(null);
@@ -312,6 +323,7 @@ export function NoteValueGame() {
             />
           }
           challengeText="Alle Noten bis hierher, drei Mal Puste. Schaffe 70 %."
+          daily={{ game: "notenwaage", onStart: () => start(DAILY_ID) }}
           onStart={() => start(pathState.selectedId)}
         />
       </div>

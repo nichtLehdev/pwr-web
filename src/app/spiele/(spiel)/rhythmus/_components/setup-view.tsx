@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/app/_components/ui/button";
 import { GameHead } from "../../../_components/game-kit";
 import { LearningPathMap } from "../../../_components/learning-path-map";
+import { DailyTile } from "../../../_components/path-screen";
 import { usePathCelebration } from "../../../_components/use-path-celebration";
 import { GameDock } from "../../../_components/game-shell-context";
 import { GAME_FOCUS_RING } from "../../../_lib/focus-ring";
@@ -73,6 +74,7 @@ export function SetupView({
   onCelebrationEnd,
   onChange,
   onStart,
+  onStartDaily,
   onCalibrate,
 }: {
   prefs: Prefs;
@@ -83,6 +85,7 @@ export function SetupView({
   onCelebrationEnd: () => void;
   onChange: (next: Prefs) => void;
   onStart: () => void;
+  onStartDaily: () => void;
   onCalibrate: () => void;
 }) {
   const isEndless = prefs.levelId === ENDLESS_ID;
@@ -192,32 +195,35 @@ export function SetupView({
         selectedRef={selectedRef}
         onPick={pick}
         after={
-          <section aria-label="Endlos">
-            <button
-              ref={isEndless ? selectedRef : undefined}
-              type="button"
-              aria-pressed={isEndless}
-              onClick={() => pick(ENDLESS_ID)}
-              className={cn(
-                "spiel-tile flex w-full items-center gap-3 p-4 text-left",
-                GAME_FOCUS_RING,
-                isEndless && "on-orange bg-primary text-ink",
-              )}
-            >
-              <InfinityIcon
-                className="h-8 w-8 shrink-0 stroke-[2.5]"
-                aria-hidden
-              />
-              <span className="min-w-0 flex-1">
-                <span className="block text-lg font-bold">Endlos</span>
-                <span className="mt-0.5 block text-sm leading-snug">
-                  {endlessRecord
-                    ? `Immer schwerer, bis die Puste weg ist. Dein Rekord: ${endlessRecord.points} Punkte.`
-                    : "Immer schwerer, bis die Puste weg ist."}
+          <>
+            <DailyTile game="rhythmus" onStart={onStartDaily} />
+            <section aria-label="Endlos">
+              <button
+                ref={isEndless ? selectedRef : undefined}
+                type="button"
+                aria-pressed={isEndless}
+                onClick={() => pick(ENDLESS_ID)}
+                className={cn(
+                  "spiel-tile flex w-full items-center gap-3 p-4 text-left",
+                  GAME_FOCUS_RING,
+                  isEndless && "on-orange bg-primary text-ink",
+                )}
+              >
+                <InfinityIcon
+                  className="h-8 w-8 shrink-0 stroke-[2.5]"
+                  aria-hidden
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-lg font-bold">Endlos</span>
+                  <span className="mt-0.5 block text-sm leading-snug">
+                    {endlessRecord
+                      ? `Immer schwerer, bis die Puste weg ist. Dein Rekord: ${endlessRecord.points} Punkte.`
+                      : "Immer schwerer, bis die Puste weg ist."}
+                  </span>
                 </span>
-              </span>
-            </button>
-          </section>
+              </button>
+            </section>
+          </>
         }
       />
 

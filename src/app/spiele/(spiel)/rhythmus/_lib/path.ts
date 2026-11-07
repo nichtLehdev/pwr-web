@@ -3,6 +3,8 @@ import {
   CHALLENGE_PASS_PERCENT,
   challengePassed,
   createLearningPath,
+  pickDailyStages,
+  type PathProgress,
   type Celebration,
   type CelebrationStage,
   type CelebrationStep,
@@ -60,10 +62,22 @@ function sameMeter(a: TimeSignature, b: TimeSignature): boolean {
  * zusammen, sonst müsste man alle paar Figuren neu umdenken.
  */
 export function buildChallengeSteps(sectionIndex: number): ChallengeStep[] {
-  const levels = RHYTHM_PATH.challengeStages(sectionIndex, {
-    min: MIN_CHALLENGE_FIGURES,
-    max: MAX_CHALLENGE_FIGURES,
-  });
+  return stepsForLevels(
+    RHYTHM_PATH.challengeStages(sectionIndex, {
+      min: MIN_CHALLENGE_FIGURES,
+      max: MAX_CHALLENGE_FIGURES,
+    }),
+  );
+}
+
+const DAILY_FIGURES = 8;
+
+/** Tagestraining: acht Figuren aus allen offenen Stufen, schwache öfter. */
+export function buildDailySteps(progress: PathProgress): ChallengeStep[] {
+  return stepsForLevels(pickDailyStages(RHYTHM_PATH, progress, DAILY_FIGURES));
+}
+
+function stepsForLevels(levels: Level[]): ChallengeStep[] {
   const bpm = Math.min(...levels.map((level) => level.bpm.start));
 
   const groups: { ts: TimeSignature; levels: Level[] }[] = [];
@@ -92,10 +106,11 @@ export class ChallengePlan implements AnswerRules {
   completed = false;
 
   constructor(
-    sectionIndex: number,
+    source: number | ChallengeStep[],
     private readonly rng: Rng = Math.random,
   ) {
-    this.steps = buildChallengeSteps(sectionIndex);
+    this.steps =
+      typeof source === "number" ? buildChallengeSteps(source) : source;
   }
 
   get lives(): number {

@@ -263,3 +263,46 @@ export function recordPathRun<S extends PathStage>(
         : null;
   return { progress: next, stars, passed, celebration };
 }
+
+/* Tagestraining: jeden Tag neu gemischt aus allem, was offen ist. */
+
+export const DAILY_ID = "daily";
+
+export type RunKind = "lesson" | "challenge" | "daily";
+
+export function runKindOf<S extends PathStage>(
+  path: LearningPath<S>,
+  id: string,
+): RunKind {
+  if (id === DAILY_ID) return "daily";
+  return path.parseChallengeId(id) !== null ? "challenge" : "lesson";
+}
+
+export function unlockedStages<S extends PathStage>(
+  path: LearningPath<S>,
+  progress: PathProgress,
+): S[] {
+  return path.sections
+    .filter((section) => path.isSectionUnlocked(section.index, progress))
+    .flatMap((section) => section.stages);
+}
+
+/** Schwache Stufen kommen öfter dran: ohne Sterne viermal so oft wie mit dreien. */
+export function pickDailyStages<S extends PathStage>(
+  path: LearningPath<S>,
+  progress: PathProgress,
+  count: number,
+  rng: () => number = Math.random,
+): S[] {
+  const pool = unlockedStages(path, progress);
+  const weight = (stage: S) => 4 - Math.min(3, progress[stage.id]?.stars ?? 0);
+  const total = pool.reduce((sum, stage) => sum + weight(stage), 0);
+  return Array.from({ length: count }, () => {
+    let roll = rng() * total;
+    for (const stage of pool) {
+      roll -= weight(stage);
+      if (roll < 0) return stage;
+    }
+    return pool[pool.length - 1]!;
+  });
+}
