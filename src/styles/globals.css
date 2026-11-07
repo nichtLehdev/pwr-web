@@ -427,6 +427,16 @@ body {
   background: var(--color-night-raised);
 }
 
+/* Bestehende eckige Knöpfe der Lernspiele, ohne jeden einzeln umzubauen. */
+.spiel-runde button {
+  border-radius: 0.875rem;
+}
+/* Auch Notenzeile, Waage und Griffbild ordnen sich als Karten ein. */
+.spiel-runde .spiel-karte {
+  border-radius: 1.25rem;
+  overflow: hidden;
+}
+
 .spiel-pad {
   box-shadow: 0 0.5rem 0 var(--color-ink);
   transition:
@@ -437,7 +447,17 @@ body {
   box-shadow: 0 0.125rem 0 var(--color-ink);
   transform: translateY(0.375rem);
 }
-.dark .spiel-pad {
+.dark /* Bestehende eckige Knöpfe der Lernspiele, ohne jeden einzeln umzubauen. */
+.spiel-runde button {
+  border-radius: 0.875rem;
+}
+/* Auch Notenzeile, Waage und Griffbild ordnen sich als Karten ein. */
+.spiel-runde .spiel-karte {
+  border-radius: 1.25rem;
+  overflow: hidden;
+}
+
+.spiel-pad {
   box-shadow: 0 0.5rem 0 #000;
 }
 

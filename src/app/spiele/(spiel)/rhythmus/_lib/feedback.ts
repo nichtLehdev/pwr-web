@@ -1,7 +1,8 @@
+import { starsFor, type Stars } from "../../../_lib/rewards";
 import { pulseOf, secPerTick } from "../../../_lib/rhythm/ticks";
 import type { Attempt } from "./conductor";
 
-export type Stars = 0 | 1 | 2 | 3;
+export { starsFor, type Stars };
 
 export type SessionSummary = {
   percent: number;
@@ -15,13 +16,6 @@ export type SessionSummary = {
 const MIN_SAMPLES = 4;
 /** Anteil eines Schlags, ab dem eine Tendenz spürbar und nicht bloß Streuung ist. */
 const BIAS_BEAT_FRACTION = 0.045;
-
-export function starsFor(percent: number): Stars {
-  if (percent >= 90) return 3;
-  if (percent >= 75) return 2;
-  if (percent >= 60) return 1;
-  return 0;
-}
 
 function median(values: number[]): number {
   const sorted = [...values].sort((a, b) => a - b);
