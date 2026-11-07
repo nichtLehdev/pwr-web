@@ -417,6 +417,126 @@ body {
 }
 
 /*
+ * Rhythmus-Spiele: bewusst die Ausnahme vom rechtwinkligen Programmheft, weil hier Kinder
+ * spielen. Die Klassen gelten nur auf den Spielflächen.
+ */
+.spiel-buehne {
+  background: #fff3d6;
+}
+.dark .spiel-buehne {
+  background: var(--color-night-raised);
+}
+
+.spiel-pad {
+  box-shadow: 0 0.5rem 0 var(--color-ink);
+  transition:
+    transform 60ms,
+    box-shadow 60ms;
+}
+.spiel-pad[data-pressed="true"] {
+  box-shadow: 0 0.125rem 0 var(--color-ink);
+  transform: translateY(0.375rem);
+}
+.dark .spiel-pad {
+  box-shadow: 0 0.5rem 0 #000;
+}
+
+@keyframes spiel-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.4) rotate(-14deg);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.2) rotate(4deg);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.spiel-pop {
+  animation: spiel-pop 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes spiel-shake {
+  25% {
+    transform: translateX(-6px);
+  }
+  50% {
+    transform: translateX(5px);
+  }
+  75% {
+    transform: translateX(-3px);
+  }
+}
+.spiel-shake {
+  animation: spiel-shake 0.32s ease-in-out;
+}
+
+@keyframes spiel-float {
+  50% {
+    transform: translateY(-6px);
+  }
+}
+.spiel-float {
+  animation: spiel-float 2.2s ease-in-out infinite;
+}
+
+@keyframes spiel-glow {
+  50% {
+    box-shadow: 0 0 0 0.5rem rgb(250 166 25 / 0.35);
+  }
+}
+.spiel-glow {
+  animation: spiel-glow 1.6s ease-in-out infinite;
+}
+
+.spiel-burst {
+  position: absolute;
+  z-index: 15;
+  pointer-events: none;
+  font-size: 1.125rem;
+  font-weight: 800;
+  animation: spiel-burst 0.55s ease-out forwards;
+}
+@keyframes spiel-burst {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.6);
+  }
+  to {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy)))
+      scale(1.2);
+  }
+}
+
+.spiel-confetti-piece {
+  position: absolute;
+  top: -1.5rem;
+  font-size: 1.25rem;
+  font-weight: 800;
+  animation: spiel-confetti linear both;
+}
+@keyframes spiel-confetti {
+  to {
+    transform: translate(var(--drift), 108dvh) rotate(540deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spiel-pop,
+  .spiel-shake,
+  .spiel-float,
+  .spiel-glow {
+    animation: none;
+  }
+  .spiel-confetti {
+    display: none;
+  }
+}
+
+/*
  * iOS Safari renders date/time inputs as native widgets (intrinsic width,
  * centred and taller); reset them to plain fields so mixed rows line up.
  */
