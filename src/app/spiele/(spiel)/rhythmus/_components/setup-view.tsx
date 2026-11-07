@@ -20,6 +20,7 @@ import type { InputMode } from "../_lib/conductor";
 import { ENDLESS_ID, type EndlessRecords } from "../_lib/endless";
 import {
   CHALLENGE_PASS_PERCENT,
+  clampSelection,
   parseChallengeId,
   RHYTHM_PATH,
   type Celebration,
@@ -73,6 +74,7 @@ function ChoiceField({
 export function SetupView({
   prefs,
   progress,
+  progressByMode,
   endlessRecords,
   notice,
   celebration,
@@ -86,6 +88,7 @@ export function SetupView({
 }: {
   prefs: Prefs;
   progress: Progress;
+  progressByMode: Record<PlayMode, Progress>;
   endlessRecords: EndlessRecords;
   notice: string | null;
   celebration: Celebration | null;
@@ -98,7 +101,9 @@ export function SetupView({
   onCalibrate: () => void;
 }) {
   const isEndless = prefs.levelId === ENDLESS_ID;
-  const dailyDone = useDailyDone("rhythmus");
+  const dailyDone = useDailyDone(
+    prefs.mode === "band" ? "rhythmus-band" : "rhythmus",
+  );
   const challengeSection = parseChallengeId(prefs.levelId);
   const level = levelById(prefs.levelId) ?? LEVELS[0]!;
   const levelNumber = LEVELS.indexOf(level) + 1;
@@ -132,7 +137,13 @@ export function SetupView({
     userPicked.current = true;
     onChange({ ...prefs, levelId });
   };
-  const setMode = (mode: PlayMode) => onChange({ ...prefs, mode });
+  // Jede Spielart hat ihren Pfad: Die Auswahl muss dort offen sein.
+  const setMode = (mode: PlayMode) =>
+    onChange({
+      ...prefs,
+      mode,
+      levelId: clampSelection(prefs.levelId, progressByMode[mode]),
+    });
   const setInput = (input: InputMode) => onChange({ ...prefs, input });
   const stepBpm = (delta: number) =>
     onChange({
@@ -177,13 +188,13 @@ export function SetupView({
         <ChoiceField
           active={prefs.mode === "answer"}
           title="Nachspielen"
-          hint="Hören, dann du"
+          hint={`Hören, dann du · ${totalStars(progressByMode.answer)} Sterne`}
           onClick={() => setMode("answer")}
         />
         <ChoiceField
           active={prefs.mode === "band"}
           title="Notenband"
-          hint="Lesen und spielen"
+          hint={`Lesen und spielen · ${totalStars(progressByMode.band)} Sterne`}
           onClick={() => setMode("band")}
         />
       </div>

@@ -14,7 +14,15 @@ import { LEVELS, type Level } from "../../../_lib/rhythm/levels";
 import { figureKey } from "../../../_lib/rhythm/ticks";
 import type { TimeSignature } from "../../../_lib/rhythm/types";
 import { Lives } from "./endless";
-import type { AnswerRules, AnswerStep } from "./session-script";
+import type {
+  AnswerRules,
+  AnswerStep,
+  BandSource,
+  SegmentSpec,
+  SessionScript,
+} from "./session-script";
+import { generateBar } from "../../../_lib/rhythm/generator";
+import type { RhythmEvent } from "../../../_lib/rhythm/types";
 
 export const RHYTHM_PATH = createLearningPath<Level>(
   [...new Set(LEVELS.map((level) => level.group))].map((title) => ({
@@ -145,4 +153,123 @@ export class ChallengePlan implements AnswerRules {
     }
     return this.step(change);
   }
+}
+
+const BAND_CHALLENGE_BARS = { min: 12, max: 16 };
+const BAND_DAILY_BARS = 8;
+
+function sameMeterOf(a: TimeSignature, b: TimeSignature): boolean {
+  return a.numerator === b.numerator && a.denominator === b.denominator;
+}
+
+/**
+ * Das Notenband zeigt eine Taktart je Lauf: die, die die meisten Stufen kennen.
+ * Stufen ohne diese Taktart fallen weg.
+ */
+export function bandMeterFor(levels: readonly Level[]): {
+  ts: TimeSignature;
+  levels: Level[];
+} {
+  const candidates = levels.flatMap((level) => level.meters);
+  let best = candidates[0]!;
+  let bestCount = -1;
+  for (const meter of candidates) {
+    const count = levels.filter((level) =>
+      level.meters.some((m) => sameMeterOf(m, meter)),
+    ).length;
+    if (count > bestCount) {
+      best = meter;
+      bestCount = count;
+    }
+  }
+  return {
+    ts: best,
+    levels: levels.filter((level) =>
+      level.meters.some((m) => sameMeterOf(m, best)),
+    ),
+  };
+}
+
+/** Challenge und Tagestraining im Notenband: ein Takt je Stufe, drei Mal Puste. */
+export class BandRunScript implements SessionScript, BandSource {
+  readonly ts: TimeSignature;
+  readonly barCount: number;
+  private readonly bars: RhythmEvent[][];
+  private readonly bpm: number;
+  private readonly health = new Lives();
+  private cursor = -1;
+  completed = false;
+
+  constructor(levels: readonly Level[], rng: Rng = Math.random) {
+    const { ts, levels: usable } = bandMeterFor(levels);
+    this.ts = ts;
+    this.bars = usable.map((level) => generateBar(level, ts, rng));
+    this.barCount = this.bars.length;
+    const slowest = Math.min(...usable.map((level) => level.bpm.start));
+    this.bpm = Math.max(slowest, ...usable.map((level) => level.bpm.min));
+  }
+
+  get lives(): number {
+    return this.health.lives;
+  }
+
+  barAt(index: number): RhythmEvent[] | undefined {
+    return this.bars[index];
+  }
+
+  peekBar(index: number): RhythmEvent[] | undefined {
+    return this.bars[index];
+  }
+
+  bpmAt(): number {
+    return this.bpm;
+  }
+
+  next(lastAccuracy: number | null): SegmentSpec | null {
+    const index = this.cursor++;
+    if (index === -1) return this.spec("count", [[]], 0, null);
+    let announcement: SegmentSpec["announcement"] = null;
+    if (lastAccuracy !== null) {
+      const change = this.health.register(lastAccuracy);
+      if (this.lives <= 0) return null;
+      if (change) announcement = change;
+    }
+    if (index >= this.bars.length) {
+      this.completed = true;
+      return null;
+    }
+    return this.spec("read", [this.bars[index]!], index, announcement);
+  }
+
+  private spec(
+    kind: SegmentSpec["kind"],
+    bars: RhythmEvent[][],
+    index: number,
+    announcement: SegmentSpec["announcement"],
+  ): SegmentSpec {
+    return {
+      kind,
+      bpm: this.bpm,
+      timeSignature: this.ts,
+      bars,
+      index,
+      total: this.barCount,
+      announcement,
+      lives: this.lives,
+    };
+  }
+}
+
+export function bandChallenge(sectionIndex: number, rng?: Rng): BandRunScript {
+  return new BandRunScript(
+    RHYTHM_PATH.challengeStages(sectionIndex, BAND_CHALLENGE_BARS),
+    rng,
+  );
+}
+
+export function bandDaily(progress: PathProgress, rng?: Rng): BandRunScript {
+  return new BandRunScript(
+    pickDailyStages(RHYTHM_PATH, progress, BAND_DAILY_BARS),
+    rng,
+  );
 }

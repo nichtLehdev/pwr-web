@@ -7,6 +7,9 @@ import type { Stars } from "./feedback";
 
 const PREFS_KEY = "pwr.spiele.v1.rhythmus.prefs";
 const PROGRESS_KEY = "pwr.spiele.v1.rhythmus.progress";
+/** Notenband hat seinen eigenen Pfad: Lesen ist eine andere Fähigkeit als Nachspielen. */
+const BAND_PROGRESS_KEY = "pwr.spiele.v1.rhythmus.band.progress";
+const BAND_COPIED_KEY = "pwr.spiele.v1.rhythmus.band.copied";
 
 export type PlayMode = "answer" | "band";
 
@@ -49,7 +52,8 @@ function read<T>(key: string): T | null {
 function write(key: string, value: unknown): void {
   try {
     localStorage.setItem(scopedKey(key), JSON.stringify(value));
-    if (key === PROGRESS_KEY) notifyProgressChanged();
+    if (key === PROGRESS_KEY || key === BAND_PROGRESS_KEY)
+      notifyProgressChanged();
   } catch {
     /* Privatmodus: Es bleibt bei dieser Sitzung. */
   }
@@ -73,12 +77,23 @@ export function savePrefs(prefs: Prefs): void {
   write(PREFS_KEY, prefs);
 }
 
-export function loadProgress(): Progress {
-  return read<Progress>(PROGRESS_KEY) ?? {};
+export function loadProgress(mode: PlayMode = "answer"): Progress {
+  if (mode === "answer") return read<Progress>(PROGRESS_KEY) ?? {};
+  const band = read<Progress>(BAND_PROGRESS_KEY);
+  if (band) return band;
+  // Einmalig: Wer vor der Trennung gespielt hat, behält in beiden Pfaden, was offen war.
+  if (read<boolean>(BAND_COPIED_KEY)) return {};
+  const copied = read<Progress>(PROGRESS_KEY) ?? {};
+  write(BAND_PROGRESS_KEY, copied);
+  write(BAND_COPIED_KEY, true);
+  return copied;
 }
 
-export function saveProgress(progress: Progress): void {
-  write(PROGRESS_KEY, progress);
+export function saveProgress(
+  progress: Progress,
+  mode: PlayMode = "answer",
+): void {
+  write(mode === "band" ? BAND_PROGRESS_KEY : PROGRESS_KEY, progress);
 }
 
 /** Bestwerte bleiben, das Tempo folgt dem letzten Spiel. */
