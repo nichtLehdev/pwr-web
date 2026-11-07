@@ -31,7 +31,7 @@ export function ScaleSVG({
     <div
       aria-hidden={decorative || undefined}
       className={cn(
-        "border-rule dark:border-night-rule text-ink dark:text-night-text flex h-full w-full flex-col overflow-hidden border",
+        "spiel-karte border-rule dark:border-night-rule text-ink dark:text-night-text flex h-full w-full flex-col overflow-hidden border",
         // Gleichgewicht wird mit Tinte quittiert, nicht mit Gruen.
         balancedFlash && "ring-ink dark:ring-night-text ring-[3px] ring-inset",
       )}

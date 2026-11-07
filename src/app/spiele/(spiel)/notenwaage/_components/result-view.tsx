@@ -1,18 +1,18 @@
 "use client";
 
-import {
-  PartyPopper,
-  RotateCcw,
-  SlidersHorizontal,
-  Trophy,
-} from "lucide-react";
 import { Button } from "@/app/_components/ui/button";
+import { ArcadeButton } from "../../../_components/arcade-button";
+import { Celebration } from "../../../_components/game-kit";
+import { GameDock } from "../../../_components/game-shell-context";
 
 type Props = {
   score: number;
   solved: number;
   total: number;
   bestStreak: number;
+  maxScore: number;
+  bestScore: number;
+  plays: number;
   onRetry: () => void;
   onSetup: () => void;
 };
@@ -22,51 +22,31 @@ export function NoteWaageResultView({
   solved,
   total,
   bestStreak,
+  maxScore,
+  bestScore,
+  plays,
   onRetry,
   onSetup,
 }: Props) {
-  const percent = total > 0 ? Math.round((100 * solved) / total) : 0;
+  const percent = maxScore > 0 ? Math.round((100 * score) / maxScore) : 0;
+  const isBest = plays > 1 && score > 0 && score >= bestScore;
   return (
-    <div className="border-rule dark:border-night-rule space-y-5 border-t pt-5 md:space-y-6 md:pt-6">
-      <div className="text-center">
-        {percent >= 75 ? (
-          <Trophy
-            className="text-primary-ink dark:text-primary mx-auto h-12 w-12 stroke-[1.35] md:h-16 md:w-16"
-            aria-hidden
-          />
-        ) : (
-          <PartyPopper
-            className="text-primary-ink dark:text-primary mx-auto h-12 w-12 stroke-[1.35] md:h-16 md:w-16"
-            aria-hidden
-          />
-        )}
-        <p className="text-ink dark:text-night-text mt-3 text-lg font-bold md:text-xl">
-          Runde beendet
-        </p>
-        {/* Orange als Schrift auf Papier hat nur 1,99:1, daher Messing-Tinte; nachts trägt Orange. */}
-        <p className="text-primary-ink dark:text-primary mt-2 text-4xl font-bold tabular-nums md:text-5xl">
-          {score}
-        </p>
-        <p className="text-dark dark:text-night-muted mt-2 text-sm font-medium">
-          Gelöst: {solved}/{total} · Beste First-Try-Serie: {bestStreak}
-        </p>
-      </div>
-      <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-        <Button type="button" size="lg" className="gap-2" onClick={onRetry}>
-          <RotateCcw className="h-5 w-5" aria-hidden />
-          Nochmal spielen
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="lg"
-          className="gap-2"
-          onClick={onSetup}
-        >
-          <SlidersHorizontal className="h-5 w-5" aria-hidden />
-          Setup ändern
-        </Button>
-      </div>
-    </div>
+    <>
+      <Celebration
+        percent={percent}
+        value={String(score)}
+        valueLabel="Punkte"
+        stats={`Gelöst: ${solved}/${total} · Beste Serie: ${bestStreak} · Dein Rekord: ${bestScore}`}
+        badge={isBest ? "Bestleistung!" : null}
+      />
+      <GameDock>
+        <div className="flex flex-col gap-2">
+          <ArcadeButton onClick={onRetry}>Nochmal spielen</ArcadeButton>
+          <Button type="button" variant="outline" onClick={onSetup}>
+            Schwierigkeit wählen
+          </Button>
+        </div>
+      </GameDock>
+    </>
   );
 }

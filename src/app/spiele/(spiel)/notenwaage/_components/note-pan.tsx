@@ -47,7 +47,7 @@ export function NotePan({
     slotCount != null ? Math.max(0, slotCount - notes.length) : 0;
 
   return (
-    <div className="border-rule bg-rule/25 dark:border-night-rule dark:bg-night-raised border p-1 md:p-1.5">
+    <div className="spiel-karte border-rule bg-rule/25 dark:border-night-rule dark:bg-night-raised border p-1 md:p-1.5">
       <p className="text-ink dark:text-night-text mb-0.5 text-center text-[10px] font-bold md:text-[11px]">
         {title}
         {headerHint && (

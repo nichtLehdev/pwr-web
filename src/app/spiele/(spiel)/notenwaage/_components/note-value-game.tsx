@@ -8,7 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { Music, Settings2 } from "lucide-react";
+import { Settings2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/app/_components/ui/button";
 import { GAME_FOCUS_RING } from "../../../_lib/focus-ring";
@@ -28,7 +28,13 @@ import {
   type Puzzle,
 } from "../_lib/types";
 import { GameBarSlot, GameDock } from "../../../_components/game-shell-context";
-import { GameStepIndicator } from "../../../_components/game-step-indicator";
+import { ArcadeButton } from "../../../_components/arcade-button";
+import {
+  GameHero,
+  ToniCoach,
+  useGameSounds,
+} from "../../../_components/game-kit";
+import { praiseFor } from "../../../_lib/rewards";
 import { useGameStats } from "../../../_lib/stats/use-game-stats";
 import { ScaleSVG } from "./scale-svg";
 import { NotePan, type PanEntry } from "./note-pan";
@@ -59,7 +65,6 @@ const VORSCHAU_GLYPH =
 // Kästchen, der Abstand zur Beschriftung muss also mitwachsen.
 const VORSCHAU_ABSTAND =
   "mt-[max(13px,min(calc(2.5dvh_-_7px),22px))] md:mt-[max(16px,min(calc(4dvh_-_13px),36px))]";
-const TITEL_ZEICHEN = "h-[clamp(40px,7dvh,72px)] w-[clamp(40px,7dvh,72px)]";
 
 // Stabile Schlüssel für Einträge in der rechten Schale: beim Entfernen einer
 // Note bleiben alle anderen NoteGlyphs gemountet (kein VexFlow-Re-Render).
@@ -79,6 +84,7 @@ function readStoredDifficulty(): DifficultyId | null {
 
 export function NoteValueGame() {
   const { aggregates, recordResult } = useGameStats("notenwaage");
+  const { correct: soundCorrect, wrong: soundWrong } = useGameSounds();
   const [difficulty, setDifficulty] = useState<DifficultyId>("beginner");
   const [phase, setPhase] = useState<Phase>("setup");
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
@@ -129,6 +135,15 @@ export function NoteValueGame() {
       /* ignore */
     }
   }, []);
+
+  // Klang aus dem Urteil abgeleitet: So bleibt die Spiellogik unberührt.
+  useEffect(() => {
+    if (attempts === 0) return;
+    if (pendingAdvance) soundCorrect(firstTryStreak);
+    else soundWrong();
+    // Nur je Antwort klingen, nicht beim Zurücksetzen der Runde.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [attempts]);
 
   const leftUnits = useMemo(
     () => (puzzle ? totalUnits(puzzle.left) : 0),
@@ -340,55 +355,28 @@ export function NoteValueGame() {
   if (phase === "result") {
     return (
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
-        <GameStepIndicator
-          steps={["Setup", "Spielen", "Auswertung"]}
-          current={2}
-        />
         <NoteWaageResultView
           score={score}
           solved={solved}
           total={ROUND_LEN}
           bestStreak={bestFirstTry}
+          maxScore={ROUND_LEN * 100}
+          bestScore={aggregates?.bestScore ?? 0}
+          plays={aggregates?.plays ?? 0}
           onRetry={startGame}
           onSetup={goToSetup}
         />
-        {aggregates && aggregates.plays > 0 && (
-          <p className="text-dark dark:text-night-muted text-center text-sm">
-            Persönlicher Rekord:{" "}
-            <span className="text-ink dark:text-night-text font-bold">
-              {aggregates.bestScore} Punkte
-            </span>{" "}
-            · {aggregates.plays} {aggregates.plays === 1 ? "Runde" : "Runden"}{" "}
-            gespielt
-          </p>
-        )}
       </div>
     );
   }
 
   if (phase === "setup") {
     return (
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 md:gap-5">
-        <GameStepIndicator
-          steps={["Setup", "Spielen", "Auswertung"]}
-          current={0}
+      <div className="spiel-runde mx-auto flex w-full max-w-5xl flex-col gap-3 md:gap-5">
+        <GameHero
+          title="Notenwaage"
+          text="Leg Noten auf die Waage, bis beide Seiten gleich schwer sind!"
         />
-        <div className="text-center">
-          <Music
-            className={cn(
-              "text-primary-ink dark:text-primary mx-auto",
-              TITEL_ZEICHEN,
-            )}
-            aria-hidden
-          />
-          <h2 className="text-ink dark:text-night-text mt-2 text-xl font-bold md:text-3xl">
-            Notenwaage
-          </h2>
-          <p className="text-dark dark:text-night-muted mx-auto mt-2 max-w-xl text-sm md:text-base">
-            Fülle die rechte Waagschale mit Notenwerten, bis beide Seiten gleich
-            schwer sind.
-          </p>
-        </div>
         {/* Rein schmückend, daher für Vorleseprogramme unsichtbar. */}
         <div className={cn("shrink-0 overflow-hidden", SETUP_WAAGE)}>
           <ScaleSVG diffUnits={0} decorative />
@@ -477,9 +465,9 @@ export function NoteValueGame() {
           </ul>
         </section>
 
-        <Button type="button" size="lg" className="w-full" onClick={startGame}>
-          Los geht&apos;s!
-        </Button>
+        <GameDock>
+          <ArcadeButton onClick={startGame}>Los geht&apos;s!</ArcadeButton>
+        </GameDock>
       </div>
     );
   }
@@ -489,12 +477,7 @@ export function NoteValueGame() {
   const openSlots = Math.max(0, puzzle.rightCount - right.length);
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-2 md:gap-3">
-      <GameStepIndicator
-        steps={["Setup", "Spielen", "Auswertung"]}
-        current={1}
-      />
-
+    <div className="spiel-runde mx-auto flex w-full max-w-5xl flex-col gap-2 md:gap-3">
       {/* Spielstand im Status-Platz der Hülle, damit keine eigene Zeile Höhe kostet. */}
       <GameBarSlot>
         <p className="text-ink dark:text-night-text text-xs font-bold tabular-nums md:text-sm">
@@ -507,14 +490,20 @@ export function NoteValueGame() {
         </p>
       </GameBarSlot>
 
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-ink dark:text-night-text min-w-0 flex-1 text-xs font-bold md:text-sm">
-          Aufgabe: Rechte Seite mit genau{" "}
-          <span className="text-primary-ink dark:text-primary">
-            {puzzle.rightCount}
-          </span>{" "}
-          Symbolen ausgleichen
-        </p>
+      <div className="flex items-center gap-2">
+        <div className="min-w-0 flex-1">
+          <ToniCoach
+            mood={pendingAdvance ? "happy" : feedback ? "oops" : "listen"}
+            message={
+              pendingAdvance
+                ? praiseFor(firstTryStreak || 1)
+                : (feedback ?? "Mach beide Seiten gleich schwer!")
+            }
+            note={`Mit genau ${puzzle.rightCount} Symbolen`}
+            streak={firstTryStreak}
+            progress={roundIdx / ROUND_LEN}
+          />
+        </div>
         <button
           type="button"
           onClick={goToSetup}
@@ -525,7 +514,7 @@ export function NoteValueGame() {
           )}
         >
           <Settings2 className="h-4 w-4" aria-hidden />
-          Setup
+          <span className="hidden sm:inline">Setup</span>
         </button>
       </div>
       {puzzle.requiredRests != null && (
@@ -589,21 +578,19 @@ export function NoteValueGame() {
       </div>
 
       <GameDock>
-        <div className="grid grid-cols-2 gap-1.5 md:gap-2">
-          <Button
-            type="button"
-            size="lg"
-            className="w-full"
+        <div className="flex items-start gap-2">
+          <ArcadeButton
+            className="flex-[2]"
             disabled={pendingAdvance}
             onClick={submit}
           >
             Fertig
-          </Button>
+          </ArcadeButton>
           <Button
             type="button"
             variant="outline"
             size="lg"
-            className="w-full"
+            className="flex-1"
             disabled={pendingAdvance}
             onClick={skip}
           >
