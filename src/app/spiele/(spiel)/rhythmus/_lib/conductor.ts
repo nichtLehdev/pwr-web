@@ -241,10 +241,9 @@ export class Conductor {
     );
   }
 
-  /** Beim Notenband sind alle Takte vorab bekannt. */
+  /** Beim Notenband stehen die folgenden Takte vorab fest. */
   private nextReadBarStartsWithRest(segment: Segment): boolean | null {
-    const bars = (this.script as { bars?: SegmentSpec["bars"] }).bars;
-    return bars?.[segment.index + 1]?.[0]?.isRest ?? null;
+    return this.script.peekBar?.(segment.index + 1)?.[0]?.isRest ?? null;
   }
 
   private scheduleSound(segment: Segment): void {

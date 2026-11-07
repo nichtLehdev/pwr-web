@@ -8,13 +8,13 @@ import { barScale, type BarHandle } from "../../../_lib/rhythm/draw-bar";
 import { barTicks, pulseOf, secPerTick } from "../../../_lib/rhythm/ticks";
 import type { Conductor, Press, Segment } from "../_lib/conductor";
 import type { JudgeEvent } from "../_lib/judge";
-import { ballHop, CountOverlay, StageHud, useCountIn } from "./stage-parts";
-
-const ANNOUNCEMENT = {
-  again: "Noch einmal!",
-  faster: "Schneller!",
-  slower: "Etwas ruhiger",
-} as const;
+import {
+  ANNOUNCEMENT,
+  ballHop,
+  CountOverlay,
+  StageHud,
+  useCountIn,
+} from "./stage-parts";
 
 /** Vorspielen, Nachspielen: Der Ball zeigt beides, gewertet wird nur die Antwort. */
 export function AnswerStage({ conductor }: { conductor: Conductor }) {
@@ -134,7 +134,7 @@ export function AnswerStage({ conductor }: { conductor: Conductor }) {
         ? "Jetzt du!"
         : "Mitzählen!";
   const figureIndex = segment?.index ?? 0;
-  const total = segment?.total ?? 1;
+  const total = segment?.total ?? null;
 
   return (
     <div className="spiel-buehne flex flex-col gap-2 rounded-3xl p-3 sm:p-4">
@@ -146,10 +146,17 @@ export function AnswerStage({ conductor }: { conductor: Conductor }) {
         }
         progressText={
           segment && segment.kind !== "count"
-            ? `Figur ${figureIndex + 1} von ${total} · ${segment.bpm} BPM`
+            ? `Figur ${figureIndex + 1}${total !== null ? ` von ${total}` : ""} · ${segment.bpm} BPM`
             : ""
         }
-        progress={segment?.kind === "count" ? 0 : figureIndex / total}
+        progress={
+          segment && segment.lives !== undefined
+            ? null
+            : segment?.kind === "count" || total === null
+              ? 0
+              : figureIndex / total
+        }
+        lives={segment?.lives}
       />
       <div
         ref={sheetRef}

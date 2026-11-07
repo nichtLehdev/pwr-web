@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Flame, Music2 } from "lucide-react";
+import { Flame, Music2, Wind } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Toni, type ToniMood } from "../../../_components/toni";
 import { pulseOf, secPerTick } from "../../../_lib/rhythm/ticks";
 import type { Conductor, Segment } from "../_lib/conductor";
+import { MAX_LIVES } from "../_lib/endless";
 import type { JudgeEvent } from "../_lib/judge";
 
 const REACTION_MS = 650;
@@ -31,6 +32,27 @@ function BeatDots({ pulses, active }: { pulses: number; active: number }) {
         />
       ))}
     </div>
+  );
+}
+
+/** Tonis Puste: die Leben im Endlos-Spiel. */
+function Breath({ lives }: { lives: number }) {
+  return (
+    <p className="mt-1 flex items-center gap-1" role="status">
+      <span className="sr-only">Noch {lives} Puste</span>
+      {Array.from({ length: MAX_LIVES }, (_, i) => (
+        <Wind
+          key={i}
+          aria-hidden
+          className={cn(
+            "h-5 w-5 stroke-[2.5] transition-opacity",
+            i < lives
+              ? "text-primary-ink dark:text-primary spiel-pop"
+              : "text-ink/20 dark:text-night-rule",
+          )}
+        />
+      ))}
+    </p>
   );
 }
 
@@ -68,13 +90,15 @@ export function StageHud({
   baseMood,
   progressText,
   progress,
+  lives,
 }: {
   conductor: Conductor;
   baseText: string;
   baseMood: ToniMood;
   progressText: string;
-  /** Anteil 0–1 der geschafften Runde. */
-  progress: number;
+  /** Anteil 0–1 der geschafften Runde; Endlos hat stattdessen Puste. */
+  progress: number | null;
+  lives?: number;
 }) {
   const [reaction, setReaction] = useState<{
     id: number;
@@ -155,15 +179,18 @@ export function StageHud({
             {progressText}
           </span>
         </div>
-        <div
-          className="bg-ink/10 dark:bg-night-rule mt-1.5 h-2 overflow-hidden rounded-full"
-          aria-hidden
-        >
+        {progress !== null && (
           <div
-            className="bg-primary h-full rounded-full transition-[width] duration-300"
-            style={{ width: `${Math.round(progress * 100)}%` }}
-          />
-        </div>
+            className="bg-ink/10 dark:bg-night-rule mt-1.5 h-2 overflow-hidden rounded-full"
+            aria-hidden
+          >
+            <div
+              className="bg-primary h-full rounded-full transition-[width] duration-300"
+              style={{ width: `${Math.round(progress * 100)}%` }}
+            />
+          </div>
+        )}
+        {lives !== undefined && <Breath lives={lives} />}
       </div>
       <div className="flex min-w-16 flex-col items-end leading-none">
         <span className="condensed text-ink dark:text-night-text flex items-center gap-1 text-[clamp(1.5rem,4svh,2.5rem)] font-extrabold tabular-nums">
@@ -187,6 +214,15 @@ export function StageHud({
     </div>
   );
 }
+
+export const ANNOUNCEMENT = {
+  again: "Noch einmal!",
+  faster: "Schneller!",
+  slower: "Etwas ruhiger",
+  fresh: "Neuer Rhythmus!",
+  lost: "Puste weg!",
+  gained: "Puste zurück!",
+} as const;
 
 /** Große Einzählzahl; `key` startet die Plopp-Animation je Schlag neu. */
 export function CountOverlay({ number }: { number: number | null }) {

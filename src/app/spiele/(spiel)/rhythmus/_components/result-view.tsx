@@ -25,6 +25,7 @@ import {
 import type { Level } from "../../../_lib/rhythm/levels";
 import type { Attempt } from "../_lib/conductor";
 import type { SessionSummary } from "../_lib/feedback";
+import type { EndlessResult } from "./rhythm-game";
 
 function headlineFor(stars: number): string {
   if (stars === 3) return "Wahnsinn, das sitzt!";
@@ -82,6 +83,7 @@ export function ResultView({
   nextLevel,
   bestStreak,
   points,
+  endless,
   isRecord,
   rankUp,
   awardsStars,
@@ -94,6 +96,7 @@ export function ResultView({
   nextLevel: Level | null;
   bestStreak: number;
   points: number;
+  endless: EndlessResult | null;
   isRecord: boolean;
   /** Neuer Titel, wenn diese Runde ihn gebracht hat. */
   rankUp: string | null;
@@ -108,13 +111,17 @@ export function ResultView({
 
   // Je Stern ein Ton höher; nach einer gelungenen Runde klingt es wie eine Fanfare.
   useEffect(() => {
+    if (endless) {
+      if (endless.isRecord) audio.jingle(JINGLE_NOTES, STAR_STEP_SEC / 2, 0.25);
+      return;
+    }
     if (!awardsStars || summary.stars === 0) return;
     audio.jingle(
       JINGLE_NOTES.slice(0, summary.stars + (summary.stars === 3 ? 2 : 1)),
       STAR_STEP_SEC / 2,
       0.25,
     );
-  }, [audio, awardsStars, summary.stars]);
+  }, [audio, awardsStars, endless, summary.stars]);
 
   const description = useMemo(
     () =>
@@ -169,20 +176,38 @@ export function ResultView({
 
   return (
     <div className="flex flex-col gap-3 pb-2">
-      {awardsStars && summary.stars >= CELEBRATE_FROM_STARS && <Confetti />}
+      {((awardsStars && summary.stars >= CELEBRATE_FROM_STARS) ||
+        endless?.isRecord) && <Confetti />}
 
       <div className="spiel-buehne flex flex-col items-center gap-2 rounded-3xl p-4 text-center">
         <Toni
-          mood={summary.stars >= 1 ? "happy" : "idle"}
+          mood={summary.stars >= 1 || endless?.isRecord ? "happy" : "idle"}
           className="spiel-float h-[clamp(5rem,16svh,8rem)] w-[clamp(5rem,16svh,8rem)]"
         />
         <p className="condensed text-ink dark:text-night-text text-[clamp(1.75rem,4.5svh,3rem)] leading-none font-extrabold">
-          {headlineFor(summary.stars)}
+          {endless
+            ? endless.isRecord
+              ? "Neuer Rekord!"
+              : "Puh, die Puste ist weg!"
+            : headlineFor(summary.stars)}
         </p>
         <span className="sr-only">
-          {summary.percent} Prozent, {summary.stars} von 3 Sternen, {points}{" "}
-          Punkte
+          {summary.percent} Prozent,{" "}
+          {!endless && `${summary.stars} von 3 Sternen, `}
+          {points} Punkte
         </span>
+        {endless && (
+          <p className="text-ink dark:text-night-text text-center">
+            <span className="condensed spiel-pop inline-block text-[clamp(2.5rem,8svh,4.5rem)] leading-none font-extrabold tabular-nums">
+              {endless.reached}
+            </span>{" "}
+            <span className="font-bold">{endless.unit} geschafft</span>
+            <span className="text-dark dark:text-night-muted block text-sm font-bold tabular-nums">
+              Dein Rekord: {endless.best.points} Punkte, {endless.best.reached}{" "}
+              {endless.unit}
+            </span>
+          </p>
+        )}
         {awardsStars && (
           <div className="flex gap-2" aria-hidden>
             {[1, 2, 3].map((n) => (
@@ -209,7 +234,7 @@ export function ResultView({
           <span>{summary.percent} % getroffen</span>
           {bestStreak >= 4 && <span>{bestStreak} in Folge</span>}
         </p>
-        {(isRecord || rankUp) && (
+        {!endless && (isRecord || rankUp) && (
           <p className="bg-primary text-ink spiel-pop rounded-full px-4 py-1 font-extrabold">
             {rankUp ? `Neuer Titel: ${rankUp}!` : "Neuer Rekord!"}
           </p>

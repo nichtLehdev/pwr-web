@@ -57,7 +57,7 @@ export function buildTips(attempts: readonly Attempt[]): string[] {
     notes.filter((n) => n.verdict === "missed").length / notes.length;
   if (missedShare > 0.25) {
     tips.push(
-      "Einige Noten sind dir durchgerutscht. Lies die Figur beim Vorspielen schon mit und zähle leise die Schläge.",
+      "Einige Noten sind dir durchgerutscht. Lies die Noten schon vorab mit und zähle leise die Schläge.",
     );
   }
 

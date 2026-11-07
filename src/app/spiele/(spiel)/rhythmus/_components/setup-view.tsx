@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { BookOpen, Ear, Settings2, Star } from "lucide-react";
+import {
+  BookOpen,
+  Ear,
+  Infinity as InfinityIcon,
+  Settings2,
+  Star,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ArcadeButton } from "../../../_components/arcade-button";
 import { GameDock } from "../../../_components/game-shell-context";
@@ -9,6 +15,7 @@ import { Toni } from "../../../_components/toni";
 import { GAME_FOCUS_RING } from "../../../_lib/focus-ring";
 import { LEVELS, levelById, type Level } from "../../../_lib/rhythm/levels";
 import type { InputMode } from "../_lib/conductor";
+import { ENDLESS_ID, type EndlessRecords } from "../_lib/endless";
 import {
   startBpm,
   type PlayMode,
@@ -140,6 +147,7 @@ function ModeCard({
 export function SetupView({
   prefs,
   progress,
+  endlessRecords,
   notice,
   onChange,
   onStart,
@@ -147,12 +155,15 @@ export function SetupView({
 }: {
   prefs: Prefs;
   progress: Progress;
+  endlessRecords: EndlessRecords;
   notice: string | null;
   onChange: (next: Prefs) => void;
   onStart: () => void;
   onCalibrate: () => void;
 }) {
+  const isEndless = prefs.levelId === ENDLESS_ID;
   const level = levelById(prefs.levelId) ?? LEVELS[0]!;
+  const endlessRecord = endlessRecords[prefs.mode];
   const levelNumber = LEVELS.indexOf(level) + 1;
   const autoBpm = startBpm(level, progress);
   const stars = totalStars(progress);
@@ -160,15 +171,18 @@ export function SetupView({
   const { stations, height } = pathLayout(LEVELS);
   const selectedStation = stations[levelNumber - 1]!;
   const selectedRef = useRef<HTMLButtonElement>(null);
+  const endlessRef = useRef<HTMLButtonElement>(null);
   const userPicked = useRef(false);
 
   // Beim Öffnen dort einsteigen, wo man zuletzt war. Die Auswahl kommt erst nach dem
   // Mount aus dem Speicher; spätere Klicks sollen die Karte nicht verschieben.
   useEffect(() => {
-    if (!userPicked.current && selectedStation.index > 2) {
+    if (userPicked.current) return;
+    if (isEndless) endlessRef.current?.scrollIntoView({ block: "center" });
+    else if (selectedStation.index > 2) {
       selectedRef.current?.scrollIntoView({ block: "center" });
     }
-  }, [selectedStation.index]);
+  }, [isEndless, selectedStation.index]);
 
   const setMode = (mode: PlayMode) => onChange({ ...prefs, mode });
   const setInput = (input: InputMode) => onChange({ ...prefs, input });
@@ -258,7 +272,7 @@ export function SetupView({
           </svg>
 
           {stations.map(({ level: entry, index, newGroup, x, y }) => {
-            const active = entry.id === level.id;
+            const active = !isEndless && entry.id === level.id;
             const earned = progress[entry.id]?.stars ?? 0;
             const color = GROUP_COLORS[entry.group] ?? "#faa619";
             const labelOnRight = x < 50;
@@ -333,6 +347,36 @@ export function SetupView({
           })}
         </div>
       </section>
+
+      <button
+        ref={endlessRef}
+        type="button"
+        aria-pressed={isEndless}
+        onClick={() => {
+          userPicked.current = true;
+          onChange({ ...prefs, levelId: ENDLESS_ID });
+        }}
+        className={cn(
+          "flex min-h-20 w-full items-center gap-3 rounded-3xl border-[3px] p-3 text-left transition-colors",
+          GAME_FOCUS_RING,
+          isEndless
+            ? "spiel-glow bg-primary border-ink text-ink"
+            : "border-ink bg-ink text-paper dark:border-night-text dark:bg-night-raised dark:text-night-text",
+        )}
+      >
+        <InfinityIcon className="h-10 w-10 shrink-0 stroke-[2.5]" aria-hidden />
+        <span className="min-w-0 flex-1">
+          <span className="condensed block text-2xl leading-none font-extrabold">
+            Endlos
+          </span>
+          <span className="mt-1 block text-sm leading-snug">
+            Immer schwerer, bis die Puste weg ist.
+            {endlessRecord
+              ? ` Dein Rekord: ${endlessRecord.points} Punkte.`
+              : ""}
+          </span>
+        </span>
+      </button>
 
       <details className="border-rule dark:border-night-rule rounded-2xl border-2">
         <summary
@@ -440,14 +484,14 @@ export function SetupView({
         <div className="flex flex-col gap-1.5">
           <p className="text-center text-sm leading-snug">
             <strong className="text-ink dark:text-night-text font-extrabold">
-              {level.title}:
+              {isEndless ? "Endlos:" : `${level.title}:`}
             </strong>{" "}
             <span className="text-dark dark:text-night-muted">
-              {level.hint}
+              {isEndless ? "Drei Mal Puste, wie weit kommst du?" : level.hint}
             </span>
           </p>
           <ArcadeButton onClick={onStart}>
-            Stufe {levelNumber} spielen
+            {isEndless ? "Endlos spielen" : `Stufe ${levelNumber} spielen`}
           </ArcadeButton>
         </div>
       </GameDock>

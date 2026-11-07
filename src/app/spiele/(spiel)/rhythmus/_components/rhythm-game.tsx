@@ -13,9 +13,20 @@ import { useGameStats } from "../../../_lib/stats/use-game-stats";
 import { RhythmAudio } from "../../../_lib/rhythm/audio";
 import { pickMeter } from "../../../_lib/rhythm/generator";
 import { LEVELS, levelById, type Level } from "../../../_lib/rhythm/levels";
-import type { RhythmEvent, TimeSignature } from "../../../_lib/rhythm/types";
+import type { TimeSignature } from "../../../_lib/rhythm/types";
 import { Conductor, type Attempt } from "../_lib/conductor";
 import { summarize, type SessionSummary } from "../_lib/feedback";
+import {
+  ENDLESS_ID,
+  ENDLESS_METER,
+  EndlessBandScript,
+  EndlessPlan,
+  loadEndlessRecords,
+  mergeEndlessRecord,
+  saveEndlessRecords,
+  type EndlessRecord,
+  type EndlessRecords,
+} from "../_lib/endless";
 import { loadLatencyMs } from "../_lib/latency";
 import {
   DEFAULT_PREFS,
@@ -35,6 +46,8 @@ import {
   BandScript,
   createBandBars,
   figuresForLevel,
+  type BandSource,
+  type SessionScript,
 } from "../_lib/session-script";
 import { rankFor, totalStars } from "../_lib/ranks";
 import { AnswerStage } from "./answer-stage";
@@ -48,10 +61,20 @@ type View = "setup" | "calibrate" | "play" | "result";
 
 type Session = {
   conductor: Conductor;
-  level: Level;
-  /** Nur beim Notenband: Es zeichnet alle Takte vorab bekannt. */
-  band: { bars: RhythmEvent[][]; ts: TimeSignature; bpm: number } | null;
+  /** `null`: Endlos. */
+  level: Level | null;
+  /** Nur beim Notenband: Es zeichnet die kommenden Takte vorab. */
+  band: { source: BandSource; ts: TimeSignature } | null;
+  /** Nur Endlos: wie weit der Lauf gekommen ist. */
+  reached: (() => number) | null;
   startedAt: number;
+};
+
+export type EndlessResult = {
+  reached: number;
+  unit: "Figuren" | "Takte";
+  best: EndlessRecord;
+  isRecord: boolean;
 };
 
 export function RhythmGame() {
@@ -71,15 +94,21 @@ export function RhythmGame() {
     rankUp: null as string | null,
   });
   const [isListening, setIsListening] = useState(true);
+  const [endlessRecords, setEndlessRecords] = useState<EndlessRecords>({});
+  const [endlessResult, setEndlessResult] = useState<EndlessResult | null>(
+    null,
+  );
 
   const [audio] = useState(() => new RhythmAudio());
   const sessionRef = useRef<Session | null>(null);
+  const endlessRecordsRef = useRef(endlessRecords);
   const prefsRef = useRef(prefs);
   const progressRef = useRef(progress);
   useEffect(() => {
     prefsRef.current = prefs;
     progressRef.current = progress;
-  }, [prefs, progress]);
+    endlessRecordsRef.current = endlessRecords;
+  }, [prefs, progress, endlessRecords]);
 
   // localStorage erst nach dem Mount lesen (SSR-sicher).
   useEffect(() => {
@@ -87,6 +116,7 @@ export function RhythmGame() {
     setPrefs(loadPrefs());
     setProgress(loadProgress());
     setLatencyMs(loadLatencyMs());
+    setEndlessRecords(loadEndlessRecords());
   }, []);
 
   useEffect(() => {
@@ -103,7 +133,8 @@ export function RhythmGame() {
     (active: Session, attempts: Attempt[]) => {
       const result = summarize(attempts);
       const { fixedBpm, mode, input } = prefsRef.current;
-      const awardsStars = fixedBpm === null;
+      const isEndless = active.level === null;
+      const awardsStars = fixedBpm === null && !isEndless;
       setSummary(result);
       setBestStreak(active.conductor.judge.bestStreak);
       recordResult({
@@ -112,17 +143,37 @@ export function RhythmGame() {
         streak: active.conductor.judge.bestStreak,
         durationMs: Math.round(performance.now() - active.startedAt),
         meta: {
-          level: active.level.id,
+          level: active.level?.id ?? ENDLESS_ID,
           mode,
           input,
           bpm: result.bpm,
-          fixedTempo: !awardsStars,
+          fixedTempo: !isEndless && !awardsStars,
+          ...(active.reached && {
+            points: active.conductor.points,
+            reached: active.reached(),
+          }),
         },
       });
       const points = active.conductor.points;
       let isRecord = false;
       let rankUp: string | null = null;
-      if (awardsStars) {
+      setEndlessResult(null);
+      if (active.reached) {
+        const reached = active.reached();
+        const merged = mergeEndlessRecord(endlessRecordsRef.current, mode, {
+          points,
+          reached,
+        });
+        setEndlessRecords(merged.records);
+        saveEndlessRecords(merged.records);
+        setEndlessResult({
+          reached,
+          unit: mode === "band" ? "Takte" : "Figuren",
+          best: merged.records[mode]!,
+          isRecord: merged.isRecord,
+        });
+        isRecord = merged.isRecord;
+      } else if (awardsStars && active.level) {
         const before = progressRef.current;
         const merged = mergeProgress(before, active.level.id, {
           stars: result.stars,
@@ -146,20 +197,35 @@ export function RhythmGame() {
   );
 
   const start = useCallback(
-    async (level: Level) => {
+    async (level: Level | null) => {
       await audio.ensure();
       const { mode, input, fixedBpm } = prefsRef.current;
-      const ts = pickMeter(level);
-      const bpm = fixedBpm ?? startBpm(level, progressRef.current);
       const latencySec = latencyMs === null ? null : latencyMs / 1000;
 
       let band: Session["band"] = null;
-      let script;
-      if (mode === "band") {
+      let reached: Session["reached"] = null;
+      let script: SessionScript;
+      if (level === null) {
+        if (mode === "band") {
+          const endless = new EndlessBandScript();
+          band = { source: endless, ts: ENDLESS_METER };
+          reached = () => endless.reached;
+          script = endless;
+        } else {
+          const plan = new EndlessPlan();
+          reached = () => plan.reached;
+          script = new AnswerScript(plan, ENDLESS_METER, null);
+        }
+      } else if (mode === "band") {
+        const ts = pickMeter(level);
+        const bpm = fixedBpm ?? startBpm(level, progressRef.current);
         const bars = createBandBars(level, ts);
-        band = { bars, ts, bpm };
-        script = new BandScript(bars, ts, bpm);
+        const fixed = new BandScript(bars, ts, bpm);
+        band = { source: fixed, ts };
+        script = fixed;
       } else {
+        const ts = pickMeter(level);
+        const bpm = fixedBpm ?? startBpm(level, progressRef.current);
         const total = figuresForLevel(level);
         const plan = new AnswerPlan(level, ts, total, {
           start: bpm,
@@ -170,13 +236,14 @@ export function RhythmGame() {
 
       const conductor = new Conductor(audio, script, {
         input,
-        leniency: level.leniency,
+        leniency: level?.leniency ?? 1,
         latencySec,
       });
       const active: Session = {
         conductor,
         level,
         band,
+        reached,
         startedAt: performance.now(),
       };
       conductor.subscribe({
@@ -221,8 +288,11 @@ export function RhythmGame() {
     [audio],
   );
 
-  const currentLevel = levelById(prefs.levelId) ?? LEVELS[0]!;
-  const following = nextLevel(currentLevel);
+  const isEndless = prefs.levelId === ENDLESS_ID;
+  const currentLevel = isEndless
+    ? null
+    : (levelById(prefs.levelId) ?? LEVELS[0]!);
+  const following = currentLevel ? nextLevel(currentLevel) : null;
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-[clamp(0.5rem,1.8svh,1.25rem)]">
@@ -230,6 +300,7 @@ export function RhythmGame() {
         <SetupView
           prefs={prefs}
           progress={progress}
+          endlessRecords={endlessRecords}
           notice={notice}
           onChange={changePrefs}
           onStart={() => void start(currentLevel)}
@@ -264,9 +335,8 @@ export function RhythmGame() {
           {session.band ? (
             <BandStage
               conductor={session.conductor}
-              bars={session.band.bars}
+              source={session.band.source}
               timeSignature={session.band.ts}
-              bpm={session.band.bpm}
             />
           ) : (
             <AnswerStage conductor={session.conductor} />
@@ -297,9 +367,10 @@ export function RhythmGame() {
           nextLevel={following}
           bestStreak={bestStreak}
           points={reward.points}
+          endless={endlessResult}
           isRecord={reward.isRecord}
           rankUp={reward.rankUp}
-          awardsStars={prefs.fixedBpm === null}
+          awardsStars={prefs.fixedBpm === null && !isEndless}
           audio={audio}
           onAgain={() => void start(currentLevel)}
           onNext={() => {

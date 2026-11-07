@@ -16,10 +16,17 @@ import {
   secPerTick,
   TICKS_PER_QUARTER,
 } from "../../../_lib/rhythm/ticks";
-import type { RhythmEvent, TimeSignature } from "../../../_lib/rhythm/types";
+import type { TimeSignature } from "../../../_lib/rhythm/types";
 import type { Conductor, Press, Segment } from "../_lib/conductor";
+import type { BandSource } from "../_lib/session-script";
 import { spawnBurst } from "../../../_components/confetti";
-import { ballHop, CountOverlay, StageHud, useCountIn } from "./stage-parts";
+import {
+  ANNOUNCEMENT,
+  ballHop,
+  CountOverlay,
+  StageHud,
+  useCountIn,
+} from "./stage-parts";
 
 /** Lesekante: links genug Platz fürs Gespielte, rechts der Blick voraus. */
 const READ_LINE = 0.22;
@@ -33,14 +40,12 @@ type DrawnBar = { host: HTMLDivElement; handle: BarHandle };
  */
 export function BandStage({
   conductor,
-  bars,
+  source,
   timeSignature,
-  bpm,
 }: {
   conductor: Conductor;
-  bars: RhythmEvent[][];
+  source: BandSource;
   timeSignature: TimeSignature;
-  bpm: number;
 }) {
   const { resolvedTheme } = useTheme();
   const dark = resolvedTheme === "dark";
@@ -48,11 +53,17 @@ export function BandStage({
   const trackRef = useRef<HTMLDivElement>(null);
   const ballRef = useRef<HTMLDivElement>(null);
   const drawn = useRef(new Map<number, DrawnBar>());
-  const [barNumber, setBarNumber] = useState<number | null>(null);
+  const [segment, setSegment] = useState<Segment | null>(null);
   const countNumber = useCountIn(conductor);
 
   useEffect(() => {
-    const barSec = barTicks(timeSignature) * secPerTick(bpm);
+    const ticksPerBar = barTicks(timeSignature);
+    const { pulsesPerBar } = pulseOf(timeSignature);
+    const barSecAt = (index: number) =>
+      ticksPerBar * secPerTick(source.bpmAt(index));
+    // Takt und Startzeit wandern mit: Das Tempo darf von Takt zu Takt wechseln.
+    let barIndex = 0;
+    let barStart = conductor.startSec + barSecAt(0);
     const barWidth =
       (barTicks(timeSignature) / TICKS_PER_QUARTER) * QUARTER_WIDTH;
     let ready = false;
@@ -63,7 +74,7 @@ export function BandStage({
 
     const ensureBar = (index: number, scale: number) => {
       const track = trackRef.current;
-      const events = bars[index];
+      const events = source.barAt(index);
       if (!track || !events || drawnBars.has(index)) return;
       const host = document.createElement("div");
       host.style.position = "absolute";
@@ -83,8 +94,8 @@ export function BandStage({
     };
 
     const unsubscribe = conductor.subscribe({
-      onSegment: (segment: Segment) => {
-        if (segment.kind === "read") setBarNumber(segment.index + 1);
+      onSegment: (next: Segment) => {
+        if (next.kind === "read") setSegment(next);
       },
       onFrame: (songSec) => {
         const box = boxRef.current;
@@ -95,13 +106,19 @@ export function BandStage({
           box.clientHeight / VIEW_HEIGHT,
           Math.max(MIN_SCALE, width / 640),
         );
-        // Der erste Takt beginnt nach dem Einzähltakt.
-        const position = (songSec - conductor.startSec - barSec) / barSec;
+        if (barIndex === 0 && barStart < conductor.startSec) {
+          barStart = conductor.startSec + barSecAt(0);
+        }
+        while (songSec >= barStart + barSecAt(barIndex)) {
+          barStart += barSecAt(barIndex);
+          barIndex++;
+        }
+        // Vor dem ersten Takt negativ: Dann läuft er während des Einzählens heran.
+        const position = barIndex + (songSec - barStart) / barSecAt(barIndex);
         const x = width * READ_LINE - position * barWidth * scale;
         track.style.transform = `translate3d(${x}px, 0, 0)`;
         if (ballRef.current) {
-          const pulseSec = pulseOf(timeSignature).pulseTicks * secPerTick(bpm);
-          const hop = ballHop((songSec - conductor.startSec) / pulseSec, 16);
+          const hop = ballHop(position * pulsesPerBar, 16);
           ballRef.current.style.transform = `translate(-50%, ${hop}px)`;
         }
 
@@ -161,20 +178,31 @@ export function BandStage({
       for (const bar of drawnBars.values()) bar.host.remove();
       drawnBars.clear();
     };
-  }, [conductor, bars, timeSignature, bpm, dark]);
+  }, [conductor, source, timeSignature, dark]);
 
   return (
     <div className="spiel-buehne flex flex-col gap-2 rounded-3xl p-3 sm:p-4">
       <StageHud
         conductor={conductor}
-        baseText={barNumber === null ? "Mitzählen!" : "Lies und spiel!"}
-        baseMood={barNumber === null ? "idle" : "play"}
+        baseText={
+          !segment
+            ? "Mitzählen!"
+            : segment.announcement
+              ? ANNOUNCEMENT[segment.announcement]
+              : "Lies und spiel!"
+        }
+        baseMood={!segment ? "idle" : "play"}
         progressText={
-          barNumber !== null
-            ? `Takt ${barNumber} von ${bars.length} · ${bpm} BPM`
+          segment
+            ? `Takt ${segment.index + 1}${segment.total !== null ? ` von ${segment.total}` : ""} · ${segment.bpm} BPM`
             : ""
         }
-        progress={(barNumber ?? 0) / bars.length}
+        progress={
+          source.barCount === null
+            ? null
+            : (segment ? segment.index + 1 : 0) / source.barCount
+        }
+        lives={source.barCount === null ? (segment?.lives ?? 3) : undefined}
       />
       <div
         ref={boxRef}

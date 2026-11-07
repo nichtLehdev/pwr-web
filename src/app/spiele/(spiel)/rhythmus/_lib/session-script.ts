@@ -12,7 +12,8 @@ import type {
 } from "../../../_lib/rhythm/types";
 
 export type SegmentKind = "count" | "call" | "answer" | "read";
-export type Announcement = "again" | "faster" | "slower" | null;
+export type Announcement =
+  "again" | "faster" | "slower" | "fresh" | "lost" | "gained" | null;
 
 export type SegmentSpec = {
   kind: SegmentKind;
@@ -21,14 +22,34 @@ export type SegmentSpec = {
   bars: RhythmEvent[][];
   /** Figur (Antworten) bzw. Takt (Notenband): auch Basis für die Harmonie. */
   index: number;
-  total: number;
+  /** `null`: Endlos. */
+  total: number | null;
   announcement: Announcement;
+  /** Nur Endlos: verbleibende Puste. */
+  lives?: number;
 };
 
 /** Der Dirigent fragt kurz vor Ablauf des Laufenden nach dem nächsten Abschnitt. */
 export interface SessionScript {
   /** `lastAccuracy`: Ergebnis des zuletzt angelegten Spielabschnitts. */
   next(lastAccuracy: number | null): SegmentSpec | null;
+  /** Falls Takte vorab feststehen: nötig, um zu wissen, ob nach einer Note Pause kommt. */
+  peekBar?(index: number): RhythmEvent[] | undefined;
+}
+
+/** Was das Notenband wissen muss, um im Voraus zu zeichnen und mitzulaufen. */
+export interface BandSource {
+  barAt(index: number): RhythmEvent[] | undefined;
+  bpmAt(index: number): number;
+  /** `null`: Endlos. */
+  readonly barCount: number | null;
+}
+
+/** Was das Nachspielen von seinen Regeln braucht; Stufen und Endlos füllen es verschieden. */
+export interface AnswerRules {
+  first(): AnswerStep;
+  afterAnswer(accuracy: number): AnswerStep | null;
+  readonly lives?: number;
 }
 
 const PASS_ACCURACY = 0.65;
@@ -51,7 +72,7 @@ export type AnswerStep = {
 };
 
 /** Regeln fürs Antworten: Wiederholung bei Patzern, Tempo folgt dem Können. */
-export class AnswerPlan {
+export class AnswerPlan implements AnswerRules {
   bpm: number;
   private index = 0;
   private attempt = 1;
@@ -144,9 +165,9 @@ export class AnswerScript implements SessionScript {
   private stage: "count" | "call" | "answer" = "count";
 
   constructor(
-    private readonly plan: AnswerPlan,
+    private readonly plan: AnswerRules,
     private readonly ts: TimeSignature,
-    private readonly total: number,
+    private readonly total: number | null,
   ) {}
 
   next(lastAccuracy: number | null): SegmentSpec | null {
@@ -183,12 +204,13 @@ export class AnswerScript implements SessionScript {
       index: step.index,
       total: this.total,
       announcement: kind === "call" ? step.announcement : null,
+      lives: this.plan.lives,
     };
   }
 }
 
 /** Notenband: Einzählen, dann durchgehend vom Blatt, fest im Tempo. */
-export class BandScript implements SessionScript {
+export class BandScript implements SessionScript, BandSource {
   private cursor = -1;
 
   constructor(
@@ -196,6 +218,22 @@ export class BandScript implements SessionScript {
     readonly ts: TimeSignature,
     readonly bpm: number,
   ) {}
+
+  peekBar(index: number): RhythmEvent[] | undefined {
+    return this.bars[index];
+  }
+
+  barAt(index: number): RhythmEvent[] | undefined {
+    return this.bars[index];
+  }
+
+  bpmAt(): number {
+    return this.bpm;
+  }
+
+  get barCount(): number {
+    return this.bars.length;
+  }
 
   next(): SegmentSpec | null {
     const index = this.cursor++;

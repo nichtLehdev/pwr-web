@@ -1,5 +1,6 @@
 import { levelById, LEVELS, type Level } from "../../../_lib/rhythm/levels";
 import type { InputMode } from "./conductor";
+import { ENDLESS_ID } from "./endless";
 import type { Stars } from "./feedback";
 
 const PREFS_KEY = "pwr.spiele.v1.rhythmus.prefs";
@@ -52,7 +53,10 @@ function write(key: string, value: unknown): void {
 export function loadPrefs(): Prefs {
   const stored = read<Partial<Prefs>>(PREFS_KEY);
   return {
-    levelId: levelById(stored?.levelId)?.id ?? DEFAULT_PREFS.levelId,
+    levelId:
+      stored?.levelId === ENDLESS_ID
+        ? ENDLESS_ID
+        : (levelById(stored?.levelId)?.id ?? DEFAULT_PREFS.levelId),
     mode: stored?.mode === "band" ? "band" : "answer",
     input: stored?.input === "tap" ? "tap" : "hold",
     fixedBpm: typeof stored?.fixedBpm === "number" ? stored.fixedBpm : null,
