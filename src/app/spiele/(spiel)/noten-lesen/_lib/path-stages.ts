@@ -184,6 +184,8 @@ export type NotenRun = {
   total: number;
   challengeSection: number | null;
   daily: boolean;
+  /** Bestenliste: Die Noten kommen vom Server. */
+  ranked?: boolean;
 };
 
 /** Eine Challenge zieht aus allen bisherigen Stufen, das Tagestraining aus allen offenen. */

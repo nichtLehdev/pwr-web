@@ -17,6 +17,17 @@ import { usePathState } from "../../../_lib/use-path-state";
 import { gameInstruments } from "../../../_lib/profiles/options";
 import { activeProfileInstruments } from "../../../_lib/profiles/scope";
 import { buildNotenRun, NOTEN_PATH, type NotenRun } from "../_lib/path-stages";
+import {
+  ENDLESS_REPORT_EVERY,
+  NOTE_TIME_MS,
+  type EndlessAnswer,
+} from "../../../_lib/endless-rules";
+import { activeProfileId } from "../../../_lib/profiles/scope";
+import {
+  RankedResult,
+  RankedTile,
+  type RankedOutcome,
+} from "../../../_components/ranked";
 import { loadWeak, markDailyDone, saveWeak } from "../../../_lib/daily";
 import { DAILY_ID, runKindOf } from "../../../_lib/learning-path";
 import { GAME_FOCUS_RING } from "../../../_lib/focus-ring";
@@ -191,6 +202,24 @@ export function NoteReadingGame() {
   const mode: GameModeId = lesson ? "quiz" : freeMode;
   const pathState = usePathState(NOTEN_PATH, `noten-lesen.${instrument}`);
   const [outcome, setOutcome] = useState<LessonOutcome | null>(null);
+  const [rankedOutcome, setRankedOutcome] = useState<RankedOutcome | null>(
+    null,
+  );
+  /** Laufender Bestenlisten-Lauf: Warteschlange vom Server und noch nicht gemeldete Antworten. */
+  const rankedRef = useRef<{
+    runId: string;
+    profileId: string;
+    queue: WrittenPitch[];
+    index: number;
+    reported: number;
+    buffer: EndlessAnswer[];
+    sending: Promise<void> | null;
+    invalid: string | null;
+  } | null>(null);
+  const shownAtRef = useRef(0);
+  const finishRankedRef = useRef<() => Promise<void>>(async () => undefined);
+  const startRankedRun = api.gameEndless.start.useMutation();
+  const reportRanked = api.gameEndless.report.useMutation();
   const [freeOpen, setFreeOpen] = useState(false);
   /* Bleibt auch bei aktivem eigenem Set die zuletzt gewählte Preset-Stufe —
    * „Entfernen“ fällt genau dorthin zurück. */
@@ -439,8 +468,13 @@ export function NoteReadingGame() {
 
   const spawnNote = useCallback(() => {
     let p: WrittenPitch;
+    const ranked = rankedRef.current;
     const pool = lessonRef.current?.pitches ?? customSet?.pitches;
-    if (pool) {
+    if (ranked) {
+      p = ranked.queue[ranked.index] ?? ranked.queue.at(-1)!;
+      setStaffAccidentalLayout(STAFF_LAYOUT_EXPLICIT);
+      setOptions(buildAnswerLabelsForLayout(p, "diatonic"));
+    } else if (pool) {
       /* Eigenes Set: Pool und Schlüssel kommen aus dem Set; Vorzeichen
        * immer explizit an der Note (keine zufälligen Tonarten). */
       p = pickPitchFromPool(pool, lastMidiRef.current, {
@@ -490,7 +524,13 @@ export function NoteReadingGame() {
     setAnswerLocked(false);
     setAwaitingNext(false);
     awaitingNextRef.current = false;
-    if (mode === "quiz" && !lessonRef.current) {
+    shownAtRef.current = performance.now();
+    if (ranked) {
+      const secs = NOTE_TIME_MS / 1000;
+      quizDeadlineRef.current = performance.now() + NOTE_TIME_MS;
+      lastShownTenthRef.current = secs * 10;
+      setQuizSecondsLeft(secs);
+    } else if (mode === "quiz" && !lessonRef.current) {
       const secs = customSet
         ? CUSTOM_QUIZ_NOTE_SECONDS
         : QUIZ_NOTE_SECONDS[difficulty];
@@ -507,6 +547,10 @@ export function NoteReadingGame() {
     (completed: boolean = true) => {
       clearTimers();
       const active = lessonRef.current;
+      if (active?.ranked) {
+        void finishRankedRef.current();
+        return;
+      }
       const total = active?.total ?? QUIZ_ROUND_LEN;
       if (active) {
         const percent = Math.round((100 * quizCorrectRef.current) / total);
@@ -542,6 +586,69 @@ export function NoteReadingGame() {
       setPhase("result");
     },
     [clearTimers, pathState, recordResult, instrument, difficulty, mode],
+  );
+
+  /** Gesammelte Antworten melden; der Server legt neue Noten nach. */
+  const flushRanked = useCallback(async () => {
+    const ranked = rankedRef.current;
+    if (!ranked || ranked.buffer.length === 0 || ranked.invalid) return;
+    if (ranked.sending) await ranked.sending;
+    const answers = ranked.buffer.splice(0);
+    const fromIndex = ranked.reported;
+    ranked.reported += answers.length;
+    ranked.sending = reportRanked
+      .mutateAsync({
+        profileId: ranked.profileId,
+        runId: ranked.runId,
+        fromIndex,
+        answers,
+      })
+      .then((result) => {
+        if (result.status === "running") ranked.queue.push(...result.pitches);
+        else if (result.status === "invalid") ranked.invalid = result.reason;
+        else setRankedOutcome(result);
+      })
+      .catch(() => {
+        ranked.invalid =
+          "Die Verbindung ist abgerissen. Dieser Lauf zählt leider nicht.";
+      })
+      .finally(() => {
+        ranked.sending = null;
+      });
+    await ranked.sending;
+  }, [reportRanked]);
+
+  const finishRanked = useCallback(async () => {
+    const ranked = rankedRef.current;
+    if (!ranked) return;
+    await flushRanked();
+    if (ranked.sending) await ranked.sending;
+    if (ranked.invalid)
+      setRankedOutcome({ status: "invalid", reason: ranked.invalid });
+    recordResult({
+      score: quizCorrectRef.current,
+      streak: bestStreakRoundRef.current,
+      meta: { instrument, kind: "endless", reached: quizCorrectRef.current },
+    });
+    setPhase("result");
+  }, [flushRanked, recordResult, instrument]);
+  useEffect(() => {
+    finishRankedRef.current = finishRanked;
+  });
+
+  /** Antwort für den Server merken; alle zehn wird gemeldet. */
+  const noteRankedAnswer = useCallback(
+    (label: string | null) => {
+      const ranked = rankedRef.current;
+      if (!ranked) return;
+      ranked.buffer.push({
+        label,
+        ms: Math.round(performance.now() - shownAtRef.current),
+      });
+      ranked.index++;
+      if (ranked.buffer.length >= ENDLESS_REPORT_EVERY) void flushRanked();
+    },
+    [flushRanked],
   );
 
   const scheduleAfter = useCallback((ms: number, fn: () => void) => {
@@ -608,6 +715,7 @@ export function NoteReadingGame() {
     setStreak(0);
     streakRef.current = 0;
     recordMiss(missTrackerRef.current, pitchKey(p));
+    noteRankedAnswer(null);
     if (mode === "quiz") {
       recordQuizMiss(p, clef);
       loseHeart.current();
@@ -616,7 +724,15 @@ export function NoteReadingGame() {
       `Zeit abgelaufen — richtig wäre: ${answerLabelForPitch(p)}. ${describeWrittenNote(p, clef)}`,
     );
     advanceAfterAnswer(false);
-  }, [loseHeart, answerLocked, clef, mode, recordQuizMiss, advanceAfterAnswer]);
+  }, [
+    loseHeart,
+    answerLocked,
+    clef,
+    mode,
+    recordQuizMiss,
+    advanceAfterAnswer,
+    noteRankedAnswer,
+  ]);
 
   useEffect(() => {
     if (
@@ -681,8 +797,48 @@ export function NoteReadingGame() {
     spawnNote();
   }, [resetHearts, clearTimers, spawnNote]);
 
+  const startRanked = useCallback(async () => {
+    const profileId = activeProfileId();
+    if (!profileId) return;
+    try {
+      const run = await startRankedRun.mutateAsync({
+        profileId,
+        game: "noten-lesen",
+        variant: instrument,
+      });
+      rankedRef.current = {
+        runId: run.runId,
+        profileId,
+        queue: run.pitches,
+        index: 0,
+        reported: 0,
+        buffer: [],
+        sending: null,
+        invalid: null,
+      };
+      const lessonRun: NotenRun = {
+        id: "ranked",
+        pitches: run.pitches,
+        clef: clefForInstrument(instrument),
+        total: Number.POSITIVE_INFINITY,
+        challengeSection: null,
+        daily: false,
+        ranked: true,
+      };
+      lessonRef.current = lessonRun;
+      setLesson(lessonRun);
+      setRankedOutcome(null);
+      setOutcome(null);
+      setRoundResult(null);
+      startGame();
+    } catch {
+      setCustomNotice("Für die Bestenliste brauchst du Internet.");
+    }
+  }, [instrument, startGame, startRankedRun]);
+
   const startLesson = useCallback(
     (id: string) => {
+      rankedRef.current = null;
       const run = buildNotenRun(id, instrument, pathState.progress);
       // Verfehlte Töne aus früheren Tagen kommen öfter dran.
       missTrackerRef.current = loadWeak(`noten-lesen.${instrument}`);
@@ -697,6 +853,7 @@ export function NoteReadingGame() {
   );
 
   const startFree = useCallback(() => {
+    rankedRef.current = null;
     lessonRef.current = null;
     setLesson(null);
     setOutcome(null);
@@ -709,6 +866,7 @@ export function NoteReadingGame() {
       if (phase !== "play" || !pitchRef.current || answerLocked) return;
       const p = pitchRef.current;
       const ok = labelsMatchAnswer(label, p);
+      noteRankedAnswer(label);
       setAnswerLocked(true);
       setPicked(label);
       quizDeadlineRef.current = null;
@@ -759,6 +917,7 @@ export function NoteReadingGame() {
       mode,
       recordQuizMiss,
       advanceAfterAnswer,
+      noteRankedAnswer,
     ],
   );
 
@@ -816,6 +975,7 @@ export function NoteReadingGame() {
 
   const openSetup = useCallback(() => {
     clearTimers();
+    rankedRef.current = null;
     lessonRef.current = null;
     setLesson(null);
     setPhase("setup");
@@ -896,32 +1056,42 @@ export function NoteReadingGame() {
           onStart={() => startLesson(pathState.selectedId)}
           daily={{ game: "noten-lesen", onStart: () => startLesson(DAILY_ID) }}
           below={
-            <FreePractice
-              open={freeOpen}
-              onToggle={setFreeOpen}
-              onStart={startFree}
-            >
-              <InstrumentSelector
-                instrument={instrument}
-                mode={freeMode}
-                difficulty={difficulty}
-                customSet={
-                  customSet
-                    ? {
-                        name: customSet.name,
-                        noteCount: customSet.pitches.length,
-                      }
-                    : null
+            <>
+              <RankedTile
+                game="noten-lesen"
+                variant={instrument}
+                variantLabel={
+                  INSTRUMENTS.find((i) => i.id === instrument)?.label ?? ""
                 }
-                customPending={pendingSet ? { name: pendingSet.name } : null}
-                customNotice={customNotice}
-                onInstrument={setInstrument}
-                onMode={setMode}
-                onDifficulty={handleDifficulty}
-                onOpenLibrary={() => setLibraryOpen(true)}
-                onRemoveCustomSet={handleRemoveCustomSet}
+                onStart={() => void startRanked()}
               />
-            </FreePractice>
+              <FreePractice
+                open={freeOpen}
+                onToggle={setFreeOpen}
+                onStart={startFree}
+              >
+                <InstrumentSelector
+                  instrument={instrument}
+                  mode={freeMode}
+                  difficulty={difficulty}
+                  customSet={
+                    customSet
+                      ? {
+                          name: customSet.name,
+                          noteCount: customSet.pitches.length,
+                        }
+                      : null
+                  }
+                  customPending={pendingSet ? { name: pendingSet.name } : null}
+                  customNotice={customNotice}
+                  onInstrument={setInstrument}
+                  onMode={setMode}
+                  onDifficulty={handleDifficulty}
+                  onOpenLibrary={() => setLibraryOpen(true)}
+                  onRemoveCustomSet={handleRemoveCustomSet}
+                />
+              </FreePractice>
+            </>
           }
         />
       )}
@@ -1039,7 +1209,7 @@ export function NoteReadingGame() {
             hearts={mode === "quiz" ? hearts : undefined}
             streak={streak}
             progress={
-              mode === "quiz"
+              mode === "quiz" && !lesson?.ranked
                 ? quizIndex / (lesson?.total ?? QUIZ_ROUND_LEN)
                 : null
             }
@@ -1119,43 +1289,59 @@ export function NoteReadingGame() {
         </div>
       )}
 
-      {phase === "result" && roundResult && lesson && outcome && (
-        <PathResult
-          percent={outcome.percent}
-          value={`${roundResult.correct}/${roundResult.total}`}
-          valueLabel="richtig"
-          rows={[["Beste Serie", String(roundResult.bestStreakRound)]]}
-          challenge={
-            lesson.challengeSection === null
-              ? null
-              : {
-                  passed: outcome.passed,
-                  nextSection: NOTEN_PATH.sections[lesson.challengeSection + 1]
-                    ? lesson.challengeSection + 2
-                    : null,
-                }
-          }
-          detailsLabel="Diese Noten nochmal anschauen"
-          onAgain={() => startLesson(lesson.id)}
+      {phase === "result" && lesson?.ranked && rankedOutcome && (
+        <RankedResult
+          game="noten-lesen"
+          variant={instrument}
+          outcome={rankedOutcome}
+          onAgain={() => void startRanked()}
           onContinue={openSetup}
-        >
-          {roundResult.missed && roundResult.missed.length > 0 ? (
-            <ul className="space-y-1.5">
-              {roundResult.missed.map((m) => (
-                <li
-                  key={`${m.label}|${m.description}`}
-                  className="text-dark dark:text-night-muted text-sm leading-snug"
-                >
-                  <span className="text-ink dark:text-night-text font-bold">
-                    {m.label}
-                  </span>{" "}
-                  — {m.description}
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </PathResult>
+        />
       )}
+
+      {phase === "result" &&
+        roundResult &&
+        lesson &&
+        !lesson.ranked &&
+        outcome && (
+          <PathResult
+            percent={outcome.percent}
+            value={`${roundResult.correct}/${roundResult.total}`}
+            valueLabel="richtig"
+            rows={[["Beste Serie", String(roundResult.bestStreakRound)]]}
+            challenge={
+              lesson.challengeSection === null
+                ? null
+                : {
+                    passed: outcome.passed,
+                    nextSection: NOTEN_PATH.sections[
+                      lesson.challengeSection + 1
+                    ]
+                      ? lesson.challengeSection + 2
+                      : null,
+                  }
+            }
+            detailsLabel="Diese Noten nochmal anschauen"
+            onAgain={() => startLesson(lesson.id)}
+            onContinue={openSetup}
+          >
+            {roundResult.missed && roundResult.missed.length > 0 ? (
+              <ul className="space-y-1.5">
+                {roundResult.missed.map((m) => (
+                  <li
+                    key={`${m.label}|${m.description}`}
+                    className="text-dark dark:text-night-muted text-sm leading-snug"
+                  >
+                    <span className="text-ink dark:text-night-text font-bold">
+                      {m.label}
+                    </span>{" "}
+                    — {m.description}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </PathResult>
+        )}
 
       {phase === "result" && roundResult && !lesson && (
         <NoteReadingResultView

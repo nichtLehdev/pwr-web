@@ -27,6 +27,7 @@ import { noteSetsRouter } from "./routers/note-sets";
 import { gamesRouter } from "./routers/games";
 import { gameProfilesRouter } from "./routers/game-profiles";
 import { gameLeaguesRouter } from "./routers/game-leagues";
+import { gameEndlessRouter } from "./routers/game-endless";
 import { customFieldTemplatesRouter } from "./routers/custom-field-templates";
 import { maintenanceRouter } from "./routers/maintenance";
 import { oauthConnectionsRouter } from "./routers/oauth-connections";
@@ -62,6 +63,7 @@ export const appRouter = createTRPCRouter({
   games: gamesRouter,
   gameProfiles: gameProfilesRouter,
   gameLeagues: gameLeaguesRouter,
+  gameEndless: gameEndlessRouter,
   customFieldTemplates: customFieldTemplatesRouter,
   oauthConnections: oauthConnectionsRouter,
   reviewChanges: reviewChangesRouter,

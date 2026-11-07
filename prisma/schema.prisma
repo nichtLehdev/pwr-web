@@ -148,6 +148,8 @@ model GameProfile {
   results       GameResult[] @relation("GameProfileResults")
   leagueWeeks   GameLeagueMember[]
   taskRewards   GameTaskReward[]
+  endlessRuns   GameEndlessRun[]
+  endlessBests  GameEndlessBest[]
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
@@ -2088,4 +2090,43 @@ model GameTaskReward {
 
   @@unique([profileId, weekStart, taskKey])
   @@map("game_task_reward")
+}
+
+/**
+ * Ein laufender Endlos-Lauf für die Bestenliste: Der Server stellt die Aufgaben und
+ * prüft jede Antwort. Nach dem Lauf wird die Zeile gelöscht, nur der Bestwert bleibt.
+ */
+model GameEndlessRun {
+  id           String      @id @default(uuid())
+  profileId    String
+  profile      GameProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  game         String
+  variant      String
+  /// Gestellte Aufgaben in Reihenfolge, dazu die Antworten.
+  state        Json
+  score        Int         @default(0)
+  hearts       Int
+  startedAt    DateTime    @default(now())
+  lastReportAt DateTime    @default(now())
+
+  @@index([profileId])
+  @@index([lastReportAt])
+  @@map("game_endless_run")
+}
+
+/** Bestwert je Profil, Spiel und Variante (etwa Instrument), mit den Antworten zum Nachprüfen. */
+model GameEndlessBest {
+  id         String      @id @default(uuid())
+  profileId  String
+  profile    GameProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  game       String
+  variant    String
+  score      Int
+  replay     Json?
+  hidden     Boolean     @default(false)
+  achievedAt DateTime    @default(now())
+
+  @@unique([profileId, game, variant])
+  @@index([game, variant, score])
+  @@map("game_endless_best")
 }
