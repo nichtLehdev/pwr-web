@@ -13,7 +13,7 @@ import type {
 
 export type SegmentKind = "count" | "call" | "answer" | "read";
 export type Announcement =
-  "again" | "faster" | "slower" | "fresh" | "lost" | "gained" | null;
+  "again" | "faster" | "slower" | "fresh" | "lost" | "gained" | "longer" | null;
 
 export type SegmentSpec = {
   kind: SegmentKind;

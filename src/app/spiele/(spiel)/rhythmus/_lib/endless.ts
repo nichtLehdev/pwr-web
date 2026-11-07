@@ -30,6 +30,15 @@ const FIGURES_PER_STAGE = 3;
 const BARS_PER_STAGE = 6;
 const BARS_PER_TEMPO_STEP = 8;
 const BAND_TEMPO_STEP = 4;
+/** Ab hier werden Figuren länger statt nur schneller. */
+export const LONG_FROM_BPM = 96;
+/** Nach dem Wechsel auf zwei Takte bleibt das Tempo so viele Figuren stehen. */
+const TEMPO_HOLD_FIGURES = 6;
+/** Notenband oberhalb von LONG_FROM_BPM: seltener und kleiner schneller. */
+const BAND_LATE_BARS_PER_STEP = 16;
+const BAND_LATE_TEMPO_STEP = 2;
+/** So viele Figuren sind Triolen, sobald es welche gibt. */
+const TRIPLET_SHARE = 0.35;
 const RECENT_FIGURES = 3;
 
 export const ENDLESS_METER: TimeSignature = { numerator: 4, denominator: 4 };
@@ -44,8 +53,27 @@ const SOURCE_LEVELS = LEVELS.filter((level) =>
 
 export const ENDLESS_STAGES = SOURCE_LEVELS.length;
 
+/** Triolen und Sechzehntel in einer Figur sind zu viel Umdenken auf einmal. */
+export type EndlessFamily = "all" | "straight" | "triplet";
+
+function isTriplet(pattern: string): boolean {
+  return pattern.split(" ").some((token) => token === "t" || token === "rt");
+}
+
+function isSixteenth(pattern: string): boolean {
+  return pattern.includes("16");
+}
+
+export function hasTriplets(stage: number): boolean {
+  return endlessLevelAt(stage).cells.some((cell) => isTriplet(cell.pattern));
+}
+
 /** Alles bisher Gelernte; das Neueste kommt am häufigsten, damit man es auch übt. */
-export function endlessLevelAt(stage: number): Level {
+export function endlessLevelAt(
+  stage: number,
+  family: EndlessFamily = "all",
+  bars: 1 | 2 = 1,
+): Level {
   const index = Math.min(stage, SOURCE_LEVELS.length - 1);
   const newest = SOURCE_LEVELS[index]!;
   const cells = new Map<string, Cell>();
@@ -63,15 +91,20 @@ export function endlessLevelAt(stage: number): Level {
       cells.set(cell.pattern, { ...cell, weight: (cell.weight ?? 1) * 2 });
     }
   }
+  const fits = (cell: Cell) =>
+    family === "all" ||
+    (family === "triplet"
+      ? !isSixteenth(cell.pattern)
+      : !isTriplet(cell.pattern));
   return {
     id: ENDLESS_ID,
     title: "Endlos",
     hint: "",
     group: "Endlos",
     meters: [ENDLESS_METER],
-    cells: [...cells.values()],
+    cells: [...cells.values()].filter(fits),
     bpm: { min: START_BPM, start: START_BPM, max: MAX_BPM },
-    bars: 1,
+    bars,
     minOnsets: 2,
     leniency: 1,
   };
@@ -106,7 +139,10 @@ export class EndlessPlan implements AnswerRules {
   private cleared = 0;
   private index = 0;
   private recent: string[] = [];
+  private holdLeft = 0;
   bpm = START_BPM;
+  /** Ab LONG_FROM_BPM zwei Takte je Figur. */
+  long = false;
 
   constructor(private readonly rng: Rng = Math.random) {}
 
@@ -124,7 +160,14 @@ export class EndlessPlan implements AnswerRules {
   }
 
   private step(announcement: Announcement): AnswerStep {
-    const figure = generateFigure(endlessLevelAt(this.stage()), ENDLESS_METER, {
+    const stage = this.stage();
+    const family: EndlessFamily = !hasTriplets(stage)
+      ? "straight"
+      : this.rng() < TRIPLET_SHARE
+        ? "triplet"
+        : "straight";
+    const level = endlessLevelAt(stage, family, this.long ? 2 : 1);
+    const figure = generateFigure(level, ENDLESS_METER, {
       rng: this.rng,
       avoid: new Set(this.recent),
     });
@@ -147,7 +190,13 @@ export class EndlessPlan implements AnswerRules {
     const allStagesOpen = this.stage() >= ENDLESS_STAGES;
     const tempoStep = allStagesOpen ? 2 : 1;
     const bpmBefore = this.bpm;
-    this.bpm = Math.min(MAX_BPM, this.bpm + tempoStep);
+    if (!this.long && this.bpm >= LONG_FROM_BPM) {
+      this.long = true;
+      this.holdLeft = TEMPO_HOLD_FIGURES;
+      return this.step("longer");
+    }
+    if (this.holdLeft > 0) this.holdLeft--;
+    else this.bpm = Math.min(MAX_BPM, this.bpm + tempoStep);
 
     if (change === "gained") return this.step("gained");
     if (this.stage() !== stageBefore && !allStagesOpen) {
@@ -167,6 +216,7 @@ export class EndlessBandScript implements SessionScript, BandSource {
   private readonly bars: RhythmEvent[][] = [];
   private cursor = -1;
   private cleared = 0;
+  private family: EndlessFamily = "straight";
 
   constructor(private readonly rng: Rng = Math.random) {}
 
@@ -179,17 +229,35 @@ export class EndlessBandScript implements SessionScript, BandSource {
   }
 
   bpmAt(index: number): number {
+    const early =
+      START_BPM + Math.floor(index / BARS_PER_TEMPO_STEP) * BAND_TEMPO_STEP;
+    if (early < LONG_FROM_BPM) return early;
+    const lateFrom =
+      ((LONG_FROM_BPM - START_BPM) / BAND_TEMPO_STEP) * BARS_PER_TEMPO_STEP;
     return Math.min(
       MAX_BPM,
-      START_BPM + Math.floor(index / BARS_PER_TEMPO_STEP) * BAND_TEMPO_STEP,
+      LONG_FROM_BPM +
+        Math.floor((index - lateFrom) / BAND_LATE_BARS_PER_STEP) *
+          BAND_LATE_TEMPO_STEP,
     );
   }
 
   barAt(index: number): RhythmEvent[] {
     while (this.bars.length <= index) {
       const stage = Math.floor(this.bars.length / BARS_PER_STAGE);
+      // Je zwei Takte entweder gerade oder Triolen, nie abwechselnd Takt für Takt.
+      if (this.bars.length % 2 === 0) {
+        this.family =
+          hasTriplets(stage) && this.rng() < TRIPLET_SHARE
+            ? "triplet"
+            : "straight";
+      }
       this.bars.push(
-        generateBar(endlessLevelAt(stage), ENDLESS_METER, this.rng),
+        generateBar(
+          endlessLevelAt(stage, this.family),
+          ENDLESS_METER,
+          this.rng,
+        ),
       );
     }
     return this.bars[index]!;

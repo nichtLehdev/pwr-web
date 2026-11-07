@@ -210,6 +210,7 @@ export const ANNOUNCEMENT = {
   fresh: "Neuer Rhythmus",
   lost: "Puste weg",
   gained: "Puste zurück",
+  longer: "Jetzt zwei Takte",
 } as const;
 
 /** Große Einzählzahl; `key` startet die Animation je Schlag neu. */

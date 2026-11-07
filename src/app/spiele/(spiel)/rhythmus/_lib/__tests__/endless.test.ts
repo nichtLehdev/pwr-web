@@ -7,6 +7,7 @@ import {
   EndlessBandScript,
   EndlessPlan,
   endlessLevelAt,
+  LONG_FROM_BPM,
   ENDLESS_METER,
   ENDLESS_STAGES,
   MAX_LIVES,
@@ -219,5 +220,73 @@ describe("mergeEndlessRecord", () => {
     expect(second.isRecord).toBe(true);
     expect(second.records.answer).toEqual({ points: 20, reached: 2 });
     expect(second.records.band).toBeUndefined();
+  });
+});
+
+describe("longer figures and separate triplets", () => {
+  it("never mixes triplets and sixteenths in one figure", () => {
+    for (let stage = 0; stage < ENDLESS_STAGES + 2; stage++) {
+      for (const family of ["straight", "triplet"] as const) {
+        const patterns = endlessLevelAt(stage, family).cells.map(
+          (c) => c.pattern,
+        );
+        const triplet = patterns.some((p) => p.split(" ").includes("t"));
+        const sixteenth = patterns.some((p) => p.includes("16"));
+        expect(triplet && sixteenth).toBe(false);
+      }
+    }
+  });
+
+  it("switches to two bars at a calm tempo and holds the tempo for a while", () => {
+    let seed = 1;
+    const plan = new EndlessPlan(
+      () => (seed = (seed * 16807) % 2147483647) / 2147483647,
+    );
+    let step = plan.first();
+    const seen: { bars: number; bpm: number; announcement: unknown }[] = [];
+    for (let i = 0; i < 60; i++) {
+      seen.push({
+        bars: step.figure.bars.length,
+        bpm: step.bpm,
+        announcement: step.announcement,
+      });
+      step = plan.afterAnswer(1)!;
+    }
+    const switchAt = seen.findIndex((s) => s.bars === 2);
+    expect(switchAt).toBeGreaterThan(0);
+    expect(seen[switchAt]!.announcement).toBe("longer");
+    expect(seen[switchAt]!.bpm).toBeGreaterThanOrEqual(LONG_FROM_BPM);
+    expect(seen[switchAt]!.bpm).toBeLessThan(LONG_FROM_BPM + 3);
+    expect(seen.slice(0, switchAt).every((s) => s.bars === 1)).toBe(true);
+    expect(seen.slice(switchAt).every((s) => s.bars === 2)).toBe(true);
+    const held = seen.slice(switchAt, switchAt + 7).map((s) => s.bpm);
+    expect(new Set(held).size).toBe(1);
+    expect(seen.at(-1)!.bpm).toBeGreaterThan(held[0]!);
+  });
+
+  it("keeps two-bar blocks in one family in Notenband", () => {
+    let seed = 3;
+    const band = new EndlessBandScript(
+      () => (seed = (seed * 16807) % 2147483647) / 2147483647,
+    );
+    const isTripletBar = (bar: { tupletId?: number }[]) =>
+      bar.some((e) => e.tupletId !== undefined);
+    const isSixteenthBar = (bar: { ticks: number; tupletId?: number }[]) =>
+      bar.some((e) => e.tupletId === undefined && e.ticks === 12);
+    for (let i = 0; i < 400; i += 2) {
+      const pair = [band.barAt(i), band.barAt(i + 1)];
+      const triplet = pair.some(isTripletBar);
+      const sixteenth = pair.some(isSixteenthBar);
+      expect(triplet && sixteenth).toBe(false);
+    }
+  });
+
+  it("slows the tempo rise in Notenband from the calm limit on", () => {
+    const band = new EndlessBandScript();
+    const early = band.bpmAt(8) - band.bpmAt(0);
+    const at = Array.from({ length: 400 }, (_, i) => band.bpmAt(i)).findIndex(
+      (bpm) => bpm >= LONG_FROM_BPM,
+    );
+    expect(band.bpmAt(at + 16) - band.bpmAt(at)).toBeLessThan(early);
   });
 });
