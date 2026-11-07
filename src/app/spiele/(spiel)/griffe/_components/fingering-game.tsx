@@ -14,6 +14,8 @@ import {
   PathScreen,
 } from "../../../_components/path-screen";
 import { usePathState } from "../../../_lib/use-path-state";
+import { gameInstruments } from "../../../_lib/profiles/options";
+import { activeProfileInstruments } from "../../../_lib/profiles/scope";
 import {
   buildGriffeRun,
   GRIFFE_PATH,
@@ -356,7 +358,16 @@ export function FingeringGame() {
       /* ignore */
     }
     queueMicrotask(() => {
-      if (stored.instrument) setInstrument(stored.instrument);
+      const fromProfile = gameInstruments(activeProfileInstruments(), "griffe");
+      const instrumentChoice =
+        fromProfile.length > 0 &&
+        !(
+          stored.instrument &&
+          (fromProfile as readonly string[]).includes(stored.instrument)
+        )
+          ? fromProfile[0]
+          : stored.instrument;
+      if (instrumentChoice) setInstrument(instrumentChoice);
       if (stored.mode) setMode(stored.mode);
       if (linkSetId) {
         // Link schlägt gespeichertes Set; feste Stufe bleibt als Fallback.

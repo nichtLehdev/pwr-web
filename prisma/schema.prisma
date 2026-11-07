@@ -78,6 +78,7 @@ model User {
   bezirkScopes    UserBezirkScope[]    @relation("UserBezirkScopes")
 
   gameResults GameResult[] @relation("UserGameResults")
+  gameProfiles GameProfile[] @relation("UserGameProfiles")
 
   maintenanceUpdates MaintenanceState[] @relation("MaintenanceUpdatedBy")
 
@@ -115,11 +116,37 @@ model GameResult {
   playedAt   DateTime
   clientId   String
   createdAt  DateTime @default(now())
+  /// Wer an einem geteilten Konto gespielt hat; ältere Ergebnisse haben kein Profil.
+  profileId  String?
+  profile    GameProfile? @relation("GameProfileResults", fields: [profileId], references: [id], onDelete: SetNull)
 
   @@unique([userId, clientId])
   @@index([userId, game])
   @@index([game, score])
+  @@index([profileId, playedAt])
   @@map("game_result")
+}
+
+/**
+ * Spielprofil unter einem Login, damit mehrere Kinder ein Konto teilen können.
+ * Der Name kommt aus festen Listen, nie aus Freitext: Er erscheint später in Ranglisten.
+ */
+model GameProfile {
+  id            String       @id @default(uuid())
+  userId        String
+  user          User         @relation("UserGameProfiles", fields: [userId], references: [id], onDelete: Cascade)
+  nameAdjective String
+  nameNoun      String
+  color         String
+  instruments   String[]
+  /// Lernpfad-Fortschritt je Spiel; der Sync führt Geräte zusammen, bessere Werte gewinnen.
+  progress      Json         @default("{}")
+  results       GameResult[] @relation("GameProfileResults")
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([userId])
+  @@map("game_profile")
 }
 
 /**

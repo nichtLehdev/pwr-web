@@ -1,3 +1,4 @@
+import { notifyProgressChanged, scopedKey } from "../../../_lib/profiles/scope";
 import {
   generateBar,
   generateFigure,
@@ -248,7 +249,7 @@ const RECORDS_KEY = "pwr.spiele.v1.rhythmus.endless";
 
 export function loadEndlessRecords(): EndlessRecords {
   try {
-    const raw = localStorage.getItem(RECORDS_KEY);
+    const raw = localStorage.getItem(scopedKey(RECORDS_KEY));
     return raw ? (JSON.parse(raw) as EndlessRecords) : {};
   } catch {
     return {};
@@ -257,7 +258,8 @@ export function loadEndlessRecords(): EndlessRecords {
 
 export function saveEndlessRecords(records: EndlessRecords): void {
   try {
-    localStorage.setItem(RECORDS_KEY, JSON.stringify(records));
+    localStorage.setItem(scopedKey(RECORDS_KEY), JSON.stringify(records));
+    notifyProgressChanged();
   } catch {
     /* Privatmodus: Es bleibt bei dieser Sitzung. */
   }

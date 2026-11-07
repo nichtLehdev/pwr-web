@@ -14,6 +14,8 @@ import {
   PathScreen,
 } from "../../../_components/path-screen";
 import { usePathState } from "../../../_lib/use-path-state";
+import { gameInstruments } from "../../../_lib/profiles/options";
+import { activeProfileInstruments } from "../../../_lib/profiles/scope";
 import { buildNotenRun, NOTEN_PATH, type NotenRun } from "../_lib/path-stages";
 import { GAME_FOCUS_RING } from "../../../_lib/focus-ring";
 import { toNoteSetSummary, type NoteSetSummary } from "../../../_lib/note-sets";
@@ -320,7 +322,16 @@ export function NoteReadingGame() {
     }
 
     queueMicrotask(() => {
-      if (stored.instrument) setInstrument(stored.instrument);
+      const fromProfile = gameInstruments(activeProfileInstruments(), "noten");
+      const instrumentChoice =
+        fromProfile.length > 0 &&
+        !(
+          stored.instrument &&
+          (fromProfile as readonly string[]).includes(stored.instrument)
+        )
+          ? fromProfile[0]
+          : stored.instrument;
+      if (instrumentChoice) setInstrument(instrumentChoice);
       if (stored.mode) setMode(stored.mode);
       if (stored.difficulty) setDifficulty(stored.difficulty);
       if (pending) setPendingSet(pending);

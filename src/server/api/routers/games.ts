@@ -19,6 +19,7 @@ const resultSchema = z.object({
     .max(24 * 60 * 60 * 1000)
     .optional(),
   meta: z.record(z.string(), z.unknown()).optional(),
+  profileId: z.string().uuid().optional(),
 });
 
 export const gamesRouter = createTRPCRouter({
@@ -29,6 +30,15 @@ export const gamesRouter = createTRPCRouter({
   submitResults: protectedProcedure
     .input(z.object({ results: z.array(resultSchema).min(1).max(50) }))
     .mutation(async ({ ctx, input }) => {
+      // Fremde oder gelöschte Profile zählen nicht; das Ergebnis bleibt dem Konto.
+      const owned = new Set(
+        (
+          await ctx.db.gameProfile.findMany({
+            where: { userId: ctx.session.user.id },
+            select: { id: true },
+          })
+        ).map((p) => p.id),
+      );
       const created = await ctx.db.gameResult.createMany({
         data: input.results.map((r) => ({
           userId: ctx.session.user.id,
@@ -40,6 +50,7 @@ export const gamesRouter = createTRPCRouter({
           meta: r.meta as Prisma.InputJsonValue | undefined,
           playedAt: r.playedAt,
           clientId: r.clientId,
+          profileId: r.profileId && owned.has(r.profileId) ? r.profileId : null,
         })),
         skipDuplicates: true,
       });

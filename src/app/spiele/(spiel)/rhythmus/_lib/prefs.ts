@@ -1,3 +1,4 @@
+import { notifyProgressChanged, scopedKey } from "../../../_lib/profiles/scope";
 import { levelById, LEVELS, type Level } from "../../../_lib/rhythm/levels";
 import type { InputMode } from "./conductor";
 import { ENDLESS_ID } from "./endless";
@@ -38,7 +39,7 @@ export const DEFAULT_PREFS: Prefs = {
 
 function read<T>(key: string): T | null {
   try {
-    const raw = localStorage.getItem(key);
+    const raw = localStorage.getItem(scopedKey(key));
     return raw ? (JSON.parse(raw) as T) : null;
   } catch {
     return null;
@@ -47,7 +48,8 @@ function read<T>(key: string): T | null {
 
 function write(key: string, value: unknown): void {
   try {
-    localStorage.setItem(key, JSON.stringify(value));
+    localStorage.setItem(scopedKey(key), JSON.stringify(value));
+    if (key === PROGRESS_KEY) notifyProgressChanged();
   } catch {
     /* Privatmodus: Es bleibt bei dieser Sitzung. */
   }

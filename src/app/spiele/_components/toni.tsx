@@ -113,8 +113,15 @@ function Face({ mood }: { mood: ToniMood }) {
 /** Toni, die kleine Tuba: Das Maskottchen der Spielwelt. Rein dekorativ. */
 export const Toni = forwardRef<
   HTMLDivElement,
-  { mood?: ToniMood; className?: string }
->(function Toni({ mood = "idle", className }, ref) {
+  {
+    mood?: ToniMood;
+    className?: string;
+    /** Profilfarbe; ohne bleibt Toni Messing. */
+    color?: { body: string; dark: string };
+  }
+>(function Toni({ mood = "idle", className, color }, ref) {
+  const body = color?.body ?? BRASS;
+  const bell = color?.dark ?? BRASS_DARK;
   return (
     <div ref={ref} className={cn("shrink-0", className)} aria-hidden>
       <svg
@@ -125,7 +132,7 @@ export const Toni = forwardRef<
         <ellipse cx="72" cy="113" rx="11" ry="6" fill="currentColor" />
         <path
           d="M72 36C80 22 92 14 106 7l12 25c-14 2-24 10-28 24z"
-          fill={BRASS_DARK}
+          fill={bell}
           stroke="currentColor"
           strokeWidth="3"
           strokeLinejoin="round"
@@ -149,7 +156,7 @@ export const Toni = forwardRef<
           cx="55"
           cy="68"
           r="42"
-          fill={BRASS}
+          fill={body}
           stroke="currentColor"
           strokeWidth="3"
         />

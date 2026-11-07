@@ -25,6 +25,7 @@ import { notificationsRouter } from "./routers/notifications";
 import { contactRouter } from "./routers/contact";
 import { noteSetsRouter } from "./routers/note-sets";
 import { gamesRouter } from "./routers/games";
+import { gameProfilesRouter } from "./routers/game-profiles";
 import { customFieldTemplatesRouter } from "./routers/custom-field-templates";
 import { maintenanceRouter } from "./routers/maintenance";
 import { oauthConnectionsRouter } from "./routers/oauth-connections";
@@ -58,6 +59,7 @@ export const appRouter = createTRPCRouter({
   contact: contactRouter,
   noteSets: noteSetsRouter,
   games: gamesRouter,
+  gameProfiles: gameProfilesRouter,
   customFieldTemplates: customFieldTemplatesRouter,
   oauthConnections: oauthConnectionsRouter,
   reviewChanges: reviewChangesRouter,
