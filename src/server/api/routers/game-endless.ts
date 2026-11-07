@@ -5,12 +5,23 @@ import {
   ENDLESS_GAMES,
   endlessBoard,
   reportEndless,
+  reportRhythm,
   startEndlessRun,
+  startRhythmRun,
 } from "@/server/games/endless";
 import { permissionProcedure } from "../middleware/permissions";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 const gameSchema = z.enum(ENDLESS_GAMES);
+const questionGameSchema = z.enum(["noten-lesen", "griffe"]);
+const pressSchema = z.object({
+  atMs: z
+    .number()
+    .int()
+    .min(-10_000)
+    .max(4 * 60 * 60 * 1000),
+  durationMs: z.number().int().min(0).max(60_000).nullable(),
+});
 
 async function assertOwned(
   db: { gameProfile: { findFirst: (args: object) => Promise<unknown> } },
@@ -29,7 +40,7 @@ export const gameEndlessRouter = createTRPCRouter({
     .input(
       z.object({
         profileId: z.string().uuid(),
-        game: gameSchema,
+        game: questionGameSchema,
         variant: z.string().max(40),
       }),
     )
@@ -43,6 +54,32 @@ export const gameEndlessRouter = createTRPCRouter({
       );
     }),
 
+  startRhythm: protectedProcedure
+    .input(
+      z.object({ profileId: z.string().uuid(), variant: z.string().max(20) }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      await assertOwned(ctx.db, ctx.session.user.id, input.profileId);
+      return startRhythmRun(ctx.db, input.profileId, input.variant);
+    }),
+
+  reportRhythm: protectedProcedure
+    .input(
+      z.object({
+        profileId: z.string().uuid(),
+        runId: z.string().uuid(),
+        fromPress: z.number().int().min(0),
+        presses: z.array(pressSchema).max(2000),
+        fromDecision: z.number().int().min(0),
+        decisions: z.array(z.number().min(0).max(1).nullable()).max(2000),
+        final: z.boolean(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      await assertOwned(ctx.db, ctx.session.user.id, input.profileId);
+      return reportRhythm(ctx.db, input.profileId, input);
+    }),
+
   report: protectedProcedure
     .input(
       z.object({
@@ -52,7 +89,7 @@ export const gameEndlessRouter = createTRPCRouter({
         answers: z
           .array(
             z.object({
-              label: z.string().max(8).nullable(),
+              label: z.string().max(80).nullable(),
               ms: z.number().int().min(0).max(60000),
             }),
           )

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { Medal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/app/_components/ui/button";
@@ -10,18 +11,21 @@ import { ResultField } from "./game-kit";
 import { GameDock } from "./game-shell-context";
 import { ProfileAvatar, useProfiles } from "./profiles";
 
-type Game = "noten-lesen";
+type Game = "noten-lesen" | "griffe" | "rhythmus";
 
 /** Einstieg zur Bestenliste: nur mit Profil und Netz, weil der Server mitprüft. */
 export function RankedTile({
   game,
   variant,
   variantLabel,
+  rules = `${NOTE_TIME_MS / 1000} Sekunden je Note, ${ENDLESS_HEARTS} Herzen.`,
   onStart,
 }: {
   game: Game;
   variant: string;
   variantLabel: string;
+  /** Kurz, was in diesem Spiel zählt. */
+  rules?: string;
   onStart: () => void;
 }) {
   const { active } = useProfiles();
@@ -56,7 +60,7 @@ export function RankedTile({
                 ? `Dein Bestwert: ${board.data.myBest}, Platz ${board.data.myRank}.`
                 : leader
                   ? `Endlos gegen alle. Vorne: ${leader.name} mit ${leader.score}.`
-                  : `Endlos gegen alle: ${NOTE_TIME_MS / 1000} Sekunden je Note, ${ENDLESS_HEARTS} Herzen.`}
+                  : `Endlos gegen alle: ${rules}`}
           </span>
         </span>
       </button>
@@ -66,34 +70,42 @@ export function RankedTile({
 
 export type RankedOutcome =
   | { status: "finished"; score: number; best: number; isBest: boolean }
-  | { status: "invalid"; reason: string };
+  | { status: "invalid"; reason: string }
+  | { status: "checking" };
 
 /** Ergebnis eines Bestenlisten-Laufs mit der Spitze der Liste. */
 export function RankedResult({
   game,
   variant,
   outcome,
+  unit = "richtig",
   onAgain,
   onContinue,
 }: {
   game: Game;
   variant: string;
   outcome: RankedOutcome;
+  unit?: string;
   onAgain: () => void;
   onContinue: () => void;
 }) {
   const { active } = useProfiles();
-  const board = api.gameEndless.board.useQuery({
-    game,
-    variant,
-    profileId: active?.id ?? null,
-  });
+  const board = api.gameEndless.board.useQuery(
+    { game, variant, profileId: active?.id ?? null },
+    { enabled: outcome.status !== "checking" },
+  );
+  const utils = api.useUtils();
+  // Die Liste vom Start ist veraltet, sobald der neue Wert gespeichert ist.
+  useEffect(() => {
+    if (outcome.status !== "checking")
+      void utils.gameEndless.board.invalidate();
+  }, [outcome.status, utils]);
   return (
     <div className="flex flex-col gap-4 pb-2">
       {outcome.status === "finished" ? (
         <ResultField
           value={String(outcome.score)}
-          valueLabel="richtig"
+          valueLabel={unit}
           headline={
             outcome.isBest
               ? "Neuer Bestwert."
@@ -103,6 +115,13 @@ export function RankedResult({
           celebrate={outcome.isBest}
           badge={board.data?.myRank ? `Platz ${board.data.myRank}` : null}
         />
+      ) : outcome.status === "checking" ? (
+        <p
+          role="status"
+          className="text-dark dark:text-night-muted py-10 text-center text-lg font-bold"
+        >
+          Der Server zählt nach …
+        </p>
       ) : (
         <p className="text-ink dark:text-night-text py-6 text-center text-xl font-bold">
           {outcome.reason}

@@ -361,6 +361,11 @@ export class Conductor {
     this.emit("onFinish", this.attempts());
   }
 
+  /** Alle Tastendrücke in Liedzeit, für die Prüfung einer Bestenlisten-Runde. */
+  pressLog(): readonly Press[] {
+    return this.presses;
+  }
+
   attempts(): Attempt[] {
     return this.segments.flatMap((segment) => {
       if (segment.kind !== "answer" && segment.kind !== "read") return [];

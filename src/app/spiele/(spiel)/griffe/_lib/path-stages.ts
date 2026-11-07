@@ -127,6 +127,8 @@ export type GriffeRun = {
   total: number;
   challengeSection: number | null;
   daily: boolean;
+  /** Bestenliste: Die Noten kommen vom Server. */
+  ranked?: boolean;
 };
 
 /** Nur Töne mit bekanntem Griff; eine Challenge zieht aus allen bisherigen Stufen. */

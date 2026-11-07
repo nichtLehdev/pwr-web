@@ -7,6 +7,7 @@ import { Button } from "@/app/_components/ui/button";
 import { GameHead } from "../../../_components/game-kit";
 import { LearningPathMap } from "../../../_components/learning-path-map";
 import { DailyTile } from "../../../_components/path-screen";
+import { RankedTile } from "../../../_components/ranked";
 import { usePathCelebration } from "../../../_components/use-path-celebration";
 import { GameDock } from "../../../_components/game-shell-context";
 import { GAME_FOCUS_RING } from "../../../_lib/focus-ring";
@@ -75,6 +76,7 @@ export function SetupView({
   onChange,
   onStart,
   onStartDaily,
+  onStartRanked,
   onCalibrate,
 }: {
   prefs: Prefs;
@@ -86,6 +88,7 @@ export function SetupView({
   onChange: (next: Prefs) => void;
   onStart: () => void;
   onStartDaily: () => void;
+  onStartRanked: () => void;
   onCalibrate: () => void;
 }) {
   const isEndless = prefs.levelId === ENDLESS_ID;
@@ -197,6 +200,13 @@ export function SetupView({
         after={
           <>
             <DailyTile game="rhythmus" onStart={onStartDaily} />
+            <RankedTile
+              game="rhythmus"
+              variant={`${prefs.mode}:${prefs.input}`}
+              variantLabel={`${prefs.mode === "band" ? "Notenband" : "Nachspielen"}, ${prefs.input === "hold" ? "Halten" : "Tippen"}`}
+              rules="Drei Mal Puste, der Server zählt nach."
+              onStart={onStartRanked}
+            />
             <section aria-label="Endlos">
               <button
                 ref={isEndless ? selectedRef : undefined}

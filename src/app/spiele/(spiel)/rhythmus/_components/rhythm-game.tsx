@@ -67,6 +67,18 @@ import {
   type Celebration,
 } from "../_lib/path";
 import { rankFor, totalStars } from "../_lib/ranks";
+import {
+  endlessScript,
+  RecordingScript,
+  relativePresses,
+  type RhythmVariant,
+} from "../_lib/replay";
+import { activeProfileId } from "../../../_lib/profiles/scope";
+import { RankedResult, type RankedOutcome } from "../../../_components/ranked";
+import { api } from "@/trpc/react";
+
+/** So oft meldet ein Bestenlisten-Lauf seine Drücke. */
+const RANKED_REPORT_MS = 8000;
 import { markDailyDone } from "../../../_lib/daily";
 import { DAILY_ID } from "../../../_lib/learning-path";
 import { AnswerStage } from "./answer-stage";
@@ -87,6 +99,17 @@ type Session = {
   /** Nur Endlos: wie weit der Lauf gekommen ist. */
   reached: (() => number) | null;
   /** Nur Challenges. */
+  /** Bestenliste: Der Server spielt den Lauf aus diesen Drücken nach. */
+  ranked: {
+    runId: string;
+    profileId: string;
+    variant: RhythmVariant;
+    recording: RecordingScript;
+    sentPresses: number;
+    sentDecisions: number;
+    timer: number | null;
+    invalid: string | null;
+  } | null;
   /** `section: null` ist das Tagestraining. */
   challenge: { section: number | null; plan: ChallengePlan } | null;
   startedAt: number;
@@ -130,6 +153,49 @@ export function RhythmGame() {
     useState<ChallengeResult | null>(null);
 
   const [celebration, setCelebration] = useState<Celebration | null>(null);
+  const [rankedOutcome, setRankedOutcome] = useState<RankedOutcome | null>(
+    null,
+  );
+  const [rankedVariant, setRankedVariant] = useState<RhythmVariant | null>(
+    null,
+  );
+  const startRhythmRun = api.gameEndless.startRhythm.useMutation();
+  const reportRhythm = api.gameEndless.reportRhythm.useMutation();
+  const reportRef = useRef(reportRhythm.mutateAsync);
+  useEffect(() => {
+    reportRef.current = reportRhythm.mutateAsync;
+  });
+
+  /** Fertige Drücke und Entscheidungen melden; am Ende auch die noch offenen. */
+  const sendRanked = useCallback(async (active: Session, final: boolean) => {
+    const ranked = active.ranked;
+    if (!ranked || ranked.invalid) return null;
+    const { conductor } = active;
+    const all = relativePresses(conductor.pressLog(), conductor.startSec);
+    const open = all.findIndex((p) => p.durationMs === null);
+    const upTo = final || open === -1 ? all.length : open;
+    const presses = all.slice(ranked.sentPresses, upTo);
+    const decisions = ranked.recording.decisions.slice(ranked.sentDecisions);
+    try {
+      const result = await reportRef.current({
+        profileId: ranked.profileId,
+        runId: ranked.runId,
+        fromPress: ranked.sentPresses,
+        presses,
+        fromDecision: ranked.sentDecisions,
+        decisions,
+        final,
+      });
+      ranked.sentPresses += presses.length;
+      ranked.sentDecisions += decisions.length;
+      if (result.status === "invalid") ranked.invalid = result.reason;
+      return result;
+    } catch {
+      ranked.invalid =
+        "Die Verbindung ist abgerissen. Dieser Lauf zählt leider nicht.";
+      return null;
+    }
+  }, []);
 
   const [audio] = useState(() => new RhythmAudio());
   const sessionRef = useRef<Session | null>(null);
@@ -168,6 +234,24 @@ export function RhythmGame() {
 
   const finish = useCallback(
     (active: Session, attempts: Attempt[]) => {
+      if (active.ranked) {
+        const ranked = active.ranked;
+        if (ranked.timer !== null) window.clearInterval(ranked.timer);
+        setRankedVariant(ranked.variant);
+        setRankedOutcome({ status: "checking" });
+        void sendRanked(active, true).then((final) => {
+          if (final && final.status === "finished") setRankedOutcome(final);
+          else
+            setRankedOutcome({
+              status: "invalid",
+              reason:
+                ranked.invalid ??
+                "Der Lauf konnte nicht geprüft werden. Er zählt leider nicht.",
+            });
+        });
+      } else {
+        setRankedVariant(null);
+      }
       const result = summarize(attempts);
       const { fixedBpm, mode, input } = prefsRef.current;
       const isEndless = active.level === null && !active.challenge;
@@ -275,11 +359,14 @@ export function RhythmGame() {
       setSession(null);
       setView("result");
     },
-    [recordResult],
+    [recordResult, sendRanked],
   );
 
   const start = useCallback(
-    async (selectionId: string) => {
+    async (
+      selectionId: string,
+      rankedRun?: { runId: string; seed: number; profileId: string },
+    ) => {
       setCelebration(null);
       await audio.ensure();
       const { mode, input, fixedBpm } = prefsRef.current;
@@ -294,6 +381,7 @@ export function RhythmGame() {
       let band: Session["band"] = null;
       let reached: Session["reached"] = null;
       let challenge: Session["challenge"] = null;
+      let ranked: Session["ranked"] = null;
       let script: SessionScript;
       if (daily) {
         const plan = new ChallengePlan(buildDailySteps(progressRef.current));
@@ -308,6 +396,23 @@ export function RhythmGame() {
           plan.total,
           hasSteadyPitch(SECTIONS[challengeSection]!.stages[0]!),
         );
+      } else if (level === null && rankedRun) {
+        const variant: RhythmVariant = `${mode}:${input}`;
+        const made = endlessScript(variant, rankedRun.seed);
+        const recording = new RecordingScript(made.script);
+        if (made.band) band = { source: made.band, ts: ENDLESS_METER };
+        reached = made.reached;
+        script = recording;
+        ranked = {
+          runId: rankedRun.runId,
+          profileId: rankedRun.profileId,
+          variant,
+          recording,
+          sentPresses: 0,
+          sentDecisions: 0,
+          timer: null,
+          invalid: null,
+        };
       } else if (level === null) {
         if (mode === "band") {
           const endless = new EndlessBandScript();
@@ -348,8 +453,15 @@ export function RhythmGame() {
         band,
         reached,
         challenge,
+        ranked,
         startedAt: performance.now(),
       };
+      if (ranked) {
+        ranked.timer = window.setInterval(
+          () => void sendRanked(active, false),
+          RANKED_REPORT_MS,
+        );
+      }
       conductor.subscribe({
         onFinish: (attempts) => finish(active, attempts),
         onSegment: (segment) => setIsListening(segment.kind === "call"),
@@ -362,10 +474,28 @@ export function RhythmGame() {
       // Erst die Bühne einhängen, dann losspielen: Sonst fehlt ihr der Beginn.
       requestAnimationFrame(() => conductor.start());
     },
-    [audio, finish, latencyMs],
+    [audio, finish, latencyMs, sendRanked],
   );
 
+  const startRanked = useCallback(async () => {
+    const profileId = activeProfileId();
+    if (!profileId) return;
+    const { mode, input } = prefsRef.current;
+    try {
+      const run = await startRhythmRun.mutateAsync({
+        profileId,
+        variant: `${mode}:${input}`,
+      });
+      setRankedOutcome(null);
+      await start(ENDLESS_ID, { ...run, profileId });
+    } catch {
+      setNotice("Für die Bestenliste brauchst du Internet.");
+    }
+  }, [start, startRhythmRun]);
+
   const abort = useCallback((message: string | null) => {
+    const timer = sessionRef.current?.ranked?.timer;
+    if (timer != null) window.clearInterval(timer);
     sessionRef.current?.conductor.stop();
     sessionRef.current = null;
     setSession(null);
@@ -407,6 +537,7 @@ export function RhythmGame() {
           onChange={changePrefs}
           onStart={() => void start(prefs.levelId)}
           onStartDaily={() => void start(DAILY_ID)}
+          onStartRanked={() => void startRanked()}
           onCalibrate={() => setView("calibrate")}
         />
       )}
@@ -464,7 +595,22 @@ export function RhythmGame() {
         </>
       )}
 
-      {view === "result" && summary && (
+      {view === "result" && rankedVariant && rankedOutcome && (
+        <RankedResult
+          game="rhythmus"
+          variant={rankedVariant}
+          outcome={rankedOutcome}
+          unit="Punkte"
+          onAgain={() => void startRanked()}
+          onContinue={() => {
+            audio.cancelScheduled();
+            setRankedVariant(null);
+            setView("setup");
+          }}
+        />
+      )}
+
+      {view === "result" && summary && !rankedVariant && (
         <ResultView
           summary={summary}
           challenge={challengeResult}
