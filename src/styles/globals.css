@@ -416,6 +416,516 @@ body {
   }
 }
 
+/* Spiele: Reaktionen ohne Federn, wie ein Stempel aufs Papier. */
+@keyframes spiel-stamp {
+  from {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.spiel-stamp {
+  animation: spiel-stamp 0.14s ease-out both;
+}
+
+@keyframes spiel-shake {
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(4px);
+  }
+}
+.spiel-shake {
+  animation: spiel-shake 0.22s linear;
+}
+
+.spiel-burst {
+  position: absolute;
+  z-index: 15;
+  pointer-events: none;
+  font-size: 1.125rem;
+  font-weight: 800;
+  animation: spiel-burst 0.45s ease-out forwards;
+}
+@keyframes spiel-burst {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+  to {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy)));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spiel-stamp,
+  .spiel-shake {
+    animation: none;
+  }
+}
+
+/*
+ * Spielwelt: das Aussehen aller Spiele, eine Lern-App mit Toni, rund und griffig.
+ * Die Übersicht /spiele verbindet sie mit dem Programmheft (`.spiele-hub`).
+ */
+[data-spiel-theme="welt"] {
+  --spiel-corner: 1rem;
+}
+[data-spiel-theme="welt"] .condensed,
+[data-spiel-theme="welt"] .semi-condensed,
+[data-spiel-theme="welt"] button {
+  font-variation-settings: normal;
+  font-stretch: 100%;
+  letter-spacing: normal;
+  text-transform: none;
+}
+/* Lektionen beginnen oben; der Fortschritt steht immer an derselben Stelle. */
+[data-spiel-theme="welt"] main > div {
+  margin-top: 0;
+}
+[data-spiel-theme="welt"] main .spiel-status {
+  order: -1;
+}
+[data-spiel-theme="welt"] .spiel-section-label {
+  border: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: center;
+}
+[data-spiel-theme="welt"] .spiel-rows button {
+  align-items: center;
+  text-align: center;
+}
+[data-spiel-theme="welt"] .spiel-options li {
+  border: 0;
+  margin-bottom: 0.5rem;
+}
+[data-spiel-theme="welt"] .spiel-options button {
+  padding: 0.375rem 0.5rem;
+}
+[data-spiel-theme="welt"] .spiel-slot {
+  border: 0;
+}
+/* Eine Auswahl sieht überall gleich aus. */
+[data-spiel-theme="welt"] main button[aria-pressed="true"],
+[data-spiel-theme="welt"] main button.on-orange {
+  background: var(--color-primary);
+  color: var(--color-ink);
+  border-color: var(--color-primary-ink);
+}
+.dark [data-spiel-theme="welt"] main button[aria-pressed="true"],
+.dark [data-spiel-theme="welt"] main button.on-orange {
+  color: #1c1d1f;
+}
+/* Eckige Reste aus dem Programmheft */
+[data-spiel-theme="welt"] > header button,
+[data-spiel-theme="welt"] kbd,
+[data-spiel-theme="welt"] main details,
+[data-spiel-theme="welt"] main li[class*="border"]:not([class*="border-b"]),
+[data-spiel-theme="welt"]
+  main
+  div[class*="border"]:not([class*="border-b"]):not([class*="border-t"]) {
+  border-radius: var(--spiel-corner);
+}
+[data-spiel-theme="welt"] > header [class*="bg-primary"],
+[data-spiel-theme="welt"] > header [class*="bg-red-700"],
+[data-spiel-theme="welt"] main span[class*="bg-primary"],
+[data-spiel-theme="welt"] main div[class*="bg-red-700"],
+[data-spiel-theme="welt"] main div.on-orange.absolute {
+  border-radius: 0.5rem;
+}
+[data-spiel-theme="welt"] kbd {
+  font-family: inherit;
+}
+@media (hover: hover) {
+  [data-spiel-theme="welt"]
+    main
+    button[class*="border"]:not(.spiel-action):not(.spiel-pad):not(
+      [aria-pressed="true"]
+    ):hover {
+    background: rgb(250 166 25 / 0.12);
+  }
+}
+[data-spiel-theme="welt"] .spiel-choice-title {
+  font-size: clamp(1.125rem, 5vw, 1.5rem);
+}
+[data-spiel-theme="welt"] .spiel-status-text {
+  font-size: clamp(1.25rem, 5vw, 1.625rem);
+  line-height: 1.15;
+}
+[data-spiel-theme="welt"] .spiel-hud-text {
+  font-size: clamp(1.5rem, 6.5vw, 2.75rem);
+}
+[data-spiel-theme="welt"] .spiel-pad {
+  font-size: clamp(1.375rem, 6vw, 2.25rem);
+}
+[data-spiel-theme="welt"] main button,
+[data-spiel-theme="welt"] [class*="empty:hidden"] button,
+[data-spiel-theme="welt"] .spiel-karte,
+[data-spiel-theme="welt"] .spiel-tile,
+[data-spiel-theme="welt"] .spiel-banner,
+[data-spiel-theme="welt"] .spiel-slot,
+[data-spiel-theme="welt"] .spiel-feedback {
+  border-radius: var(--spiel-corner);
+}
+[data-spiel-theme="welt"] .spiel-karte,
+[data-spiel-theme="welt"] .spiel-sheet {
+  overflow: hidden;
+}
+[data-spiel-theme="welt"] .spiel-sheet {
+  border: 2px solid var(--color-rule);
+  border-radius: var(--spiel-corner);
+}
+.dark [data-spiel-theme="welt"] .spiel-sheet {
+  border-color: var(--color-night-rule);
+}
+[data-spiel-theme="welt"] .spiel-status {
+  border-bottom: 0;
+}
+[data-spiel-theme="welt"] main button[class*="border"]:not(.spiel-node),
+[data-spiel-theme="welt"]
+  [class*="empty:hidden"]
+  button[class*="border"]:not(.spiel-action) {
+  border-width: 2px;
+  border-bottom-width: 4px;
+}
+[data-spiel-theme="welt"]
+  button[class*="border-ink"]:not([aria-pressed="true"]):not(.on-orange):not(
+    .spiel-pad
+  ):not(.spiel-action) {
+  border-color: var(--color-rule);
+}
+.dark
+  [data-spiel-theme="welt"]
+  button[class*="border-ink"]:not([aria-pressed="true"]):not(.on-orange):not(
+    .spiel-pad
+  ):not(.spiel-action) {
+  border-color: var(--color-night-rule);
+}
+[data-spiel-theme="welt"] .spiel-bar {
+  order: -1;
+  height: 1rem;
+  margin-bottom: 0.625rem;
+  border-radius: 9999px;
+  overflow: hidden;
+  background: var(--color-rule);
+}
+.dark [data-spiel-theme="welt"] .spiel-bar {
+  background: var(--color-night-rule);
+}
+[data-spiel-theme="welt"] .spiel-status {
+  display: flex;
+  flex-direction: column;
+}
+[data-spiel-theme="welt"] .spiel-bar > div {
+  border-radius: 9999px;
+}
+[data-spiel-theme="welt"] .spiel-tag {
+  border-radius: 9999px;
+}
+[data-spiel-theme="welt"] .spiel-dot {
+  border-radius: 50%;
+}
+[data-spiel-theme="welt"] .spiel-star {
+  color: var(--color-primary-ink);
+  fill: var(--color-primary);
+}
+.spiel-banner {
+  background: var(--color-primary);
+  color: var(--color-ink);
+  transition: background-color 0.4s ease;
+}
+.spiel-banner[data-unlocking="true"] {
+  animation: spiel-banner-pop 0.45s ease-out 0.35s;
+}
+/* Das Band ist fast so breit wie der Bildschirm und darf kaum wachsen. */
+@keyframes spiel-banner-pop {
+  40% {
+    scale: 1.025;
+  }
+}
+.spiel-banner[data-locked="true"] {
+  background: var(--color-rule);
+  color: #1c1d1f;
+}
+.dark .spiel-banner[data-locked="true"] {
+  background: var(--color-night-rule);
+  color: var(--color-night-text);
+}
+.spiel-tile {
+  border: 2px solid var(--color-rule);
+  border-bottom-width: 4px;
+  color: var(--color-ink);
+}
+.dark .spiel-tile {
+  border-color: var(--color-night-rule);
+  color: var(--color-night-text);
+}
+.spiel-tile.bg-primary {
+  border-color: var(--color-primary-ink);
+  color: var(--color-ink);
+}
+[data-spiel-theme="welt"] .spiel-rows button,
+[data-spiel-theme="welt"] .spiel-answer {
+  border: 2px solid var(--color-rule);
+  border-bottom-width: 4px;
+}
+[data-spiel-theme="welt"] .spiel-rows button {
+  margin-bottom: 0.5rem;
+}
+.dark [data-spiel-theme="welt"] .spiel-rows button,
+.dark [data-spiel-theme="welt"] .spiel-answer {
+  border-color: var(--color-night-rule);
+}
+
+/* Lernpfad: die einzige runde Form neben Toni */
+.spiel-node {
+  border-radius: 50% !important;
+  background: var(--color-rule);
+  color: var(--color-dark);
+  box-shadow: 0 6px 0 #b9b9b5;
+  transition:
+    translate 80ms,
+    box-shadow 80ms;
+}
+.dark .spiel-node {
+  background: var(--color-night-rule);
+  color: var(--color-night-text);
+  box-shadow: 0 6px 0 #4a4d53;
+}
+.spiel-node[data-state="done"],
+.spiel-node[data-state="active"] {
+  background: var(--color-primary);
+  color: var(--color-ink);
+  box-shadow: 0 6px 0 var(--color-primary-ink);
+}
+.spiel-node[data-state="active"] {
+  --glow: color-mix(in srgb, var(--color-primary) 60%, transparent);
+  box-shadow:
+    0 6px 0 var(--color-primary-ink),
+    0 3px 24px 7px var(--glow);
+  animation: spiel-node-glow 2.4s ease-in-out infinite;
+}
+.dark .spiel-node[data-state="active"] {
+  --glow: color-mix(in srgb, var(--color-primary) 45%, transparent);
+}
+@keyframes spiel-node-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 6px 0 var(--color-primary-ink),
+      0 3px 16px 3px var(--glow);
+  }
+  50% {
+    box-shadow:
+      0 6px 0 var(--color-primary-ink),
+      0 3px 28px 9px var(--glow);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spiel-node[data-state="active"] {
+    animation: none;
+  }
+}
+.spiel-weight {
+  outline: none;
+}
+.spiel-weight:focus-visible circle {
+  stroke-width: 6;
+}
+.spiel-node[data-celebrate="true"] {
+  animation: spiel-node-pop 0.4s ease-out;
+}
+@keyframes spiel-node-pop {
+  40% {
+    scale: 1.12;
+  }
+}
+.spiel-node-stars {
+  position: relative;
+  z-index: 5;
+  transform-origin: top center;
+  transition: scale 0.25s ease;
+}
+.spiel-node-stars[data-big="true"] {
+  scale: 2;
+}
+.spiel-node-stars[data-big="true"] .spiel-star {
+  animation: spiel-star-pop 0.32s ease-out;
+}
+@keyframes spiel-star-pop {
+  from {
+    opacity: 0;
+    transform: scale(1.9) rotate(-18deg);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(0.88);
+  }
+}
+.spiel-node[data-state="challenge"] {
+  background: var(--color-paper);
+  color: var(--color-primary-ink);
+  box-shadow:
+    inset 0 0 0 4px var(--color-primary),
+    0 6px 0 var(--color-primary-ink);
+}
+.dark .spiel-node[data-state="challenge"] {
+  background: var(--color-night);
+  color: var(--color-primary);
+}
+.spiel-node[data-state="locked"] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.spiel-node:not(:disabled):active {
+  translate: 0 4px;
+  animation: none;
+  box-shadow: 0 2px 0 var(--color-primary-ink);
+}
+
+/* Hauptknöpfe und Spielfläche */
+[data-spiel-theme="welt"] .spiel-pad,
+[data-spiel-theme="welt"] .spiel-action {
+  border: 0;
+  border-radius: 1rem;
+  margin-bottom: 0.3125rem;
+  font-weight: 800;
+  box-shadow: 0 5px 0 var(--color-primary-ink);
+  transition:
+    translate 60ms,
+    box-shadow 60ms;
+}
+[data-spiel-theme="welt"] .spiel-action {
+  background: var(--color-primary);
+  color: var(--color-ink);
+}
+@media (hover: hover) {
+  [data-spiel-theme="welt"] .spiel-action:hover:not(:disabled):not(:focus) {
+    background: var(--color-primary-light);
+  }
+}
+/* Geister-Knöpfe kippen nicht wie im Programmheft nach Schwarz. */
+[data-spiel-theme="welt"]
+  [class*="empty:hidden"]
+  button:not(.spiel-action):not(.spiel-pad):hover {
+  background: rgb(250 166 25 / 0.12);
+  color: var(--color-ink);
+}
+.dark
+  [data-spiel-theme="welt"]
+  [class*="empty:hidden"]
+  button:not(.spiel-action):not(.spiel-pad):hover {
+  color: var(--color-night-text);
+}
+[data-spiel-theme="welt"] .spiel-pad.border-rule,
+.dark [data-spiel-theme="welt"] .spiel-pad.dark\:border-night-rule {
+  border: 2px solid var(--color-rule);
+  box-shadow: none;
+}
+[data-spiel-theme="welt"] .spiel-pad[data-pressed="true"],
+[data-spiel-theme="welt"] .spiel-action:active:not(:disabled) {
+  background: var(--color-primary);
+  color: #1c1d1f;
+  box-shadow: 0 1px 0 var(--color-primary-ink);
+  translate: 0 4px;
+}
+[data-spiel-theme="welt"] .spiel-status > div:first-of-type > :first-child {
+  width: 4.75rem;
+  height: 4.75rem;
+}
+
+/* Urteil einer Lektion: färbt die ganze Leiste am unteren Rand */
+.spiel-feedback {
+  padding: 0;
+}
+.spiel-feedback[data-tone="right"] {
+  color: #7a4100;
+}
+.spiel-feedback[data-tone="wrong"] {
+  color: #991b1b;
+}
+.dark .spiel-feedback[data-tone="right"] {
+  color: var(--color-primary);
+}
+.dark .spiel-feedback[data-tone="wrong"] {
+  color: #f87171;
+}
+[data-spiel-theme="welt"]
+  [class*="empty:hidden"]:has(.spiel-feedback[data-tone="right"]),
+.spiel-feedback-overlay[data-tone="right"] {
+  background: #fff2d6;
+}
+[data-spiel-theme="welt"]
+  [class*="empty:hidden"]:has(.spiel-feedback[data-tone="wrong"]),
+.spiel-feedback-overlay[data-tone="wrong"] {
+  background: #fde8e8;
+}
+.dark
+  [data-spiel-theme="welt"]
+  [class*="empty:hidden"]:has(.spiel-feedback[data-tone="right"]),
+.dark .spiel-feedback-overlay[data-tone="right"] {
+  background: #3a2c10;
+}
+.dark
+  [data-spiel-theme="welt"]
+  [class*="empty:hidden"]:has(.spiel-feedback[data-tone="wrong"]),
+.dark .spiel-feedback-overlay[data-tone="wrong"] {
+  background: #3f1a1a;
+}
+.spiel-feedback-overlay {
+  border-radius: 1rem 1rem 0 0 !important;
+  position: fixed;
+  inset: auto 0 0;
+  z-index: 30;
+  padding: 1rem 1rem max(1rem, env(safe-area-inset-bottom));
+}
+[data-spiel-theme="welt"] .spiel-inline-feedback {
+  display: none;
+}
+
+.spiel-confetti-piece {
+  position: absolute;
+  top: -1.5rem;
+  animation: spiel-confetti linear both;
+}
+@keyframes spiel-confetti {
+  to {
+    transform: translate(var(--drift), 108dvh) rotate(540deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spiel-confetti {
+    display: none;
+  }
+}
+
+/* Übersicht: Programmheft-Satz, aber der Weg ins Spiel ist der griffige Spielknopf. */
+.spiele-hub-action {
+  background: var(--color-primary);
+  color: #1c1d1f;
+  border-radius: 1rem;
+  box-shadow: 0 5px 0 var(--color-primary-ink);
+  transition:
+    translate 60ms,
+    box-shadow 60ms;
+}
+@media (hover: hover) {
+  .spiele-hub-action:hover {
+    background: var(--color-primary-light);
+  }
+}
+.spiele-hub-action:active {
+  box-shadow: 0 1px 0 var(--color-primary-ink);
+  translate: 0 4px;
+}
+
 /*
  * iOS Safari renders date/time inputs as native widgets (intrinsic width,
  * centred and taller); reset them to plain fields so mixed rows line up.

@@ -13,7 +13,7 @@ import type { GriffeDifficultyId, GriffeInstrumentId } from "./types";
 const MISS_BOOST_WEIGHT = 3;
 
 /** Pool-Töne sind B‑Stimm‑schreibend; bei der C‑Stimme wird Konzert gezeigt. */
-function displayPitchForInstrument(
+export function displayPitchForInstrument(
   instrument: GriffeInstrumentId,
   poolPitchBbWritten: WrittenPitch,
 ): WrittenPitch {
