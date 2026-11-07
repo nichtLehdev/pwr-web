@@ -85,7 +85,7 @@ function answerConductor(audio: FakeAudio, total = 4, fixed = false, bpm = 90) {
   const plan = new AnswerPlan(level, ts, total, { start: bpm, fixed });
   return {
     plan,
-    conductor: new Conductor(audio, new AnswerScript(plan, ts, total), {
+    conductor: new Conductor(audio, new AnswerScript(plan, total), {
       input: "hold",
       leniency: 1,
       latencySec: 0,
@@ -182,7 +182,7 @@ describe("Conductor", () => {
   it("corrects for output latency before judging", () => {
     const audio = new FakeAudio();
     const plan = new AnswerPlan(level, ts, 1, { start: 90, fixed: true });
-    const conductor = new Conductor(audio, new AnswerScript(plan, ts, 1), {
+    const conductor = new Conductor(audio, new AnswerScript(plan, 1), {
       input: "tap",
       leniency: 1,
       latencySec: 0.2,
@@ -270,7 +270,7 @@ describe("summaries", () => {
         start: each.bpm.start,
         fixed: true,
       });
-      const conductor = new Conductor(audio, new AnswerScript(plan, meter, 2), {
+      const conductor = new Conductor(audio, new AnswerScript(plan, 2), {
         input: "hold",
         leniency: each.leniency,
         latencySec: 0,

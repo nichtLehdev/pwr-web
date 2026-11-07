@@ -28,10 +28,10 @@ import {
   type Puzzle,
 } from "../_lib/types";
 import { GameBarSlot, GameDock } from "../../../_components/game-shell-context";
-import { ArcadeButton } from "../../../_components/arcade-button";
 import {
-  GameHero,
-  ToniCoach,
+  GameHead,
+  GameStatus,
+  LessonFeedback,
   useGameSounds,
 } from "../../../_components/game-kit";
 import { praiseFor } from "../../../_lib/rewards";
@@ -253,8 +253,8 @@ export function NoteValueGame() {
         setFirstTryStreak(0);
         setFeedback(
           selectedRests < requiredRests
-            ? `Challenge: noch ${requiredRests - selectedRests} Pause(n) hinzufügen`
-            : `Challenge: ${selectedRests - requiredRests} Pause(n) zu viel`,
+            ? `Challenge: noch ${requiredRests - selectedRests} ${requiredRests - selectedRests === 1 ? "Pause" : "Pausen"} hinzufügen`
+            : `Challenge: ${selectedRests - requiredRests} ${selectedRests - requiredRests === 1 ? "Pause" : "Pausen"} zu viel`,
         );
         return;
       }
@@ -262,8 +262,8 @@ export function NoteValueGame() {
         setFirstTryStreak(0);
         setFeedback(
           selectedNotes < requiredNotes
-            ? `Challenge: noch ${requiredNotes - selectedNotes} Note(n) hinzufügen`
-            : `Challenge: ${selectedNotes - requiredNotes} Note(n) zu viel`,
+            ? `Challenge: noch ${requiredNotes - selectedNotes} ${requiredNotes - selectedNotes === 1 ? "Note" : "Noten"} hinzufügen`
+            : `Challenge: ${selectedNotes - requiredNotes} ${selectedNotes - requiredNotes === 1 ? "Note" : "Noten"} zu viel`,
         );
         return;
       }
@@ -293,7 +293,7 @@ export function NoteValueGame() {
       setFirstTryStreak(0);
       setFeedback(
         rightIds.length < puzzle.rightCount
-          ? `Noch ${puzzle.rightCount - rightIds.length} Note(n) ergänzen`
+          ? `Noch ${puzzle.rightCount - rightIds.length} ${puzzle.rightCount - rightIds.length === 1 ? "Note" : "Noten"} ergänzen`
           : `Zu viele Noten gewählt`,
       );
       return;
@@ -372,10 +372,10 @@ export function NoteValueGame() {
 
   if (phase === "setup") {
     return (
-      <div className="spiel-runde mx-auto flex w-full max-w-5xl flex-col gap-3 md:gap-5">
-        <GameHero
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 md:gap-5">
+        <GameHead
           title="Notenwaage"
-          text="Leg Noten auf die Waage, bis beide Seiten gleich schwer sind!"
+          text="Leg Noten auf die Waage, bis beide Seiten gleich schwer sind."
         />
         {/* Rein schmückend, daher für Vorleseprogramme unsichtbar. */}
         <div className={cn("shrink-0 overflow-hidden", SETUP_WAAGE)}>
@@ -429,7 +429,7 @@ export function NoteValueGame() {
         </div>
 
         <section className="flex flex-col gap-2 md:gap-3">
-          <h3 className="border-rule dark:border-night-rule text-dark dark:text-night-muted border-b pb-1 text-center text-[11px] font-bold tracking-wide uppercase md:text-xs">
+          <h3 className="border-rule dark:border-night-rule text-dark dark:text-night-muted border-b pb-1 text-center text-xs font-bold md:text-sm">
             Diese Werte liegen bereit
           </h3>
           <ul
@@ -466,7 +466,14 @@ export function NoteValueGame() {
         </section>
 
         <GameDock>
-          <ArcadeButton onClick={startGame}>Los geht&apos;s!</ArcadeButton>
+          <Button
+            type="button"
+            size="lg"
+            className="spiel-action w-full"
+            onClick={startGame}
+          >
+            Los geht&apos;s
+          </Button>
         </GameDock>
       </div>
     );
@@ -477,7 +484,7 @@ export function NoteValueGame() {
   const openSlots = Math.max(0, puzzle.rightCount - right.length);
 
   return (
-    <div className="spiel-runde mx-auto flex w-full max-w-5xl flex-col gap-2 md:gap-3">
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-2 md:gap-3">
       {/* Spielstand im Status-Platz der Hülle, damit keine eigene Zeile Höhe kostet. */}
       <GameBarSlot>
         <p className="text-ink dark:text-night-text text-xs font-bold tabular-nums md:text-sm">
@@ -485,42 +492,43 @@ export function NoteValueGame() {
           {roundIdx + 1}/{ROUND_LEN}
           <span className="text-dark dark:text-night-muted hidden sm:inline">
             {" "}
-            · Streak: {firstTryStreak}
+            · Serie: {firstTryStreak}
           </span>
         </p>
       </GameBarSlot>
 
-      <div className="flex items-center gap-2">
-        <div className="min-w-0 flex-1">
-          <ToniCoach
-            mood={pendingAdvance ? "happy" : feedback ? "oops" : "listen"}
-            message={
-              pendingAdvance
-                ? praiseFor(firstTryStreak || 1)
-                : (feedback ?? "Mach beide Seiten gleich schwer!")
-            }
-            note={`Mit genau ${puzzle.rightCount} Symbolen`}
-            streak={firstTryStreak}
-            progress={roundIdx / ROUND_LEN}
-          />
-        </div>
-        <button
-          type="button"
-          onClick={goToSetup}
-          aria-label="Zurück zum Setup"
-          className={cn(
-            "border-rule text-ink dark:border-night-rule dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-rule inline-flex min-h-11 shrink-0 items-center gap-1.5 border px-3 text-xs font-bold transition-colors motion-safe:active:scale-[0.98] md:gap-2",
-            GAME_FOCUS_RING,
-          )}
-        >
-          <Settings2 className="h-4 w-4" aria-hidden />
-          <span className="hidden sm:inline">Setup</span>
-        </button>
-      </div>
+      <GameStatus
+        mood={pendingAdvance ? "happy" : feedback ? "oops" : "listen"}
+        message={
+          pendingAdvance
+            ? praiseFor(firstTryStreak || 1)
+            : (feedback ?? "Mach beide Seiten gleich schwer")
+        }
+        question="Mach beide Seiten gleich schwer"
+        note={`Mit genau ${puzzle.rightCount} Symbolen`}
+        streak={firstTryStreak}
+        progress={roundIdx / ROUND_LEN}
+        aside={
+          <button
+            type="button"
+            onClick={goToSetup}
+            aria-label="Zurück zum Setup"
+            className={cn(
+              "border-rule text-ink dark:border-night-rule dark:text-night-text hover:bg-rule/25 dark:hover:bg-night-rule inline-flex min-h-11 shrink-0 items-center gap-1.5 border px-3 text-xs font-bold transition-colors motion-safe:active:scale-[0.98] md:gap-2",
+              GAME_FOCUS_RING,
+            )}
+          >
+            <Settings2 className="h-4 w-4" aria-hidden />
+            <span className="hidden sm:inline">Setup</span>
+          </button>
+        }
+      />
       {puzzle.requiredRests != null && (
         <p className="text-primary-ink dark:text-primary text-[11px] font-bold md:text-xs">
-          Challenge: genau {puzzle.rightCount - puzzle.requiredRests} Note(n) +{" "}
-          {puzzle.requiredRests} Pause(n)
+          Challenge: genau {puzzle.rightCount - puzzle.requiredRests}{" "}
+          {puzzle.rightCount - puzzle.requiredRests === 1 ? "Note" : "Noten"} +{" "}
+          {puzzle.requiredRests}{" "}
+          {puzzle.requiredRests === 1 ? "Pause" : "Pausen"}
         </p>
       )}
 
@@ -540,7 +548,7 @@ export function NoteValueGame() {
           editable={!pendingAdvance}
           onRemoveAt={removeAt}
           slotCount={puzzle.rightCount}
-          headerHint={`Noch ${openSlots} Symbol(e)`}
+          headerHint={`Noch ${openSlots} ${openSlots === 1 ? "Symbol" : "Symbole"}`}
         />
       </div>
 
@@ -555,7 +563,7 @@ export function NoteValueGame() {
           role="status"
           aria-live="polite"
           className={cn(
-            "shrink-0 text-xs md:text-sm",
+            "spiel-inline-feedback shrink-0 text-xs md:text-sm",
             feedback
               ? "border-rule bg-rule/25 dark:border-night-rule dark:bg-night-raised border px-2.5 py-1.5 md:px-3 md:py-2"
               : "sr-only",
@@ -578,14 +586,25 @@ export function NoteValueGame() {
       </div>
 
       <GameDock>
+        {feedback && (
+          <div className="mb-2">
+            <LessonFeedback
+              tone={pendingAdvance ? "right" : "wrong"}
+              title={pendingAdvance ? "Richtig!" : "Noch nicht"}
+              text={feedback}
+            />
+          </div>
+        )}
         <div className="flex items-start gap-2">
-          <ArcadeButton
-            className="flex-[2]"
+          <Button
+            type="button"
+            size="lg"
+            className="spiel-action flex-[2]"
             disabled={pendingAdvance}
             onClick={submit}
           >
             Fertig
-          </ArcadeButton>
+          </Button>
           <Button
             type="button"
             variant="outline"

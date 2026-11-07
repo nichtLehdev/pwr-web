@@ -29,7 +29,10 @@ export function GameShell({ children }: { children: ReactNode }) {
   return (
     <GameShellProvider value={ctx}>
       <StatsSyncRunner />
-      <div className="programm font-programm bg-paper text-ink dark:bg-night dark:text-night-text grid h-dvh grid-rows-[auto_minmax(0,1fr)_auto] overflow-x-hidden pr-[env(safe-area-inset-right,0px)] pl-[env(safe-area-inset-left,0px)]">
+      <div
+        data-spiel-theme="welt"
+        className="programm font-programm bg-paper text-ink dark:bg-night dark:text-night-text grid h-dvh grid-rows-[auto_minmax(0,1fr)_auto] overflow-x-hidden pr-[env(safe-area-inset-right,0px)] pl-[env(safe-area-inset-left,0px)]"
+      >
         <header className="border-rule dark:border-night-rule bg-paper dark:bg-night z-20 border-b pt-[env(safe-area-inset-top,0px)]">
           <div className="mx-auto flex h-12 w-full max-w-5xl items-center gap-2 px-3 md:px-5">
             <div className="flex flex-1 items-center justify-start">

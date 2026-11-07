@@ -1,16 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Star } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { Button } from "@/app/_components/ui/button";
-import { ArcadeButton } from "../../../_components/arcade-button";
-import { Confetti } from "../../../_components/confetti";
-import { GameDock } from "../../../_components/game-shell-context";
-import { Toni } from "../../../_components/toni";
-import { RhythmFigureLoader } from "../../../_components/rhythm-figure-loader";
 import {
-  harmonyAt,
+  DetailRow,
+  FactRows,
+  ResultField,
+} from "../../../_components/game-kit";
+import { GameDock } from "../../../_components/game-shell-context";
+import { useSkipGesture } from "../../../_components/use-skip-gesture";
+import { RhythmFigureLoader } from "../../../_components/rhythm-figure-loader";
+import { resultHeadline } from "../../../_lib/rewards";
+import {
+  harmonyFor,
   JINGLE_NOTES,
   type RhythmAudio,
 } from "../../../_lib/rhythm/audio";
@@ -22,19 +24,11 @@ import {
   pulseOf,
   secPerTick,
 } from "../../../_lib/rhythm/ticks";
-import type { Level } from "../../../_lib/rhythm/levels";
 import type { Attempt } from "../_lib/conductor";
 import type { SessionSummary } from "../_lib/feedback";
-import type { EndlessResult } from "./rhythm-game";
+import { CHALLENGE_PASS_PERCENT, SECTIONS } from "../_lib/path";
+import type { ChallengeResult, EndlessResult } from "./rhythm-game";
 
-function headlineFor(stars: number): string {
-  if (stars === 3) return "Wahnsinn, das sitzt!";
-  if (stars === 2) return "Super gespielt!";
-  if (stars === 1) return "Geschafft, weiter so!";
-  return "Fast! Noch eine Runde?";
-}
-
-const CELEBRATE_FROM_STARS = 2;
 const STAR_STEP_SEC = 0.28;
 
 /** Spielt die Figur mit Klick: entweder die Vorlage oder das, was der Spieler gespielt hat. */
@@ -56,7 +50,7 @@ function replay(
       0.3,
     );
   }
-  const { melodyHz } = harmonyAt(attempt.index);
+  const { melodyHz } = harmonyFor(attempt);
   if (version === "target") {
     attempt.bars.forEach((events, barIndex) => {
       for (const onset of onsetsOf(events)) {
@@ -80,7 +74,7 @@ function replay(
 
 export function ResultView({
   summary,
-  nextLevel,
+  challenge,
   bestStreak,
   points,
   endless,
@@ -89,11 +83,10 @@ export function ResultView({
   awardsStars,
   audio,
   onAgain,
-  onNext,
   onSetup,
 }: {
   summary: SessionSummary;
-  nextLevel: Level | null;
+  challenge: ChallengeResult | null;
   bestStreak: number;
   points: number;
   endless: EndlessResult | null;
@@ -103,7 +96,6 @@ export function ResultView({
   awardsStars: boolean;
   audio: RhythmAudio;
   onAgain: () => void;
-  onNext: () => void;
   onSetup: () => void;
 }) {
   const attempt = summary.focusAttempt;
@@ -122,6 +114,13 @@ export function ResultView({
       0.25,
     );
   }, [audio, awardsStars, endless, summary.stars]);
+
+  // Die Fanfare gehört zur Feier und endet mit ihr.
+  const [jingling, setJingling] = useState(true);
+  useSkipGesture(jingling, () => {
+    setJingling(false);
+    audio.cancelScheduled();
+  });
 
   const description = useMemo(
     () =>
@@ -174,88 +173,88 @@ export function ResultView({
     });
   };
 
-  return (
-    <div className="flex flex-col gap-3 pb-2">
-      {((awardsStars && summary.stars >= CELEBRATE_FROM_STARS) ||
-        endless?.isRecord) && <Confetti />}
+  const rows: [string, string][] = [
+    ["Punkte", String(points)],
+    ...(endless
+      ? ([["Getroffen", `${summary.percent} %`]] as [string, string][])
+      : []),
+    ...(bestStreak >= 4
+      ? ([["Beste Serie", String(bestStreak)]] as [string, string][])
+      : []),
+    ...(endless
+      ? ([
+          [
+            "Dein Rekord",
+            `${endless.best.points} Punkte, ${endless.best.reached} ${endless.unit}`,
+          ],
+        ] as [string, string][])
+      : []),
+  ];
 
-      <div className="spiel-buehne flex flex-col items-center gap-2 rounded-3xl p-4 text-center">
-        <Toni
-          mood={summary.stars >= 1 || endless?.isRecord ? "happy" : "idle"}
-          className="spiel-float h-[clamp(5rem,16svh,8rem)] w-[clamp(5rem,16svh,8rem)]"
-        />
-        <p className="condensed text-ink dark:text-night-text text-[clamp(1.75rem,4.5svh,3rem)] leading-none font-extrabold">
-          {endless
+  return (
+    <div className="flex flex-col gap-4 pb-2">
+      <ResultField
+        value={endless ? String(endless.reached) : `${summary.percent} %`}
+        valueLabel={endless ? `${endless.unit} geschafft` : "getroffen"}
+        headline={
+          endless
             ? endless.isRecord
-              ? "Neuer Rekord!"
-              : "Puh, die Puste ist weg!"
-            : headlineFor(summary.stars)}
+              ? "Neuer Rekord."
+              : "Die Puste ist weg."
+            : challenge
+              ? challenge.passed
+                ? "Challenge geschafft."
+                : "Noch nicht geschafft."
+              : resultHeadline(summary.stars)
+        }
+        stars={awardsStars ? summary.stars : null}
+        percent={summary.percent}
+        celebrate={
+          endless
+            ? endless.isRecord
+            : challenge
+              ? challenge.passed
+              : awardsStars && summary.stars >= 2
+        }
+        badge={
+          challenge?.passed && SECTIONS[challenge.section + 1]
+            ? `Abschnitt ${challenge.section + 2} ist frei`
+            : endless
+              ? null
+              : rankUp
+                ? `Neuer Titel: ${rankUp}`
+                : isRecord
+                  ? "Neuer Rekord"
+                  : null
+        }
+      />
+
+      {challenge && !challenge.passed && (
+        <p className="text-ink dark:text-night-text text-center text-lg leading-snug font-bold">
+          Du brauchst {CHALLENGE_PASS_PERCENT} % und noch Puste am Ende. Übe die
+          Stufen noch einmal, dann klappt es.
         </p>
-        <span className="sr-only">
-          {summary.percent} Prozent,{" "}
-          {!endless && `${summary.stars} von 3 Sternen, `}
-          {points} Punkte
-        </span>
-        {endless && (
-          <p className="text-ink dark:text-night-text text-center">
-            <span className="condensed spiel-pop inline-block text-[clamp(2.5rem,8svh,4.5rem)] leading-none font-extrabold tabular-nums">
-              {endless.reached}
-            </span>{" "}
-            <span className="font-bold">{endless.unit} geschafft</span>
-            <span className="text-dark dark:text-night-muted block text-sm font-bold tabular-nums">
-              Dein Rekord: {endless.best.points} Punkte, {endless.best.reached}{" "}
-              {endless.unit}
-            </span>
-          </p>
-        )}
-        {awardsStars && (
-          <div className="flex gap-2" aria-hidden>
-            {[1, 2, 3].map((n) => (
-              <Star
-                key={n}
-                className={cn(
-                  "h-[clamp(2.75rem,8svh,4.5rem)] w-[clamp(2.75rem,8svh,4.5rem)] stroke-[1.5]",
-                  n <= summary.stars
-                    ? "fill-primary text-ink dark:text-night-text spiel-pop"
-                    : "text-ink/20 dark:text-night-rule",
-                )}
-                style={{ animationDelay: `${0.25 + (n - 1) * STAR_STEP_SEC}s` }}
-              />
-            ))}
-          </div>
-        )}
-        <p
-          className="text-ink dark:text-night-text flex flex-wrap items-center justify-center gap-x-3 font-bold tabular-nums"
-          aria-hidden
-        >
-          <span className="condensed text-2xl font-extrabold">
-            {points} Punkte
-          </span>
-          <span>{summary.percent} % getroffen</span>
-          {bestStreak >= 4 && <span>{bestStreak} in Folge</span>}
-        </p>
-        {!endless && (isRecord || rankUp) && (
-          <p className="bg-primary text-ink spiel-pop rounded-full px-4 py-1 font-extrabold">
-            {rankUp ? `Neuer Titel: ${rankUp}!` : "Neuer Rekord!"}
-          </p>
-        )}
-        <p className="text-ink dark:text-night-text mt-1 max-w-[52ch] leading-snug">
-          {summary.tips[0]}
-        </p>
-      </div>
+      )}
+
+      <FactRows rows={rows} />
+
+      <p className="text-ink dark:text-night-text max-w-[52ch] text-lg leading-snug">
+        {challenge?.passed
+          ? SECTIONS[challenge.section + 1]
+            ? `Du kannst jetzt alles aus Abschnitt ${challenge.section + 1}.`
+            : "Du hast den ganzen Lernpfad geschafft."
+          : summary.tips[0]}
+      </p>
 
       {attempt && (
-        <details className="border-rule dark:border-night-rule rounded-2xl border-2">
-          <summary className="text-ink dark:text-night-text flex min-h-11 cursor-pointer list-none items-center justify-center rounded-2xl px-3 text-sm font-bold [&::-webkit-details-marker]:hidden">
-            Genauer ansehen: Wie klang es bei dir?
-          </summary>
-          <div className="flex flex-col gap-2 px-3 pb-3">
+        <DetailRow label="Wie klang es bei dir?">
+          <div className="flex flex-col gap-2">
             {summary.tips.length > 1 && (
-              <ul className="flex flex-col gap-1">
+              <ul>
                 {summary.tips.slice(1).map((tip) => (
                   <li
                     key={tip}
-                    className="border-primary text-ink dark:text-night-text border-l-4 pl-3 text-sm leading-snug"
+                    className="border-rule dark:border-night-rule text-ink dark:text-night-text border-b py-2 leading-snug"
                   >
                     {tip}
                   </li>
@@ -265,12 +264,13 @@ export function ResultView({
             <div className="h-[clamp(8rem,22svh,14rem)]">
               <RhythmFigureLoader
                 bars={attempt.bars}
+                noteKey={harmonyFor(attempt).melodyKey}
                 timeSignature={attempt.timeSignature}
                 onDrawn={paintAttempt}
               />
             </div>
             {description && <p className="sr-only">{description}</p>}
-            <p className="text-dark dark:text-night-muted text-xs">
+            <p className="text-dark dark:text-night-muted text-sm">
               Die schwierigste Stelle der Runde: oben dein Spiel in Messing,
               darunter grau die Vorlage. Liegen sie übereinander, passt es.
             </p>
@@ -293,36 +293,28 @@ export function ResultView({
               </Button>
             </div>
           </div>
-        </details>
+        </DetailRow>
       )}
 
       <GameDock>
-        <div className="flex flex-col gap-2">
-          {nextLevel && summary.stars >= 2 ? (
-            <ArcadeButton onClick={onNext}>Nächste Stufe</ArcadeButton>
-          ) : (
-            <ArcadeButton onClick={onAgain}>Nochmal spielen</ArcadeButton>
-          )}
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1"
-              onClick={onSetup}
-            >
-              Zum Musikweg
-            </Button>
-            {nextLevel && summary.stars >= 2 && (
-              <Button
-                type="button"
-                variant="outline"
-                className="flex-1"
-                onClick={onAgain}
-              >
-                Nochmal
-              </Button>
-            )}
-          </div>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            size="lg"
+            variant="outline"
+            className="flex-1"
+            onClick={onAgain}
+          >
+            Nochmal
+          </Button>
+          <Button
+            type="button"
+            size="lg"
+            className="spiel-action flex-1"
+            onClick={onSetup}
+          >
+            Weiter
+          </Button>
         </div>
       </GameDock>
     </div>

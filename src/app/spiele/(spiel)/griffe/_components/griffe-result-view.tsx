@@ -1,8 +1,7 @@
 "use client";
 
 import { Button } from "@/app/_components/ui/button";
-import { ArcadeButton } from "../../../_components/arcade-button";
-import { Celebration } from "../../../_components/game-kit";
+import { GameResult } from "../../../_components/game-kit";
 import { GameDock } from "../../../_components/game-shell-context";
 
 export type GriffeMissedRow = {
@@ -45,12 +44,15 @@ export function GriffeResultView({
 
   return (
     <>
-      <Celebration
+      <GameResult
         percent={percent}
         value={`${result.correct}/${result.total}`}
         valueLabel="richtig"
-        stats={`Beste Serie: ${result.bestStreakRound} · Dein Rekord: ${bestScore}`}
-        badge={isBest ? "Bestleistung!" : null}
+        rows={[
+          ["Beste Serie", String(result.bestStreakRound)],
+          ["Dein Rekord", `${bestScore} richtig`],
+        ]}
+        badge={isBest ? "Bestleistung" : null}
         detailsLabel="Das übst du am besten noch"
       >
         {topMissed.length > 0 ? (
@@ -66,10 +68,17 @@ export function GriffeResultView({
             ))}
           </ul>
         ) : null}
-      </Celebration>
+      </GameResult>
       <GameDock>
         <div className="flex flex-col gap-2">
-          <ArcadeButton onClick={onRetry}>Nochmal spielen</ArcadeButton>
+          <Button
+            type="button"
+            size="lg"
+            className="spiel-action w-full"
+            onClick={onRetry}
+          >
+            Nochmal spielen
+          </Button>
           <Button type="button" variant="outline" onClick={onChangeSetup}>
             Schwierigkeit und Modus
           </Button>

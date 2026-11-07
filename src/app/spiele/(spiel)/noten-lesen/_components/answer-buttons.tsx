@@ -61,7 +61,7 @@ export function AnswerButtons({
               onClick={() => onPick(label)}
               /* Höhe wächst mit dem Fenster, fällt aber nie unter 44 px. */
               className={cn(
-                "relative flex min-h-[clamp(2.75rem,7dvh,4rem)] w-full items-center justify-center gap-1.5 border-[3px] px-2 py-2 transition active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100",
+                "spiel-answer relative flex min-h-[clamp(2.75rem,7dvh,4rem)] w-full items-center justify-center gap-1.5 border-2 px-2 py-2 transition active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100",
                 GAME_FOCUS_RING,
                 marked ? "disabled:opacity-100" : "disabled:opacity-40",
                 /* Richtig ist Tinte, nicht Grün (keine Farbe des Hefts). */
@@ -75,7 +75,7 @@ export function AnswerButtons({
             >
               {/* Ziffern-Badge nur wo auch Tastenkürzel gelten (md+, wie der Hinweis). */}
               <span
-                className="on-orange bg-primary text-ink absolute top-1 left-1 hidden h-5 min-w-5 items-center justify-center rounded-md px-0.5 text-[10px] font-bold tabular-nums md:flex"
+                className="on-orange bg-primary text-ink absolute top-1 left-1 hidden h-5 min-w-5 items-center justify-center px-0.5 text-[10px] font-bold tabular-nums md:flex"
                 aria-hidden
               >
                 {n}

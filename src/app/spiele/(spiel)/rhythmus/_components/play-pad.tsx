@@ -83,11 +83,13 @@ export function PlayPad({
         type="button"
         data-pressed={pressed}
         className={cn(
-          "spiel-pad condensed border-ink mb-2 flex min-h-[clamp(5rem,18dvh,9rem)] w-full touch-none items-center justify-center rounded-3xl border-[3px] text-[clamp(1.5rem,4svh,2.5rem)] font-extrabold select-none [-webkit-touch-callout:none]",
+          "spiel-pad condensed flex min-h-[clamp(5rem,18dvh,9rem)] w-full touch-none items-center justify-center border-2 text-[clamp(1.75rem,5svh,3rem)] font-extrabold transition-colors duration-75 select-none [-webkit-touch-callout:none]",
           GAME_FOCUS_RING,
-          pressed || emphasized
-            ? "bg-primary text-ink"
-            : "bg-paper text-dark dark:bg-night-raised dark:text-night-muted",
+          pressed
+            ? "border-ink bg-ink text-paper dark:border-night-text dark:bg-night-text dark:text-night"
+            : emphasized
+              ? "on-orange border-ink bg-primary text-ink"
+              : "border-rule text-dark dark:border-night-rule dark:text-night-muted bg-transparent",
         )}
         aria-label={`${label}. Auf dem Desktop: Leertaste oder Eingabetaste.`}
         aria-keyshortcuts="Space Enter"

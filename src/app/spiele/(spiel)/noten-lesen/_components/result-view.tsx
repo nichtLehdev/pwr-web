@@ -1,6 +1,6 @@
 "use client";
 
-import { Celebration } from "../../../_components/game-kit";
+import { GameResult } from "../../../_components/game-kit";
 
 export type MissedNote = {
   label: string;
@@ -33,12 +33,15 @@ export function NoteReadingResultView({
   const isBest = plays > 1 && result.correct > 0 && result.correct >= bestScore;
 
   return (
-    <Celebration
+    <GameResult
       percent={percent}
       value={`${result.correct}/${result.total}`}
       valueLabel="richtig"
-      stats={`Beste Serie: ${result.bestStreakRound} · Dein Rekord: ${bestScore}`}
-      badge={isBest ? "Bestleistung!" : null}
+      rows={[
+        ["Beste Serie", String(result.bestStreakRound)],
+        ["Dein Rekord", `${bestScore} richtig`],
+      ]}
+      badge={isBest ? "Bestleistung" : null}
       detailsLabel="Diese Noten nochmal anschauen"
     >
       {result.missed && result.missed.length > 0 ? (
@@ -56,6 +59,6 @@ export function NoteReadingResultView({
           ))}
         </ul>
       ) : null}
-    </Celebration>
+    </GameResult>
   );
 }

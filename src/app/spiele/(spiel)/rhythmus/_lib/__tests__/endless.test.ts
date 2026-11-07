@@ -170,11 +170,11 @@ describe("whole runs", () => {
   it("nobody plays: a run ends after three lost lives", () => {
     const audio = new FakeAudio();
     const plan = new EndlessPlan();
-    const conductor = new Conductor(
-      audio,
-      new AnswerScript(plan, ENDLESS_METER, null),
-      { input: "tap", leniency: 1, latencySec: 0 },
-    );
+    const conductor = new Conductor(audio, new AnswerScript(plan, null), {
+      input: "tap",
+      leniency: 1,
+      latencySec: 0,
+    });
     const attempts = run(conductor, audio, false);
     expect(attempts).toHaveLength(MAX_LIVES);
     expect(plan.lives).toBe(0);
@@ -183,11 +183,11 @@ describe("whole runs", () => {
   it("a perfect player does not lose breath", () => {
     const audio = new FakeAudio();
     const plan = new EndlessPlan();
-    const conductor = new Conductor(
-      audio,
-      new AnswerScript(plan, ENDLESS_METER, null),
-      { input: "hold", leniency: 1, latencySec: 0 },
-    );
+    const conductor = new Conductor(audio, new AnswerScript(plan, null), {
+      input: "hold",
+      leniency: 1,
+      latencySec: 0,
+    });
     run(conductor, audio, true);
     expect(plan.lives).toBe(MAX_LIVES);
     expect(plan.reached).toBeGreaterThan(3);

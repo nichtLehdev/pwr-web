@@ -1,21 +1,26 @@
 "use client";
 
-import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { Flame, Star, Volume2, VolumeX } from "lucide-react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import { Flame, Heart, Plus, Star, Volume2, VolumeX, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { GAME_FOCUS_RING } from "../_lib/focus-ring";
-import {
-  isStreakMilestone,
-  resultHeadline,
-  starsFor,
-  type Stars,
-} from "../_lib/rewards";
+import { GAMES } from "../_lib/games";
+import { dailyStreak } from "../_lib/stats/daily-streak";
+import { xpForPercent, xpToday } from "../_lib/stats/xp";
+import { loadGameState } from "../_lib/stats/storage";
+import { resultHeadline, starsFor, type Stars } from "../_lib/rewards";
 import { JINGLE_NOTES, RhythmAudio } from "../_lib/rhythm/audio";
 import { Confetti } from "./confetti";
+import { useSkipGesture } from "./use-skip-gesture";
 import { Toni, type ToniMood } from "./toni";
 
 const SOUND_KEY = "pwr.spiele.v1.sound";
-const CELEBRATE_FROM_STARS = 2;
 const STAR_STEP_SEC = 0.28;
 const WRONG_NOTES = [185, 155.56] as const;
 
@@ -82,7 +87,7 @@ export function SoundToggle() {
         }
       }}
       className={cn(
-        "text-ink dark:text-night-text flex h-11 w-11 shrink-0 items-center justify-center rounded-full",
+        "text-ink dark:text-night-text hover:bg-ink hover:text-paper dark:hover:bg-night-text dark:hover:text-night flex h-11 w-11 shrink-0 items-center justify-center",
         GAME_FOCUS_RING,
       )}
     >
@@ -95,107 +100,384 @@ export function SoundToggle() {
   );
 }
 
-/** Begrüßung auf den Auswahlseiten. */
-export function GameHero({
-  title,
-  text,
-  mood = "idle",
-}: {
-  title: string;
-  text: string;
-  mood?: ToniMood;
-}) {
+/** Lob darf laut sein. */
+function cheerful(text: string): string {
+  return text.replace(/\.?$/, "!");
+}
+
+/** Tagesserie und XP über alle Spiele, aus den echten Runden berechnet. */
+export function DailyStats() {
+  const [stats, setStats] = useState({ days: 0, xp: 0 });
+  useEffect(() => {
+    const events = GAMES.flatMap(
+      (game) => loadGameState(game.slug).recentEvents,
+    );
+    const now = new Date();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Serverbild kennt den Speicher nicht
+    setStats({
+      days: dailyStreak(
+        events.map((event) => event.playedAt),
+        now,
+      ),
+      xp: xpToday(events, now),
+    });
+  }, []);
   return (
-    <div className="spiel-buehne flex items-center gap-3 rounded-3xl p-3">
-      <Toni mood={mood} className="spiel-float h-20 w-20 sm:h-24 sm:w-24" />
-      <div className="min-w-0 flex-1">
-        <h2 className="condensed text-ink dark:text-night-text text-[clamp(1.5rem,4svh,2.5rem)] leading-none font-extrabold">
-          {title}
-        </h2>
-        <p className="text-ink dark:text-night-text mt-1 leading-snug">
-          {text}
-        </p>
-      </div>
-      <SoundToggle />
-    </div>
+    <p className="text-ink dark:text-night-text mt-1.5 flex flex-wrap gap-x-4 font-extrabold tabular-nums">
+      <span className="flex items-center gap-1">
+        <Flame
+          className="text-primary-ink dark:text-primary h-5 w-5"
+          aria-hidden
+        />
+        {stats.days === 1 ? "1 Tag" : `${stats.days} Tage`} in Folge
+      </span>
+      <span className="flex items-center gap-1">
+        <Zap
+          className="text-primary-ink dark:text-primary h-5 w-5"
+          aria-hidden
+        />
+        {stats.xp} XP heute
+      </span>
+    </p>
   );
 }
 
-/** Toni kommentiert das Spiel: fester Platz, damit der Inhalt darunter nicht springt. */
-export function ToniCoach({
+const MAX_HEARTS = 3;
+
+/**
+ * Herzen einer Lektion. Über Refs erreichbar, damit die Spiele sie
+ * aus ihren bestehenden Antwort-Handlern aufrufen können, ohne ihre Logik umzubauen.
+ */
+export function useLessonHearts(onEmpty: () => void) {
+  const [hearts, setHearts] = useState(MAX_HEARTS);
+  const left = useRef(MAX_HEARTS);
+  const onEmptyRef = useRef(onEmpty);
+  useEffect(() => {
+    onEmptyRef.current = onEmpty;
+  });
+  const lose = useRef(() => {
+    if (left.current <= 0) return;
+    left.current -= 1;
+    setHearts(left.current);
+    if (left.current === 0) onEmptyRef.current();
+  });
+  const reset = useRef(() => {
+    left.current = MAX_HEARTS;
+    setHearts(MAX_HEARTS);
+  });
+  return { hearts, lose, reset };
+}
+
+export function HeartRow({ hearts }: { hearts: number }) {
+  return (
+    <span className="flex items-center gap-0.5" role="status">
+      <span className="sr-only">
+        Noch {hearts} {hearts === 1 ? "Herz" : "Herzen"}
+      </span>
+      {Array.from({ length: MAX_HEARTS }, (_, i) => (
+        <Heart
+          key={i}
+          aria-hidden
+          className={cn(
+            "h-6 w-6",
+            i < hearts
+              ? "fill-red-600 text-red-600"
+              : "text-rule dark:text-night-rule",
+          )}
+        />
+      ))}
+    </span>
+  );
+}
+
+/** Kopf der Auswahlseite mit Toni. */
+export function GameHead({
+  title,
+  text,
+  aside = <SoundToggle />,
+  weltTitle,
+  weltText,
+  children,
+}: {
+  title: string;
+  text: string;
+  aside?: ReactNode;
+  /** Eigene Begrüßung statt `title` bzw. `text`. */
+  weltTitle?: string;
+  weltText?: string;
+  children?: ReactNode;
+}) {
+  return (
+    <header>
+      <div className="flex items-center gap-3">
+        <Toni mood="idle" className="h-20 w-20 sm:h-24 sm:w-24" />
+        <div className="min-w-0 flex-1">
+          <h2 className="text-ink dark:text-night-text text-2xl leading-tight font-extrabold md:text-3xl">
+            {weltTitle ?? title}
+          </h2>
+          <p className="text-ink dark:text-night-text mt-1 leading-snug">
+            {weltText ?? text}
+          </p>
+          {children}
+          <DailyStats />
+        </div>
+        {aside}
+      </div>
+    </header>
+  );
+}
+
+/** Serie als Etikett: gefülltes Rechteck wie die Zustände der Website. */
+export function StreakTag({ streak }: { streak: number }) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        "spiel-tag semi-condensed on-orange bg-primary text-ink px-2 py-0.5 text-sm font-semibold whitespace-nowrap tabular-nums",
+        streak >= 2 ? "visible" : "invisible",
+      )}
+    >
+      Serie {streak}
+    </span>
+  );
+}
+
+/** Stand des Spiels: fester Platz, damit der Inhalt darunter nicht springt. */
+export function GameStatus({
   mood,
   message,
   note,
   streak = 0,
   progress = null,
+  question,
+  hearts,
+  aside,
 }: {
   mood: ToniMood;
   message: string;
+  /** Bleibt stehen; das Urteil steht im Band am unteren Rand. */
+  question?: string;
+  hearts?: number;
+  /** Zusätzliche Bedienung neben der Ansage, etwa Einstellungen. */
+  aside?: ReactNode;
   note?: string;
   streak?: number;
   /** Anteil 0–1; `null` blendet den Balken aus (Lernen, Endlos). */
   progress?: number | null;
 }) {
-  const celebrating = mood === "happy" && isStreakMilestone(streak);
+  const shown = question ?? message;
   return (
-    <div className="spiel-buehne flex items-center gap-2 rounded-3xl px-3 py-2 sm:gap-3">
-      {celebrating && <Confetti key={streak} pieces={26} />}
-      <Toni
-        key={mood}
-        mood={mood}
-        className={cn(
-          "h-[clamp(3rem,8dvh,4.5rem)] w-[clamp(3rem,8dvh,4.5rem)]",
-          mood === "happy" && "spiel-pop",
-          mood === "oops" && "spiel-shake",
-        )}
-      />
-      <div className="min-w-0 flex-1">
-        <p
-          key={message}
-          className={cn(
-            "condensed text-ink dark:text-night-text origin-left text-[clamp(1.25rem,3svh,1.875rem)] leading-none font-extrabold",
-            mood === "happy" && "spiel-pop",
-          )}
-        >
-          {message}
-        </p>
-        {note && (
-          <p className="text-dark dark:text-night-muted mt-0.5 text-xs leading-tight font-bold">
-            {note}
-          </p>
-        )}
-        {progress !== null && (
-          <div
-            className="bg-ink/10 dark:bg-night-rule mt-1.5 h-2 overflow-hidden rounded-full"
-            aria-hidden
+    <div className="spiel-status border-ink dark:border-night-text border-b-2">
+      <div className="flex items-center gap-3 pb-2">
+        <Toni
+          mood={mood}
+          className="h-[clamp(2.75rem,7dvh,3.75rem)] w-[clamp(2.75rem,7dvh,3.75rem)]"
+        />
+        <div className="min-w-0 flex-1">
+          <p
+            key={shown}
+            className={cn(
+              "spiel-status-text condensed text-ink dark:text-night-text origin-left text-[clamp(1.375rem,3.4svh,2.25rem)] leading-none font-extrabold",
+              mood === "happy" && "spiel-stamp",
+              mood === "oops" && "spiel-shake",
+            )}
           >
-            <div
-              className="bg-primary h-full rounded-full transition-[width] duration-300"
-              style={{ width: `${Math.round(progress * 100)}%` }}
-            />
-          </div>
-        )}
+            {mood === "happy" ? cheerful(shown) : shown}
+          </p>
+          {note && (
+            <p className="text-dark dark:text-night-muted mt-1 text-sm leading-tight">
+              {note}
+            </p>
+          )}
+        </div>
+        <StreakTag streak={streak} />
+        {hearts !== undefined && <HeartRow hearts={hearts} />}
+        {aside}
       </div>
-      <span
-        className={cn(
-          "bg-primary text-ink flex items-center gap-1 rounded-full px-2.5 py-1 text-sm font-extrabold tabular-nums transition-opacity",
-          streak >= 2 ? "opacity-100" : "opacity-0",
-        )}
-        aria-hidden
-      >
-        <Flame className="h-4 w-4" />
-        {streak}
-      </span>
+      {progress !== null && (
+        <div aria-hidden className="spiel-bar h-1.5">
+          <div
+            className="bg-primary h-full transition-[width] duration-300"
+            style={{ width: `${Math.round(progress * 100)}%` }}
+          />
+        </div>
+      )}
     </div>
   );
 }
 
-/** Ergebnisfeier mit Sternen; Einzelheiten stehen als `children` hinter einem Klick. */
-export function Celebration({
+/** Sterne ohne Zierde: Tinte, die in der Fläche steht. */
+export function StarMarks({
+  stars,
+  className,
+  stamped = false,
+}: {
+  stars: number;
+  className?: string;
+  stamped?: boolean;
+}) {
+  return (
+    <span
+      className="flex gap-1"
+      role="img"
+      aria-label={`${stars} von 3 Sternen`}
+    >
+      {[1, 2, 3].map((n) => (
+        <Star
+          key={n}
+          aria-hidden
+          className={cn(
+            "stroke-[1.5]",
+            className,
+            n <= stars ? "spiel-star fill-current" : "opacity-25",
+            stamped && n <= stars && "spiel-stamp",
+          )}
+          style={
+            stamped
+              ? { animationDelay: `${0.2 + (n - 1) * STAR_STEP_SEC}s` }
+              : undefined
+          }
+        />
+      ))}
+    </span>
+  );
+}
+
+/** Die eine volle Druckfläche des Spiels: die große Zahl am Ende einer Runde. */
+export function ResultField({
+  value,
+  valueLabel,
+  headline,
+  stars,
+  badge,
+  celebrate = (stars ?? 0) >= 2,
+  percent,
+}: {
+  value: string;
+  valueLabel: string;
+  headline: string;
+  stars: Stars | null;
+  badge?: string | null;
+  /** Standard: ab zwei Sternen. */
+  celebrate?: boolean;
+  /** Daraus berechnen sich die verdienten XP. */
+  percent?: number;
+}) {
+  const [skipped, setSkipped] = useState(false);
+  useSkipGesture(!skipped, () => setSkipped(true));
+
+  return (
+    <section className="flex flex-col items-center gap-2 py-2 text-center">
+      {celebrate && !skipped && <Confetti pieces={40} />}
+      <Toni
+        mood={(stars ?? 0) >= 1 || celebrate ? "happy" : "idle"}
+        className="h-[clamp(5rem,16dvh,8rem)] w-[clamp(5rem,16dvh,8rem)]"
+      />
+      <p className="text-ink dark:text-night-text text-3xl leading-tight font-extrabold">
+        {cheerful(headline)}
+      </p>
+      {stars !== null && (
+        <StarMarks
+          stars={stars}
+          stamped={!skipped}
+          className="text-ink dark:text-night-text h-[clamp(2.75rem,8svh,4rem)] w-[clamp(2.75rem,8svh,4rem)]"
+        />
+      )}
+      <p className="text-ink dark:text-night-text">
+        <span className="text-4xl font-extrabold tabular-nums">{value}</span>{" "}
+        <span className="font-bold">{valueLabel}</span>
+      </p>
+      {percent !== undefined && (
+        <p className="text-primary-ink dark:text-primary flex items-center gap-1 text-xl font-extrabold">
+          <Zap className="h-5 w-5" aria-hidden />+{xpForPercent(percent)} XP
+        </p>
+      )}
+      {badge && (
+        <p className="spiel-tag on-orange bg-primary text-ink spiel-stamp px-3 py-1 font-bold">
+          {badge}
+        </p>
+      )}
+    </section>
+  );
+}
+
+/** Urteil einer Lektion am unteren Rand. */
+export function LessonFeedback({
+  tone,
+  title,
+  text,
+  overlay = false,
+}: {
+  tone: "right" | "wrong";
+  title: string;
+  text?: string | null;
+  /** Über dem Dock statt darin: für Runden ohne eigene Aktionsleiste. */
+  overlay?: boolean;
+}) {
+  return (
+    <div
+      role="status"
+      data-tone={tone}
+      className={cn(
+        "spiel-feedback px-4 py-3",
+        overlay && "spiel-feedback-overlay",
+      )}
+    >
+      <p className="text-xl font-extrabold">{title}</p>
+      {text && <p className="mt-0.5 leading-snug">{text}</p>}
+    </div>
+  );
+}
+
+/** Kennzahlen im Tabellensatz unter der Fläche. */
+export function FactRows({ rows }: { rows: [string, string][] }) {
+  return (
+    <dl className="border-ink dark:border-night-text border-t-2">
+      {rows.map(([label, value]) => (
+        <div
+          key={label}
+          className="border-rule dark:border-night-rule flex items-baseline justify-between gap-3 border-b py-2"
+        >
+          <dt className="text-dark dark:text-night-muted">{label}</dt>
+          <dd className="condensed text-ink dark:text-night-text text-xl font-extrabold tabular-nums">
+            {value}
+          </dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+/** Aufklappzeile in der Machart der Wegzeilen. */
+export function DetailRow({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <details className="border-rule dark:border-night-rule border-b">
+      <summary
+        className={cn(
+          "text-ink dark:text-night-text hover:bg-primary hover:text-ink flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-1 font-bold [&::-webkit-details-marker]:hidden",
+          GAME_FOCUS_RING,
+        )}
+      >
+        {label}
+        <Plus className="h-5 w-5 shrink-0" aria-hidden />
+      </summary>
+      <div className="px-1 pb-4">{children}</div>
+    </details>
+  );
+}
+
+/** Rundenende der Lernspiele: Fläche, Kennzahlen, Einzelheiten hinter einem Klick. */
+export function GameResult({
   percent,
   value,
   valueLabel,
-  stats,
+  rows,
   badge,
   detailsLabel,
   children,
@@ -203,7 +485,7 @@ export function Celebration({
   percent: number;
   value: string;
   valueLabel: string;
-  stats?: string;
+  rows?: [string, string][];
   badge?: string | null;
   detailsLabel?: string;
   children?: ReactNode;
@@ -213,60 +495,20 @@ export function Celebration({
   useEffect(() => fanfare(stars), [fanfare, stars]);
 
   return (
-    <div className="flex flex-col gap-3">
-      {stars >= CELEBRATE_FROM_STARS && <Confetti />}
-      <div className="spiel-buehne flex flex-col items-center gap-2 rounded-3xl p-4 text-center">
-        <Toni
-          mood={stars >= 1 ? "happy" : "idle"}
-          className="spiel-float h-[clamp(5rem,16dvh,8rem)] w-[clamp(5rem,16dvh,8rem)]"
-        />
-        <p className="condensed text-ink dark:text-night-text text-[clamp(1.75rem,4.5svh,3rem)] leading-none font-extrabold">
-          {resultHeadline(stars)}
-        </p>
-        <span className="sr-only">{stars} von 3 Sternen.</span>
-        <div className="flex gap-2" aria-hidden>
-          {[1, 2, 3].map((n) => (
-            <Star
-              key={n}
-              className={cn(
-                "h-[clamp(2.75rem,8svh,4.5rem)] w-[clamp(2.75rem,8svh,4.5rem)] stroke-[1.5]",
-                n <= stars
-                  ? "fill-primary text-ink dark:text-night-text spiel-pop"
-                  : "text-ink/20 dark:text-night-rule",
-              )}
-              style={{ animationDelay: `${0.25 + (n - 1) * STAR_STEP_SEC}s` }}
-            />
-          ))}
-        </div>
-        <p className="text-ink dark:text-night-text">
-          <span className="condensed text-3xl font-extrabold tabular-nums">
-            {value}
-          </span>{" "}
-          <span className="font-bold">{valueLabel}</span>
-        </p>
-        {stats && (
-          <p className="text-dark dark:text-night-muted text-sm font-bold tabular-nums">
-            {stats}
-          </p>
-        )}
-        {badge && (
-          <p className="bg-primary text-ink spiel-pop rounded-full px-4 py-1 font-extrabold">
-            {badge}
-          </p>
-        )}
-      </div>
+    <div className="flex flex-col gap-4">
+      <ResultField
+        value={value}
+        valueLabel={valueLabel}
+        headline={resultHeadline(stars)}
+        stars={stars}
+        badge={badge}
+        percent={percent}
+      />
+      {rows && <FactRows rows={rows} />}
       {children && (
-        <details className="border-rule dark:border-night-rule rounded-2xl border-2">
-          <summary
-            className={cn(
-              "text-ink dark:text-night-text flex min-h-11 cursor-pointer list-none items-center justify-center rounded-2xl px-3 text-sm font-bold [&::-webkit-details-marker]:hidden",
-              GAME_FOCUS_RING,
-            )}
-          >
-            {detailsLabel ?? "Genauer ansehen"}
-          </summary>
-          <div className="px-3 pb-3">{children}</div>
-        </details>
+        <DetailRow label={detailsLabel ?? "Genauer ansehen"}>
+          {children}
+        </DetailRow>
       )}
     </div>
   );

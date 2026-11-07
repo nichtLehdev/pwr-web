@@ -1,8 +1,7 @@
 "use client";
 
 import { Button } from "@/app/_components/ui/button";
-import { ArcadeButton } from "../../../_components/arcade-button";
-import { Celebration } from "../../../_components/game-kit";
+import { GameResult } from "../../../_components/game-kit";
 import { GameDock } from "../../../_components/game-shell-context";
 
 type Props = {
@@ -32,16 +31,27 @@ export function NoteWaageResultView({
   const isBest = plays > 1 && score > 0 && score >= bestScore;
   return (
     <>
-      <Celebration
+      <GameResult
         percent={percent}
         value={String(score)}
         valueLabel="Punkte"
-        stats={`Gelöst: ${solved}/${total} · Beste Serie: ${bestStreak} · Dein Rekord: ${bestScore}`}
-        badge={isBest ? "Bestleistung!" : null}
+        rows={[
+          ["Gelöst", `${solved}/${total}`],
+          ["Beste Serie", String(bestStreak)],
+          ["Dein Rekord", `${bestScore} Punkte`],
+        ]}
+        badge={isBest ? "Bestleistung" : null}
       />
       <GameDock>
         <div className="flex flex-col gap-2">
-          <ArcadeButton onClick={onRetry}>Nochmal spielen</ArcadeButton>
+          <Button
+            type="button"
+            size="lg"
+            className="spiel-action w-full"
+            onClick={onRetry}
+          >
+            Nochmal spielen
+          </Button>
           <Button type="button" variant="outline" onClick={onSetup}>
             Schwierigkeit wählen
           </Button>

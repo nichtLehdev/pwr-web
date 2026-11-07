@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { spawnBurst } from "../../../_components/confetti";
+import { spawnBurst } from "../../../_components/note-burst";
 import { RhythmFigureLoader } from "../../../_components/rhythm-figure-loader";
+import { harmonyFor } from "../../../_lib/rhythm/audio";
 import { describeFigure } from "../../../_lib/rhythm/describe";
 import { barScale, type BarHandle } from "../../../_lib/rhythm/draw-bar";
 import { barTicks, pulseOf, secPerTick } from "../../../_lib/rhythm/ticks";
@@ -12,6 +13,7 @@ import {
   ANNOUNCEMENT,
   ballHop,
   CountOverlay,
+  HoppingHead,
   StageHud,
   useCountIn,
 } from "./stage-parts";
@@ -98,7 +100,7 @@ export function AnswerStage({ conductor }: { conductor: Conductor }) {
                 sheetBox.left +
                 handle.xForTick(note.tick) * barScale(handle, hostBox),
               hostBox.top - sheetBox.top + hostBox.height * 0.55,
-              note.verdict === "exact" ? 7 : 3,
+              note.verdict === "exact" ? 4 : 2,
             );
           }
         },
@@ -129,15 +131,15 @@ export function AnswerStage({ conductor }: { conductor: Conductor }) {
     segment?.kind === "call"
       ? segment.announcement
         ? ANNOUNCEMENT[segment.announcement]
-        : "Hör zu …"
+        : "Hör zu"
       : isAnswer
-        ? "Jetzt du!"
-        : "Mitzählen!";
+        ? "Jetzt du"
+        : "Mitzählen";
   const figureIndex = segment?.index ?? 0;
   const total = segment?.total ?? null;
 
   return (
-    <div className="spiel-buehne flex flex-col gap-2 rounded-3xl p-3 sm:p-4">
+    <div className="spiel-stage flex flex-col gap-2">
       <StageHud
         conductor={conductor}
         baseText={baseText}
@@ -149,39 +151,27 @@ export function AnswerStage({ conductor }: { conductor: Conductor }) {
             ? `Figur ${figureIndex + 1}${total !== null ? ` von ${total}` : ""} · ${segment.bpm} BPM`
             : ""
         }
-        progress={
-          segment && segment.lives !== undefined
-            ? null
-            : segment?.kind === "count" || total === null
-              ? 0
-              : figureIndex / total
-        }
+        progress={total === null ? null : figureIndex / total}
         lives={segment?.lives}
       />
       <div
         ref={sheetRef}
-        className="bg-paper dark:bg-night relative h-[clamp(7.5rem,22svh,12rem)] rounded-2xl px-2 md:h-[clamp(11rem,34svh,20rem)]"
+        className="spiel-sheet relative h-[clamp(8rem,26svh,14rem)] md:h-[clamp(12rem,38svh,22rem)]"
       >
         {figure && (
           <RhythmFigureLoader
             bars={figure.bars}
+            noteKey={harmonyFor(figure).melodyKey}
             timeSignature={figure.timeSignature}
             onDrawn={onDrawn}
           />
         )}
         <div
           ref={cursorRef}
-          className="bg-primary/60 pointer-events-none absolute top-0 left-0 z-10 w-0.5 opacity-0"
+          className="bg-primary-ink dark:bg-primary pointer-events-none absolute top-0 left-0 z-10 w-0.5 opacity-0"
           aria-hidden
         >
-          <div
-            ref={ballRef}
-            className={
-              isAnswer
-                ? "bg-primary border-ink absolute top-2 left-1/2 h-5 w-5 rounded-full border-2"
-                : "border-ink absolute top-2 left-1/2 h-5 w-5 rounded-full border-2 bg-[#78a8da]"
-            }
-          />
+          <HoppingHead headRef={ballRef} filled={isAnswer} />
         </div>
         <CountOverlay number={countNumber} />
         {figure && (

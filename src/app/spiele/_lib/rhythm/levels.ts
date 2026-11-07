@@ -301,3 +301,7 @@ export const LEVELS: readonly Level[] = [
 export function levelById(id: string | null | undefined): Level | null {
   return LEVELS.find((level) => level.id === id) ?? null;
 }
+
+export function hasSteadyPitch(level: Level): boolean {
+  return level.group === LEVELS[0]!.group;
+}

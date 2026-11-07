@@ -69,10 +69,10 @@ const BASE_DURATION: Record<NoteValue, { duration: string; dots: number }> = {
   "16": { duration: "16", dots: 0 },
 };
 
-function staveNote(event: RhythmEvent): StaveNote {
+function staveNote(event: RhythmEvent, noteKey: string): StaveNote {
   const { duration, dots } = BASE_DURATION[event.value];
   const note = new StaveNote({
-    keys: [event.isRest ? "b/4" : "c/4"],
+    keys: [event.isRest ? "b/4" : noteKey],
     duration: event.isRest ? `${duration}r` : duration,
     dots,
   });
@@ -106,12 +106,14 @@ export function drawBar(
   host: HTMLDivElement,
   options: {
     events: RhythmEvent[];
+    /** Klingender Ton, siehe `harmonyAt`. */
+    noteKey: string;
     timeSignature: TimeSignature;
     showPrefix: boolean;
     dark: boolean;
   },
 ): BarHandle {
-  const { events, timeSignature, showPrefix, dark } = options;
+  const { events, noteKey, timeSignature, showPrefix, dark } = options;
   const colors = notationColors(dark);
   const barWidth = barTicks(timeSignature) * PX_PER_TICK;
   const tsString = `${timeSignature.numerator}/${timeSignature.denominator}`;
@@ -131,7 +133,7 @@ export function drawBar(
   stave.setWidth(prefixWidth + barWidth);
   const totalWidth = prefixWidth + barWidth;
 
-  const notes = events.map(staveNote);
+  const notes = events.map((event) => staveNote(event, noteKey));
   const tuplets: Tuplet[] = [];
   let i = 0;
   while (i < events.length) {

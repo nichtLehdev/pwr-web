@@ -12,6 +12,8 @@ import type { RhythmEvent, TimeSignature } from "../_lib/rhythm/types";
 
 export type RhythmFigureProps = {
   bars: RhythmEvent[][];
+  /** Klingender Ton, siehe `harmonyAt`. */
+  noteKey: string;
   timeSignature: TimeSignature;
   className?: string;
   /** Bekommt je Takt die Griffe zum Einfärben, nach jedem Neuzeichnen. */
@@ -21,6 +23,7 @@ export type RhythmFigureProps = {
 /** Eine Figur aus eigenständigen Takten; zwei Takte stehen auf dem Telefon untereinander. */
 export function RhythmFigure({
   bars,
+  noteKey,
   timeSignature,
   className,
   onDrawn,
@@ -41,6 +44,7 @@ export function RhythmFigure({
       const handles = hosts.map((host, index) =>
         drawBar(host, {
           events: bars[index]!,
+          noteKey,
           timeSignature,
           showPrefix: index === 0,
           dark,
@@ -55,7 +59,7 @@ export function RhythmFigure({
     return () => {
       cancelled = true;
     };
-  }, [bars, timeSignature, dark]);
+  }, [bars, noteKey, timeSignature, dark]);
 
   return (
     <div

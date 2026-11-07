@@ -110,7 +110,7 @@ function Face({ mood }: { mood: ToniMood }) {
   }
 }
 
-/** Toni, die kleine Tuba: Das Maskottchen der Rhythmus-Spiele. Rein dekorativ. */
+/** Toni, die kleine Tuba: Das Maskottchen der Spielwelt. Rein dekorativ. */
 export const Toni = forwardRef<
   HTMLDivElement,
   { mood?: ToniMood; className?: string }

@@ -27,6 +27,8 @@ export type SegmentSpec = {
   announcement: Announcement;
   /** Nur Endlos: verbleibende Puste. */
   lives?: number;
+  /** Alle Figuren auf demselben Ton, siehe `harmonyFor`. */
+  steadyPitch?: boolean;
 };
 
 /** Der Dirigent fragt kurz vor Ablauf des Laufenden nach dem nächsten Abschnitt. */
@@ -43,6 +45,7 @@ export interface BandSource {
   bpmAt(index: number): number;
   /** `null`: Endlos. */
   readonly barCount: number | null;
+  readonly steadyPitch?: boolean;
 }
 
 /** Was das Nachspielen von seinen Regeln braucht; Stufen und Endlos füllen es verschieden. */
@@ -162,12 +165,12 @@ export class AnswerPlan implements AnswerRules {
 /** Antworten: Einzählen, dann immer Vorspielen und Nachspielen. */
 export class AnswerScript implements SessionScript {
   private step: AnswerStep | null = null;
-  private stage: "count" | "call" | "answer" = "count";
+  private stage: "count" | "call" | "answer" | "decide" = "count";
 
   constructor(
     private readonly plan: AnswerRules,
-    private readonly ts: TimeSignature,
     private readonly total: number | null,
+    private readonly steadyPitch = false,
   ) {}
 
   next(lastAccuracy: number | null): SegmentSpec | null {
@@ -181,12 +184,22 @@ export class AnswerScript implements SessionScript {
       return this.spec("call", this.step!, this.step!.figure.bars);
     }
     if (this.stage === "answer") {
-      this.stage = "next" as never;
+      this.stage = "decide";
       return this.spec("answer", this.step!, this.step!.figure.bars);
     }
+    const previous = this.step!.figure.timeSignature;
     const step = this.plan.afterAnswer(lastAccuracy ?? 0);
     if (!step) return null;
     this.step = step;
+    // Neue Taktart: erst neu einzählen, sonst fehlt der Puls.
+    const { numerator, denominator } = step.figure.timeSignature;
+    if (
+      numerator !== previous.numerator ||
+      denominator !== previous.denominator
+    ) {
+      this.stage = "call";
+      return this.spec("count", step, [emptyBar()]);
+    }
     this.stage = "answer";
     return this.spec("call", step, step.figure.bars);
   }
@@ -199,12 +212,13 @@ export class AnswerScript implements SessionScript {
     return {
       kind,
       bpm: step.bpm,
-      timeSignature: this.ts,
+      timeSignature: step.figure.timeSignature,
       bars,
       index: step.index,
       total: this.total,
       announcement: kind === "call" ? step.announcement : null,
       lives: this.plan.lives,
+      steadyPitch: this.steadyPitch,
     };
   }
 }
@@ -217,6 +231,7 @@ export class BandScript implements SessionScript, BandSource {
     readonly bars: RhythmEvent[][],
     readonly ts: TimeSignature,
     readonly bpm: number,
+    readonly steadyPitch = false,
   ) {}
 
   peekBar(index: number): RhythmEvent[] | undefined {
@@ -257,6 +272,7 @@ export class BandScript implements SessionScript, BandSource {
       index,
       total: this.bars.length,
       announcement: null,
+      steadyPitch: this.steadyPitch,
     };
   }
 }

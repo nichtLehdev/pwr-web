@@ -1,5 +1,5 @@
 import { describe, expect, it } from "@jest/globals";
-import { isStreakMilestone, praiseFor, starsFor } from "../rewards";
+import { praiseFor, starsFor } from "../rewards";
 
 describe("starsFor", () => {
   it.each([
@@ -15,10 +15,8 @@ describe("starsFor", () => {
 
 describe("praise", () => {
   it("celebrates every fifth note in a row", () => {
-    expect(praiseFor(10)).toBe("10 in Folge!");
-    expect(isStreakMilestone(10)).toBe(true);
-    expect(isStreakMilestone(9)).toBe(false);
-    expect(isStreakMilestone(0)).toBe(false);
+    expect(praiseFor(10)).toBe("10 in Folge");
+    expect(praiseFor(9)).not.toContain("in Folge");
   });
 
   it("always has something to say", () => {

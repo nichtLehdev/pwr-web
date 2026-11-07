@@ -12,7 +12,12 @@ import {
 import { useGameStats } from "../../../_lib/stats/use-game-stats";
 import { RhythmAudio } from "../../../_lib/rhythm/audio";
 import { pickMeter } from "../../../_lib/rhythm/generator";
-import { LEVELS, levelById, type Level } from "../../../_lib/rhythm/levels";
+import {
+  hasSteadyPitch,
+  LEVELS,
+  levelById,
+  type Level,
+} from "../../../_lib/rhythm/levels";
 import type { TimeSignature } from "../../../_lib/rhythm/types";
 import { Conductor, type Attempt } from "../_lib/conductor";
 import { summarize, type SessionSummary } from "../_lib/feedback";
@@ -33,7 +38,6 @@ import {
   loadPrefs,
   loadProgress,
   mergeProgress,
-  nextLevel,
   savePrefs,
   saveProgress,
   startBpm,
@@ -49,6 +53,18 @@ import {
   type BandSource,
   type SessionScript,
 } from "../_lib/session-script";
+import {
+  CHALLENGE_LENIENCY,
+  challengeCelebration,
+  challengeId,
+  challengePassed,
+  ChallengePlan,
+  clampSelection,
+  levelCelebration,
+  parseChallengeId,
+  SECTIONS,
+  type Celebration,
+} from "../_lib/path";
 import { rankFor, totalStars } from "../_lib/ranks";
 import { AnswerStage } from "./answer-stage";
 import { BandStage } from "./band-stage";
@@ -67,6 +83,8 @@ type Session = {
   band: { source: BandSource; ts: TimeSignature } | null;
   /** Nur Endlos: wie weit der Lauf gekommen ist. */
   reached: (() => number) | null;
+  /** Nur Challenges. */
+  challenge: { section: number; plan: ChallengePlan } | null;
   startedAt: number;
 };
 
@@ -75,6 +93,11 @@ export type EndlessResult = {
   unit: "Figuren" | "Takte";
   best: EndlessRecord;
   isRecord: boolean;
+};
+
+export type ChallengeResult = {
+  section: number;
+  passed: boolean;
 };
 
 export function RhythmGame() {
@@ -99,6 +122,11 @@ export function RhythmGame() {
     null,
   );
 
+  const [challengeResult, setChallengeResult] =
+    useState<ChallengeResult | null>(null);
+
+  const [celebration, setCelebration] = useState<Celebration | null>(null);
+
   const [audio] = useState(() => new RhythmAudio());
   const sessionRef = useRef<Session | null>(null);
   const endlessRecordsRef = useRef(endlessRecords);
@@ -112,9 +140,14 @@ export function RhythmGame() {
 
   // localStorage erst nach dem Mount lesen (SSR-sicher).
   useEffect(() => {
+    const storedProgress = loadProgress();
+    const storedPrefs = loadPrefs();
     // eslint-disable-next-line react-hooks/set-state-in-effect -- Serverbild und Speicher unterscheiden sich
-    setPrefs(loadPrefs());
-    setProgress(loadProgress());
+    setPrefs({
+      ...storedPrefs,
+      levelId: clampSelection(storedPrefs.levelId, storedProgress),
+    });
+    setProgress(storedProgress);
     setLatencyMs(loadLatencyMs());
     setEndlessRecords(loadEndlessRecords());
   }, []);
@@ -133,8 +166,9 @@ export function RhythmGame() {
     (active: Session, attempts: Attempt[]) => {
       const result = summarize(attempts);
       const { fixedBpm, mode, input } = prefsRef.current;
-      const isEndless = active.level === null;
-      const awardsStars = fixedBpm === null && !isEndless;
+      const isEndless = active.level === null && !active.challenge;
+      const awardsStars =
+        active.challenge !== null || (fixedBpm === null && !isEndless);
       setSummary(result);
       setBestStreak(active.conductor.judge.bestStreak);
       recordResult({
@@ -143,7 +177,9 @@ export function RhythmGame() {
         streak: active.conductor.judge.bestStreak,
         durationMs: Math.round(performance.now() - active.startedAt),
         meta: {
-          level: active.level?.id ?? ENDLESS_ID,
+          level: active.challenge
+            ? challengeId(active.challenge.section)
+            : (active.level?.id ?? ENDLESS_ID),
           mode,
           input,
           bpm: result.bpm,
@@ -158,7 +194,29 @@ export function RhythmGame() {
       let isRecord = false;
       let rankUp: string | null = null;
       setEndlessResult(null);
-      if (active.reached) {
+      setChallengeResult(null);
+      setCelebration(null);
+      if (active.challenge) {
+        const { section, plan } = active.challenge;
+        const passed = challengePassed(plan.completed, result.percent);
+        const merged = mergeProgress(
+          progressRef.current,
+          challengeId(section),
+          {
+            stars: result.stars,
+            percent: result.percent,
+            points,
+            bpm: result.bpm,
+            passed,
+          },
+        );
+        setProgress(merged);
+        saveProgress(merged);
+        setChallengeResult({ section, passed });
+        setCelebration(
+          challengeCelebration(section, progressRef.current, passed),
+        );
+      } else if (active.reached) {
         const reached = active.reached();
         const merged = mergeEndlessRecord(endlessRecordsRef.current, mode, {
           points,
@@ -187,6 +245,9 @@ export function RhythmGame() {
         if (newRank !== rankFor(totalStars(before)).title) rankUp = newRank;
         setProgress(merged);
         saveProgress(merged);
+        setCelebration(
+          levelCelebration(active.level, before, merged, result.stars),
+        );
       }
       setReward({ points, isRecord, rankUp });
       sessionRef.current = null;
@@ -197,15 +258,31 @@ export function RhythmGame() {
   );
 
   const start = useCallback(
-    async (level: Level | null) => {
+    async (selectionId: string) => {
+      setCelebration(null);
       await audio.ensure();
       const { mode, input, fixedBpm } = prefsRef.current;
       const latencySec = latencyMs === null ? null : latencyMs / 1000;
+      const challengeSection = parseChallengeId(selectionId);
+      const level =
+        selectionId === ENDLESS_ID || challengeSection !== null
+          ? null
+          : (levelById(selectionId) ?? LEVELS[0]!);
 
       let band: Session["band"] = null;
       let reached: Session["reached"] = null;
+      let challenge: Session["challenge"] = null;
       let script: SessionScript;
-      if (level === null) {
+      if (challengeSection !== null) {
+        // Immer Nachspielen: Taktarten und Tempi wechseln, das geht nur mit Vorspielen.
+        const plan = new ChallengePlan(challengeSection);
+        challenge = { section: challengeSection, plan };
+        script = new AnswerScript(
+          plan,
+          plan.total,
+          hasSteadyPitch(SECTIONS[challengeSection]!.levels[0]!),
+        );
+      } else if (level === null) {
         if (mode === "band") {
           const endless = new EndlessBandScript();
           band = { source: endless, ts: ENDLESS_METER };
@@ -214,13 +291,13 @@ export function RhythmGame() {
         } else {
           const plan = new EndlessPlan();
           reached = () => plan.reached;
-          script = new AnswerScript(plan, ENDLESS_METER, null);
+          script = new AnswerScript(plan, null);
         }
       } else if (mode === "band") {
         const ts = pickMeter(level);
         const bpm = fixedBpm ?? startBpm(level, progressRef.current);
         const bars = createBandBars(level, ts);
-        const fixed = new BandScript(bars, ts, bpm);
+        const fixed = new BandScript(bars, ts, bpm, hasSteadyPitch(level));
         band = { source: fixed, ts };
         script = fixed;
       } else {
@@ -231,12 +308,12 @@ export function RhythmGame() {
           start: bpm,
           fixed: fixedBpm !== null,
         });
-        script = new AnswerScript(plan, ts, total);
+        script = new AnswerScript(plan, total, hasSteadyPitch(level));
       }
 
       const conductor = new Conductor(audio, script, {
         input,
-        leniency: level?.leniency ?? 1,
+        leniency: challenge ? CHALLENGE_LENIENCY : (level?.leniency ?? 1),
         latencySec,
       });
       const active: Session = {
@@ -244,6 +321,7 @@ export function RhythmGame() {
         level,
         band,
         reached,
+        challenge,
         startedAt: performance.now(),
       };
       conductor.subscribe({
@@ -289,10 +367,6 @@ export function RhythmGame() {
   );
 
   const isEndless = prefs.levelId === ENDLESS_ID;
-  const currentLevel = isEndless
-    ? null
-    : (levelById(prefs.levelId) ?? LEVELS[0]!);
-  const following = currentLevel ? nextLevel(currentLevel) : null;
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-[clamp(0.5rem,1.8svh,1.25rem)]">
@@ -302,8 +376,10 @@ export function RhythmGame() {
           progress={progress}
           endlessRecords={endlessRecords}
           notice={notice}
+          celebration={celebration}
+          onCelebrationEnd={() => setCelebration(null)}
           onChange={changePrefs}
-          onStart={() => void start(currentLevel)}
+          onStart={() => void start(prefs.levelId)}
           onCalibrate={() => setView("calibrate")}
         />
       )}
@@ -345,7 +421,7 @@ export function RhythmGame() {
             <PlayPad
               label={
                 isListening && !session.band
-                  ? "Hör zu …"
+                  ? "Hör zu"
                   : prefs.input === "hold"
                     ? "Drücken und halten"
                     : "Tippen"
@@ -364,21 +440,17 @@ export function RhythmGame() {
       {view === "result" && summary && (
         <ResultView
           summary={summary}
-          nextLevel={following}
+          challenge={challengeResult}
           bestStreak={bestStreak}
           points={reward.points}
           endless={endlessResult}
           isRecord={reward.isRecord}
           rankUp={reward.rankUp}
-          awardsStars={prefs.fixedBpm === null && !isEndless}
+          awardsStars={
+            challengeResult !== null || (prefs.fixedBpm === null && !isEndless)
+          }
           audio={audio}
-          onAgain={() => void start(currentLevel)}
-          onNext={() => {
-            if (!following) return;
-            changePrefs({ ...prefs, levelId: following.id });
-            prefsRef.current = { ...prefs, levelId: following.id };
-            void start(following);
-          }}
+          onAgain={() => void start(prefs.levelId)}
           onSetup={() => {
             audio.cancelScheduled();
             setView("setup");

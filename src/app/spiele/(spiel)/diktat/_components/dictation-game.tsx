@@ -1,21 +1,19 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  Check,
-  Rocket,
-  Sparkles,
-  Target,
-  X,
-  type LucideIcon,
-} from "lucide-react";
+import { Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/app/_components/ui/button";
-import { GAME_FOCUS_RING } from "../../../_lib/focus-ring";
+import type { ToniMood } from "../../../_components/toni";
 import { GameBarSlot, GameDock } from "../../../_components/game-shell-context";
-import { ArcadeButton } from "../../../_components/arcade-button";
-import { Confetti } from "../../../_components/confetti";
-import { Toni, type ToniMood } from "../../../_components/toni";
+import {
+  FactRows,
+  GameHead,
+  GameStatus,
+  LessonFeedback,
+  ResultField,
+  useLessonHearts,
+} from "../../../_components/game-kit";
 import { RhythmFigureLoader } from "../../../_components/rhythm-figure-loader";
 import {
   harmonyAt,
@@ -37,12 +35,14 @@ import {
   secPerTick,
 } from "../../../_lib/rhythm/ticks";
 import type { Figure } from "../../../_lib/rhythm/types";
+import { resultHeadline, starsFor } from "../../../_lib/rewards";
 import { useGameStats } from "../../../_lib/stats/use-game-stats";
 
 type Stage = "beginner" | "intermediate" | "advanced";
 type Phase = "setup" | "play" | "result";
 
 const ROUNDS = 10;
+const HEARTS_EMPTY_DELAY_MS = 1200;
 const POINTS_FIRST_TRY = 10;
 const POINTS_SECOND_TRY = 5;
 
@@ -50,7 +50,6 @@ const STAGES: {
   id: Stage;
   title: string;
   hint: string;
-  icon: LucideIcon;
   levels: string[];
   options: number;
 }[] = [
@@ -58,7 +57,6 @@ const STAGES: {
     id: "beginner",
     title: "Leicht",
     hint: "Viertel, Halbe, Pausen und Achtel, drei Antworten",
-    icon: Sparkles,
     levels: ["viertel-halbe", "ganze-pausen", "dreier", "achtel"],
     options: 3,
   },
@@ -66,7 +64,6 @@ const STAGES: {
     id: "intermediate",
     title: "Mittel",
     hint: "Achtelpausen, Punktierungen und Synkopen, vier Antworten",
-    icon: Target,
     levels: ["achtelpausen", "punktiert", "synkopen", "sechzehntel"],
     options: 4,
   },
@@ -74,7 +71,6 @@ const STAGES: {
     id: "advanced",
     title: "Schwer",
     hint: "Sechzehntel-Figuren, Triolen und 6/8, vier Antworten",
-    icon: Rocket,
     levels: [
       "achtel-sechzehntel",
       "punktierte-achtel",
@@ -163,6 +159,14 @@ export function DictationGame() {
   const [firstTryCount, setFirstTryCount] = useState(0);
   const recent = useRef(new Set<string>());
 
+  const finishRef = useRef<() => void>(() => undefined);
+  const {
+    hearts,
+    lose: loseHeart,
+    reset: resetHearts,
+  } = useLessonHearts(() =>
+    window.setTimeout(() => finishRef.current(), HEARTS_EMPTY_DELAY_MS),
+  );
   const stage = STAGES.find((s) => s.id === stageId)!;
   const mood: ToniMood = solved
     ? "happy"
@@ -191,6 +195,7 @@ export function DictationGame() {
   );
 
   const startGame = () => {
+    resetHearts.current();
     recent.current.clear();
     setRoundIndex(0);
     setScore(0);
@@ -214,6 +219,7 @@ export function DictationGame() {
     if (index !== round.correctIndex) {
       setWrongPicks((picks) => [...picks, index]);
       setStreak(0);
+      loseHeart.current();
       return;
     }
     setSolved(true);
@@ -232,17 +238,24 @@ export function DictationGame() {
     }
   };
 
+  const finish = () => {
+    audio.cancelScheduled();
+    recordResult({
+      score,
+      maxScore: ROUNDS * POINTS_FIRST_TRY,
+      streak: bestStreak,
+      meta: { difficulty: stageId },
+    });
+    setPhase("result");
+  };
+  useEffect(() => {
+    finishRef.current = finish;
+  });
+
   const advance = () => {
     const next = roundIndex + 1;
     if (next >= ROUNDS) {
-      audio.cancelScheduled();
-      recordResult({
-        score,
-        maxScore: ROUNDS * POINTS_FIRST_TRY,
-        streak: bestStreak,
-        meta: { difficulty: stageId },
-      });
-      setPhase("result");
+      finish();
       return;
     }
     setRoundIndex(next);
@@ -258,84 +271,65 @@ export function DictationGame() {
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-[clamp(0.5rem,1.8svh,1.25rem)]">
       {phase === "setup" && (
-        <div className="flex flex-col gap-[clamp(0.75rem,2.6svh,2rem)]">
-          <div className="spiel-buehne flex items-center gap-3 rounded-3xl p-3">
-            <Toni
-              mood="listen"
-              className="spiel-float h-20 w-20 sm:h-24 sm:w-24"
-            />
-            <div className="min-w-0">
-              <h2 className="condensed text-ink dark:text-night-text text-[clamp(1.5rem,4svh,2.5rem)] leading-none font-extrabold">
-                Spitz die Ohren!
-              </h2>
-              <p className="text-ink dark:text-night-text mt-1 leading-snug">
-                Ich spiele dir etwas vor, du findest die passenden Noten. Sofort
-                richtig gibt {POINTS_FIRST_TRY} Punkte, beim zweiten Versuch{" "}
-                {POINTS_SECOND_TRY}.
-              </p>
-            </div>
-          </div>
+        <div className="flex flex-col gap-5">
+          <GameHead
+            title="Rhythmus-Diktat"
+            text={`Hör genau hin und finde die passenden Noten. Sofort richtig gibt ${POINTS_FIRST_TRY} Punkte, beim zweiten Versuch ${POINTS_SECOND_TRY}.`}
+            weltTitle="Spitz die Ohren!"
+            aside={null}
+          />
 
           <section aria-labelledby="diktat-schwierigkeit">
             <h3
               id="diktat-schwierigkeit"
-              className="semi-condensed text-dark dark:text-night-muted text-xs font-bold tracking-[0.06em] uppercase"
+              className="spiel-section-label condensed text-ink dark:text-night-text border-ink dark:border-night-text border-b-2 pb-1 text-[1.75rem] leading-none font-extrabold"
             >
               Schwierigkeit
             </h3>
-            <div className="mt-2 flex flex-col gap-2">
+            <ul className="spiel-rows">
               {STAGES.map((s) => {
-                const Icon = s.icon;
                 const active = s.id === stageId;
                 return (
-                  <button
-                    key={s.id}
-                    type="button"
-                    aria-pressed={active}
-                    onClick={() => setStageId(s.id)}
-                    className={cn(
-                      "flex min-h-[clamp(3rem,9svh,5.5rem)] w-full items-center gap-3 rounded-2xl border-[3px] px-3 text-left transition-colors md:gap-5 md:px-5",
-                      GAME_FOCUS_RING,
-                      active
-                        ? "on-orange bg-primary border-ink text-ink"
-                        : "border-rule hover:border-ink dark:border-night-rule dark:hover:border-night-text",
-                    )}
-                  >
-                    <Icon
+                  <li key={s.id}>
+                    <button
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => setStageId(s.id)}
                       className={cn(
-                        "h-6 w-6 shrink-0 stroke-[1.5]",
-                        active ? "text-ink" : "text-dark dark:text-night-muted",
+                        "border-rule dark:border-night-rule group flex min-h-14 w-full flex-col border-b px-2 py-2 text-left transition-colors focus-visible:outline-3 focus-visible:-outline-offset-3",
+                        active
+                          ? "on-orange bg-primary text-ink"
+                          : "hover:bg-primary hover:text-ink text-ink dark:text-night-text",
                       )}
-                      aria-hidden
-                    />
-                    <span className="min-w-0 flex-1">
-                      <span
-                        className={cn(
-                          "condensed block text-xl leading-tight font-bold",
-                          !active && "text-ink dark:text-night-text",
-                        )}
-                      >
+                    >
+                      <span className="text-[1.125rem] leading-tight font-bold">
                         {s.title}
                       </span>
                       <span
                         className={cn(
-                          "mt-0.5 block text-sm leading-snug",
-                          active
-                            ? "text-ink"
-                            : "text-dark dark:text-night-muted",
+                          "mt-0.5 text-sm leading-snug",
+                          !active &&
+                            "text-dark dark:text-night-muted group-hover:text-ink",
                         )}
                       >
                         {s.hint}
                       </span>
-                    </span>
-                  </button>
+                    </button>
+                  </li>
                 );
               })}
-            </div>
+            </ul>
           </section>
 
           <GameDock>
-            <ArcadeButton onClick={startGame}>Los geht&apos;s!</ArcadeButton>
+            <Button
+              type="button"
+              size="lg"
+              className="spiel-action w-full"
+              onClick={startGame}
+            >
+              Los geht&apos;s
+            </Button>
           </GameDock>
         </div>
       )}
@@ -343,124 +337,127 @@ export function DictationGame() {
       {phase === "play" && round && (
         <div className="flex flex-col gap-3 pb-2">
           <GameBarSlot>
-            <span className="semi-condensed text-dark dark:text-night-muted text-xs font-bold tracking-[0.06em] uppercase tabular-nums">
-              {roundIndex + 1} / {ROUNDS} · {score} Punkte
+            <span className="semi-condensed text-dark dark:text-night-muted text-sm font-semibold tabular-nums">
+              {roundIndex + 1}/{ROUNDS} · {score} Punkte
             </span>
           </GameBarSlot>
 
-          {solved && wrongPicks.length === 0 && (
-            <Confetti key={roundIndex} pieces={28} />
-          )}
-          <div className="spiel-buehne flex items-center gap-3 rounded-3xl p-3">
-            <Toni
-              key={`${mood}-${wrongPicks.length}`}
+          <div role="status">
+            <GameStatus
               mood={mood}
-              className={cn(
-                "h-[clamp(3.75rem,11svh,5.5rem)] w-[clamp(3.75rem,11svh,5.5rem)]",
-                mood === "oops" && "spiel-shake",
-                mood === "happy" && "spiel-pop",
-              )}
-            />
-            <div className="min-w-0 flex-1">
-              <p
-                className="condensed text-ink dark:text-night-text text-[clamp(1.375rem,3.4svh,2.25rem)] leading-none font-extrabold"
-                role="status"
-              >
-                {solved
+              message={
+                solved
                   ? wrongPicks.length === 0
-                    ? "Richtig, sofort erkannt!"
-                    : "Jetzt stimmt's!"
+                    ? "Sofort erkannt"
+                    : "Jetzt stimmt es"
                   : wrongPicks.length > 0
-                    ? "Fast! Hör noch einmal hin."
-                    : "Welche Noten hörst du?"}
-              </p>
-              {solved && (
-                <p className="text-dark dark:text-night-muted mt-1 text-sm">
-                  Tippe die anderen an, dann hörst du den Unterschied.
-                </p>
-              )}
-              <div
-                className="bg-ink/10 dark:bg-night-rule mt-2 h-2 overflow-hidden rounded-full"
-                aria-hidden
-              >
-                <div
-                  className="bg-primary h-full rounded-full transition-[width] duration-300"
-                  style={{ width: `${(roundIndex / ROUNDS) * 100}%` }}
-                />
-              </div>
-            </div>
+                    ? "Daneben, hör noch einmal hin"
+                    : "Welche Noten hörst du?"
+              }
+              question="Welche Noten hörst du?"
+              hearts={hearts}
+              progress={roundIndex / ROUNDS}
+            />
           </div>
 
-          <div
+          <ol
             className={cn(
-              "grid grid-cols-1 gap-2",
-              round.options.length === 4 && "md:grid-cols-2",
+              "spiel-options grid grid-cols-1",
+              round.options.length === 4 && "md:grid-cols-2 md:gap-x-6",
             )}
           >
             {round.options.map((figure, index) => {
               const isWrong = wrongPicks.includes(index);
               const isRight = solved && index === round.correctIndex;
               return (
-                <button
+                <li
                   key={`${roundIndex}-${index}`}
-                  type="button"
-                  aria-disabled={isWrong && !solved}
-                  aria-label={`Antwort ${index + 1}: ${describeFigure(figure)}${
-                    isRight ? " Richtig." : isWrong ? " Falsch." : ""
-                  }`}
-                  onClick={() => pick(index)}
-                  className={cn(
-                    "bg-paper dark:bg-night relative h-[clamp(4.75rem,13svh,10rem)] rounded-2xl border-[3px] px-2 transition-colors",
-                    GAME_FOCUS_RING,
-                    isRight
-                      ? "border-primary-ink dark:border-primary"
-                      : isWrong
-                        ? "spiel-shake border-red-700 opacity-60 dark:border-red-400"
-                        : "border-rule hover:border-ink dark:border-night-rule dark:hover:border-night-text",
-                  )}
+                  className="border-rule dark:border-night-rule border-b"
                 >
-                  <RhythmFigureLoader
-                    bars={figure.bars}
-                    timeSignature={figure.timeSignature}
-                  />
-                  {isRight && (
-                    <Check
-                      className="spiel-pop text-primary-ink dark:text-primary absolute top-1.5 right-1.5 h-7 w-7 stroke-[3]"
-                      aria-hidden
-                    />
-                  )}
-                  {isWrong && (
-                    <X
-                      className="absolute top-1.5 right-1.5 h-6 w-6 text-red-700 dark:text-red-400"
-                      aria-hidden
-                    />
-                  )}
-                </button>
+                  <button
+                    type="button"
+                    aria-disabled={isWrong && !solved}
+                    aria-label={`Antwort ${index + 1}: ${describeFigure(figure)}${
+                      isRight ? " Richtig." : isWrong ? " Falsch." : ""
+                    }`}
+                    onClick={() => pick(index)}
+                    className={cn(
+                      "spiel-answer group flex h-[clamp(4.75rem,13svh,10rem)] w-full items-stretch gap-3 py-1.5 text-left focus-visible:outline-3 focus-visible:-outline-offset-3",
+                      isWrong && !solved && "cursor-not-allowed",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "spiel-slot condensed flex w-12 shrink-0 items-center justify-center text-[1.75rem] font-extrabold transition-colors",
+                        isRight
+                          ? "on-orange bg-primary text-ink spiel-stamp"
+                          : isWrong
+                            ? "text-paper spiel-shake bg-red-700"
+                            : "border-ink text-ink group-hover:bg-primary group-hover:text-ink dark:border-night-text dark:text-night-text border-2",
+                      )}
+                    >
+                      {isRight ? (
+                        <Check className="h-7 w-7 stroke-3" aria-hidden />
+                      ) : isWrong ? (
+                        <X className="h-7 w-7 stroke-3" aria-hidden />
+                      ) : (
+                        <span aria-hidden>{"ABCD"[index]}</span>
+                      )}
+                    </span>
+                    <span
+                      className={cn("min-w-0 flex-1", isWrong && "opacity-40")}
+                    >
+                      <RhythmFigureLoader
+                        bars={figure.bars}
+                        noteKey={harmonyAt(0).melodyKey}
+                        timeSignature={figure.timeSignature}
+                      />
+                    </span>
+                  </button>
+                </li>
               );
             })}
-          </div>
+          </ol>
 
           <GameDock>
             <div className="flex flex-col gap-2">
               {solved ? (
-                <ArcadeButton onClick={advance}>
-                  {roundIndex + 1 >= ROUNDS ? "Zum Ergebnis" : "Weiter"}
-                </ArcadeButton>
-              ) : (
-                <ArcadeButton
-                  onClick={() =>
-                    void audio
-                      .ensure()
-                      .then(() =>
-                        playFigure(audio, round.target, round.level, true),
-                      )
+                <LessonFeedback
+                  tone="right"
+                  title={
+                    wrongPicks.length === 0
+                      ? "Sofort erkannt!"
+                      : "Jetzt stimmt es!"
                   }
-                >
-                  Nochmal hören
-                </ArcadeButton>
-              )}
-              <Button type="button" variant="outline" onClick={backToSetup}>
-                Abbrechen
+                  text="Tippe die anderen an, dann hörst du den Unterschied."
+                />
+              ) : wrongPicks.length > 0 ? (
+                <LessonFeedback
+                  tone="wrong"
+                  title="Das war es nicht"
+                  text="Hör noch einmal hin."
+                />
+              ) : null}
+              <Button
+                type="button"
+                size="lg"
+                className="spiel-action w-full"
+                onClick={
+                  solved
+                    ? advance
+                    : () =>
+                        void audio
+                          .ensure()
+                          .then(() =>
+                            playFigure(audio, round.target, round.level, true),
+                          )
+                }
+              >
+                {solved
+                  ? roundIndex + 1 >= ROUNDS
+                    ? "Zum Ergebnis"
+                    : "Weiter"
+                  : "Nochmal hören"}
               </Button>
             </div>
           </GameDock>
@@ -468,33 +465,38 @@ export function DictationGame() {
       )}
 
       {phase === "result" && (
-        <div className="spiel-buehne flex flex-col items-center gap-4 rounded-3xl p-4 text-center">
-          {score >= ROUNDS * POINTS_FIRST_TRY * 0.6 && <Confetti />}
-          <Toni
-            mood={score >= ROUNDS * POINTS_FIRST_TRY * 0.4 ? "happy" : "idle"}
-            className="spiel-float h-[clamp(5rem,16svh,8rem)] w-[clamp(5rem,16svh,8rem)]"
+        <div className="flex flex-col gap-4">
+          <ResultField
+            value={String(score)}
+            valueLabel={`von ${ROUNDS * POINTS_FIRST_TRY} Punkten`}
+            headline={resultHeadline(
+              starsFor((100 * score) / (ROUNDS * POINTS_FIRST_TRY)),
+            )}
+            stars={starsFor((100 * score) / (ROUNDS * POINTS_FIRST_TRY))}
+            percent={(100 * score) / (ROUNDS * POINTS_FIRST_TRY)}
           />
-          <p className="on-orange bg-primary text-ink spiel-pop flex min-w-[8rem] flex-col items-center rounded-2xl px-5 py-2.5">
-            <span className="condensed text-[clamp(2.25rem,6.5svh,4rem)] leading-none font-extrabold tabular-nums">
-              {score}
-            </span>
-            <span className="semi-condensed mt-1.5 text-xs font-bold tracking-[0.06em] uppercase">
-              von {ROUNDS * POINTS_FIRST_TRY} Punkten
-            </span>
-          </p>
-          <p className="text-ink dark:text-night-text">
-            {firstTryCount} von {ROUNDS} Figuren beim ersten Hören erkannt
-            {bestStreak >= 2 && `, ${bestStreak} davon in Folge`}.
-          </p>
-          {aggregates && aggregates.plays > 0 && (
-            <p className="text-dark dark:text-night-muted text-sm">
-              Persönlicher Rekord: {aggregates.bestScore} Punkte ·{" "}
-              {aggregates.plays} {aggregates.plays === 1 ? "Runde" : "Runden"}
-            </p>
-          )}
+          <FactRows
+            rows={[
+              ["Beim ersten Hören erkannt", `${firstTryCount} von ${ROUNDS}`],
+              ["Beste Serie", String(bestStreak)],
+              ...(aggregates && aggregates.plays > 0
+                ? ([["Dein Rekord", `${aggregates.bestScore} Punkte`]] as [
+                    string,
+                    string,
+                  ][])
+                : []),
+            ]}
+          />
           <GameDock>
             <div className="flex flex-col gap-2">
-              <ArcadeButton onClick={startGame}>Nochmal spielen</ArcadeButton>
+              <Button
+                type="button"
+                size="lg"
+                className="spiel-action w-full"
+                onClick={startGame}
+              >
+                Nochmal spielen
+              </Button>
               <Button type="button" variant="outline" onClick={backToSetup}>
                 Schwierigkeit wählen
               </Button>

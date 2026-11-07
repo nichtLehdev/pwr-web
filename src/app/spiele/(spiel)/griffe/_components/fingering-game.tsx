@@ -56,11 +56,12 @@ import {
   type StoredCustomSetRef,
 } from "../_lib/types";
 import { GameBarSlot, GameDock } from "../../../_components/game-shell-context";
-import { ArcadeButton } from "../../../_components/arcade-button";
 import {
-  GameHero,
-  ToniCoach,
+  GameHead,
+  GameStatus,
+  LessonFeedback,
   useGameSounds,
+  useLessonHearts,
 } from "../../../_components/game-kit";
 import { praiseFor } from "../../../_lib/rewards";
 import { useGameStats } from "../../../_lib/stats/use-game-stats";
@@ -73,7 +74,8 @@ import { ValveDiagram, type ValveReveal } from "./valve-diagram";
 
 const NEXT_MS = 800;
 /** Quiz: kurze Fehler-Anzeige, das Tempo gehört zum Format. */
-const WRONG_MS = 1500;
+/** Die Erklärung steht im Band und muss sich in Ruhe lesen lassen. */
+const WRONG_MS = 3500;
 /** Endlos: Auflösung + Merkhilfe müssen lesbar bleiben. */
 const ENDLESS_WRONG_MS = 2600;
 /** Anfänger bekommen mehr Zeit pro Note. */
@@ -85,6 +87,7 @@ const QUIZ_SECONDS_BY_DIFFICULTY: Record<GriffeDifficultyId, number> = {
 /** Eigene Sets mischen Lagen beliebig — großzügig wie Anfänger. */
 const QUIZ_SECONDS_CUSTOM = 8;
 const QUIZ_ROUND_LEN = 15;
+const HEARTS_EMPTY_DELAY_MS = 900;
 
 /** Breit und flach: nebeneinander, gestapelt rutscht das Griffbild unter die Falz. */
 const WIDE_SHORT_TWO_COLUMNS =
@@ -540,7 +543,9 @@ export function FingeringGame() {
     [activateCustomSet, instrument],
   );
 
+  const loseHeartRef = useRef<() => void>(() => undefined);
   const recordMiss = useCallback((p: WrittenPitch) => {
+    loseHeartRef.current();
     const k = pitchKey(p);
     const m = missedMapRef.current;
     // Label inkl. Oktave — sonst kollidieren z. B. D4 und D5 in der Auswertung.
@@ -624,6 +629,21 @@ export function FingeringGame() {
     const id = window.setTimeout(fn, ms);
     timersRef.current.push(id);
   }, []);
+
+  // Letztes Herz weg: Das Urteil noch kurz zeigen, dann endet die Lektion.
+  const {
+    hearts,
+    lose: loseHeart,
+    reset: resetHearts,
+  } = useLessonHearts(() =>
+    scheduleAfter(HEARTS_EMPTY_DELAY_MS, goToQuizResult),
+  );
+  useEffect(() => {
+    // Nur im Quiz gibt es Herzen; Lernen und Endlos bleiben ohne Strafe.
+    loseHeartRef.current = () => {
+      if (mode === "quiz") loseHeart.current();
+    };
+  }, [mode, loseHeart]);
 
   const advanceAfterAnswer = useCallback(
     (wasCorrect: boolean) => {
@@ -947,6 +967,7 @@ export function FingeringGame() {
   }, [phase, inputKind, answerLocked, mode, toggleValve, advanceLearn]);
 
   const startGame = useCallback(() => {
+    resetHearts.current();
     clearTimers();
     missedMapRef.current = new Map();
     setPhase("play");
@@ -959,7 +980,7 @@ export function FingeringGame() {
     bestStreakRoundRef.current = 0;
     lastMidiRef.current = null;
     spawnNote();
-  }, [clearTimers, spawnNote]);
+  }, [resetHearts, clearTimers, spawnNote]);
 
   const openSetup = useCallback(() => {
     clearTimers();
@@ -1003,18 +1024,34 @@ export function FingeringGame() {
 
   const actionButton =
     mode === "learn" && answerLocked ? (
-      <ArcadeButton onClick={advanceLearn}>Weiter</ArcadeButton>
+      <Button
+        type="button"
+        size="lg"
+        className="spiel-action w-full"
+        onClick={advanceLearn}
+      >
+        Weiter
+      </Button>
     ) : inputKind === "slide" ? (
-      <ArcadeButton
+      <Button
+        type="button"
+        size="lg"
+        className="spiel-action w-full"
         disabled={answerLocked || slidePosition == null}
         onClick={handleConfirmSlide}
       >
         Antwort bestätigen
-      </ArcadeButton>
+      </Button>
     ) : (
-      <ArcadeButton disabled={answerLocked} onClick={handleConfirmValves}>
+      <Button
+        type="button"
+        size="lg"
+        className="spiel-action w-full"
+        disabled={answerLocked}
+        onClick={handleConfirmValves}
+      >
         Antwort bestätigen
-      </ArcadeButton>
+      </Button>
     );
 
   if (!hydrated) {
@@ -1026,12 +1063,12 @@ export function FingeringGame() {
   }
 
   return (
-    <div className="spiel-runde mx-auto flex w-full max-w-5xl flex-col gap-3 md:gap-4">
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 md:gap-4">
       {phase === "setup" && (
         <div className="space-y-[clamp(0.75rem,2.4dvh,1.5rem)]">
-          <GameHero
+          <GameHead
             title="Griffe"
-            text="Lies die Note und zeig mir den richtigen Griff!"
+            text="Lies die Note und wähle den richtigen Griff."
           />
 
           {setupHint && (
@@ -1062,7 +1099,14 @@ export function FingeringGame() {
           />
 
           <GameDock>
-            <ArcadeButton onClick={startGame}>Los geht&apos;s!</ArcadeButton>
+            <Button
+              type="button"
+              size="lg"
+              className="spiel-action w-full"
+              onClick={startGame}
+            >
+              Los geht&apos;s
+            </Button>
           </GameDock>
         </div>
       )}
@@ -1189,7 +1233,7 @@ export function FingeringGame() {
             )}
           >
             <div className="flex min-w-0 flex-col gap-[clamp(0.5rem,1.6dvh,1rem)]">
-              <ToniCoach
+              <GameStatus
                 mood={
                   flash === "correct"
                     ? "happy"
@@ -1201,9 +1245,11 @@ export function FingeringGame() {
                   flash === "correct"
                     ? praiseFor(streak)
                     : flash === "wrong"
-                      ? "Hoppla!"
+                      ? "Daneben"
                       : "Welcher Griff passt?"
                 }
+                question="Welcher Griff passt?"
+                hearts={mode === "quiz" ? hearts : undefined}
                 streak={streak}
                 progress={mode === "quiz" ? quizIndex / QUIZ_ROUND_LEN : null}
               />
@@ -1228,7 +1274,7 @@ export function FingeringGame() {
               <div
                 role="status"
                 aria-live="polite"
-                className="text-ink dark:text-night-text max-h-[22dvh] min-h-[clamp(2.75rem,7dvh,5rem)] shrink-0 overflow-y-auto px-1 py-2 text-sm leading-snug"
+                className="spiel-inline-feedback text-ink dark:text-night-text max-h-[22dvh] min-h-[clamp(2.75rem,7dvh,5rem)] shrink-0 overflow-y-auto px-1 py-2 text-sm leading-snug"
               >
                 {feedbackText && (
                   <span className="flex items-start gap-1.5">
@@ -1281,7 +1327,29 @@ export function FingeringGame() {
             </div>
           </div>
 
-          <GameDock>{actionButton}</GameDock>
+          <GameDock>
+            <div className="flex flex-col gap-2">
+              {flash !== "none" && (
+                <LessonFeedback
+                  tone={flash === "correct" ? "right" : "wrong"}
+                  title={
+                    flash === "correct"
+                      ? `${praiseFor(streak)}!`
+                      : "Leider falsch"
+                  }
+                  text={
+                    flash === "correct"
+                      ? null
+                      : learnLine?.replace(
+                          /^Falsch\s*[—–-]\s*richtig:/,
+                          "Richtig ist",
+                        )
+                  }
+                />
+              )}
+              {actionButton}
+            </div>
+          </GameDock>
         </div>
       )}
 

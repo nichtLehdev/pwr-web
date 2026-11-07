@@ -140,7 +140,7 @@ export function CalibrationView({
             <Button
               type="button"
               size="lg"
-              className="flex-1"
+              className="spiel-action flex-1"
               onClick={() => void start()}
             >
               {status === "idle" ? "Messung starten" : "Neu messen"}

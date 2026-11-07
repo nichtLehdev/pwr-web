@@ -1,13 +1,21 @@
-/** Kleine Kadenz: Figuren klingen wie Musik statt immer auf demselben Ton. */
+/** Kleine Kadenz: Figuren klingen wie Musik. Noten stehen auf dem Ton, der klingt. */
 const HARMONY = [
-  { melodyHz: 293.66, bassHz: 116.54 }, // B-Dur
-  { melodyHz: 311.13, bassHz: 155.56 }, // Es-Dur
-  { melodyHz: 261.63, bassHz: 174.61 }, // F-Dur
-  { melodyHz: 293.66, bassHz: 116.54 },
+  { melodyHz: 293.66, melodyKey: "d/4", bassHz: 116.54 }, // B-Dur
+  { melodyHz: 392.0, melodyKey: "g/4", bassHz: 155.56 }, // Es-Dur, Es bräuchte ein Vorzeichen
+  { melodyHz: 261.63, melodyKey: "c/4", bassHz: 174.61 }, // F-Dur
+  { melodyHz: 293.66, melodyKey: "d/4", bassHz: 116.54 },
 ] as const;
 
 export function harmonyAt(index: number): (typeof HARMONY)[number] {
   return HARMONY[index % HARMONY.length]!;
+}
+
+/** Am Anfang bleibt der Ton gleich: Wer Rhythmus lernt, soll nicht auch noch Tonhöhen deuten. */
+export function harmonyFor(place: {
+  index: number;
+  steadyPitch?: boolean;
+}): (typeof HARMONY)[number] {
+  return harmonyAt(place.steadyPitch ? 0 : place.index);
 }
 
 /** B-Dur aufwärts: Fanfare und richtige Antworten klingen in der Tonart des Spiels. */

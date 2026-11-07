@@ -77,7 +77,7 @@ export function endlessLevelAt(stage: number): Level {
 }
 
 /** Puste: geteilte Regel beider Spielarten. */
-class Lives {
+export class Lives {
   lives = MAX_LIVES;
   private cleanRun = 0;
 

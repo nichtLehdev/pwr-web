@@ -2,14 +2,7 @@
 
 import { useState } from "react";
 
-const COLORS = [
-  "#faa619",
-  "#3b82f6",
-  "#10b981",
-  "#ef4444",
-  "#8b5cf6",
-  "#ec4899",
-];
+const COLORS = ["#faa619", "#ffd27a", "#a55800"];
 
 /** Einmaliger Konfetti-Regen. Bei reduzierter Bewegung blendet ihn das CSS aus. */
 export function Confetti({ pieces = 60 }: { pieces?: number }) {
@@ -22,7 +15,7 @@ export function Confetti({ pieces = 60 }: { pieces?: number }) {
       color: COLORS[i % COLORS.length]!,
       size: 7 + Math.random() * 7,
       drift: (Math.random() - 0.5) * 120,
-      note: i % 5 === 0,
+      note: false,
     })),
   );
 
@@ -51,28 +44,4 @@ export function Confetti({ pieces = 60 }: { pieces?: number }) {
       ))}
     </div>
   );
-}
-
-/** Kleine Notenwolke an einer Stelle, wenn ein Treffer sitzt. */
-export function spawnBurst(
-  container: HTMLElement,
-  x: number,
-  y: number,
-  count: number,
-): void {
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  for (let i = 0; i < count; i++) {
-    const piece = document.createElement("span");
-    const angle = (Math.PI * 2 * i) / count + Math.random() * 0.6;
-    const distance = 26 + Math.random() * 26;
-    piece.className = "spiel-burst";
-    piece.textContent = i % 3 === 0 ? "★" : "♪";
-    piece.style.left = `${x}px`;
-    piece.style.top = `${y}px`;
-    piece.style.color = COLORS[i % COLORS.length]!;
-    piece.style.setProperty("--dx", `${Math.cos(angle) * distance}px`);
-    piece.style.setProperty("--dy", `${Math.sin(angle) * distance}px`);
-    piece.addEventListener("animationend", () => piece.remove());
-    container.appendChild(piece);
-  }
 }

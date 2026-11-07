@@ -51,11 +51,12 @@ import {
   STAFF_LAYOUT_EXPLICIT,
   type StaffAccidentalLayout,
 } from "../_lib/staff-accidental-layout";
-import { ArcadeButton } from "../../../_components/arcade-button";
 import {
-  GameHero,
-  ToniCoach,
+  GameHead,
+  GameStatus,
+  LessonFeedback,
   useGameSounds,
+  useLessonHearts,
 } from "../../../_components/game-kit";
 import { praiseFor } from "../../../_lib/rewards";
 import { GameBarSlot, GameDock } from "../../../_components/game-shell-context";
@@ -72,7 +73,8 @@ import {
 
 const NEXT_MS = 800;
 /** Quiz: kurze Fehleranzeige, der Timer treibt das Tempo. */
-const WRONG_MS = 1400;
+/** Die Erklärung steht im Band und muss sich in Ruhe lesen lassen. */
+const WRONG_MS = 3500;
 /** Endlos: mehr Zeit, die Erklärung zur falschen Antwort zu lesen. */
 const ENDLESS_WRONG_MS = 2600;
 /** Quiz: Sekunden pro Note — mehr Zeit für die Wechsel-Schlüssel-Stufen. */
@@ -90,6 +92,7 @@ const QUIZ_NOTE_SECONDS: Record<DifficultyId, number> = {
 /** Eigenes Set: fester Wert — Pools sind beliebig, 8 s tragen auch 12er-Raster. */
 const CUSTOM_QUIZ_NOTE_SECONDS = 8;
 const QUIZ_ROUND_LEN = 15;
+const HEARTS_EMPTY_DELAY_MS = 900;
 
 type Phase = "setup" | "play" | "result";
 
@@ -487,6 +490,15 @@ export function NoteReadingGame() {
     timersRef.current.push(id);
   }, []);
 
+  // Letztes Herz weg: Das Urteil noch kurz zeigen, dann endet die Lektion.
+  const {
+    hearts,
+    lose: loseHeart,
+    reset: resetHearts,
+  } = useLessonHearts(() =>
+    scheduleAfter(HEARTS_EMPTY_DELAY_MS, goToQuizResult),
+  );
+
   const advanceAfterAnswer = useCallback(
     (wasCorrect: boolean) => {
       if (mode === "learn") {
@@ -537,12 +549,15 @@ export function NoteReadingGame() {
     setStreak(0);
     streakRef.current = 0;
     recordMiss(missTrackerRef.current, pitchKey(p));
-    if (mode === "quiz") recordQuizMiss(p, clef);
+    if (mode === "quiz") {
+      recordQuizMiss(p, clef);
+      loseHeart.current();
+    }
     setLearnLine(
       `Zeit abgelaufen — richtig wäre: ${answerLabelForPitch(p)}. ${describeWrittenNote(p, clef)}`,
     );
     advanceAfterAnswer(false);
-  }, [answerLocked, clef, mode, recordQuizMiss, advanceAfterAnswer]);
+  }, [loseHeart, answerLocked, clef, mode, recordQuizMiss, advanceAfterAnswer]);
 
   useEffect(() => {
     if (
@@ -592,6 +607,7 @@ export function NoteReadingGame() {
   }, [phase, mode, pitch, answerLocked, handleTimeout]);
 
   const startGame = useCallback(() => {
+    resetHearts.current();
     clearTimers();
     setPhase("play");
     setStreak(0);
@@ -604,7 +620,7 @@ export function NoteReadingGame() {
     lastMidiRef.current = null;
     missedNotesRef.current = new Map();
     spawnNote();
-  }, [clearTimers, spawnNote]);
+  }, [resetHearts, clearTimers, spawnNote]);
 
   const handleAnswer = useCallback(
     (label: string) => {
@@ -643,14 +659,25 @@ export function NoteReadingGame() {
         streakRef.current = 0;
         setStreak(0);
         recordMiss(missTrackerRef.current, pitchKey(p));
-        if (mode === "quiz") recordQuizMiss(p, clef);
+        if (mode === "quiz") {
+          recordQuizMiss(p, clef);
+          loseHeart.current();
+        }
         setLearnLine(
           `Falsch — richtig: ${answerLabelForPitch(p)}. ${describeWrittenNote(p, clef)}`,
         );
         advanceAfterAnswer(false);
       }
     },
-    [phase, answerLocked, clef, mode, recordQuizMiss, advanceAfterAnswer],
+    [
+      loseHeart,
+      phase,
+      answerLocked,
+      clef,
+      mode,
+      recordQuizMiss,
+      advanceAfterAnswer,
+    ],
   );
 
   /** Lernen: expliziter „Weiter“-Schritt (Button, Enter oder Leertaste). */
@@ -763,12 +790,12 @@ export function NoteReadingGame() {
     mode === "learn" ? "Lernen" : mode === "quiz" ? "Quiz" : "Endlos";
 
   return (
-    <div className="spiel-runde mx-auto flex w-full max-w-5xl flex-col gap-[clamp(0.625rem,1.8dvh,1.5rem)]">
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-[clamp(0.625rem,1.8dvh,1.5rem)]">
       {phase === "setup" && (
         <div className="flex flex-col gap-[clamp(0.75rem,2.2dvh,1.75rem)]">
-          <GameHero
+          <GameHead
             title="Noten lesen"
-            text="Schau dir die Note an und finde schnell ihren Namen!"
+            text="Schau dir die Note an und finde schnell ihren Namen."
           />
 
           <InstrumentSelector
@@ -794,7 +821,14 @@ export function NoteReadingGame() {
       {/* Hauptaktion im Dock, sonst liegt sie auf kurzen Fenstern unter dem Setup. */}
       {phase === "setup" && !libraryOpen && (
         <GameDock>
-          <ArcadeButton onClick={startGame}>Los geht&apos;s!</ArcadeButton>
+          <Button
+            type="button"
+            size="lg"
+            className="spiel-action w-full"
+            onClick={startGame}
+          >
+            Los geht&apos;s
+          </Button>
         </GameDock>
       )}
 
@@ -852,7 +886,7 @@ export function NoteReadingGame() {
               <Button
                 type="button"
                 size="lg"
-                className="mt-4 w-full"
+                className="spiel-action mt-4 w-full"
                 onClick={() => {
                   setSetupOpen(false);
                   lastMidiRef.current = null;
@@ -880,7 +914,7 @@ export function NoteReadingGame() {
             />
           </GameBarSlot>
 
-          <ToniCoach
+          <GameStatus
             mood={
               flash === "correct"
                 ? "happy"
@@ -892,14 +926,33 @@ export function NoteReadingGame() {
               flash === "correct"
                 ? praiseFor(streak)
                 : flash === "wrong"
-                  ? "Hoppla!"
+                  ? "Daneben"
                   : "Wie heißt diese Note?"
             }
+            question="Wie heißt diese Note?"
+            hearts={mode === "quiz" ? hearts : undefined}
             streak={streak}
             progress={mode === "quiz" ? quizIndex / QUIZ_ROUND_LEN : null}
           />
+          {flash !== "none" && (
+            <LessonFeedback
+              overlay={mode !== "learn"}
+              tone={flash === "correct" ? "right" : "wrong"}
+              title={
+                flash === "correct" ? `${praiseFor(streak)}!` : "Leider falsch"
+              }
+              text={
+                flash === "correct"
+                  ? null
+                  : learnLine?.replace(
+                      /^Falsch\s*[—–-]\s*richtig:/,
+                      "Richtig ist",
+                    )
+              }
+            />
+          )}
 
-          <div className="bg-paper dark:bg-night relative overflow-hidden rounded-2xl">
+          <div className="relative">
             <StaffDisplay
               clef={clef}
               pitch={pitch}
@@ -936,7 +989,7 @@ export function NoteReadingGame() {
           <p
             aria-live="polite"
             className={cn(
-              "min-h-[2.75rem] border px-3 py-2 text-sm leading-snug",
+              "spiel-inline-feedback min-h-[2.75rem] border px-3 py-2 text-sm leading-snug",
               learnLine
                 ? "text-ink dark:text-night-text border-rule dark:border-night-rule dark:bg-night-raised bg-rule/25"
                 : "border-transparent",
@@ -968,23 +1021,32 @@ export function NoteReadingGame() {
        * Erscheinen nicht springt. */}
       {phase === "play" && pitch && mode === "learn" && !libraryOpen && (
         <GameDock>
-          <ArcadeButton onClick={handleLearnNext} disabled={!awaitingNext}>
+          <Button
+            type="button"
+            size="lg"
+            className="spiel-action w-full"
+            onClick={handleLearnNext}
+            disabled={!awaitingNext}
+          >
             Weiter
-          </ArcadeButton>
+          </Button>
         </GameDock>
       )}
 
       {phase === "result" && roundResult && !libraryOpen && (
         <GameDock>
           <div className="flex flex-col gap-2">
-            <ArcadeButton
+            <Button
+              type="button"
+              size="lg"
+              className="spiel-action w-full"
               onClick={() => {
                 setRoundResult(null);
                 startGame();
               }}
             >
               Nochmal spielen
-            </ArcadeButton>
+            </Button>
             <Button type="button" variant="outline" onClick={openSetup}>
               Schwierigkeit und Modus
             </Button>

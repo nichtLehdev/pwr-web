@@ -1,6 +1,7 @@
 import { levelById, LEVELS, type Level } from "../../../_lib/rhythm/levels";
 import type { InputMode } from "./conductor";
 import { ENDLESS_ID } from "./endless";
+import { parseChallengeId } from "./path";
 import type { Stars } from "./feedback";
 
 const PREFS_KEY = "pwr.spiele.v1.rhythmus.prefs";
@@ -22,6 +23,8 @@ export type LevelProgress = {
   bestPoints: number;
   /** Zuletzt erreichtes Tempo: Hier geht es beim nächsten Mal weiter. */
   bpm: number;
+  /** Nur Challenges: Einmal geschafft bleibt geschafft. */
+  passed?: boolean;
 };
 
 export type Progress = Record<string, LevelProgress>;
@@ -54,8 +57,9 @@ export function loadPrefs(): Prefs {
   const stored = read<Partial<Prefs>>(PREFS_KEY);
   return {
     levelId:
-      stored?.levelId === ENDLESS_ID
-        ? ENDLESS_ID
+      stored?.levelId === ENDLESS_ID ||
+      parseChallengeId(stored?.levelId) !== null
+        ? stored!.levelId!
         : (levelById(stored?.levelId)?.id ?? DEFAULT_PREFS.levelId),
     mode: stored?.mode === "band" ? "band" : "answer",
     input: stored?.input === "tap" ? "tap" : "hold",
@@ -79,7 +83,13 @@ export function saveProgress(progress: Progress): void {
 export function mergeProgress(
   progress: Progress,
   levelId: string,
-  result: { stars: Stars; percent: number; points: number; bpm: number },
+  result: {
+    stars: Stars;
+    percent: number;
+    points: number;
+    bpm: number;
+    passed?: boolean;
+  },
 ): Progress {
   const previous = progress[levelId];
   return {
@@ -89,13 +99,9 @@ export function mergeProgress(
       bestPercent: Math.max(previous?.bestPercent ?? 0, result.percent),
       bestPoints: Math.max(previous?.bestPoints ?? 0, result.points),
       bpm: result.bpm,
+      ...((previous?.passed || result.passed) && { passed: true }),
     },
   };
-}
-
-export function nextLevel(level: Level): Level | null {
-  const index = LEVELS.findIndex((l) => l.id === level.id);
-  return LEVELS[index + 1] ?? null;
 }
 
 export function startBpm(level: Level, progress: Progress): number {

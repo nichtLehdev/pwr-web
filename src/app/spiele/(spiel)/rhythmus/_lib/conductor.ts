@@ -1,5 +1,5 @@
 import {
-  harmonyAt,
+  harmonyFor,
   type AudioPort,
   type HeldTone,
 } from "../../../_lib/rhythm/audio";
@@ -44,6 +44,7 @@ export type Attempt = {
   segmentId: number;
   kind: "answer" | "read";
   index: number;
+  steadyPitch?: boolean;
   bpm: number;
   timeSignature: TimeSignature;
   bars: SegmentSpec["bars"];
@@ -252,7 +253,7 @@ export class Conductor {
     const { pulseTicks, pulsesPerBar } = pulseOf(segment.timeSignature);
     const pulseSec = pulseTicks * tickSec;
     const pulses = Math.round((segment.endSec - segment.startSec) / pulseSec);
-    const harmony = harmonyAt(segment.index);
+    const harmony = harmonyFor(segment);
 
     for (let k = 0; k < pulses; k++) {
       const accent = k % pulsesPerBar === 0;
@@ -307,7 +308,7 @@ export class Conductor {
   press(wallMs: number): void {
     if (!this.running) return;
     const songMs = (this.audio.wallToAudio(wallMs) - this.latency) * 1000;
-    const hz = harmonyAt(this.activeSegment?.index ?? 0).melodyHz;
+    const hz = harmonyFor(this.activeSegment ?? { index: 0 }).melodyHz;
     if (this.options.input === "hold") {
       this.held?.stop();
       this.held = this.audio.startHeld(hz);
@@ -372,6 +373,7 @@ export class Conductor {
           segmentId: segment.id,
           kind: segment.kind,
           index: segment.index,
+          steadyPitch: segment.steadyPitch,
           bpm: segment.bpm,
           timeSignature: segment.timeSignature,
           bars: segment.bars,

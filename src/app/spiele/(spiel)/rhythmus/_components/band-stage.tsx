@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useTheme } from "@/app/_components/general/theme-provider";
+import { harmonyFor } from "../../../_lib/rhythm/audio";
 import {
   BAR_LEAD,
   drawBar,
@@ -19,11 +20,12 @@ import {
 import type { TimeSignature } from "../../../_lib/rhythm/types";
 import type { Conductor, Press, Segment } from "../_lib/conductor";
 import type { BandSource } from "../_lib/session-script";
-import { spawnBurst } from "../../../_components/confetti";
+import { spawnBurst } from "../../../_components/note-burst";
 import {
   ANNOUNCEMENT,
   ballHop,
   CountOverlay,
+  HoppingHead,
   StageHud,
   useCountIn,
 } from "./stage-parts";
@@ -83,6 +85,8 @@ export function BandStage({
       track.appendChild(host);
       const handle = drawBar(host, {
         events,
+        noteKey: harmonyFor({ index, steadyPitch: source.steadyPitch })
+          .melodyKey,
         timeSignature,
         showPrefix: index === 0,
         dark,
@@ -155,7 +159,7 @@ export function BandStage({
             box,
             box.clientWidth * READ_LINE,
             box.clientHeight * 0.55,
-            note.verdict === "exact" ? 7 : 3,
+            note.verdict === "exact" ? 4 : 2,
           );
         }
       },
@@ -181,15 +185,15 @@ export function BandStage({
   }, [conductor, source, timeSignature, dark]);
 
   return (
-    <div className="spiel-buehne flex flex-col gap-2 rounded-3xl p-3 sm:p-4">
+    <div className="spiel-stage flex flex-col gap-2">
       <StageHud
         conductor={conductor}
         baseText={
           !segment
-            ? "Mitzählen!"
+            ? "Mitzählen"
             : segment.announcement
               ? ANNOUNCEMENT[segment.announcement]
-              : "Lies und spiel!"
+              : "Lies und spiel"
         }
         baseMood={!segment ? "idle" : "play"}
         progressText={
@@ -206,7 +210,7 @@ export function BandStage({
       />
       <div
         ref={boxRef}
-        className="bg-paper dark:bg-night relative h-[clamp(7.5rem,22svh,12rem)] overflow-hidden rounded-2xl md:h-[clamp(11rem,34svh,20rem)]"
+        className="spiel-sheet relative h-[clamp(8rem,26svh,14rem)] overflow-hidden md:h-[clamp(12rem,38svh,22rem)]"
         aria-hidden
       >
         <div
@@ -214,13 +218,10 @@ export function BandStage({
           className="absolute inset-0 will-change-transform"
         />
         <div
-          className="bg-primary/70 pointer-events-none absolute top-0 bottom-0 z-10 w-1"
+          className="bg-primary-ink dark:bg-primary pointer-events-none absolute top-0 bottom-0 z-10 w-0.5"
           style={{ left: `${READ_LINE * 100}%` }}
         >
-          <div
-            ref={ballRef}
-            className="bg-primary border-ink absolute top-2 left-1/2 h-5 w-5 rounded-full border-2"
-          />
+          <HoppingHead headRef={ballRef} filled />
         </div>
         <CountOverlay number={countNumber} />
       </div>
