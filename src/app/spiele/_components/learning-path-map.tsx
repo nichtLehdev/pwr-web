@@ -7,7 +7,7 @@ import {
   type ReactNode,
   type Ref,
 } from "react";
-import { Check, Lock, Trophy } from "lucide-react";
+import { Check, Lock, Music, Sparkles, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StarMarks } from "./game-kit";
 import { Toni, type ToniMood } from "./toni";
@@ -27,6 +27,135 @@ const SWING_PX = 84;
 
 function nodeOffset(index: number): number {
   return SWING_PX * Math.sin(index * 0.85);
+}
+
+const NODE_CENTER_Y = (NODE_SIZE - 8) / 2;
+const BONUS_GAP_PX = 140;
+const BONUS_MAX_PX = 130;
+
+/** Weiche Kurve zwischen zwei Knoten, senkrecht hinein und hinaus. */
+function trail(
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+): string {
+  const bend = (to.y - from.y) / 2;
+  return `M${from.x} ${from.y}C${from.x} ${from.y + bend} ${to.x} ${to.y - bend} ${to.x} ${to.y}`;
+}
+
+type NodeShared = {
+  unlocked: boolean;
+  offPath: boolean;
+  selectedId: string;
+  selectedRef: Ref<HTMLButtonElement>;
+  toniRef: Ref<HTMLDivElement>;
+  toniMood: ToniMood;
+  fromId: string | null;
+  stage: CelebrationStage | null;
+  revealing: boolean;
+  celebration: (Celebration & { revealed: number }) | null;
+  shown: PathProgress;
+  onPick: (id: string) => void;
+};
+
+/** Ein Knoten des Pfads: Stufe oder Bonusstufe, mit Sternen und Toni daneben. */
+function StageNode<S extends PathStage>({
+  level,
+  label,
+  face,
+  caption,
+  row,
+  offset,
+  unlocked,
+  offPath,
+  selectedId,
+  selectedRef,
+  toniRef,
+  toniMood,
+  fromId,
+  stage,
+  revealing,
+  celebration,
+  shown,
+  onPick,
+}: NodeShared & {
+  level: S;
+  label: string;
+  face: ReactNode;
+  caption?: string;
+  row: number;
+  offset: number;
+}) {
+  const isCelebrated = level.id === fromId;
+  const earned =
+    isCelebrated && revealing && celebration
+      ? celebration.revealed
+      : (shown[level.id]?.stars ?? 0);
+  const active = !offPath && level.id === selectedId;
+  return (
+    <div
+      className="absolute flex flex-col items-center"
+      style={{
+        top: row * NODE_STEP_Y,
+        left: `calc(50% + ${offset}px - ${NODE_SIZE / 2}px)`,
+        width: NODE_SIZE,
+      }}
+    >
+      {active && (
+        <TravelingToni offset={offset} mood={toniMood} toniRef={toniRef} />
+      )}
+      <button
+        ref={active ? selectedRef : undefined}
+        type="button"
+        disabled={!unlocked}
+        aria-pressed={active}
+        aria-label={
+          unlocked
+            ? `${label}: ${level.title}. ${level.hint}. ${earned} von 3 Sternen.`
+            : `${label}: ${level.title}. Gesperrt.`
+        }
+        onClick={() => onPick(level.id)}
+        data-path-id={level.id}
+        data-celebrate={isCelebrated && stage === "done"}
+        data-state={
+          !unlocked
+            ? "locked"
+            : active
+              ? "active"
+              : earned > 0
+                ? "done"
+                : "open"
+        }
+        className={cn(
+          "spiel-node relative flex items-center justify-center text-2xl font-extrabold",
+          GAME_FOCUS_RING,
+        )}
+        style={{ width: NODE_SIZE, height: NODE_SIZE - 8 }}
+      >
+        {unlocked ? face : <Lock className="h-6 w-6" aria-hidden />}
+        {level.badge === "read" && unlocked && (
+          <span className="spiel-node-badge" aria-hidden>
+            <Music className="h-3.5 w-3.5" />
+          </span>
+        )}
+      </button>
+      {(earned > 0 || (isCelebrated && revealing)) && (
+        <div
+          className="spiel-node-stars mt-1.5"
+          data-big={isCelebrated && revealing}
+        >
+          <StarMarks stars={earned} className="h-3 w-3" />
+        </div>
+      )}
+      {caption && earned === 0 && !(isCelebrated && revealing) && (
+        <span
+          className="text-dark dark:text-night-muted mt-1 text-xs font-extrabold"
+          aria-hidden
+        >
+          {caption}
+        </span>
+      )}
+    </div>
+  );
 }
 
 function TravelingToni({
@@ -149,9 +278,46 @@ export function LearningPathMap<S extends PathStage>({
         const challenge = path.challengeId(section.index);
         const challengeActive = !offPath && selectedId === challenge;
         const firstNumber = path.stages.indexOf(section.stages[0]!) + 1;
-        const challengeOffset = nodeOffset(
-          firstNumber - 1 + section.stages.length,
+        const count = section.stages.length;
+        const bonus = section.bonus ?? [];
+        const challengeRow = count + bonus.length;
+        const challengeOffset = nodeOffset(firstNumber - 1 + count);
+        const lastOffset = nodeOffset(firstNumber - 2 + count);
+        // Bonusstufen liegen neben dem Weg, auf der Seite, die gerade frei ist.
+        const middle = (lastOffset + challengeOffset) / 2;
+        const bonusOffset = Math.max(
+          -BONUS_MAX_PX,
+          Math.min(
+            BONUS_MAX_PX,
+            middle > 0 ? middle - BONUS_GAP_PX : middle + BONUS_GAP_PX,
+          ),
         );
+        const points = [
+          ...section.stages.map((_, i) => ({
+            x: nodeOffset(firstNumber - 1 + i),
+            y: i * NODE_STEP_Y + NODE_CENTER_Y,
+            done: (shown[section.stages[i]!.id]?.stars ?? 0) > 0,
+          })),
+          {
+            x: challengeOffset,
+            y: challengeRow * NODE_STEP_Y + 38,
+            done: passed,
+          },
+        ];
+        const nodeProps = {
+          unlocked,
+          offPath,
+          selectedId,
+          selectedRef,
+          toniRef,
+          toniMood,
+          fromId,
+          stage,
+          revealing,
+          celebration,
+          shown,
+          onPick,
+        };
         return (
           <section
             key={section.title}
@@ -183,86 +349,72 @@ export function LearningPathMap<S extends PathStage>({
 
             <div
               className="relative mt-5"
-              style={{
-                height: (section.stages.length + 1) * NODE_STEP_Y + 24,
-              }}
+              style={{ height: (challengeRow + 1) * NODE_STEP_Y + 24 }}
             >
-              {section.stages.map((level, i) => {
-                const number = firstNumber + i;
-                const isCelebrated = level.id === fromId;
-                const earned =
-                  isCelebrated && revealing && celebration
-                    ? celebration.revealed
-                    : (shown[level.id]?.stars ?? 0);
-                const active = !offPath && level.id === selectedId;
-                const offset = nodeOffset(number - 1);
-                return (
-                  <div
-                    key={level.id}
-                    className="absolute flex flex-col items-center"
-                    style={{
-                      top: i * NODE_STEP_Y,
-                      left: `calc(50% + ${offset}px - ${NODE_SIZE / 2}px)`,
-                      width: NODE_SIZE,
-                    }}
-                  >
-                    {active && (
-                      <TravelingToni
-                        offset={offset}
-                        mood={toniMood}
-                        toniRef={toniRef}
-                      />
-                    )}
-                    <button
-                      ref={active ? selectedRef : undefined}
-                      type="button"
-                      disabled={!unlocked}
-                      aria-pressed={active}
-                      aria-label={
-                        unlocked
-                          ? `Stufe ${number}: ${level.title}. ${level.hint}. ${earned} von 3 Sternen.`
-                          : `Stufe ${number}: ${level.title}. Gesperrt.`
-                      }
-                      onClick={() => onPick(level.id)}
-                      data-path-id={level.id}
-                      data-celebrate={isCelebrated && stage === "done"}
-                      data-state={
-                        !unlocked
-                          ? "locked"
-                          : active
-                            ? "active"
-                            : earned > 0
-                              ? "done"
-                              : "open"
-                      }
-                      className={cn(
-                        "spiel-node flex items-center justify-center text-2xl font-extrabold",
-                        GAME_FOCUS_RING,
-                      )}
-                      style={{ width: NODE_SIZE, height: NODE_SIZE - 8 }}
-                    >
-                      {unlocked ? (
-                        number
-                      ) : (
-                        <Lock className="h-6 w-6" aria-hidden />
-                      )}
-                    </button>
-                    {(earned > 0 || (isCelebrated && revealing)) && (
-                      <div
-                        className="spiel-node-stars mt-1.5"
-                        data-big={isCelebrated && revealing}
-                      >
-                        <StarMarks stars={earned} className="h-3 w-3" />
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+              <svg
+                aria-hidden
+                className="pointer-events-none absolute top-0 overflow-visible"
+                style={{ left: "50%" }}
+                width={1}
+                height={(challengeRow + 1) * NODE_STEP_Y}
+              >
+                {points.slice(1).map((to, k) => {
+                  const from = points[k]!;
+                  return (
+                    <path
+                      key={k}
+                      className="spiel-trail"
+                      data-done={unlocked && from.done}
+                      data-locked={!unlocked}
+                      d={trail(from, to)}
+                    />
+                  );
+                })}
+                {bonus.map((b, k) => {
+                  const from = points[count - 1]!;
+                  return (
+                    <path
+                      key={b.id}
+                      className="spiel-trail"
+                      data-branch
+                      data-locked={!unlocked}
+                      d={trail(from, {
+                        x: bonusOffset,
+                        y: (count + k) * NODE_STEP_Y + NODE_CENTER_Y,
+                      })}
+                    />
+                  );
+                })}
+              </svg>
+
+              {section.stages.map((level, i) => (
+                <StageNode
+                  key={level.id}
+                  {...nodeProps}
+                  level={level}
+                  label={`Stufe ${firstNumber + i}`}
+                  face={firstNumber + i}
+                  row={i}
+                  offset={nodeOffset(firstNumber - 1 + i)}
+                />
+              ))}
+              {bonus.map((level, k) => (
+                <StageNode
+                  key={level.id}
+                  {...nodeProps}
+                  level={level}
+                  label="Bonus"
+                  face={<Sparkles className="h-6 w-6" aria-hidden />}
+                  caption="Bonus"
+                  row={count + k}
+                  offset={bonusOffset}
+                />
+              ))}
 
               <div
                 className="absolute flex flex-col items-center"
                 style={{
-                  top: section.stages.length * NODE_STEP_Y,
+                  top: challengeRow * NODE_STEP_Y,
                   left: `calc(50% + ${challengeOffset}px - 3rem)`,
                   width: "6rem",
                 }}

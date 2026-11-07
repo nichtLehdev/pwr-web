@@ -15,7 +15,6 @@ import { pickMeter } from "../../../_lib/rhythm/generator";
 import {
   hasSteadyPitch,
   LEVELS,
-  levelById,
   type Level,
 } from "../../../_lib/rhythm/levels";
 import type { TimeSignature } from "../../../_lib/rhythm/types";
@@ -59,14 +58,12 @@ import {
   challengeCelebration,
   challengeId,
   challengePassed,
-  bandChallenge,
-  bandDaily,
-  type BandRunScript,
   buildDailySteps,
   ChallengePlan,
   clampSelection,
   RHYTHM_PATH,
-  levelCelebration,
+  stageCelebration,
+  type RhythmStage,
   parseChallengeId,
   SECTIONS,
   type Celebration,
@@ -127,11 +124,9 @@ type Session = {
     invalid: string | null;
   } | null;
   /** `section: null` ist das Tagestraining. */
-  challenge: {
-    section: number | null;
-    plan: ChallengePlan | BandRunScript;
-  } | null;
-  /** Der Pfad, in den das Ergebnis zählt. */
+  challenge: { section: number | null; plan: ChallengePlan } | null;
+  /** Die gespielte Stufe des Pfads; ihre Kennung trägt Stern und Tempo. */
+  stage: RhythmStage | null;
   mode: PlayMode;
   startedAt: number;
 };
@@ -153,10 +148,7 @@ export function RhythmGame() {
   const { recordResult } = useGameStats("rhythmus");
   const [view, setView] = useState<View>("setup");
   const [prefs, setPrefs] = useState<Prefs>(DEFAULT_PREFS);
-  const [progressByMode, setProgressByMode] = useState<
-    Record<PlayMode, Progress>
-  >({ answer: {}, band: {} });
-  const progress = progressByMode[prefs.mode];
+  const [progress, setProgress] = useState<Progress>({});
   const [latencyMs, setLatencyMs] = useState<number | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -227,29 +219,25 @@ export function RhythmGame() {
   const sessionRef = useRef<Session | null>(null);
   const endlessRecordsRef = useRef(endlessRecords);
   const prefsRef = useRef(prefs);
-  const progressRef = useRef(progressByMode);
+  const progressRef = useRef(progress);
   useEffect(() => {
     prefsRef.current = prefs;
-    progressRef.current = progressByMode;
+    progressRef.current = progress;
     endlessRecordsRef.current = endlessRecords;
-  }, [prefs, progressByMode, endlessRecords]);
+  }, [prefs, progress, endlessRecords]);
 
   // localStorage erst nach dem Mount lesen (SSR-sicher).
   useEffect(() => {
-    const storedProgress = loadProgress("answer");
-    const storedBand = loadProgress("band");
+    const storedProgress = loadProgress();
     const storedPrefs = loadPrefs();
     setPrefs({
       ...storedPrefs,
       levelId:
         storedPrefs.levelId === ENDLESS_ID
           ? LEVELS[0]!.id
-          : clampSelection(
-              storedPrefs.levelId,
-              storedPrefs.mode === "band" ? storedBand : storedProgress,
-            ),
+          : clampSelection(storedPrefs.levelId, storedProgress),
     });
-    setProgressByMode({ answer: storedProgress, band: storedBand });
+    setProgress(storedProgress);
     setLatencyMs(loadLatencyMs());
     setEndlessRecords(loadEndlessRecords());
   }, []);
@@ -337,14 +325,13 @@ export function RhythmGame() {
       setEndlessResult(null);
       setChallengeResult(null);
       setCelebration(null);
-      const pathMode = active.mode;
-      const pathProgress = progressRef.current[pathMode];
+      const pathProgress = progressRef.current;
       const store = (merged: Progress) => {
-        setProgressByMode((all) => ({ ...all, [pathMode]: merged }));
-        saveProgress(merged, pathMode);
+        setProgress(merged);
+        saveProgress(merged);
       };
       if (active.challenge?.section === null) {
-        markDailyDone(pathMode === "band" ? "rhythmus-band" : "rhythmus");
+        markDailyDone("rhythmus");
       } else if (active.challenge) {
         const { plan } = active.challenge;
         const section = active.challenge.section;
@@ -374,21 +361,21 @@ export function RhythmGame() {
           isRecord: merged.isRecord,
         });
         isRecord = merged.isRecord;
-      } else if (awardsStars && active.level) {
+      } else if (awardsStars && active.stage) {
         const before = pathProgress;
-        const merged = mergeProgress(before, active.level.id, {
+        const merged = mergeProgress(before, active.stage.id, {
           stars: result.stars,
           percent: result.percent,
           points,
           bpm: result.bpm,
         });
-        const previousBest = before[active.level.id]?.bestPoints ?? 0;
+        const previousBest = before[active.stage.id]?.bestPoints ?? 0;
         isRecord = previousBest > 0 && points > previousBest;
         const newRank = rankFor(totalStars(merged)).title;
         if (newRank !== rankFor(totalStars(before)).title) rankUp = newRank;
         store(merged);
         setCelebration(
-          levelCelebration(active.level, before, merged, result.stars),
+          stageCelebration(active.stage, before, merged, result.stars),
         );
       }
       setReward({ points, isRecord, rankUp });
@@ -410,28 +397,21 @@ export function RhythmGame() {
       const latencySec = latencyMs === null ? null : latencyMs / 1000;
       const challengeSection = parseChallengeId(selectionId);
       const daily = selectionId === DAILY_ID;
-      const level =
+      const stage =
         selectionId === ENDLESS_ID || challengeSection !== null || daily
           ? null
-          : (levelById(selectionId) ?? LEVELS[0]!);
+          : (RHYTHM_PATH.stageById(selectionId) ?? RHYTHM_PATH.stages[0]!);
+      const level = stage?.level ?? null;
+      // Stufen bestimmen ihre Spielart selbst, Endlos folgt der Einstellung.
+      const playMode = stage?.mode ?? mode;
 
       let band: Session["band"] = null;
       let reached: Session["reached"] = null;
       let challenge: Session["challenge"] = null;
       let ranked: Session["ranked"] = null;
       let script: SessionScript;
-      const pathProgress = progressRef.current[mode];
-      if (daily && mode === "band") {
-        const run = bandDaily(pathProgress);
-        challenge = { section: null, plan: run };
-        band = { source: run, ts: run.ts };
-        script = run;
-      } else if (challengeSection !== null && mode === "band") {
-        const run = bandChallenge(challengeSection);
-        challenge = { section: challengeSection, plan: run };
-        band = { source: run, ts: run.ts };
-        script = run;
-      } else if (daily) {
+      const pathProgress = progressRef.current;
+      if (daily) {
         const plan = new ChallengePlan(buildDailySteps(pathProgress));
         challenge = { section: null, plan };
         script = new AnswerScript(plan, plan.total);
@@ -442,7 +422,7 @@ export function RhythmGame() {
         script = new AnswerScript(
           plan,
           plan.total,
-          hasSteadyPitch(SECTIONS[challengeSection]!.stages[0]!),
+          hasSteadyPitch(SECTIONS[challengeSection]!.stages[0]!.level),
         );
       } else if (level === null && rankedRun) {
         const variant: RhythmVariant = `${mode}:${input}`;
@@ -472,16 +452,16 @@ export function RhythmGame() {
           reached = () => plan.reached;
           script = new AnswerScript(plan, null);
         }
-      } else if (mode === "band") {
+      } else if (playMode === "band") {
         const ts = pickMeter(level);
-        const bpm = fixedBpm ?? startBpm(level, pathProgress);
+        const bpm = fixedBpm ?? startBpm(level, pathProgress, stage?.id);
         const bars = createBandBars(level, ts);
         const fixed = new BandScript(bars, ts, bpm, hasSteadyPitch(level));
         band = { source: fixed, ts };
         script = fixed;
       } else {
         const ts = pickMeter(level);
-        const bpm = fixedBpm ?? startBpm(level, pathProgress);
+        const bpm = fixedBpm ?? startBpm(level, pathProgress, stage?.id);
         const total = figuresForLevel(level);
         const plan = new AnswerPlan(level, ts, total, {
           start: bpm,
@@ -502,7 +482,8 @@ export function RhythmGame() {
         reached,
         challenge,
         ranked,
-        mode,
+        stage,
+        mode: playMode,
         startedAt: performance.now(),
       };
       if (ranked) {
@@ -527,23 +508,31 @@ export function RhythmGame() {
   );
 
   /** Mit Profil zählt Endlos für die Bestenliste, sonst läuft es nur auf dem Gerät. */
-  const startEndless = useCallback(async () => {
-    const profileId = activeProfileId();
-    const { mode, input } = prefsRef.current;
-    setRankedOutcome(null);
-    try {
-      if (!profileId) throw new Error("ohne Profil");
-      const run = await startRhythmRun.mutateAsync({
-        profileId,
-        variant: `${mode}:${input}`,
-      });
-      setUnranked(null);
-      await start(ENDLESS_ID, { ...run, profileId });
-    } catch {
-      setUnranked(unrankedReason(Boolean(profileId)));
-      await start(ENDLESS_ID);
-    }
-  }, [start, startRhythmRun]);
+  const startEndless = useCallback(
+    async (chosen?: PlayMode) => {
+      if (chosen && chosen !== prefsRef.current.mode) {
+        const next = { ...prefsRef.current, mode: chosen };
+        prefsRef.current = next;
+        changePrefs(next);
+      }
+      const profileId = activeProfileId();
+      const { mode, input } = prefsRef.current;
+      setRankedOutcome(null);
+      try {
+        if (!profileId) throw new Error("ohne Profil");
+        const run = await startRhythmRun.mutateAsync({
+          profileId,
+          variant: `${mode}:${input}`,
+        });
+        setUnranked(null);
+        await start(ENDLESS_ID, { ...run, profileId });
+      } catch {
+        setUnranked(unrankedReason(Boolean(profileId)));
+        await start(ENDLESS_ID);
+      }
+    },
+    [changePrefs, start, startRhythmRun],
+  );
 
   const abort = useCallback((message: string | null) => {
     const timer = sessionRef.current?.ranked?.timer;
@@ -589,7 +578,6 @@ export function RhythmGame() {
         <SetupView
           prefs={prefs}
           progress={progress}
-          progressByMode={progressByMode}
           endlessRecords={endlessRecords}
           notice={notice}
           celebration={celebration}
@@ -597,7 +585,7 @@ export function RhythmGame() {
           onChange={changePrefs}
           onStart={() => void start(prefs.levelId)}
           onStartDaily={() => void start(DAILY_ID)}
-          onStartEndless={() => void startEndless()}
+          onStartEndless={(mode) => void startEndless(mode)}
           onOpenBoard={() => setView("board")}
           onCalibrate={() => setView("calibrate")}
         />

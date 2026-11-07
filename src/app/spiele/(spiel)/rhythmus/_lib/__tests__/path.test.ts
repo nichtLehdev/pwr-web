@@ -11,8 +11,8 @@ import {
   ChallengePlan,
   clampSelection,
   isSectionUnlocked,
-  levelCelebration,
-  nextAfterLevel,
+  nextAfterStage,
+  stageCelebration,
   parseChallengeId,
   SECTIONS,
 } from "../path";
@@ -62,8 +62,8 @@ describe("section locks", () => {
 
   it("leads from the last lesson of a section to its challenge", () => {
     const section = SECTIONS[0]!;
-    expect(nextAfterLevel(section.stages[0]!)).toBe(section.stages[1]!.id);
-    expect(nextAfterLevel(section.stages.at(-1)!)).toBe(challengeId(0));
+    expect(nextAfterStage(section.stages[0]!)).toBe(section.stages[1]!.id);
+    expect(nextAfterStage(section.stages.at(-1)!)).toBe(challengeId(0));
   });
 });
 
@@ -73,18 +73,20 @@ describe.each(SECTIONS.map((s) => [s.title, s] as const))(
     const steps = buildChallengeSteps(section.index);
 
     it("covers every level of the section", () => {
-      for (const level of section.stages) {
+      for (const { level } of section.stages) {
         expect(steps.some((step) => step.level === level)).toBe(true);
       }
     });
 
     it("reflects earlier sections and nothing from later ones", () => {
-      const allowed = SECTIONS.slice(0, section.index + 1).flatMap(
-        (s) => s.stages,
+      const allowed = SECTIONS.slice(0, section.index + 1).flatMap((s) =>
+        s.stages.map((stage) => stage.level),
       );
       for (const step of steps) expect(allowed).toContain(step.level);
       for (const earlier of SECTIONS.slice(0, section.index)) {
-        expect(steps.some((s) => earlier.stages.includes(s.level))).toBe(true);
+        expect(
+          steps.some((s) => earlier.stages.some((st) => st.level === s.level)),
+        ).toBe(true);
       }
       expect(steps.length).toBeLessThanOrEqual(12);
       expect(steps.length).toBeGreaterThanOrEqual(8);
@@ -215,33 +217,33 @@ describe("celebration on the path", () => {
   });
 
   it("stays out of the way after a run without stars", () => {
-    expect(levelCelebration(level, {}, {}, 0)).toBeNull();
+    expect(stageCelebration(level, {}, {}, 0)).toBeNull();
     expect(challengeCelebration(0, {}, false)).toBeNull();
   });
 
   it("walks to the next stage from two stars on", () => {
-    expect(levelCelebration(level, {}, earned(level.id, 2), 2)?.toId).toBe(
+    expect(stageCelebration(level, {}, earned(level.id, 2), 2)?.toId).toBe(
       section.stages[1]!.id,
     );
     expect(
-      levelCelebration(level, {}, earned(level.id, 1), 1)?.toId,
+      stageCelebration(level, {}, earned(level.id, 1), 1)?.toId,
     ).toBeNull();
-    expect(levelCelebration(last, {}, earned(last.id, 3), 3)?.toId).toBe(
+    expect(stageCelebration(last, {}, earned(last.id, 3), 3)?.toId).toBe(
       challengeId(0),
     );
   });
 
   it("reveals the best stars one by one", () => {
-    const best = levelCelebration(level, {}, earned(level.id, 3), 1)!;
+    const best = stageCelebration(level, {}, earned(level.id, 3), 1)!;
     expect(best.stars).toBe(3);
     const steps = celebrationSteps(best).filter((s) => s.stage === "stars");
     expect(steps.map((s) => s.revealed)).toEqual([1, 2, 3]);
   });
 
   it("only ends in a walk when there is somewhere to go", () => {
-    const stay = levelCelebration(level, {}, earned(level.id, 1), 1)!;
+    const stay = stageCelebration(level, {}, earned(level.id, 1), 1)!;
     expect(celebrationSteps(stay).at(-1)?.stage).toBe("stars");
-    const go = levelCelebration(level, {}, earned(level.id, 2), 2)!;
+    const go = stageCelebration(level, {}, earned(level.id, 2), 2)!;
     expect(celebrationSteps(go).at(-1)?.stage).toBe("walk");
   });
 

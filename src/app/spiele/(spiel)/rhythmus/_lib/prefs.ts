@@ -1,15 +1,12 @@
 import { notifyProgressChanged, scopedKey } from "../../../_lib/profiles/scope";
-import { levelById, LEVELS, type Level } from "../../../_lib/rhythm/levels";
+import { LEVELS, type Level } from "../../../_lib/rhythm/levels";
 import type { InputMode } from "./conductor";
 import { ENDLESS_ID } from "./endless";
-import { parseChallengeId } from "./path";
+import { parseChallengeId, RHYTHM_PATH } from "./path";
 import type { Stars } from "./feedback";
 
 const PREFS_KEY = "pwr.spiele.v1.rhythmus.prefs";
 const PROGRESS_KEY = "pwr.spiele.v1.rhythmus.progress";
-/** Notenband hat seinen eigenen Pfad: Lesen ist eine andere Fähigkeit als Nachspielen. */
-const BAND_PROGRESS_KEY = "pwr.spiele.v1.rhythmus.band.progress";
-const BAND_COPIED_KEY = "pwr.spiele.v1.rhythmus.band.copied";
 
 export type PlayMode = "answer" | "band";
 
@@ -52,8 +49,7 @@ function read<T>(key: string): T | null {
 function write(key: string, value: unknown): void {
   try {
     localStorage.setItem(scopedKey(key), JSON.stringify(value));
-    if (key === PROGRESS_KEY || key === BAND_PROGRESS_KEY)
-      notifyProgressChanged();
+    if (key === PROGRESS_KEY) notifyProgressChanged();
   } catch {
     /* Privatmodus: Es bleibt bei dieser Sitzung. */
   }
@@ -66,7 +62,7 @@ export function loadPrefs(): Prefs {
       stored?.levelId === ENDLESS_ID ||
       parseChallengeId(stored?.levelId) !== null
         ? stored!.levelId!
-        : (levelById(stored?.levelId)?.id ?? DEFAULT_PREFS.levelId),
+        : (RHYTHM_PATH.stageById(stored?.levelId)?.id ?? DEFAULT_PREFS.levelId),
     mode: stored?.mode === "band" ? "band" : "answer",
     input: stored?.input === "tap" ? "tap" : "hold",
     fixedBpm: typeof stored?.fixedBpm === "number" ? stored.fixedBpm : null,
@@ -77,23 +73,12 @@ export function savePrefs(prefs: Prefs): void {
   write(PREFS_KEY, prefs);
 }
 
-export function loadProgress(mode: PlayMode = "answer"): Progress {
-  if (mode === "answer") return read<Progress>(PROGRESS_KEY) ?? {};
-  const band = read<Progress>(BAND_PROGRESS_KEY);
-  if (band) return band;
-  // Einmalig: Wer vor der Trennung gespielt hat, behält in beiden Pfaden, was offen war.
-  if (read<boolean>(BAND_COPIED_KEY)) return {};
-  const copied = read<Progress>(PROGRESS_KEY) ?? {};
-  write(BAND_PROGRESS_KEY, copied);
-  write(BAND_COPIED_KEY, true);
-  return copied;
+export function loadProgress(): Progress {
+  return read<Progress>(PROGRESS_KEY) ?? {};
 }
 
-export function saveProgress(
-  progress: Progress,
-  mode: PlayMode = "answer",
-): void {
-  write(mode === "band" ? BAND_PROGRESS_KEY : PROGRESS_KEY, progress);
+export function saveProgress(progress: Progress): void {
+  write(PROGRESS_KEY, progress);
 }
 
 /** Bestwerte bleiben, das Tempo folgt dem letzten Spiel. */
@@ -121,8 +106,12 @@ export function mergeProgress(
   };
 }
 
-export function startBpm(level: Level, progress: Progress): number {
-  const stored = progress[level.id]?.bpm;
+export function startBpm(
+  level: Level,
+  progress: Progress,
+  stageId: string = level.id,
+): number {
+  const stored = progress[stageId]?.bpm;
   if (typeof stored !== "number") return level.bpm.start;
   return Math.min(level.bpm.max, Math.max(level.bpm.min, stored));
 }

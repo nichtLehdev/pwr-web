@@ -5,13 +5,21 @@ import { starsFor, type Stars } from "./rewards";
  * einer Challenge über alles bisher Gelernte.
  */
 
-export type PathStage = { id: string; title: string; hint: string };
+export type PathStage = {
+  id: string;
+  title: string;
+  hint: string;
+  /** Kleines Zeichen am Knoten, etwa für Stufen im Notenband. */
+  badge?: "read";
+};
 
 export type PathSection<S extends PathStage = PathStage> = {
   index: number;
   title: string;
   hint?: string;
   stages: readonly S[];
+  /** Freiwillige Stufen neben dem Weg: zählen nicht für die Challenge. */
+  bonus?: readonly S[];
 };
 
 export type PathEntry = { stars: number; passed?: boolean };
@@ -40,13 +48,22 @@ export type LearningPath<S extends PathStage = PathStage> = ReturnType<
 >;
 
 export function createLearningPath<S extends PathStage>(
-  groups: readonly { title: string; hint?: string; stages: readonly S[] }[],
+  groups: readonly {
+    title: string;
+    hint?: string;
+    stages: readonly S[];
+    bonus?: readonly S[];
+  }[],
 ) {
   const sections: readonly PathSection<S>[] = groups.map((group, index) => ({
     ...group,
     index,
   }));
   const stages = sections.flatMap((section) => section.stages);
+  const allStages = sections.flatMap((section) => [
+    ...section.stages,
+    ...(section.bonus ?? []),
+  ]);
 
   const challengeId = (sectionIndex: number) =>
     `${CHALLENGE_PREFIX}${sectionIndex}`;
@@ -58,10 +75,16 @@ export function createLearningPath<S extends PathStage>(
   };
 
   const stageById = (id: string | null | undefined): S | undefined =>
-    stages.find((stage) => stage.id === id);
+    allStages.find((stage) => stage.id === id);
 
   const sectionOfStage = (stage: S): PathSection<S> =>
-    sections.find((section) => section.stages.includes(stage))!;
+    sections.find(
+      (section) =>
+        section.stages.includes(stage) || section.bonus?.includes(stage),
+    )!;
+
+  const isBonus = (stage: S): boolean =>
+    sections.some((section) => section.bonus?.includes(stage));
 
   const isChallengePassed = (sectionIndex: number, progress: PathProgress) =>
     progress[challengeId(sectionIndex)]?.passed === true;
@@ -107,7 +130,11 @@ export function createLearningPath<S extends PathStage>(
     const stars = after[stage.id]?.stars ?? attemptStars;
     return {
       fromId: stage.id,
-      toId: stars >= STARS_TO_MOVE_ON ? nextAfterStage(stage) : null,
+      // Nach einer Bonusstufe bleibt Toni, der Weg geht anderswo weiter.
+      toId:
+        stars >= STARS_TO_MOVE_ON && !isBonus(stage)
+          ? nextAfterStage(stage)
+          : null,
       stars,
       before,
       unlockedSection: null,
@@ -163,6 +190,8 @@ export function createLearningPath<S extends PathStage>(
   return {
     sections,
     stages,
+    allStages,
+    isBonus,
     challengeId,
     parseChallengeId,
     stageById,

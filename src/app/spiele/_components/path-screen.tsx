@@ -255,44 +255,42 @@ export type ModeButtonSpec = {
   onClick: () => void;
 };
 
-/** Die Spielarten neben dem Pfad als kleine Knöpfe, damit der Pfad die Hauptsache bleibt. */
+/** Die Spielarten als runde Knöpfe in Stufengröße über dem Pfad; Gesperrtes trägt ein Schloss. */
 export function ModeButtons({ buttons }: { buttons: ModeButtonSpec[] }) {
   return (
-    <div
-      className={cn(
-        "grid gap-2",
-        buttons.length >= 3
-          ? "grid-cols-3"
-          : buttons.length === 2
-            ? "grid-cols-2"
-            : "grid-cols-1",
-      )}
-    >
+    <div className="flex justify-center gap-6">
       {buttons.map(
         ({ key, label, icon: Icon, status, locked, highlight, onClick }) => (
-          <button
+          <div
             key={key}
-            type="button"
-            disabled={Boolean(locked)}
-            onClick={onClick}
-            aria-label={`${label}: ${locked ?? status}`}
-            className={cn(
-              "spiel-tile flex min-h-11 flex-col items-center gap-1 px-2 py-3 text-center disabled:cursor-not-allowed",
-              GAME_FOCUS_RING,
-              highlight && !locked && "on-orange bg-primary text-ink",
-              locked && "opacity-60",
-            )}
+            className="flex w-[72px] flex-col items-center gap-1.5"
           >
-            {locked ? (
-              <Lock className="h-6 w-6" aria-hidden />
-            ) : (
-              <Icon className="h-6 w-6 stroke-[2.25]" aria-hidden />
-            )}
-            <span className="text-sm leading-tight font-extrabold">
+            <button
+              type="button"
+              disabled={Boolean(locked)}
+              onClick={onClick}
+              aria-label={`${label}: ${locked ?? status}`}
+              title={locked ?? status}
+              data-state={locked ? "locked" : highlight ? "active" : "done"}
+              className={cn(
+                "spiel-node spiel-mode flex items-center justify-center",
+                GAME_FOCUS_RING,
+              )}
+              style={{ width: 64, height: 58 }}
+            >
+              {locked ? (
+                <Lock className="h-6 w-6" aria-hidden />
+              ) : (
+                <Icon className="h-7 w-7 stroke-[2.25]" aria-hidden />
+              )}
+            </button>
+            <span
+              className="text-ink dark:text-night-text text-xs font-extrabold"
+              aria-hidden
+            >
               {label}
             </span>
-            <span className="text-xs leading-tight">{locked ?? status}</span>
-          </button>
+          </div>
         ),
       )}
     </div>

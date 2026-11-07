@@ -32,7 +32,6 @@ export function isProgressSuffix(suffix: string): boolean {
   return (
     suffix.endsWith(".path") ||
     suffix === "rhythmus.progress" ||
-    suffix === "rhythmus.band.progress" ||
     suffix === "rhythmus.endless"
   );
 }

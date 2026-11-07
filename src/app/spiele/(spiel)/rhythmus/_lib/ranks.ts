@@ -1,4 +1,4 @@
-import { LEVELS } from "../../../_lib/rhythm/levels";
+import { RHYTHM_PATH } from "./path";
 import type { Progress } from "./prefs";
 
 const RANKS = [
@@ -10,10 +10,13 @@ const RANKS = [
   { from: 45, title: "Chorleitung" },
 ] as const;
 
-export const MAX_STARS = LEVELS.length * 3;
+export const MAX_STARS = RHYTHM_PATH.allStages.length * 3;
 
 export function totalStars(progress: Progress): number {
-  return LEVELS.reduce((sum, l) => sum + (progress[l.id]?.stars ?? 0), 0);
+  return RHYTHM_PATH.allStages.reduce(
+    (sum, stage) => sum + (progress[stage.id]?.stars ?? 0),
+    0,
+  );
 }
 
 export function rankFor(stars: number): {
