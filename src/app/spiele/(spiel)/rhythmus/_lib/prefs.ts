@@ -1,5 +1,9 @@
 import { notifyProgressChanged, scopedKey } from "../../../_lib/profiles/scope";
-import { LEVELS, type Level } from "../../../_lib/rhythm/levels";
+import {
+  LEVELS,
+  type Level,
+  hasSteadyTempo,
+} from "../../../_lib/rhythm/levels";
 import type { InputMode } from "./conductor";
 import { ENDLESS_ID } from "./endless";
 import { parseChallengeId, RHYTHM_PATH } from "./path";
@@ -112,6 +116,8 @@ export function startBpm(
   stageId: string = level.id,
 ): number {
   const stored = progress[stageId]?.bpm;
-  if (typeof stored !== "number") return level.bpm.start;
+  if (typeof stored !== "number" || hasSteadyTempo(level)) {
+    return level.bpm.start;
+  }
   return Math.min(level.bpm.max, Math.max(level.bpm.min, stored));
 }

@@ -11,7 +11,8 @@ import type {
   TimeSignature,
 } from "../../../_lib/rhythm/types";
 
-export type SegmentKind = "count" | "call" | "answer" | "read";
+/** `ready`: ein leerer Takt zwischen Vorspielen und Nachspielen, nur für Einsteiger. */
+export type SegmentKind = "count" | "call" | "ready" | "answer" | "read";
 export type Announcement =
   "again" | "faster" | "slower" | "fresh" | "lost" | "gained" | "longer" | null;
 
@@ -62,7 +63,7 @@ const TEMPO_STEP = 4;
 const RECENT_FIGURES = 3;
 
 export function figuresForLevel(level: Level): number {
-  return level.bars === 2 ? 6 : 10;
+  return level.figures ?? (level.bars === 2 ? 6 : 10);
 }
 
 export const BAND_BARS = 16;
@@ -88,7 +89,8 @@ export class AnswerPlan implements AnswerRules {
     private readonly level: Level,
     private readonly ts: TimeSignature,
     private readonly total: number,
-    private readonly tempo: { start: number; fixed: boolean },
+    /** `steady`: nie schneller, langsamer aber schon, wenn es hakt. */
+    private readonly tempo: { start: number; fixed: boolean; steady?: boolean },
     private readonly rng: Rng = Math.random,
   ) {
     this.bpm = tempo.start;
@@ -120,7 +122,7 @@ export class AnswerPlan implements AnswerRules {
     if (passed) {
       this.failRun = 0;
       this.cleanRun = accuracy >= SOLID_ACCURACY ? this.cleanRun + 1 : 0;
-      if (this.cleanRun >= 2 && !this.tempo.fixed) {
+      if (this.cleanRun >= 2 && !this.tempo.fixed && !this.tempo.steady) {
         this.cleanRun = 0;
         if (this.bpm < this.level.bpm.max) {
           this.bpm = Math.min(this.level.bpm.max, this.bpm + TEMPO_STEP);
@@ -165,12 +167,14 @@ export class AnswerPlan implements AnswerRules {
 /** Antworten: Einzählen, dann immer Vorspielen und Nachspielen. */
 export class AnswerScript implements SessionScript {
   private step: AnswerStep | null = null;
-  private stage: "count" | "call" | "answer" | "decide" = "count";
+  private stage: "count" | "call" | "ready" | "answer" | "decide" = "count";
 
   constructor(
     private readonly plan: AnswerRules,
     private readonly total: number | null,
     private readonly steadyPitch = false,
+    /** Einen Takt zum Einzählen zwischen Vorspielen und Nachspielen. */
+    private readonly gap = false,
   ) {}
 
   next(lastAccuracy: number | null): SegmentSpec | null {
@@ -180,8 +184,12 @@ export class AnswerScript implements SessionScript {
       return this.spec("count", this.step, [emptyBar()]);
     }
     if (this.stage === "call") {
-      this.stage = "answer";
+      this.stage = this.gap ? "ready" : "answer";
       return this.spec("call", this.step!, this.step!.figure.bars);
+    }
+    if (this.stage === "ready") {
+      this.stage = "answer";
+      return this.spec("ready", this.step!, [emptyBar()]);
     }
     if (this.stage === "answer") {
       this.stage = "decide";
@@ -200,7 +208,7 @@ export class AnswerScript implements SessionScript {
       this.stage = "call";
       return this.spec("count", step, [emptyBar()]);
     }
-    this.stage = "answer";
+    this.stage = this.gap ? "ready" : "answer";
     return this.spec("call", step, step.figure.bars);
   }
 

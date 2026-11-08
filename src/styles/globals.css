@@ -1038,19 +1038,6 @@ input[type="datetime-local"]::-webkit-date-and-time-value {
     border-color: var(--color-primary-ink);
   }
 }
-.spiel-tut-fill {
-  animation: spiel-tut-fill 2.6s infinite;
-}
-@keyframes spiel-tut-fill {
-  0%,
-  10% {
-    width: 0;
-  }
-  75%,
-  100% {
-    width: 100%;
-  }
-}
 .spiel-tut-fill-70 {
   animation: spiel-tut-fill-70 3s infinite;
 }
@@ -1061,24 +1048,6 @@ input[type="datetime-local"]::-webkit-date-and-time-value {
   60%,
   100% {
     width: 74%;
-  }
-}
-.spiel-tut-press {
-  box-shadow: 0 6px 0 var(--color-primary-ink);
-  animation: spiel-tut-press 2.6s infinite;
-}
-@keyframes spiel-tut-press {
-  0%,
-  8%,
-  80%,
-  100% {
-    transform: none;
-    box-shadow: 0 6px 0 var(--color-primary-ink);
-  }
-  12%,
-  75% {
-    transform: translateY(5px);
-    box-shadow: 0 1px 0 var(--color-primary-ink);
   }
 }
 .spiel-tut-scroll {
@@ -1180,5 +1149,17 @@ input[type="datetime-local"]::-webkit-date-and-time-value {
   .spiel-tut-backdrop,
   [class*="spiel-tut-"] {
     animation: none !important;
+  }
+}
+.spiel-tut-playhead {
+  left: 0;
+  animation: spiel-tut-playhead 3.6s linear infinite;
+}
+@keyframes spiel-tut-playhead {
+  from {
+    left: 0;
+  }
+  to {
+    left: calc(100% - 4px);
   }
 }

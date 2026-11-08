@@ -14,6 +14,7 @@ import {
   ballHop,
   CountOverlay,
   HoppingHead,
+  ReadyBadge,
   StageHud,
   useCountIn,
 } from "./stage-parts";
@@ -23,6 +24,7 @@ export function AnswerStage({ conductor }: { conductor: Conductor }) {
   const [segment, setSegment] = useState<Segment | null>(null);
   const [figure, setFigure] = useState<Segment | null>(null);
   const countNumber = useCountIn(conductor);
+  const readyNumber = useCountIn(conductor, "ready");
   const handlesRef = useRef<BarHandle[]>([]);
   const hostsRef = useRef<HTMLElement[]>([]);
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -38,7 +40,9 @@ export function AnswerStage({ conductor }: { conductor: Conductor }) {
     const hide = () => {
       cursor.style.opacity = "0";
     };
-    if (!active || active.kind === "count") return hide();
+    if (!active || active.kind === "count" || active.kind === "ready") {
+      return hide();
+    }
     const ticksPerBar = barTicks(active.timeSignature);
     const elapsed = (songSec - active.startSec) / secPerTick(active.bpm);
     const barIndex = Math.floor(elapsed / ticksPerBar);
@@ -68,7 +72,8 @@ export function AnswerStage({ conductor }: { conductor: Conductor }) {
         onSegment: (next) => {
           current.current = next;
           setSegment(next);
-          if (next.kind !== "count") setFigure(next);
+          // Beim Einzählen zur Antwort bleibt die Figur stehen, die gleich drankommt.
+          if (next.kind !== "count" && next.kind !== "ready") setFigure(next);
           // Bei einer Wiederholung bleibt das Bild stehen, nur die Farben gehen.
           if (next.kind === "answer") {
             for (const handle of handlesRef.current) handle.clear();
@@ -134,7 +139,9 @@ export function AnswerStage({ conductor }: { conductor: Conductor }) {
         : "Hör zu"
       : isAnswer
         ? "Jetzt du"
-        : "Mitzählen";
+        : segment?.kind === "ready"
+          ? "Gleich bist du dran"
+          : "Mitzählen";
   const figureIndex = segment?.index ?? 0;
   const total = segment?.total ?? null;
 
@@ -174,6 +181,12 @@ export function AnswerStage({ conductor }: { conductor: Conductor }) {
           <HoppingHead headRef={ballRef} filled={isAnswer} />
         </div>
         <CountOverlay number={countNumber} />
+        {segment?.kind === "ready" && (
+          <ReadyBadge
+            number={readyNumber}
+            pulses={pulseOf(segment.timeSignature).pulsesPerBar}
+          />
+        )}
         {figure && (
           <p className="sr-only">
             {describeFigure({
