@@ -1,7 +1,8 @@
-import { levelById, LEVELS, type Level } from "../../../_lib/rhythm/levels";
+import { notifyProgressChanged, scopedKey } from "../../../_lib/profiles/scope";
+import { LEVELS, type Level } from "../../../_lib/rhythm/levels";
 import type { InputMode } from "./conductor";
 import { ENDLESS_ID } from "./endless";
-import { parseChallengeId } from "./path";
+import { parseChallengeId, RHYTHM_PATH } from "./path";
 import type { Stars } from "./feedback";
 
 const PREFS_KEY = "pwr.spiele.v1.rhythmus.prefs";
@@ -38,7 +39,7 @@ export const DEFAULT_PREFS: Prefs = {
 
 function read<T>(key: string): T | null {
   try {
-    const raw = localStorage.getItem(key);
+    const raw = localStorage.getItem(scopedKey(key));
     return raw ? (JSON.parse(raw) as T) : null;
   } catch {
     return null;
@@ -47,7 +48,8 @@ function read<T>(key: string): T | null {
 
 function write(key: string, value: unknown): void {
   try {
-    localStorage.setItem(key, JSON.stringify(value));
+    localStorage.setItem(scopedKey(key), JSON.stringify(value));
+    if (key === PROGRESS_KEY) notifyProgressChanged();
   } catch {
     /* Privatmodus: Es bleibt bei dieser Sitzung. */
   }
@@ -60,7 +62,7 @@ export function loadPrefs(): Prefs {
       stored?.levelId === ENDLESS_ID ||
       parseChallengeId(stored?.levelId) !== null
         ? stored!.levelId!
-        : (levelById(stored?.levelId)?.id ?? DEFAULT_PREFS.levelId),
+        : (RHYTHM_PATH.stageById(stored?.levelId)?.id ?? DEFAULT_PREFS.levelId),
     mode: stored?.mode === "band" ? "band" : "answer",
     input: stored?.input === "tap" ? "tap" : "hold",
     fixedBpm: typeof stored?.fixedBpm === "number" ? stored.fixedBpm : null,
@@ -104,8 +106,12 @@ export function mergeProgress(
   };
 }
 
-export function startBpm(level: Level, progress: Progress): number {
-  const stored = progress[level.id]?.bpm;
+export function startBpm(
+  level: Level,
+  progress: Progress,
+  stageId: string = level.id,
+): number {
+  const stored = progress[stageId]?.bpm;
   if (typeof stored !== "number") return level.bpm.start;
   return Math.min(level.bpm.max, Math.max(level.bpm.min, stored));
 }

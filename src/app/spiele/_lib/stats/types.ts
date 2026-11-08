@@ -13,11 +13,13 @@ export type GameResultEvent = {
   durationMs?: number;
   /** Spielspezifisch: Schwierigkeit, Instrument, BPM … */
   meta?: Record<string, unknown>;
+  /** Wer gespielt hat, falls ein Profil gewählt war. */
+  profileId?: string;
 };
 
 export type GameResultInput = Omit<
   GameResultEvent,
-  "clientId" | "gameId" | "playedAt"
+  "clientId" | "gameId" | "playedAt" | "profileId"
 >;
 
 export type GameAggregates = {

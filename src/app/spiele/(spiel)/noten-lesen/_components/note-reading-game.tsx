@@ -12,9 +12,36 @@ import {
   LeaveRunButton,
   PathChoice,
   PathScreen,
+  ModeButtons,
+  useDailyDone,
 } from "../../../_components/path-screen";
 import { usePathState } from "../../../_lib/use-path-state";
+import { CalendarDays, Infinity as InfinityIcon, Medal } from "lucide-react";
+import {
+  DAILY_AFTER_SECTION,
+  ENDLESS_AFTER_SECTION,
+  sectionFinished,
+} from "../../../_lib/learning-path";
+
+import { gameInstruments } from "../../../_lib/profiles/options";
+import { activeProfileInstruments } from "../../../_lib/profiles/scope";
 import { buildNotenRun, NOTEN_PATH, type NotenRun } from "../_lib/path-stages";
+import {
+  ENDLESS_REPORT_EVERY,
+  NOTE_TIME_MS,
+  type EndlessAnswer,
+} from "../../../_lib/endless-rules";
+import { activeProfileId } from "../../../_lib/profiles/scope";
+import {
+  LeaderboardView,
+  RankedResult,
+  UNRANKED_NO_PROFILE,
+  UnrankedNotice,
+  unrankedReason,
+  type RankedOutcome,
+} from "../../../_components/ranked";
+import { loadWeak, markDailyDone, saveWeak } from "../../../_lib/daily";
+import { DAILY_ID, runKindOf } from "../../../_lib/learning-path";
 import { GAME_FOCUS_RING } from "../../../_lib/focus-ring";
 import { toNoteSetSummary, type NoteSetSummary } from "../../../_lib/note-sets";
 import {
@@ -103,7 +130,7 @@ const CUSTOM_QUIZ_NOTE_SECONDS = 8;
 const QUIZ_ROUND_LEN = 15;
 const HEARTS_EMPTY_DELAY_MS = 900;
 
-type Phase = "setup" | "play" | "result";
+type Phase = "setup" | "play" | "result" | "board";
 type LessonOutcome = { percent: number; passed: boolean };
 
 /** Persistierter Verweis auf ein eigenes Set (Name nur für die „Lädt …“-Kachel). */
@@ -176,6 +203,19 @@ function readStoredSettings(): Partial<StoredSettings> {
   }
 }
 
+/** Endlos ohne Server: zufällig, nie zweimal derselbe Ton hintereinander. */
+function pickLocal(
+  pool: readonly WrittenPitch[],
+  count: number,
+): WrittenPitch[] {
+  const out: WrittenPitch[] = [];
+  for (let i = 0; i < count; i++) {
+    const options = pool.filter((p) => p !== out.at(-1));
+    out.push(options[Math.floor(Math.random() * options.length)]!);
+  }
+  return out;
+}
+
 export function NoteReadingGame() {
   const { aggregates, recordResult } = useGameStats("noten-lesen");
   const { correct: soundCorrect, wrong: soundWrong } = useGameSounds();
@@ -187,11 +227,45 @@ export function NoteReadingGame() {
   const mode: GameModeId = lesson ? "quiz" : freeMode;
   const pathState = usePathState(NOTEN_PATH, `noten-lesen.${instrument}`);
   const [outcome, setOutcome] = useState<LessonOutcome | null>(null);
+  const [rankedOutcome, setRankedOutcome] = useState<RankedOutcome | null>(
+    null,
+  );
+  /** Warum der laufende Endlos-Lauf nicht in die Liste kommt; `null`, wenn er zählt. */
+  const [unranked, setUnranked] = useState<string | null>(null);
+  const unrankedRef = useRef<string | null>(null);
+  useEffect(() => {
+    unrankedRef.current = unranked;
+  }, [unranked]);
+  /** Laufender Bestenlisten-Lauf: Warteschlange vom Server und noch nicht gemeldete Antworten. */
+  const rankedRef = useRef<{
+    runId: string;
+    profileId: string;
+    queue: WrittenPitch[];
+    index: number;
+    reported: number;
+    buffer: EndlessAnswer[];
+    sending: Promise<void> | null;
+    invalid: string | null;
+    local: boolean;
+    pool: WrittenPitch[];
+  } | null>(null);
+  const shownAtRef = useRef(0);
+  const finishRankedRef = useRef<() => Promise<void>>(async () => undefined);
+  const startRankedRun = api.gameEndless.start.useMutation();
+  const reportRanked = api.gameEndless.report.useMutation();
   const [freeOpen, setFreeOpen] = useState(false);
   /* Bleibt auch bei aktivem eigenem Set die zuletzt gewählte Preset-Stufe —
    * „Entfernen“ fällt genau dorthin zurück. */
   const [difficulty, setDifficulty] = useState<DifficultyId>("beginner");
   const [phase, setPhase] = useState<Phase>("setup");
+  const dailyDone = useDailyDone("noten-lesen", phase);
+  const endlessLocked = sectionFinished(
+    NOTEN_PATH,
+    ENDLESS_AFTER_SECTION,
+    pathState.progress,
+  )
+    ? null
+    : "Schaff erst Abschnitt 3";
   const [hydrated, setHydrated] = useState(false);
 
   /** Aktives eigenes Notenset (Custom-Schwierigkeit). */
@@ -320,7 +394,16 @@ export function NoteReadingGame() {
     }
 
     queueMicrotask(() => {
-      if (stored.instrument) setInstrument(stored.instrument);
+      const fromProfile = gameInstruments(activeProfileInstruments(), "noten");
+      const instrumentChoice =
+        fromProfile.length > 0 &&
+        !(
+          stored.instrument &&
+          (fromProfile as readonly string[]).includes(stored.instrument)
+        )
+          ? fromProfile[0]
+          : stored.instrument;
+      if (instrumentChoice) setInstrument(instrumentChoice);
       if (stored.mode) setMode(stored.mode);
       if (stored.difficulty) setDifficulty(stored.difficulty);
       if (pending) setPendingSet(pending);
@@ -426,8 +509,13 @@ export function NoteReadingGame() {
 
   const spawnNote = useCallback(() => {
     let p: WrittenPitch;
+    const ranked = rankedRef.current;
     const pool = lessonRef.current?.pitches ?? customSet?.pitches;
-    if (pool) {
+    if (ranked) {
+      p = ranked.queue[ranked.index] ?? ranked.queue.at(-1)!;
+      setStaffAccidentalLayout(STAFF_LAYOUT_EXPLICIT);
+      setOptions(buildAnswerLabelsForLayout(p, "diatonic"));
+    } else if (pool) {
       /* Eigenes Set: Pool und Schlüssel kommen aus dem Set; Vorzeichen
        * immer explizit an der Note (keine zufälligen Tonarten). */
       p = pickPitchFromPool(pool, lastMidiRef.current, {
@@ -477,7 +565,13 @@ export function NoteReadingGame() {
     setAnswerLocked(false);
     setAwaitingNext(false);
     awaitingNextRef.current = false;
-    if (mode === "quiz" && !lessonRef.current) {
+    shownAtRef.current = performance.now();
+    if (ranked) {
+      const secs = NOTE_TIME_MS / 1000;
+      quizDeadlineRef.current = performance.now() + NOTE_TIME_MS;
+      lastShownTenthRef.current = secs * 10;
+      setQuizSecondsLeft(secs);
+    } else if (mode === "quiz" && !lessonRef.current) {
       const secs = customSet
         ? CUSTOM_QUIZ_NOTE_SECONDS
         : QUIZ_NOTE_SECONDS[difficulty];
@@ -494,10 +588,18 @@ export function NoteReadingGame() {
     (completed: boolean = true) => {
       clearTimers();
       const active = lessonRef.current;
+      if (active?.ranked) {
+        void finishRankedRef.current();
+        return;
+      }
       const total = active?.total ?? QUIZ_ROUND_LEN;
       if (active) {
         const percent = Math.round((100 * quizCorrectRef.current) / total);
-        const { passed } = pathState.record(active.id, { percent, completed });
+        const { passed } = active.daily
+          ? { passed: false }
+          : pathState.record(active.id, { percent, completed });
+        if (active.daily) markDailyDone("noten-lesen");
+        saveWeak(`noten-lesen.${instrument}`, missTrackerRef.current);
         setOutcome({ percent, passed });
       }
       setRoundResult({
@@ -511,12 +613,102 @@ export function NoteReadingGame() {
         maxScore: total,
         streak: bestStreakRoundRef.current,
         meta: active
-          ? { instrument, stage: active.id }
-          : { instrument, difficulty, mode },
+          ? {
+              instrument,
+              stage: active.id,
+              kind: runKindOf(NOTEN_PATH, active.id),
+              passed:
+                active.challengeSection !== null &&
+                quizCorrectRef.current / total >= 0.7 &&
+                completed,
+            }
+          : { instrument, difficulty, mode, kind: "free" },
       });
       setPhase("result");
     },
     [clearTimers, pathState, recordResult, instrument, difficulty, mode],
+  );
+
+  /** Gesammelte Antworten melden; der Server legt neue Noten nach. */
+  const flushRanked = useCallback(async () => {
+    const ranked = rankedRef.current;
+    if (!ranked || ranked.buffer.length === 0 || ranked.invalid) return;
+    if (ranked.sending) await ranked.sending;
+    const answers = ranked.buffer.splice(0);
+    const fromIndex = ranked.reported;
+    ranked.reported += answers.length;
+    ranked.sending = reportRanked
+      .mutateAsync({
+        profileId: ranked.profileId,
+        runId: ranked.runId,
+        fromIndex,
+        answers,
+      })
+      .then((result) => {
+        if (result.status === "running") ranked.queue.push(...result.pitches);
+        else if (result.status === "invalid") ranked.invalid = result.reason;
+        else setRankedOutcome(result);
+      })
+      .catch(() => {
+        setUnranked(
+          "Die Verbindung ist weg. Dieser Lauf zählt nicht für die Bestenliste.",
+        );
+        ranked.invalid =
+          "Die Verbindung ist abgerissen. Dieser Lauf zählt leider nicht.";
+      })
+      .finally(() => {
+        ranked.sending = null;
+      });
+    await ranked.sending;
+  }, [reportRanked]);
+
+  const finishRanked = useCallback(async () => {
+    const ranked = rankedRef.current;
+    if (!ranked) return;
+    if (ranked.local) {
+      setRankedOutcome({
+        status: "unranked",
+        score: quizCorrectRef.current,
+        reason: unrankedRef.current ?? UNRANKED_NO_PROFILE,
+      });
+      setPhase("result");
+      return;
+    }
+    await flushRanked();
+    if (ranked.sending) await ranked.sending;
+    if (ranked.invalid)
+      setRankedOutcome({ status: "invalid", reason: ranked.invalid });
+    recordResult({
+      score: quizCorrectRef.current,
+      streak: bestStreakRoundRef.current,
+      meta: { instrument, kind: "endless", reached: quizCorrectRef.current },
+    });
+    setPhase("result");
+  }, [flushRanked, recordResult, instrument]);
+  useEffect(() => {
+    finishRankedRef.current = finishRanked;
+  });
+
+  /** Antwort für den Server merken; alle zehn wird gemeldet. */
+  const noteRankedAnswer = useCallback(
+    (label: string | null) => {
+      const ranked = rankedRef.current;
+      if (!ranked) return;
+      ranked.buffer.push({
+        label,
+        ms: Math.round(performance.now() - shownAtRef.current),
+      });
+      ranked.index++;
+      if (ranked.local) {
+        ranked.buffer.length = 0;
+        if (ranked.queue.length - ranked.index < 10) {
+          ranked.queue.push(...pickLocal(ranked.pool, 20));
+        }
+        return;
+      }
+      if (ranked.buffer.length >= ENDLESS_REPORT_EVERY) void flushRanked();
+    },
+    [flushRanked],
   );
 
   const scheduleAfter = useCallback((ms: number, fn: () => void) => {
@@ -583,6 +775,7 @@ export function NoteReadingGame() {
     setStreak(0);
     streakRef.current = 0;
     recordMiss(missTrackerRef.current, pitchKey(p));
+    noteRankedAnswer(null);
     if (mode === "quiz") {
       recordQuizMiss(p, clef);
       loseHeart.current();
@@ -591,7 +784,15 @@ export function NoteReadingGame() {
       `Zeit abgelaufen — richtig wäre: ${answerLabelForPitch(p)}. ${describeWrittenNote(p, clef)}`,
     );
     advanceAfterAnswer(false);
-  }, [loseHeart, answerLocked, clef, mode, recordQuizMiss, advanceAfterAnswer]);
+  }, [
+    loseHeart,
+    answerLocked,
+    clef,
+    mode,
+    recordQuizMiss,
+    advanceAfterAnswer,
+    noteRankedAnswer,
+  ]);
 
   useEffect(() => {
     if (
@@ -656,9 +857,80 @@ export function NoteReadingGame() {
     spawnNote();
   }, [resetHearts, clearTimers, spawnNote]);
 
+  const beginEndless = useCallback(
+    (pitches: WrittenPitch[]) => {
+      const lessonRun: NotenRun = {
+        id: "ranked",
+        pitches: pitches,
+        clef: clefForInstrument(instrument),
+        total: Number.POSITIVE_INFINITY,
+        challengeSection: null,
+        daily: false,
+        ranked: true,
+      };
+      lessonRef.current = lessonRun;
+      setLesson(lessonRun);
+      setRankedOutcome(null);
+      setOutcome(null);
+      setRoundResult(null);
+      startGame();
+    },
+    [instrument, startGame],
+  );
+
+  const startRanked = useCallback(async () => {
+    const profileId = activeProfileId();
+    // Ohne Profil oder Netz läuft Endlos auf dem Gerät und zählt nicht für die Liste.
+    const local = (reason: string) => {
+      setUnranked(reason);
+      const pool = buildNotenRun("alle-naturtoene", instrument).pitches;
+      rankedRef.current = {
+        runId: "",
+        profileId: "",
+        queue: pickLocal(pool, 40),
+        index: 0,
+        reported: 0,
+        buffer: [],
+        sending: null,
+        invalid: null,
+        local: true,
+        pool,
+      };
+      return { pitches: rankedRef.current.queue };
+    };
+    try {
+      if (!profileId) throw new Error("ohne Profil");
+      setUnranked(null);
+      const run = await startRankedRun.mutateAsync({
+        profileId,
+        game: "noten-lesen",
+        variant: instrument,
+      });
+      rankedRef.current = {
+        runId: run.runId,
+        profileId,
+        queue: run.pitches,
+        index: 0,
+        reported: 0,
+        buffer: [],
+        sending: null,
+        invalid: null,
+        local: false,
+        pool: [],
+      };
+      beginEndless(run.pitches);
+    } catch {
+      const run = local(unrankedReason(Boolean(profileId)));
+      beginEndless(run.pitches);
+    }
+  }, [beginEndless, instrument, startRankedRun]);
+
   const startLesson = useCallback(
     (id: string) => {
-      const run = buildNotenRun(id, instrument);
+      rankedRef.current = null;
+      const run = buildNotenRun(id, instrument, pathState.progress);
+      // Verfehlte Töne aus früheren Tagen kommen öfter dran.
+      missTrackerRef.current = loadWeak(`noten-lesen.${instrument}`);
       lessonRef.current = run;
       setLesson(run);
       setOutcome(null);
@@ -670,6 +942,7 @@ export function NoteReadingGame() {
   );
 
   const startFree = useCallback(() => {
+    rankedRef.current = null;
     lessonRef.current = null;
     setLesson(null);
     setOutcome(null);
@@ -682,6 +955,7 @@ export function NoteReadingGame() {
       if (phase !== "play" || !pitchRef.current || answerLocked) return;
       const p = pitchRef.current;
       const ok = labelsMatchAnswer(label, p);
+      noteRankedAnswer(label);
       setAnswerLocked(true);
       setPicked(label);
       quizDeadlineRef.current = null;
@@ -732,6 +1006,7 @@ export function NoteReadingGame() {
       mode,
       recordQuizMiss,
       advanceAfterAnswer,
+      noteRankedAnswer,
     ],
   );
 
@@ -789,6 +1064,7 @@ export function NoteReadingGame() {
 
   const openSetup = useCallback(() => {
     clearTimers();
+    rankedRef.current = null;
     lessonRef.current = null;
     setLesson(null);
     setPhase("setup");
@@ -850,6 +1126,7 @@ export function NoteReadingGame() {
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-[clamp(0.625rem,1.8dvh,1.5rem)]">
       {phase === "setup" && !libraryOpen && (
         <PathScreen
+          tutorials={() => ["noten-lesen-start"]}
           path={NOTEN_PATH}
           state={pathState}
           head={
@@ -867,34 +1144,84 @@ export function NoteReadingGame() {
             </>
           }
           onStart={() => startLesson(pathState.selectedId)}
-          below={
-            <FreePractice
-              open={freeOpen}
-              onToggle={setFreeOpen}
-              onStart={startFree}
-            >
-              <InstrumentSelector
-                instrument={instrument}
-                mode={freeMode}
-                difficulty={difficulty}
-                customSet={
-                  customSet
-                    ? {
-                        name: customSet.name,
-                        noteCount: customSet.pitches.length,
-                      }
-                    : null
-                }
-                customPending={pendingSet ? { name: pendingSet.name } : null}
-                customNotice={customNotice}
-                onInstrument={setInstrument}
-                onMode={setMode}
-                onDifficulty={handleDifficulty}
-                onOpenLibrary={() => setLibraryOpen(true)}
-                onRemoveCustomSet={handleRemoveCustomSet}
-              />
-            </FreePractice>
+          modes={
+            <ModeButtons
+              buttons={[
+                {
+                  key: "daily",
+                  label: "Tagestraining",
+                  icon: CalendarDays,
+                  status: dailyDone ? "Heute geschafft" : "Doppelte XP",
+                  highlight: !dailyDone,
+                  locked: sectionFinished(
+                    NOTEN_PATH,
+                    DAILY_AFTER_SECTION,
+                    pathState.progress,
+                  )
+                    ? null
+                    : "Schaff erst Abschnitt 2",
+                  onClick: () => startLesson(DAILY_ID),
+                },
+                {
+                  key: "endless",
+                  label: "Endlos",
+                  icon: InfinityIcon,
+                  status: "Drei Herzen",
+                  locked: endlessLocked,
+                  onClick: () => void startRanked(),
+                },
+                {
+                  key: "board",
+                  label: "Bestenliste",
+                  icon: Medal,
+                  status: "Ansehen",
+                  onClick: () => setPhase("board"),
+                },
+              ]}
+            />
           }
+          below={
+            <>
+              <FreePractice
+                open={freeOpen}
+                onToggle={setFreeOpen}
+                onStart={startFree}
+              >
+                <InstrumentSelector
+                  instrument={instrument}
+                  mode={freeMode}
+                  difficulty={difficulty}
+                  customSet={
+                    customSet
+                      ? {
+                          name: customSet.name,
+                          noteCount: customSet.pitches.length,
+                        }
+                      : null
+                  }
+                  customPending={pendingSet ? { name: pendingSet.name } : null}
+                  customNotice={customNotice}
+                  onInstrument={setInstrument}
+                  onMode={setMode}
+                  onDifficulty={handleDifficulty}
+                  onOpenLibrary={() => setLibraryOpen(true)}
+                  onRemoveCustomSet={handleRemoveCustomSet}
+                />
+              </FreePractice>
+            </>
+          }
+        />
+      )}
+
+      {phase === "board" && (
+        <LeaderboardView
+          game="noten-lesen"
+          variants={INSTRUMENTS.map(({ id, label }) => ({ id, label }))}
+          variant={instrument}
+          onVariant={(id) => setInstrument(id as typeof instrument)}
+          playLocked={endlessLocked}
+          onPlay={() => void startRanked()}
+          onBack={() => setPhase("setup")}
         />
       )}
 
@@ -1011,11 +1338,12 @@ export function NoteReadingGame() {
             hearts={mode === "quiz" ? hearts : undefined}
             streak={streak}
             progress={
-              mode === "quiz"
+              mode === "quiz" && !lesson?.ranked
                 ? quizIndex / (lesson?.total ?? QUIZ_ROUND_LEN)
                 : null
             }
           />
+          {lesson?.ranked && <UnrankedNotice reason={unranked} />}
           {flash !== "none" && (
             <LessonFeedback
               overlay={mode !== "learn"}
@@ -1091,43 +1419,59 @@ export function NoteReadingGame() {
         </div>
       )}
 
-      {phase === "result" && roundResult && lesson && outcome && (
-        <PathResult
-          percent={outcome.percent}
-          value={`${roundResult.correct}/${roundResult.total}`}
-          valueLabel="richtig"
-          rows={[["Beste Serie", String(roundResult.bestStreakRound)]]}
-          challenge={
-            lesson.challengeSection === null
-              ? null
-              : {
-                  passed: outcome.passed,
-                  nextSection: NOTEN_PATH.sections[lesson.challengeSection + 1]
-                    ? lesson.challengeSection + 2
-                    : null,
-                }
-          }
-          detailsLabel="Diese Noten nochmal anschauen"
-          onAgain={() => startLesson(lesson.id)}
+      {phase === "result" && lesson?.ranked && rankedOutcome && (
+        <RankedResult
+          game="noten-lesen"
+          variant={instrument}
+          outcome={rankedOutcome}
+          onAgain={() => void startRanked()}
           onContinue={openSetup}
-        >
-          {roundResult.missed && roundResult.missed.length > 0 ? (
-            <ul className="space-y-1.5">
-              {roundResult.missed.map((m) => (
-                <li
-                  key={`${m.label}|${m.description}`}
-                  className="text-dark dark:text-night-muted text-sm leading-snug"
-                >
-                  <span className="text-ink dark:text-night-text font-bold">
-                    {m.label}
-                  </span>{" "}
-                  — {m.description}
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </PathResult>
+        />
       )}
+
+      {phase === "result" &&
+        roundResult &&
+        lesson &&
+        !lesson.ranked &&
+        outcome && (
+          <PathResult
+            percent={outcome.percent}
+            value={`${roundResult.correct}/${roundResult.total}`}
+            valueLabel="richtig"
+            rows={[["Beste Serie", String(roundResult.bestStreakRound)]]}
+            challenge={
+              lesson.challengeSection === null
+                ? null
+                : {
+                    passed: outcome.passed,
+                    nextSection: NOTEN_PATH.sections[
+                      lesson.challengeSection + 1
+                    ]
+                      ? lesson.challengeSection + 2
+                      : null,
+                  }
+            }
+            detailsLabel="Diese Noten nochmal anschauen"
+            onAgain={() => startLesson(lesson.id)}
+            onContinue={openSetup}
+          >
+            {roundResult.missed && roundResult.missed.length > 0 ? (
+              <ul className="space-y-1.5">
+                {roundResult.missed.map((m) => (
+                  <li
+                    key={`${m.label}|${m.description}`}
+                    className="text-dark dark:text-night-muted text-sm leading-snug"
+                  >
+                    <span className="text-ink dark:text-night-text font-bold">
+                      {m.label}
+                    </span>{" "}
+                    — {m.description}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </PathResult>
+        )}
 
       {phase === "result" && roundResult && !lesson && (
         <NoteReadingResultView

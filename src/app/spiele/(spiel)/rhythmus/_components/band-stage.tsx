@@ -206,7 +206,7 @@ export function BandStage({
             ? null
             : (segment ? segment.index + 1 : 0) / source.barCount
         }
-        lives={source.barCount === null ? (segment?.lives ?? 3) : undefined}
+        lives={segment?.lives}
       />
       <div
         ref={boxRef}

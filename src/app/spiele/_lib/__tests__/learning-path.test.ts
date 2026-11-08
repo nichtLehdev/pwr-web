@@ -2,6 +2,10 @@ import { describe, expect, it } from "@jest/globals";
 import {
   celebrationSteps,
   createLearningPath,
+  DAILY_ID,
+  pickDailyStages,
+  runKindOf,
+  unlockedStages,
   mergePathEntry,
   parsePathStore,
   recordPathRun,
@@ -87,5 +91,31 @@ describe("celebrationSteps", () => {
       "stars",
     );
     expect(celebrationSteps({ ...base, toId: "b" }).at(-1)?.stage).toBe("walk");
+  });
+});
+
+describe("daily practice", () => {
+  it("only draws from unlocked sections", () => {
+    const picks = pickDailyStages(path, {}, 40);
+    expect(picks.every((s) => ["a", "b"].includes(s.id))).toBe(true);
+    const opened = { "challenge-0": { stars: 2, passed: true } };
+    expect(unlockedStages(path, opened).map((s) => s.id)).toEqual([
+      "a",
+      "b",
+      "c",
+    ]);
+  });
+
+  it("brings weak stages more often", () => {
+    const progress = { a: { stars: 3 }, b: { stars: 0 } };
+    const picks = pickDailyStages(path, progress, 2000);
+    const weak = picks.filter((s) => s.id === "b").length;
+    expect(weak / picks.length).toBeGreaterThan(0.7);
+  });
+
+  it("knows what kind of run an id is", () => {
+    expect(runKindOf(path, DAILY_ID)).toBe("daily");
+    expect(runKindOf(path, "challenge-1")).toBe("challenge");
+    expect(runKindOf(path, "a")).toBe("lesson");
   });
 });

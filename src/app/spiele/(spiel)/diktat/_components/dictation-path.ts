@@ -1,5 +1,8 @@
 import {
   createLearningPath,
+  DAILY_ID,
+  pickDailyStages,
+  type PathProgress,
   type PathStage,
 } from "../../../_lib/learning-path";
 import {
@@ -35,9 +38,26 @@ export type DictationRun = {
   levels: Level[];
   options: number;
   challengeSection: number | null;
+  daily: boolean;
 };
 
-export function buildDictationRun(id: string): DictationRun {
+export function buildDictationRun(
+  id: string,
+  progress: PathProgress = {},
+): DictationRun {
+  if (id === DAILY_ID) {
+    const stages = pickDailyStages(DICTATION_PATH, progress, LESSON_ROUNDS);
+    const hardest = Math.max(
+      ...stages.map((s) => DICTATION_PATH.sectionOfStage(s).index),
+    );
+    return {
+      id,
+      levels: stages.map((s) => s.level),
+      options: hardest < SECTIONS_WITH_THREE_OPTIONS ? 3 : 4,
+      challengeSection: null,
+      daily: true,
+    };
+  }
   const challengeSection = DICTATION_PATH.parseChallengeId(id);
   const stage = DICTATION_PATH.stageById(id) ?? DICTATION_PATH.stages[0]!;
   const sectionIndex =
@@ -53,6 +73,7 @@ export function buildDictationRun(id: string): DictationRun {
         : Array.from({ length: LESSON_ROUNDS }, () => stage.level),
     options: sectionIndex < SECTIONS_WITH_THREE_OPTIONS ? 3 : 4,
     challengeSection,
+    daily: false,
   };
 }
 

@@ -11,11 +11,23 @@ import {
 } from "../../../_components/game-kit";
 import { GameBarSlot, GameDock } from "../../../_components/game-shell-context";
 import { PathResult } from "../../../_components/path-result";
-import { LeaveRunButton, PathScreen } from "../../../_components/path-screen";
+import {
+  LeaveRunButton,
+  PathScreen,
+  ModeButtons,
+  useDailyDone,
+} from "../../../_components/path-screen";
 import { Toni } from "../../../_components/toni";
 import { praiseFor } from "../../../_lib/rewards";
 import { useGameStats } from "../../../_lib/stats/use-game-stats";
 import { usePathState } from "../../../_lib/use-path-state";
+import { CalendarDays } from "lucide-react";
+import {
+  DAILY_AFTER_SECTION,
+  sectionFinished,
+} from "../../../_lib/learning-path";
+import { markDailyDone } from "../../../_lib/daily";
+import { DAILY_ID, runKindOf } from "../../../_lib/learning-path";
 import {
   createPuzzle,
   puzzleSignature,
@@ -61,6 +73,7 @@ export function NoteValueGame() {
   const pathState = usePathState(WAAGE_PATH, "notenwaage");
 
   const [phase, setPhase] = useState<Phase>("path");
+  const dailyDone = useDailyDone("notenwaage", phase);
   const [run, setRun] = useState<WaageRun | null>(null);
   const [roundIdx, setRoundIdx] = useState(0);
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
@@ -101,12 +114,21 @@ export function NoteValueGame() {
       const total = active.steps.length;
       const { score, solved, bestStreak } = totals.current;
       const percent = Math.round((score / (total * 100)) * 100);
-      const recorded = pathState.record(active.id, { percent, completed });
+      const recorded = active.daily
+        ? { passed: false }
+        : pathState.record(active.id, { percent, completed });
+      if (active.daily) markDailyDone("notenwaage");
       recordResult({
         score,
         maxScore: total * 100,
         streak: bestStreak,
-        meta: { stage: active.id, solved, total },
+        meta: {
+          stage: active.id,
+          kind: runKindOf(WAAGE_PATH, active.id),
+          passed: recorded.passed,
+          solved,
+          total,
+        },
       });
       setResult({
         solved,
@@ -172,7 +194,7 @@ export function NoteValueGame() {
     (id: string) => {
       clearAdvance();
       pathState.clearCelebration();
-      const active = buildRun(id);
+      const active = buildRun(id, pathState.progress);
       runRef.current = active;
       setRun(active);
       setResult(null);
@@ -303,6 +325,12 @@ export function NoteValueGame() {
     return (
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
         <PathScreen
+          tutorials={(stage) =>
+            stage.liveScale
+              ? ["notenwaage-start"]
+              : ["notenwaage-start", "notenwaage-wiegen"]
+          }
+          challengeTutorials={["notenwaage-wiegen"]}
           path={WAAGE_PATH}
           state={pathState}
           head={
@@ -312,6 +340,27 @@ export function NoteValueGame() {
             />
           }
           challengeText="Alle Noten bis hierher, drei Mal Puste. Schaffe 70 %."
+          modes={
+            <ModeButtons
+              buttons={[
+                {
+                  key: "daily",
+                  label: "Tagestraining",
+                  icon: CalendarDays,
+                  status: dailyDone ? "Heute geschafft" : "Doppelte XP",
+                  highlight: !dailyDone,
+                  locked: sectionFinished(
+                    WAAGE_PATH,
+                    DAILY_AFTER_SECTION,
+                    pathState.progress,
+                  )
+                    ? null
+                    : "Schaff erst Abschnitt 2",
+                  onClick: () => start(DAILY_ID),
+                },
+              ]}
+            />
+          }
           onStart={() => start(pathState.selectedId)}
         />
       </div>

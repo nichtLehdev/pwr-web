@@ -9,6 +9,8 @@ import { GameHub, GameRows } from "./_components/game-hub";
 import { InstallHintCard } from "./_components/install-hint-card";
 import { OfflineReadyCard } from "./_components/offline-ready-card";
 import { StatsSyncRunner } from "./_components/stats-sync-runner";
+import { ProfilesProvider } from "./_components/profiles";
+import { LeagueCard, WeeklyTasksCard } from "./_components/league";
 import { buildPageMetadata } from "@/lib/seo";
 
 export const metadata = buildPageMetadata({
@@ -32,24 +34,28 @@ export default function SpielePage() {
       }
     >
       <PageSection>
-        <GameHub />
-        <Note tone="info" className="mb-8">
-          Alle Spiele befinden sich derzeit in einer frühen Entwicklungsphase
-          und können sich noch ändern. Schwierigkeitsstufen werden später
-          angepasst.
-        </Note>
-        <InstallHintCard />
-        <OfflineReadyCard />
-        <StatsSyncRunner />
+        <ProfilesProvider>
+          <GameHub />
+          <LeagueCard />
+          <WeeklyTasksCard />
+          <Note tone="info" className="mb-8">
+            Alle Spiele befinden sich derzeit in einer frühen Entwicklungsphase
+            und können sich noch ändern. Schwierigkeitsstufen werden später
+            angepasst.
+          </Note>
+          <InstallHintCard />
+          <OfflineReadyCard />
+          <StatsSyncRunner />
 
-        <div className="mt-10">
-          <Split
-            head={<Heading id="angebote-heading">Angebote</Heading>}
-            bodyClassName="mt-8"
-          >
-            <GameRows labelledBy="angebote-heading" />
-          </Split>
-        </div>
+          <div className="mt-10">
+            <Split
+              head={<Heading id="angebote-heading">Angebote</Heading>}
+              bodyClassName="mt-8"
+            >
+              <GameRows labelledBy="angebote-heading" />
+            </Split>
+          </div>
+        </ProfilesProvider>
       </PageSection>
     </PublicPage>
   );

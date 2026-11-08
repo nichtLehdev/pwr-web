@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { notifyProgressChanged, scopedKey } from "./profiles/scope";
 import {
   parsePathStore,
   recordPathRun,
@@ -11,7 +12,7 @@ import {
 } from "./learning-path";
 
 function storageKey(key: string): string {
-  return `pwr.spiele.v1.${key}.path`;
+  return scopedKey(`pwr.spiele.v1.${key}.path`);
 }
 
 function write(key: string, selectedId: string, progress: PathProgress): void {
@@ -20,6 +21,7 @@ function write(key: string, selectedId: string, progress: PathProgress): void {
       storageKey(key),
       JSON.stringify({ selectedId, progress }),
     );
+    notifyProgressChanged();
   } catch {
     /* Privates Fenster: Fortschritt gilt dann nur für diese Sitzung. */
   }

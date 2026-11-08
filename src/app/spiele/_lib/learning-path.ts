@@ -5,13 +5,21 @@ import { starsFor, type Stars } from "./rewards";
  * einer Challenge über alles bisher Gelernte.
  */
 
-export type PathStage = { id: string; title: string; hint: string };
+export type PathStage = {
+  id: string;
+  title: string;
+  hint: string;
+  /** Kleines Zeichen am Knoten, etwa für Stufen im Notenband. */
+  badge?: "read";
+};
 
 export type PathSection<S extends PathStage = PathStage> = {
   index: number;
   title: string;
   hint?: string;
   stages: readonly S[];
+  /** Freiwillige Stufen neben dem Weg: zählen nicht für die Challenge. */
+  bonus?: readonly S[];
 };
 
 export type PathEntry = { stars: number; passed?: boolean };
@@ -40,13 +48,22 @@ export type LearningPath<S extends PathStage = PathStage> = ReturnType<
 >;
 
 export function createLearningPath<S extends PathStage>(
-  groups: readonly { title: string; hint?: string; stages: readonly S[] }[],
+  groups: readonly {
+    title: string;
+    hint?: string;
+    stages: readonly S[];
+    bonus?: readonly S[];
+  }[],
 ) {
   const sections: readonly PathSection<S>[] = groups.map((group, index) => ({
     ...group,
     index,
   }));
   const stages = sections.flatMap((section) => section.stages);
+  const allStages = sections.flatMap((section) => [
+    ...section.stages,
+    ...(section.bonus ?? []),
+  ]);
 
   const challengeId = (sectionIndex: number) =>
     `${CHALLENGE_PREFIX}${sectionIndex}`;
@@ -58,10 +75,16 @@ export function createLearningPath<S extends PathStage>(
   };
 
   const stageById = (id: string | null | undefined): S | undefined =>
-    stages.find((stage) => stage.id === id);
+    allStages.find((stage) => stage.id === id);
 
   const sectionOfStage = (stage: S): PathSection<S> =>
-    sections.find((section) => section.stages.includes(stage))!;
+    sections.find(
+      (section) =>
+        section.stages.includes(stage) || section.bonus?.includes(stage),
+    )!;
+
+  const isBonus = (stage: S): boolean =>
+    sections.some((section) => section.bonus?.includes(stage));
 
   const isChallengePassed = (sectionIndex: number, progress: PathProgress) =>
     progress[challengeId(sectionIndex)]?.passed === true;
@@ -107,7 +130,11 @@ export function createLearningPath<S extends PathStage>(
     const stars = after[stage.id]?.stars ?? attemptStars;
     return {
       fromId: stage.id,
-      toId: stars >= STARS_TO_MOVE_ON ? nextAfterStage(stage) : null,
+      // Nach einer Bonusstufe bleibt Toni, der Weg geht anderswo weiter.
+      toId:
+        stars >= STARS_TO_MOVE_ON && !isBonus(stage)
+          ? nextAfterStage(stage)
+          : null,
       stars,
       before,
       unlockedSection: null,
@@ -163,6 +190,8 @@ export function createLearningPath<S extends PathStage>(
   return {
     sections,
     stages,
+    allStages,
+    isBonus,
     challengeId,
     parseChallengeId,
     stageById,
@@ -263,3 +292,63 @@ export function recordPathRun<S extends PathStage>(
         : null;
   return { progress: next, stars, passed, celebration };
 }
+
+/* Tagestraining: jeden Tag neu gemischt aus allem, was offen ist. */
+
+export const DAILY_ID = "daily";
+
+export type RunKind = "lesson" | "challenge" | "daily";
+
+export function runKindOf<S extends PathStage>(
+  path: LearningPath<S>,
+  id: string,
+): RunKind {
+  if (id === DAILY_ID) return "daily";
+  return path.parseChallengeId(id) !== null ? "challenge" : "lesson";
+}
+
+export function unlockedStages<S extends PathStage>(
+  path: LearningPath<S>,
+  progress: PathProgress,
+): S[] {
+  return path.sections
+    .filter((section) => path.isSectionUnlocked(section.index, progress))
+    .flatMap((section) => section.stages);
+}
+
+/** Schwache Stufen kommen öfter dran: ohne Sterne viermal so oft wie mit dreien. */
+export function pickDailyStages<S extends PathStage>(
+  path: LearningPath<S>,
+  progress: PathProgress,
+  count: number,
+  rng: () => number = Math.random,
+): S[] {
+  const pool = unlockedStages(path, progress);
+  const weight = (stage: S) => 4 - Math.min(3, progress[stage.id]?.stars ?? 0);
+  const total = pool.reduce((sum, stage) => sum + weight(stage), 0);
+  return Array.from({ length: count }, () => {
+    let roll = rng() * total;
+    for (const stage of pool) {
+      roll -= weight(stage);
+      if (roll < 0) return stage;
+    }
+    return pool[pool.length - 1]!;
+  });
+}
+
+/** Abschnitt geschafft: Challenge bestanden oder der nächste Abschnitt schon offen. */
+export function sectionFinished<S extends PathStage>(
+  path: LearningPath<S>,
+  sectionIndex: number,
+  progress: PathProgress,
+): boolean {
+  if (path.isChallengePassed(sectionIndex, progress)) return true;
+  return (
+    sectionIndex + 1 < path.sections.length &&
+    path.isSectionUnlocked(sectionIndex + 1, progress)
+  );
+}
+
+/** Tagestraining nach Abschnitt 2, Endlos nach Abschnitt 3; vorher fehlt dafür das Handwerk. */
+export const DAILY_AFTER_SECTION = 1;
+export const ENDLESS_AFTER_SECTION = 2;

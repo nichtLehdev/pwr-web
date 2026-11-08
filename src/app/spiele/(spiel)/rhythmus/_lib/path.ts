@@ -3,6 +3,9 @@ import {
   CHALLENGE_PASS_PERCENT,
   challengePassed,
   createLearningPath,
+  type PathStage,
+  pickDailyStages,
+  type PathProgress,
   type Celebration,
   type CelebrationStage,
   type CelebrationStep,
@@ -12,13 +15,59 @@ import { LEVELS, type Level } from "../../../_lib/rhythm/levels";
 import { figureKey } from "../../../_lib/rhythm/ticks";
 import type { TimeSignature } from "../../../_lib/rhythm/types";
 import { Lives } from "./endless";
+import type { PlayMode } from "./prefs";
 import type { AnswerRules, AnswerStep } from "./session-script";
 
-export const RHYTHM_PATH = createLearningPath<Level>(
-  [...new Set(LEVELS.map((level) => level.group))].map((title) => ({
-    title,
-    stages: LEVELS.filter((level) => level.group === title),
-  })),
+/** Eine Stufe des Pfads: eine Rhythmus-Stufe, nachgespielt oder im Notenband gelesen. */
+export type RhythmStage = PathStage & {
+  level: Level;
+  mode: PlayMode;
+};
+
+/** Ab hier gehört das Notenband zum Weg; davor gibt es je eine Bonusstufe. */
+const READING_FROM_SECTION = 2;
+
+function answerStage(level: Level): RhythmStage {
+  return {
+    id: level.id,
+    title: level.title,
+    hint: level.hint,
+    level,
+    mode: "answer",
+  };
+}
+
+function bandStage(level: Level): RhythmStage {
+  return {
+    id: `band:${level.id}`,
+    title: `${level.title} lesen`,
+    hint: "Lies die Noten auf dem Band und spiel mit",
+    level,
+    mode: "band",
+    badge: "read",
+  };
+}
+
+export const RHYTHM_PATH = createLearningPath<RhythmStage>(
+  [...new Set(LEVELS.map((level) => level.group))].map((title, index) => {
+    const levels = LEVELS.filter((level) => level.group === title);
+    if (index < READING_FROM_SECTION) {
+      return {
+        title,
+        stages: levels.map(answerStage),
+        bonus: [bandStage(levels.at(-1)!)],
+      };
+    }
+    // Erst hören, dann lesen: Nach je zwei Stufen und am Ende kommt das Notenband.
+    return {
+      title,
+      stages: levels.flatMap((level, i) =>
+        i % 2 === 1 || i === levels.length - 1
+          ? [answerStage(level), bandStage(level)]
+          : [answerStage(level)],
+      ),
+    };
+  }),
 );
 
 export const {
@@ -28,9 +77,9 @@ export const {
   isChallengePassed,
   isSectionUnlocked,
   clampSelection,
-  sectionOfStage: sectionOfLevel,
-  nextAfterStage: nextAfterLevel,
-  stageCelebration: levelCelebration,
+  sectionOfStage,
+  nextAfterStage,
+  stageCelebration,
   challengeCelebration,
 } = RHYTHM_PATH;
 
@@ -60,10 +109,24 @@ function sameMeter(a: TimeSignature, b: TimeSignature): boolean {
  * zusammen, sonst müsste man alle paar Figuren neu umdenken.
  */
 export function buildChallengeSteps(sectionIndex: number): ChallengeStep[] {
-  const levels = RHYTHM_PATH.challengeStages(sectionIndex, {
-    min: MIN_CHALLENGE_FIGURES,
-    max: MAX_CHALLENGE_FIGURES,
-  });
+  return stepsForLevels(
+    RHYTHM_PATH.challengeStages(sectionIndex, {
+      min: MIN_CHALLENGE_FIGURES,
+      max: MAX_CHALLENGE_FIGURES,
+    }).map((stage) => stage.level),
+  );
+}
+
+const DAILY_FIGURES = 8;
+
+/** Tagestraining: acht Figuren aus allen offenen Stufen, schwache öfter. */
+export function buildDailySteps(progress: PathProgress): ChallengeStep[] {
+  return stepsForLevels(
+    pickDailyStages(RHYTHM_PATH, progress, DAILY_FIGURES).map((s) => s.level),
+  );
+}
+
+function stepsForLevels(levels: Level[]): ChallengeStep[] {
   const bpm = Math.min(...levels.map((level) => level.bpm.start));
 
   const groups: { ts: TimeSignature; levels: Level[] }[] = [];
@@ -92,10 +155,11 @@ export class ChallengePlan implements AnswerRules {
   completed = false;
 
   constructor(
-    sectionIndex: number,
+    source: number | ChallengeStep[],
     private readonly rng: Rng = Math.random,
   ) {
-    this.steps = buildChallengeSteps(sectionIndex);
+    this.steps =
+      typeof source === "number" ? buildChallengeSteps(source) : source;
   }
 
   get lives(): number {

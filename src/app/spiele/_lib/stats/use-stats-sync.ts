@@ -46,6 +46,7 @@ export function useStatsSync() {
             streak: e.streak,
             durationMs: e.durationMs,
             meta: e.meta,
+            profileId: e.profileId,
           })),
         });
         removeFromOutbox(batch.map((e) => e.clientId));

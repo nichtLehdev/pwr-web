@@ -1,15 +1,20 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { Infinity as InfinityIcon } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { CalendarDays, Infinity as InfinityIcon, Medal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/app/_components/ui/button";
 import { GameHead } from "../../../_components/game-kit";
 import { LearningPathMap } from "../../../_components/learning-path-map";
+import { ModeButtons, useDailyDone } from "../../../_components/path-screen";
+import {
+  DAILY_AFTER_SECTION,
+  ENDLESS_AFTER_SECTION,
+  sectionFinished,
+} from "../../../_lib/learning-path";
 import { usePathCelebration } from "../../../_components/use-path-celebration";
 import { GameDock } from "../../../_components/game-shell-context";
 import { GAME_FOCUS_RING } from "../../../_lib/focus-ring";
-import { LEVELS, levelById } from "../../../_lib/rhythm/levels";
 import type { InputMode } from "../_lib/conductor";
 import { ENDLESS_ID, type EndlessRecords } from "../_lib/endless";
 import {
@@ -25,44 +30,13 @@ import {
   type Progress,
 } from "../_lib/prefs";
 import { MAX_STARS, rankFor, totalStars } from "../_lib/ranks";
+import { TutorialHelpButton, useTutorial } from "../../../_components/tutorial";
+import type { TutorialId } from "../../../_lib/tutorials";
 
 const MIN_BPM = 40;
 const MAX_BPM = 200;
 
 const ON_ORANGE = "on-orange bg-primary text-ink";
-
-/** Wahl aus zwei Feldern, Tinte statt Icons. */
-function ChoiceField({
-  active,
-  title,
-  hint,
-  onClick,
-}: {
-  active: boolean;
-  title: string;
-  hint: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      aria-pressed={active}
-      onClick={onClick}
-      className={cn(
-        "border-ink dark:border-night-text flex min-h-11 flex-col border-2 p-3 text-left transition-colors",
-        GAME_FOCUS_RING,
-        active
-          ? ON_ORANGE
-          : "hover:bg-primary hover:text-ink text-ink dark:text-night-text",
-      )}
-    >
-      <span className="spiel-choice-title condensed text-[1.75rem] leading-none font-extrabold">
-        {title}
-      </span>
-      <span className="mt-1 text-sm leading-snug">{hint}</span>
-    </button>
-  );
-}
 
 export function SetupView({
   prefs,
@@ -73,6 +47,9 @@ export function SetupView({
   onCelebrationEnd,
   onChange,
   onStart,
+  onStartDaily,
+  onStartEndless,
+  onOpenBoard,
   onCalibrate,
 }: {
   prefs: Prefs;
@@ -83,14 +60,29 @@ export function SetupView({
   onCelebrationEnd: () => void;
   onChange: (next: Prefs) => void;
   onStart: () => void;
+  onStartDaily: () => void;
+  onStartEndless: (mode: PlayMode) => void;
+  onOpenBoard: () => void;
   onCalibrate: () => void;
 }) {
   const isEndless = prefs.levelId === ENDLESS_ID;
+  const tutorial = useTutorial();
+  const dailyDone = useDailyDone("rhythmus");
+  const [choosingEndless, setChoosingEndless] = useState(false);
   const challengeSection = parseChallengeId(prefs.levelId);
-  const level = levelById(prefs.levelId) ?? LEVELS[0]!;
-  const levelNumber = LEVELS.indexOf(level) + 1;
+  const stage = RHYTHM_PATH.stageById(prefs.levelId) ?? RHYTHM_PATH.stages[0]!;
+  const level = stage.level;
+  const levelNumber = RHYTHM_PATH.stages.indexOf(stage) + 1;
+  const tutorialIds: TutorialId[] =
+    challengeSection !== null
+      ? ["challenge"]
+      : isEndless
+        ? ["endless"]
+        : stage.mode === "band"
+          ? ["rhythmus-band"]
+          : ["rhythmus-start"];
   const endlessRecord = endlessRecords[prefs.mode];
-  const autoBpm = startBpm(level, progress);
+  const autoBpm = startBpm(level, progress, stage.id);
   const stars = totalStars(progress);
   const rank = rankFor(stars);
   const selectedRef = useRef<HTMLButtonElement>(null);
@@ -119,7 +111,6 @@ export function SetupView({
     userPicked.current = true;
     onChange({ ...prefs, levelId });
   };
-  const setMode = (mode: PlayMode) => onChange({ ...prefs, mode });
   const setInput = (input: InputMode) => onChange({ ...prefs, input });
   const stepBpm = (delta: number) =>
     onChange({
@@ -160,21 +151,71 @@ export function SetupView({
         </p>
       )}
 
-      <div className="grid grid-cols-2 gap-2">
-        <ChoiceField
-          active={prefs.mode === "answer"}
-          title="Nachspielen"
-          hint="Hören, dann du"
-          onClick={() => setMode("answer")}
-        />
-        <ChoiceField
-          active={prefs.mode === "band"}
-          title="Notenband"
-          hint="Lesen und spielen"
-          onClick={() => setMode("band")}
-        />
-      </div>
-
+      <ModeButtons
+        buttons={[
+          {
+            key: "daily",
+            label: "Tagestraining",
+            icon: CalendarDays,
+            status: dailyDone ? "Heute geschafft" : "Doppelte XP",
+            highlight: !dailyDone,
+            locked: sectionFinished(RHYTHM_PATH, DAILY_AFTER_SECTION, progress)
+              ? null
+              : "Schaff erst Abschnitt 2",
+            onClick: onStartDaily,
+          },
+          {
+            key: "endless",
+            label: "Endlos",
+            icon: InfinityIcon,
+            status: endlessRecord
+              ? `Rekord ${endlessRecord.points}`
+              : "Drei Mal Puste",
+            locked: sectionFinished(
+              RHYTHM_PATH,
+              ENDLESS_AFTER_SECTION,
+              progress,
+            )
+              ? null
+              : "Schaff erst Abschnitt 3",
+            onClick: () => setChoosingEndless((open) => !open),
+          },
+          {
+            key: "board",
+            label: "Bestenliste",
+            icon: Medal,
+            status: "Ansehen",
+            onClick: onOpenBoard,
+          },
+        ]}
+      />
+      {choosingEndless && (
+        <div
+          role="group"
+          aria-label="Endlos spielen"
+          className="spiel-tile flex flex-col gap-2 p-3"
+        >
+          <p className="text-ink dark:text-night-text text-center text-sm font-bold">
+            Wie willst du Endlos spielen?
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onStartEndless("answer")}
+            >
+              Nachspielen
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onStartEndless("band")}
+            >
+              Notenband
+            </Button>
+          </div>
+        </div>
+      )}
       <LearningPathMap
         path={RHYTHM_PATH}
         selectedId={prefs.levelId}
@@ -191,34 +232,6 @@ export function SetupView({
         progress={progress}
         selectedRef={selectedRef}
         onPick={pick}
-        after={
-          <section aria-label="Endlos">
-            <button
-              ref={isEndless ? selectedRef : undefined}
-              type="button"
-              aria-pressed={isEndless}
-              onClick={() => pick(ENDLESS_ID)}
-              className={cn(
-                "spiel-tile flex w-full items-center gap-3 p-4 text-left",
-                GAME_FOCUS_RING,
-                isEndless && "on-orange bg-primary text-ink",
-              )}
-            >
-              <InfinityIcon
-                className="h-8 w-8 shrink-0 stroke-[2.5]"
-                aria-hidden
-              />
-              <span className="min-w-0 flex-1">
-                <span className="block text-lg font-bold">Endlos</span>
-                <span className="mt-0.5 block text-sm leading-snug">
-                  {endlessRecord
-                    ? `Immer schwerer, bis die Puste weg ist. Dein Rekord: ${endlessRecord.points} Punkte.`
-                    : "Immer schwerer, bis die Puste weg ist."}
-                </span>
-              </span>
-            </button>
-          </section>
-        }
       />
 
       <details className="border-ink dark:border-night-text border-t-2">
@@ -330,7 +343,11 @@ export function SetupView({
               >
                 {parseChallengeId(celebration.fromId) !== null
                   ? "Challenge geschafft!"
-                  : `Stufe ${LEVELS.findIndex((l) => l.id === celebration.fromId) + 1} geschafft!`}
+                  : RHYTHM_PATH.stages.some(
+                        (st) => st.id === celebration.fromId,
+                      )
+                    ? `Stufe ${RHYTHM_PATH.stages.findIndex((st) => st.id === celebration.fromId) + 1} geschafft!`
+                    : "Bonus geschafft!"}
               </p>
               <Button
                 type="button"
@@ -349,27 +366,30 @@ export function SetupView({
                     ? `Challenge Abschnitt ${challengeSection + 1}:`
                     : isEndless
                       ? "Endlos:"
-                      : `${level.title}:`}
+                      : `${stage.title}:`}
                 </strong>{" "}
                 <span className="text-dark dark:text-night-muted">
                   {challengeSection !== null
                     ? `Alles, was du bisher gelernt hast, drei Mal Puste. Schaffe ${CHALLENGE_PASS_PERCENT} %.`
                     : isEndless
                       ? "Drei Mal Puste, wie weit kommst du?"
-                      : level.hint}
+                      : stage.hint}
                 </span>
+                <TutorialHelpButton ids={tutorialIds} />
               </p>
               <Button
                 type="button"
                 size="lg"
                 className="spiel-action w-full"
-                onClick={onStart}
+                onClick={() => tutorial.gate(tutorialIds, onStart)}
               >
                 {challengeSection !== null
                   ? "Challenge starten"
                   : isEndless
                     ? "Endlos spielen"
-                    : `Stufe ${levelNumber} spielen`}
+                    : levelNumber > 0
+                      ? `Stufe ${levelNumber} spielen`
+                      : "Bonus spielen"}
               </Button>
             </>
           )}

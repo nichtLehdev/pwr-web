@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
-import { X } from "lucide-react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { isDailyDone } from "../_lib/daily";
+import { Lock, X, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/app/_components/ui/button";
 import { GAME_FOCUS_RING } from "../_lib/focus-ring";
@@ -14,6 +15,8 @@ import type { usePathState } from "../_lib/use-path-state";
 import { GameDock } from "./game-shell-context";
 import { LearningPathMap } from "./learning-path-map";
 import { usePathCelebration } from "./use-path-celebration";
+import { TutorialHelpButton, useTutorial } from "./tutorial";
+import type { TutorialId } from "../_lib/tutorials";
 
 /** Ein neuer Bildschirm beginnt oben, egal wie weit der Pfad gescrollt war. */
 export function scrollGameToTop(from: Element | null): void {
@@ -29,16 +32,25 @@ export function PathScreen<S extends PathStage>({
   state,
   head,
   below,
+  modes,
   challengeText = `Alles, was du bisher gelernt hast, drei Mal Puste. Schaffe ${CHALLENGE_PASS_PERCENT} %.`,
+  tutorials,
+  challengeTutorials = [],
   onStart,
 }: {
   path: LearningPath<S>;
   state: ReturnType<typeof usePathState<S>>;
   head: ReactNode;
   below?: ReactNode;
+  /** Kleine Knöpfe über dem Pfad: Tagestraining, Endlos, Bestenliste. */
+  modes?: ReactNode;
   challengeText?: string;
+  /** Was Toni vor einer Stufe zum ersten Mal erklärt; die Challenge kommt von selbst dazu. */
+  tutorials?: (stage: S) => TutorialId[];
+  challengeTutorials?: TutorialId[];
   onStart: () => void;
 }) {
+  const tutorial = useTutorial();
   const { selectedId, progress, celebration } = state;
   const challengeSection = path.parseChallengeId(selectedId);
   const stage = path.stageById(selectedId) ?? path.stages[0]!;
@@ -64,6 +76,11 @@ export function PathScreen<S extends PathStage>({
     }
   }, [celebration, challengeSection, number]);
 
+  const tutorialIds: TutorialId[] =
+    challengeSection !== null
+      ? ["challenge", ...challengeTutorials]
+      : (tutorials?.(stage) ?? []);
+
   const celebratedNumber = celebration
     ? path.stages.findIndex((s) => s.id === celebration.fromId) + 1
     : 0;
@@ -71,6 +88,7 @@ export function PathScreen<S extends PathStage>({
   return (
     <div className="flex flex-col gap-5 pb-2">
       {head}
+      {modes}
       <LearningPathMap
         path={path}
         selectedId={selectedId}
@@ -123,19 +141,24 @@ export function PathScreen<S extends PathStage>({
                 <span className="text-dark dark:text-night-muted">
                   {challengeSection !== null ? challengeText : stage.hint}
                 </span>
+                <TutorialHelpButton ids={tutorialIds} />
               </p>
               <Button
                 type="button"
                 size="lg"
                 className="spiel-action w-full"
                 onClick={() => {
-                  scrollGameToTop(selectedRef.current);
-                  onStart();
+                  tutorial.gate(tutorialIds, () => {
+                    scrollGameToTop(selectedRef.current);
+                    onStart();
+                  });
                 }}
               >
                 {challengeSection !== null
                   ? "Challenge starten"
-                  : `Stufe ${number} spielen`}
+                  : number > 0
+                    ? `Stufe ${number} spielen`
+                    : "Bonus spielen"}
               </Button>
             </>
           )}
@@ -226,5 +249,74 @@ export function LeaveRunButton({ onLeave }: { onLeave: () => void }) {
       <X className="h-4 w-4" aria-hidden />
       Abbrechen
     </button>
+  );
+}
+
+/** Hat das Profil das heutige Tagestraining schon gemacht? */
+export function useDailyDone(game: string, refresh?: unknown): boolean {
+  const [done, setDone] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- Serverbild kennt den Speicher nicht
+  useEffect(() => setDone(isDailyDone(game)), [game, refresh]);
+  return done;
+}
+
+export type ModeButtonSpec = {
+  key: string;
+  label: string;
+  icon: LucideIcon;
+  /** Kurzer Zustand unter dem Namen. */
+  status: string;
+  /** Warum der Knopf noch zu ist; `null`, wenn er offen ist. */
+  locked?: string | null;
+  /** Hervorgehoben, etwa ein noch offenes Tagestraining. */
+  highlight?: boolean;
+  onClick: () => void;
+};
+
+/** Die Spielarten als runde Knöpfe in Stufengröße über dem Pfad; Gesperrtes trägt ein Schloss. */
+export function ModeButtons({ buttons }: { buttons: ModeButtonSpec[] }) {
+  const tutorial = useTutorial();
+  return (
+    <div className="flex justify-center gap-6">
+      {buttons.map(
+        ({ key, label, icon: Icon, status, locked, highlight, onClick }) => (
+          <div
+            key={key}
+            className="flex w-[72px] flex-col items-center gap-1.5"
+          >
+            <button
+              type="button"
+              disabled={Boolean(locked)}
+              onClick={() =>
+                tutorial.gate(
+                  key === "daily" || key === "endless" ? [key] : [],
+                  onClick,
+                )
+              }
+              aria-label={`${label}: ${locked ?? status}`}
+              title={locked ?? status}
+              data-state={locked ? "locked" : highlight ? "active" : "done"}
+              className={cn(
+                "spiel-node spiel-mode flex items-center justify-center",
+                GAME_FOCUS_RING,
+              )}
+              style={{ width: 64, height: 58 }}
+            >
+              {locked ? (
+                <Lock className="h-6 w-6" aria-hidden />
+              ) : (
+                <Icon className="h-7 w-7 stroke-[2.25]" aria-hidden />
+              )}
+            </button>
+            <span
+              className="text-ink dark:text-night-text text-xs font-extrabold"
+              aria-hidden
+            >
+              {label}
+            </span>
+          </div>
+        ),
+      )}
+    </div>
   );
 }

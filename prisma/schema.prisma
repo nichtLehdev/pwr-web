@@ -79,7 +79,8 @@ model User {
   userPermissions UserPermission[]
   bezirkScopes    UserBezirkScope[]    @relation("UserBezirkScopes")
 
-  gameResults GameResult[] @relation("UserGameResults")
+  gameResults  GameResult[]  @relation("UserGameResults")
+  gameProfiles GameProfile[] @relation("UserGameProfiles")
 
   maintenanceUpdates MaintenanceState[] @relation("MaintenanceUpdatedBy")
 
@@ -105,9 +106,9 @@ model User {
  * die Outbox darf denselben Batch beliebig oft erneut senden.
  */
 model GameResult {
-  id         String   @id @default(uuid())
+  id         String       @id @default(uuid())
   userId     String
-  user       User     @relation("UserGameResults", fields: [userId], references: [id], onDelete: Cascade)
+  user       User         @relation("UserGameResults", fields: [userId], references: [id], onDelete: Cascade)
   game       String // GameId-Slug, im Router gegen die Registry validiert
   score      Int
   maxScore   Int?
@@ -116,12 +117,46 @@ model GameResult {
   meta       Json?
   playedAt   DateTime
   clientId   String
-  createdAt  DateTime @default(now())
+  createdAt  DateTime     @default(now())
+  /// Vom Server berechnet (siehe xp-rules); Grundlage für Ligen.
+  xp         Int          @default(0)
+  /// Wer an einem geteilten Konto gespielt hat; ältere Ergebnisse haben kein Profil.
+  profileId  String?
+  profile    GameProfile? @relation("GameProfileResults", fields: [profileId], references: [id], onDelete: SetNull)
 
   @@unique([userId, clientId])
   @@index([userId, game])
   @@index([game, score])
+  @@index([profileId, playedAt])
   @@map("game_result")
+}
+
+/**
+ * Spielprofil unter einem Login, damit mehrere Kinder ein Konto teilen können.
+ * Der Name kommt aus festen Listen, nie aus Freitext: Er erscheint später in Ranglisten.
+ */
+model GameProfile {
+  id            String             @id @default(uuid())
+  userId        String
+  user          User               @relation("UserGameProfiles", fields: [userId], references: [id], onDelete: Cascade)
+  nameAdjective String
+  nameNoun      String
+  color         String
+  instruments   String[]
+  /// Lernpfad-Fortschritt je Spiel; der Sync führt Geräte zusammen, bessere Werte gewinnen.
+  progress      Json               @default("{}")
+  /// Liga-Stufe 0 (Piano) bis 4 (Fortissimo), gilt ab der nächsten Woche.
+  tier          Int                @default(0)
+  results       GameResult[]       @relation("GameProfileResults")
+  leagueWeeks   GameLeagueMember[]
+  taskRewards   GameTaskReward[]
+  endlessRuns   GameEndlessRun[]
+  endlessBests  GameEndlessBest[]
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  @@index([userId])
+  @@map("game_profile")
 }
 
 /**
@@ -2252,4 +2287,83 @@ model MembershipInvoice {
 
   @@index([runId, sheetRow])
   @@map("membership_invoice")
+}
+
+/**
+ * Ein Profil in einer Wochenliga. Die XP kommen aus game_result, gezählt nach
+ * Eingang beim Server zwischen Montag und Sonntag (deutsche Zeit).
+ */
+model GameLeagueMember {
+  id        String      @id @default(uuid())
+  profileId String
+  profile   GameProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  weekStart DateTime
+  groupId   String
+  tier      Int
+  /// Nach Wochenende: 1 auf, -1 ab, 0 bleibt; null, solange die Woche läuft.
+  outcome   Int?
+  /// Von der Moderation ausgeblendet, zählt dann nicht mit.
+  hidden    Boolean     @default(false)
+  createdAt DateTime    @default(now())
+
+  @@unique([profileId, weekStart])
+  @@index([weekStart, groupId])
+  @@map("game_league_member")
+}
+
+/**
+ * Bonus für eine geschaffte Wochenaufgabe; zählt in der Liga mit, einmal je Aufgabe.
+ */
+model GameTaskReward {
+  id        String      @id @default(uuid())
+  profileId String
+  profile   GameProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  weekStart DateTime
+  taskKey   String
+  xp        Int
+  createdAt DateTime    @default(now())
+
+  @@unique([profileId, weekStart, taskKey])
+  @@map("game_task_reward")
+}
+
+/**
+ * Ein laufender Endlos-Lauf für die Bestenliste: Der Server stellt die Aufgaben und
+ * prüft jede Antwort. Nach dem Lauf wird die Zeile gelöscht, nur der Bestwert bleibt.
+ */
+model GameEndlessRun {
+  id           String      @id @default(uuid())
+  profileId    String
+  profile      GameProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  game         String
+  variant      String
+  /// Gestellte Aufgaben in Reihenfolge, dazu die Antworten.
+  state        Json
+  score        Int         @default(0)
+  hearts       Int
+  startedAt    DateTime    @default(now())
+  lastReportAt DateTime    @default(now())
+
+  @@index([profileId])
+  @@index([lastReportAt])
+  @@map("game_endless_run")
+}
+
+/**
+ * Bestwert je Profil, Spiel und Variante (etwa Instrument), mit den Antworten zum Nachprüfen.
+ */
+model GameEndlessBest {
+  id         String      @id @default(uuid())
+  profileId  String
+  profile    GameProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  game       String
+  variant    String
+  score      Int
+  replay     Json?
+  hidden     Boolean     @default(false)
+  achievedAt DateTime    @default(now())
+
+  @@unique([profileId, game, variant])
+  @@index([game, variant, score])
+  @@map("game_endless_best")
 }

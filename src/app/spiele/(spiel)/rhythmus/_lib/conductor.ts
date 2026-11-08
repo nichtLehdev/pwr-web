@@ -66,6 +66,8 @@ export type ConductorListener = {
 
 const VERDICT_POINTS = { exact: 10, close: 6, off: 2, missed: 0 } as const;
 const STREAK_PER_MULTIPLIER = 8;
+/** Beim Halten bringt der Einsatz nur einen Teil, den Rest die richtige Länge. */
+const ONSET_SHARE = 0.6;
 const MAX_MULTIPLIER = 4;
 
 function segmentSeconds(spec: SegmentSpec): number {
@@ -140,8 +142,18 @@ export class Conductor {
   }
 
   private forward(event: JudgeEvent): void {
-    if (event.type === "note" && event.note.verdict) {
-      this.points += VERDICT_POINTS[event.note.verdict] * this.multiplier;
+    const { note } = event.type === "extra" ? { note: null } : event;
+    const holdCounts = this.options.input === "hold" && note?.judgeLength;
+    if (event.type === "note" && note?.verdict) {
+      const share = holdCounts ? ONSET_SHARE : 1;
+      this.points += Math.round(
+        VERDICT_POINTS[note.verdict] * this.multiplier * share,
+      );
+    }
+    if (event.type === "length" && note?.verdict && note.length === "ok") {
+      this.points += Math.round(
+        VERDICT_POINTS[note.verdict] * this.multiplier * (1 - ONSET_SHARE),
+      );
     }
     this.emit("onJudge", event);
   }
@@ -359,6 +371,11 @@ export class Conductor {
     this.finished = true;
     this.halt();
     this.emit("onFinish", this.attempts());
+  }
+
+  /** Alle Tastendrücke in Liedzeit, für die Prüfung einer Bestenlisten-Runde. */
+  pressLog(): readonly Press[] {
+    return this.presses;
   }
 
   attempts(): Attempt[] {

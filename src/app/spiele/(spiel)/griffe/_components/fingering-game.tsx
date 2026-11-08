@@ -12,13 +12,40 @@ import {
   LeaveRunButton,
   PathChoice,
   PathScreen,
+  ModeButtons,
+  useDailyDone,
 } from "../../../_components/path-screen";
 import { usePathState } from "../../../_lib/use-path-state";
+import { CalendarDays, Infinity as InfinityIcon, Medal } from "lucide-react";
+import {
+  DAILY_AFTER_SECTION,
+  ENDLESS_AFTER_SECTION,
+  sectionFinished,
+} from "../../../_lib/learning-path";
+
+import { gameInstruments } from "../../../_lib/profiles/options";
+import { activeProfileInstruments } from "../../../_lib/profiles/scope";
 import {
   buildGriffeRun,
   GRIFFE_PATH,
   type GriffeRun,
 } from "../_lib/path-stages";
+import {
+  ENDLESS_REPORT_EVERY,
+  GRIFFE_NOTE_TIME_MS,
+  type EndlessAnswer,
+} from "../../../_lib/endless-rules";
+import { activeProfileId } from "../../../_lib/profiles/scope";
+import {
+  LeaderboardView,
+  RankedResult,
+  UNRANKED_NO_PROFILE,
+  UnrankedNotice,
+  unrankedReason,
+  type RankedOutcome,
+} from "../../../_components/ranked";
+import { loadWeak, markDailyDone, saveWeak } from "../../../_lib/daily";
+import { DAILY_ID, runKindOf } from "../../../_lib/learning-path";
 import { GAME_FOCUS_RING } from "../../../_lib/focus-ring";
 import { toNoteSetSummary, type NoteSetSummary } from "../../../_lib/note-sets";
 import {
@@ -112,7 +139,7 @@ function quizSecondsFor(difficulty: GriffeDifficultyChoice): number {
     : QUIZ_SECONDS_BY_DIFFICULTY[difficulty];
 }
 
-type Phase = "setup" | "play" | "result";
+type Phase = "setup" | "play" | "result" | "board";
 type LessonOutcome = { percent: number; passed: boolean };
 
 type StoredGriffeSettings = {
@@ -204,6 +231,19 @@ function allValidFingeringsLine(
 /** Woher die aufzulösende Set-Referenz stammt — bestimmt die Fehlertexte. */
 type PendingSetResolve = { publicId: string; source: "storage" | "link" };
 
+/** Endlos ohne Server: zufällig, nie zweimal derselbe Ton hintereinander. */
+function pickLocal(
+  pool: readonly WrittenPitch[],
+  count: number,
+): WrittenPitch[] {
+  const out: WrittenPitch[] = [];
+  for (let i = 0; i < count; i++) {
+    const options = pool.filter((p) => p !== out.at(-1));
+    out.push(options[Math.floor(Math.random() * options.length)]!);
+  }
+  return out;
+}
+
 export function FingeringGame() {
   const { aggregates, recordResult } = useGameStats("griffe");
   const { correct: soundCorrect, wrong: soundWrong } = useGameSounds();
@@ -212,6 +252,32 @@ export function FingeringGame() {
   /** Eine Stufe oder Challenge des Lernpfads läuft; sonst gilt das freie Üben. */
   const [lesson, setLesson] = useState<GriffeRun | null>(null);
   const lessonRef = useRef<GriffeRun | null>(null);
+  const [rankedOutcome, setRankedOutcome] = useState<RankedOutcome | null>(
+    null,
+  );
+  /** Warum der laufende Endlos-Lauf nicht in die Liste kommt; `null`, wenn er zählt. */
+  const [unranked, setUnranked] = useState<string | null>(null);
+  const unrankedRef = useRef<string | null>(null);
+  useEffect(() => {
+    unrankedRef.current = unranked;
+  }, [unranked]);
+  /** Laufender Bestenlisten-Lauf: Warteschlange vom Server und noch nicht gemeldete Griffe. */
+  const rankedRef = useRef<{
+    runId: string;
+    profileId: string;
+    queue: WrittenPitch[];
+    index: number;
+    reported: number;
+    buffer: EndlessAnswer[];
+    sending: Promise<void> | null;
+    invalid: string | null;
+    local: boolean;
+    pool: WrittenPitch[];
+  } | null>(null);
+  const shownAtRef = useRef(0);
+  const finishRankedRef = useRef<() => Promise<void>>(async () => undefined);
+  const startRankedRun = api.gameEndless.start.useMutation();
+  const reportRanked = api.gameEndless.report.useMutation();
   const mode: GameModeId = lesson ? "quiz" : freeMode;
   const pathState = usePathState(GRIFFE_PATH, `griffe.${instrument}`);
   const [outcome, setOutcome] = useState<LessonOutcome | null>(null);
@@ -219,6 +285,14 @@ export function FingeringGame() {
   const [difficulty, setDifficulty] =
     useState<GriffeDifficultyChoice>("beginner");
   const [phase, setPhase] = useState<Phase>("setup");
+  const dailyDone = useDailyDone("griffe", phase);
+  const endlessLocked = sectionFinished(
+    GRIFFE_PATH,
+    ENDLESS_AFTER_SECTION,
+    pathState.progress,
+  )
+    ? null
+    : "Schaff erst Abschnitt 3";
   const [hydrated, setHydrated] = useState(false);
 
   /** Aktives Notenset („Eigenes Set"), voll aufgelöst inkl. Tonliste. */
@@ -356,7 +430,16 @@ export function FingeringGame() {
       /* ignore */
     }
     queueMicrotask(() => {
-      if (stored.instrument) setInstrument(stored.instrument);
+      const fromProfile = gameInstruments(activeProfileInstruments(), "griffe");
+      const instrumentChoice =
+        fromProfile.length > 0 &&
+        !(
+          stored.instrument &&
+          (fromProfile as readonly string[]).includes(stored.instrument)
+        )
+          ? fromProfile[0]
+          : stored.instrument;
+      if (instrumentChoice) setInstrument(instrumentChoice);
       if (stored.mode) setMode(stored.mode);
       if (linkSetId) {
         // Link schlägt gespeichertes Set; feste Stufe bleibt als Fallback.
@@ -596,17 +679,20 @@ export function FingeringGame() {
     const boost = new Set(adaptiveRef.current.keys());
     // Eigenes Set: fester Pool aus spielbaren Set-Tönen — gleicher Zieh-Pfad
     // (Wiederholungs-Schutz + Miss-Boost) wie bei den Standard-Stufen.
+    const ranked = rankedRef.current;
     const lessonPool = lessonRef.current?.pitches;
-    const p = lessonPool
-      ? pickFromDisplayPool(lessonPool, lastMidiRef.current, boost)
-      : difficulty === "custom"
-        ? pickFromDisplayPool(customPool, lastMidiRef.current, boost)
-        : pickRandomGriffePitch(
-            instrument,
-            difficulty,
-            lastMidiRef.current,
-            boost,
-          );
+    const p = ranked
+      ? (ranked.queue[ranked.index] ?? ranked.queue.at(-1)!)
+      : lessonPool
+        ? pickFromDisplayPool(lessonPool, lastMidiRef.current, boost)
+        : difficulty === "custom"
+          ? pickFromDisplayPool(customPool, lastMidiRef.current, boost)
+          : pickRandomGriffePitch(
+              instrument,
+              difficulty,
+              lastMidiRef.current,
+              boost,
+            );
     lastMidiRef.current = writtenPitchToMidi(p);
     pitchRef.current = p;
     setPitch(p);
@@ -631,7 +717,12 @@ export function FingeringGame() {
     setSlideQuart(false);
     setRevealValves(null);
     setRevealSlide(null);
-    if (mode === "quiz" && !lessonPool) {
+    shownAtRef.current = performance.now();
+    if (ranked) {
+      quizDeadlineRef.current = performance.now() + GRIFFE_NOTE_TIME_MS;
+      lastTenthRef.current = -1;
+      setQuizSecondsLeft(GRIFFE_NOTE_TIME_MS / 1000);
+    } else if (mode === "quiz" && !lessonPool) {
       const secs = quizSecondsFor(difficulty);
       quizDeadlineRef.current = performance.now() + secs * 1000;
       lastTenthRef.current = -1;
@@ -646,10 +737,26 @@ export function FingeringGame() {
     (completed: boolean = true) => {
       clearTimers();
       const active = lessonRef.current;
+      if (active?.ranked) {
+        void finishRankedRef.current();
+        return;
+      }
       const total = active?.total ?? QUIZ_ROUND_LEN;
       if (active) {
         const percent = Math.round((100 * quizCorrectRef.current) / total);
-        const { passed } = pathState.record(active.id, { percent, completed });
+        const { passed } = active.daily
+          ? { passed: false }
+          : pathState.record(active.id, { percent, completed });
+        if (active.daily) markDailyDone("griffe");
+        saveWeak(
+          `griffe.${instrument}`,
+          new Map(
+            [...adaptiveRef.current].map(([midi, left]) => [
+              String(midi),
+              left,
+            ]),
+          ),
+        );
         setOutcome({ percent, passed });
       }
       const missedRows = [...missedMapRef.current.entries()]
@@ -666,8 +773,16 @@ export function FingeringGame() {
         maxScore: total,
         streak: bestStreakRoundRef.current,
         meta: active
-          ? { instrument, stage: active.id }
-          : { instrument, difficulty, mode },
+          ? {
+              instrument,
+              stage: active.id,
+              kind: runKindOf(GRIFFE_PATH, active.id),
+              passed:
+                active.challengeSection !== null &&
+                quizCorrectRef.current / total >= 0.7 &&
+                completed,
+            }
+          : { instrument, difficulty, mode, kind: "free" },
       });
       setPhase("result");
     },
@@ -751,6 +866,60 @@ export function FingeringGame() {
     setRevealSlide(null);
   }, []);
 
+  /** Gesammelte Griffe melden; der Server legt neue Noten nach. */
+  const flushRanked = useCallback(async () => {
+    const ranked = rankedRef.current;
+    if (!ranked || ranked.buffer.length === 0 || ranked.invalid) return;
+    if (ranked.sending) await ranked.sending;
+    const answers = ranked.buffer.splice(0);
+    const fromIndex = ranked.reported;
+    ranked.reported += answers.length;
+    ranked.sending = reportRanked
+      .mutateAsync({
+        profileId: ranked.profileId,
+        runId: ranked.runId,
+        fromIndex,
+        answers,
+      })
+      .then((result) => {
+        if (result.status === "running") ranked.queue.push(...result.pitches);
+        else if (result.status === "invalid") ranked.invalid = result.reason;
+        else setRankedOutcome(result);
+      })
+      .catch(() => {
+        setUnranked(
+          "Die Verbindung ist weg. Dieser Lauf zählt nicht für die Bestenliste.",
+        );
+        ranked.invalid =
+          "Die Verbindung ist abgerissen. Dieser Lauf zählt leider nicht.";
+      })
+      .finally(() => {
+        ranked.sending = null;
+      });
+    await ranked.sending;
+  }, [reportRanked]);
+
+  const noteRankedAnswer = useCallback(
+    (label: string | null) => {
+      const ranked = rankedRef.current;
+      if (!ranked) return;
+      ranked.buffer.push({
+        label,
+        ms: Math.round(performance.now() - shownAtRef.current),
+      });
+      ranked.index++;
+      if (ranked.local) {
+        ranked.buffer.length = 0;
+        if (ranked.queue.length - ranked.index < 10) {
+          ranked.queue.push(...pickLocal(ranked.pool, 20));
+        }
+        return;
+      }
+      if (ranked.buffer.length >= ENDLESS_REPORT_EVERY) void flushRanked();
+    },
+    [flushRanked],
+  );
+
   const resolveAnswer = useCallback(
     (submitted: string[][], opts: { timeout?: boolean } = {}) => {
       const p = pitchRef.current;
@@ -760,6 +929,7 @@ export function FingeringGame() {
       if (answerLockedRef.current) return;
       answerLockedRef.current = true;
       const wasTimeout = Boolean(opts.timeout);
+      noteRankedAnswer(wasTimeout ? null : JSON.stringify(submitted[0] ?? []));
       setAnswerLocked(true);
       quizDeadlineRef.current = null;
 
@@ -864,6 +1034,7 @@ export function FingeringGame() {
       instrument,
       mode,
       recordMiss,
+      noteRankedAnswer,
     ],
   );
 
@@ -1033,9 +1204,112 @@ export function FingeringGame() {
     spawnNote();
   }, [resetHearts, clearTimers, spawnNote]);
 
+  const finishRanked = useCallback(async () => {
+    const ranked = rankedRef.current;
+    if (!ranked) return;
+    if (ranked.local) {
+      setRankedOutcome({
+        status: "unranked",
+        score: quizCorrectRef.current,
+        reason: unrankedRef.current ?? UNRANKED_NO_PROFILE,
+      });
+      setPhase("result");
+      return;
+    }
+    setRankedOutcome({ status: "checking" });
+    setPhase("result");
+    await flushRanked();
+    if (ranked.sending) await ranked.sending;
+    if (ranked.invalid)
+      setRankedOutcome({ status: "invalid", reason: ranked.invalid });
+    recordResult({
+      score: quizCorrectRef.current,
+      streak: bestStreakRoundRef.current,
+      meta: { instrument, kind: "endless", reached: quizCorrectRef.current },
+    });
+  }, [flushRanked, recordResult, instrument]);
+  useEffect(() => {
+    finishRankedRef.current = finishRanked;
+  });
+
+  const beginEndless = useCallback(
+    (pitches: WrittenPitch[]) => {
+      const lessonRun: GriffeRun = {
+        id: "ranked",
+        pitches: pitches,
+        total: Number.POSITIVE_INFINITY,
+        challengeSection: null,
+        daily: false,
+        ranked: true,
+      };
+      lessonRef.current = lessonRun;
+      setLesson(lessonRun);
+      setRankedOutcome(null);
+      setOutcome(null);
+      setRoundResult(null);
+      startGame();
+    },
+    [startGame],
+  );
+
+  const startRanked = useCallback(async () => {
+    const profileId = activeProfileId();
+    // Ohne Profil oder Netz läuft Endlos auf dem Gerät und zählt nicht für die Liste.
+    const local = (reason: string) => {
+      setUnranked(reason);
+      const pool = buildGriffeRun("alle-zusammen", instrument).pitches;
+      rankedRef.current = {
+        runId: "",
+        profileId: "",
+        queue: pickLocal(pool, 40),
+        index: 0,
+        reported: 0,
+        buffer: [],
+        sending: null,
+        invalid: null,
+        local: true,
+        pool,
+      };
+      return { pitches: rankedRef.current.queue };
+    };
+    try {
+      if (!profileId) throw new Error("ohne Profil");
+      setUnranked(null);
+      const run = await startRankedRun.mutateAsync({
+        profileId,
+        game: "griffe",
+        variant: instrument,
+      });
+      rankedRef.current = {
+        runId: run.runId,
+        profileId,
+        queue: run.pitches,
+        index: 0,
+        reported: 0,
+        buffer: [],
+        sending: null,
+        invalid: null,
+        local: false,
+        pool: [],
+      };
+      beginEndless(run.pitches);
+    } catch {
+      const run = local(unrankedReason(Boolean(profileId)));
+      beginEndless(run.pitches);
+    }
+  }, [beginEndless, instrument, startRankedRun]);
+
   const startLesson = useCallback(
     (id: string) => {
-      const run = buildGriffeRun(id, instrument);
+      rankedRef.current = null;
+      const run = buildGriffeRun(id, instrument, pathState.progress);
+      // Verfehlte Griffe aus früheren Tagen kommen öfter dran.
+      adaptiveRef.current = new Map(
+        [...loadWeak(`griffe.${instrument}`)].map(([midi, left]) => [
+          Number(midi),
+          left,
+        ]),
+      );
       lessonRef.current = run;
       setLesson(run);
       setOutcome(null);
@@ -1047,6 +1321,7 @@ export function FingeringGame() {
   );
 
   const startFree = useCallback(() => {
+    rankedRef.current = null;
     lessonRef.current = null;
     setLesson(null);
     setOutcome(null);
@@ -1056,6 +1331,7 @@ export function FingeringGame() {
 
   const openSetup = useCallback(() => {
     clearTimers();
+    rankedRef.current = null;
     lessonRef.current = null;
     setLesson(null);
     setPhase("setup");
@@ -1140,6 +1416,7 @@ export function FingeringGame() {
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 md:gap-4">
       {phase === "setup" && !libraryOpen && (
         <PathScreen
+          tutorials={() => ["griffe-start"]}
           path={GRIFFE_PATH}
           state={pathState}
           head={
@@ -1160,39 +1437,89 @@ export function FingeringGame() {
             </>
           }
           onStart={() => startLesson(pathState.selectedId)}
-          below={
-            <FreePractice
-              open={freeOpen}
-              onToggle={setFreeOpen}
-              onStart={startFree}
-            >
-              {setupHint && (
-                <p
-                  role="status"
-                  aria-live="polite"
-                  className="border-primary-ink bg-rule/25 text-ink dark:border-primary dark:bg-night-raised dark:text-night-text border-l-4 px-3 py-2 text-sm"
-                >
-                  {setupHint}
-                </p>
-              )}
-              <GriffeInstrumentSelector
-                instrument={instrument}
-                mode={freeMode}
-                difficulty={difficulty}
-                customSetName={customSet?.name ?? null}
-                customSetSummary={
-                  customSet && customCoverage
-                    ? `${customCoverage.covered.length} von ${customCoverage.total} Noten spielbar`
-                    : null
-                }
-                onInstrument={handleInstrumentChange}
-                onMode={setMode}
-                onDifficulty={handleDifficultyChange}
-                onOpenLibrary={() => setLibraryOpen(true)}
-                onRemoveCustomSet={() => deactivateCustomSet(null)}
-              />
-            </FreePractice>
+          modes={
+            <ModeButtons
+              buttons={[
+                {
+                  key: "daily",
+                  label: "Tagestraining",
+                  icon: CalendarDays,
+                  status: dailyDone ? "Heute geschafft" : "Doppelte XP",
+                  highlight: !dailyDone,
+                  locked: sectionFinished(
+                    GRIFFE_PATH,
+                    DAILY_AFTER_SECTION,
+                    pathState.progress,
+                  )
+                    ? null
+                    : "Schaff erst Abschnitt 2",
+                  onClick: () => startLesson(DAILY_ID),
+                },
+                {
+                  key: "endless",
+                  label: "Endlos",
+                  icon: InfinityIcon,
+                  status: "Drei Herzen",
+                  locked: endlessLocked,
+                  onClick: () => void startRanked(),
+                },
+                {
+                  key: "board",
+                  label: "Bestenliste",
+                  icon: Medal,
+                  status: "Ansehen",
+                  onClick: () => setPhase("board"),
+                },
+              ]}
+            />
           }
+          below={
+            <>
+              <FreePractice
+                open={freeOpen}
+                onToggle={setFreeOpen}
+                onStart={startFree}
+              >
+                {setupHint && (
+                  <p
+                    role="status"
+                    aria-live="polite"
+                    className="border-primary-ink bg-rule/25 text-ink dark:border-primary dark:bg-night-raised dark:text-night-text border-l-4 px-3 py-2 text-sm"
+                  >
+                    {setupHint}
+                  </p>
+                )}
+                <GriffeInstrumentSelector
+                  instrument={instrument}
+                  mode={freeMode}
+                  difficulty={difficulty}
+                  customSetName={customSet?.name ?? null}
+                  customSetSummary={
+                    customSet && customCoverage
+                      ? `${customCoverage.covered.length} von ${customCoverage.total} Noten spielbar`
+                      : null
+                  }
+                  onInstrument={handleInstrumentChange}
+                  onMode={setMode}
+                  onDifficulty={handleDifficultyChange}
+                  onOpenLibrary={() => setLibraryOpen(true)}
+                  onRemoveCustomSet={() => deactivateCustomSet(null)}
+                />
+              </FreePractice>
+            </>
+          }
+        />
+      )}
+
+      {phase === "board" && (
+        <LeaderboardView
+          game="griffe"
+          variants={GRIFFE_INSTRUMENTS.map(({ id, label }) => ({ id, label }))}
+          variant={instrument}
+          onVariant={(id) => handleInstrumentChange(id as typeof instrument)}
+          playLocked={endlessLocked}
+          onPlay={() => void startRanked()}
+          onBack={() => setPhase("setup")}
         />
       )}
 
@@ -1349,11 +1676,12 @@ export function FingeringGame() {
                 hearts={mode === "quiz" ? hearts : undefined}
                 streak={streak}
                 progress={
-                  mode === "quiz"
+                  mode === "quiz" && !lesson?.ranked
                     ? quizIndex / (lesson?.total ?? QUIZ_ROUND_LEN)
                     : null
                 }
               />
+              {lesson?.ranked && <UnrankedNotice reason={unranked} />}
               {/* Kastenhöhe über `className`, die Notenschrift skaliert darin mit. */}
               <StaffDisplay
                 clef={clef}
@@ -1454,41 +1782,57 @@ export function FingeringGame() {
         </div>
       )}
 
-      {phase === "result" && roundResult && lesson && outcome && (
-        <PathResult
-          percent={outcome.percent}
-          value={`${roundResult.correct}/${roundResult.total}`}
-          valueLabel="richtig"
-          rows={[["Beste Serie", String(roundResult.bestStreakRound)]]}
-          challenge={
-            lesson.challengeSection === null
-              ? null
-              : {
-                  passed: outcome.passed,
-                  nextSection: GRIFFE_PATH.sections[lesson.challengeSection + 1]
-                    ? lesson.challengeSection + 2
-                    : null,
-                }
-          }
-          detailsLabel="Das übst du am besten noch"
-          onAgain={() => startLesson(lesson.id)}
+      {phase === "result" && lesson?.ranked && rankedOutcome && (
+        <RankedResult
+          game="griffe"
+          variant={instrument}
+          outcome={rankedOutcome}
+          onAgain={() => void startRanked()}
           onContinue={openSetup}
-        >
-          {roundResult.missed.length > 0 ? (
-            <ul className="text-ink dark:text-night-text space-y-1 text-sm">
-              {roundResult.missed.map((row) => (
-                <li
-                  key={row.key}
-                  className="border-rule dark:border-night-rule flex justify-between gap-3 border-b pb-1 last:border-0"
-                >
-                  <span className="font-semibold">{row.label}</span>
-                  <span className="font-bold tabular-nums">{row.count}×</span>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </PathResult>
+        />
       )}
+
+      {phase === "result" &&
+        roundResult &&
+        lesson &&
+        !lesson.ranked &&
+        outcome && (
+          <PathResult
+            percent={outcome.percent}
+            value={`${roundResult.correct}/${roundResult.total}`}
+            valueLabel="richtig"
+            rows={[["Beste Serie", String(roundResult.bestStreakRound)]]}
+            challenge={
+              lesson.challengeSection === null
+                ? null
+                : {
+                    passed: outcome.passed,
+                    nextSection: GRIFFE_PATH.sections[
+                      lesson.challengeSection + 1
+                    ]
+                      ? lesson.challengeSection + 2
+                      : null,
+                  }
+            }
+            detailsLabel="Das übst du am besten noch"
+            onAgain={() => startLesson(lesson.id)}
+            onContinue={openSetup}
+          >
+            {roundResult.missed.length > 0 ? (
+              <ul className="text-ink dark:text-night-text space-y-1 text-sm">
+                {roundResult.missed.map((row) => (
+                  <li
+                    key={row.key}
+                    className="border-rule dark:border-night-rule flex justify-between gap-3 border-b pb-1 last:border-0"
+                  >
+                    <span className="font-semibold">{row.label}</span>
+                    <span className="font-bold tabular-nums">{row.count}×</span>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </PathResult>
+        )}
 
       {phase === "result" && roundResult && !lesson && (
         <GriffeResultView

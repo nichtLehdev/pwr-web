@@ -13,8 +13,20 @@ import {
   useLessonHearts,
 } from "../../../_components/game-kit";
 import { PathResult } from "../../../_components/path-result";
-import { LeaveRunButton, PathScreen } from "../../../_components/path-screen";
+import {
+  LeaveRunButton,
+  PathScreen,
+  ModeButtons,
+  useDailyDone,
+} from "../../../_components/path-screen";
 import { usePathState } from "../../../_lib/use-path-state";
+import { CalendarDays } from "lucide-react";
+import {
+  DAILY_AFTER_SECTION,
+  sectionFinished,
+} from "../../../_lib/learning-path";
+import { markDailyDone } from "../../../_lib/daily";
+import { DAILY_ID, runKindOf } from "../../../_lib/learning-path";
 import {
   buildDictationRun,
   createRound,
@@ -95,6 +107,7 @@ export function DictationGame() {
   } | null>(null);
   const [audio] = useState(() => new RhythmAudio());
   const [phase, setPhase] = useState<Phase>("setup");
+  const dailyDone = useDailyDone("diktat", phase);
   const [round, setRound] = useState<DictationRound | null>(null);
   const [roundIndex, setRoundIndex] = useState(0);
   const [wrongPicks, setWrongPicks] = useState<number[]>([]);
@@ -144,7 +157,7 @@ export function DictationGame() {
   );
 
   const startRun = (id: string) => {
-    const active = buildDictationRun(id);
+    const active = buildDictationRun(id, pathState.progress);
     setRun(active);
     setOutcome(null);
     pathState.clearCelebration();
@@ -196,13 +209,16 @@ export function DictationGame() {
     if (!run) return;
     const maxScore = run.levels.length * POINTS_FIRST_TRY;
     const percent = Math.round((100 * score) / maxScore);
-    const { passed } = pathState.record(run.id, { percent, completed });
+    const { passed } = run.daily
+      ? { passed: false }
+      : pathState.record(run.id, { percent, completed });
+    if (run.daily) markDailyDone("diktat");
     setOutcome({ percent, passed });
     recordResult({
       score,
       maxScore,
       streak: bestStreak,
-      meta: { stage: run.id },
+      meta: { stage: run.id, kind: runKindOf(DICTATION_PATH, run.id), passed },
     });
     setPhase("result");
   };
@@ -231,6 +247,7 @@ export function DictationGame() {
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-[clamp(0.5rem,1.8svh,1.25rem)]">
       {phase === "setup" && (
         <PathScreen
+          tutorials={() => ["diktat-start"]}
           path={DICTATION_PATH}
           state={pathState}
           head={
@@ -242,6 +259,27 @@ export function DictationGame() {
             />
           }
           onStart={() => startRun(pathState.selectedId)}
+          modes={
+            <ModeButtons
+              buttons={[
+                {
+                  key: "daily",
+                  label: "Tagestraining",
+                  icon: CalendarDays,
+                  status: dailyDone ? "Heute geschafft" : "Doppelte XP",
+                  highlight: !dailyDone,
+                  locked: sectionFinished(
+                    DICTATION_PATH,
+                    DAILY_AFTER_SECTION,
+                    pathState.progress,
+                  )
+                    ? null
+                    : "Schaff erst Abschnitt 2",
+                  onClick: () => startRun(DAILY_ID),
+                },
+              ]}
+            />
+          }
         />
       )}
 

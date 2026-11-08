@@ -1,4 +1,5 @@
 import type { GameId } from "../games";
+import { activeProfileId, scopedKey } from "../profiles/scope";
 import {
   EMPTY_AGGREGATES,
   type GameLocalState,
@@ -57,7 +58,7 @@ function emptyState(): GameLocalState {
 }
 
 function gameKey(gameId: GameId): string {
-  return `${PREFIX}.${gameId}`;
+  return scopedKey(`${PREFIX}.${gameId}`);
 }
 
 /** Defensive Normalisierung — kaputte/fremde Einträge fallen auf leer zurück. */
@@ -114,6 +115,7 @@ export function recordResult(
     gameId,
     playedAt: new Date().toISOString(),
     ...input,
+    ...(activeProfileId() && { profileId: activeProfileId()! }),
   };
 
   const prev = loadGameState(gameId);
