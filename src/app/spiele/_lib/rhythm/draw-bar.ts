@@ -25,8 +25,6 @@ export const BAR_LEAD = 9;
 const THIN_BARLINE = 1.4;
 const THICK_BARLINE = 4.5;
 const BARLINE_GAP = 2.6;
-/** Halbe Notenkopfbreite: Cursor und Lesekante zielen auf die Kopfmitte. */
-const HEAD_CENTER = 6;
 const STAVE_Y = 60;
 const VIEW_Y = 66;
 export const VIEW_HEIGHT = 132;
@@ -38,7 +36,7 @@ export type NoteMark = "exact" | "close" | "off" | "missed";
 
 export type BarHandle = {
   width: number;
-  /** x-Koordinate (logisch) zu einer Position im Takt. */
+  /** x-Koordinate (logisch) zu einer Position im Takt; eine Note beginnt am linken Rand ihres Kopfs. */
   xForTick: (tick: number) => number;
   mark: (eventIndex: number, mark: NoteMark, lengthIssue: boolean) => void;
   /** Spielspur unter den Noten: zeigt, was tatsächlich gespielt wurde. */
@@ -224,7 +222,7 @@ export function drawBar(
   svg.style.display = "block";
 
   const xForTick = (tick: number) =>
-    prefixWidth + BAR_LEAD + HEAD_CENTER + tick * PX_PER_TICK;
+    prefixWidth + BAR_LEAD + tick * PX_PER_TICK;
 
   const overlay = document.createElementNS("http://www.w3.org/2000/svg", "g");
   svg.appendChild(overlay);
