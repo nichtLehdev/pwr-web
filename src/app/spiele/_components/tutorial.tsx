@@ -292,6 +292,27 @@ function Demo({ kind }: { kind: TutorialDemo | NoteDemo }) {
           </Row>
         </div>
       );
+    case "tempo-up":
+      return (
+        <div className="flex items-center gap-1.5">
+          {[66, 70, 74, 78].map((bpm, i) => (
+            <span key={bpm} className="contents">
+              {i > 0 && (
+                <span
+                  className="text-dark dark:text-night-muted text-sm font-extrabold"
+                  aria-hidden
+                >
+                  →
+                </span>
+              )}
+              <Cell at={i * 0.7} label={String(bpm)} />
+            </span>
+          ))}
+          <span className="text-dark dark:text-night-muted ml-1 text-xs font-extrabold">
+            BPM
+          </span>
+        </div>
+      );
     case "no-gap":
       return (
         <div className="flex gap-1.5">

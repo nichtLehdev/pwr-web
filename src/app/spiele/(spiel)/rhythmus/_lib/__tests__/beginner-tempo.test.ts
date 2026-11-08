@@ -2,7 +2,11 @@ import { describe, expect, it } from "@jest/globals";
 import { hasSteadyTempo, LEVELS } from "../../../../_lib/rhythm/levels";
 import { parseCell } from "../../../../_lib/rhythm/generator";
 import { barTicks } from "../../../../_lib/rhythm/ticks";
-import { noteTutorialFor, TUTORIALS } from "../../../../_lib/tutorials";
+import {
+  noteTutorialFor,
+  tempoTutorialFor,
+  TUTORIALS,
+} from "../../../../_lib/tutorials";
 import { startBpm } from "../prefs";
 import { AnswerPlan, AnswerScript, figuresForLevel } from "../session-script";
 
@@ -46,6 +50,22 @@ describe("steady tempo where a section brings something new", () => {
         expect(hasSteadyTempo(level)).toBe(group === groups[0] || i < 2);
       });
     }
+  });
+});
+
+describe("tempo warning", () => {
+  const byId = (id: string) => LEVELS.find((l) => l.id === id)!;
+
+  it("comes before the first level of a section where the tempo grows", () => {
+    expect(tempoTutorialFor(byId("achtel"))).toBeNull();
+    expect(tempoTutorialFor(byId("punktiert"))).toBe("rhythmus-tempo-2");
+    expect(tempoTutorialFor(byId("punktierte-achtel"))).toBe(
+      "rhythmus-tempo-3",
+    );
+    expect(tempoTutorialFor(byId("sechsachtel-sechzehntel"))).toBe(
+      "rhythmus-tempo-4",
+    );
+    expect(tempoTutorialFor(byId("meister"))).toBeNull();
   });
 });
 
