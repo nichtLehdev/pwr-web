@@ -185,8 +185,11 @@ export function SetupView({
             key: "daily",
             label: "Tagestraining",
             icon: CalendarDays,
-            status: dailyDone ? "Heute geschafft" : "Doppelte XP",
+            status: dailyDone
+              ? "Heute geschafft, morgen gibt es ein neues"
+              : "Doppelte XP",
             highlight: !dailyDone,
+            done: dailyDone,
             locked: sectionFinished(RHYTHM_PATH, DAILY_AFTER_SECTION, progress)
               ? null
               : "Schaff erst Abschnitt 2",

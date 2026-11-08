@@ -347,8 +347,11 @@ export function NoteValueGame() {
                   key: "daily",
                   label: "Tagestraining",
                   icon: CalendarDays,
-                  status: dailyDone ? "Heute geschafft" : "Doppelte XP",
+                  status: dailyDone
+                    ? "Heute geschafft, morgen gibt es ein neues"
+                    : "Doppelte XP",
                   highlight: !dailyDone,
+                  done: dailyDone,
                   locked: sectionFinished(
                     WAAGE_PATH,
                     DAILY_AFTER_SECTION,
