@@ -106,11 +106,21 @@ describe("daily practice", () => {
     ]);
   });
 
-  it("brings weak stages more often", () => {
-    const progress = { a: { stars: 3 }, b: { stars: 0 } };
+  it("brings weaker finished stages more often", () => {
+    const progress = { a: { stars: 3 }, b: { stars: 1 } };
     const picks = pickDailyStages(path, progress, 2000);
     const weak = picks.filter((s) => s.id === "b").length;
     expect(weak / picks.length).toBeGreaterThan(0.7);
+  });
+
+  it("only uses stages that are already finished", () => {
+    const progress = {
+      a: { stars: 2 },
+      "challenge-0": { stars: 2, passed: true },
+      c: { stars: 0 },
+    };
+    const picks = pickDailyStages(path, progress, 200);
+    expect(new Set(picks.map((s) => s.id))).toEqual(new Set(["a"]));
   });
 
   it("knows what kind of run an id is", () => {

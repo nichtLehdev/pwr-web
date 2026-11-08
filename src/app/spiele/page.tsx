@@ -1,13 +1,11 @@
 import PublicPage from "@/app/_components/general/public-page";
-import { Note } from "@/app/_components/programmheft/note";
 import {
   PageSection,
   Split,
 } from "@/app/_components/programmheft/page-section";
 import { Heading } from "@/app/_components/programmheft/section-head";
 import { GameHub, GameRows } from "./_components/game-hub";
-import { InstallHintCard } from "./_components/install-hint-card";
-import { OfflineReadyCard } from "./_components/offline-ready-card";
+import { OfflineMenu } from "./_components/offline-menu";
 import { StatsSyncRunner } from "./_components/stats-sync-runner";
 import { ProfilesProvider } from "./_components/profiles";
 import { LeagueCard, WeeklyTasksCard } from "./_components/league";
@@ -28,8 +26,8 @@ export default function SpielePage() {
       breadcrumbs={[{ label: "Start", href: "/" }, { label: "Spiele" }]}
       description={
         <p>
-          Kleine interaktive Übungen zum Mitmachen — ohne Anmeldung, direkt im
-          Browser.
+          Lerne Noten, Griffe und Rhythmen mit Toni – auf spielerische Art,
+          direkt im Browser.
         </p>
       }
     >
@@ -38,13 +36,7 @@ export default function SpielePage() {
           <GameHub />
           <LeagueCard />
           <WeeklyTasksCard />
-          <Note tone="info" className="mb-8">
-            Alle Spiele befinden sich derzeit in einer frühen Entwicklungsphase
-            und können sich noch ändern. Schwierigkeitsstufen werden später
-            angepasst.
-          </Note>
-          <InstallHintCard />
-          <OfflineReadyCard />
+          <OfflineMenu />
           <StatsSyncRunner />
 
           <div className="mt-10">

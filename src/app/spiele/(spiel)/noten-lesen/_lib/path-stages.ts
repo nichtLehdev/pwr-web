@@ -1,7 +1,7 @@
 import {
   createLearningPath,
   DAILY_ID,
-  unlockedStages,
+  finishedStages,
   type PathProgress,
   type PathStage,
 } from "../../../_lib/learning-path";
@@ -198,7 +198,7 @@ export function buildNotenRun(
   const daily = id === DAILY_ID;
   const challengeSection = NOTEN_PATH.parseChallengeId(id);
   const stages = daily
-    ? unlockedStages(NOTEN_PATH, progress)
+    ? finishedStages(NOTEN_PATH, progress)
     : challengeSection !== null
       ? NOTEN_PATH.sections
           .slice(0, challengeSection + 1)

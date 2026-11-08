@@ -37,6 +37,10 @@ const TEMPO_HOLD_FIGURES = 6;
 /** Notenband oberhalb von LONG_FROM_BPM: seltener und kleiner schneller. */
 const BAND_LATE_BARS_PER_STEP = 16;
 const BAND_LATE_TEMPO_STEP = 2;
+/** Nach dem Wechsel auf zwei Takte: so viele Figuren mit mehr langen Noten, abnehmend. */
+export const CALM_FIGURES = 8;
+/** Notenwerte, die man in der ruhigen Phase bevorzugt: Viertel, Halbe, Ganze und ihre Pausen. */
+const CALM_TOKENS = new Set(["w", "hd", "h", "q", "rw", "rh", "rq"]);
 /** So viele Figuren sind Triolen, sobald es welche gibt. */
 const TRIPLET_SHARE = 0.35;
 const RECENT_FIGURES = 3;
@@ -60,6 +64,10 @@ function isTriplet(pattern: string): boolean {
   return pattern.split(" ").some((token) => token === "t" || token === "rt");
 }
 
+function isCalm(pattern: string): boolean {
+  return pattern.split(" ").every((token) => CALM_TOKENS.has(token));
+}
+
 function isSixteenth(pattern: string): boolean {
   return pattern.includes("16");
 }
@@ -68,11 +76,15 @@ export function hasTriplets(stage: number): boolean {
   return endlessLevelAt(stage).cells.some((cell) => isTriplet(cell.pattern));
 }
 
-/** Alles bisher Gelernte; das Neueste kommt am häufigsten, damit man es auch übt. */
+/**
+ * Alles bisher Gelernte; das Neueste kommt am häufigsten, damit man es auch übt.
+ * `calm` (0 bis 1) verschiebt das Gewicht zu langen Noten, etwa wenn die Figur länger wird.
+ */
 export function endlessLevelAt(
   stage: number,
   family: EndlessFamily = "all",
   bars: 1 | 2 = 1,
+  calm = 0,
 ): Level {
   const index = Math.min(stage, SOURCE_LEVELS.length - 1);
   const newest = SOURCE_LEVELS[index]!;
@@ -96,13 +108,25 @@ export function endlessLevelAt(
     (family === "triplet"
       ? !isSixteenth(cell.pattern)
       : !isTriplet(cell.pattern));
+  const settled = [...cells.values()].map((cell) =>
+    calm <= 0
+      ? cell
+      : {
+          pattern: cell.pattern,
+          strong: cell.strong,
+          // Nicht jedes Mal das Neueste erzwingen, solange man sich an zwei Takte gewöhnt.
+          weight:
+            (cell.weight ?? 1) *
+            (isCalm(cell.pattern) ? 1 + 3 * calm : 1 - 0.85 * calm),
+        },
+  );
   return {
     id: ENDLESS_ID,
     title: "Endlos",
     hint: "",
     group: "Endlos",
     meters: [ENDLESS_METER],
-    cells: [...cells.values()].filter(fits),
+    cells: settled.filter(fits),
     bpm: { min: START_BPM, start: START_BPM, max: MAX_BPM },
     bars,
     minOnsets: 2,
@@ -140,6 +164,8 @@ export class EndlessPlan implements AnswerRules {
   private index = 0;
   private recent: string[] = [];
   private holdLeft = 0;
+  /** Figurnummer, ab der es zwei Takte gibt. */
+  private longFrom = 0;
   bpm = START_BPM;
   /** Ab LONG_FROM_BPM zwei Takte je Figur. */
   long = false;
@@ -166,7 +192,10 @@ export class EndlessPlan implements AnswerRules {
       : this.rng() < TRIPLET_SHARE
         ? "triplet"
         : "straight";
-    const level = endlessLevelAt(stage, family, this.long ? 2 : 1);
+    const calm = this.long
+      ? Math.max(0, 1 - (this.index - this.longFrom) / CALM_FIGURES)
+      : 0;
+    const level = endlessLevelAt(stage, family, this.long ? 2 : 1, calm);
     const figure = generateFigure(level, ENDLESS_METER, {
       rng: this.rng,
       avoid: new Set(this.recent),
@@ -192,6 +221,7 @@ export class EndlessPlan implements AnswerRules {
     const bpmBefore = this.bpm;
     if (!this.long && this.bpm >= LONG_FROM_BPM) {
       this.long = true;
+      this.longFrom = this.index;
       this.holdLeft = TEMPO_HOLD_FIGURES;
       return this.step("longer");
     }

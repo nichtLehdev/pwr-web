@@ -27,7 +27,7 @@ export function roundXp(round: {
   percent: number;
   /** Stufe schon mit mindestens so vielen Sternen geschafft. */
   replay?: boolean;
-  /** Erstes Tagestraining dieses Spiels heute. */
+  /** Erstes Tagestraining dieses Spiels heute; alle weiteren bringen nichts. */
   firstDailyToday?: boolean;
   /** Challenge zum ersten Mal geschafft. */
   firstPass?: boolean;
@@ -44,7 +44,8 @@ export function roundXp(round: {
         (round.firstPass ? FIRST_PASS_BONUS : 0)
       );
     case "daily":
-      return round.firstDailyToday ? base * 2 : reduced;
+      // Einmal am Tag je Spiel; jede weitere Runde wäre nur Punktesammeln.
+      return round.firstDailyToday ? base * 2 : 0;
     case "endless":
       return Math.min(ENDLESS_MAX, 5 + Math.floor((round.reached ?? 0) / 2));
     case "free":

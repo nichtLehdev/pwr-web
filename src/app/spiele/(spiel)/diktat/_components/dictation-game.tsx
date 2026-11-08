@@ -270,8 +270,11 @@ export function DictationGame() {
                   key: "daily",
                   label: "Tagestraining",
                   icon: CalendarDays,
-                  status: dailyDone ? "Heute geschafft" : "Doppelte XP",
+                  status: dailyDone
+                    ? "Heute geschafft, morgen gibt es ein neues"
+                    : "Doppelte XP",
                   highlight: !dailyDone,
+                  done: dailyDone,
                   locked: sectionFinished(
                     DICTATION_PATH,
                     DAILY_AFTER_SECTION,

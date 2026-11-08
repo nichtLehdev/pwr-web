@@ -35,6 +35,7 @@ import {
   type Progress,
 } from "../_lib/prefs";
 import { MAX_STARS, rankFor, totalStars } from "../_lib/ranks";
+import { bandBpmFor } from "../_lib/session-script";
 import { hasAnswerGap } from "../../../_lib/rhythm/levels";
 import { TutorialHelpButton, useTutorial } from "../../../_components/tutorial";
 import { BottomSheet } from "../../../_components/bottom-sheet";
@@ -110,7 +111,10 @@ export function SetupView({
               ...(tempo ? [tempo] : []),
             ];
   const endlessRecord = endlessRecords[prefs.mode];
-  const autoBpm = startBpm(level, progress, stage.id);
+  const autoBpm =
+    stage.mode === "band"
+      ? bandBpmFor(level)
+      : startBpm(level, progress, stage.id);
   const stars = totalStars(progress);
   const rank = rankFor(stars);
   const selectedRef = useRef<HTMLButtonElement>(null);
@@ -185,8 +189,11 @@ export function SetupView({
             key: "daily",
             label: "Tagestraining",
             icon: CalendarDays,
-            status: dailyDone ? "Heute geschafft" : "Doppelte XP",
+            status: dailyDone
+              ? "Heute geschafft, morgen gibt es ein neues"
+              : "Doppelte XP",
             highlight: !dailyDone,
+            done: dailyDone,
             locked: sectionFinished(RHYTHM_PATH, DAILY_AFTER_SECTION, progress)
               ? null
               : "Schaff erst Abschnitt 2",

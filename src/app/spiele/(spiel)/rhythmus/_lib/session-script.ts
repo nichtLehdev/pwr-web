@@ -66,7 +66,15 @@ export function figuresForLevel(level: Level): number {
   return level.figures ?? (level.bars === 2 ? 6 : 10);
 }
 
-export const BAND_BARS = 16;
+/** Vom Blatt ohne Vorspielen ist schwerer als Nachspielen: kürzer, ruhiger, etwas großzügiger. */
+export const BAND_BARS = 8;
+const BAND_SLOWER_BPM = 8;
+export const BAND_LENIENCY_BONUS = 0.15;
+
+/** Tempo einer Notenband-Stufe: etwas unter dem Starttempo der Stufe, nie unter ihrem Minimum. */
+export function bandBpmFor(level: Level): number {
+  return Math.max(level.bpm.min, level.bpm.start - BAND_SLOWER_BPM);
+}
 
 export type AnswerStep = {
   figure: Figure;
@@ -290,7 +298,18 @@ export function createBandBars(
   ts: TimeSignature,
   rng: Rng = Math.random,
 ): RhythmEvent[][] {
-  return generateBarSequence(level, ts, BAND_BARS, rng);
+  // Nur jeder zweite Takt muss das Neue enthalten; dazwischen darf man durchatmen.
+  const relaxed: Level = {
+    ...level,
+    cells: level.cells.map((cell) => ({
+      ...cell,
+      focus: false,
+      weight: cell.focus ? 1 : cell.weight,
+    })),
+  };
+  const strict = generateBarSequence(level, ts, BAND_BARS, rng);
+  const easy = generateBarSequence(relaxed, ts, BAND_BARS, rng);
+  return strict.map((bar, i) => (i % 2 === 0 ? bar : easy[i]!));
 }
 
 function emptyBar(): RhythmEvent[] {

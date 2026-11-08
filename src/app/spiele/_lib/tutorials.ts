@@ -220,7 +220,7 @@ export const TUTORIALS = {
   daily: [
     {
       title: "Jeden Tag ein bisschen",
-      text: "Das Tagestraining mischt Stufen, die du schon kannst. Das erste am Tag bringt doppelte XP.",
+      text: "Das Tagestraining mischt Stufen, die du schon geschafft hast. Es gibt eins am Tag, dafür mit doppelten XP.",
       mood: "happy",
       demo: "daily",
     },

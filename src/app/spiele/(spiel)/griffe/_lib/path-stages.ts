@@ -1,7 +1,7 @@
 import {
   createLearningPath,
   DAILY_ID,
-  unlockedStages,
+  finishedStages,
   type PathProgress,
   type PathStage,
 } from "../../../_lib/learning-path";
@@ -140,7 +140,7 @@ export function buildGriffeRun(
   const daily = id === DAILY_ID;
   const challengeSection = GRIFFE_PATH.parseChallengeId(id);
   const stages = daily
-    ? unlockedStages(GRIFFE_PATH, progress)
+    ? finishedStages(GRIFFE_PATH, progress)
     : challengeSection !== null
       ? GRIFFE_PATH.sections
           .slice(0, challengeSection + 1)

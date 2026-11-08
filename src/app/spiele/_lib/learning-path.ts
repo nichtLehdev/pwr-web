@@ -316,14 +316,26 @@ export function unlockedStages<S extends PathStage>(
     .flatMap((section) => section.stages);
 }
 
-/** Schwache Stufen kommen öfter dran: ohne Sterne viermal so oft wie mit dreien. */
+/** Was ins Tagestraining darf: nur Stufen, die schon mit mindestens einem Stern geschafft sind. */
+export function finishedStages<S extends PathStage>(
+  path: LearningPath<S>,
+  progress: PathProgress,
+): S[] {
+  const done = path.stages.filter(
+    (stage) => (progress[stage.id]?.stars ?? 0) > 0,
+  );
+  // Ohne geschaffte Stufe gäbe es nichts zu üben; dann lieber das Offene.
+  return done.length > 0 ? done : unlockedStages(path, progress);
+}
+
+/** Schwächer geschaffte Stufen kommen öfter dran: mit einem Stern dreimal so oft wie mit dreien. */
 export function pickDailyStages<S extends PathStage>(
   path: LearningPath<S>,
   progress: PathProgress,
   count: number,
   rng: () => number = Math.random,
 ): S[] {
-  const pool = unlockedStages(path, progress);
+  const pool = finishedStages(path, progress);
   const weight = (stage: S) => 4 - Math.min(3, progress[stage.id]?.stars ?? 0);
   const total = pool.reduce((sum, stage) => sum + weight(stage), 0);
   return Array.from({ length: count }, () => {

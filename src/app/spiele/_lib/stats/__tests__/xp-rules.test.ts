@@ -7,11 +7,11 @@ describe("roundXp", () => {
     expect(roundXp({ kind: "lesson", percent: 100, replay: true })).toBe(5);
   });
 
-  it("doubles the first daily practice of the day", () => {
+  it("doubles the first daily practice of the day and pays nothing after", () => {
     expect(
       roundXp({ kind: "daily", percent: 100, firstDailyToday: true }),
     ).toBe(40);
-    expect(roundXp({ kind: "daily", percent: 100 })).toBe(5);
+    expect(roundXp({ kind: "daily", percent: 100 })).toBe(0);
   });
 
   it("adds a bonus for the first passed challenge", () => {

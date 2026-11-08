@@ -48,6 +48,18 @@ const mobileRowClass = (active: boolean) =>
       : "text-ink dark:text-night-text font-semibold"
   }`;
 
+/** Schräges Neu-Schild im Spielwelt-Stil, das halb über dem Menüpunkt sitzt. */
+function NewBadge({ className = "" }: { className?: string }) {
+  return (
+    <>
+      <span aria-hidden className={`nav-new-badge ${className}`}>
+        Neu
+      </span>
+      <span className="sr-only"> (neu)</span>
+    </>
+  );
+}
+
 export default function Navigation() {
   const pathname = usePathname();
   const { bannerHeight } = useBanner();
@@ -158,7 +170,7 @@ export default function Navigation() {
         { href: "/materialien/literatur", label: "Literatur & CDs" },
       ],
     },
-    { href: "/spiele", label: "Spiele" },
+    { href: "/spiele", label: "Spiele", isNew: true },
     {
       href: "/ueber-uns",
       label: "Über uns",
@@ -317,9 +329,12 @@ export default function Navigation() {
                   <Link
                     href={link.href}
                     aria-current={pathname === link.href ? "page" : undefined}
-                    className={topLinkClass(isActive(link.href))}
+                    className={`${topLinkClass(isActive(link.href))} relative`}
                   >
                     {link.label}
+                    {"isNew" in link && link.isNew && (
+                      <NewBadge className="nav-new-badge-float" />
+                    )}
                   </Link>
                 )}
               </div>
@@ -510,6 +525,9 @@ export default function Navigation() {
                   >
                     <CurrentMarker active={isActive(link.href)} />
                     {link.label}
+                    {"isNew" in link && link.isNew && (
+                      <NewBadge className="nav-new-badge-inline" />
+                    )}
                   </Link>
                 )}
               </li>

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { isDailyDone } from "../_lib/daily";
-import { Lock, X, type LucideIcon } from "lucide-react";
+import { Check, Lock, X, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/app/_components/ui/button";
 import { GAME_FOCUS_RING } from "../_lib/focus-ring";
@@ -275,6 +275,8 @@ export type ModeButtonSpec = {
   locked?: string | null;
   /** Hervorgehoben, etwa ein noch offenes Tagestraining. */
   highlight?: boolean;
+  /** Für heute erledigt: Haken statt Symbol, erst morgen wieder spielbar. */
+  done?: boolean;
   onClick: () => void;
 };
 
@@ -289,14 +291,23 @@ export function ModeButtons({ buttons }: { buttons: ModeButtonSpec[] }) {
       )}
     >
       {buttons.map(
-        ({ key, label, icon: Icon, status, locked, highlight, onClick }) => (
+        ({
+          key,
+          label,
+          icon: Icon,
+          status,
+          locked,
+          highlight,
+          done,
+          onClick,
+        }) => (
           <div
             key={key}
             className="flex w-[72px] flex-col items-center gap-1.5"
           >
             <button
               type="button"
-              disabled={Boolean(locked)}
+              disabled={Boolean(locked) || done}
               onClick={() =>
                 tutorial.gate(
                   key === "daily" || key === "endless" ? [key] : [],
@@ -314,6 +325,8 @@ export function ModeButtons({ buttons }: { buttons: ModeButtonSpec[] }) {
             >
               {locked ? (
                 <Lock className="h-6 w-6" aria-hidden />
+              ) : done ? (
+                <Check className="h-7 w-7 stroke-[3]" aria-hidden />
               ) : (
                 <Icon className="h-7 w-7 stroke-[2.25]" aria-hidden />
               )}
