@@ -33,6 +33,7 @@ import {
   type TutorialStep,
 } from "../_lib/tutorials";
 import { Toni } from "./toni";
+import { BottomSheet } from "./bottom-sheet";
 import { RhythmFigureLoader } from "./rhythm-figure-loader";
 import { parseCell } from "../_lib/rhythm/generator";
 import { barTicks, pulseOf } from "../_lib/rhythm/ticks";
@@ -124,9 +125,6 @@ export function TutorialHelpButton({ ids }: { ids: readonly TutorialId[] }) {
   );
 }
 
-/** Ab so viel Zug nach unten gilt das Blatt als weggewischt. */
-const SWIPE_CLOSE_PX = 80;
-
 function TutorialSheet({
   steps,
   fresh,
@@ -137,9 +135,6 @@ function TutorialSheet({
   onDone: () => void;
 }) {
   const [index, setIndex] = useState(0);
-  const [drag, setDrag] = useState(0);
-  const [dragging, setDragging] = useState(false);
-  const dragStart = useRef<number | null>(null);
   const primaryRef = useRef<HTMLButtonElement>(null);
   const step = steps[index]!;
   const last = index === steps.length - 1;
@@ -148,115 +143,55 @@ function TutorialSheet({
     primaryRef.current?.focus({ preventScroll: true });
   }, [index]);
 
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onDone();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onDone]);
-
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center">
-      <div
-        className="spiel-tut-backdrop bg-ink/45 absolute inset-0"
-        onClick={onDone}
-        aria-hidden
-      />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="spiel-tut-title"
-        className="spiel-tut-sheet bg-paper dark:bg-night relative flex w-full max-w-xl flex-col gap-4 rounded-t-[28px] px-5 pt-3 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]"
-        style={{
-          transform: drag ? `translateY(${drag}px)` : undefined,
-          transition: dragging ? "none" : undefined,
-        }}
-        onPointerDown={(event) => {
-          if ((event.target as HTMLElement).closest("button")) return;
-          dragStart.current = event.clientY;
-          setDragging(true);
-          event.currentTarget.setPointerCapture(event.pointerId);
-        }}
-        onPointerMove={(event) => {
-          if (dragStart.current === null) return;
-          setDrag(Math.max(0, event.clientY - dragStart.current));
-        }}
-        onPointerUp={() => {
-          const swiped = drag > SWIPE_CLOSE_PX;
-          dragStart.current = null;
-          setDragging(false);
-          setDrag(0);
-          if (swiped) onDone();
-        }}
-        onPointerCancel={() => {
-          dragStart.current = null;
-          setDragging(false);
-          setDrag(0);
-        }}
-      >
-        <div
-          className="bg-rule dark:bg-night-rule mx-auto h-1.5 w-10 rounded-full"
-          aria-hidden
-        />
-        <div className="flex items-center justify-between">
-          <span className="text-primary-ink dark:text-primary text-xs font-extrabold tracking-wider uppercase">
-            {fresh ? "Neu für dich" : "So geht's"}
-          </span>
-          <button
-            type="button"
-            onClick={onDone}
-            className={cn(
-              "text-dark hover:text-ink dark:text-night-muted dark:hover:text-night-text -mr-2 min-h-11 px-2 text-sm font-extrabold",
-              GAME_FOCUS_RING,
-            )}
+    <BottomSheet
+      eyebrow={fresh ? "Neu für dich" : "So geht's"}
+      closeLabel={fresh ? "Überspringen" : "Schließen"}
+      labelledBy="spiel-tut-title"
+      onClose={onDone}
+    >
+      <div className="flex items-start gap-3">
+        <Toni mood={step.mood} className="h-[76px] w-[76px]" />
+        <div className="border-rule dark:border-night-rule flex-1 rounded-[18px] border-[3px] px-3.5 py-3">
+          <h2
+            id="spiel-tut-title"
+            className="text-ink dark:text-night-text mb-1 text-lg leading-tight font-extrabold"
           >
-            {fresh ? "Überspringen" : "Schließen"}
-          </button>
+            {step.title}
+          </h2>
+          <p className="text-dark dark:text-night-muted text-[15px] leading-snug">
+            {step.text}
+          </p>
         </div>
-        <div className="flex items-start gap-3">
-          <Toni mood={step.mood} className="h-[76px] w-[76px]" />
-          <div className="border-rule dark:border-night-rule flex-1 rounded-[18px] border-[3px] px-3.5 py-3">
-            <h2
-              id="spiel-tut-title"
-              className="text-ink dark:text-night-text mb-1 text-lg leading-tight font-extrabold"
-            >
-              {step.title}
-            </h2>
-            <p className="text-dark dark:text-night-muted text-[15px] leading-snug">
-              {step.text}
-            </p>
-          </div>
-        </div>
-        <div className="px-1" aria-hidden key={index}>
-          <Demo kind={step.demo} />
-        </div>
-        {steps.length > 1 && (
-          <div className="flex justify-center gap-1.5" aria-hidden>
-            {steps.map((_, i) => (
-              <span
-                key={i}
-                className={cn(
-                  "h-2 rounded-full transition-all",
-                  i === index
-                    ? "bg-primary w-[22px]"
-                    : "bg-rule dark:bg-night-rule w-2",
-                )}
-              />
-            ))}
-          </div>
-        )}
-        <Button
-          ref={primaryRef}
-          type="button"
-          size="lg"
-          className="spiel-action w-full"
-          onClick={() => (last ? onDone() : setIndex(index + 1))}
-        >
-          {!last ? "Weiter" : fresh ? "Los geht's" : "Alles klar"}
-        </Button>
       </div>
-    </div>
+      <div className="px-1" aria-hidden key={index}>
+        <Demo kind={step.demo} />
+      </div>
+      {steps.length > 1 && (
+        <div className="flex justify-center gap-1.5" aria-hidden>
+          {steps.map((_, i) => (
+            <span
+              key={i}
+              className={cn(
+                "h-2 rounded-full transition-all",
+                i === index
+                  ? "bg-primary w-[22px]"
+                  : "bg-rule dark:bg-night-rule w-2",
+              )}
+            />
+          ))}
+        </div>
+      )}
+      <Button
+        ref={primaryRef}
+        type="button"
+        size="lg"
+        className="spiel-action w-full"
+        onClick={() => (last ? onDone() : setIndex(index + 1))}
+      >
+        {!last ? "Weiter" : fresh ? "Los geht's" : "Alles klar"}
+      </Button>
+    </BottomSheet>
   );
 }
 

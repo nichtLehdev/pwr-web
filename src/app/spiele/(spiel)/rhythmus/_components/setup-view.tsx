@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CalendarDays, Infinity as InfinityIcon, Medal } from "lucide-react";
+import {
+  CalendarDays,
+  Infinity as InfinityIcon,
+  Medal,
+  Settings,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/app/_components/ui/button";
 import { GameHead } from "../../../_components/game-kit";
@@ -32,6 +37,7 @@ import {
 import { MAX_STARS, rankFor, totalStars } from "../_lib/ranks";
 import { hasAnswerGap } from "../../../_lib/rhythm/levels";
 import { TutorialHelpButton, useTutorial } from "../../../_components/tutorial";
+import { BottomSheet } from "../../../_components/bottom-sheet";
 import { noteTutorialFor, type TutorialId } from "../../../_lib/tutorials";
 
 const MIN_BPM = 40;
@@ -70,6 +76,10 @@ export function SetupView({
   const tutorial = useTutorial();
   const dailyDone = useDailyDone("rhythmus");
   const [choosingEndless, setChoosingEndless] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const settingsSummary = `${prefs.input === "hold" ? "Halten" : "Tippen"} · ${
+    prefs.fixedBpm === null ? "Tempo passt sich an" : `${prefs.fixedBpm} BPM`
+  }`;
   const challengeSection = parseChallengeId(prefs.levelId);
   const stage = RHYTHM_PATH.stageById(prefs.levelId) ?? RHYTHM_PATH.stages[0]!;
   const level = stage.level;
@@ -195,6 +205,13 @@ export function SetupView({
             status: "Ansehen",
             onClick: onOpenBoard,
           },
+          {
+            key: "settings",
+            label: "Einstellungen",
+            icon: Settings,
+            status: settingsSummary,
+            onClick: () => setSettingsOpen(true),
+          },
         ]}
       />
       {choosingEndless && (
@@ -242,104 +259,99 @@ export function SetupView({
         onPick={pick}
       />
 
-      <details className="border-ink dark:border-night-text border-t-2">
-        <summary
-          className={cn(
-            "text-ink dark:text-night-text flex min-h-14 cursor-pointer list-none items-center gap-2 font-bold [&::-webkit-details-marker]:hidden",
-            GAME_FOCUS_RING,
-          )}
+      {settingsOpen && (
+        <BottomSheet
+          eyebrow="Rhythmus"
+          title="Einstellungen"
+          onClose={() => setSettingsOpen(false)}
         >
-          Einstellungen
-          <span className="text-dark dark:text-night-muted ml-auto text-sm font-normal">
-            {prefs.input === "hold" ? "Halten" : "Tippen"} ·{" "}
-            {prefs.fixedBpm === null
-              ? "Tempo passt sich an"
-              : `${prefs.fixedBpm} BPM`}
-          </span>
-        </summary>
-        <div className="flex flex-col gap-4 pb-3">
-          <div>
-            <p className="text-dark dark:text-night-muted mb-1.5 text-sm">
-              Eingabe: Bei „Halten“ zählt auch, wie lange der Ton klingt.
-            </p>
-            <div className="flex gap-2">
-              {(
-                [
-                  ["hold", "Halten"],
-                  ["tap", "Tippen"],
-                ] as const
-              ).map(([id, title]) => (
+          <div className="flex flex-col gap-4">
+            <div>
+              <p className="text-dark dark:text-night-muted mb-1.5 text-sm">
+                Eingabe: Bei „Halten“ zählt auch, wie lange der Ton klingt.
+              </p>
+              <div className="flex gap-2">
+                {(
+                  [
+                    ["hold", "Halten"],
+                    ["tap", "Tippen"],
+                  ] as const
+                ).map(([id, title]) => (
+                  <button
+                    key={id}
+                    type="button"
+                    aria-pressed={prefs.input === id}
+                    onClick={() => setInput(id)}
+                    className={cn(
+                      smallButton,
+                      "flex-1",
+                      prefs.input === id && cn(ON_ORANGE, "dark:text-ink"),
+                    )}
+                  >
+                    {title}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="text-dark dark:text-night-muted mb-1.5 text-sm">
+                Tempo: Mit festem Tempo übst du frei, aber ohne Sterne.
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
                 <button
-                  key={id}
                   type="button"
-                  aria-pressed={prefs.input === id}
-                  onClick={() => setInput(id)}
+                  aria-pressed={prefs.fixedBpm === null}
+                  onClick={() =>
+                    onChange({
+                      ...prefs,
+                      fixedBpm: prefs.fixedBpm === null ? autoBpm : null,
+                    })
+                  }
                   className={cn(
                     smallButton,
-                    "flex-1",
-                    prefs.input === id && cn(ON_ORANGE, "dark:text-ink"),
+                    prefs.fixedBpm === null && cn(ON_ORANGE, "dark:text-ink"),
                   )}
                 >
-                  {title}
+                  Passt sich an
                 </button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <p className="text-dark dark:text-night-muted mb-1.5 text-sm">
-              Tempo: Mit festem Tempo übst du frei, aber ohne Sterne.
-            </p>
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                aria-pressed={prefs.fixedBpm === null}
-                onClick={() =>
-                  onChange({
-                    ...prefs,
-                    fixedBpm: prefs.fixedBpm === null ? autoBpm : null,
-                  })
-                }
-                className={cn(
-                  smallButton,
-                  prefs.fixedBpm === null && cn(ON_ORANGE, "dark:text-ink"),
-                )}
-              >
-                Passt sich an
-              </button>
-              {prefs.fixedBpm !== null && (
-                <span className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    aria-label="Tempo verlangsamen"
-                    onClick={() => stepBpm(-4)}
-                    className={cn(smallButton, "w-11 text-xl")}
-                  >
-                    −
-                  </button>
-                  <span className="condensed text-ink dark:text-night-text min-w-20 text-center text-xl font-extrabold tabular-nums">
-                    {prefs.fixedBpm} BPM
+                {prefs.fixedBpm !== null && (
+                  <span className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      aria-label="Tempo verlangsamen"
+                      onClick={() => stepBpm(-4)}
+                      className={cn(smallButton, "w-11 text-xl")}
+                    >
+                      −
+                    </button>
+                    <span className="condensed text-ink dark:text-night-text min-w-20 text-center text-xl font-extrabold tabular-nums">
+                      {prefs.fixedBpm} BPM
+                    </span>
+                    <button
+                      type="button"
+                      aria-label="Tempo erhöhen"
+                      onClick={() => stepBpm(4)}
+                      className={cn(smallButton, "w-11 text-xl")}
+                    >
+                      +
+                    </button>
                   </span>
-                  <button
-                    type="button"
-                    aria-label="Tempo erhöhen"
-                    onClick={() => stepBpm(4)}
-                    className={cn(smallButton, "w-11 text-xl")}
-                  >
-                    +
-                  </button>
-                </span>
-              )}
+                )}
+              </div>
             </div>
+            <button
+              type="button"
+              onClick={() => {
+                setSettingsOpen(false);
+                onCalibrate();
+              }}
+              className={cn(smallButton, "self-start")}
+            >
+              Klingt der Ton verzögert? Timing einstellen
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={onCalibrate}
-            className={cn(smallButton, "self-start")}
-          >
-            Klingt der Ton verzögert? Timing einstellen
-          </button>
-        </div>
-      </details>
+        </BottomSheet>
+      )}
 
       <GameDock>
         <div className="flex flex-col gap-1.5">

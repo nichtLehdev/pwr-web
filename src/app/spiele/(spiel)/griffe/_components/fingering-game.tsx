@@ -1,7 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Check, ChevronDown, Settings2, X } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  Settings2,
+  X,
+  SlidersHorizontal,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/react";
 import { Button } from "@/app/_components/ui/button";
@@ -1469,6 +1475,13 @@ export function FingeringGame() {
                   icon: Medal,
                   status: "Ansehen",
                   onClick: () => setPhase("board"),
+                },
+                {
+                  key: "free",
+                  label: "Frei üben",
+                  icon: SlidersHorizontal,
+                  status: "Eigene Notensets, Quiz und Endlos",
+                  onClick: () => setFreeOpen(true),
                 },
               ]}
             />
