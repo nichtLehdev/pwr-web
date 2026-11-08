@@ -265,6 +265,8 @@ export const UNRANKED_NO_PROFILE =
   "Ohne Profil zählt dieser Lauf nicht für die Bestenliste.";
 export const UNRANKED_OFFLINE =
   "Offline: Dieser Lauf zählt nicht für die Bestenliste.";
+export const UNRANKED_PAUSED =
+  "Pausiert: Dieser Lauf zählt nicht mehr für die Bestenliste.";
 export const UNRANKED_SERVER =
   "Der Server ist gerade nicht erreichbar. Dieser Lauf zählt nicht für die Bestenliste.";
 

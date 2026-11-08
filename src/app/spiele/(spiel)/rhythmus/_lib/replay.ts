@@ -68,6 +68,10 @@ export class RecordingScript implements SessionScript {
   peekBar(index: number): RhythmEvent[] | undefined {
     return this.inner.peekBar?.(index);
   }
+
+  rewind(from: { kind: SegmentSpec["kind"]; index: number }): void {
+    this.inner.rewind?.(from);
+  }
 }
 
 /** Gibt die Entscheidungen des Geräts weiter und merkt sich, was der Server selbst sah. */

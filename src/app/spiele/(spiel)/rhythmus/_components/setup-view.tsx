@@ -39,6 +39,7 @@ import { bandBpmFor } from "../_lib/session-script";
 import { hasAnswerGap } from "../../../_lib/rhythm/levels";
 import { TutorialHelpButton, useTutorial } from "../../../_components/tutorial";
 import { BottomSheet } from "../../../_components/bottom-sheet";
+import { VolumeSlider } from "../../../_components/game-kit";
 import {
   noteTutorialFor,
   tempoTutorialFor,
@@ -283,6 +284,7 @@ export function SetupView({
           onClose={() => setSettingsOpen(false)}
         >
           <div className="flex flex-col gap-4">
+            <VolumeSlider />
             <div>
               <p className="text-dark dark:text-night-muted mb-1.5 text-sm">
                 Eingabe: Bei „Halten“ zählt auch, wie lange der Ton klingt.

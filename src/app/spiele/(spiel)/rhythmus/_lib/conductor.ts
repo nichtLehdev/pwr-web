@@ -96,8 +96,13 @@ export class Conductor {
   private raf: number | null = null;
   private held: HeldTone | null = null;
   private openPress: Press | null = null;
+  private autoRun = true;
+  /** Nach einer Pause abgeschnittene Abschnitte: Sie zählen und erscheinen nicht mehr. */
+  private readonly discarded = new Set<number>();
+  private readonly pointsBySegment = new Map<number, number>();
   startSec = 0;
   points = 0;
+  paused = false;
 
   constructor(
     private readonly audio: AudioPort,
@@ -142,6 +147,16 @@ export class Conductor {
   }
 
   private forward(event: JudgeEvent): void {
+    const before = this.points;
+    this.score(event);
+    this.pointsBySegment.set(
+      event.segmentId,
+      (this.pointsBySegment.get(event.segmentId) ?? 0) + this.points - before,
+    );
+    this.emit("onJudge", event);
+  }
+
+  private score(event: JudgeEvent): void {
     const { note } = event.type === "extra" ? { note: null } : event;
     const holdCounts = this.options.input === "hold" && note?.judgeLength;
     if (event.type === "note" && note?.verdict) {
@@ -155,7 +170,6 @@ export class Conductor {
         VERDICT_POINTS[note.verdict] * this.multiplier * (1 - ONSET_SHARE),
       );
     }
-    this.emit("onJudge", event);
   }
 
   /** Was man gerade hört (Audiozeit minus Ausgabeweg). */
@@ -166,10 +180,56 @@ export class Conductor {
   /** Ohne `autoRun` treibt der Aufrufer per `pump` (Tests). */
   start(autoRun = true): void {
     this.running = true;
+    this.autoRun = autoRun;
     this.startSec = this.audio.now() + START_DELAY_SEC;
     this.cursorSec = this.startSec;
     this.scheduleAhead();
-    if (!autoRun) return;
+    if (autoRun) this.loop();
+  }
+
+  /**
+   * Anhalten mitten im Lauf. Der angefangene Abschnitt fliegt raus und das Skript spult zurück;
+   * liefert `false`, wenn es nichts anzuhalten gibt.
+   */
+  pause(now = this.songSec()): boolean {
+    if (!this.running || this.finished || !this.script.rewind) return false;
+    this.halt();
+    this.audio.cancelScheduled();
+    this.openPress = null;
+    const live = this.segments.filter(
+      (s) => !this.discarded.has(s.id) && s.endSec > now,
+    );
+    // Steht der nächste Abschnitt schon fest, ist der laufende fast vorbei und bleibt.
+    const future = live.filter((s) => s.startSec > now);
+    const cut = future.length > 0 ? future : live;
+    for (const segment of cut) {
+      this.discarded.add(segment.id);
+      this.judge.removeSegment(segment.id);
+      this.points -= this.pointsBySegment.get(segment.id) ?? 0;
+      this.pointsBySegment.delete(segment.id);
+    }
+    const first = cut[0];
+    if (first) {
+      this.script.rewind({ kind: first.kind, index: first.index });
+      this.scriptDone = false;
+    }
+    // Die Entscheidung über den letzten Abschnitt ist schon gefallen.
+    this.lastPlayable = null;
+    this.paused = true;
+    return true;
+  }
+
+  /** Weiter nach `pause`: frische Uhr, das Skript zählt neu ein. */
+  resume(): void {
+    if (!this.paused || this.finished) return;
+    this.paused = false;
+    this.running = true;
+    this.cursorSec = this.audio.now() + START_DELAY_SEC;
+    this.scheduleAhead();
+    if (this.autoRun) this.loop();
+  }
+
+  private loop(): void {
     this.timer = window.setInterval(() => this.scheduleAhead(), 25);
     const frame = () => {
       this.pump(this.songSec());
@@ -302,6 +362,7 @@ export class Conductor {
     ) {
       const segment = this.segments[this.announced]!;
       this.announced++;
+      if (this.discarded.has(segment.id)) continue;
       this.activeSegment = segment;
       this.emit("onSegment", segment);
     }
@@ -366,6 +427,7 @@ export class Conductor {
     for (let i = this.segments.length - 1; i >= 0; i--) {
       const s = this.segments[i]!;
       if (s.kind !== "answer" && s.kind !== "read") continue;
+      if (this.discarded.has(s.id)) continue;
       const halfPulseMs =
         (pulseOf(s.timeSignature).pulseTicks * secPerTick(s.bpm) * 1000) / 2;
       if (songMs < s.startSec * 1000 - halfPulseMs) continue;
@@ -379,6 +441,7 @@ export class Conductor {
       this.segments.find(
         (s) =>
           (s.kind === "answer" || s.kind === "read") &&
+          !this.discarded.has(s.id) &&
           songMs >= s.startSec * 1000 - 120 &&
           songMs < s.endSec * 1000,
       ) ?? null
@@ -400,6 +463,7 @@ export class Conductor {
   attempts(): Attempt[] {
     return this.segments.flatMap((segment) => {
       if (segment.kind !== "answer" && segment.kind !== "read") return [];
+      if (this.discarded.has(segment.id)) return [];
       const judged = this.judge.segment(segment.id);
       if (!judged) return [];
       const startMs = segment.startSec * 1000;

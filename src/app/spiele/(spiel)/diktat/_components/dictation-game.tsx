@@ -11,6 +11,7 @@ import {
   GameHead,
   GameStatus,
   LessonFeedback,
+  SoundToggle,
   useLessonHearts,
 } from "../../../_components/game-kit";
 import { PathResult } from "../../../_components/path-result";
@@ -259,7 +260,7 @@ export function DictationGame() {
               title="Rhythmus-Diktat"
               text={`Hör genau hin und finde die passenden Noten. Sofort richtig gibt ${POINTS_FIRST_TRY} Punkte, beim zweiten Versuch ${POINTS_SECOND_TRY}.`}
               weltTitle="Spitz die Ohren!"
-              aside={null}
+              aside={<SoundToggle rewards={false} />}
             />
           }
           onStart={() => startRun(pathState.selectedId)}

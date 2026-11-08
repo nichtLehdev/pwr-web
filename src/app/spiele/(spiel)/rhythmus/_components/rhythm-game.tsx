@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { X } from "lucide-react";
+import { Pause, X } from "lucide-react";
+import { Button } from "@/app/_components/ui/button";
+import { Toni } from "../../../_components/toni";
 import { cn } from "@/lib/utils";
 import { GAME_FOCUS_RING } from "../../../_lib/focus-ring";
 import {
@@ -84,6 +86,7 @@ import { activeProfileId } from "../../../_lib/profiles/scope";
 import {
   LeaderboardView,
   RankedResult,
+  UNRANKED_PAUSED,
   UnrankedNotice,
   unrankedReason,
   type RankedOutcome,
@@ -550,26 +553,50 @@ export function RhythmGame() {
     [changePrefs, start, startRhythmRun],
   );
 
+  const [paused, setPaused] = useState(false);
+
+  /** Anhalten; ein Bestenlisten-Lauf zählt danach nicht mehr, der Server könnte ihn nicht nachspielen. */
+  const pause = useCallback(() => {
+    const active = sessionRef.current;
+    if (!active || !active.conductor.pause()) return;
+    if (active.ranked) {
+      if (active.ranked.timer != null)
+        window.clearInterval(active.ranked.timer);
+      active.ranked = null;
+      setUnranked(UNRANKED_PAUSED);
+      setSession({ ...active });
+    }
+    setPaused(true);
+  }, []);
+
+  const resume = useCallback(async () => {
+    const active = sessionRef.current;
+    if (!active) return;
+    // Nach dem Hintergrund kann der Audiokontext angehalten sein; das Tippen weckt ihn.
+    await audio.ensure().catch(() => undefined);
+    active.conductor.resume();
+    setPaused(false);
+  }, [audio]);
+
   const abort = useCallback((message: string | null) => {
     const timer = sessionRef.current?.ranked?.timer;
     if (timer != null) window.clearInterval(timer);
     sessionRef.current?.conductor.stop();
     sessionRef.current = null;
     setSession(null);
+    setPaused(false);
     setNotice(message);
     setView("setup");
   }, []);
 
-  /** Im Hintergrund läuft die Audiouhr anders weiter: Die Runde wäre nicht mehr fair. */
+  /** Im Hintergrund läuft die Audiouhr anders weiter: lieber anhalten als falsch werten. */
   useEffect(() => {
     const onVisibility = () => {
-      if (document.visibilityState === "hidden" && sessionRef.current) {
-        abort("Unterbrochen, starte die Runde neu.");
-      }
+      if (document.visibilityState === "hidden") pause();
     };
     document.addEventListener("visibilitychange", onVisibility);
     return () => document.removeEventListener("visibilitychange", onVisibility);
-  }, [abort]);
+  }, [pause]);
 
   useEffect(
     () => () => {
@@ -641,6 +668,19 @@ export function RhythmGame() {
       {view === "play" && session && (
         <>
           <GameBarSlot>
+            {!paused && (
+              <button
+                type="button"
+                onClick={pause}
+                aria-label="Pause"
+                className={cn(
+                  "border-rule text-dark hover:bg-rule/25 dark:border-night-rule dark:text-night-muted dark:hover:bg-night-raised mr-2 inline-flex min-h-11 min-w-11 items-center justify-center border transition-colors",
+                  GAME_FOCUS_RING,
+                )}
+              >
+                <Pause className="h-4 w-4" aria-hidden />
+              </button>
+            )}
             <button
               type="button"
               onClick={() => abort(null)}
@@ -656,31 +696,46 @@ export function RhythmGame() {
           {session.level === null && !session.challenge && !session.ranked && (
             <UnrankedNotice reason={unranked} />
           )}
-          {session.band ? (
-            <BandStage
-              conductor={session.conductor}
-              source={session.band.source}
-              timeSignature={session.band.ts}
-            />
-          ) : (
-            <AnswerStage conductor={session.conductor} />
-          )}
+          {paused && <PauseCard band={session.band !== null} />}
+          {/* Versteckt statt abgebaut: Das Band behält seine gezeichneten Takte. */}
+          <div className={paused ? "hidden" : undefined}>
+            {session.band ? (
+              <BandStage
+                conductor={session.conductor}
+                source={session.band.source}
+                timeSignature={session.band.ts}
+              />
+            ) : (
+              <AnswerStage conductor={session.conductor} />
+            )}
+          </div>
           <GameDock>
-            <PlayPad
-              label={
-                isListening && !session.band
-                  ? "Hör zu"
-                  : prefs.input === "hold"
-                    ? "Drücken und halten"
-                    : "Tippen"
-              }
-              emphasized={!isListening || session.band !== null}
-              hint={
-                prefs.input === "hold" ? "Halten mit der" : "Tippen mit der"
-              }
-              onPress={(t) => session.conductor.press(t)}
-              onRelease={(t) => session.conductor.release(t)}
-            />
+            {paused ? (
+              <Button
+                type="button"
+                size="lg"
+                className="spiel-action w-full"
+                onClick={() => void resume()}
+              >
+                Weiter
+              </Button>
+            ) : (
+              <PlayPad
+                label={
+                  isListening && !session.band
+                    ? "Hör zu"
+                    : prefs.input === "hold"
+                      ? "Drücken und halten"
+                      : "Tippen"
+                }
+                emphasized={!isListening || session.band !== null}
+                hint={
+                  prefs.input === "hold" ? "Halten mit der" : "Tippen mit der"
+                }
+                onPress={(t) => session.conductor.press(t)}
+                onRelease={(t) => session.conductor.release(t)}
+              />
+            )}
           </GameDock>
         </>
       )}
@@ -720,6 +775,23 @@ export function RhythmGame() {
           }}
         />
       )}
+    </div>
+  );
+}
+
+/** Was beim Weiterspielen passiert, damit niemand mitten im Takt einsteigen muss. */
+function PauseCard({ band }: { band: boolean }) {
+  return (
+    <div className="spiel-tile flex flex-col items-center gap-3 px-5 py-8 text-center">
+      <Toni mood="idle" className="h-24 w-24" />
+      <h2 className="condensed text-ink dark:text-night-text text-3xl font-extrabold">
+        Pause
+      </h2>
+      <p className="text-dark dark:text-night-muted max-w-[34ch]">
+        {band
+          ? "Beim Weiterspielen zähle ich ein, der letzte Takt läuft noch einmal vorbei."
+          : "Beim Weiterspielen zähle ich ein und spiele die Figur noch einmal vor."}
+      </p>
     </div>
   );
 }

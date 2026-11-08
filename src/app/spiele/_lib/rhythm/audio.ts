@@ -1,3 +1,4 @@
+import { gainForVolume, loadVolume, VOLUME_CHANGED_EVENT } from "../volume";
 /** Kleine Kadenz: Figuren klingen wie Musik. Noten stehen auf dem Ton, der klingt. */
 const HARMONY = [
   { melodyHz: 293.66, melodyKey: "d/4", bassHz: 116.54 }, // B-Dur
@@ -56,12 +57,16 @@ function noiseClick(ctx: AudioContext): AudioBuffer {
   return buffer;
 }
 
+/** Volle Lautstärke am Regler; darüber fängt der Begrenzer an zu pumpen. */
+const MASTER_GAIN = 0.9;
+
 export class RhythmAudio implements AudioPort {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
   private click: AudioBuffer | null = null;
   private scheduled = new Set<Scheduled>();
   private clockOffset: number | null = null;
+  private onVolume: ((event: Event) => void) | null = null;
 
   /** Muss aus einer Nutzerhandlung heraus laufen, sonst bleibt der Kontext stumm. */
   async ensure(): Promise<void> {
@@ -74,7 +79,19 @@ export class RhythmAudio implements AudioPort {
       this.ctx = new Ctor({ latencyHint: "interactive" });
       this.click = noiseClick(this.ctx);
       this.master = this.ctx.createGain();
-      this.master.gain.value = 0.9;
+      this.master.gain.value = MASTER_GAIN * gainForVolume(loadVolume());
+      // Der Regler wirkt sofort, auch mitten im Spiel.
+      this.onVolume = (event) => {
+        const volume = (event as CustomEvent<number>).detail;
+        if (this.ctx && this.master) {
+          this.master.gain.setTargetAtTime(
+            MASTER_GAIN * gainForVolume(volume),
+            this.ctx.currentTime,
+            0.02,
+          );
+        }
+      };
+      window.addEventListener(VOLUME_CHANGED_EVENT, this.onVolume);
       const limiter = this.ctx.createDynamicsCompressor();
       this.master.connect(limiter);
       limiter.connect(this.ctx.destination);
@@ -241,6 +258,10 @@ export class RhythmAudio implements AudioPort {
 
   close(): void {
     this.cancelScheduled();
+    if (this.onVolume) {
+      window.removeEventListener(VOLUME_CHANGED_EVENT, this.onVolume);
+      this.onVolume = null;
+    }
     void this.ctx?.close();
     this.ctx = null;
     this.master = null;

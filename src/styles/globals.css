@@ -1188,3 +1188,11 @@ input[type="datetime-local"]::-webkit-date-and-time-value {
   margin-top: -12px;
   margin-left: -6px;
 }
+
+/* Lautstärkeregler: Spielwelt-Orange statt Systemblau. */
+.spiel-volume {
+  accent-color: var(--color-primary-ink);
+}
+.dark .spiel-volume {
+  accent-color: var(--color-primary);
+}

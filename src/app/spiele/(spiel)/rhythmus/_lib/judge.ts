@@ -99,6 +99,22 @@ export class LiveJudge {
 
   constructor(private readonly options: JudgeOptions) {}
 
+  /** Nach einer Pause: ein abgebrochener Abschnitt zählt nicht. */
+  removeSegment(id: number): void {
+    const index = this.segments.findIndex((s) => s.id === id);
+    if (index >= 0) this.segments.splice(index, 1);
+    if (this.active?.segmentId === id) this.active = null;
+    // Die Serie zählt nur, was bleibt; sonst gäbe die Wiederholung einen höheren Faktor.
+    this.streak = 0;
+    this.bestStreak = 0;
+    for (const segment of this.segments) {
+      for (const note of segment.notes) {
+        if (note.verdict === null) continue;
+        this.countStreak(note.verdict);
+      }
+    }
+  }
+
   addSegment(input: JudgeSegmentInput): void {
     this.segments.push({
       ...input,

@@ -38,6 +38,11 @@ export interface SessionScript {
   next(lastAccuracy: number | null): SegmentSpec | null;
   /** Falls Takte vorab feststehen: nötig, um zu wissen, ob nach einer Note Pause kommt. */
   peekBar?(index: number): RhythmEvent[] | undefined;
+  /**
+   * Nach einer Pause dort weitermachen, wo `from` abgeschnitten wurde: erst einzählen,
+   * dann die Figur bzw. den Takt noch einmal.
+   */
+  rewind?(from: { kind: SegmentKind; index: number }): void;
 }
 
 /** Was das Notenband wissen muss, um im Voraus zu zeichnen und mitzulaufen. */
@@ -175,7 +180,8 @@ export class AnswerPlan implements AnswerRules {
 /** Antworten: Einzählen, dann immer Vorspielen und Nachspielen. */
 export class AnswerScript implements SessionScript {
   private step: AnswerStep | null = null;
-  private stage: "count" | "call" | "ready" | "answer" | "decide" = "count";
+  private stage: "count" | "recount" | "call" | "ready" | "answer" | "decide" =
+    "count";
 
   constructor(
     private readonly plan: AnswerRules,
@@ -185,11 +191,22 @@ export class AnswerScript implements SessionScript {
     private readonly gap = false,
   ) {}
 
+  rewind(): void {
+    if (!this.step) return;
+    // Die Figur von vorn, ohne die Ansage von vorhin zu wiederholen.
+    this.step = { ...this.step, announcement: null };
+    this.stage = "recount";
+  }
+
   next(lastAccuracy: number | null): SegmentSpec | null {
     if (this.stage === "count") {
       this.step = this.plan.first();
       this.stage = "call";
       return this.spec("count", this.step, [emptyBar()]);
+    }
+    if (this.stage === "recount") {
+      this.stage = "call";
+      return this.spec("count", this.step!, [emptyBar()]);
     }
     if (this.stage === "call") {
       this.stage = this.gap ? "ready" : "answer";
@@ -266,7 +283,19 @@ export class BandScript implements SessionScript, BandSource {
     return this.bars.length;
   }
 
+  private recount = false;
+
+  /** Ab dem abgeschnittenen Takt weiter; im Einzähltakt läuft der davor noch einmal vorbei. */
+  rewind(from: { kind: SegmentKind; index: number }): void {
+    this.cursor = from.kind === "read" ? from.index : Math.max(0, this.cursor);
+    this.recount = true;
+  }
+
   next(): SegmentSpec | null {
+    if (this.recount) {
+      this.recount = false;
+      return this.spec("count", [emptyBar()], Math.max(0, this.cursor));
+    }
     const index = this.cursor++;
     if (index === -1) {
       return this.spec("count", [emptyBar()], 0);

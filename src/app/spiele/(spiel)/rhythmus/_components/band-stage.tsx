@@ -59,13 +59,10 @@ export function BandStage({
   const countNumber = useCountIn(conductor);
 
   useEffect(() => {
-    const ticksPerBar = barTicks(timeSignature);
     const { pulsesPerBar } = pulseOf(timeSignature);
-    const barSecAt = (index: number) =>
-      ticksPerBar * secPerTick(source.bpmAt(index));
-    // Takt und Startzeit wandern mit: Das Tempo darf von Takt zu Takt wechseln.
-    let barIndex = 0;
-    let barStart = conductor.startSec + barSecAt(0);
+    // Die Lage kommt aus dem laufenden Abschnitt: So stimmt sie auch nach einer Pause.
+    // Beim Einzählen läuft der Takt davor vorbei, ganz am Anfang ein leerer.
+    let current: Segment | null = null;
     const barWidth =
       (barTicks(timeSignature) / TICKS_PER_QUARTER) * QUARTER_WIDTH;
     let ready = false;
@@ -103,7 +100,11 @@ export function BandStage({
 
     const unsubscribe = conductor.subscribe({
       onSegment: (next: Segment) => {
-        if (next.kind === "read") setSegment(next);
+        if (next.kind === "read" || next.kind === "count") current = next;
+        // Nach einer Pause kommt ein Takt noch einmal: Die alten Markierungen gehen.
+        if (next.kind === "read") drawnBars.get(next.index)?.handle.clear();
+        // Auch nach einer Pause heißt der Einzähltakt „Mitzählen“.
+        setSegment(next.kind === "read" ? next : null);
       },
       onFrame: (songSec) => {
         const box = boxRef.current;
@@ -114,15 +115,12 @@ export function BandStage({
           box.clientHeight / VIEW_HEIGHT,
           Math.max(MIN_SCALE, width / 640),
         );
-        if (barIndex === 0 && barStart < conductor.startSec) {
-          barStart = conductor.startSec + barSecAt(0);
-        }
-        while (songSec >= barStart + barSecAt(barIndex)) {
-          barStart += barSecAt(barIndex);
-          barIndex++;
-        }
-        // Vor dem ersten Takt negativ: Dann läuft er während des Einzählens heran.
-        const position = barIndex + (songSec - barStart) / barSecAt(barIndex);
+        const progress = current
+          ? (songSec - current.startSec) / (current.endSec - current.startSec)
+          : 0;
+        const position = current
+          ? current.index + progress - (current.kind === "count" ? 1 : 0)
+          : -1;
         const x = width * READ_LINE - position * barWidth * scale;
         track.style.transform = `translate3d(${x}px, 0, 0)`;
         if (ballRef.current) {
