@@ -292,20 +292,30 @@ function Demo({ kind }: { kind: TutorialDemo | NoteDemo }) {
           </Row>
         </div>
       );
-    case "dot":
+    case "dot-half":
+    case "dot-quarter":
+    case "dot-eighth": {
+      const sum = DOT_SUMS[kind];
       return (
         <div className="flex items-end justify-center gap-2">
-          <DotTerm note="half" beats={2} label="2 Schläge" />
+          <DotTerm note={sum.note} boxes={2} label={sum.parts[0]} />
           <span className="text-ink dark:text-night-text pb-9 text-2xl font-extrabold">
             +
           </span>
-          <DotTerm note="dot" beats={1} label="die Hälfte" />
+          <DotTerm note="dot" boxes={1} label={sum.parts[1]} />
           <span className="text-ink dark:text-night-text pb-9 text-2xl font-extrabold">
             =
           </span>
-          <DotTerm note="dotted-half" beats={3} label="3 Schläge" highlight />
+          <DotTerm
+            note={sum.note}
+            dotted
+            boxes={3}
+            label={sum.parts[2]}
+            highlight
+          />
         </div>
       );
+    }
     case "tempo-up":
       return (
         <div className="flex items-center gap-1.5">
@@ -602,15 +612,38 @@ function NoteDemoView({ demo }: { demo: NoteDemo }) {
   );
 }
 
-/** Eine Note als einfache Zeichnung mit ihren Schlägen darunter, für die Punkt-Rechnung. */
+type DotNote = "half" | "quarter" | "eighth";
+
+/** Immer zwei Kästchen plus eins: Was ein Kästchen bedeutet, sagt die Beschriftung. */
+const DOT_SUMS: Record<
+  "dot-half" | "dot-quarter" | "dot-eighth",
+  { note: DotNote; parts: [string, string, string] }
+> = {
+  "dot-half": {
+    note: "half",
+    parts: ["2 Schläge", "die Hälfte", "3 Schläge"],
+  },
+  "dot-quarter": {
+    note: "quarter",
+    parts: ["1 Schlag", "ein halber", "1½ Schläge"],
+  },
+  "dot-eighth": {
+    note: "eighth",
+    parts: ["2 Sechzehntel", "1 Sechzehntel", "3 Sechzehntel"],
+  },
+};
+
+/** Eine Note als einfache Zeichnung mit ihrer Dauer in Kästchen darunter, für die Punkt-Rechnung. */
 function DotTerm({
   note,
-  beats,
+  dotted,
+  boxes,
   label,
   highlight,
 }: {
-  note: "half" | "dot" | "dotted-half";
-  beats: number;
+  note: DotNote | "dot";
+  dotted?: boolean;
+  boxes: number;
   label: string;
   highlight?: boolean;
 }) {
@@ -635,12 +668,21 @@ function DotTerm({
               rx="9"
               ry="6.5"
               transform="rotate(-22 16 44)"
-              fill="none"
+              fill={note === "half" ? "none" : "currentColor"}
               stroke="currentColor"
               strokeWidth="3.4"
             />
             <path d="M24 42V6" stroke="currentColor" strokeWidth="2.6" />
-            {note === "dotted-half" && (
+            {note === "eighth" && (
+              <path
+                d="M24 6c2 7 11 10 10 21"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3.4"
+                strokeLinecap="round"
+              />
+            )}
+            {dotted && (
               <circle
                 cx="34"
                 cy="44"
@@ -652,7 +694,7 @@ function DotTerm({
         )}
       </svg>
       <div className="flex gap-1">
-        {Array.from({ length: beats }, (_, i) => (
+        {Array.from({ length: boxes }, (_, i) => (
           <span
             key={i}
             className={cn(
@@ -664,7 +706,7 @@ function DotTerm({
           />
         ))}
       </div>
-      <span className="text-dark dark:text-night-muted text-xs font-extrabold">
+      <span className="text-dark dark:text-night-muted text-xs font-extrabold whitespace-nowrap">
         {label}
       </span>
     </div>

@@ -7,7 +7,9 @@ export type TutorialDemo =
   | "call-response"
   | "no-gap"
   | "tempo-up"
-  | "dot"
+  | "dot-half"
+  | "dot-quarter"
+  | "dot-eighth"
   | "band"
   | "challenge"
   | "daily"
@@ -95,7 +97,7 @@ export const TUTORIALS = {
       title: "Der Punkt hinter der Note",
       text: "Ein Punkt macht eine Note um die Hälfte länger. Eine Halbe dauert zwei Schläge, die Hälfte davon ist einer: Mit Punkt sind es drei.",
       mood: "listen",
-      demo: "dot",
+      demo: "dot-half",
     },
     note(
       "Die punktierte Halbe",
@@ -119,9 +121,15 @@ export const TUTORIALS = {
     ),
   ],
   "noten-punktiert": [
+    {
+      title: "Der Punkt, noch einmal",
+      text: "Weißt du noch? Der Punkt macht eine Note um die Hälfte länger. Eine Viertel dauert einen Schlag, mit Punkt sind es anderthalb.",
+      mood: "listen",
+      demo: "dot-quarter",
+    },
     note(
       "Die punktierte Viertel",
-      "Wie bei der Halben macht der Punkt die Viertel um die Hälfte länger: ein Schlag plus ein halber, also anderthalb. Danach passt genau eine Achtel.",
+      "Nach anderthalb Schlägen fehlt noch ein halber bis zum nächsten Schlag. Genau da passt eine Achtel: „ta-a ti“.",
       "qd 8 qd 8",
     ),
   ],
@@ -147,9 +155,15 @@ export const TUTORIALS = {
     ),
   ],
   "noten-punktierte-achtel": [
+    {
+      title: "Der Punkt bei der Achtel",
+      text: "Auch hier macht der Punkt die Note um die Hälfte länger. Eine Achtel sind zwei Sechzehntel, mit Punkt sind es drei.",
+      mood: "listen",
+      demo: "dot-eighth",
+    },
     note(
       "Die punktierte Achtel",
-      "Sie dauert drei Sechzehntel, die Sechzehntel danach ist ganz kurz. Das klingt hüpfend.",
+      "Drei Sechzehntel lang, dann bleibt für den Rest des Schlags nur eine kurze Sechzehntel. Das klingt hüpfend.",
       "8d 16 8d 16 q q",
     ),
   ],
