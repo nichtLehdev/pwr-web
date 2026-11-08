@@ -271,7 +271,7 @@ export class Conductor {
       const accent = k % pulsesPerBar === 0;
       const at = segment.startSec + k * pulseSec;
       audio.scheduleClick(at, accent);
-      if (accent && segment.kind !== "count") {
+      if (accent && segment.kind !== "count" && segment.kind !== "ready") {
         audio.scheduleBass(at, pulseSec * pulsesPerBar * 0.9, harmony.bassHz);
       }
     }

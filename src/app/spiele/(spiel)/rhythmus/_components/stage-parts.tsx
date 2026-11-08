@@ -232,25 +232,55 @@ export function CountOverlay({ number }: { number: number | null }) {
 }
 
 /** Zählt beim Einzählen mit und liefert `null`, sobald die Musik beginnt. */
-export function useCountIn(conductor: Conductor): number | null {
+export function useCountIn(
+  conductor: Conductor,
+  kind: "count" | "ready" = "count",
+): number | null {
   const [number, setNumber] = useState<number | null>(null);
   useEffect(() => {
     let segment: Segment | null = null;
     return conductor.subscribe({
       onSegment: (next) => {
         segment = next;
-        if (next.kind !== "count") setNumber(null);
+        if (next.kind !== kind) setNumber(null);
       },
       onFrame: (songSec) => {
-        if (segment?.kind !== "count") return;
+        if (segment?.kind !== kind) return;
         const pulseSec =
           pulseOf(segment.timeSignature).pulseTicks * secPerTick(segment.bpm);
         const beat = Math.floor((songSec - segment.startSec) / pulseSec) + 1;
         if (beat >= 1) setNumber(beat);
       },
     });
-  }, [conductor]);
+  }, [conductor, kind]);
   return number;
+}
+
+/** Zählt zum Einsatz ein, ohne den Takt zu verdecken, den man gleich spielt. */
+export function ReadyBadge({
+  number,
+  pulses,
+}: {
+  number: number | null;
+  pulses: number;
+}) {
+  if (number === null) return null;
+  return (
+    <div
+      className="pointer-events-none absolute inset-x-0 top-2 z-20 flex justify-center"
+      aria-hidden
+    >
+      <p className="bg-primary text-ink flex items-center gap-2 rounded-full px-4 py-1.5 text-base font-extrabold shadow-[0_3px_0_var(--color-primary-ink)]">
+        Du bist dran
+        <span
+          key={number}
+          className="rhythm-count-pop condensed min-w-[1.2ch] text-2xl leading-none tabular-nums"
+        >
+          {Math.min(number, pulses)}
+        </span>
+      </p>
+    </div>
+  );
 }
 
 /** Hüpfender Notenkopf: Höhe aus der Phase im Schlag, so sieht man den Einsatz kommen. */

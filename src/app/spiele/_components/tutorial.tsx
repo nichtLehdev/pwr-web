@@ -357,6 +357,26 @@ function Demo({ kind }: { kind: TutorialDemo | NoteDemo }) {
           </Row>
         </div>
       );
+    case "no-gap":
+      return (
+        <div className="flex gap-1.5">
+          {[
+            { who: "Toni", from: 0 },
+            { who: "Du", from: 1.6 },
+          ].map(({ who, from }) => (
+            <div key={who} className="flex flex-1 flex-col gap-1">
+              <span className="text-dark dark:text-night-muted text-xs font-extrabold">
+                {who}
+              </span>
+              <div className="flex gap-1">
+                <Cell at={from} />
+                <Cell at={from + 0.4} />
+                <Cell at={from + 0.8} wide />
+              </div>
+            </div>
+          ))}
+        </div>
+      );
     case "band":
       return (
         <div className="border-rule dark:border-night-rule relative h-[70px] overflow-hidden rounded-2xl border-[3px]">

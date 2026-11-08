@@ -4,7 +4,7 @@ import { parseCell } from "../../../../_lib/rhythm/generator";
 import { barTicks } from "../../../../_lib/rhythm/ticks";
 import { noteTutorialFor, TUTORIALS } from "../../../../_lib/tutorials";
 import { startBpm } from "../prefs";
-import { AnswerPlan, figuresForLevel } from "../session-script";
+import { AnswerPlan, AnswerScript, figuresForLevel } from "../session-script";
 
 const first = LEVELS[0]!;
 
@@ -59,5 +59,36 @@ describe("note tutorials", () => {
         expect(ticks).toBe(barTicks({ numerator, denominator }));
       }
     }
+  });
+});
+
+describe("count-in bar before answering", () => {
+  const kinds = (gap: boolean) => {
+    const plan = new AnswerPlan(first, first.meters[0]!, 2, {
+      start: 60,
+      fixed: false,
+    });
+    const script = new AnswerScript(plan, 2, true, gap);
+    const out: string[] = [];
+    for (let spec = script.next(null); spec; spec = script.next(1)) {
+      out.push(spec.kind);
+    }
+    return out;
+  };
+
+  it("adds one empty bar between listening and playing for beginners", () => {
+    expect(kinds(true)).toEqual([
+      "count",
+      "call",
+      "ready",
+      "answer",
+      "call",
+      "ready",
+      "answer",
+    ]);
+  });
+
+  it("goes straight on without it", () => {
+    expect(kinds(false)).toEqual(["count", "call", "answer", "call", "answer"]);
   });
 });

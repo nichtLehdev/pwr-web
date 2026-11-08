@@ -4,6 +4,7 @@ import { scopedKey } from "./profiles/scope";
 
 export type TutorialDemo =
   | "call-response"
+  | "no-gap"
   | "band"
   | "challenge"
   | "daily"
@@ -41,7 +42,7 @@ export const TUTORIALS = {
   "rhythmus-start": [
     {
       title: "Hör zu, dann spiel nach",
-      text: "Ich spiele dir einen Takt vor. Danach bist du dran: Tipp genau so, wie du es gehört hast.",
+      text: "Ich spiele dir einen Takt vor. Dann zähle ich bis vier, und du spielst ihn genau so nach.",
       mood: "listen",
       demo: "call-response",
     },
@@ -149,6 +150,14 @@ export const TUTORIALS = {
       "8 8 8 8 8 8",
       "6/8",
     ),
+  ],
+  "rhythmus-ohne-pause": [
+    {
+      title: "Ab jetzt ohne Pause",
+      text: "Bisher hast du nach dem Vorspielen einen Takt zum Einzählen bekommen. Ab jetzt geht es direkt weiter: Dein Takt beginnt, sobald meiner aufhört.",
+      mood: "play",
+      demo: "no-gap",
+    },
   ],
   "rhythmus-band": [
     {

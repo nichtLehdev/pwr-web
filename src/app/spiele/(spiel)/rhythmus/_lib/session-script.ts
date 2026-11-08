@@ -11,7 +11,8 @@ import type {
   TimeSignature,
 } from "../../../_lib/rhythm/types";
 
-export type SegmentKind = "count" | "call" | "answer" | "read";
+/** `ready`: ein leerer Takt zwischen Vorspielen und Nachspielen, nur für Einsteiger. */
+export type SegmentKind = "count" | "call" | "ready" | "answer" | "read";
 export type Announcement =
   "again" | "faster" | "slower" | "fresh" | "lost" | "gained" | "longer" | null;
 
@@ -166,12 +167,14 @@ export class AnswerPlan implements AnswerRules {
 /** Antworten: Einzählen, dann immer Vorspielen und Nachspielen. */
 export class AnswerScript implements SessionScript {
   private step: AnswerStep | null = null;
-  private stage: "count" | "call" | "answer" | "decide" = "count";
+  private stage: "count" | "call" | "ready" | "answer" | "decide" = "count";
 
   constructor(
     private readonly plan: AnswerRules,
     private readonly total: number | null,
     private readonly steadyPitch = false,
+    /** Einen Takt zum Einzählen zwischen Vorspielen und Nachspielen. */
+    private readonly gap = false,
   ) {}
 
   next(lastAccuracy: number | null): SegmentSpec | null {
@@ -181,8 +184,12 @@ export class AnswerScript implements SessionScript {
       return this.spec("count", this.step, [emptyBar()]);
     }
     if (this.stage === "call") {
-      this.stage = "answer";
+      this.stage = this.gap ? "ready" : "answer";
       return this.spec("call", this.step!, this.step!.figure.bars);
+    }
+    if (this.stage === "ready") {
+      this.stage = "answer";
+      return this.spec("ready", this.step!, [emptyBar()]);
     }
     if (this.stage === "answer") {
       this.stage = "decide";
@@ -201,7 +208,7 @@ export class AnswerScript implements SessionScript {
       this.stage = "call";
       return this.spec("count", step, [emptyBar()]);
     }
-    this.stage = "answer";
+    this.stage = this.gap ? "ready" : "answer";
     return this.spec("call", step, step.figure.bars);
   }
 

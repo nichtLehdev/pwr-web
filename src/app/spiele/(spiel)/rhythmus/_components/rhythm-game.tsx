@@ -13,6 +13,7 @@ import { useGameStats } from "../../../_lib/stats/use-game-stats";
 import { RhythmAudio } from "../../../_lib/rhythm/audio";
 import { pickMeter } from "../../../_lib/rhythm/generator";
 import {
+  hasAnswerGap,
   hasSteadyPitch,
   hasSteadyTempo,
   LEVELS,
@@ -420,10 +421,12 @@ export function RhythmGame() {
         // Nachspielen wechselt Taktarten und Tempi, das Vorspielen trägt einen hindurch.
         const plan = new ChallengePlan(challengeSection);
         challenge = { section: challengeSection, plan };
+        const first = SECTIONS[challengeSection]!.stages[0]!.level;
         script = new AnswerScript(
           plan,
           plan.total,
-          hasSteadyPitch(SECTIONS[challengeSection]!.stages[0]!.level),
+          hasSteadyPitch(first),
+          hasAnswerGap(first),
         );
       } else if (level === null && rankedRun) {
         const variant: RhythmVariant = `${mode}:${input}`;
@@ -469,7 +472,12 @@ export function RhythmGame() {
           fixed: fixedBpm !== null,
           steady: hasSteadyTempo(level),
         });
-        script = new AnswerScript(plan, total, hasSteadyPitch(level));
+        script = new AnswerScript(
+          plan,
+          total,
+          hasSteadyPitch(level),
+          hasAnswerGap(level),
+        );
       }
 
       const conductor = new Conductor(audio, script, {

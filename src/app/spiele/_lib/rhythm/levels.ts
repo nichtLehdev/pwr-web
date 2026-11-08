@@ -309,6 +309,11 @@ export function hasSteadyPitch(level: Level): boolean {
   return level.group === LEVELS[0]!.group;
 }
 
+/** Einsteiger bekommen zwischen Vorspielen und Nachspielen einen Takt zum Einzählen. */
+export function hasAnswerGap(level: Level): boolean {
+  return level.group === LEVELS[0]!.group;
+}
+
 /** In den Grundlagen wird es während einer Stufe nicht schneller, sonst kommen Kinder nicht mit. */
 export function hasSteadyTempo(level: Level): boolean {
   return level.group === LEVELS[0]!.group;
