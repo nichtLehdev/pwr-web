@@ -25,6 +25,7 @@ export const BAR_LEAD = 9;
 const THIN_BARLINE = 1.4;
 const THICK_BARLINE = 4.5;
 const BARLINE_GAP = 2.6;
+const END_TAIL = 32;
 const STAVE_Y = 60;
 const VIEW_Y = 66;
 export const VIEW_HEIGHT = 132;
@@ -36,6 +37,8 @@ export type NoteMark = "exact" | "close" | "off" | "missed";
 
 export type BarHandle = {
   width: number;
+  /** Breite von Schlüssel und Taktart vor dem ersten Schlag; 0 ohne Vorsatz. */
+  prefixWidth: number;
   /** x-Koordinate (logisch) zu einer Position im Takt; eine Note beginnt am linken Rand ihres Kopfs. */
   xForTick: (tick: number) => number;
   mark: (eventIndex: number, mark: NoteMark, lengthIssue: boolean) => void;
@@ -135,8 +138,10 @@ export function drawBar(
   // Bestimmt erst nach dem Layout der Vorsätze die echte Startposition.
   stave.format();
   const prefixWidth = showPrefix ? stave.getNoteStartX() : 0;
-  stave.setWidth(prefixWidth + barWidth);
-  const totalWidth = prefixWidth + barWidth;
+  // Vor dem Schlussstrich etwas Luft, sonst stößt eine kurze letzte Note an ihn.
+  const tail = endBarline === "end" ? END_TAIL : 0;
+  stave.setWidth(prefixWidth + barWidth + tail);
+  const totalWidth = prefixWidth + barWidth + tail;
 
   const notes = events.map((event) => staveNote(event, noteKey));
   const tuplets: Tuplet[] = [];
@@ -252,6 +257,7 @@ export function drawBar(
 
   return {
     width: totalWidth,
+    prefixWidth,
     xForTick,
     mark: (eventIndex, mark, lengthIssue) => {
       paint(

@@ -95,7 +95,7 @@ export function BandStage({
             ? "end"
             : "single",
       });
-      const prefixWidth = handle.width - barWidth;
+      const { prefixWidth } = handle;
       host.style.left = `${(index * barWidth - BAR_LEAD - prefixWidth) * scale}px`;
       host.style.width = `${handle.width * scale}px`;
       drawnBars.set(index, { host, handle });
