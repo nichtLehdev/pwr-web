@@ -21,6 +21,8 @@ import { Confetti } from "./confetti";
 import { useSkipGesture } from "./use-skip-gesture";
 import { useOptionalProfiles } from "./profiles";
 import { Toni, type ToniMood } from "./toni";
+import { BottomSheet } from "./bottom-sheet";
+import { DEFAULT_VOLUME, loadVolume, saveVolume } from "../_lib/volume";
 
 const SOUND_KEY = "pwr.spiele.v1.sound";
 const STAR_STEP_SEC = 0.28;
@@ -70,35 +72,149 @@ export function useGameSounds() {
   return { correct, wrong, fanfare };
 }
 
-export function SoundToggle() {
+/** Lautstärke aller Spiele; beim Loslassen klingt ein kurzer Probeton. */
+export function VolumeSlider() {
+  const [volume, setVolume] = useState(DEFAULT_VOLUME);
+  const [audio] = useState(() => new RhythmAudio());
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- Serverbild kennt den Speicher nicht
+  useEffect(() => setVolume(loadVolume()), []);
+  useEffect(() => () => audio.close(), [audio]);
+  const preview = () => {
+    if (volume <= 0) return;
+    void audio
+      .ensure()
+      .then(() => audio.jingle(JINGLE_NOTES.slice(0, 3), 0.08))
+      .catch(() => undefined);
+  };
+  const percent = Math.round(volume * 100);
+  return (
+    <label className="flex flex-col gap-2">
+      <span className="flex items-baseline justify-between">
+        <span className="text-ink dark:text-night-text font-bold">
+          Lautstärke
+        </span>
+        <span className="text-dark dark:text-night-muted text-sm font-extrabold tabular-nums">
+          {percent} %
+        </span>
+      </span>
+      <span className="flex items-center gap-3">
+        <VolumeX
+          className="text-dark dark:text-night-muted h-5 w-5 shrink-0"
+          aria-hidden
+        />
+        <input
+          type="range"
+          min={0}
+          max={100}
+          step={5}
+          value={percent}
+          aria-valuetext={`${percent} Prozent`}
+          onChange={(event) => {
+            const next = Number(event.currentTarget.value) / 100;
+            setVolume(next);
+            saveVolume(next);
+          }}
+          onPointerUp={preview}
+          onKeyUp={(event) => {
+            if (
+              event.key.startsWith("Arrow") ||
+              event.key === "Home" ||
+              event.key === "End"
+            )
+              preview();
+          }}
+          className={cn(
+            "spiel-volume h-11 w-full cursor-pointer",
+            GAME_FOCUS_RING,
+          )}
+        />
+        <Volume2
+          className="text-dark dark:text-night-muted h-5 w-5 shrink-0"
+          aria-hidden
+        />
+      </span>
+    </label>
+  );
+}
+
+/**
+ * Lautsprecher neben der Überschrift: öffnet Spielklänge an/aus und die Lautstärke.
+ * `rewards`: nur wo es abschaltbare Belohnungsklänge gibt; Diktat braucht seinen Ton.
+ */
+export function SoundToggle({ rewards = true }: { rewards?: boolean }) {
   const [on, setOn] = useState(true);
+  const [open, setOpen] = useState(false);
   // eslint-disable-next-line react-hooks/set-state-in-effect -- Serverbild kennt den Speicher nicht
   useEffect(() => setOn(readSoundOn()), []);
+  const setSound = (next: boolean) => {
+    setOn(next);
+    try {
+      localStorage.setItem(SOUND_KEY, next ? "on" : "off");
+    } catch {
+      /* Privatmodus: Es bleibt bei dieser Sitzung. */
+    }
+  };
+  const muted = rewards && !on;
   return (
-    <button
-      type="button"
-      aria-pressed={on}
-      aria-label="Spielklänge"
-      onClick={() => {
-        const next = !on;
-        setOn(next);
-        try {
-          localStorage.setItem(SOUND_KEY, next ? "on" : "off");
-        } catch {
-          /* Privatmodus: Es bleibt bei dieser Sitzung. */
-        }
-      }}
-      className={cn(
-        "text-ink dark:text-night-text hover:bg-ink hover:text-paper dark:hover:bg-night-text dark:hover:text-night flex h-11 w-11 shrink-0 items-center justify-center",
-        GAME_FOCUS_RING,
+    <>
+      <button
+        type="button"
+        aria-haspopup="dialog"
+        aria-label="Ton und Lautstärke"
+        onClick={() => setOpen(true)}
+        className={cn(
+          "text-ink dark:text-night-text hover:bg-ink hover:text-paper dark:hover:bg-night-text dark:hover:text-night flex h-11 w-11 shrink-0 items-center justify-center",
+          GAME_FOCUS_RING,
+        )}
+      >
+        {muted ? (
+          <VolumeX className="h-5 w-5 opacity-50" aria-hidden />
+        ) : (
+          <Volume2 className="h-5 w-5" aria-hidden />
+        )}
+      </button>
+      {open && (
+        <BottomSheet
+          eyebrow="Ton"
+          title="Klang und Lautstärke"
+          onClose={() => setOpen(false)}
+        >
+          {rewards && (
+            <div className="flex flex-col gap-2">
+              <span className="text-ink dark:text-night-text font-bold">
+                Spielklänge
+              </span>
+              <span className="text-dark dark:text-night-muted -mt-1 text-sm">
+                Kurze Töne bei richtig, falsch und für die Sterne.
+              </span>
+              <div className="flex gap-2" role="group" aria-label="Spielklänge">
+                {(
+                  [
+                    [true, "An"],
+                    [false, "Aus"],
+                  ] as const
+                ).map(([value, label]) => (
+                  <button
+                    key={label}
+                    type="button"
+                    aria-pressed={on === value}
+                    onClick={() => setSound(value)}
+                    className={cn(
+                      "spiel-tile min-h-11 flex-1 px-3 py-2 text-sm font-bold",
+                      GAME_FOCUS_RING,
+                      on === value && "on-orange bg-primary text-ink",
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          <VolumeSlider />
+        </BottomSheet>
       )}
-    >
-      {on ? (
-        <Volume2 className="h-5 w-5" aria-hidden />
-      ) : (
-        <VolumeX className="h-5 w-5 opacity-50" aria-hidden />
-      )}
-    </button>
+    </>
   );
 }
 
