@@ -320,7 +320,14 @@ export class Conductor {
   press(wallMs: number): void {
     if (!this.running) return;
     const songMs = (this.audio.wallToAudio(wallMs) - this.latency) * 1000;
-    const hz = harmonyFor(this.activeSegment ?? { index: 0 }).melodyHz;
+    const event = this.judge.press(songMs);
+    // Der Ton gehört zum Takt der getroffenen Note, nicht zum gerade angezeigten:
+    // Eine erste Note auf oder knapp vor der Eins läge sonst noch im alten Takt.
+    const owner =
+      (event ? this.segments[event.segmentId - 1] : null) ??
+      this.playableAround(songMs) ??
+      this.activeSegment;
+    const hz = harmonyFor(owner ?? { index: 0 }).melodyHz;
     if (this.options.input === "hold") {
       this.held?.stop();
       this.held = this.audio.startHeld(hz);
@@ -330,7 +337,6 @@ export class Conductor {
     const press: Press = { atMs: songMs, durationMs: null };
     this.presses.push(press);
     this.openPress = press;
-    const event = this.judge.press(songMs);
     this.emit("onPress", press, this.segmentAt(songMs));
     if (event) this.forward(event);
   }
@@ -353,6 +359,19 @@ export class Conductor {
   /** Takt- bzw. Figurnummer eines Abschnitts: Der Richter kennt nur dessen id. */
   indexOfSegment(segmentId: number): number {
     return this.segments[segmentId - 1]?.index ?? -1;
+  }
+
+  /** Der spielbare Abschnitt eines Drucks; bis zu einem halben Schlag vor seinem Anfang zählt schon. */
+  private playableAround(songMs: number): Segment | null {
+    for (let i = this.segments.length - 1; i >= 0; i--) {
+      const s = this.segments[i]!;
+      if (s.kind !== "answer" && s.kind !== "read") continue;
+      const halfPulseMs =
+        (pulseOf(s.timeSignature).pulseTicks * secPerTick(s.bpm) * 1000) / 2;
+      if (songMs < s.startSec * 1000 - halfPulseMs) continue;
+      return songMs < s.endSec * 1000 ? s : null;
+    }
+    return null;
   }
 
   private segmentAt(songMs: number): Segment | null {
