@@ -7,6 +7,7 @@ export type TutorialDemo =
   | "call-response"
   | "no-gap"
   | "tempo-up"
+  | "dot"
   | "band"
   | "challenge"
   | "daily"
@@ -86,7 +87,19 @@ export const TUTORIALS = {
   "noten-dreier": [
     note(
       "Der Dreiertakt",
-      "Jetzt hat ein Takt nur drei Schläge. Der Punkt macht die Halbe länger: Sie dauert dann drei Schläge.",
+      "Jetzt hat ein Takt nur drei Schläge: eins, zwei, drei. Die untere 4 heißt, dass jeder Schlag eine Viertel ist.",
+      "q q q",
+      "3/4",
+    ),
+    {
+      title: "Der Punkt hinter der Note",
+      text: "Ein Punkt macht eine Note um die Hälfte länger. Eine Halbe dauert zwei Schläge, die Hälfte davon ist einer: Mit Punkt sind es drei.",
+      mood: "listen",
+      demo: "dot",
+    },
+    note(
+      "Die punktierte Halbe",
+      "Sie füllt den ganzen Dreiertakt. Halt den Knopf alle drei Schläge lang: „ta-a-a“.",
       "hd",
       "3/4",
     ),
@@ -108,7 +121,7 @@ export const TUTORIALS = {
   "noten-punktiert": [
     note(
       "Die punktierte Viertel",
-      "Der Punkt macht die Viertel um die Hälfte länger: anderthalb Schläge. Danach passt genau eine Achtel.",
+      "Wie bei der Halben macht der Punkt die Viertel um die Hälfte länger: ein Schlag plus ein halber, also anderthalb. Danach passt genau eine Achtel.",
       "qd 8 qd 8",
     ),
   ],

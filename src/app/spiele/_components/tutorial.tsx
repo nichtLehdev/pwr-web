@@ -292,6 +292,20 @@ function Demo({ kind }: { kind: TutorialDemo | NoteDemo }) {
           </Row>
         </div>
       );
+    case "dot":
+      return (
+        <div className="flex items-end justify-center gap-2">
+          <DotTerm note="half" beats={2} label="2 Schläge" />
+          <span className="text-ink dark:text-night-text pb-9 text-2xl font-extrabold">
+            +
+          </span>
+          <DotTerm note="dot" beats={1} label="die Hälfte" />
+          <span className="text-ink dark:text-night-text pb-9 text-2xl font-extrabold">
+            =
+          </span>
+          <DotTerm note="dotted-half" beats={3} label="3 Schläge" highlight />
+        </div>
+      );
     case "tempo-up":
       return (
         <div className="flex items-center gap-1.5">
@@ -584,6 +598,75 @@ function NoteDemoView({ demo }: { demo: NoteDemo }) {
           </span>
         ))}
       </div>
+    </div>
+  );
+}
+
+/** Eine Note als einfache Zeichnung mit ihren Schlägen darunter, für die Punkt-Rechnung. */
+function DotTerm({
+  note,
+  beats,
+  label,
+  highlight,
+}: {
+  note: "half" | "dot" | "dotted-half";
+  beats: number;
+  label: string;
+  highlight?: boolean;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-1.5">
+      <svg
+        viewBox="0 0 44 56"
+        className={cn(
+          "h-14 w-11",
+          note === "dot"
+            ? "text-primary-ink dark:text-primary"
+            : "text-ink dark:text-night-text",
+        )}
+      >
+        {note === "dot" ? (
+          <circle cx="22" cy="40" r="6" fill="currentColor" />
+        ) : (
+          <>
+            <ellipse
+              cx="16"
+              cy="44"
+              rx="9"
+              ry="6.5"
+              transform="rotate(-22 16 44)"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3.4"
+            />
+            <path d="M24 42V6" stroke="currentColor" strokeWidth="2.6" />
+            {note === "dotted-half" && (
+              <circle
+                cx="34"
+                cy="44"
+                r="3.6"
+                className="fill-primary-ink dark:fill-primary"
+              />
+            )}
+          </>
+        )}
+      </svg>
+      <div className="flex gap-1">
+        {Array.from({ length: beats }, (_, i) => (
+          <span
+            key={i}
+            className={cn(
+              "h-5 w-5 rounded-md",
+              highlight
+                ? "bg-primary"
+                : "border-rule dark:border-night-rule border-2",
+            )}
+          />
+        ))}
+      </div>
+      <span className="text-dark dark:text-night-muted text-xs font-extrabold">
+        {label}
+      </span>
     </div>
   );
 }
