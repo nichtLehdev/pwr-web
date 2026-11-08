@@ -62,7 +62,7 @@ const TEMPO_STEP = 4;
 const RECENT_FIGURES = 3;
 
 export function figuresForLevel(level: Level): number {
-  return level.bars === 2 ? 6 : 10;
+  return level.figures ?? (level.bars === 2 ? 6 : 10);
 }
 
 export const BAND_BARS = 16;
@@ -88,7 +88,8 @@ export class AnswerPlan implements AnswerRules {
     private readonly level: Level,
     private readonly ts: TimeSignature,
     private readonly total: number,
-    private readonly tempo: { start: number; fixed: boolean },
+    /** `steady`: nie schneller, langsamer aber schon, wenn es hakt. */
+    private readonly tempo: { start: number; fixed: boolean; steady?: boolean },
     private readonly rng: Rng = Math.random,
   ) {
     this.bpm = tempo.start;
@@ -120,7 +121,7 @@ export class AnswerPlan implements AnswerRules {
     if (passed) {
       this.failRun = 0;
       this.cleanRun = accuracy >= SOLID_ACCURACY ? this.cleanRun + 1 : 0;
-      if (this.cleanRun >= 2 && !this.tempo.fixed) {
+      if (this.cleanRun >= 2 && !this.tempo.fixed && !this.tempo.steady) {
         this.cleanRun = 0;
         if (this.bpm < this.level.bpm.max) {
           this.bpm = Math.min(this.level.bpm.max, this.bpm + TEMPO_STEP);

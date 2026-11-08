@@ -25,6 +25,8 @@ export type Level = {
   cells: readonly Cell[];
   bpm: { min: number; start: number; max: number };
   bars: 1 | 2;
+  /** Wie viele Figuren eine Stufe lang ist; ohne Angabe nach `bars`. */
+  figures?: number;
   minOnsets: number;
   /** Faktor für die Trefferfenster: Einsteiger bekommen etwas mehr Luft. */
   leniency: number;
@@ -43,8 +45,9 @@ export const LEVELS: readonly Level[] = [
     group: "Grundlagen",
     meters: [FOUR],
     cells: [Q, { pattern: "h", weight: 2, focus: true }],
-    bpm: { min: 60, start: 72, max: 104 },
+    bpm: { min: 52, start: 60, max: 104 },
     bars: 1,
+    figures: 5,
     minOnsets: 2,
     leniency: 1.3,
   },
@@ -61,7 +64,7 @@ export const LEVELS: readonly Level[] = [
       { pattern: "rq", weight: 2, focus: true },
       { pattern: "rh", focus: true, strong: true },
     ],
-    bpm: { min: 60, start: 76, max: 108 },
+    bpm: { min: 56, start: 66, max: 108 },
     bars: 1,
     minOnsets: 1,
     leniency: 1.3,
@@ -78,7 +81,7 @@ export const LEVELS: readonly Level[] = [
       { pattern: "hd", focus: true },
       QUARTER_REST,
     ],
-    bpm: { min: 66, start: 84, max: 120 },
+    bpm: { min: 60, start: 72, max: 120 },
     bars: 1,
     minOnsets: 1,
     leniency: 1.3,
@@ -303,5 +306,10 @@ export function levelById(id: string | null | undefined): Level | null {
 }
 
 export function hasSteadyPitch(level: Level): boolean {
+  return level.group === LEVELS[0]!.group;
+}
+
+/** In den Grundlagen wird es während einer Stufe nicht schneller, sonst kommen Kinder nicht mit. */
+export function hasSteadyTempo(level: Level): boolean {
   return level.group === LEVELS[0]!.group;
 }

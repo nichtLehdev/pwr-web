@@ -31,7 +31,7 @@ import {
 } from "../_lib/prefs";
 import { MAX_STARS, rankFor, totalStars } from "../_lib/ranks";
 import { TutorialHelpButton, useTutorial } from "../../../_components/tutorial";
-import type { TutorialId } from "../../../_lib/tutorials";
+import { noteTutorialFor, type TutorialId } from "../../../_lib/tutorials";
 
 const MIN_BPM = 40;
 const MAX_BPM = 200;
@@ -73,6 +73,7 @@ export function SetupView({
   const stage = RHYTHM_PATH.stageById(prefs.levelId) ?? RHYTHM_PATH.stages[0]!;
   const level = stage.level;
   const levelNumber = RHYTHM_PATH.stages.indexOf(stage) + 1;
+  const notes = noteTutorialFor(level.id);
   const tutorialIds: TutorialId[] =
     challengeSection !== null
       ? ["challenge"]
@@ -80,7 +81,9 @@ export function SetupView({
         ? ["endless"]
         : stage.mode === "band"
           ? ["rhythmus-band"]
-          : ["rhythmus-start"];
+          : notes
+            ? ["rhythmus-start", notes]
+            : ["rhythmus-start"];
   const endlessRecord = endlessRecords[prefs.mode];
   const autoBpm = startBpm(level, progress, stage.id);
   const stars = totalStars(progress);

@@ -27,11 +27,16 @@ import {
   markTutorialsSeen,
   TUTORIALS,
   unseenTutorials,
+  type NoteDemo,
   type TutorialDemo,
   type TutorialId,
   type TutorialStep,
 } from "../_lib/tutorials";
 import { Toni } from "./toni";
+import { RhythmFigureLoader } from "./rhythm-figure-loader";
+import { parseCell } from "../_lib/rhythm/generator";
+import { barTicks, pulseOf } from "../_lib/rhythm/ticks";
+import type { RhythmEvent, TimeSignature } from "../_lib/rhythm/types";
 
 type Open = {
   ids: TutorialId[];
@@ -334,7 +339,8 @@ function Seesaw({ className }: { className?: string }) {
   );
 }
 
-function Demo({ kind }: { kind: TutorialDemo }) {
+function Demo({ kind }: { kind: TutorialDemo | NoteDemo }) {
+  if (typeof kind === "object") return <NoteDemoView demo={kind} />;
   switch (kind) {
     case "call-response":
       return (
@@ -349,17 +355,6 @@ function Demo({ kind }: { kind: TutorialDemo }) {
             <Cell at={2.7} />
             <Cell at={3.2} wide label="ta-a" />
           </Row>
-        </div>
-      );
-    case "hold":
-      return (
-        <div className="flex flex-col items-center gap-2.5">
-          <div className="bg-rule dark:bg-night-rule h-[14px] w-full overflow-hidden rounded-full">
-            <div className="spiel-tut-fill bg-primary h-full" />
-          </div>
-          <span className="spiel-tut-press bg-primary text-ink flex h-[76px] w-[76px] items-center justify-center rounded-full text-[13px] font-extrabold">
-            halten
-          </span>
         </div>
       );
     case "band":
@@ -534,4 +529,85 @@ function Demo({ kind }: { kind: TutorialDemo }) {
         </div>
       );
   }
+}
+
+const METERS: Record<NonNullable<NoteDemo["meter"]> | "4/4", TimeSignature> = {
+  "4/4": { numerator: 4, denominator: 4 },
+  "3/4": { numerator: 3, denominator: 4 },
+  "6/8": { numerator: 6, denominator: 8 },
+};
+
+/** Gesprochene Silbe je Notenwert; zu kurze Werte bleiben ohne, sonst wird es eng. */
+function syllable(event: RhythmEvent): string {
+  if (event.isRest) return event.ticks >= 48 ? "Pause" : "";
+  if (event.tupletId) return "";
+  return (
+    {
+      w: "ta-a-a-a",
+      hd: "ta-a-a",
+      h: "ta-a",
+      qd: "ta-a",
+      q: "ta",
+      "8d": "ti",
+      "8": "ti",
+      "16": "",
+    } as const
+  )[event.value];
+}
+
+/** Sekunden je Schlag in der Vorführung: ruhig, damit man mitzählen kann. */
+const DEMO_BEAT_SEC = 0.9;
+
+function NoteDemoView({ demo }: { demo: NoteDemo }) {
+  const ts = METERS[demo.meter ?? "4/4"];
+  const bars = useMemo(() => {
+    // Je drei Triolen-Achtel bilden eine eigene Triole, wie im Spiel.
+    let triplet = 0;
+    return [
+      parseCell(demo.notes).map((event) =>
+        event.tupletId
+          ? { ...event, tupletId: 1 + Math.floor(triplet++ / 3) }
+          : event,
+      ),
+    ];
+  }, [demo.notes]);
+  const events = bars[0]!;
+  const { pulseTicks, pulsesPerBar } = pulseOf(ts);
+  const total = barTicks(ts);
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="h-[84px]">
+        <RhythmFigureLoader bars={bars} noteKey="d/4" timeSignature={ts} />
+      </div>
+      <div className="relative flex gap-1">
+        {events.map((event, i) => (
+          <span
+            key={i}
+            className={cn(
+              "flex h-8 min-w-0 items-center justify-center overflow-hidden rounded-lg text-xs font-extrabold",
+              event.isRest
+                ? "border-rule text-dark dark:border-night-rule dark:text-night-muted border-2 border-dashed"
+                : "bg-primary text-ink",
+            )}
+            style={{ flex: `${event.ticks} 1 0` }}
+          >
+            {syllable(event)}
+          </span>
+        ))}
+        <span
+          className="spiel-tut-playhead bg-ink dark:bg-night-text absolute -inset-y-1 w-1 rounded-full"
+          style={{
+            animationDuration: `${(total / pulseTicks) * DEMO_BEAT_SEC}s`,
+          }}
+        />
+      </div>
+      <div className="text-dark dark:text-night-muted flex text-xs font-extrabold">
+        {Array.from({ length: pulsesPerBar }, (_, i) => (
+          <span key={i} className="flex-1">
+            {i + 1}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
 }

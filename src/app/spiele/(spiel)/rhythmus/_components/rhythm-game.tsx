@@ -14,6 +14,7 @@ import { RhythmAudio } from "../../../_lib/rhythm/audio";
 import { pickMeter } from "../../../_lib/rhythm/generator";
 import {
   hasSteadyPitch,
+  hasSteadyTempo,
   LEVELS,
   type Level,
 } from "../../../_lib/rhythm/levels";
@@ -466,6 +467,7 @@ export function RhythmGame() {
         const plan = new AnswerPlan(level, ts, total, {
           start: bpm,
           fixed: fixedBpm !== null,
+          steady: hasSteadyTempo(level),
         });
         script = new AnswerScript(plan, total, hasSteadyPitch(level));
       }
