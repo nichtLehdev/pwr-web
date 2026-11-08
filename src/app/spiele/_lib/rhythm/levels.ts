@@ -314,7 +314,15 @@ export function hasAnswerGap(level: Level): boolean {
   return level.group === LEVELS[0]!.group;
 }
 
-/** In den Grundlagen wird es während einer Stufe nicht schneller, sonst kommen Kinder nicht mit. */
+/** So viele Stufen zu Beginn eines Abschnitts bringen Neues; dort bleibt das Tempo stehen. */
+const STEADY_LEVELS_PER_SECTION = 2;
+
+/**
+ * Nie schneller während der Stufe: in den Grundlagen ganz, sonst bei den ersten Stufen eines
+ * Abschnitts, solange man das Neue noch lernt.
+ */
 export function hasSteadyTempo(level: Level): boolean {
-  return level.group === LEVELS[0]!.group;
+  if (level.group === LEVELS[0]!.group) return true;
+  const section = LEVELS.filter((l) => l.group === level.group);
+  return section.indexOf(level) < STEADY_LEVELS_PER_SECTION;
 }

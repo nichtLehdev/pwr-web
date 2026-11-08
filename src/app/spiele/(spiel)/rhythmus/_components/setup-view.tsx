@@ -38,7 +38,11 @@ import { MAX_STARS, rankFor, totalStars } from "../_lib/ranks";
 import { hasAnswerGap } from "../../../_lib/rhythm/levels";
 import { TutorialHelpButton, useTutorial } from "../../../_components/tutorial";
 import { BottomSheet } from "../../../_components/bottom-sheet";
-import { noteTutorialFor, type TutorialId } from "../../../_lib/tutorials";
+import {
+  noteTutorialFor,
+  tempoTutorialFor,
+  type TutorialId,
+} from "../../../_lib/tutorials";
 
 const MIN_BPM = 40;
 const MAX_BPM = 200;
@@ -85,6 +89,7 @@ export function SetupView({
   const level = stage.level;
   const levelNumber = RHYTHM_PATH.stages.indexOf(stage) + 1;
   const notes = noteTutorialFor(level.id);
+  const tempo = tempoTutorialFor(level);
   // Wer aus den Grundlagen kommt, erfährt vorher, dass der Takt zum Einzählen wegfällt.
   const noGap: TutorialId[] = hasAnswerGap(level)
     ? []
@@ -98,7 +103,12 @@ export function SetupView({
         ? ["endless"]
         : stage.mode === "band"
           ? ["rhythmus-band"]
-          : ["rhythmus-start", ...noGap, ...(notes ? [notes] : [])];
+          : [
+              "rhythmus-start",
+              ...noGap,
+              ...(notes ? [notes] : []),
+              ...(tempo ? [tempo] : []),
+            ];
   const endlessRecord = endlessRecords[prefs.mode];
   const autoBpm = startBpm(level, progress, stage.id);
   const stars = totalStars(progress);

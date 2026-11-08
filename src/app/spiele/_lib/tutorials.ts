@@ -1,10 +1,15 @@
 import type { ToniMood } from "../_components/toni";
 import { CHALLENGE_PASS_PERCENT } from "./learning-path";
 import { scopedKey } from "./profiles/scope";
+import { hasSteadyTempo, LEVELS, type Level } from "./rhythm/levels";
 
 export type TutorialDemo =
   | "call-response"
   | "no-gap"
+  | "tempo-up"
+  | "dot-half"
+  | "dot-quarter"
+  | "dot-eighth"
   | "band"
   | "challenge"
   | "daily"
@@ -36,6 +41,15 @@ const note = (
   mood: "idle",
   demo: { notes, meter },
 });
+
+const TEMPO_STEPS: readonly TutorialStep[] = [
+  {
+    title: "Jetzt wird es schneller",
+    text: "Ab hier passt sich das Tempo an, bis der Abschnitt zu Ende ist: Zwei saubere Figuren, und es wird etwas schneller. Hakt es, wird es wieder langsamer.",
+    mood: "play",
+    demo: "tempo-up",
+  },
+];
 
 /** Was Toni erklärt, bevor etwas zum ersten Mal drankommt. Kurz halten: zwei Sätze. */
 export const TUTORIALS = {
@@ -75,7 +89,19 @@ export const TUTORIALS = {
   "noten-dreier": [
     note(
       "Der Dreiertakt",
-      "Jetzt hat ein Takt nur drei Schläge. Der Punkt macht die Halbe länger: Sie dauert dann drei Schläge.",
+      "Jetzt hat ein Takt nur drei Schläge: eins, zwei, drei. Die untere 4 heißt, dass jeder Schlag eine Viertel ist.",
+      "q q q",
+      "3/4",
+    ),
+    {
+      title: "Der Punkt hinter der Note",
+      text: "Ein Punkt macht eine Note um die Hälfte länger. Eine Halbe dauert zwei Schläge, die Hälfte davon ist einer: Mit Punkt sind es drei.",
+      mood: "listen",
+      demo: "dot-half",
+    },
+    note(
+      "Die punktierte Halbe",
+      "Sie füllt den ganzen Dreiertakt. Halt den Knopf alle drei Schläge lang: „ta-a-a“.",
       "hd",
       "3/4",
     ),
@@ -95,9 +121,15 @@ export const TUTORIALS = {
     ),
   ],
   "noten-punktiert": [
+    {
+      title: "Der Punkt, noch einmal",
+      text: "Weißt du noch? Der Punkt macht eine Note um die Hälfte länger. Eine Viertel dauert einen Schlag, mit Punkt sind es anderthalb.",
+      mood: "listen",
+      demo: "dot-quarter",
+    },
     note(
       "Die punktierte Viertel",
-      "Der Punkt macht die Viertel um die Hälfte länger: anderthalb Schläge. Danach passt genau eine Achtel.",
+      "Nach anderthalb Schlägen fehlt noch ein halber bis zum nächsten Schlag. Genau da passt eine Achtel: „ta-a ti“.",
       "qd 8 qd 8",
     ),
   ],
@@ -123,9 +155,15 @@ export const TUTORIALS = {
     ),
   ],
   "noten-punktierte-achtel": [
+    {
+      title: "Der Punkt bei der Achtel",
+      text: "Auch hier macht der Punkt die Note um die Hälfte länger. Eine Achtel sind zwei Sechzehntel, mit Punkt sind es drei.",
+      mood: "listen",
+      demo: "dot-eighth",
+    },
     note(
       "Die punktierte Achtel",
-      "Sie dauert drei Sechzehntel, die Sechzehntel danach ist ganz kurz. Das klingt hüpfend.",
+      "Drei Sechzehntel lang, dann bleibt für den Rest des Schlags nur eine kurze Sechzehntel. Das klingt hüpfend.",
       "8d 16 8d 16 q q",
     ),
   ],
@@ -159,6 +197,10 @@ export const TUTORIALS = {
       demo: "no-gap",
     },
   ],
+  // Je Abschnitt einmal, vor der ersten Stufe, in der das Tempo wieder mitwächst.
+  "rhythmus-tempo-2": TEMPO_STEPS,
+  "rhythmus-tempo-3": TEMPO_STEPS,
+  "rhythmus-tempo-4": TEMPO_STEPS,
   "rhythmus-band": [
     {
       title: "Jetzt liest du selbst",
@@ -234,6 +276,14 @@ export const TUTORIALS = {
 } satisfies Record<string, readonly TutorialStep[]>;
 
 export type TutorialId = keyof typeof TUTORIALS;
+
+/** Der Hinweis aufs mitwachsende Tempo, vor jeder Rhythmus-Stufe, die nicht festes Tempo hat. */
+export function tempoTutorialFor(level: Level): TutorialId | null {
+  if (hasSteadyTempo(level)) return null;
+  const groups = [...new Set(LEVELS.map((l) => l.group))];
+  const id = `rhythmus-tempo-${groups.indexOf(level.group) + 1}`;
+  return id in TUTORIALS ? (id as TutorialId) : null;
+}
 
 /** Die Notenerklärung zu einer Rhythmus-Stufe, falls diese etwas Neues bringt. */
 export function noteTutorialFor(levelId: string): TutorialId | null {
