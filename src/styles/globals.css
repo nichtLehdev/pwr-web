@@ -1004,7 +1004,6 @@ input[type="datetime-local"]::-webkit-date-and-time-value {
 .spiel-tut-sheet {
   animation: spiel-tut-up 0.32s cubic-bezier(0.2, 0.9, 0.3, 1.15);
   transition: transform 0.2s ease-out;
-  touch-action: none;
 }
 .spiel-tut-backdrop {
   animation: spiel-tut-dim 0.25s ease-out;

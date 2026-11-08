@@ -16,6 +16,7 @@ import { GameDock } from "./game-shell-context";
 import { LearningPathMap } from "./learning-path-map";
 import { usePathCelebration } from "./use-path-celebration";
 import { TutorialHelpButton, useTutorial } from "./tutorial";
+import { BottomSheet } from "./bottom-sheet";
 import type { TutorialId } from "../_lib/tutorials";
 
 /** Ein neuer Bildschirm beginnt oben, egal wie weit der Pfad gescrollt war. */
@@ -201,7 +202,7 @@ export function PathChoice<T extends string>({
   );
 }
 
-/** Die freien Modi und eigenen Notensets, für wer ohne Pfad üben möchte. */
+/** Die freien Modi und eigenen Notensets als Blatt, geöffnet über den Knopf über dem Pfad. */
 export function FreePractice({
   open,
   onToggle,
@@ -213,25 +214,29 @@ export function FreePractice({
   children: ReactNode;
   onStart: () => void;
 }) {
+  if (!open) return null;
   return (
-    <details
-      open={open}
-      onToggle={(event) => onToggle(event.currentTarget.open)}
-      className="spiel-tile p-4"
+    <BottomSheet
+      eyebrow="Ohne Lernpfad"
+      title="Frei üben"
+      onClose={() => onToggle(false)}
     >
-      <summary className="text-ink dark:text-night-text cursor-pointer text-lg font-bold">
-        Frei üben
-        <span className="text-dark dark:text-night-muted mt-0.5 block text-sm font-normal">
-          Eigene Notensets, Quiz und Endlos, ohne Lernpfad
-        </span>
-      </summary>
-      <div className="mt-4 flex flex-col gap-4">
-        {children}
-        <Button type="button" size="lg" className="w-full" onClick={onStart}>
-          Frei üben starten
-        </Button>
-      </div>
-    </details>
+      <p className="text-dark dark:text-night-muted -mt-2 text-sm">
+        Eigene Notensets, Quiz und Endlos. Zählt nicht für Sterne.
+      </p>
+      {children}
+      <Button
+        type="button"
+        size="lg"
+        className="spiel-action w-full"
+        onClick={() => {
+          onToggle(false);
+          onStart();
+        }}
+      >
+        Frei üben starten
+      </Button>
+    </BottomSheet>
   );
 }
 
@@ -277,7 +282,12 @@ export type ModeButtonSpec = {
 export function ModeButtons({ buttons }: { buttons: ModeButtonSpec[] }) {
   const tutorial = useTutorial();
   return (
-    <div className="flex justify-center gap-6">
+    <div
+      className={cn(
+        "flex justify-center",
+        buttons.length > 3 ? "gap-3" : "gap-6",
+      )}
+    >
       {buttons.map(
         ({ key, label, icon: Icon, status, locked, highlight, onClick }) => (
           <div
