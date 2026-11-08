@@ -248,6 +248,104 @@ describe("Conductor", () => {
     }
   });
 
+  describe("pause", () => {
+    /** Wie `play`, hält aber nach `pauseAt` Sekunden an und spielt nach einer Weile weiter. */
+    function playWithPause(
+      conductor: Conductor,
+      audio: FakeAudio,
+      pauseAt: number,
+    ) {
+      let attempts: Attempt[] | null = null;
+      const kinds: string[] = [];
+      const done = new Set<string>();
+      conductor.subscribe({
+        onFinish: (a) => (attempts = a),
+        onSegment: (segment) => kinds.push(segment.kind),
+      });
+      conductor.start(false);
+      const t0 = audio.time;
+      let pausedOnce = false;
+      for (let step = 0; step < 200_000 && !attempts; step++) {
+        audio.time += 0.005;
+        if (!pausedOnce && audio.time - t0 >= pauseAt) {
+          pausedOnce = true;
+          expect(conductor.pause(audio.time)).toBe(true);
+          audio.time += 3;
+          conductor.resume();
+          kinds.push("|");
+        }
+        const nowMs = audio.time * 1000;
+        for (const attempt of conductor.attempts()) {
+          attempt.notes.forEach((note) => {
+            const key = `${attempt.segmentId}:${note.eventIndex}:${note.barIndex}`;
+            if (done.has(key) || nowMs < note.onsetMs + 5) return;
+            done.add(key);
+            conductor.press(note.onsetMs + 5);
+            conductor.release(note.onsetMs + 5 + note.durationMs * 0.9);
+          });
+        }
+        conductor.pump(audio.time);
+      }
+      return { attempts: attempts as unknown as Attempt[], kinds };
+    }
+
+    it("repeats the interrupted figure after a count-in and scores each once", () => {
+      const audio = new FakeAudio();
+      const { conductor } = answerConductor(audio, 3, true);
+      // Mitten in der ersten Antwort: Einzählen, Vorspielen, dann ein Stück Antwort.
+      const barSec = 4 * (60 / 90);
+      const { attempts, kinds } = playWithPause(
+        conductor,
+        audio,
+        0.15 + barSec * 2.5,
+      );
+      const afterPause = kinds.slice(kinds.indexOf("|") + 1);
+      expect(afterPause.slice(0, 3)).toEqual(["count", "call", "answer"]);
+      expect(attempts.map((a) => a.index)).toEqual([0, 1, 2]);
+      expect(summarize(attempts).percent).toBe(100);
+    });
+
+    it("lets the band count in again and goes on from the cut bar", () => {
+      const audio = new FakeAudio();
+      const bars = createBandBars(level, ts).slice(0, 4);
+      const conductor = new Conductor(audio, new BandScript(bars, ts, 100), {
+        input: "tap",
+        leniency: 1,
+        latencySec: 0,
+      });
+      const barSec = 4 * (60 / 100);
+      const { attempts, kinds } = playWithPause(
+        conductor,
+        audio,
+        0.15 + barSec * 2.4,
+      );
+      expect(kinds.slice(kinds.indexOf("|") + 1)[0]).toBe("count");
+      expect(attempts.map((a) => a.index)).toEqual([0, 1, 2, 3]);
+      expect(summarize(attempts).percent).toBe(100);
+    });
+
+    it("takes back the points of the cut part", () => {
+      const audio = new FakeAudio();
+      const bars = createBandBars(level, ts).slice(0, 2);
+      const conductor = new Conductor(audio, new BandScript(bars, ts, 100), {
+        input: "tap",
+        leniency: 1,
+        latencySec: 0,
+      });
+      const plainAudio = new FakeAudio();
+      const plain = new Conductor(plainAudio, new BandScript(bars, ts, 100), {
+        input: "tap",
+        leniency: 1,
+        latencySec: 0,
+      });
+      const barSec = 4 * (60 / 100);
+      playWithPause(conductor, audio, 0.15 + barSec * 1.6);
+      playWithPause(plain, plainAudio, 999);
+      expect(plain.points).toBeGreaterThan(0);
+      expect(conductor.points).toBe(plain.points);
+    });
+  });
+
   it("does not count presses during the call", () => {
     const audio = new FakeAudio();
     const { conductor } = answerConductor(audio, 1, true);

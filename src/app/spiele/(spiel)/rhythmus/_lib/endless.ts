@@ -297,7 +297,19 @@ export class EndlessBandScript implements SessionScript, BandSource {
     return this.barAt(index);
   }
 
+  private recount = false;
+
+  rewind(from: { kind: SegmentSpec["kind"]; index: number }): void {
+    this.cursor = from.kind === "read" ? from.index : Math.max(0, this.cursor);
+    this.recount = true;
+  }
+
   next(lastAccuracy: number | null): SegmentSpec | null {
+    if (this.recount) {
+      this.recount = false;
+      const at = Math.max(0, this.cursor);
+      return this.spec("count", [[]], at, this.bpmAt(at), null);
+    }
     const index = this.cursor++;
     if (index === -1) {
       return this.spec("count", [[]], 0, this.bpmAt(0), null);
