@@ -48,6 +48,7 @@ export function RhythmFigure({
           timeSignature,
           showPrefix: index === 0,
           dark,
+          endBarline: "single",
         }),
       );
       // Damit beide Takte denselben Maßstab haben, zählt die Breite samt Vorsatz.
