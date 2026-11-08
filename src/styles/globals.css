@@ -999,3 +999,186 @@ input[type="datetime-local"]::-webkit-date-and-time-value {
   /* Holds the row height while the field is still empty. */
   min-height: 1.5em;
 }
+
+/* Erklärblatt: gleitet von unten herein, die Vorführungen laufen in Schleife. */
+.spiel-tut-sheet {
+  animation: spiel-tut-up 0.32s cubic-bezier(0.2, 0.9, 0.3, 1.15);
+  transition: transform 0.2s ease-out;
+  touch-action: none;
+}
+.spiel-tut-backdrop {
+  animation: spiel-tut-dim 0.25s ease-out;
+}
+@keyframes spiel-tut-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+@keyframes spiel-tut-dim {
+  from {
+    opacity: 0;
+  }
+}
+.spiel-tut-cell {
+  border: 3px solid var(--color-rule);
+  animation: spiel-tut-light 4.4s infinite both;
+}
+.dark .spiel-tut-cell {
+  border-color: var(--color-night-rule);
+}
+@keyframes spiel-tut-light {
+  0%,
+  38%,
+  100% {
+    background: transparent;
+  }
+  3%,
+  34% {
+    background: var(--color-primary);
+    border-color: var(--color-primary-ink);
+  }
+}
+.spiel-tut-fill {
+  animation: spiel-tut-fill 2.6s infinite;
+}
+@keyframes spiel-tut-fill {
+  0%,
+  10% {
+    width: 0;
+  }
+  75%,
+  100% {
+    width: 100%;
+  }
+}
+.spiel-tut-fill-70 {
+  animation: spiel-tut-fill-70 3s infinite;
+}
+@keyframes spiel-tut-fill-70 {
+  0% {
+    width: 0;
+  }
+  60%,
+  100% {
+    width: 74%;
+  }
+}
+.spiel-tut-press {
+  box-shadow: 0 6px 0 var(--color-primary-ink);
+  animation: spiel-tut-press 2.6s infinite;
+}
+@keyframes spiel-tut-press {
+  0%,
+  8%,
+  80%,
+  100% {
+    transform: none;
+    box-shadow: 0 6px 0 var(--color-primary-ink);
+  }
+  12%,
+  75% {
+    transform: translateY(5px);
+    box-shadow: 0 1px 0 var(--color-primary-ink);
+  }
+}
+.spiel-tut-scroll {
+  animation: spiel-tut-scroll 4s linear infinite;
+}
+@keyframes spiel-tut-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.spiel-tut-pulse {
+  animation: spiel-tut-pulse 1.6s ease-in-out infinite;
+}
+@keyframes spiel-tut-pulse {
+  50% {
+    transform: scale(1.08);
+  }
+}
+.spiel-tut-fade {
+  animation: spiel-tut-fade 4s infinite both;
+}
+@keyframes spiel-tut-fade {
+  0%,
+  20%,
+  100% {
+    opacity: 1;
+  }
+  28%,
+  90% {
+    opacity: 0.18;
+  }
+}
+.spiel-tut-key {
+  animation: spiel-tut-key 2.4s infinite;
+}
+@keyframes spiel-tut-key {
+  0%,
+  45%,
+  100% {
+    background: transparent;
+  }
+  55%,
+  90% {
+    background: var(--color-primary);
+    border-color: var(--color-primary-ink);
+    color: var(--color-ink);
+  }
+}
+.spiel-tut-valve {
+  animation: spiel-tut-valve 2.4s infinite both;
+}
+@keyframes spiel-tut-valve {
+  0%,
+  30%,
+  100% {
+    transform: none;
+    background: transparent;
+  }
+  40%,
+  85% {
+    transform: translateY(5px);
+    background: var(--color-primary);
+    border-color: var(--color-primary-ink);
+    color: var(--color-ink);
+  }
+}
+.spiel-tut-balance {
+  animation: spiel-tut-balance 3s ease-in-out infinite;
+}
+@keyframes spiel-tut-balance {
+  0%,
+  20% {
+    transform: rotate(-9deg);
+  }
+  55%,
+  100% {
+    transform: rotate(0);
+  }
+}
+.spiel-tut-weigh {
+  transform: rotate(0);
+  animation: spiel-tut-weigh 3.2s ease-in-out infinite;
+}
+@keyframes spiel-tut-weigh {
+  0%,
+  45% {
+    transform: rotate(0);
+  }
+  65%,
+  100% {
+    transform: rotate(6deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spiel-tut-sheet,
+  .spiel-tut-backdrop,
+  [class*="spiel-tut-"] {
+    animation: none !important;
+  }
+}

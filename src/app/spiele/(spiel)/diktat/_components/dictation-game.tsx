@@ -247,6 +247,7 @@ export function DictationGame() {
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-[clamp(0.5rem,1.8svh,1.25rem)]">
       {phase === "setup" && (
         <PathScreen
+          tutorials={() => ["diktat-start"]}
           path={DICTATION_PATH}
           state={pathState}
           head={

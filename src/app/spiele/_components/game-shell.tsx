@@ -9,6 +9,7 @@ import { gameBySlug } from "../_lib/games";
 import { GameShellProvider } from "./game-shell-context";
 import { ProfileGate, ProfilesProvider } from "./profiles";
 import { StatsSyncRunner } from "./stats-sync-runner";
+import { TutorialProvider } from "./tutorial";
 
 /**
  * Vollbild-Hülle aller Spiele (Kopfleiste, Inhalt, Aktions-Dock) als 100dvh-Grid,
@@ -40,47 +41,53 @@ export function GameShell({ children }: { children: ReactNode }) {
           data-spiel-theme="welt"
           className="programm font-programm bg-paper text-ink dark:bg-night dark:text-night-text grid h-dvh grid-rows-[auto_minmax(0,1fr)_auto] overflow-x-hidden pr-[env(safe-area-inset-right,0px)] pl-[env(safe-area-inset-left,0px)]"
         >
-          <header className="border-rule dark:border-night-rule bg-paper dark:bg-night z-20 border-b pt-[env(safe-area-inset-top,0px)]">
-            <div className="mx-auto flex h-12 w-full max-w-5xl items-center gap-2 px-3 md:px-5">
-              <div className="flex flex-1 items-center justify-start">
-                <Link
-                  href="/spiele"
-                  className="text-ink hover:bg-rule/25 dark:text-night-text dark:hover:bg-night-raised -ml-2 inline-flex min-h-11 items-center gap-0.5 py-1.5 pr-2.5 pl-1 text-sm font-bold transition-colors"
-                >
-                  <ChevronLeft
-                    className="h-5 w-5 shrink-0 stroke-[2.25]"
-                    aria-hidden
-                  />
-                  Spiele
-                </Link>
+          <TutorialProvider>
+            <header className="border-rule dark:border-night-rule bg-paper dark:bg-night z-20 border-b pt-[env(safe-area-inset-top,0px)]">
+              <div className="mx-auto flex h-12 w-full max-w-5xl items-center gap-2 px-3 md:px-5">
+                <div className="flex flex-1 items-center justify-start">
+                  <Link
+                    href="/spiele"
+                    className="text-ink hover:bg-rule/25 dark:text-night-text dark:hover:bg-night-raised -ml-2 inline-flex min-h-11 items-center gap-0.5 py-1.5 pr-2.5 pl-1 text-sm font-bold transition-colors"
+                  >
+                    <ChevronLeft
+                      className="h-5 w-5 shrink-0 stroke-[2.25]"
+                      aria-hidden
+                    />
+                    Spiele
+                  </Link>
+                </div>
+                <h1 className="condensed text-ink dark:text-night-text min-w-0 truncate text-base font-bold">
+                  {title}
+                </h1>
+                <div
+                  ref={setBarSlotEl}
+                  className="flex flex-1 items-center justify-end gap-2"
+                />
               </div>
-              <h1 className="condensed text-ink dark:text-night-text min-w-0 truncate text-base font-bold">
-                {title}
-              </h1>
-              <div
-                ref={setBarSlotEl}
-                className="flex flex-1 items-center justify-end gap-2"
-              />
-            </div>
-          </header>
+            </header>
 
-          <main
-            aria-label={title}
-            className={cn(
-              "flex min-h-0 flex-col overscroll-contain px-3 pt-3 pb-6 md:px-5 md:pt-4",
-              scrollLocked ? "overflow-hidden" : "overflow-y-auto",
-            )}
-          >
-            {/* `m-auto` statt `justify-center`: zentriert, ohne bei hohem Inhalt den oberen Rand abzuschneiden. */}
-            <div className="m-auto w-full">
-              {isProfilePage ? children : <ProfileGate>{children}</ProfileGate>}
-            </div>
-          </main>
+            <main
+              aria-label={title}
+              className={cn(
+                "flex min-h-0 flex-col overscroll-contain px-3 pt-3 pb-6 md:px-5 md:pt-4",
+                scrollLocked ? "overflow-hidden" : "overflow-y-auto",
+              )}
+            >
+              {/* `m-auto` statt `justify-center`: zentriert, ohne bei hohem Inhalt den oberen Rand abzuschneiden. */}
+              <div className="m-auto w-full">
+                {isProfilePage ? (
+                  children
+                ) : (
+                  <ProfileGate>{children}</ProfileGate>
+                )}
+              </div>
+            </main>
 
-          <div
-            ref={setDockEl}
-            className="border-rule dark:border-night-rule bg-paper dark:bg-night z-20 border-t px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] empty:hidden md:px-5"
-          />
+            <div
+              ref={setDockEl}
+              className="border-rule dark:border-night-rule bg-paper dark:bg-night z-20 border-t px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] empty:hidden md:px-5"
+            />
+          </TutorialProvider>
         </div>
       </ProfilesProvider>
     </GameShellProvider>

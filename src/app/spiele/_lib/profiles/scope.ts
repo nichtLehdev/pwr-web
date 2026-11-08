@@ -39,6 +39,7 @@ export function isProgressSuffix(suffix: string): boolean {
 const SCOPED_SUFFIXES = (suffix: string) =>
   isProgressSuffix(suffix) ||
   suffix === "rhythmus.prefs" ||
+  suffix === "tutorials" ||
   /^(rhythmus|diktat|noten-lesen|griffe|notenwaage)$/.test(suffix);
 
 export function notifyProgressChanged(): void {

@@ -15,6 +15,8 @@ import type { usePathState } from "../_lib/use-path-state";
 import { GameDock } from "./game-shell-context";
 import { LearningPathMap } from "./learning-path-map";
 import { usePathCelebration } from "./use-path-celebration";
+import { TutorialHelpButton, useTutorial } from "./tutorial";
+import type { TutorialId } from "../_lib/tutorials";
 
 /** Ein neuer Bildschirm beginnt oben, egal wie weit der Pfad gescrollt war. */
 export function scrollGameToTop(from: Element | null): void {
@@ -32,6 +34,8 @@ export function PathScreen<S extends PathStage>({
   below,
   modes,
   challengeText = `Alles, was du bisher gelernt hast, drei Mal Puste. Schaffe ${CHALLENGE_PASS_PERCENT} %.`,
+  tutorials,
+  challengeTutorials = [],
   onStart,
 }: {
   path: LearningPath<S>;
@@ -41,8 +45,12 @@ export function PathScreen<S extends PathStage>({
   /** Kleine Knöpfe über dem Pfad: Tagestraining, Endlos, Bestenliste. */
   modes?: ReactNode;
   challengeText?: string;
+  /** Was Toni vor einer Stufe zum ersten Mal erklärt; die Challenge kommt von selbst dazu. */
+  tutorials?: (stage: S) => TutorialId[];
+  challengeTutorials?: TutorialId[];
   onStart: () => void;
 }) {
+  const tutorial = useTutorial();
   const { selectedId, progress, celebration } = state;
   const challengeSection = path.parseChallengeId(selectedId);
   const stage = path.stageById(selectedId) ?? path.stages[0]!;
@@ -67,6 +75,11 @@ export function PathScreen<S extends PathStage>({
       selectedRef.current?.scrollIntoView({ block: "center" });
     }
   }, [celebration, challengeSection, number]);
+
+  const tutorialIds: TutorialId[] =
+    challengeSection !== null
+      ? ["challenge", ...challengeTutorials]
+      : (tutorials?.(stage) ?? []);
 
   const celebratedNumber = celebration
     ? path.stages.findIndex((s) => s.id === celebration.fromId) + 1
@@ -128,19 +141,24 @@ export function PathScreen<S extends PathStage>({
                 <span className="text-dark dark:text-night-muted">
                   {challengeSection !== null ? challengeText : stage.hint}
                 </span>
+                <TutorialHelpButton ids={tutorialIds} />
               </p>
               <Button
                 type="button"
                 size="lg"
                 className="spiel-action w-full"
                 onClick={() => {
-                  scrollGameToTop(selectedRef.current);
-                  onStart();
+                  tutorial.gate(tutorialIds, () => {
+                    scrollGameToTop(selectedRef.current);
+                    onStart();
+                  });
                 }}
               >
                 {challengeSection !== null
                   ? "Challenge starten"
-                  : `Stufe ${number} spielen`}
+                  : number > 0
+                    ? `Stufe ${number} spielen`
+                    : "Bonus spielen"}
               </Button>
             </>
           )}
@@ -257,6 +275,7 @@ export type ModeButtonSpec = {
 
 /** Die Spielarten als runde Knöpfe in Stufengröße über dem Pfad; Gesperrtes trägt ein Schloss. */
 export function ModeButtons({ buttons }: { buttons: ModeButtonSpec[] }) {
+  const tutorial = useTutorial();
   return (
     <div className="flex justify-center gap-6">
       {buttons.map(
@@ -268,7 +287,12 @@ export function ModeButtons({ buttons }: { buttons: ModeButtonSpec[] }) {
             <button
               type="button"
               disabled={Boolean(locked)}
-              onClick={onClick}
+              onClick={() =>
+                tutorial.gate(
+                  key === "daily" || key === "endless" ? [key] : [],
+                  onClick,
+                )
+              }
               aria-label={`${label}: ${locked ?? status}`}
               title={locked ?? status}
               data-state={locked ? "locked" : highlight ? "active" : "done"}

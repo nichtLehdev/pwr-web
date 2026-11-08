@@ -1126,6 +1126,7 @@ export function NoteReadingGame() {
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-[clamp(0.625rem,1.8dvh,1.5rem)]">
       {phase === "setup" && !libraryOpen && (
         <PathScreen
+          tutorials={() => ["noten-lesen-start"]}
           path={NOTEN_PATH}
           state={pathState}
           head={

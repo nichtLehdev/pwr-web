@@ -30,6 +30,8 @@ import {
   type Progress,
 } from "../_lib/prefs";
 import { MAX_STARS, rankFor, totalStars } from "../_lib/ranks";
+import { TutorialHelpButton, useTutorial } from "../../../_components/tutorial";
+import type { TutorialId } from "../../../_lib/tutorials";
 
 const MIN_BPM = 40;
 const MAX_BPM = 200;
@@ -64,12 +66,21 @@ export function SetupView({
   onCalibrate: () => void;
 }) {
   const isEndless = prefs.levelId === ENDLESS_ID;
+  const tutorial = useTutorial();
   const dailyDone = useDailyDone("rhythmus");
   const [choosingEndless, setChoosingEndless] = useState(false);
   const challengeSection = parseChallengeId(prefs.levelId);
   const stage = RHYTHM_PATH.stageById(prefs.levelId) ?? RHYTHM_PATH.stages[0]!;
   const level = stage.level;
   const levelNumber = RHYTHM_PATH.stages.indexOf(stage) + 1;
+  const tutorialIds: TutorialId[] =
+    challengeSection !== null
+      ? ["challenge"]
+      : isEndless
+        ? ["endless"]
+        : stage.mode === "band"
+          ? ["rhythmus-band"]
+          : ["rhythmus-start"];
   const endlessRecord = endlessRecords[prefs.mode];
   const autoBpm = startBpm(level, progress, stage.id);
   const stars = totalStars(progress);
@@ -364,18 +375,21 @@ export function SetupView({
                       ? "Drei Mal Puste, wie weit kommst du?"
                       : stage.hint}
                 </span>
+                <TutorialHelpButton ids={tutorialIds} />
               </p>
               <Button
                 type="button"
                 size="lg"
                 className="spiel-action w-full"
-                onClick={onStart}
+                onClick={() => tutorial.gate(tutorialIds, onStart)}
               >
                 {challengeSection !== null
                   ? "Challenge starten"
                   : isEndless
                     ? "Endlos spielen"
-                    : `Stufe ${levelNumber} spielen`}
+                    : levelNumber > 0
+                      ? `Stufe ${levelNumber} spielen`
+                      : "Bonus spielen"}
               </Button>
             </>
           )}

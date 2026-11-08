@@ -1416,6 +1416,7 @@ export function FingeringGame() {
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 md:gap-4">
       {phase === "setup" && !libraryOpen && (
         <PathScreen
+          tutorials={() => ["griffe-start"]}
           path={GRIFFE_PATH}
           state={pathState}
           head={

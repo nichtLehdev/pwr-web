@@ -325,6 +325,12 @@ export function NoteValueGame() {
     return (
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
         <PathScreen
+          tutorials={(stage) =>
+            stage.liveScale
+              ? ["notenwaage-start"]
+              : ["notenwaage-start", "notenwaage-wiegen"]
+          }
+          challengeTutorials={["notenwaage-wiegen"]}
           path={WAAGE_PATH}
           state={pathState}
           head={
