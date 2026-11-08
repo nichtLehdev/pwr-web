@@ -1,20 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Share } from "lucide-react";
-import { Note } from "@/app/_components/programmheft/note";
 import { isIos, isStandalone } from "@/lib/pwa";
 
-type BeforeInstallPromptEvent = Event & {
+export type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 };
 
 /**
  * Chromium bekommt einen Install-Button (beforeinstallprompt), iOS Safari die
- * "Zum Home-Bildschirm"-Anleitung; in der installierten App unsichtbar.
+ * "Zum Home-Bildschirm"-Anleitung; in der installierten App gibt es nichts zu zeigen.
  */
-export function InstallHintCard() {
+export function useInstallHint(): {
+  installEvent: BeforeInstallPromptEvent | null;
+  iosHint: boolean;
+} {
   const [installEvent, setInstallEvent] =
     useState<BeforeInstallPromptEvent | null>(null);
   const [showIosHint, setShowIosHint] = useState(false);
@@ -40,38 +41,6 @@ export function InstallHintCard() {
     };
   }, []);
 
-  if (installed || (!installEvent && !showIosHint)) return null;
-
-  return (
-    <Note tone="info" title="Als App aufs Handy" className="mb-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <p className="max-w-[46ch]">
-          {installEvent ? (
-            "Installiere die Spiele als App — sie funktionieren dann auch offline."
-          ) : (
-            <>
-              In Safari:{" "}
-              <Share
-                className="inline h-4 w-4 align-text-bottom"
-                aria-label="Teilen-Symbol"
-              />{" "}
-              Teilen → „Zum Home-Bildschirm" — die Spiele funktionieren dann
-              auch offline.
-            </>
-          )}
-        </p>
-        {installEvent ? (
-          <button
-            type="button"
-            onClick={() => {
-              void installEvent.prompt();
-            }}
-            className="border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night semi-condensed inline-flex min-h-12 shrink-0 items-center gap-3 border-2 px-6 text-lg font-semibold transition-colors"
-          >
-            App installieren
-          </button>
-        ) : null}
-      </div>
-    </Note>
-  );
+  if (installed) return { installEvent: null, iosHint: false };
+  return { installEvent, iosHint: showIosHint };
 }

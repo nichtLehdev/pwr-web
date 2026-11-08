@@ -1,16 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CheckCircle2, CloudDownload } from "lucide-react";
 import { GAMES } from "../_lib/games";
 
-type WarmupState = "idle" | "warming" | "ready";
+export type WarmupState = "idle" | "warming" | "ready";
 
 /**
  * Macht die Spiele offline verfügbar: unter einem Service Worker werden im Leerlauf die
  * Spiel-Dokumente gecacht und die Spiel-Module importiert, damit ihre Chunks in den SW-Cache laufen.
  */
-export function OfflineReadyCard() {
+export function useOfflineWarmup(): WarmupState {
   const [state, setState] = useState<WarmupState>("idle");
 
   useEffect(() => {
@@ -57,30 +56,5 @@ export function OfflineReadyCard() {
     };
   }, []);
 
-  if (state === "idle") return null;
-
-  return (
-    <p
-      className="text-dark dark:text-night-muted mb-8 flex items-center gap-2 text-sm"
-      role="status"
-    >
-      {state === "warming" ? (
-        <>
-          <CloudDownload
-            className="h-4 w-4 shrink-0 motion-safe:animate-pulse"
-            aria-hidden
-          />
-          Spiele werden für die Offline-Nutzung vorbereitet …
-        </>
-      ) : (
-        <>
-          <CheckCircle2
-            className="text-ink dark:text-night-text h-4 w-4 shrink-0"
-            aria-hidden
-          />
-          Spiele sind offline verfügbar.
-        </>
-      )}
-    </p>
-  );
+  return state;
 }
