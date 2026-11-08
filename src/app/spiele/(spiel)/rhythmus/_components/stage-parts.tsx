@@ -260,9 +260,11 @@ export function useCountIn(
 export function ReadyBadge({
   number,
   pulses,
+  label = "Du bist dran",
 }: {
   number: number | null;
   pulses: number;
+  label?: string;
 }) {
   if (number === null) return null;
   return (
@@ -271,7 +273,7 @@ export function ReadyBadge({
       aria-hidden
     >
       <p className="bg-primary text-ink flex items-center gap-2 rounded-full px-4 py-1.5 text-base font-extrabold shadow-[0_3px_0_var(--color-primary-ink)]">
-        Du bist dran
+        {label}
         <span
           key={number}
           className="rhythm-count-pop condensed min-w-[1.2ch] text-2xl leading-none tabular-nums"

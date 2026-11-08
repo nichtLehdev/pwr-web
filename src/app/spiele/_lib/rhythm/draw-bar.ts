@@ -22,6 +22,9 @@ export const QUARTER_WIDTH = 100;
 const PX_PER_TICK = QUARTER_WIDTH / TICKS_PER_QUARTER;
 /** Abstand Taktstrich → erste Note. Kleiner als eine Sechzehntel minus Notenkopf. */
 export const BAR_LEAD = 9;
+const THIN_BARLINE = 1.4;
+const THICK_BARLINE = 4.5;
+const BARLINE_GAP = 2.6;
 /** Halbe Notenkopfbreite: Cursor und Lesekante zielen auf die Kopfmitte. */
 const HEAD_CENTER = 6;
 const STAVE_Y = 60;
@@ -111,9 +114,12 @@ export function drawBar(
     timeSignature: TimeSignature;
     showPrefix: boolean;
     dark: boolean;
+    /** Taktstrich am Ende selbst zeichnen; VexFlows liegt genau auf dem Rand und wird abgeschnitten. */
+    endBarline?: "single" | "end";
   },
 ): BarHandle {
-  const { events, noteKey, timeSignature, showPrefix, dark } = options;
+  const { events, noteKey, timeSignature, showPrefix, dark, endBarline } =
+    options;
   const colors = notationColors(dark);
   const barWidth = barTicks(timeSignature) * PX_PER_TICK;
   const tsString = `${timeSignature.numerator}/${timeSignature.denominator}`;
@@ -126,6 +132,7 @@ export function drawBar(
   const stave = new Stave(0, STAVE_Y, barWidth);
   if (showPrefix) stave.addClef("treble").addTimeSignature(tsString);
   else stave.setBegBarType(Barline.type.NONE);
+  if (endBarline) stave.setEndBarType(Barline.type.NONE);
   stave.setContext(ctx);
   // Bestimmt erst nach dem Layout der Vorsätze die echte Startposition.
   stave.format();
@@ -186,6 +193,24 @@ export function drawBar(
     voice.draw(ctx, stave);
     for (const tuplet of tuplets) tuplet.setContext(ctx).draw();
     for (const beam of beams) beam.setContext(ctx).draw();
+  }
+
+  if (endBarline) {
+    const top = stave.getYForLine(0);
+    const height = stave.getYForLine(4) - top;
+    ctx.setFillStyle(colors.stave);
+    if (endBarline === "end") {
+      // Schlussstrich: dünner Strich, Abstand, dicker Strich am Ende.
+      ctx.fillRect(totalWidth - THICK_BARLINE, top, THICK_BARLINE, height);
+      ctx.fillRect(
+        totalWidth - THICK_BARLINE - BARLINE_GAP - THIN_BARLINE,
+        top,
+        THIN_BARLINE,
+        height,
+      );
+    } else {
+      ctx.fillRect(totalWidth - THIN_BARLINE, top, THIN_BARLINE, height);
+    }
   }
 
   const svg = host.querySelector("svg")!;

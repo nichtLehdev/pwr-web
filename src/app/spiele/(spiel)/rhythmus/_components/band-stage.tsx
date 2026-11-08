@@ -24,8 +24,8 @@ import { spawnBurst } from "../../../_components/note-burst";
 import {
   ANNOUNCEMENT,
   ballHop,
-  CountOverlay,
   HoppingHead,
+  ReadyBadge,
   StageHud,
   useCountIn,
 } from "./stage-parts";
@@ -90,6 +90,10 @@ export function BandStage({
         timeSignature,
         showPrefix: index === 0,
         dark,
+        endBarline:
+          source.barCount !== null && index === source.barCount - 1
+            ? "end"
+            : "single",
       });
       const prefixWidth = handle.width - barWidth;
       host.style.left = `${(index * barWidth - BAR_LEAD - prefixWidth) * scale}px`;
@@ -223,7 +227,12 @@ export function BandStage({
         >
           <HoppingHead headRef={ballRef} filled />
         </div>
-        <CountOverlay number={countNumber} />
+        {/* Beim Einzählen sichtbar bleiben: Der erste Takt läuft schon heran. */}
+        <ReadyBadge
+          number={countNumber}
+          pulses={pulseOf(timeSignature).pulsesPerBar}
+          label="Zähl mit"
+        />
       </div>
     </div>
   );
