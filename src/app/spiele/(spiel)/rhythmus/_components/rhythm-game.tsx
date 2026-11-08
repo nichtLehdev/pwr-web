@@ -50,6 +50,8 @@ import {
   AnswerPlan,
   AnswerScript,
   BandScript,
+  BAND_LENIENCY_BONUS,
+  bandBpmFor,
   createBandBars,
   figuresForLevel,
   type BandSource,
@@ -458,7 +460,7 @@ export function RhythmGame() {
         }
       } else if (playMode === "band") {
         const ts = pickMeter(level);
-        const bpm = fixedBpm ?? startBpm(level, pathProgress, stage?.id);
+        const bpm = fixedBpm ?? bandBpmFor(level);
         const bars = createBandBars(level, ts);
         const fixed = new BandScript(bars, ts, bpm, hasSteadyPitch(level));
         band = { source: fixed, ts };
@@ -482,7 +484,11 @@ export function RhythmGame() {
 
       const conductor = new Conductor(audio, script, {
         input,
-        leniency: challenge ? CHALLENGE_LENIENCY : (level?.leniency ?? 1),
+        leniency: challenge
+          ? CHALLENGE_LENIENCY
+          : (level?.leniency ?? 1) +
+            // Nur Stufen: Endlos wird auf dem Server mit der normalen Toleranz nachgerechnet.
+            (level && playMode === "band" ? BAND_LENIENCY_BONUS : 0),
         latencySec,
       });
       const active: Session = {
