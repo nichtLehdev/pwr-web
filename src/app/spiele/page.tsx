@@ -34,8 +34,11 @@ export default function SpielePage() {
       <PageSection>
         <ProfilesProvider>
           <GameHub />
-          <LeagueCard />
-          <WeeklyTasksCard />
+          {/* Nebeneinander, sobald Platz ist; eine einzelne Karte nimmt die volle Breite. */}
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,22rem),1fr))] items-start gap-x-10">
+            <LeagueCard />
+            <WeeklyTasksCard />
+          </div>
           <OfflineMenu />
           <StatsSyncRunner />
 
