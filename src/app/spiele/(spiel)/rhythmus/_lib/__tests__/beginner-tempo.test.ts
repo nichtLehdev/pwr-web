@@ -37,6 +37,18 @@ describe("Grundlagen tempo", () => {
   });
 });
 
+describe("steady tempo where a section brings something new", () => {
+  it("holds the tempo for the first two levels of every section", () => {
+    const groups = [...new Set(LEVELS.map((l) => l.group))];
+    for (const group of groups) {
+      const levels = LEVELS.filter((l) => l.group === group);
+      levels.forEach((level, i) => {
+        expect(hasSteadyTempo(level)).toBe(group === groups[0] || i < 2);
+      });
+    }
+  });
+});
+
 describe("note tutorials", () => {
   it("explain the notes before the first three levels", () => {
     for (const level of LEVELS.slice(0, 3)) {
