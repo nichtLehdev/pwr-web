@@ -1,5 +1,6 @@
 import { describe, expect, it } from "@jest/globals";
-import type { AudioPort } from "../../../../_lib/rhythm/audio";
+import { harmonyFor, type AudioPort } from "../../../../_lib/rhythm/audio";
+import { parseCell } from "../../../../_lib/rhythm/generator";
 import { LEVELS, levelById } from "../../../../_lib/rhythm/levels";
 import { onsetsOf, secPerTick } from "../../../../_lib/rhythm/ticks";
 import { Conductor, type Attempt } from "../conductor";
@@ -221,6 +222,30 @@ describe("Conductor", () => {
     expect(attempts.map((a) => a.index)).toEqual([0, 1, 2, 3]);
     expect(attempts.every((a) => a.bpm === 100)).toBe(true);
     expect(summarize(attempts).percent).toBe(100);
+  });
+
+  it("sounds a bar's first note in that bar's pitch, also when pressed early", () => {
+    const four = { numerator: 4, denominator: 4 };
+    const bars = [0, 1, 2].map(() => parseCell("q q q q"));
+    for (const early of [0, 40]) {
+      const audio = new FakeAudio();
+      const pitches: number[] = [];
+      audio.playShort = ((hz: number) => {
+        pitches.push(hz);
+      }) as unknown as FakeAudio["playShort"];
+      const conductor = new Conductor(audio, new BandScript(bars, four, 100), {
+        input: "tap",
+        leniency: 1,
+        latencySec: 0,
+      });
+      const attempts = play(conductor, audio, () => -early);
+      [0, 1, 2].forEach((bar) => {
+        expect(pitches.slice(bar * 4, bar * 4 + 4)).toEqual(
+          Array(4).fill(harmonyFor({ index: bar }).melodyHz),
+        );
+      });
+      expect(attempts.every((a) => a.extras === 0)).toBe(true);
+    }
   });
 
   it("does not count presses during the call", () => {
