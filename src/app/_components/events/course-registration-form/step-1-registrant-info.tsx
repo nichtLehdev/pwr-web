@@ -223,7 +223,7 @@ export function Step1RegistrantInfo({
             showRequiredMark={!staffMode}
             type="text"
             maxLength={100}
-            placeholder="Düsseldorf"
+            placeholder="Musterstadt"
           />
         </div>
 
@@ -307,7 +307,7 @@ export function Step1RegistrantInfo({
                 required
                 type="text"
                 maxLength={100}
-                placeholder="Düsseldorf"
+                placeholder="Musterstadt"
               />
 
               <RegistrantField

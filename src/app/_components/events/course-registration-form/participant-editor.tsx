@@ -225,7 +225,7 @@ export function ParticipantEditor({
             className={fieldClass({
               error: flagged("city"),
             })}
-            placeholder="Düsseldorf"
+            placeholder="Musterstadt"
           />
         </div>
 
