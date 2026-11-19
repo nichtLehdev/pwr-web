@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { resolveDeletionRequests } from "../helpers/deletion-requests";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import {
@@ -1809,6 +1810,12 @@ export const coursesRouter = createTRPCRouter({
         where: { id: input.id },
       });
       await deleteReviewSnapshots(ctx.db, "course", [input.id]);
+      await resolveDeletionRequests(
+        ctx.db,
+        "course",
+        [input.id],
+        ctx.session.user.id,
+      );
 
       return { success: true };
     }),
@@ -2309,6 +2316,12 @@ export const coursesRouter = createTRPCRouter({
         where: { id: { in: canDeleteIds } },
       });
       await deleteReviewSnapshots(ctx.db, "course", canDeleteIds);
+      await resolveDeletionRequests(
+        ctx.db,
+        "course",
+        canDeleteIds,
+        ctx.session.user.id,
+      );
 
       return { success: true, deletedCount: canDeleteIds.length };
     }),

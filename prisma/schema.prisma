@@ -2008,6 +2008,36 @@ model ContentReviewSnapshot {
 }
 
 /// In-app notifications shown in the header bell. One row per recipient.
+enum ContentDeletionRequestStatus {
+  OPEN
+  /// Inhalt wurde gelöscht (über den Antrag oder auf anderem Weg).
+  DONE
+  DECLINED
+}
+
+/// Löschantrag für einen Inhalt, den die antragstellende Person selbst nicht löschen darf.
+model ContentDeletionRequest {
+  id            String                       @id @default(uuid())
+  /// "post" | "event" | "course" — wie in ContentReviewSnapshot.
+  contentType   String
+  /// Plain id (no FK): one table for three content models; the row outlives the content.
+  contentId     String
+  /// Titel zum Zeitpunkt des Antrags, damit der Antrag nach dem Löschen lesbar bleibt.
+  contentTitle  String
+  reason        String
+  status        ContentDeletionRequestStatus @default(OPEN)
+  /// Plain ids (no FK), as in AuditLog.
+  requestedById String?
+  decidedById   String?
+  decisionNote  String?
+  decidedAt     DateTime?
+  createdAt     DateTime                     @default(now())
+
+  @@index([contentType, contentId, status])
+  @@index([status, createdAt])
+  @@map("content_deletion_request")
+}
+
 model Notification {
   id     String @id @default(uuid())
   userId String

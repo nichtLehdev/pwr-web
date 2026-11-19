@@ -34,6 +34,10 @@ export {
 } from "./dashboard-overflow-menu";
 export { DraftRestorePrompt } from "./draft-restore-prompt";
 export { ReviewChangesPanel } from "./review-changes-panel";
+export {
+  DeletionRequestButton,
+  DeletionRequestNotice,
+} from "./deletion-request";
 export { default as SlugField } from "./slug-field";
 export {
   PersonDetailsFields,

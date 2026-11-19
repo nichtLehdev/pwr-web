@@ -27,6 +27,8 @@ import {
   DashboardOverflowMenu,
   DashboardPage,
   EntryExportButton,
+  DeletionRequestButton,
+  DeletionRequestNotice,
   ReviewChangesPanel,
   useEntryExport,
 } from "@/app/_components/dashboard";
@@ -193,7 +195,8 @@ export default function PostDetailPage() {
   const isReviewer = hasApprovePermission;
   const isOwner = post.createdById === session.user.id;
   const canEdit = isOwner || hasEditPermission;
-  const canDelete = isOwner || hasEditPermission;
+  // Wie auf dem Server: eigene Inhalte oder `posts.delete`; alle anderen beantragen.
+  const canDelete = isOwner || hasPermission("posts.delete" as PermissionKey);
   const canReview = isReviewer && post.status === ContentStatus.PENDING;
 
   const hasPendingDownloads =
@@ -276,6 +279,7 @@ export default function PostDetailPage() {
                 Löschen
               </button>
             )}
+            <DeletionRequestButton contentType="post" contentId={postId} />
             {/* Auf dem Telefon steht der Export im „…“-Menü; ab sm als Knopf
                 vor „Löschen“, damit die zerstörerische Aktion am Ende bleibt. */}
             {entryExport.canExport && (
@@ -302,6 +306,12 @@ export default function PostDetailPage() {
             </Tag>
           )}
         </div>
+
+        <DeletionRequestNotice
+          contentType="post"
+          contentId={post.id}
+          onDelete={() => setShowDeleteModal(true)}
+        />
 
         {canReview && (
           <section className="border-rule dark:border-night-rule mb-6 border-2 p-6">

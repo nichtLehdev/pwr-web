@@ -19,6 +19,8 @@ import {
   DashboardOverflowMenu,
   DashboardPage,
   EntryExportButton,
+  DeletionRequestButton,
+  DeletionRequestNotice,
   ReviewChangesPanel,
   useEntryExport,
 } from "@/app/_components/dashboard";
@@ -177,7 +179,8 @@ export default function EventDetailPage() {
   const isReviewer = hasApprovePermission;
   const isOwner = event.createdById === session.user.id;
   const canEdit = isOwner || hasEditPermission;
-  const canDelete = isOwner || hasEditPermission;
+  // Wie auf dem Server: eigene Inhalte oder `events.delete`; alle anderen beantragen.
+  const canDelete = isOwner || hasPermission("events.delete" as PermissionKey);
   const canReview = isReviewer && event.status === ContentStatus.PENDING;
 
   const eventDate = new Date(event.eventDate);
@@ -283,6 +286,7 @@ export default function EventDetailPage() {
                 Löschen
               </button>
             )}
+            <DeletionRequestButton contentType="event" contentId={eventId} />
             {/* Auf dem Telefon steht der Export im „…“-Menü; ab sm als Knopf
                 vor „Löschen“, damit die zerstörerische Aktion am Ende bleibt. */}
             {entryExport.canExport && (
@@ -351,6 +355,12 @@ export default function EventDetailPage() {
             </p>
           </div>
         )}
+
+        <DeletionRequestNotice
+          contentType="event"
+          contentId={event.id}
+          onDelete={() => setShowDeleteModal(true)}
+        />
 
         {canReview && (
           <section className="border-rule dark:border-night-rule mb-8 border-2 p-6">

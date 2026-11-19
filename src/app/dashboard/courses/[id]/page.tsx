@@ -38,6 +38,8 @@ import {
   DashboardOverflowMenu,
   DashboardPage,
   EntryExportButton,
+  DeletionRequestButton,
+  DeletionRequestNotice,
   ReviewChangesPanel,
   useEntryExport,
 } from "@/app/_components/dashboard";
@@ -253,7 +255,8 @@ export default function CourseDetailPage() {
     hasEditPermission ||
     hasDistrictCourseAccess ||
     course.viewerCollaboratorRole === CourseCollaboratorRole.ORGANIZER;
-  const canDelete = isOwner || hasEditPermission;
+  // Wie auf dem Server: eigene Inhalte oder `courses.delete`; alle anderen beantragen.
+  const canDelete = isOwner || hasPermission("courses.delete" as PermissionKey);
   const canReview = isReviewer && course.status === ContentStatus.PENDING;
   const canViewParticipants =
     isOwner || hasViewParticipantsPermission || hasCourseTeamAccess;
@@ -477,6 +480,7 @@ export default function CourseDetailPage() {
               Löschen
             </button>
           )}
+          <DeletionRequestButton contentType="course" contentId={courseId} />
           {/* Mobil steht der Export im „…“-Menü; ab sm hier, damit
               „Löschen“ am Ende der Reihe bleibt. */}
           {entryExport.canExport && (
@@ -506,6 +510,12 @@ export default function CourseDetailPage() {
           <Tag tone="orange">Ausgebucht</Tag>
         )}
       </div>
+
+      <DeletionRequestNotice
+        contentType="course"
+        contentId={course.id}
+        onDelete={() => setShowDeleteModal(true)}
+      />
 
       <section
         id="course-detail-overview"

@@ -34,6 +34,7 @@ import { customFieldTemplatesRouter } from "./routers/custom-field-templates";
 import { maintenanceRouter } from "./routers/maintenance";
 import { oauthConnectionsRouter } from "./routers/oauth-connections";
 import { reviewChangesRouter } from "./routers/review-changes";
+import { deletionRequestsRouter } from "./routers/deletion-requests";
 
 export const appRouter = createTRPCRouter({
   maintenance: maintenanceRouter,
@@ -71,6 +72,7 @@ export const appRouter = createTRPCRouter({
   customFieldTemplates: customFieldTemplatesRouter,
   oauthConnections: oauthConnectionsRouter,
   reviewChanges: reviewChangesRouter,
+  deletionRequests: deletionRequestsRouter,
 });
 
 export type AppRouter = typeof appRouter;
