@@ -159,7 +159,7 @@ export function PersonDetailsFields({
                 type="text"
                 value={value.city}
                 onChange={(e) => onChange({ city: e.target.value })}
-                placeholder="Düsseldorf"
+                placeholder="Musterstadt"
                 maxLength={100}
                 className={inputClass}
               />
