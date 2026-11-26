@@ -32,10 +32,17 @@ const TOKEN_TTL_MS = 20 * 60 * 1000;
  * abgeleitet, damit kein Deployment eine weitere Variable braucht. Die
  * Ableitung sorgt dafür, dass das Captcha-Geheimnis nichts über das
  * Sitzungsgeheimnis verrät.
+ *
+ * Erst beim ersten Aufruf: Der Build lädt das Modul ohne Geheimnisse
+ * (SKIP_ENV_VALIDATION), dort wäre BETTER_AUTH_SECRET undefined.
  */
-const secret =
-  env.CAP_SECRET ??
-  createHmac("sha256", env.BETTER_AUTH_SECRET).update("cap-captcha").digest();
+let cachedSecret: string | Buffer | undefined;
+function capSecret(): string | Buffer {
+  cachedSecret ??=
+    env.CAP_SECRET ??
+    createHmac("sha256", env.BETTER_AUTH_SECRET).update("cap-captcha").digest();
+  return cachedSecret;
+}
 
 /** Signatur → Ablauf. Eine gelöste Challenge lässt sich nur einmal einlösen. */
 const usedSignatures = new Map<string, number>();
@@ -63,7 +70,7 @@ function consumeNonce(signature: string, ttlMs: number): boolean {
 }
 
 export function createCapChallenge(scope: CapScope): Promise<ChallengeResult> {
-  return generateChallenge(secret, { scope });
+  return generateChallenge(capSecret(), { scope });
 }
 
 /**
@@ -77,7 +84,7 @@ export async function redeemCapChallenge(
   { success: true; token: string; expires: number } | { success: false }
 > {
   const result = await validateChallenge(
-    secret,
+    capSecret(),
     body as ValidateChallengeBody,
     { scope, consumeNonce, tokenTtlMs: TOKEN_TTL_MS },
   );
