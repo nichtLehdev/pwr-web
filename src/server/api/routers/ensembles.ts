@@ -118,19 +118,22 @@ export const ensemblesRouter = createTRPCRouter({
           bezirk: true,
           conductor: { select: linkedUserContactSelect },
           representative: { select: linkedUserContactSelect },
-          events: {
+          performers: {
             where: {
-              status: "APPROVED",
-              eventDate: { gte: new Date() },
+              event: { status: "APPROVED", eventDate: { gte: new Date() } },
             },
             take: 5,
-            orderBy: { eventDate: "asc" },
+            orderBy: { event: { eventDate: "asc" } },
             include: {
-              coverImage: true,
-              location: true,
-              downloads: {
+              event: {
                 include: {
-                  download: true,
+                  coverImage: true,
+                  location: true,
+                  downloads: {
+                    include: {
+                      download: true,
+                    },
+                  },
                 },
               },
             },
@@ -159,10 +162,11 @@ export const ensemblesRouter = createTRPCRouter({
         ensemble.representative,
       );
 
-      const { conductor, representative, ...rest } = ensemble;
+      const { conductor, representative, performers, ...rest } = ensemble;
 
       return {
         ...rest,
+        events: performers.map((p) => p.event),
         conductorEmail: conductorContact.email,
         conductorPhone: conductorContact.phone,
         conductorStreet: conductorContact.street,

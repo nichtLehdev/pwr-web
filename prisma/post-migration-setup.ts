@@ -148,6 +148,8 @@ async function ensureSystemRolesExist() {
     PERMISSIONS.DOWNLOADS_UPLOAD,
     PERMISSIONS.DOWNLOADS_APPROVE,
     PERMISSIONS.DOWNLOADS_VIEW,
+    // Nur anlegen; Bearbeiten/Löschen bestehender Orte bleibt bei organization.manage_locations.
+    PERMISSIONS.LOCATIONS_CREATE,
   ];
 
   await db.rolePermission.deleteMany({
@@ -191,6 +193,8 @@ async function ensureSystemRolesExist() {
     PERMISSIONS.MEDIA_VIEW,
     PERMISSIONS.DOWNLOADS_UPLOAD,
     PERMISSIONS.DOWNLOADS_VIEW,
+    // Damit Obleute beim Termin-Anlegen einen fehlenden Ort ergänzen können.
+    PERMISSIONS.LOCATIONS_CREATE,
   ];
 
   await db.rolePermission.deleteMany({

@@ -10,6 +10,7 @@ import { WayList, WayRow } from "@/app/_components/programmheft/way-list";
 import { ValueTable } from "@/app/_components/programmheft/value-table";
 import { Heading } from "@/app/_components/programmheft/section-head";
 import { eventCategoryLabel } from "@/lib/termine-labels";
+import { performerName } from "@/lib/event-performers";
 import { MitwirkendeBild, TerminBeschreibung } from "./termin-bild";
 import PublicShareButton from "@/app/_components/general/public-share-button";
 import { cn } from "@/lib/utils";
@@ -267,76 +268,55 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
               </div>
             )}
 
-            {event.performingEnsembleType && (
+            {event.performers.length > 0 && (
               <div>
                 <Heading as="h2" size="list" rule>
                   Mitwirkende
                 </Heading>
-                <div className="mt-4">
-                  {event.performingEnsembleType === "AUSWAHLCHOR" &&
-                    event.auswahlChor && (
-                      <div className="flex flex-col gap-4 md:flex-row md:items-start md:gap-8">
+                <div className="mt-4 space-y-6">
+                  {event.performers.map((performer) => {
+                    const linked = performer.auswahlChor ?? performer.ensemble;
+                    const conductor = performer.auswahlChor
+                      ? performer.auswahlChor.conductor?.displayName
+                      : performer.ensemble
+                        ? performer.ensemble.conductorName ||
+                          performer.ensemble.conductor?.displayName
+                        : null;
+                    return (
+                      <div
+                        key={performer.id}
+                        className="flex flex-col gap-4 md:flex-row md:items-start md:gap-8"
+                      >
                         <div>
                           <p className="text-ink dark:text-night-text mb-1 font-semibold">
-                            {event.auswahlChor.name}
+                            {performerName(performer)}
                           </p>
-                          {event.auswahlChor.description && (
+                          {linked?.description && (
                             <p className="text-dark dark:text-night-muted text-sm">
-                              {event.auswahlChor.description}
+                              {linked.description}
                             </p>
                           )}
-                          {event.auswahlChor.conductor && (
+                          {conductor && (
                             <p className="text-dark dark:text-night-muted mt-2 text-sm">
-                              Leitung: {event.auswahlChor.conductor.displayName}
+                              Leitung: {conductor}
                             </p>
                           )}
                         </div>
-                        {event.auswahlChor.image && (
+                        {linked?.image && (
                           <MitwirkendeBild
-                            image={event.auswahlChor.image}
-                            fallbackAlt={event.auswahlChor.name}
+                            image={linked.image}
+                            fallbackAlt={linked.name}
                           />
                         )}
                       </div>
-                    )}
-                  {event.performingEnsembleType === "ENSEMBLE" &&
-                    event.ensemble && (
-                      <div className="flex flex-col gap-4 md:flex-row md:items-start md:gap-8">
-                        <div>
-                          <p className="text-ink dark:text-night-text mb-1 font-semibold">
-                            {event.ensemble.name}
-                          </p>
-                          {event.ensemble.description && (
-                            <p className="text-dark dark:text-night-muted text-sm">
-                              {event.ensemble.description}
-                            </p>
-                          )}
-                          {(event.ensemble.conductorName ||
-                            event.ensemble.conductor) && (
-                            <p className="text-dark dark:text-night-muted mt-2 text-sm">
-                              Leitung:{" "}
-                              {event.ensemble.conductorName ||
-                                event.ensemble.conductor?.displayName}
-                            </p>
-                          )}
-                        </div>
-                        {event.ensemble.image && (
-                          <MitwirkendeBild
-                            image={event.ensemble.image}
-                            fallbackAlt={event.ensemble.name}
-                          />
-                        )}
-                      </div>
-                    )}
-                  {event.performingEnsembleType === "CUSTOM" &&
-                    event.performingEnsembleName && (
-                      <p className="text-ink dark:text-night-text font-semibold">
-                        {event.performingEnsembleName}
-                      </p>
-                    )}
+                    );
+                  })}
                   {event.leitung && (
-                    <p className="text-dark dark:text-night-muted mt-2 text-sm">
-                      Leitung: {event.leitung}
+                    <p className="text-dark dark:text-night-muted text-sm">
+                      {event.performers.length > 1
+                        ? "Gesamtleitung"
+                        : "Leitung"}
+                      : {event.leitung}
                     </p>
                   )}
                 </div>

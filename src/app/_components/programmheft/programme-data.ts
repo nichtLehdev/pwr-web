@@ -10,6 +10,7 @@ import { formatAvailableSlots } from "@/lib/format-available-slots";
 import { isExternalCourse } from "@/lib/course-external";
 import { berlinFormatter } from "@/lib/berlin-time";
 import { isNeuerTermin } from "@/lib/neue-termine";
+import { performerName } from "@/lib/event-performers";
 
 export type ProgrammeEvent =
   RouterOutputs["events"]["getAll"]["events"][number];
@@ -39,7 +40,8 @@ export type ProgrammeEntry = {
   when: string;
   place: string | null;
   bezirk: { number: number; shortName: string } | null;
-  ensemble: ProgrammeEnsemble | null;
+  /** In der Reihenfolge, die der Termin festlegt; leer, wenn niemand eingetragen ist. */
+  ensembles: ProgrammeEnsemble[];
   status: ProgrammeStatus | null;
   registration: ProgrammeRegistration | null;
   cancelled: boolean;
@@ -136,26 +138,18 @@ function closedStatus(
 }
 
 /**
- * Die drei Ensemble-Arten eines Termins auf eine Zeile gebracht. Ohne gesetztes
- * Ensemble — der Regelfall — bleibt die Zeile wie bisher.
+ * Die Mitwirkenden eines Termins als Etiketten. Ohne Mitwirkende — der
+ * Regelfall — bleibt die Zeile wie bisher.
  */
-export function ensembleFor(event: ProgrammeEvent): ProgrammeEnsemble | null {
-  switch (event.performingEnsembleType) {
-    case "AUSWAHLCHOR":
-      return event.auswahlChor
-        ? { name: event.auswahlChor.name, auswahlchor: true }
-        : null;
-    case "ENSEMBLE":
-      return event.ensemble
-        ? { name: event.ensemble.name, auswahlchor: false }
-        : null;
-    case "CUSTOM":
-      return event.performingEnsembleName?.trim()
-        ? { name: event.performingEnsembleName.trim(), auswahlchor: false }
-        : null;
-    default:
-      return null;
-  }
+export function ensemblesFor(
+  event: Pick<ProgrammeEvent, "performers">,
+): ProgrammeEnsemble[] {
+  return event.performers.flatMap((performer) => {
+    const name = performerName(performer);
+    return name
+      ? [{ name, auswahlchor: performer.type === "AUSWAHLCHOR" }]
+      : [];
+  });
 }
 
 export function eventEntry(event: ProgrammeEvent, now: Date): ProgrammeEntry {
@@ -171,7 +165,7 @@ export function eventEntry(event: ProgrammeEvent, now: Date): ProgrammeEntry {
     bezirk: event.bezirk
       ? { number: event.bezirk.number, shortName: event.bezirk.shortName }
       : null,
-    ensemble: ensembleFor(event),
+    ensembles: ensemblesFor(event),
     status: null,
     registration: null,
     cancelled: event.cancelled,
@@ -199,7 +193,7 @@ export function courseEntry(
     bezirk: course.bezirk
       ? { number: course.bezirk.number, shortName: course.bezirk.shortName }
       : null,
-    ensemble: null,
+    ensembles: [],
     status: open ? null : closedStatus(course, now),
     registration: open ? registrationFor(course, now) : null,
     cancelled: false,

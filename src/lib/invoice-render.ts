@@ -34,7 +34,7 @@ function imageFormat(dataUrl: string): "PNG" | "JPEG" {
 }
 
 /** Diagonal "ENTWURF"/"STORNIERT" stamp so an unpublished copy can't pass as final. */
-function drawWatermark(doc: jsPDF, text: string) {
+export function drawWatermark(doc: jsPDF, text: string) {
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   doc.saveGraphicsState();

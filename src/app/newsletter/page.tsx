@@ -7,6 +7,7 @@ import { PageSection } from "../_components/programmheft/page-section";
 import { Note } from "../_components/programmheft/note";
 import { useBotTrap } from "@/lib/use-bot-trap";
 import { BotTrapField } from "../_components/general/bot-trap-field";
+import { CapCaptcha } from "../_components/general/cap-captcha";
 
 const FIELD =
   "border-ink dark:border-night-text text-ink dark:text-night-text bg-paper dark:bg-night w-full border-2 px-4 py-3 text-base";
@@ -22,9 +23,22 @@ export default function NewsletterPage() {
   >("idle");
   const [message, setMessage] = useState("");
   const botTrap = useBotTrap();
+  const [capToken, setCapToken] = useState<string | null>(null);
+  // Ein Token gilt nur für einen Versuch: nach einem Fehler ein frisches Widget.
+  const [capKey, setCapKey] = useState(0);
+
+  const resetCap = () => {
+    setCapToken(null);
+    setCapKey((key) => key + 1);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!capToken) {
+      setStatus("error");
+      setMessage("Bitte bestätige zuerst, dass du kein Roboter bist.");
+      return;
+    }
     setStatus("loading");
     setMessage("");
 
@@ -37,6 +51,7 @@ export default function NewsletterPage() {
         body: JSON.stringify({
           email,
           name: name || undefined,
+          capToken,
           ...botTrap.fields(),
         }),
       });
@@ -56,10 +71,12 @@ export default function NewsletterPage() {
       } else {
         setStatus("error");
         setMessage(data.message || "Ein Fehler ist aufgetreten.");
+        resetCap();
       }
     } catch {
       setStatus("error");
       setMessage("Ein Fehler ist aufgetreten. Bitte versuche es erneut.");
+      resetCap();
     }
   };
 
@@ -152,6 +169,13 @@ export default function NewsletterPage() {
                     über den Abmeldelink in jedem Newsletter widerrufen. *
                   </label>
                 </div>
+
+                <CapCaptcha
+                  key={capKey}
+                  endpoint="/api/cap/newsletter/"
+                  onSolve={setCapToken}
+                  onReset={() => setCapToken(null)}
+                />
 
                 {status === "error" && message && (
                   <Note tone="error">

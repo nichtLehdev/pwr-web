@@ -436,3 +436,30 @@ input[type="datetime-local"]::-webkit-date-and-time-value {
   /* Holds the row height while the field is still empty. */
   min-height: 1.5em;
 }
+
+/* Cap-Captcha im Programmheft-Stil: eckig, Tintenrand, Orange als Akzent. */
+cap-widget.cap-captcha {
+  --cap-font: inherit;
+  --cap-background: var(--color-paper, #ffffff);
+  --cap-color: var(--color-ink, #1c1d1f);
+  --cap-border-color: var(--color-ink, #1c1d1f);
+  --cap-border-radius: 0;
+  --cap-checkbox-border-radius: 0;
+  --cap-checkbox-border: 2px solid var(--color-ink, #1c1d1f);
+  --cap-checkbox-background: var(--color-paper, #ffffff);
+  --cap-spinner-color: var(--color-ink, #1c1d1f);
+  --cap-spinner-background-color: var(--color-rule, #d4d4d1);
+  --cap-focus-ring: var(--color-primary, #faa619);
+  --cap-widget-width: 100%;
+  display: block;
+}
+
+.dark cap-widget.cap-captcha {
+  --cap-background: var(--color-night, #141517);
+  --cap-color: var(--color-night-text, #ecebe8);
+  --cap-border-color: var(--color-night-text, #ecebe8);
+  --cap-checkbox-border: 2px solid var(--color-night-text, #ecebe8);
+  --cap-checkbox-background: var(--color-night, #141517);
+  --cap-spinner-color: var(--color-night-text, #ecebe8);
+  --cap-spinner-background-color: var(--color-night-rule, #34373c);
+}

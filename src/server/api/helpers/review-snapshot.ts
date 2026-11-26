@@ -3,6 +3,7 @@ import type { db as database } from "@/server/db";
 import { formatBerlin } from "@/lib/berlin-time";
 import { parseCustomFieldCondition } from "@/lib/course-custom-fields";
 import { courseTypeLabel, eventCategoryLabel } from "@/lib/termine-labels";
+import { performerName } from "@/lib/event-performers";
 
 import { createLogger } from "@/server/utils/logger";
 
@@ -53,10 +54,12 @@ const FIELD_LABELS: Record<ReviewContentType, Record<string, string>> = {
     location: "Ort",
     bezirk: "Bezirk",
     districtName: "Bezirksname",
+    performers: "Mitwirkende",
+    // Felder älterer Prüfstände (vor mehreren Mitwirkenden pro Termin).
     performingEnsembleType: "Mitwirkende (Art)",
     ensemble: "Posaunenchor",
     auswahlChor: "Auswahlchor",
-    performingEnsembleName: "Mitwirkende",
+    performingEnsembleName: "Mitwirkende (Name)",
     leitung: "Leitung",
     coverImage: "Titelbild",
     description: "Beschreibung",
@@ -278,8 +281,13 @@ async function loadEventFields(
       bezirk: bezirkSelect,
       location: true,
       coverImage: { select: { name: true } },
-      ensemble: { select: { name: true } },
-      auswahlChor: { select: { name: true } },
+      performers: {
+        orderBy: { sortOrder: "asc" },
+        include: {
+          ensemble: { select: { name: true } },
+          auswahlChor: { select: { name: true } },
+        },
+      },
       priceOptions: true,
       downloads: { include: { download: { select: { title: true } } } },
     },
@@ -289,14 +297,14 @@ async function loadEventFields(
   return {
     ...scalarFields(event),
     category: eventCategoryLabel(event.category),
-    performingEnsembleType: event.performingEnsembleType
-      ? enumLabel("performingEnsembleType", event.performingEnsembleType)
-      : null,
     bezirk: formatBezirk(event.bezirk),
     location: formatLocation(event.location),
     coverImage: event.coverImage?.name ?? null,
-    ensemble: event.ensemble?.name ?? null,
-    auswahlChor: event.auswahlChor?.name ?? null,
+    // Reihenfolge zählt (sie ist die Anzeige-Reihenfolge), daher nicht sortiert.
+    performers: event.performers.map(
+      (p) =>
+        `${performerName(p)} (${enumLabel("performingEnsembleType", p.type)})`,
+    ),
     priceOptions: event.priceOptions
       .map((option) =>
         [`${option.label}: ${formatEuro(option.price)}`, option.description]

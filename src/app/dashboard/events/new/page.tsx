@@ -8,7 +8,7 @@ import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
-import { PERMISSIONS } from "@/lib/permissions";
+import { LOCATION_CREATE_PERMISSIONS, PERMISSIONS } from "@/lib/permissions";
 import { districtFieldState } from "@/lib/district-scope";
 import {
   DashboardFormBlock,
@@ -20,14 +20,14 @@ import {
   SlugField,
   type DashboardSectionNavItem,
   NewLocationForm,
+  PerformersField,
+  performerDraftsFromSaved,
+  performerDraftsToInput,
+  type PerformerDraft,
 } from "@/app/_components/dashboard";
 import { getErrorMessage } from "@/lib/utils";
 import { useToast } from "@/app/_components/ui/toast";
-import {
-  EventCategory,
-  EventEnsembleType,
-  ContentStatus,
-} from "~/generated/prisma/enums";
+import { EventCategory, ContentStatus } from "~/generated/prisma/enums";
 import { Lock, Trash2, ImageIcon, FileDown, X } from "lucide-react";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import RichTextEditor from "@/app/_components/editor/rich-text-editor-lazy";
@@ -44,16 +44,10 @@ const categoryLabels: Record<EventCategory, string> = {
   ANDERE: "Andere",
 };
 
-const ensembleTypeLabels: Record<EventEnsembleType, string> = {
-  AUSWAHLCHOR: "Auswahlchor",
-  ENSEMBLE: "Ensemble",
-  CUSTOM: "Benutzerdefiniert",
-};
-
 const NEW_EVENT_NAV_ITEMS: DashboardSectionNavItem[] = [
   { href: "#event-form-inhalt", label: "Inhalt" },
   { href: "#event-form-termin", label: "Termin & Ort" },
-  { href: "#event-form-mitwirkung", label: "Ensemble & Teilnahme" },
+  { href: "#event-form-mitwirkung", label: "Mitwirkende & Teilnahme" },
   { href: "#event-form-preise", label: "Eintritt" },
   { href: "#event-form-veroeffentlichung", label: "Veröffentlichung" },
 ];
@@ -74,7 +68,9 @@ export default function NewEventPage() {
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, { enabled: !!session?.user });
 
-  const { hasDashboardAccess, hasPermission } = usePermissions();
+  const { hasDashboardAccess, hasPermission, hasAnyPermission } =
+    usePermissions();
+  const canCreateLocation = hasAnyPermission(LOCATION_CREATE_PERMISSIONS);
 
   const hasApprovePermission = hasPermission(PERMISSIONS.EVENTS_APPROVE);
   const hasCreatePermission = hasPermission(PERMISSIONS.EVENTS_CREATE);
@@ -100,15 +96,7 @@ export default function NewEventPage() {
   const [locationSearch, setLocationSearch] = useState("");
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const [showNewLocationForm, setShowNewLocationForm] = useState(false);
-  const [performingEnsembleType, setPerformingEnsembleType] =
-    useState<EventEnsembleType | null>(null);
-  const [ensembleId, setEnsembleId] = useState<string>("");
-  const [ensembleSearch, setEnsembleSearch] = useState("");
-  const [showEnsembleDropdown, setShowEnsembleDropdown] = useState(false);
-  const [auswahlChorId, setAuswahlChorId] = useState<string>("");
-  const [auswahlChorSearch, setAuswahlChorSearch] = useState("");
-  const [showAuswahlChorDropdown, setShowAuswahlChorDropdown] = useState(false);
-  const [performingEnsembleName, setPerformingEnsembleName] = useState("");
+  const [performers, setPerformers] = useState<PerformerDraft[]>([]);
   const [leitung, setLeitung] = useState("");
 
   const [openToParticipants, setOpenToParticipants] = useState(false);
@@ -146,12 +134,7 @@ export default function NewEventPage() {
       districtName,
       locationId,
       locationSearch,
-      performingEnsembleType,
-      ensembleId,
-      ensembleSearch,
-      auswahlChorId,
-      auswahlChorSearch,
-      performingEnsembleName,
+      performers,
       leitung,
       openToParticipants,
       participationInfo,
@@ -178,12 +161,7 @@ export default function NewEventPage() {
       districtName,
       locationId,
       locationSearch,
-      performingEnsembleType,
-      ensembleId,
-      ensembleSearch,
-      auswahlChorId,
-      auswahlChorSearch,
-      performingEnsembleName,
+      performers,
       leitung,
       openToParticipants,
       participationInfo,
@@ -238,12 +216,7 @@ export default function NewEventPage() {
       setDistrictName(saved.districtName || "");
       setLocationId(saved.locationId || "");
       setLocationSearch(saved.locationSearch || "");
-      setPerformingEnsembleType(saved.performingEnsembleType || null);
-      setEnsembleId(saved.ensembleId || "");
-      setEnsembleSearch(saved.ensembleSearch || "");
-      setAuswahlChorId(saved.auswahlChorId || "");
-      setAuswahlChorSearch(saved.auswahlChorSearch || "");
-      setPerformingEnsembleName(saved.performingEnsembleName || "");
+      setPerformers(performerDraftsFromSaved(saved));
       setLeitung(saved.leitung || "");
       setOpenToParticipants(saved.openToParticipants || false);
       setParticipationInfo(saved.participationInfo || "");
@@ -268,28 +241,6 @@ export default function NewEventPage() {
     limit: 100,
     search: locationSearch || undefined,
   });
-
-  const { data: ensemblesData } = api.ensembles.getAll.useQuery(
-    {
-      limit: 100,
-      search: ensembleSearch || undefined,
-      // Derselbe Zuschnitt, den der Server beim Speichern prüft.
-      bezirkIds: selectableBezirkIds ?? undefined,
-    },
-    // Ohne die alte Liste klappt das Dropdown bei jedem Tastendruck zu.
-    { placeholderData: (prev) => prev },
-  );
-
-  // Die Suche läuft auf dem Server; dessen Treffer aus der Beschreibung
-  // gehören nicht in eine Namenssuche.
-  const ensembleOptions = (ensemblesData?.ensembles ?? []).filter((e) =>
-    e.name.toLowerCase().includes(ensembleSearch.toLowerCase()),
-  );
-
-  const { data: auswahlchoereData } = api.auswahlchoere.getAll.useQuery(
-    {},
-    { enabled: isHigherRole },
-  );
 
   /* eslint-disable react-hooks/set-state-in-effect -- Initializing form state from server data is a valid pattern */
   useEffect(() => {
@@ -340,8 +291,6 @@ export default function NewEventPage() {
       const target = event.target as HTMLElement;
       if (!target.closest("[data-dropdown]")) {
         setShowLocationDropdown(false);
-        setShowEnsembleDropdown(false);
-        setShowAuswahlChorDropdown(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -437,19 +386,7 @@ export default function NewEventPage() {
       category,
       bezirkId: bezirkId || undefined,
       districtName: districtName.trim() || undefined,
-      performingEnsembleType: performingEnsembleType ?? undefined,
-      ensembleId:
-        performingEnsembleType === "ENSEMBLE"
-          ? ensembleId || undefined
-          : undefined,
-      auswahlChorId:
-        performingEnsembleType === "AUSWAHLCHOR"
-          ? auswahlChorId || undefined
-          : undefined,
-      performingEnsembleName:
-        performingEnsembleType === "CUSTOM"
-          ? performingEnsembleName.trim() || undefined
-          : undefined,
+      performers: performerDraftsToInput(performers),
       leitung: leitung.trim() || undefined,
       openToParticipants,
       participationInfo: participationInfo.trim() || undefined,
@@ -477,12 +414,6 @@ export default function NewEventPage() {
   if (!session) {
     return null;
   }
-
-  const availableEnsembleTypes = isHigherRole
-    ? Object.entries(ensembleTypeLabels)
-    : Object.entries(ensembleTypeLabels).filter(
-        ([value]) => value !== "AUSWAHLCHOR",
-      );
 
   return (
     <DashboardPage
@@ -833,16 +764,18 @@ export default function NewEventPage() {
                             </div>
                           )}
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShowLocationDropdown(false);
-                            setShowNewLocationForm(true);
-                          }}
-                          className="text-primary-ink dark:text-primary border-rule dark:border-night-rule hover:bg-rule/25 dark:hover:bg-night-rule block w-full border-t px-4 py-2 text-left text-sm font-medium"
-                        >
-                          + Neuen Ort erstellen
-                        </button>
+                        {canCreateLocation && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowLocationDropdown(false);
+                              setShowNewLocationForm(true);
+                            }}
+                            className="text-primary-ink dark:text-primary border-rule dark:border-night-rule hover:bg-rule/25 dark:hover:bg-night-rule block w-full border-t px-4 py-2 text-left text-sm font-medium"
+                          >
+                            + Neuen Ort erstellen
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
@@ -945,177 +878,20 @@ export default function NewEventPage() {
           >
             <DashboardFormZoneHeader
               step={3}
-              title="Ensemble & Teilnahme"
+              title="Mitwirkende & Teilnahme"
               description="Mitwirkende, Leitung und ob externe Teilnahme möglich ist."
             />
             <div className="space-y-10">
-              <DashboardFormBlock title="Auftretendes Ensemble">
+              <DashboardFormBlock title="Mitwirkende">
                 <div className="space-y-4">
-                  <div>
-                    <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
-                      Ensemble-Typ
-                    </label>
-                    <Select
-                      value={performingEnsembleType ?? ""}
-                      onChange={(e) =>
-                        setPerformingEnsembleType(
-                          e.target.value
-                            ? (e.target.value as EventEnsembleType)
-                            : null,
-                        )
-                      }
-                    >
-                      <option value="">Kein Ensemble</option>
-                      {availableEnsembleTypes.map(([value, label]) => (
-                        <option key={value} value={value}>
-                          {label}
-                        </option>
-                      ))}
-                    </Select>
-                    {!isHigherRole && (
-                      <p className="text-dark dark:text-night-muted mt-1 text-xs">
-                        Du kannst Ensembles aus deinem Bezirk auswählen oder
-                        einen benutzerdefinierten Namen eingeben.
-                      </p>
-                    )}
-                  </div>
+                  <PerformersField
+                    value={performers}
+                    onChange={setPerformers}
+                    allowAuswahlchor={isHigherRole}
+                    bezirkIds={selectableBezirkIds}
+                  />
 
-                  {performingEnsembleType === "ENSEMBLE" && (
-                    <div className="relative" data-dropdown>
-                      <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
-                        Ensemble suchen
-                      </label>
-                      <input
-                        type="text"
-                        value={ensembleSearch}
-                        onChange={(e) => {
-                          setEnsembleSearch(e.target.value);
-                          setShowEnsembleDropdown(true);
-                          if (!e.target.value) setEnsembleId("");
-                        }}
-                        onFocus={() => setShowEnsembleDropdown(true)}
-                        placeholder="Suche nach einem Ensemble..."
-                        className="border-ink dark:border-night-text dark:bg-night dark:text-night-text text-ink bg-paper block w-full border px-3 py-2"
-                      />
-
-                      {showEnsembleDropdown && ensemblesData && (
-                        <div className="border-rule dark:border-night-rule dark:bg-night-raised bg-paper absolute z-10 mt-1 w-full overflow-hidden border">
-                          <div
-                            className="overflow-y-auto"
-                            style={{ maxHeight: "240px" }}
-                          >
-                            {ensembleOptions.map((ensemble) => (
-                              <button
-                                key={ensemble.id}
-                                type="button"
-                                onClick={() => {
-                                  setEnsembleId(ensemble.id);
-                                  setEnsembleSearch(ensemble.name);
-                                  setShowEnsembleDropdown(false);
-                                }}
-                                className="hover:bg-rule/25 dark:hover:bg-night-rule block w-full px-4 py-2 text-left text-sm"
-                              >
-                                <span className="text-ink dark:text-night-text font-medium">
-                                  {ensemble.name}
-                                </span>
-                                {ensemble.bezirk && (
-                                  <span className="text-dark dark:text-night-muted">
-                                    {" "}
-                                    – Bezirk {ensemble.bezirk.number}
-                                  </span>
-                                )}
-                              </button>
-                            ))}
-                            {ensembleOptions.length === 0 && (
-                              <div className="text-dark dark:text-night-muted px-4 py-3 text-sm">
-                                Keine Ensembles gefunden
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {performingEnsembleType === "AUSWAHLCHOR" && (
-                    <div className="relative" data-dropdown>
-                      <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
-                        Auswahlchor suchen
-                      </label>
-                      <input
-                        type="text"
-                        value={auswahlChorSearch}
-                        onChange={(e) => {
-                          setAuswahlChorSearch(e.target.value);
-                          setShowAuswahlChorDropdown(true);
-                          if (!e.target.value) setAuswahlChorId("");
-                        }}
-                        onFocus={() => setShowAuswahlChorDropdown(true)}
-                        placeholder="Suche nach einem Auswahlchor..."
-                        className="border-ink dark:border-night-text dark:bg-night dark:text-night-text text-ink bg-paper block w-full border px-3 py-2"
-                      />
-
-                      {showAuswahlChorDropdown && auswahlchoereData && (
-                        <div className="border-rule dark:border-night-rule dark:bg-night-raised bg-paper absolute z-10 mt-1 w-full overflow-hidden border">
-                          <div
-                            className="overflow-y-auto"
-                            style={{ maxHeight: "240px" }}
-                          >
-                            {auswahlchoereData.auswahlchoere
-                              ?.filter((c) =>
-                                c.name
-                                  .toLowerCase()
-                                  .includes(auswahlChorSearch.toLowerCase()),
-                              )
-                              .map((chor) => (
-                                <button
-                                  key={chor.id}
-                                  type="button"
-                                  onClick={() => {
-                                    setAuswahlChorId(chor.id);
-                                    setAuswahlChorSearch(chor.name);
-                                    setShowAuswahlChorDropdown(false);
-                                  }}
-                                  className="hover:bg-rule/25 dark:hover:bg-night-rule block w-full px-4 py-2 text-left text-sm"
-                                >
-                                  <span className="text-ink dark:text-night-text font-medium">
-                                    {chor.name}
-                                  </span>
-                                </button>
-                              ))}
-                            {auswahlchoereData.auswahlchoere?.filter((c) =>
-                              c.name
-                                .toLowerCase()
-                                .includes(auswahlChorSearch.toLowerCase()),
-                            ).length === 0 && (
-                              <div className="text-dark dark:text-night-muted px-4 py-3 text-sm">
-                                Keine Auswahlchöre gefunden
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {performingEnsembleType === "CUSTOM" && (
-                    <div>
-                      <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
-                        Ensemble-Name
-                      </label>
-                      <input
-                        type="text"
-                        value={performingEnsembleName}
-                        onChange={(e) =>
-                          setPerformingEnsembleName(e.target.value)
-                        }
-                        placeholder="z.B. Posaunenchor Beispielstadt"
-                        className="border-ink dark:border-night-text dark:bg-night dark:text-night-text text-ink bg-paper block w-full border px-3 py-2"
-                      />
-                    </div>
-                  )}
-
-                  {performingEnsembleType && (
+                  {performers.length > 0 && (
                     <div>
                       <label className="text-ink dark:text-night-text mb-1 block text-sm font-medium">
                         Leitung

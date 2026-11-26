@@ -29,7 +29,10 @@ import {
   readEventContent,
   readEventDownloadRefs,
   readEventPriceOptions,
+  readEventPerformerRefs,
 } from "@/server/utils/event-import";
+import { performerRowsFor } from "@/server/api/helpers/event-performers";
+import type { PerformerInput } from "@/lib/event-performers";
 import { readText } from "@/server/utils/import-values";
 import { readPostContent } from "@/server/utils/post-import";
 import {
@@ -318,6 +321,37 @@ export async function POST(
 
           const priceOptions = readEventPriceOptions(eventData.priceOptions);
 
+          // Verknüpfungen auflösen; was im Ziel fehlt, bleibt als freier Name stehen.
+          const performerInputs: PerformerInput[] = [];
+          for (const ref of readEventPerformerRefs(eventData)) {
+            const linkedId =
+              ref.type === "ENSEMBLE"
+                ? await references.ensembleId(
+                    ref.ensembleId,
+                    ref.ensemble,
+                    ref.name,
+                    title,
+                  )
+                : ref.type === "AUSWAHLCHOR"
+                  ? await references.auswahlChorId(
+                      ref.auswahlChorId,
+                      ref.auswahlChor,
+                      title,
+                    )
+                  : null;
+            if (ref.type === "ENSEMBLE" && linkedId) {
+              performerInputs.push({ type: "ENSEMBLE", ensembleId: linkedId });
+            } else if (ref.type === "AUSWAHLCHOR" && linkedId) {
+              performerInputs.push({
+                type: "AUSWAHLCHOR",
+                auswahlChorId: linkedId,
+              });
+            } else if (ref.name) {
+              performerInputs.push({ type: "CUSTOM", name: ref.name });
+            }
+          }
+          const performerRows = await performerRowsFor(db, performerInputs);
+
           results.push(
             await db.event.create({
               data: {
@@ -334,17 +368,9 @@ export async function POST(
                   title,
                 ),
                 locationId,
-                ensembleId: await references.ensembleId(
-                  eventData.ensembleId,
-                  eventData.ensemble,
-                  eventData.ensembleName,
-                  title,
-                ),
-                auswahlChorId: await references.auswahlChorId(
-                  eventData.auswahlChorId,
-                  eventData.auswahlChor,
-                  title,
-                ),
+                ...(performerRows.length > 0 && {
+                  performers: { create: performerRows },
+                }),
                 coverImageId: newCoverImageId,
                 createdById: session.user.id,
                 ...(priceOptions.length > 0 && {

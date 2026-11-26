@@ -257,12 +257,11 @@ export default function EventsClient({
 
         if (selectedChor !== "all") {
           if (item.type !== "event") return false;
-          if (item.performingEnsembleType !== "AUSWAHLCHOR") return false;
-          if (!item.auswahlChor) return false;
-          if (
-            selectedChor !== CHOR_ALLE &&
-            item.auswahlChor.slug !== selectedChor
-          ) {
+          const chorSlugs = item.performers.flatMap((p) =>
+            p.auswahlChor ? [p.auswahlChor.slug] : [],
+          );
+          if (chorSlugs.length === 0) return false;
+          if (selectedChor !== CHOR_ALLE && !chorSlugs.includes(selectedChor)) {
             return false;
           }
         }
@@ -404,9 +403,10 @@ export default function EventsClient({
     const bySlug = new Map<string, string>();
     for (const item of allItems) {
       if (item.type !== "event") continue;
-      if (item.performingEnsembleType !== "AUSWAHLCHOR") continue;
-      if (item.auswahlChor)
-        bySlug.set(item.auswahlChor.slug, item.auswahlChor.name);
+      for (const performer of item.performers) {
+        if (performer.auswahlChor)
+          bySlug.set(performer.auswahlChor.slug, performer.auswahlChor.name);
+      }
     }
     return [...bySlug]
       .map(([slug, name]) => ({ slug, name }))

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import type { EventCategory } from "~/generated/prisma/enums";
 import { berlinParts, formatBerlin } from "@/lib/berlin-time";
+import { firstPerformerImage, performerNames } from "@/lib/event-performers";
 
 type InstagramEventTemplateProps = {
   event: RouterOutputs["events"]["getEventsByMonth"][0];
@@ -47,17 +48,10 @@ export default function InstagramEventTemplate({
   event,
   imagePosition = { x: 50, y: 50 },
 }: InstagramEventTemplateProps) {
-  const imageUrl =
-    event.coverImage?.url ||
-    event.ensemble?.image?.url ||
-    event.auswahlChor?.image?.url ||
-    null;
+  const performerImage = firstPerformerImage(event.performers);
+  const imageUrl = event.coverImage?.url || performerImage?.url || null;
 
-  const imageAlt =
-    event.coverImage?.alt ||
-    event.ensemble?.image?.alt ||
-    event.auswahlChor?.image?.alt ||
-    event.title;
+  const imageAlt = event.coverImage?.alt || performerImage?.alt || event.title;
 
   const categoryLabel = categoryLabels[event.category];
   const districtColor = event.bezirk
@@ -73,15 +67,14 @@ export default function InstagramEventTemplate({
   // Die Grafik braucht reinen Text, ohne HTML-Tags und Markdown-Zeichen.
   const descriptionText = markdownToSingleLine(event.description ?? "");
 
-  const performer =
-    event.ensemble?.name ||
-    event.auswahlChor?.name ||
-    event.performingEnsembleName ||
-    null;
+  const performer = performerNames(event.performers) || null;
 
+  // Die Leitung eines verknüpften Chors passt nur, wenn er allein spielt.
+  const soloPerformer =
+    event.performers.length === 1 ? event.performers[0] : undefined;
   const conductor =
-    event.ensemble?.conductor?.displayName ||
-    event.auswahlChor?.conductor?.displayName ||
+    soloPerformer?.ensemble?.conductor?.displayName ||
+    soloPerformer?.auswahlChor?.conductor?.displayName ||
     event.leitung ||
     null;
 

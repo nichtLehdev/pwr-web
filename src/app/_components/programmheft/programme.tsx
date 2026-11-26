@@ -139,15 +139,18 @@ export function ProgrammeRow({
             {entry.when}
             {entry.place ? ` · ${entry.place}` : ""}
           </p>
-          {entry.ensemble ? (
-            <p className="mt-2">
+          {entry.ensembles.length > 0 ? (
+            <p className="mt-2 flex flex-wrap gap-1.5">
               {/* Chornamen sind lang; `whitespace-normal` hebt das `nowrap` des Etiketts auf. */}
-              <Tag
-                tone={entry.ensemble.auswahlchor ? "inverse" : "muted"}
-                className="whitespace-normal"
-              >
-                {entry.ensemble.name}
-              </Tag>
+              {entry.ensembles.map((ensemble) => (
+                <Tag
+                  key={ensemble.name}
+                  tone={ensemble.auswahlchor ? "inverse" : "muted"}
+                  className="whitespace-normal"
+                >
+                  {ensemble.name}
+                </Tag>
+              ))}
             </p>
           ) : null}
           {entry.cancelled ? (

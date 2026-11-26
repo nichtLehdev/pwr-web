@@ -53,6 +53,7 @@ export const PERMISSIONS = {
   ORGANIZATION_MANAGE_AUSWAHLCHOERE: "organization.manage_auswahlchoere",
   ORGANIZATION_MANAGE_BEZIRKE: "organization.manage_bezirke",
   ORGANIZATION_MANAGE_LOCATIONS: "organization.manage_locations",
+  LOCATIONS_CREATE: "locations.create",
 
   HOMEPAGE_MANAGE: "homepage.manage",
 
@@ -67,6 +68,8 @@ export const PERMISSIONS = {
   INVOICES_GENERATE: "invoices.generate",
   INVOICES_VIEW: "invoices.view",
   INVOICES_MANAGE: "invoices.manage",
+
+  BILLING_MANAGE: "billing.manage",
 
   SYSTEM_MANAGE: "system.manage",
   SYSTEM_VIEW_LOGS: "system.view_logs",
@@ -94,6 +97,16 @@ export const PERMISSIONS = {
 } as const;
 
 export type PermissionKey = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
+
+/**
+ * Wer neue Orte anlegen darf: Wer Orte verwaltet, ohnehin; dazu alle mit dem
+ * schmaleren locations.create (z. B. Obleute beim Anlegen eines Termins).
+ * Bearbeiten und Löschen bleiben bei organization.manage_locations.
+ */
+export const LOCATION_CREATE_PERMISSIONS: PermissionKey[] = [
+  PERMISSIONS.LOCATIONS_CREATE,
+  PERMISSIONS.ORGANIZATION_MANAGE_LOCATIONS,
+];
 
 import { z } from "zod";
 
@@ -376,6 +389,13 @@ export const PERMISSION_DEFINITIONS: Array<{
     description: "Berechtigung zum Verwalten von Veranstaltungsorten",
     category: "organization",
   },
+  {
+    key: PERMISSIONS.LOCATIONS_CREATE,
+    name: "Veranstaltungsorte anlegen",
+    description:
+      "Berechtigung, beim Erstellen von Terminen, Kursen oder Ensembles neue Veranstaltungsorte anzulegen (Bearbeiten und Löschen erfordert „Veranstaltungsorte verwalten“)",
+    category: "organization",
+  },
 
   {
     key: PERMISSIONS.HOMEPAGE_MANAGE,
@@ -436,6 +456,14 @@ export const PERMISSION_DEFINITIONS: Array<{
     name: "Rechnungen verwalten",
     description: "Berechtigung zum Verwalten von Rechnungen und Zahlungsstatus",
     category: "invoices",
+  },
+
+  {
+    key: PERMISSIONS.BILLING_MANAGE,
+    name: "Beitragsrechnungen der Geschäftsstelle",
+    description:
+      "Berechtigung, Versicherungs- und Mitgliedsbeiträge aus Excel-Tabellen abzurechnen, die Prämien zu pflegen und die Rechnungen per E-Mail zu versenden",
+    category: "billing",
   },
 
   {

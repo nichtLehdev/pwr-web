@@ -6,7 +6,7 @@ import {
   districtAllowed,
   districtScopeFilter,
   districtScopeFor,
-  ensembleLinkNeedsDistrictCheck,
+  ensembleLinksNeedingDistrictCheck,
   type DistrictScope,
 } from "@/lib/district-scope";
 
@@ -148,33 +148,48 @@ describe("assertDistrictChangeAllowed", () => {
   });
 });
 
-describe("ensembleLinkNeedsDistrictCheck", () => {
+describe("ensembleLinksNeedingDistrictCheck", () => {
   it("lets the reviewing side link any ensemble", () => {
-    expect(ensembleLinkNeedsDistrictCheck(unrestricted, "e99", null)).toBe(
-      false,
-    );
+    expect(
+      ensembleLinksNeedingDistrictCheck(unrestricted, ["e99"], []),
+    ).toEqual([]);
   });
 
-  it("checks a newly linked ensemble", () => {
-    expect(ensembleLinkNeedsDistrictCheck(bezirk12, "e99", null)).toBe(true);
-    expect(ensembleLinkNeedsDistrictCheck(bezirk12, "e99", "e42")).toBe(true);
+  it("checks newly linked ensembles", () => {
+    expect(ensembleLinksNeedingDistrictCheck(bezirk12, ["e99"], [])).toEqual([
+      "e99",
+    ]);
+    expect(
+      ensembleLinksNeedingDistrictCheck(bezirk12, ["e99", "e7"], ["e42"]),
+    ).toEqual(["e99", "e7"]);
   });
 
   // Same trap as assertDistrictChangeAllowed: the event form resubmits every field.
-  it("ignores a link that was already stored", () => {
-    expect(ensembleLinkNeedsDistrictCheck(bezirk12, "e99", "e99")).toBe(false);
-    expect(ensembleLinkNeedsDistrictCheck(bezirk12, undefined, "e99")).toBe(
-      false,
+  it("ignores links that were already stored", () => {
+    expect(
+      ensembleLinksNeedingDistrictCheck(bezirk12, ["e99", "e7"], ["e99"]),
+    ).toEqual(["e7"]);
+    expect(
+      ensembleLinksNeedingDistrictCheck(bezirk12, undefined, ["e99"]),
+    ).toEqual([]);
+  });
+
+  it("ignores removing links", () => {
+    expect(ensembleLinksNeedingDistrictCheck(bezirk12, [], ["e99"])).toEqual(
+      [],
     );
   });
 
-  it("ignores removing the link", () => {
-    expect(ensembleLinkNeedsDistrictCheck(bezirk12, null, "e99")).toBe(false);
-    expect(ensembleLinkNeedsDistrictCheck(bezirk12, "", "e99")).toBe(false);
+  it("checks each ensemble once", () => {
+    expect(
+      ensembleLinksNeedingDistrictCheck(bezirk12, ["e99", "e99"], []),
+    ).toEqual(["e99"]);
   });
 
   it("checks an account without any responsibility", () => {
-    expect(ensembleLinkNeedsDistrictCheck(noBezirk, "e99", null)).toBe(true);
+    expect(ensembleLinksNeedingDistrictCheck(noBezirk, ["e99"], [])).toEqual([
+      "e99",
+    ]);
   });
 });
 
