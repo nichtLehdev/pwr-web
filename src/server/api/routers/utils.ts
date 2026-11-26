@@ -5,8 +5,11 @@ import {
   publicProcedure,
   rateLimitedPublicProcedure,
 } from "../trpc";
-import { permissionProcedure } from "../middleware/permissions";
-import { PERMISSIONS } from "@/lib/permissions";
+import {
+  permissionProcedure,
+  permissionProcedureAny,
+} from "../middleware/permissions";
+import { LOCATION_CREATE_PERMISSIONS, PERMISSIONS } from "@/lib/permissions";
 import { sendEmail } from "@/server/email/send-email";
 import {
   generateNewsletterHtml,
@@ -143,7 +146,7 @@ export const locationsRouter = createTRPCRouter({
       return location;
     }),
 
-  create: permissionProcedure(PERMISSIONS.ORGANIZATION_MANAGE_LOCATIONS)
+  create: permissionProcedureAny(LOCATION_CREATE_PERMISSIONS)
     .input(
       z.object({
         name: z.string().max(200).optional(),
@@ -300,7 +303,7 @@ export const locationsRouter = createTRPCRouter({
     }),
 
   /** Permission-gated and throttled, so a stuck input can't hammer Photon on our behalf. */
-  searchAddress: permissionProcedure(PERMISSIONS.ORGANIZATION_MANAGE_LOCATIONS)
+  searchAddress: permissionProcedureAny(LOCATION_CREATE_PERMISSIONS)
     .use(async ({ ctx, next }) => {
       const key = `trpc:locations.searchAddress:${clientKeyFromHeaders(
         ctx.headers,

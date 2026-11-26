@@ -53,6 +53,7 @@ export const PERMISSIONS = {
   ORGANIZATION_MANAGE_AUSWAHLCHOERE: "organization.manage_auswahlchoere",
   ORGANIZATION_MANAGE_BEZIRKE: "organization.manage_bezirke",
   ORGANIZATION_MANAGE_LOCATIONS: "organization.manage_locations",
+  LOCATIONS_CREATE: "locations.create",
 
   HOMEPAGE_MANAGE: "homepage.manage",
 
@@ -94,6 +95,16 @@ export const PERMISSIONS = {
 } as const;
 
 export type PermissionKey = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
+
+/**
+ * Wer neue Orte anlegen darf: Wer Orte verwaltet, ohnehin; dazu alle mit dem
+ * schmaleren locations.create (z. B. Obleute beim Anlegen eines Termins).
+ * Bearbeiten und Löschen bleiben bei organization.manage_locations.
+ */
+export const LOCATION_CREATE_PERMISSIONS: PermissionKey[] = [
+  PERMISSIONS.LOCATIONS_CREATE,
+  PERMISSIONS.ORGANIZATION_MANAGE_LOCATIONS,
+];
 
 import { z } from "zod";
 
@@ -374,6 +385,13 @@ export const PERMISSION_DEFINITIONS: Array<{
     key: PERMISSIONS.ORGANIZATION_MANAGE_LOCATIONS,
     name: "Veranstaltungsorte verwalten",
     description: "Berechtigung zum Verwalten von Veranstaltungsorten",
+    category: "organization",
+  },
+  {
+    key: PERMISSIONS.LOCATIONS_CREATE,
+    name: "Veranstaltungsorte anlegen",
+    description:
+      "Berechtigung, beim Erstellen von Terminen, Kursen oder Ensembles neue Veranstaltungsorte anzulegen (Bearbeiten und Löschen erfordert „Veranstaltungsorte verwalten“)",
     category: "organization",
   },
 

@@ -8,6 +8,7 @@ import { useSession } from "@/lib/auth";
 import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
+import { LOCATION_CREATE_PERMISSIONS } from "@/lib/permissions";
 import { getErrorMessage } from "@/lib/utils";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import {
@@ -46,7 +47,8 @@ export default function EditEnsemblePage() {
       enabled: !!session?.user,
     });
 
-  const { hasDashboardAccess } = usePermissions();
+  const { hasDashboardAccess, hasAnyPermission } = usePermissions();
+  const canCreateLocation = hasAnyPermission(LOCATION_CREATE_PERMISSIONS);
 
   const { data: ensemble, isLoading: ensembleLoading } =
     api.ensembles.getById.useQuery(
@@ -1006,16 +1008,18 @@ export default function EditEnsemblePage() {
                           </div>
                         )}
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowLocationDropdown(false);
-                          setShowNewLocationForm(true);
-                        }}
-                        className="link-ink border-rule dark:border-night-rule hover:bg-rule/25 dark:hover:bg-night-rule block w-full border-t px-4 py-2 text-left text-sm transition-colors"
-                      >
-                        + Neuen Ort erstellen
-                      </button>
+                      {canCreateLocation && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowLocationDropdown(false);
+                            setShowNewLocationForm(true);
+                          }}
+                          className="link-ink border-rule dark:border-night-rule hover:bg-rule/25 dark:hover:bg-night-rule block w-full border-t px-4 py-2 text-left text-sm transition-colors"
+                        >
+                          + Neuen Ort erstellen
+                        </button>
+                      )}
                     </div>
                   )}
 
