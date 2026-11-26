@@ -2,6 +2,7 @@ import { describe, expect, it } from "@jest/globals";
 import {
   readEventContent,
   readEventDownloadRefs,
+  readEventPerformerRefs,
   readEventPriceOptions,
 } from "../event-import";
 
@@ -57,7 +58,6 @@ describe("readEventContent", () => {
       cancelled: false,
       category: "KONZERT",
       districtName: "Bezirksname aus dem Freitext",
-      performingEnsembleName: "Auftretendes Ensemble",
       leitung: "Musterperson",
       openToParticipants: true,
       participationInfo: "Mitspielen ab 14 Jahren.",
@@ -66,23 +66,6 @@ describe("readEventContent", () => {
       status: "DRAFT",
     });
     expect(content.eventDate.toISOString()).toBe("2026-11-14T19:00:00.000Z");
-  });
-
-  it("liest die Ensemble-Art unter dem Namen, den der Export schreibt", () => {
-    expect(readEventContent(exportedEvent()).performingEnsembleType).toBe(
-      "ENSEMBLE",
-    );
-  });
-
-  it("liest den alten Namen weiter, damit von Hand gebaute Dateien gehen", () => {
-    const content = readEventContent(
-      exportedEvent({
-        performingEnsembleType: undefined,
-        ensembleType: "AUSWAHLCHOR",
-      }),
-    );
-
-    expect(content.performingEnsembleType).toBe("AUSWAHLCHOR");
   });
 
   it("lässt Prüfvermerke und Herkunftsfelder draußen", () => {
@@ -128,8 +111,6 @@ describe("readEventContent", () => {
       duration: null,
       cancelled: false,
       districtName: null,
-      performingEnsembleType: null,
-      performingEnsembleName: null,
       leitung: null,
       openToParticipants: false,
       // Termine sind im Zweifel kostenlos — so steht es auch im Schema.
@@ -199,5 +180,118 @@ describe("readEventDownloadRefs", () => {
   it("überspringt Verweise ohne jedes Merkmal", () => {
     expect(readEventDownloadRefs([{}, null, "unsinn"])).toEqual([]);
     expect(readEventDownloadRefs(undefined)).toEqual([]);
+  });
+});
+
+describe("readEventPerformerRefs", () => {
+  it("liest die Liste, die der Export schreibt, in ihrer Reihenfolge", () => {
+    expect(
+      readEventPerformerRefs({
+        performers: [
+          {
+            type: "CUSTOM",
+            name: "Gastchor",
+            sortOrder: 1,
+            ensembleId: null,
+            auswahlChorId: null,
+          },
+          {
+            type: "AUSWAHLCHOR",
+            name: "Con Spirito",
+            sortOrder: 0,
+            auswahlChorId: "chor-1",
+            auswahlChor: { slug: "con-spirito", name: "Con Spirito" },
+          },
+        ],
+      }),
+    ).toEqual([
+      {
+        type: "AUSWAHLCHOR",
+        name: "Con Spirito",
+        ensembleId: null,
+        ensemble: null,
+        auswahlChorId: "chor-1",
+        auswahlChor: { slug: "con-spirito", name: "Con Spirito" },
+      },
+      {
+        type: "CUSTOM",
+        name: "Gastchor",
+        ensembleId: null,
+        ensemble: null,
+        auswahlChorId: null,
+        auswahlChor: null,
+      },
+    ]);
+  });
+
+  it("überspringt Einträge ohne gültige Art", () => {
+    expect(
+      readEventPerformerRefs({
+        performers: [{ type: "BAND", name: "x" }, null, "unsinn"],
+      }),
+    ).toEqual([]);
+  });
+
+  // ZIPs von vor den mehreren Mitwirkenden: Einzelfelder am Termin.
+  it("macht aus den alten Einzelfeldern einen Eintrag", () => {
+    expect(
+      readEventPerformerRefs(
+        exportedEvent({
+          ensemble: { name: "Posaunenchor Mettmann", internalId: "13-01" },
+        }),
+      ),
+    ).toEqual([
+      {
+        type: "ENSEMBLE",
+        name: "Posaunenchor Mettmann",
+        ensembleId: "ensemble-1",
+        ensemble: { name: "Posaunenchor Mettmann", internalId: "13-01" },
+        auswahlChorId: null,
+        auswahlChor: null,
+      },
+    ]);
+  });
+
+  it("übernimmt den freien Namen nur bei eigener Besetzung", () => {
+    expect(
+      readEventPerformerRefs(
+        exportedEvent({ performingEnsembleType: "CUSTOM", ensembleId: null }),
+      ),
+    ).toEqual([
+      {
+        type: "CUSTOM",
+        name: "Auftretendes Ensemble",
+        ensembleId: null,
+        ensemble: null,
+        auswahlChorId: null,
+        auswahlChor: null,
+      },
+    ]);
+  });
+
+  it("liest den alten Namen der Art weiter, damit von Hand gebaute Dateien gehen", () => {
+    const refs = readEventPerformerRefs(
+      exportedEvent({
+        performingEnsembleType: undefined,
+        ensembleType: "AUSWAHLCHOR",
+        auswahlChorId: "chor-1",
+        auswahlChorName: "Con Spirito",
+      }),
+    );
+
+    expect(refs).toEqual([
+      expect.objectContaining({
+        type: "AUSWAHLCHOR",
+        name: "Con Spirito",
+        auswahlChorId: "chor-1",
+        ensembleId: null,
+      }),
+    ]);
+  });
+
+  it("liefert ohne Mitwirkende eine leere Liste", () => {
+    expect(
+      readEventPerformerRefs({ title: "Alter Termin", category: "PROBE" }),
+    ).toEqual([]);
   });
 });

@@ -10,6 +10,7 @@ import { buildPageMetadata, plainTextExcerpt, SITE_NAME } from "@/lib/seo";
 import JsonLd from "@/app/_components/seo/json-ld";
 import { breadcrumbSchema, eventSchema } from "@/lib/structured-data";
 import { coursePath, eventPath, isUuid } from "@/lib/slug";
+import { performerNames } from "@/lib/event-performers";
 
 interface PageProps {
   params: Promise<{ type: string; id: string }>;
@@ -179,8 +180,7 @@ export default async function TerminDetailPage({ params }: PageProps) {
                 cancelled: event.cancelled,
                 isFree: event.isFree,
                 location: event.location,
-                performerName:
-                  event.performingEnsembleName ?? event.ensemble?.name,
+                performerName: performerNames(event.performers) || undefined,
               }),
               breadcrumbSchema([
                 { name: "Start", path: "/" },

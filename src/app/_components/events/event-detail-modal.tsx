@@ -19,6 +19,7 @@ import { headMeta } from "@/app/_components/programmheft/page-head";
 import { cn } from "@/lib/utils";
 import { markdownToPlainText } from "@/lib/markdown-to-plain-text";
 import { formatBerlin, isSameBerlinDay } from "@/lib/berlin-time";
+import { performerNames } from "@/lib/event-performers";
 
 interface EventDetailModalProps {
   event: CalendarItem & {
@@ -207,13 +208,13 @@ export default function EventDetailModal({
             </div>
           )}
 
-          {event.type === "event" && event.performingEnsembleName && (
+          {event.type === "event" && event.performers.length > 0 && (
             <div>
               <h3 className="text-ink dark:text-night-text mb-1 font-semibold">
                 Mitwirkende
               </h3>
               <p className="text-dark dark:text-night-muted">
-                {event.performingEnsembleName}
+                {performerNames(event.performers)}
               </p>
             </div>
           )}

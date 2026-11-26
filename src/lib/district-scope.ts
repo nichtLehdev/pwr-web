@@ -66,16 +66,18 @@ export function assertDistrictChangeAllowed(
 
 /**
  * Ein verlinktes Ensemble zeigt den Termin auf seiner öffentlichen Seite, daher eigene
- * Prüfung. Wie oben zählt nur der Wechsel; das Lösen einer Verknüpfung bleibt ungeprüft.
+ * Prüfung. Wie oben zählt nur, was neu dazukommt: schon gespeicherte Verknüpfungen
+ * (auch bezirksfremde, die jemand anderes gesetzt hat) und das Lösen bleiben ungeprüft.
+ * `submitted` undefined heißt „Mitwirkende nicht mitgeschickt“.
  */
-export function ensembleLinkNeedsDistrictCheck(
+export function ensembleLinksNeedingDistrictCheck(
   scope: DistrictScope,
-  submitted: string | null | undefined,
-  stored: string | null,
-): submitted is string {
-  if (scope.unrestricted) return false;
-  if (submitted === undefined || submitted === stored) return false;
-  return Boolean(submitted);
+  submitted: readonly string[] | undefined,
+  stored: readonly string[],
+): string[] {
+  if (scope.unrestricted || submitted === undefined) return [];
+  const already = new Set(stored);
+  return [...new Set(submitted)].filter((id) => id && !already.has(id));
 }
 
 /** Listen-Filter: eigene Inhalte plus eigene Bezirke; `null` heißt „kein Filter nötig“. */

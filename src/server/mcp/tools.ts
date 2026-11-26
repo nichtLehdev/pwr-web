@@ -109,7 +109,8 @@ export const MCP_TOOLS: McpToolDefinition[] = [
   {
     name: "list_auswahlchoere",
     title: "Auswahlchöre",
-    description: "Auswahlchöre mit ID (für auswahlChorId bei Terminen).",
+    description:
+      "Auswahlchöre mit ID (für auswahlChorId in performers bei Terminen).",
     procedure: "auswahlchoere.getAll",
     scope: READ,
   },
@@ -196,14 +197,14 @@ export const MCP_TOOLS: McpToolDefinition[] = [
   {
     name: "create_event",
     title: "Termin anlegen",
-    description: `Neuen Termin anlegen. Kategorien: KONZERT, GOTTESDIENST, PROBE, ANDERE. Ort über locationId (list_locations), mitwirkendes Ensemble über ensembleId (list_ensembles) oder auswahlChorId. duration in Minuten. ${DATE_NOTE} ${MARKDOWN_NOTE} ${STATUS_NOTE}`,
+    description: `Neuen Termin anlegen. Kategorien: KONZERT, GOTTESDIENST, PROBE, ANDERE. Ort über locationId (list_locations), Mitwirkende als Liste performers (mehrere möglich, in Anzeige-Reihenfolge): je Eintrag type ENSEMBLE mit ensembleId (list_ensembles), AUSWAHLCHOR mit auswahlChorId (list_auswahlchoere) oder CUSTOM mit name für Gäste ohne Eintrag. duration in Minuten. ${DATE_NOTE} ${MARKDOWN_NOTE} ${STATUS_NOTE}`,
     procedure: "events.create",
     scope: WRITE,
   },
   {
     name: "update_event",
     title: "Termin ändern",
-    description: `Termin ändern; nur übergebene Felder ändern sich. ${DATE_NOTE} ${STATUS_NOTE}`,
+    description: `Termin ändern; nur übergebene Felder ändern sich. performers ersetzt die ganze Liste der Mitwirkenden, also vorher mit get_event lesen und die bisherigen mitschicken. ${DATE_NOTE} ${STATUS_NOTE}`,
     procedure: "events.update",
     scope: WRITE,
   },
