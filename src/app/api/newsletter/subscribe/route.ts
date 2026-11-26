@@ -15,6 +15,7 @@ import {
   BOT_TRAP_FIELD,
   inspectBotTrap,
 } from "@/lib/bot-trap";
+import { consumeCapToken } from "@/server/utils/cap";
 
 import { createLogger } from "@/server/utils/logger";
 
@@ -58,6 +59,23 @@ export async function POST(request: NextRequest) {
         `Newsletter sign-up rejected (${verdict}) from ${clientKeyFromHeaders(request.headers)}`,
       );
       return NextResponse.json(PENDING_RESPONSE);
+    }
+
+    // Captcha vor jedem Datensatz und jeder Mail; Pflicht für das höhere
+    // Versandlimit bei mittwald. Anders als die Falle oben eine ehrliche
+    // Antwort: Wer hier scheitert, ist meist ein Mensch mit abgelaufenem Token.
+    if (!consumeCapToken("newsletter", body.capToken)) {
+      log.warn(
+        `Newsletter sign-up without valid captcha from ${clientKeyFromHeaders(request.headers)}`,
+      );
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Die Sicherheitsprüfung ist abgelaufen oder fehlgeschlagen. Bitte bestätige erneut, dass du kein Roboter bist.",
+        },
+        { status: 400 },
+      );
     }
 
     // Zwei Töpfe: pro Adresse gegen wiederholte Mails an dieselbe Person, pro

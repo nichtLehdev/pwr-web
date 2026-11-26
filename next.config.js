@@ -8,6 +8,10 @@ const config = {
   crossOrigin: "anonymous",
   allowedDevOrigins: ["192.168.6.*"],
 
+  // Lädt esbuild und den Obfuscator nur zur Laufzeit und nur für Funktionen,
+  // die wir nicht nutzen — nicht in den Server-Build ziehen.
+  serverExternalPackages: ["capjs-core"],
+
   typescript: {
     tsconfigPath: "tsconfig.build.json",
   },
@@ -59,7 +63,8 @@ const config = {
             key: "Content-Security-Policy",
             value: `
               default-src 'self';
-              script-src 'self' 'unsafe-inline' ${isDev ? "'unsafe-eval'" : ""} https://static.cloudflareinsights.com;
+              script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' ${isDev ? "'unsafe-eval'" : ""} https://static.cloudflareinsights.com;
+              worker-src 'self' blob:;
               style-src 'self' 'unsafe-inline';
               img-src 'self' data: https: blob:;
               font-src 'self' https: data:;

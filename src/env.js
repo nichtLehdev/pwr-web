@@ -54,6 +54,11 @@ export const env = createEnv({
     CONTACT_EMAIL: z.string().email().optional(),
     /** Secret for /api/cron/* routes (Bearer token or ?secret=). */
     CRON_SECRET: z.string().min(16).optional(),
+    /**
+     * Signiert die Cap-Captcha-Challenges (Newsletter). Unset: abgeleitet aus
+     * BETTER_AUTH_SECRET.
+     */
+    CAP_SECRET: z.string().min(32).optional(),
   },
 
   client: {},
@@ -76,6 +81,7 @@ export const env = createEnv({
     SMTP_MAX_MESSAGES_PER_SECOND: process.env.SMTP_MAX_MESSAGES_PER_SECOND,
     CONTACT_EMAIL: process.env.CONTACT_EMAIL,
     CRON_SECRET: process.env.CRON_SECRET,
+    CAP_SECRET: process.env.CAP_SECRET,
   },
   /** For Docker builds. */
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,
