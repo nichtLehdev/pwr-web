@@ -8,7 +8,11 @@ import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { parseDeadlineEndOfDay } from "@/lib/date-input";
 import { usePermissions } from "@/lib/use-permissions";
-import { PERMISSIONS, type PermissionKey } from "@/lib/permissions";
+import {
+  LOCATION_CREATE_PERMISSIONS,
+  PERMISSIONS,
+  type PermissionKey,
+} from "@/lib/permissions";
 import { districtFieldState } from "@/lib/district-scope";
 import {
   DashboardPage,
@@ -97,7 +101,9 @@ export default function NewCoursePage() {
     hasDashboardAccess,
     hasPermission,
     isLoading: permissionsLoading,
+    hasAnyPermission,
   } = usePermissions();
+  const canCreateLocation = hasAnyPermission(LOCATION_CREATE_PERMISSIONS);
 
   const hasApprovePermission = hasPermission(
     "courses.approve" as PermissionKey,
@@ -1179,16 +1185,18 @@ export default function NewCoursePage() {
                           </div>
                         )}
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowLocationDropdown(false);
-                          setShowNewLocationForm(true);
-                        }}
-                        className="text-primary-ink border-rule hover:bg-rule/60 dark:border-night-rule dark:text-primary dark:hover:bg-night-rule block w-full border-t px-4 py-2 text-left text-sm font-semibold"
-                      >
-                        + Neuen Ort erstellen
-                      </button>
+                      {canCreateLocation && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowLocationDropdown(false);
+                            setShowNewLocationForm(true);
+                          }}
+                          className="text-primary-ink border-rule hover:bg-rule/60 dark:border-night-rule dark:text-primary dark:hover:bg-night-rule block w-full border-t px-4 py-2 text-left text-sm font-semibold"
+                        >
+                          + Neuen Ort erstellen
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>

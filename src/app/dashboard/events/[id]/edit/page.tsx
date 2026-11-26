@@ -8,7 +8,10 @@ import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
-import type { PermissionKey } from "@/lib/permissions";
+import {
+  LOCATION_CREATE_PERMISSIONS,
+  type PermissionKey,
+} from "@/lib/permissions";
 import { districtFieldState } from "@/lib/district-scope";
 import { getErrorMessage } from "@/lib/utils";
 import { useToast } from "@/app/_components/ui/toast";
@@ -97,7 +100,9 @@ export default function EditEventPage() {
     hasDashboardAccess,
     hasPermission,
     isLoading: permissionsLoading,
+    hasAnyPermission,
   } = usePermissions();
+  const canCreateLocation = hasAnyPermission(LOCATION_CREATE_PERMISSIONS);
 
   const hasApprovePermission = hasPermission("events.approve" as PermissionKey);
   const isHigherRole = hasApprovePermission;
@@ -1062,16 +1067,18 @@ export default function EditEventPage() {
                               </div>
                             )}
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setShowLocationDropdown(false);
-                              setShowNewLocationForm(true);
-                            }}
-                            className="text-primary-ink dark:text-primary border-rule dark:border-night-rule hover:bg-rule/25 dark:hover:bg-night-rule block w-full border-t px-4 py-2 text-left text-sm font-medium"
-                          >
-                            + Neuen Ort erstellen
-                          </button>
+                          {canCreateLocation && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowLocationDropdown(false);
+                                setShowNewLocationForm(true);
+                              }}
+                              className="text-primary-ink dark:text-primary border-rule dark:border-night-rule hover:bg-rule/25 dark:hover:bg-night-rule block w-full border-t px-4 py-2 text-left text-sm font-medium"
+                            >
+                              + Neuen Ort erstellen
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>
