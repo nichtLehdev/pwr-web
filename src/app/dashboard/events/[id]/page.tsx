@@ -9,11 +9,7 @@ import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
 import type { PermissionKey } from "@/lib/permissions";
 import { useToast } from "@/app/_components/ui/toast";
-import {
-  ContentStatus,
-  EventCategory,
-  EventEnsembleType,
-} from "~/generated/prisma/enums";
+import { ContentStatus, EventCategory } from "~/generated/prisma/enums";
 import {
   DashboardFormSectionLayout,
   DashboardOverflowMenu,
@@ -34,6 +30,7 @@ import { renderDescriptionHtml } from "@/lib/sanitize";
 import "@/styles/beschreibung.css";
 import { formatBerlin } from "@/lib/berlin-time";
 import { needsUnoptimizedImage } from "@/lib/media-visibility";
+import { PERFORMER_TYPE_LABELS, performerName } from "@/lib/event-performers";
 
 const categoryLabels: Record<EventCategory, string> = {
   KONZERT: "Konzert",
@@ -57,12 +54,6 @@ const statusTones: Record<ContentStatus, TagTone> = {
   APPROVED: "ink",
   REJECTED: "cancelled",
   ARCHIVED: "muted",
-};
-
-const ensembleTypeLabels: Record<EventEnsembleType, string> = {
-  AUSWAHLCHOR: "Auswahlchor",
-  ENSEMBLE: "Ensemble",
-  CUSTOM: "Benutzerdefiniert",
 };
 
 export default function EventDetailPage() {
@@ -202,8 +193,8 @@ export default function EventDetailPage() {
     ...(event.location
       ? [{ href: "#event-detail-location", label: "Ort" }]
       : []),
-    ...(event.performingEnsembleType
-      ? [{ href: "#event-detail-ensemble", label: "Ensemble" }]
+    ...(event.performers.length > 0
+      ? [{ href: "#event-detail-ensemble", label: "Mitwirkende" }]
       : []),
     ...(event.openToParticipants
       ? [{ href: "#event-detail-participation", label: "Teilnahme" }]
@@ -211,22 +202,6 @@ export default function EventDetailPage() {
     { href: "#event-detail-pricing", label: "Eintritt" },
     { href: "#event-detail-meta", label: "Infos" },
   ];
-
-  const getEnsembleName = () => {
-    if (event.performingEnsembleType === "ENSEMBLE" && event.ensemble) {
-      return event.ensemble.name;
-    }
-    if (event.performingEnsembleType === "AUSWAHLCHOR" && event.auswahlChor) {
-      return event.auswahlChor.name;
-    }
-    if (
-      event.performingEnsembleType === "CUSTOM" &&
-      event.performingEnsembleName
-    ) {
-      return event.performingEnsembleName;
-    }
-    return null;
-  };
 
   const handleApprove = () => {
     approveMutation.mutate({
@@ -578,33 +553,25 @@ export default function EventDetailPage() {
               </section>
             )}
 
-            {event.performingEnsembleType && (
+            {event.performers.length > 0 && (
               <section
                 id="event-detail-ensemble"
                 className="dashboard-form-scroll-anchor border-rule dark:border-night-rule border-t pt-10"
               >
                 <h2 className="text-ink dark:text-night-text mb-4 text-lg font-semibold">
-                  Auftretendes Ensemble
+                  Mitwirkende
                 </h2>
                 <dl className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <dt className="text-dark dark:text-night-muted text-sm font-medium">
-                      Typ
-                    </dt>
-                    <dd className="text-ink dark:text-night-text mt-1">
-                      {ensembleTypeLabels[event.performingEnsembleType]}
-                    </dd>
-                  </div>
-                  {getEnsembleName() && (
-                    <div>
+                  {event.performers.map((performer) => (
+                    <div key={performer.id}>
                       <dt className="text-dark dark:text-night-muted text-sm font-medium">
-                        Name
+                        {PERFORMER_TYPE_LABELS[performer.type]}
                       </dt>
                       <dd className="text-ink dark:text-night-text mt-1">
-                        {getEnsembleName()}
+                        {performerName(performer)}
                       </dd>
                     </div>
-                  )}
+                  ))}
                   {event.leitung && (
                     <div>
                       <dt className="text-dark dark:text-night-muted text-sm font-medium">

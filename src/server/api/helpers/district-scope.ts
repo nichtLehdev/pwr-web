@@ -3,7 +3,7 @@ import type { PrismaClient } from "~/generated/prisma/client";
 import {
   districtAllowed,
   districtScopeFor,
-  ensembleLinkNeedsDistrictCheck,
+  ensembleLinksNeedingDistrictCheck,
   type ContentResource,
 } from "@/lib/district-scope";
 import type { DistrictScope } from "@/lib/district-scope";
@@ -18,7 +18,7 @@ export {
   assertDistrictChangeAllowed,
   districtAllowed,
   districtScopeFilter,
-  ensembleLinkNeedsDistrictCheck,
+  ensembleLinksNeedingDistrictCheck,
 } from "@/lib/district-scope";
 export type { ContentResource, DistrictScope } from "@/lib/district-scope";
 
@@ -48,34 +48,38 @@ export async function resolveDistrictScope(
 }
 
 /**
- * Schlägt den Bezirk des Ensembles nach; die Regel selbst steht in
- * `ensembleLinkNeedsDistrictCheck`.
+ * Schlägt die Bezirke neu verknüpfter Ensembles nach; die Regel selbst steht in
+ * `ensembleLinksNeedingDistrictCheck`.
  */
-export async function assertEnsembleDistrictChangeAllowed(
+export async function assertEnsembleLinksAllowed(
   db: PrismaClient,
   scope: DistrictScope,
-  submitted: string | null | undefined,
-  stored: string | null,
+  submitted: readonly string[] | undefined,
+  stored: readonly string[],
 ): Promise<void> {
-  if (!ensembleLinkNeedsDistrictCheck(scope, submitted, stored)) return;
+  const toCheck = ensembleLinksNeedingDistrictCheck(scope, submitted, stored);
+  if (toCheck.length === 0) return;
 
-  const ensemble = await db.ensemble.findUnique({
-    where: { id: submitted },
-    select: { bezirkId: true },
+  const ensembles = await db.ensemble.findMany({
+    where: { id: { in: toCheck } },
+    select: { id: true, name: true, bezirkId: true },
   });
 
-  if (!ensemble) {
+  if (ensembles.length !== toCheck.length) {
     throw new TRPCError({
       code: "NOT_FOUND",
       message: "Ensemble nicht gefunden",
     });
   }
 
-  if (!districtAllowed(scope, ensemble.bezirkId)) {
+  const outside = ensembles.filter((e) => !districtAllowed(scope, e.bezirkId));
+  if (outside.length > 0) {
     throw new TRPCError({
       code: "FORBIDDEN",
       message:
-        "Du kannst nur Ensembles aus deinem eigenen Bezirk verknüpfen. " +
+        `Du kannst nur Ensembles aus deinem eigenen Bezirk verknüpfen (${outside
+          .map((e) => e.name)
+          .join(", ")}). ` +
         "Für Gäste von außerhalb gib bitte einen freien Namen ein.",
     });
   }

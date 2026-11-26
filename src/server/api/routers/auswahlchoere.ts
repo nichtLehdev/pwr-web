@@ -21,15 +21,19 @@ export const auswahlchoereRouter = createTRPCRouter({
               bio: true,
             },
           },
-          events: {
-            orderBy: { eventDate: "asc" },
+          performers: {
+            orderBy: { event: { eventDate: "asc" } },
             include: {
-              location: true,
-              priceOptions: true,
-              coverImage: true,
-              downloads: {
+              event: {
                 include: {
-                  download: true,
+                  location: true,
+                  priceOptions: true,
+                  coverImage: true,
+                  downloads: {
+                    include: {
+                      download: true,
+                    },
+                  },
                 },
               },
             },
@@ -44,7 +48,8 @@ export const auswahlchoereRouter = createTRPCRouter({
         });
       }
 
-      return auswahlChor;
+      const { performers, ...rest } = auswahlChor;
+      return { ...rest, events: performers.map((p) => p.event) };
     }),
 
   getAll: publicProcedure
@@ -74,16 +79,22 @@ export const auswahlchoereRouter = createTRPCRouter({
           include: {
             image: true,
             conductor: true,
-            events: {
-              where: { eventDate: { gte: new Date() }, status: "APPROVED" },
-              orderBy: { eventDate: "asc" },
+            performers: {
+              where: {
+                event: { eventDate: { gte: new Date() }, status: "APPROVED" },
+              },
+              orderBy: { event: { eventDate: "asc" } },
               include: {
-                location: true,
-                priceOptions: true,
-                coverImage: true,
-                downloads: {
+                event: {
                   include: {
-                    download: true,
+                    location: true,
+                    priceOptions: true,
+                    coverImage: true,
+                    downloads: {
+                      include: {
+                        download: true,
+                      },
+                    },
                   },
                 },
               },
@@ -98,7 +109,10 @@ export const auswahlchoereRouter = createTRPCRouter({
         ctx.db.auswahlChor.count({ where }),
       ]);
       return {
-        auswahlchoere,
+        auswahlchoere: auswahlchoere.map(({ performers, ...chor }) => ({
+          ...chor,
+          events: performers.map((p) => p.event),
+        })),
         total,
         pages: Math.ceil(total / input.limit),
       };

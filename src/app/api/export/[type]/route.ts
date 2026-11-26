@@ -138,28 +138,22 @@ export async function GET(
             coverImage: true,
             location: true,
             bezirk: true,
-            ensemble: {
+            // Nur die Merkmale, an denen der Import das Ziel wiederfindet.
+            performers: {
+              orderBy: { sortOrder: "asc" },
               include: {
-                conductor: {
+                ensemble: {
                   select: {
                     id: true,
-                    displayName: true,
-                    email: true,
+                    name: true,
+                    slug: true,
+                    internalId: true,
+                    image: true,
                   },
                 },
-                image: true,
-              },
-            },
-            auswahlChor: {
-              include: {
-                conductor: {
-                  select: {
-                    id: true,
-                    displayName: true,
-                    email: true,
-                  },
+                auswahlChor: {
+                  select: { id: true, name: true, slug: true, image: true },
                 },
-                image: true,
               },
             },
             priceOptions: true,
@@ -190,14 +184,29 @@ export async function GET(
             coverImageUrl: event.coverImage?.url,
             locationName: event.location?.name,
             bezirkName: event.bezirk?.name,
-            ensembleName: event.ensemble?.name,
-            auswahlChorName: event.auswahlChor?.name,
+            performers: event.performers.map((performer) => ({
+              type: performer.type,
+              name: performer.name,
+              sortOrder: performer.sortOrder,
+              ensembleId: performer.ensembleId,
+              ensemble: performer.ensemble && {
+                name: performer.ensemble.name,
+                slug: performer.ensemble.slug,
+                internalId: performer.ensemble.internalId,
+              },
+              auswahlChorId: performer.auswahlChorId,
+              auswahlChor: performer.auswahlChor && {
+                name: performer.auswahlChor.name,
+                slug: performer.auswahlChor.slug,
+              },
+            })),
           })),
           exportedAt: new Date().toISOString(),
           count: events.length,
         };
 
-        mediaFiles = events;
+        // Bilder verknüpfter Chöre reisen mit, wie vorher beim einzelnen Ensemble.
+        mediaFiles = events.flatMap((event) => [event, ...event.performers]);
         filename = buildExportFilename(type, date, selectedIds ? events : null);
         break;
       }

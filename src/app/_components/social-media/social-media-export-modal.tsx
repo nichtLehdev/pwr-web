@@ -15,6 +15,7 @@ import {
   ScrollableModalCard,
 } from "@/app/_components/ui/scrollable-modal";
 import { berlinParts, formatBerlin } from "@/lib/berlin-time";
+import { firstPerformerImage } from "@/lib/event-performers";
 
 interface SocialMediaExportModalProps {
   isOpen: boolean;
@@ -67,9 +68,7 @@ export default function SocialMediaExportModal({
     if (typeof activeTab !== "number" || !events?.[activeTab]) return;
     const event = events[activeTab];
     const imageUrl =
-      event.coverImage?.url ||
-      event.ensemble?.image?.url ||
-      event.auswahlChor?.image?.url;
+      event.coverImage?.url || firstPerformerImage(event.performers)?.url;
     if (!imageUrl) return;
 
     setIsDragging(true);
@@ -688,8 +687,9 @@ export default function SocialMediaExportModal({
               <div className="flex flex-col items-center gap-4">
                 {filteredEvents[activeTab] &&
                   (filteredEvents[activeTab]!.coverImage?.url ||
-                    filteredEvents[activeTab]!.ensemble?.image?.url ||
-                    filteredEvents[activeTab]!.auswahlChor?.image?.url) && (
+                    firstPerformerImage(
+                      filteredEvents[activeTab]!.performers,
+                    )) && (
                     <div className="text-dark dark:text-night-muted flex items-center gap-2 text-sm">
                       <ArrowUpRightIcon className="h-5 w-5" />
                       Bild ziehen, um Position anzupassen

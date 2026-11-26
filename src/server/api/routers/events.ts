@@ -1,11 +1,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
-import {
-  EventCategory,
-  ContentStatus,
-  EventEnsembleType,
-} from "~/generated/prisma/client";
+import { EventCategory, ContentStatus } from "~/generated/prisma/client";
 import type { Prisma } from "~/generated/prisma/client";
 import { userHasPermission } from "../helpers/permissions";
 import {
@@ -16,7 +12,7 @@ import {
 import {
   assertDistrictAllowed,
   assertDistrictChangeAllowed,
-  assertEnsembleDistrictChangeAllowed,
+  assertEnsembleLinksAllowed,
   districtAllowed,
   districtScopeFilter,
   resolveDistrictScope,
@@ -36,6 +32,37 @@ import { permissionProcedure } from "../middleware/permissions";
 import { createEventSlug, updateEventSlug } from "../helpers/content-slug";
 import { isUuid, MAX_SLUG_LENGTH } from "@/lib/slug";
 import { berlinDate } from "@/lib/berlin-time";
+import {
+  linkedEnsembleIds,
+  performerNames,
+  performersInputSchema,
+} from "@/lib/event-performers";
+import {
+  performerRowsFor,
+  performersDetailInclude,
+  performersInclude,
+} from "../helpers/event-performers";
+
+/** Mitwirkende eines Originals für eine Kopie, ohne IDs. */
+function copyPerformers(
+  performers: readonly {
+    type: "ENSEMBLE" | "AUSWAHLCHOR" | "CUSTOM";
+    ensembleId: string | null;
+    auswahlChorId: string | null;
+    name: string;
+    sortOrder: number;
+  }[],
+) {
+  return performers.map(
+    ({ type, ensembleId, auswahlChorId, name, sortOrder }) => ({
+      type,
+      ensembleId,
+      auswahlChorId,
+      name,
+      sortOrder,
+    }),
+  );
+}
 
 export const eventsRouter = createTRPCRouter({
   getAll: publicProcedure
@@ -78,8 +105,7 @@ export const eventsRouter = createTRPCRouter({
             coverImage: true,
             location: true,
             bezirk: true,
-            ensemble: true,
-            auswahlChor: true,
+            performers: performersInclude,
             createdBy: {
               select: {
                 id: true,
@@ -118,18 +144,7 @@ export const eventsRouter = createTRPCRouter({
           coverImage: true,
           location: true,
           bezirk: true,
-          ensemble: {
-            include: {
-              conductor: { select: { id: true, displayName: true } },
-              image: true,
-            },
-          },
-          auswahlChor: {
-            include: {
-              conductor: { select: { id: true, displayName: true } },
-              image: true,
-            },
-          },
+          performers: performersDetailInclude,
           createdBy: {
             select: {
               id: true,
@@ -217,6 +232,7 @@ export const eventsRouter = createTRPCRouter({
             coverImage: true,
             location: true,
             bezirk: true,
+            performers: performersInclude,
             reviewer: { select: { id: true, displayName: true } },
             priceOptions: true,
             downloads: {
@@ -452,10 +468,7 @@ export const eventsRouter = createTRPCRouter({
         category: z.enum(EventCategory),
         bezirkId: z.string().optional(),
         districtName: z.string().optional(),
-        performingEnsembleType: z.enum(EventEnsembleType).optional(),
-        ensembleId: z.string().optional(),
-        auswahlChorId: z.string().optional(),
-        performingEnsembleName: z.string().max(200).optional(),
+        performers: performersInputSchema.optional(),
         leitung: z.string().max(200).optional(),
         openToParticipants: z.boolean().default(false),
         participationInfo: z.string().max(1000).optional(),
@@ -477,6 +490,7 @@ export const eventsRouter = createTRPCRouter({
       const {
         priceOptions,
         downloadIds,
+        performers,
         slug: requestedSlug,
         ...eventData
       } = input;
@@ -512,11 +526,12 @@ export const eventsRouter = createTRPCRouter({
         ctx.permissionCache,
       );
       assertDistrictAllowed(scope, input.bezirkId);
-      await assertEnsembleDistrictChangeAllowed(
+      const performerRows = await performerRowsFor(ctx.db, performers ?? []);
+      await assertEnsembleLinksAllowed(
         ctx.db,
         scope,
-        input.ensembleId,
-        null,
+        linkedEnsembleIds(performerRows),
+        [],
       );
 
       const event = await ctx.db.event.create({
@@ -529,6 +544,9 @@ export const eventsRouter = createTRPCRouter({
             requestedSlug,
           ),
           createdById: ctx.session.user.id,
+          performers: performerRows.length
+            ? { create: performerRows }
+            : undefined,
           priceOptions: priceOptions
             ? {
                 create: priceOptions,
@@ -590,10 +608,8 @@ export const eventsRouter = createTRPCRouter({
         category: z.enum(EventCategory).optional(),
         bezirkId: z.string().optional().nullable(),
         districtName: z.string().optional(),
-        performingEnsembleType: z.enum(EventEnsembleType).optional(),
-        ensembleId: z.string().optional().nullable(),
-        auswahlChorId: z.string().optional().nullable(),
-        performingEnsembleName: z.string().max(200).optional(),
+        /** Ersetzt die ganze Liste; weglassen heißt „unverändert“. */
+        performers: performersInputSchema.optional(),
         leitung: z.string().max(200).optional(),
         openToParticipants: z.boolean().optional(),
         participationInfo: z.string().max(1000).optional(),
@@ -618,6 +634,7 @@ export const eventsRouter = createTRPCRouter({
         id,
         priceOptions,
         downloadIds,
+        performers,
         slug: requestedSlug,
         ...updateData
       } = input;
@@ -628,7 +645,7 @@ export const eventsRouter = createTRPCRouter({
           createdById: true,
           status: true,
           bezirkId: true,
-          ensembleId: true,
+          performers: { select: { ensembleId: true } },
         },
       });
 
@@ -689,12 +706,25 @@ export const eventsRouter = createTRPCRouter({
         ctx.permissionCache,
       );
       assertDistrictChangeAllowed(scope, updateData.bezirkId, event.bezirkId);
-      await assertEnsembleDistrictChangeAllowed(
+      const performerRows =
+        performers === undefined
+          ? undefined
+          : await performerRowsFor(ctx.db, performers);
+      await assertEnsembleLinksAllowed(
         ctx.db,
         scope,
-        updateData.ensembleId,
-        event.ensembleId,
+        performerRows && linkedEnsembleIds(performerRows),
+        linkedEnsembleIds(event.performers),
       );
+
+      if (performerRows) {
+        await ctx.db.$transaction([
+          ctx.db.eventPerformer.deleteMany({ where: { eventId: id } }),
+          ctx.db.eventPerformer.createMany({
+            data: performerRows.map((row) => ({ ...row, eventId: id })),
+          }),
+        ]);
+      }
 
       if (priceOptions) {
         await ctx.db.eventPriceOption.deleteMany({
@@ -1009,6 +1039,7 @@ export const eventsRouter = createTRPCRouter({
         where: { id: input.id },
         include: {
           priceOptions: true,
+          performers: true,
           downloads: {
             include: {
               download: {
@@ -1055,10 +1086,7 @@ export const eventsRouter = createTRPCRouter({
           category: original.category,
           locationId: original.locationId,
           bezirkId: original.bezirkId,
-          ensembleId: original.ensembleId,
-          auswahlChorId: original.auswahlChorId,
-          performingEnsembleType: original.performingEnsembleType,
-          performingEnsembleName: original.performingEnsembleName,
+          performers: { create: copyPerformers(original.performers) },
           leitung: original.leitung,
           openToParticipants: original.openToParticipants,
           participationInfo: original.participationInfo,
@@ -1094,6 +1122,7 @@ export const eventsRouter = createTRPCRouter({
         where: { id: { in: input.ids } },
         include: {
           priceOptions: true,
+          performers: true,
           downloads: {
             include: {
               download: {
@@ -1144,10 +1173,7 @@ export const eventsRouter = createTRPCRouter({
               category: original.category,
               locationId: original.locationId,
               bezirkId: original.bezirkId,
-              ensembleId: original.ensembleId,
-              auswahlChorId: original.auswahlChorId,
-              performingEnsembleType: original.performingEnsembleType,
-              performingEnsembleName: original.performingEnsembleName,
+              performers: { create: copyPerformers(original.performers) },
               leitung: original.leitung,
               openToParticipants: original.openToParticipants,
               participationInfo: original.participationInfo,
@@ -1262,18 +1288,7 @@ export const eventsRouter = createTRPCRouter({
           coverImage: true,
           location: true,
           bezirk: true,
-          ensemble: {
-            include: {
-              conductor: { select: { id: true, displayName: true } },
-              image: true,
-            },
-          },
-          auswahlChor: {
-            include: {
-              conductor: { select: { id: true, displayName: true } },
-              image: true,
-            },
-          },
+          performers: performersDetailInclude,
         },
         orderBy: { eventDate: "asc" },
       });
@@ -1288,30 +1303,7 @@ export const eventsRouter = createTRPCRouter({
           coverImage: true,
           location: true,
           bezirk: true,
-          ensemble: {
-            include: {
-              conductor: {
-                select: {
-                  id: true,
-                  displayName: true,
-                  email: true,
-                },
-              },
-              image: true,
-            },
-          },
-          auswahlChor: {
-            include: {
-              conductor: {
-                select: {
-                  id: true,
-                  displayName: true,
-                  email: true,
-                },
-              },
-              image: true,
-            },
-          },
+          performers: performersInclude,
         },
         orderBy: { eventDate: "desc" },
       });
@@ -1322,8 +1314,7 @@ export const eventsRouter = createTRPCRouter({
           coverImageUrl: event.coverImage?.url,
           locationName: event.location?.name,
           bezirkName: event.bezirk?.name,
-          ensembleName: event.ensemble?.name,
-          auswahlChorName: event.auswahlChor?.name,
+          performerNames: performerNames(event.performers),
         })),
         exportedAt: new Date().toISOString(),
         count: events.length,
@@ -1344,9 +1335,7 @@ export const eventsRouter = createTRPCRouter({
             category: z.enum(EventCategory),
             bezirkId: z.string().optional().nullable(),
             locationId: z.string().optional().nullable(),
-            ensembleId: z.string().optional().nullable(),
-            auswahlChorId: z.string().optional().nullable(),
-            ensembleType: z.enum(EventEnsembleType).optional().nullable(),
+            performers: performersInputSchema.optional(),
             coverImageId: z.string().optional().nullable(),
             status: z.enum(ContentStatus).optional(),
             originalId: z.string().optional(),
@@ -1358,10 +1347,15 @@ export const eventsRouter = createTRPCRouter({
       const results = await Promise.all(
         input.events.map(async (eventData) => {
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { originalId, ...data } = eventData;
+          const { originalId, performers, ...data } = eventData;
+          const performerRows = await performerRowsFor(
+            ctx.db,
+            performers ?? [],
+          );
           return await ctx.db.event.create({
             data: {
               ...data,
+              performers: { create: performerRows },
               status: data.status ?? ContentStatus.DRAFT,
               cancelled: data.cancelled ?? false,
             },

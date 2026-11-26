@@ -79,8 +79,6 @@ export type EventContentImport = {
   cancelled: boolean;
   category: EventCategory;
   districtName: string | null;
-  performingEnsembleType: EventEnsembleType | null;
-  performingEnsembleName: string | null;
   leitung: string | null;
   openToParticipants: boolean;
   participationInfo: string | null;
@@ -105,13 +103,6 @@ export function readEventContent(
     cancelled: readBoolean(raw.cancelled, false),
     category: readEnum(raw.category, EventCategory, EventCategory.ANDERE),
     districtName: readText(raw.districtName),
-    /** `ensembleType` weiter lesen: von Hand geschriebene Dateien nutzen den alten Namen. */
-    performingEnsembleType: readEnum(
-      raw.performingEnsembleType ?? raw.ensembleType,
-      EventEnsembleType,
-      null,
-    ),
-    performingEnsembleName: readText(raw.performingEnsembleName),
     leitung: readText(raw.leitung),
     openToParticipants: readBoolean(raw.openToParticipants, false),
     participationInfo: readText(raw.participationInfo),
@@ -123,4 +114,91 @@ export function readEventContent(
       status === ContentStatus.APPROVED,
     ),
   };
+}
+
+/**
+ * Ein Mitwirkender aus dem Export. IDs stammen aus der Quell-Datenbank; die
+ * Route löst sie über `createReferenceResolver` auf (`ensemble`/`auswahlChor`
+ * tragen die Merkmale dafür). Ohne Treffer bleibt der Name als freier Eintrag.
+ */
+export type EventPerformerRef = {
+  type: EventEnsembleType;
+  name: string | null;
+  ensembleId: string | null;
+  ensemble: unknown;
+  auswahlChorId: string | null;
+  auswahlChor: unknown;
+};
+
+function objectOrNull(value: unknown): Record<string, unknown> | null {
+  return typeof value === "object" && value !== null
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+/**
+ * Neue Exporte schreiben `performers: [...]`. Ältere (vor mehreren Mitwirkenden
+ * pro Termin) hatten Einzelfelder am Termin; die werden zu genau einem Eintrag.
+ */
+export function readEventPerformerRefs(
+  raw: Record<string, unknown>,
+): EventPerformerRef[] {
+  if (Array.isArray(raw.performers)) {
+    return [...raw.performers]
+      .flatMap((entry, index) => {
+        const performer = objectOrNull(entry);
+        if (!performer) return [];
+        const type = readEnum(performer.type, EventEnsembleType, null);
+        if (!type) return [];
+        const ensemble = objectOrNull(performer.ensemble);
+        const auswahlChor = objectOrNull(performer.auswahlChor);
+        return [
+          {
+            order: readInteger(performer.sortOrder) ?? index,
+            ref: {
+              type,
+              name:
+                readText(performer.name) ??
+                readText(ensemble?.name) ??
+                readText(auswahlChor?.name),
+              ensembleId: readText(performer.ensembleId),
+              ensemble,
+              auswahlChorId: readText(performer.auswahlChorId),
+              auswahlChor,
+            },
+          },
+        ];
+      })
+      .sort((a, b) => a.order - b.order)
+      .map(({ ref }) => ref);
+  }
+
+  /** `ensembleType` weiter lesen: von Hand geschriebene Dateien nutzen den alten Namen. */
+  const type = readEnum(
+    raw.performingEnsembleType ?? raw.ensembleType,
+    EventEnsembleType,
+    null,
+  );
+  if (!type) return [];
+
+  const ensemble = objectOrNull(raw.ensemble);
+  const auswahlChor = objectOrNull(raw.auswahlChor);
+  const name =
+    type === "CUSTOM"
+      ? readText(raw.performingEnsembleName)
+      : type === "ENSEMBLE"
+        ? (readText(ensemble?.name) ?? readText(raw.ensembleName))
+        : (readText(auswahlChor?.name) ?? readText(raw.auswahlChorName));
+
+  return [
+    {
+      type,
+      name,
+      ensembleId: type === "ENSEMBLE" ? readText(raw.ensembleId) : null,
+      ensemble,
+      auswahlChorId:
+        type === "AUSWAHLCHOR" ? readText(raw.auswahlChorId) : null,
+      auswahlChor,
+    },
+  ];
 }

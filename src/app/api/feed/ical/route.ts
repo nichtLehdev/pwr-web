@@ -6,6 +6,7 @@ import { coursePath, eventPath } from "@/lib/slug";
 import { markdownToPlainText } from "@/lib/markdown-to-plain-text";
 
 import { createLogger } from "@/server/utils/logger";
+import { performerNames } from "@/lib/event-performers";
 
 const log = createLogger("Feed");
 
@@ -104,8 +105,13 @@ export async function GET(request: NextRequest) {
         include: {
           location: true,
           bezirk: true,
-          ensemble: true,
-          auswahlChor: true,
+          performers: {
+            orderBy: { sortOrder: "asc" },
+            include: {
+              ensemble: { select: { name: true } },
+              auswahlChor: { select: { name: true } },
+            },
+          },
         },
         orderBy: { eventDate: "asc" },
         take: Math.min(limit, 500),
@@ -153,11 +159,9 @@ export async function GET(request: NextRequest) {
           if (event.leitung) {
             descriptionParts.push(`Leitung: ${event.leitung}`);
           }
-          if (event.ensemble) {
-            descriptionParts.push(`Ensemble: ${event.ensemble.name}`);
-          }
-          if (event.auswahlChor) {
-            descriptionParts.push(`Auswahlchor: ${event.auswahlChor.name}`);
+          const mitwirkende = performerNames(event.performers);
+          if (mitwirkende) {
+            descriptionParts.push(`Mitwirkende: ${mitwirkende}`);
           }
           if (event.priceInfo) {
             descriptionParts.push(`Preis: ${event.priceInfo}`);

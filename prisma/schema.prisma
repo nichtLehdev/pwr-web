@@ -676,11 +676,7 @@ model Event {
   bezirkId     String?
   districtName String?
 
-  performingEnsembleType EventEnsembleType?
-  ensembleId             String?
-  auswahlChorId          String?
-  performingEnsembleName String?
-  leitung                String?
+  leitung String?
 
   openToParticipants Boolean @default(false)
   participationInfo  String?
@@ -693,8 +689,7 @@ model Event {
   reviewNotes String?
   reviewDate  DateTime?
 
-  ensemble     Ensemble?          @relation(fields: [ensembleId], references: [id], onDelete: SetNull)
-  auswahlChor  AuswahlChor?       @relation(fields: [auswahlChorId], references: [id], onDelete: SetNull)
+  performers   EventPerformer[]
   bezirk       Bezirk?            @relation(fields: [bezirkId], references: [id], onDelete: SetNull)
   priceOptions EventPriceOption[]
   downloads    EventDownload[]
@@ -713,6 +708,32 @@ model Event {
   @@index([bezirkId])
   @@index([status, eventDate])
   @@index([createdById])
+}
+
+/**
+ * One group playing at an event. An event can have several, e.g. two
+ * Posaunenchöre together or an Auswahlchor with a local choir.
+ * `name` is always filled: for linked rows it is the ensemble's name at
+ * save time, so the event still reads correctly if the link is removed.
+ * A CHECK constraint (see migration) ties the filled target to `type`.
+ */
+model EventPerformer {
+  id      String @id @default(uuid())
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  type          EventEnsembleType
+  ensembleId    String?
+  ensemble      Ensemble?         @relation(fields: [ensembleId], references: [id], onDelete: SetNull)
+  auswahlChorId String?
+  auswahlChor   AuswahlChor?      @relation(fields: [auswahlChorId], references: [id], onDelete: SetNull)
+  name          String
+
+  sortOrder Int @default(0)
+
+  @@index([eventId])
+  @@index([ensembleId])
+  @@index([auswahlChorId])
 }
 
 model EventPriceOption {
@@ -1412,7 +1433,7 @@ model Ensemble {
 
   isActive Boolean @default(true)
 
-  events Event[]
+  performers EventPerformer[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1454,8 +1475,8 @@ model AuswahlChor {
   showApplication Boolean @default(false)
 
   conductorId String?
-  conductor   User?   @relation("AuswahlChorConductor", fields: [conductorId], references: [id], onDelete: SetNull)
-  events      Event[]
+  conductor   User?            @relation("AuswahlChorConductor", fields: [conductorId], references: [id], onDelete: SetNull)
+  performers  EventPerformer[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

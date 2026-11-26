@@ -63,3 +63,11 @@ export {
   CONTENT_STATUS_LABELS,
   CONTENT_STATUS_OPTIONS,
 } from "./content-status";
+export {
+  PerformersField,
+  emptyPerformerDraft,
+  performerDraftsFromEvent,
+  performerDraftsFromSaved,
+  performerDraftsToInput,
+  type PerformerDraft,
+} from "./performers-field";
