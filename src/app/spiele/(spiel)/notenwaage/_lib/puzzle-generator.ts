@@ -1,14 +1,14 @@
-import {
-  DIFFICULTY_VALUES,
-  NOTE_VALUES,
-  type DifficultyId,
-  type NoteValueId,
-  type Puzzle,
-} from "./types";
+import { NOTE_VALUES, type NoteValueId, type Puzzle } from "./types";
 
-function r<T>(arr: T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)]!;
-}
+export type PuzzleConfig = {
+  values: readonly NoteValueId[];
+  left: readonly [number, number];
+  right: readonly [number, number];
+  /** Muss vorkommen: die Note, um die es in der Stufe geht. */
+  focus?: NoteValueId;
+  restChance?: number;
+  uniqueChance?: number;
+};
 
 /**
  * Zählt Lösungs-Multisets, keine Reihenfolgen: {Viertel, Halbe} ist genau eine Lösung.
@@ -64,33 +64,6 @@ export function countWays(
   return dfs(target, exactNotes, exactRests ?? 0, 0);
 }
 
-function hasAnySolutionWithCount(
-  values: NoteValueId[],
-  target: number,
-  exactNotes: number,
-  exactRests?: number,
-): boolean {
-  return countWays(values, target, exactNotes, exactRests) > 0;
-}
-
-function generateLeft(
-  values: NoteValueId[],
-  minN: number,
-  maxN: number,
-): NoteValueId[] {
-  const byId = values;
-  for (let guard = 0; guard < 500; guard++) {
-    const n = minN + Math.floor(Math.random() * (maxN - minN + 1));
-    const out: NoteValueId[] = [];
-    for (let i = 0; i < n; i++) {
-      const pick = r(byId);
-      out.push(pick);
-    }
-    if (out.length > 0) return out;
-  }
-  return ["quarter", "quarter"];
-}
-
 /** Die linke Seite ist selbst eine gültige rechte Lösung — solche Aufgaben werden verworfen. */
 export function isTrivialCopy(
   left: NoteValueId[],
@@ -108,56 +81,82 @@ export function puzzleSignature(p: Puzzle): string {
   return `${[...p.left].sort().join(",")}|${p.rightCount}|${p.uniqueOnly ? 1 : 0}|${p.requiredRests ?? "-"}`;
 }
 
-export function createPuzzle(difficulty: DifficultyId): Puzzle {
-  const values = DIFFICULTY_VALUES[difficulty];
-  const leftMin = 1;
-  const leftMax = difficulty === "beginner" ? 2 : 3;
-  const rightMin = difficulty === "beginner" ? 2 : 3;
-  const rightMax =
-    difficulty === "beginner" ? 4 : difficulty === "intermediate" ? 5 : 6;
-  const uniqueAttempt = difficulty === "advanced" && Math.random() < 0.2;
+function between([min, max]: readonly [number, number], rng: () => number) {
+  return min + Math.floor(rng() * (max - min + 1));
+}
 
-  for (let guard = 0; guard < 200; guard++) {
-    const left = generateLeft(values, leftMin, leftMax);
-    const targetUnits = left.reduce((s, id) => s + NOTE_VALUES[id].units, 0);
-    const rightCount =
-      rightMin + Math.floor(Math.random() * (rightMax - rightMin + 1));
-    const challengeAttempt = difficulty === "advanced" && Math.random() < 0.4;
-    const requiredRests = challengeAttempt
-      ? 1 + Math.floor(Math.random() * Math.max(1, Math.min(3, rightCount - 1)))
-      : undefined;
+/** Die Stufennote liegt links oder keine Lösung kommt ohne sie aus. */
+function usesFocus(
+  focus: NoteValueId,
+  values: NoteValueId[],
+  left: NoteValueId[],
+  target: number,
+  rightCount: number,
+  requiredRests?: number,
+): boolean {
+  if (left.includes(focus)) return true;
+  const without = values.filter((value) => value !== focus);
+  return countWays(without, target, rightCount, requiredRests) === 0;
+}
 
+export function createPuzzle(
+  config: PuzzleConfig,
+  rng: () => number = Math.random,
+): Puzzle {
+  const values = [...config.values];
+  const hasRests = values.some((id) => NOTE_VALUES[id].isRest);
+
+  for (let guard = 0; guard < 400; guard++) {
+    const left = Array.from(
+      { length: between(config.left, rng) },
+      () => values[Math.floor(rng() * values.length)]!,
+    );
+    const targetUnits = totalUnits(left);
+    const rightCount = between(config.right, rng);
+    const requiredRests =
+      hasRests && rng() < (config.restChance ?? 0)
+        ? 1 + Math.floor(rng() * Math.max(1, Math.min(3, rightCount - 1)))
+        : undefined;
     if (isTrivialCopy(left, rightCount, requiredRests)) continue;
-
-    if (
-      !hasAnySolutionWithCount(values, targetUnits, rightCount, requiredRests)
-    )
-      continue;
-
-    if (!uniqueAttempt) {
-      return {
-        targetUnits,
-        left,
-        rightCount,
-        uniqueOnly: false,
-        requiredRests,
-      };
-    }
     const ways = countWays(values, targetUnits, rightCount, requiredRests);
-    if (ways <= 1) {
-      return { targetUnits, left, rightCount, uniqueOnly: true, requiredRests };
+    if (ways === 0) continue;
+    // Spät im Suchlauf zählt Lösbarkeit mehr als der Schwerpunkt.
+    if (
+      config.focus &&
+      guard < 300 &&
+      !usesFocus(
+        config.focus,
+        values,
+        left,
+        targetUnits,
+        rightCount,
+        requiredRests,
+      )
+    ) {
+      continue;
     }
+    const unique = rng() < (config.uniqueChance ?? 0);
+    if (unique && ways > 1) continue;
+    return {
+      targetUnits,
+      left,
+      rightCount,
+      uniqueOnly: unique,
+      requiredRests,
+    };
   }
 
-  // Fallback: Halbe links, zwei Viertel rechts — lösbar in allen Stufen und
-  // keine Kopier-Aufgabe (1 Symbol links, 2 rechts).
-  const fallbackLeft = ["half"] as NoteValueId[];
-  return {
-    targetUnits: fallbackLeft.reduce((s, id) => s + NOTE_VALUES[id].units, 0),
-    left: fallbackLeft,
-    rightCount: 2,
-    uniqueOnly: false,
-  };
+  // Die schwerste Note und die erste Anzahl, die sie aufteilen kann.
+  const heaviest = [...values].sort(
+    (a, b) => NOTE_VALUES[b].units - NOTE_VALUES[a].units,
+  )[0]!;
+  const targetUnits = NOTE_VALUES[heaviest].units;
+  for (let rightCount = 2; rightCount <= 8; rightCount++) {
+    if (countWays(values, targetUnits, rightCount) > 0) {
+      return { targetUnits, left: [heaviest], rightCount, uniqueOnly: false };
+    }
+  }
+  throw new Error(`Keine Aufgabe möglich mit ${values.join(", ")}`);
 }
 
 export function totalUnits(ids: NoteValueId[]): number {

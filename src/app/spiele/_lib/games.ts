@@ -1,6 +1,7 @@
 /** Zentrale Spiele-Übersicht — Quelle für Übersichtskarten, Shell-Titel, Suche und Statistik. */
 
-export type GameId = "rhythmus" | "noten-lesen" | "griffe" | "notenwaage";
+export type GameId =
+  "rhythmus" | "diktat" | "noten-lesen" | "griffe" | "notenwaage";
 
 export type GameDefinition = {
   slug: GameId;
@@ -19,9 +20,9 @@ export const GAMES: readonly GameDefinition[] = [
     title: "Rhythmus",
     cardTitle: "Rhythmus-Training",
     cardDescription:
-      "Rhythmus lesen und mit Tippen wiedergeben — mit Metronom und Auswertung",
+      "Figuren nachspielen oder vom Notenband lesen, Einsatz und Notenlänge zählen: von der ersten Viertel bis zum 6/8-Takt",
     metaDescription:
-      "Rhythmus mitspielen: Vorgegebene Figur im Metronom-Takt tippen und Auswertung sehen.",
+      "Rhythmus üben: Figuren im Metronom-Takt nachspielen oder vom laufenden Notenband lesen, in 15 Stufen bis zum 6/8-Takt.",
     searchKeywords: [
       "rhythmus",
       "rhythmustraining",
@@ -30,6 +31,24 @@ export const GAMES: readonly GameDefinition[] = [
       "tippen",
       "klatschen",
       "timing",
+      "notenband",
+    ],
+  },
+  {
+    slug: "diktat",
+    title: "Rhythmus-Diktat",
+    cardTitle: "Rhythmus-Diktat",
+    cardDescription:
+      "Eine Figur hören und unter mehreren Notenbildern die richtige finden",
+    metaDescription:
+      "Rhythmus-Diktat: Rhythmus hören und das passende Notenbild erkennen, in drei Schwierigkeitsstufen.",
+    searchKeywords: [
+      "diktat",
+      "rhythmusdiktat",
+      "gehörbildung",
+      "hören",
+      "rhythmus erkennen",
+      "notenbild",
     ],
   },
   {

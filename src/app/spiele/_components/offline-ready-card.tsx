@@ -32,6 +32,7 @@ export function OfflineReadyCard() {
       // durch echte Imports anfordern — der SW cacht sie cache-first.
       await Promise.allSettled([
         import("../(spiel)/rhythmus/_components/rhythm-game"),
+        import("../(spiel)/diktat/_components/dictation-game"),
         import("../(spiel)/noten-lesen/_components/note-reading-game"),
         import("../(spiel)/griffe/_components/fingering-game"),
         import("../(spiel)/notenwaage/_components/note-value-game"),

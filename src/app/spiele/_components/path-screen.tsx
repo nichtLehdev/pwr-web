@@ -1,0 +1,230 @@
+"use client";
+
+import { useEffect, useRef, type ReactNode } from "react";
+import { X } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/app/_components/ui/button";
+import { GAME_FOCUS_RING } from "../_lib/focus-ring";
+import {
+  CHALLENGE_PASS_PERCENT,
+  type LearningPath,
+  type PathStage,
+} from "../_lib/learning-path";
+import type { usePathState } from "../_lib/use-path-state";
+import { GameDock } from "./game-shell-context";
+import { LearningPathMap } from "./learning-path-map";
+import { usePathCelebration } from "./use-path-celebration";
+
+/** Ein neuer Bildschirm beginnt oben, egal wie weit der Pfad gescrollt war. */
+export function scrollGameToTop(from: Element | null): void {
+  for (let el = from?.parentElement; el; el = el.parentElement) {
+    if (el.scrollTop > 0) el.scrollTop = 0;
+  }
+  window.scrollTo(0, 0);
+}
+
+/** Der Einstieg eines Spiels: Pfad, Toni, Animation nach einer Stufe und Startknopf. */
+export function PathScreen<S extends PathStage>({
+  path,
+  state,
+  head,
+  below,
+  challengeText = `Alles, was du bisher gelernt hast, drei Mal Puste. Schaffe ${CHALLENGE_PASS_PERCENT} %.`,
+  onStart,
+}: {
+  path: LearningPath<S>;
+  state: ReturnType<typeof usePathState<S>>;
+  head: ReactNode;
+  below?: ReactNode;
+  challengeText?: string;
+  onStart: () => void;
+}) {
+  const { selectedId, progress, celebration } = state;
+  const challengeSection = path.parseChallengeId(selectedId);
+  const stage = path.stageById(selectedId) ?? path.stages[0]!;
+  const number = path.stages.indexOf(stage) + 1;
+  const selectedRef = useRef<HTMLButtonElement>(null);
+  const userPicked = useRef(false);
+  const celebrating = usePathCelebration(
+    celebration,
+    state.select,
+    state.clearCelebration,
+  );
+
+  // Beim Öffnen dort einsteigen, wo man zuletzt war; spätere Klicks verschieben nichts.
+  useEffect(() => {
+    if (userPicked.current) return;
+    if (celebration) {
+      selectedRef.current?.scrollIntoView({
+        block: "center",
+        behavior: "smooth",
+      });
+    } else if (challengeSection !== null || number > 3) {
+      selectedRef.current?.scrollIntoView({ block: "center" });
+    }
+  }, [celebration, challengeSection, number]);
+
+  const celebratedNumber = celebration
+    ? path.stages.findIndex((s) => s.id === celebration.fromId) + 1
+    : 0;
+
+  return (
+    <div className="flex flex-col gap-5 pb-2">
+      {head}
+      <LearningPathMap
+        path={path}
+        selectedId={selectedId}
+        celebration={
+          celebration && celebrating.stage
+            ? {
+                ...celebration,
+                stage: celebrating.stage,
+                revealed: celebrating.revealed,
+              }
+            : null
+        }
+        progress={progress}
+        selectedRef={selectedRef}
+        onPick={(id) => {
+          userPicked.current = true;
+          state.select(id);
+        }}
+      />
+      {below}
+      <GameDock>
+        <div className="flex flex-col gap-1.5">
+          {celebration ? (
+            <>
+              <p
+                role="status"
+                className="text-ink dark:text-night-text text-center text-sm leading-snug font-bold"
+              >
+                {celebratedNumber > 0
+                  ? `Stufe ${celebratedNumber} geschafft!`
+                  : "Challenge geschafft!"}
+              </p>
+              <Button
+                type="button"
+                size="lg"
+                className="spiel-action w-full"
+                onClick={celebrating.skip}
+              >
+                Überspringen
+              </Button>
+            </>
+          ) : (
+            <>
+              <p className="text-center text-sm leading-snug">
+                <strong className="text-ink dark:text-night-text font-bold">
+                  {challengeSection !== null
+                    ? `Challenge Abschnitt ${challengeSection + 1}:`
+                    : `${stage.title}:`}
+                </strong>{" "}
+                <span className="text-dark dark:text-night-muted">
+                  {challengeSection !== null ? challengeText : stage.hint}
+                </span>
+              </p>
+              <Button
+                type="button"
+                size="lg"
+                className="spiel-action w-full"
+                onClick={() => {
+                  scrollGameToTop(selectedRef.current);
+                  onStart();
+                }}
+              >
+                {challengeSection !== null
+                  ? "Challenge starten"
+                  : `Stufe ${number} spielen`}
+              </Button>
+            </>
+          )}
+        </div>
+      </GameDock>
+    </div>
+  );
+}
+
+/** Auswahl über dem Pfad, etwa das Instrument: Jede Wahl hat ihren eigenen Fortschritt. */
+export function PathChoice<T extends string>({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string;
+  options: readonly { id: T; label: string }[];
+  value: T;
+  onChange: (id: T) => void;
+}) {
+  return (
+    <div role="group" aria-label={label} className="flex flex-wrap gap-2">
+      {options.map((option) => (
+        <button
+          key={option.id}
+          type="button"
+          aria-pressed={option.id === value}
+          onClick={() => onChange(option.id)}
+          className={cn(
+            "spiel-tile min-h-11 flex-1 basis-[calc(50%-0.5rem)] px-3 py-2 text-sm font-bold sm:basis-0",
+            GAME_FOCUS_RING,
+            option.id === value && "on-orange bg-primary text-ink",
+          )}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** Die freien Modi und eigenen Notensets, für wer ohne Pfad üben möchte. */
+export function FreePractice({
+  open,
+  onToggle,
+  children,
+  onStart,
+}: {
+  open: boolean;
+  onToggle: (open: boolean) => void;
+  children: ReactNode;
+  onStart: () => void;
+}) {
+  return (
+    <details
+      open={open}
+      onToggle={(event) => onToggle(event.currentTarget.open)}
+      className="spiel-tile p-4"
+    >
+      <summary className="text-ink dark:text-night-text cursor-pointer text-lg font-bold">
+        Frei üben
+        <span className="text-dark dark:text-night-muted mt-0.5 block text-sm font-normal">
+          Eigene Notensets, Quiz und Endlos, ohne Lernpfad
+        </span>
+      </summary>
+      <div className="mt-4 flex flex-col gap-4">
+        {children}
+        <Button type="button" size="lg" className="w-full" onClick={onStart}>
+          Frei üben starten
+        </Button>
+      </div>
+    </details>
+  );
+}
+
+/** Zurück zum Pfad mitten in einer Runde; der Fortschritt bleibt unberührt. */
+export function LeaveRunButton({ onLeave }: { onLeave: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onLeave}
+      className={cn(
+        "border-rule text-dark hover:text-ink dark:border-night-rule dark:text-night-muted dark:hover:text-night-text inline-flex min-h-11 items-center gap-1.5 border px-3 text-sm font-bold transition-colors",
+        GAME_FOCUS_RING,
+      )}
+    >
+      <X className="h-4 w-4" aria-hidden />
+      Abbrechen
+    </button>
+  );
+}

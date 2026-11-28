@@ -1,11 +1,24 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Check, ChevronDown, Music, Settings2, X } from "lucide-react";
+import { Check, ChevronDown, Settings2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/react";
 import { Button } from "@/app/_components/ui/button";
 import { NoteSetLibrary } from "../../../_components/note-set-library";
+import { PathResult } from "../../../_components/path-result";
+import {
+  FreePractice,
+  LeaveRunButton,
+  PathChoice,
+  PathScreen,
+} from "../../../_components/path-screen";
+import { usePathState } from "../../../_lib/use-path-state";
+import {
+  buildGriffeRun,
+  GRIFFE_PATH,
+  type GriffeRun,
+} from "../_lib/path-stages";
 import { GAME_FOCUS_RING } from "../../../_lib/focus-ring";
 import { toNoteSetSummary, type NoteSetSummary } from "../../../_lib/note-sets";
 import {
@@ -56,7 +69,14 @@ import {
   type StoredCustomSetRef,
 } from "../_lib/types";
 import { GameBarSlot, GameDock } from "../../../_components/game-shell-context";
-import { GameStepIndicator } from "../../../_components/game-step-indicator";
+import {
+  GameHead,
+  GameStatus,
+  LessonFeedback,
+  useGameSounds,
+  useLessonHearts,
+} from "../../../_components/game-kit";
+import { praiseFor } from "../../../_lib/rewards";
 import { useGameStats } from "../../../_lib/stats/use-game-stats";
 import { FingeringText } from "./fingering-text";
 import { GriffeInstrumentSelector } from "./griffe-instrument-selector";
@@ -67,7 +87,8 @@ import { ValveDiagram, type ValveReveal } from "./valve-diagram";
 
 const NEXT_MS = 800;
 /** Quiz: kurze Fehler-Anzeige, das Tempo gehört zum Format. */
-const WRONG_MS = 1500;
+/** Die Erklärung steht im Band und muss sich in Ruhe lesen lassen. */
+const WRONG_MS = 3500;
 /** Endlos: Auflösung + Merkhilfe müssen lesbar bleiben. */
 const ENDLESS_WRONG_MS = 2600;
 /** Anfänger bekommen mehr Zeit pro Note. */
@@ -79,6 +100,7 @@ const QUIZ_SECONDS_BY_DIFFICULTY: Record<GriffeDifficultyId, number> = {
 /** Eigene Sets mischen Lagen beliebig — großzügig wie Anfänger. */
 const QUIZ_SECONDS_CUSTOM = 8;
 const QUIZ_ROUND_LEN = 15;
+const HEARTS_EMPTY_DELAY_MS = 900;
 
 /** Breit und flach: nebeneinander, gestapelt rutscht das Griffbild unter die Falz. */
 const WIDE_SHORT_TWO_COLUMNS =
@@ -91,6 +113,7 @@ function quizSecondsFor(difficulty: GriffeDifficultyChoice): number {
 }
 
 type Phase = "setup" | "play" | "result";
+type LessonOutcome = { percent: number; passed: boolean };
 
 type StoredGriffeSettings = {
   instrument: GriffeInstrumentId;
@@ -183,8 +206,16 @@ type PendingSetResolve = { publicId: string; source: "storage" | "link" };
 
 export function FingeringGame() {
   const { aggregates, recordResult } = useGameStats("griffe");
+  const { correct: soundCorrect, wrong: soundWrong } = useGameSounds();
   const [instrument, setInstrument] = useState<GriffeInstrumentId>("trumpet_c");
-  const [mode, setMode] = useState<GameModeId>("learn");
+  const [freeMode, setMode] = useState<GameModeId>("learn");
+  /** Eine Stufe oder Challenge des Lernpfads läuft; sonst gilt das freie Üben. */
+  const [lesson, setLesson] = useState<GriffeRun | null>(null);
+  const lessonRef = useRef<GriffeRun | null>(null);
+  const mode: GameModeId = lesson ? "quiz" : freeMode;
+  const pathState = usePathState(GRIFFE_PATH, `griffe.${instrument}`);
+  const [outcome, setOutcome] = useState<LessonOutcome | null>(null);
+  const [freeOpen, setFreeOpen] = useState(false);
   const [difficulty, setDifficulty] =
     useState<GriffeDifficultyChoice>("beginner");
   const [phase, setPhase] = useState<Phase>("setup");
@@ -359,7 +390,7 @@ export function FingeringGame() {
           : difficulty === "custom"
             ? prevDifficultyRef.current
             : difficulty,
-        mode,
+        mode: freeMode,
         ...(isCustom
           ? {
               customSet: {
@@ -374,7 +405,21 @@ export function FingeringGame() {
     } catch {
       /* ignore */
     }
-  }, [hydrated, pendingSetResolve, instrument, difficulty, mode, customSet]);
+  }, [
+    hydrated,
+    pendingSetResolve,
+    instrument,
+    difficulty,
+    freeMode,
+    customSet,
+  ]);
+
+  // Ein Link auf ein Notenset gehört ins freie Üben.
+  useEffect(() => {
+    if (pendingSetResolve?.source === "link") {
+      queueMicrotask(() => setFreeOpen(true));
+    }
+  }, [pendingSetResolve]);
 
   // Notenzeile (VexFlow-Chunk) schon im Setup vorladen — nur Import.
   useEffect(() => {
@@ -533,7 +578,9 @@ export function FingeringGame() {
     [activateCustomSet, instrument],
   );
 
+  const loseHeartRef = useRef<() => void>(() => undefined);
   const recordMiss = useCallback((p: WrittenPitch) => {
+    loseHeartRef.current();
     const k = pitchKey(p);
     const m = missedMapRef.current;
     // Label inkl. Oktave — sonst kollidieren z. B. D4 und D5 in der Auswertung.
@@ -549,8 +596,10 @@ export function FingeringGame() {
     const boost = new Set(adaptiveRef.current.keys());
     // Eigenes Set: fester Pool aus spielbaren Set-Tönen — gleicher Zieh-Pfad
     // (Wiederholungs-Schutz + Miss-Boost) wie bei den Standard-Stufen.
-    const p =
-      difficulty === "custom"
+    const lessonPool = lessonRef.current?.pitches;
+    const p = lessonPool
+      ? pickFromDisplayPool(lessonPool, lastMidiRef.current, boost)
+      : difficulty === "custom"
         ? pickFromDisplayPool(customPool, lastMidiRef.current, boost)
         : pickRandomGriffePitch(
             instrument,
@@ -561,7 +610,7 @@ export function FingeringGame() {
     lastMidiRef.current = writtenPitchToMidi(p);
     pitchRef.current = p;
     setPitch(p);
-    if (difficulty === "advanced") {
+    if (difficulty === "advanced" && !lessonPool) {
       setStaffAccidentalLayout(
         Math.random() < 0.5
           ? { kind: "keySignature", keySpec: randomAdvancedKeySpec() }
@@ -582,7 +631,7 @@ export function FingeringGame() {
     setSlideQuart(false);
     setRevealValves(null);
     setRevealSlide(null);
-    if (mode === "quiz") {
+    if (mode === "quiz" && !lessonPool) {
       const secs = quizSecondsFor(difficulty);
       quizDeadlineRef.current = performance.now() + secs * 1000;
       lastTenthRef.current = -1;
@@ -593,30 +642,57 @@ export function FingeringGame() {
     }
   }, [instrument, difficulty, mode, customPool]);
 
-  const goToQuizResult = useCallback(() => {
-    clearTimers();
-    const missedRows = [...missedMapRef.current.entries()]
-      .filter(([, r]) => r.count > 0)
-      .map(([key, r]) => ({ key, label: r.label, count: r.count }));
-    setRoundResult({
-      correct: quizCorrectRef.current,
-      total: QUIZ_ROUND_LEN,
-      bestStreakRound: bestStreakRoundRef.current,
-      missed: missedRows,
-    });
-    recordResult({
-      score: quizCorrectRef.current,
-      maxScore: QUIZ_ROUND_LEN,
-      streak: bestStreakRoundRef.current,
-      meta: { instrument, difficulty, mode },
-    });
-    setPhase("result");
-  }, [clearTimers, recordResult, instrument, difficulty, mode]);
+  const goToQuizResult = useCallback(
+    (completed: boolean = true) => {
+      clearTimers();
+      const active = lessonRef.current;
+      const total = active?.total ?? QUIZ_ROUND_LEN;
+      if (active) {
+        const percent = Math.round((100 * quizCorrectRef.current) / total);
+        const { passed } = pathState.record(active.id, { percent, completed });
+        setOutcome({ percent, passed });
+      }
+      const missedRows = [...missedMapRef.current.entries()]
+        .filter(([, r]) => r.count > 0)
+        .map(([key, r]) => ({ key, label: r.label, count: r.count }));
+      setRoundResult({
+        correct: quizCorrectRef.current,
+        total,
+        bestStreakRound: bestStreakRoundRef.current,
+        missed: missedRows,
+      });
+      recordResult({
+        score: quizCorrectRef.current,
+        maxScore: total,
+        streak: bestStreakRoundRef.current,
+        meta: active
+          ? { instrument, stage: active.id }
+          : { instrument, difficulty, mode },
+      });
+      setPhase("result");
+    },
+    [clearTimers, pathState, recordResult, instrument, difficulty, mode],
+  );
 
   const scheduleAfter = useCallback((ms: number, fn: () => void) => {
     const id = window.setTimeout(fn, ms);
     timersRef.current.push(id);
   }, []);
+
+  // Letztes Herz weg: Das Urteil noch kurz zeigen, dann endet die Lektion.
+  const {
+    hearts,
+    lose: loseHeart,
+    reset: resetHearts,
+  } = useLessonHearts(() =>
+    scheduleAfter(HEARTS_EMPTY_DELAY_MS, () => goToQuizResult(false)),
+  );
+  useEffect(() => {
+    // Nur im Quiz gibt es Herzen; Lernen und Endlos bleiben ohne Strafe.
+    loseHeartRef.current = () => {
+      if (mode === "quiz") loseHeart.current();
+    };
+  }, [mode, loseHeart]);
 
   const advanceAfterAnswer = useCallback(
     (wasCorrect: boolean) => {
@@ -629,7 +705,7 @@ export function FingeringGame() {
         const delay = wasCorrect ? NEXT_MS : WRONG_MS;
         scheduleAfter(delay, () => {
           const nextIdx = quizIndexRef.current + 1;
-          if (nextIdx >= QUIZ_ROUND_LEN) {
+          if (nextIdx >= (lessonRef.current?.total ?? QUIZ_ROUND_LEN)) {
             goToQuizResult();
             return;
           }
@@ -690,7 +766,9 @@ export function FingeringGame() {
       // Eigene Sets mischen Zielgruppen → wie Fortgeschritten alle
       // gelisteten Alternativ-Griffe akzeptieren.
       const acceptsAllVariants =
-        difficulty === "advanced" || difficulty === "custom";
+        lessonRef.current !== null ||
+        difficulty === "advanced" ||
+        difficulty === "custom";
       const okAdvanced =
         !wasTimeout &&
         acceptsAllVariants &&
@@ -940,6 +1018,7 @@ export function FingeringGame() {
   }, [phase, inputKind, answerLocked, mode, toggleValve, advanceLearn]);
 
   const startGame = useCallback(() => {
+    resetHearts.current();
     clearTimers();
     missedMapRef.current = new Map();
     setPhase("play");
@@ -952,10 +1031,33 @@ export function FingeringGame() {
     bestStreakRoundRef.current = 0;
     lastMidiRef.current = null;
     spawnNote();
-  }, [clearTimers, spawnNote]);
+  }, [resetHearts, clearTimers, spawnNote]);
+
+  const startLesson = useCallback(
+    (id: string) => {
+      const run = buildGriffeRun(id, instrument);
+      lessonRef.current = run;
+      setLesson(run);
+      setOutcome(null);
+      setRoundResult(null);
+      pathState.clearCelebration();
+      startGame();
+    },
+    [instrument, pathState, startGame],
+  );
+
+  const startFree = useCallback(() => {
+    lessonRef.current = null;
+    setLesson(null);
+    setOutcome(null);
+    setRoundResult(null);
+    startGame();
+  }, [startGame]);
 
   const openSetup = useCallback(() => {
     clearTimers();
+    lessonRef.current = null;
+    setLesson(null);
     setPhase("setup");
     setPitch(null);
     pitchRef.current = null;
@@ -982,26 +1084,33 @@ export function FingeringGame() {
   const modeLabel =
     mode === "learn" ? "Lernen" : mode === "quiz" ? "Quiz" : "Endlos";
 
-  // Lernen/Endlos erreichen nie eine Auswertung — dritten Schritt ausblenden.
-  const stepLabels =
-    mode === "quiz" ? ["Setup", "Spielen", "Auswertung"] : ["Setup", "Spielen"];
-
   const valveCount = inputKind === "valves4" ? 4 : 3;
 
   const feedbackText =
     learnLine ??
     (flash === "correct" ? "Richtig!" : flash === "wrong" ? "Falsch." : "");
 
+  // Klang aus dem Urteil abgeleitet: So bleibt die Spiellogik unberührt.
+  useEffect(() => {
+    if (flash === "correct") soundCorrect(streakRef.current);
+    else if (flash === "wrong") soundWrong();
+  }, [flash, soundCorrect, soundWrong]);
+
   const actionButton =
     mode === "learn" && answerLocked ? (
-      <Button type="button" size="lg" className="w-full" onClick={advanceLearn}>
+      <Button
+        type="button"
+        size="lg"
+        className="spiel-action w-full"
+        onClick={advanceLearn}
+      >
         Weiter
       </Button>
     ) : inputKind === "slide" ? (
       <Button
         type="button"
         size="lg"
-        className="w-full"
+        className="spiel-action w-full"
         disabled={answerLocked || slidePosition == null}
         onClick={handleConfirmSlide}
       >
@@ -1011,7 +1120,7 @@ export function FingeringGame() {
       <Button
         type="button"
         size="lg"
-        className="w-full"
+        className="spiel-action w-full"
         disabled={answerLocked}
         onClick={handleConfirmValves}
       >
@@ -1028,99 +1137,108 @@ export function FingeringGame() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 md:gap-6">
-      <GameStepIndicator
-        steps={stepLabels}
-        current={phase === "setup" ? 0 : phase === "play" ? 1 : 2}
-      />
-
-      {phase === "setup" && (
-        <div className="space-y-[clamp(0.75rem,2.4dvh,1.5rem)]">
-          <div className="text-center">
-            <Music
-              className="text-primary-ink dark:text-primary mx-auto h-[clamp(2.25rem,5dvh,4rem)] w-[clamp(2.25rem,5dvh,4rem)] stroke-[1.4]"
-              aria-hidden
-            />
-            <h2 className="text-ink dark:text-night-text mt-2 text-[clamp(1.25rem,3dvh,1.875rem)] leading-tight font-bold tracking-tight">
-              Griffe
-            </h2>
-            <p className="text-dark dark:text-night-muted mx-auto mt-2 max-w-lg text-sm md:text-base">
-              Note lesen — Ventile oder Zug wählen. Sofortiges Feedback,
-              Merkhilfen und Modi wie beim Noten-Lesen.
-            </p>
-          </div>
-
-          {setupHint && (
-            <p
-              role="status"
-              aria-live="polite"
-              className="border-primary-ink bg-rule/25 text-ink dark:border-primary dark:bg-night-raised dark:text-night-text border-l-4 px-3 py-2 text-sm"
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 md:gap-4">
+      {phase === "setup" && !libraryOpen && (
+        <PathScreen
+          path={GRIFFE_PATH}
+          state={pathState}
+          head={
+            <>
+              <GameHead
+                title="Griffe"
+                text="Lies die Note und wähle den richtigen Griff."
+              />
+              <PathChoice
+                label="Instrument"
+                options={GRIFFE_INSTRUMENTS.map(({ id, label }) => ({
+                  id,
+                  label,
+                }))}
+                value={instrument}
+                onChange={handleInstrumentChange}
+              />
+            </>
+          }
+          onStart={() => startLesson(pathState.selectedId)}
+          below={
+            <FreePractice
+              open={freeOpen}
+              onToggle={setFreeOpen}
+              onStart={startFree}
             >
-              {setupHint}
-            </p>
-          )}
-
-          <GriffeInstrumentSelector
-            instrument={instrument}
-            mode={mode}
-            difficulty={difficulty}
-            customSetName={customSet?.name ?? null}
-            customSetSummary={
-              customSet && customCoverage
-                ? `${customCoverage.covered.length} von ${customCoverage.total} Noten spielbar`
-                : null
-            }
-            onInstrument={handleInstrumentChange}
-            onMode={setMode}
-            onDifficulty={handleDifficultyChange}
-            onOpenLibrary={() => setLibraryOpen(true)}
-            onRemoveCustomSet={() => deactivateCustomSet(null)}
-          />
-
-          <Button
-            type="button"
-            size="lg"
-            className="w-full"
-            onClick={startGame}
-          >
-            Los geht&apos;s!
-          </Button>
-        </div>
+              {setupHint && (
+                <p
+                  role="status"
+                  aria-live="polite"
+                  className="border-primary-ink bg-rule/25 text-ink dark:border-primary dark:bg-night-raised dark:text-night-text border-l-4 px-3 py-2 text-sm"
+                >
+                  {setupHint}
+                </p>
+              )}
+              <GriffeInstrumentSelector
+                instrument={instrument}
+                mode={freeMode}
+                difficulty={difficulty}
+                customSetName={customSet?.name ?? null}
+                customSetSummary={
+                  customSet && customCoverage
+                    ? `${customCoverage.covered.length} von ${customCoverage.total} Noten spielbar`
+                    : null
+                }
+                onInstrument={handleInstrumentChange}
+                onMode={setMode}
+                onDifficulty={handleDifficultyChange}
+                onOpenLibrary={() => setLibraryOpen(true)}
+                onRemoveCustomSet={() => deactivateCustomSet(null)}
+              />
+            </FreePractice>
+          }
+        />
       )}
 
       {phase === "play" && pitch && (
         <div className="flex flex-col gap-3 md:gap-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setSetupOpen((o) => !o)}
-              aria-expanded={setupOpen}
-              aria-controls="griffe-setup-panel"
-              aria-label={`Einstellungen ändern — ${insConfig?.label ?? ""}, ${difficultyLabel}, ${modeLabel}`}
-              className={cn(
-                "border-rule text-ink hover:bg-rule/25 dark:border-night-rule dark:text-night-text dark:hover:bg-night-raised inline-flex min-h-11 items-center gap-2 border px-3 py-2 text-sm font-bold transition-colors active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100",
-                GAME_FOCUS_RING,
-              )}
-            >
-              <Settings2 className="h-4 w-4 shrink-0 stroke-[2]" aria-hidden />
-              <span aria-hidden>
-                {insShort}
-                {" · "}
-                {difficultyLabel}
-                {" · "}
-                {modeLabel}
-              </span>
-              <ChevronDown
+          {lesson && (
+            <GameBarSlot>
+              <LeaveRunButton onLeave={openSetup} />
+            </GameBarSlot>
+          )}
+          {!lesson && (
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setSetupOpen((o) => !o)}
+                aria-expanded={setupOpen}
+                aria-controls="griffe-setup-panel"
+                aria-label={`Einstellungen ändern — ${insConfig?.label ?? ""}, ${difficultyLabel}, ${modeLabel}`}
                 className={cn(
-                  "h-4 w-4 shrink-0 transition-transform motion-reduce:transition-none",
-                  setupOpen && "rotate-180",
+                  "border-rule text-ink hover:bg-rule/25 dark:border-night-rule dark:text-night-text dark:hover:bg-night-raised inline-flex min-h-11 items-center gap-2 border px-3 py-2 text-sm font-bold transition-colors active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100",
+                  GAME_FOCUS_RING,
                 )}
-                aria-hidden
-              />
-            </button>
-          </div>
+              >
+                <Settings2
+                  className="h-4 w-4 shrink-0 stroke-[2]"
+                  aria-hidden
+                />
+                <span aria-hidden>
+                  {insShort}
+                  {" · "}
+                  {difficultyLabel}
+                  {" · "}
+                  {modeLabel}
+                </span>
+                <ChevronDown
+                  className={cn(
+                    "h-4 w-4 shrink-0 transition-transform motion-reduce:transition-none",
+                    setupOpen && "rotate-180",
+                  )}
+                  aria-hidden
+                />
+              </button>
+            </div>
+          )}
 
-          {setupOpen && (
+          {setupOpen && !lesson && (
             <div
               id="griffe-setup-panel"
               className="border-rule bg-rule/25 dark:border-night-rule dark:bg-night-raised border p-4"
@@ -1172,36 +1290,38 @@ export function FingeringGame() {
             </div>
           )}
 
-          <GameBarSlot>
-            <p className="condensed text-ink dark:text-night-text flex items-center gap-x-2 text-sm font-bold tabular-nums sm:gap-x-3">
-              <span>Serie {streak}</span>
-              <span className="text-dark dark:text-night-muted hidden font-semibold sm:inline">
-                Beste {bestStreak}
-              </span>
-              {mode === "quiz" && (
-                <span className="text-dark dark:text-night-muted font-semibold">
-                  {quizIndex + 1}/{QUIZ_ROUND_LEN}
-                </span>
-              )}
-              {mode === "quiz" && (
+          {!lesson && (
+            <GameBarSlot>
+              <p className="condensed text-ink dark:text-night-text flex items-center gap-x-2 text-sm font-bold tabular-nums sm:gap-x-3">
+                <span>Serie {streak}</span>
                 <span className="text-dark dark:text-night-muted hidden font-semibold sm:inline">
-                  Richtig {quizCorrect}
+                  Beste {bestStreak}
                 </span>
-              )}
-              {mode === "quiz" && quizSecondsLeft != null && (
-                <span
-                  className={cn(
-                    "w-[3.5rem] text-right",
-                    quizSecondsLeft <= 2
-                      ? "text-red-700 dark:text-red-400"
-                      : "text-ink dark:text-night-text",
-                  )}
-                >
-                  {quizSecondsLeft.toFixed(1)} s
-                </span>
-              )}
-            </p>
-          </GameBarSlot>
+                {mode === "quiz" && (
+                  <span className="text-dark dark:text-night-muted font-semibold">
+                    {quizIndex + 1}/{QUIZ_ROUND_LEN}
+                  </span>
+                )}
+                {mode === "quiz" && (
+                  <span className="text-dark dark:text-night-muted hidden font-semibold sm:inline">
+                    Richtig {quizCorrect}
+                  </span>
+                )}
+                {mode === "quiz" && quizSecondsLeft != null && (
+                  <span
+                    className={cn(
+                      "w-[3.5rem] text-right",
+                      quizSecondsLeft <= 2
+                        ? "text-red-700 dark:text-red-400"
+                        : "text-ink dark:text-night-text",
+                    )}
+                  >
+                    {quizSecondsLeft.toFixed(1)} s
+                  </span>
+                )}
+              </p>
+            </GameBarSlot>
+          )}
 
           <div
             className={cn(
@@ -1210,6 +1330,30 @@ export function FingeringGame() {
             )}
           >
             <div className="flex min-w-0 flex-col gap-[clamp(0.5rem,1.6dvh,1rem)]">
+              <GameStatus
+                mood={
+                  flash === "correct"
+                    ? "happy"
+                    : flash === "wrong"
+                      ? "oops"
+                      : "listen"
+                }
+                message={
+                  flash === "correct"
+                    ? praiseFor(streak)
+                    : flash === "wrong"
+                      ? "Daneben"
+                      : "Welcher Griff passt?"
+                }
+                question="Welcher Griff passt?"
+                hearts={mode === "quiz" ? hearts : undefined}
+                streak={streak}
+                progress={
+                  mode === "quiz"
+                    ? quizIndex / (lesson?.total ?? QUIZ_ROUND_LEN)
+                    : null
+                }
+              />
               {/* Kastenhöhe über `className`, die Notenschrift skaliert darin mit. */}
               <StaffDisplay
                 clef={clef}
@@ -1221,8 +1365,8 @@ export function FingeringGame() {
                   // Das Zugdiagramm braucht mehr Höhe als Ventilknöpfe, daher
                   // bei der Posaune eine niedrigere Notenzeile.
                   inputKind === "slide"
-                    ? "h-[clamp(8rem,24dvh,17rem)]"
-                    : "h-[clamp(9rem,30dvh,22rem)]",
+                    ? "h-[clamp(7rem,20dvh,15rem)]"
+                    : "h-[clamp(8rem,24dvh,20rem)]",
                 )}
               />
 
@@ -1231,7 +1375,7 @@ export function FingeringGame() {
               <div
                 role="status"
                 aria-live="polite"
-                className="text-ink dark:text-night-text max-h-[22dvh] min-h-[clamp(2.75rem,7dvh,5rem)] shrink-0 overflow-y-auto px-1 py-2 text-sm leading-snug"
+                className="spiel-inline-feedback text-ink dark:text-night-text max-h-[22dvh] min-h-[clamp(2.75rem,7dvh,5rem)] shrink-0 overflow-y-auto px-1 py-2 text-sm leading-snug"
               >
                 {feedbackText && (
                   <span className="flex items-start gap-1.5">
@@ -1284,41 +1428,79 @@ export function FingeringGame() {
             </div>
           </div>
 
-          <GameDock>{actionButton}</GameDock>
+          <GameDock>
+            <div className="flex flex-col gap-2">
+              {flash !== "none" && (
+                <LessonFeedback
+                  tone={flash === "correct" ? "right" : "wrong"}
+                  title={
+                    flash === "correct"
+                      ? `${praiseFor(streak)}!`
+                      : "Leider falsch"
+                  }
+                  text={
+                    flash === "correct"
+                      ? null
+                      : learnLine?.replace(
+                          /^Falsch\s*[—–-]\s*richtig:/,
+                          "Richtig ist",
+                        )
+                  }
+                />
+              )}
+              {actionButton}
+            </div>
+          </GameDock>
         </div>
       )}
 
-      {phase === "result" && roundResult && (
-        <div className="flex flex-col gap-4">
-          <div className="text-center">
-            <Music
-              className="text-primary-ink dark:text-primary mx-auto h-10 w-10 stroke-[1.4]"
-              aria-hidden
-            />
-            <p className="text-ink dark:text-night-text mt-2 text-lg font-bold">
-              Runde zu Ende
-            </p>
-          </div>
-          <GriffeResultView
-            result={roundResult}
-            onRetry={() => {
-              setRoundResult(null);
-              startGame();
-            }}
-            onChangeSetup={openSetup}
-          />
-          {aggregates && aggregates.plays > 0 && (
-            <p className="text-dark dark:text-night-muted text-center text-sm">
-              Persönlicher Rekord:{" "}
-              <span className="text-ink dark:text-night-text font-bold">
-                {aggregates.bestScore}/{QUIZ_ROUND_LEN} richtig
-              </span>
-              {aggregates.bestStreak > 0 && (
-                <> · beste Serie: {aggregates.bestStreak}</>
-              )}
-            </p>
-          )}
-        </div>
+      {phase === "result" && roundResult && lesson && outcome && (
+        <PathResult
+          percent={outcome.percent}
+          value={`${roundResult.correct}/${roundResult.total}`}
+          valueLabel="richtig"
+          rows={[["Beste Serie", String(roundResult.bestStreakRound)]]}
+          challenge={
+            lesson.challengeSection === null
+              ? null
+              : {
+                  passed: outcome.passed,
+                  nextSection: GRIFFE_PATH.sections[lesson.challengeSection + 1]
+                    ? lesson.challengeSection + 2
+                    : null,
+                }
+          }
+          detailsLabel="Das übst du am besten noch"
+          onAgain={() => startLesson(lesson.id)}
+          onContinue={openSetup}
+        >
+          {roundResult.missed.length > 0 ? (
+            <ul className="text-ink dark:text-night-text space-y-1 text-sm">
+              {roundResult.missed.map((row) => (
+                <li
+                  key={row.key}
+                  className="border-rule dark:border-night-rule flex justify-between gap-3 border-b pb-1 last:border-0"
+                >
+                  <span className="font-semibold">{row.label}</span>
+                  <span className="font-bold tabular-nums">{row.count}×</span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </PathResult>
+      )}
+
+      {phase === "result" && roundResult && !lesson && (
+        <GriffeResultView
+          result={roundResult}
+          onRetry={() => {
+            setRoundResult(null);
+            startFree();
+          }}
+          onChangeSetup={openSetup}
+          bestScore={aggregates?.bestScore ?? 0}
+          plays={aggregates?.plays ?? 0}
+        />
       )}
 
       <NoteSetLibrary

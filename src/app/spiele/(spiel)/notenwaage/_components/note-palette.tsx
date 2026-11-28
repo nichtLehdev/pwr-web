@@ -4,8 +4,7 @@ import { useRef } from "react";
 import { cn } from "@/lib/utils";
 import { GAME_FOCUS_RING } from "../../../_lib/focus-ring";
 import { NOTE_VALUES, type NoteValueId } from "../_lib/types";
-import { unitsToBeatLabel } from "../_lib/beat-label";
-import { NoteGlyph } from "./note-glyph-loader";
+import { NoteWeight } from "./balance-scale";
 
 type Props = {
   ids: NoteValueId[];
@@ -14,17 +13,6 @@ type Props = {
   disabled?: boolean;
   showDescriptions?: boolean;
 };
-
-/*
- * Größen folgen der Fensterhöhe (siehe note-pan.tsx). Abstand zur Beschriftung = halbe
- * Notengröße, weil das VexFlow-SVG anteilig unter sein Kästchen ragt.
- */
-export const PALETTE_FELD =
-  "min-h-[max(64px,min(calc(12dvh_-_14px),110px))] md:min-h-[max(72px,min(calc(28.3dvh_-_112px),190px))]";
-export const PALETTE_GLYPH =
-  "h-[max(26px,min(calc(5dvh_-_14px),44px))] w-[max(26px,min(calc(5dvh_-_14px),44px))] md:h-[max(34px,min(calc(10dvh_-_28px),80px))] md:w-[max(34px,min(calc(10dvh_-_28px),80px))]";
-export const PALETTE_ABSTAND =
-  "mt-[max(13px,min(calc(2.5dvh_-_7px),22px))] md:mt-[max(17px,min(calc(5dvh_-_14px),40px))]";
 
 export function NotePalette({
   ids,
@@ -79,25 +67,27 @@ export function NotePalette({
             onContextMenu={(e) => e.preventDefault()}
             className={cn(
               "border-rule dark:border-night-rule dark:bg-night-raised flex touch-manipulation flex-col items-center justify-center border p-1.5 transition-colors select-none motion-safe:active:scale-[0.98] md:p-2",
-              PALETTE_FELD,
+              "min-h-20",
               GAME_FOCUS_RING,
               !disabled && "hover:bg-rule/25 dark:hover:bg-night-rule",
               disabled && "opacity-60",
             )}
           >
-            <NoteGlyph id={id} className={PALETTE_GLYPH} />
+            <svg
+              viewBox="-40 -40 80 84"
+              className="text-ink dark:text-night-text h-[clamp(2.5rem,6.5dvh,4rem)] w-[clamp(2.5rem,6.5dvh,4rem)]"
+              aria-hidden
+            >
+              <NoteWeight id={id} x={0} y={0} />
+            </svg>
             {showDescriptions && (
               <>
                 <span
-                  className={cn(
-                    "text-ink dark:text-night-text text-[9px] leading-tight font-bold md:text-[11px]",
-                    PALETTE_ABSTAND,
-                  )}
+                  className={
+                    "text-ink dark:text-night-text mt-1 text-center text-[11px] leading-tight font-bold hyphens-manual md:text-xs"
+                  }
                 >
                   {def.label}
-                </span>
-                <span className="text-dark dark:text-night-muted text-[9px] font-semibold md:text-[10px]">
-                  {unitsToBeatLabel(def.units)}
                 </span>
               </>
             )}

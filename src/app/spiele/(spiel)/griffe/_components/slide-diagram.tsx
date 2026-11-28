@@ -98,7 +98,7 @@ export function SlideDiagram({
   return (
     <div
       className={cn(
-        "border p-[clamp(0.5rem,1.6dvh,1rem)] transition-colors duration-200",
+        "spiel-karte border p-[clamp(0.5rem,1.6dvh,1rem)] transition-colors duration-200",
         diagramShellClass(flash),
         className,
       )}

@@ -36,6 +36,7 @@ const STATIC_ROUTES: Array<{ path: string; priority: number }> = [
   { path: "/newsletter", priority: 0.5 },
   { path: "/kontakt", priority: 0.7 },
   { path: "/spiele", priority: 0.6 },
+  { path: "/spiele/diktat", priority: 0.5 },
   { path: "/spiele/griffe", priority: 0.5 },
   { path: "/spiele/noten-lesen", priority: 0.5 },
   { path: "/spiele/notenwaage", priority: 0.5 },

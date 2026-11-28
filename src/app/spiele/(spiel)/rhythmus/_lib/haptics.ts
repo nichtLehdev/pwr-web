@@ -93,19 +93,3 @@ function vibrateWithFallback(pattern: number | number[]): void {
 export function hapticsTap(): void {
   vibrateWithFallback(12);
 }
-
-/** Einzählschlag: leicht; erster Schlag etwas kräftiger. */
-export function hapticsCountdownBeat(isAccent: boolean): void {
-  if (!likelyTouchDevice() && !looksLikeIosTouchDevice()) return;
-  vibrateWithFallback(isAccent ? [14, 35, 10] : 10);
-}
-
-export function hapticsMetronomeBeat(): void {
-  if (!likelyTouchDevice() && !looksLikeIosTouchDevice()) return;
-  vibrateWithFallback(6);
-}
-
-export function hapticsPlayingStart(): void {
-  if (!likelyTouchDevice() && !looksLikeIosTouchDevice()) return;
-  vibrateWithFallback([12, 30, 12]);
-}

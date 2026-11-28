@@ -276,7 +276,7 @@ export function StaffDisplay({
   return (
     <div
       className={cn(
-        "relative flex w-full overflow-x-hidden overflow-y-visible border transition-colors duration-200 motion-reduce:transition-none",
+        "spiel-karte relative flex w-full overflow-x-hidden overflow-y-visible border transition-colors duration-200 motion-reduce:transition-none",
         /* Richtig ist ein Druckfeld, falsch bleibt Rot — kein Grün. */
         flash === "correct" &&
           "border-ink dark:border-night-text bg-primary/15",
